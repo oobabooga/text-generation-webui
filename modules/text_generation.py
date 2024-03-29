@@ -81,19 +81,16 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
         state = copy.deepcopy(state)
         state['stream'] = True
 
-    min_update_interval = 0
-    if state.get('max_updates_second', 0) > 0:
-        min_update_interval = 1 / state['max_updates_second']
-
     # Generate
     for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
         if escape_html:
             reply = html.escape(reply)
+
         if is_stream:
             cur_time = time.time()
 
-            # Maximum number of tokens/second
+            # Limit number of tokens/second to make text readable in real time
             if state['max_tokens_second'] > 0:
                 diff = 1 / state['max_tokens_second'] - (cur_time - last_update)
                 if diff > 0:
@@ -101,13 +98,8 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
                 last_update = time.time()
                 yield reply
-
-            # Limit updates to avoid lag in the Gradio UI
-            # API updates are not limited
             else:
-                if cur_time - last_update > min_update_interval:
-                    last_update = cur_time
-                    yield reply
+                yield reply
 
         if stop_found or (state['max_tokens_second'] > 0 and shared.stop_everything):
             break
@@ -287,7 +279,7 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
 
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
     generate_params = {}
-    for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynatemp_low', 'dynatemp_high', 'dynatemp_exponent', 'smoothing_factor', 'smoothing_curve', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'min_length', 'num_beams', 'length_penalty', 'early_stopping']:
+    for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynatemp_low', 'dynatemp_high', 'dynatemp_exponent', 'smoothing_factor', 'smoothing_curve', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size']:
         if k in state:
             generate_params[k] = state[k]
 

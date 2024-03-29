@@ -1,10 +1,10 @@
 accelerate==0.27.*
-aqlm[gpu,cpu]==1.1.0; platform_system == "Linux"
+aqlm[gpu,cpu]==1.1.2; platform_system == "Linux"
 bitsandbytes==0.43.*
 colorama
 datasets
 einops
-gradio==3.50.*
+gradio==4.23.*
 hqq==0.1.5
 jinja2==3.1.2
 lm_eval==0.3.0
@@ -22,7 +22,7 @@ safetensors==0.4.*
 scipy
 sentencepiece
 tensorboard
-transformers==4.38.*
+transformers==4.39.*
 tqdm
 wandb
 
