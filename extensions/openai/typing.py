@@ -98,13 +98,13 @@ class ChatCompletionRequestParams(BaseModel):
     instruction_template: str | None = Field(default=None, description="An instruction template defined under text-generation-webui/instruction-templates. If not set, the correct template will be automatically obtained from the model metadata.")
     instruction_template_str: str | None = Field(default=None, description="A Jinja2 instruction template. If set, will take precedence over everything else.")
 
-    character: str | None = Field(default=None, description="A character defined under text-generation-webui/characters. If not set, the default \"Assistant\" character will be used.")
-    bot_name: str | None = Field(default=None, description="Overwrites the value set by character field.", alias="name2")
-    context: str | None = Field(default=None, description="Overwrites the value set by character field.")
-    greeting: str | None = Field(default=None, description="Overwrites the value set by character field.")
-    user_name: str | None = Field(default=None, description="Your name (the user). By default, it's \"You\".", alias="name1")
+    character: str | None = Field(default='', description="A character defined under text-generation-webui/characters. If not set, the default \"Assistant\" character will be used.")
+    bot_name: str | None = Field(default='', description="Overwrites the value set by character field.", alias="name2")
+    context: str | None = Field(default='', description="Overwrites the value set by character field.")
+    greeting: str | None = Field(default='', description="Overwrites the value set by character field.")
+    user_name: str | None = Field(default='', description="Your name (the user). By default, it's \"You\".", alias="name1")
     user_bio: str | None = Field(default='', description="The user description/personality.")
-    chat_template_str: str | None = Field(default=None, description="Jinja2 template for chat.")
+    chat_template_str: str | None = Field(default='', description="Jinja2 template for chat.")
 
     chat_instruct_command: str | None = None
 
