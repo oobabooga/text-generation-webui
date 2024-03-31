@@ -77,9 +77,10 @@ def get_model_metadata(model):
         # Transformers metadata
         if hf_metadata is not None:
             metadata = json.loads(open(path, 'r', encoding='utf-8').read())
-            if 'max_position_embeddings' in metadata:
-                model_settings['truncation_length'] = metadata['max_position_embeddings']
-                model_settings['max_seq_len'] = metadata['max_position_embeddings']
+            for k in ['max_position_embeddings', 'max_seq_len']:
+                if k in metadata:
+                    model_settings['truncation_length'] = metadata[k]
+                    model_settings['max_seq_len'] = metadata[k]
 
             if 'rope_theta' in metadata:
                 model_settings['rope_freq_base'] = metadata['rope_theta']
