@@ -89,7 +89,8 @@ def get_model_metadata(model):
                 if metadata['rope_scaling']['type'] == 'linear':
                     model_settings['compress_pos_emb'] = metadata['rope_scaling']['factor']
 
-            if 'quantization_config' in metadata:
+            # Read GPTQ metadata for old GPTQ loaders
+            if 'quantization_config' in metadata and metadata['quantization_config'].get('quant_method', '') != 'exl2':
                 if 'bits' in metadata['quantization_config']:
                     model_settings['wbits'] = metadata['quantization_config']['bits']
                 if 'group_size' in metadata['quantization_config']:
