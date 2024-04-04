@@ -67,7 +67,6 @@ def load_model(model_name, loader=None):
         'llamacpp_HF': llamacpp_HF_loader,
         'ExLlamav2': ExLlamav2_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
-        'ctransformers': ctransformers_loader,
         'AutoAWQ': AutoAWQ_loader,
         'QuIP#': QuipSharp_loader,
         'HQQ': HQQ_loader,
@@ -97,7 +96,7 @@ def load_model(model_name, loader=None):
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
     if loader.lower().startswith('exllama'):
         shared.settings['truncation_length'] = shared.args.max_seq_len
-    elif loader in ['llama.cpp', 'llamacpp_HF', 'ctransformers']:
+    elif loader in ['llama.cpp', 'llamacpp_HF']:
         shared.settings['truncation_length'] = shared.args.n_ctx
 
     logger.info(f"LOADER: \"{loader}\"")
@@ -263,33 +262,6 @@ def llamacpp_HF_loader(model_name):
 
     model = LlamacppHF.from_pretrained(model_name)
     return model
-
-
-def ctransformers_loader(model_name):
-    from modules.ctransformers_model import CtransformersModel
-
-    path = Path(f'{shared.args.model_dir}/{model_name}')
-    ctrans = CtransformersModel()
-    if ctrans.model_type_is_auto():
-        model_file = path
-    else:
-        if path.is_file():
-            model_file = path
-        else:
-            entries = Path(f'{shared.args.model_dir}/{model_name}')
-            gguf = list(entries.glob('*.gguf'))
-            bin = list(entries.glob('*.bin'))
-            if len(gguf) > 0:
-                model_file = gguf[0]
-            elif len(bin) > 0:
-                model_file = bin[0]
-            else:
-                logger.error("Could not find a model for ctransformers.")
-                return None, None
-
-    logger.info(f'ctransformers weights detected: \"{model_file}\"')
-    model, tokenizer = ctrans.from_pretrained(model_file)
-    return model, tokenizer
 
 
 def AutoAWQ_loader(model_name):

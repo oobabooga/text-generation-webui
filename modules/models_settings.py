@@ -48,7 +48,7 @@ def get_model_metadata(model):
         model_settings['loader'] = loader
 
     # GGUF metadata
-    if model_settings['loader'] in ['llama.cpp', 'llamacpp_HF', 'ctransformers']:
+    if model_settings['loader'] in ['llama.cpp', 'llamacpp_HF']:
         path = Path(f'{shared.args.model_dir}/{model}')
         if path.is_file():
             model_file = path
@@ -231,7 +231,7 @@ def apply_model_settings_to_state(model, state):
         loader = model_settings.pop('loader')
 
         # If the user is using an alternative loader for the same model type, let them keep using it
-        if not (loader == 'ExLlamav2_HF' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlamav2', 'AutoGPTQ']) and not (loader == 'llama.cpp' and state['loader'] in ['ctransformers']):
+        if not (loader == 'ExLlamav2_HF' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlamav2', 'AutoGPTQ']):
             state['loader'] = loader
 
     for k in model_settings:
