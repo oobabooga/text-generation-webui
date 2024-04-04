@@ -110,9 +110,7 @@ def load_model(model_name, loader=None):
 def load_tokenizer(model_name, model):
     tokenizer = None
     path_to_model = Path(f"{shared.args.model_dir}/{model_name}/")
-    if any(s in model_name.lower() for s in ['gpt-4chan', 'gpt4chan']) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
-        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
-    elif path_to_model.exists():
+    if path_to_model.exists():
         if shared.args.no_use_fast:
             logger.info('Loading the tokenizer with use_fast=False.')
 

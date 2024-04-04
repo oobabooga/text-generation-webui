@@ -16,8 +16,6 @@ image_cache = {}
 
 with open(Path(__file__).resolve().parent / '../css/html_readable_style.css', 'r') as f:
     readable_css = f.read()
-with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') as css_f:
-    _4chan_css = css_f.read()
 with open(Path(__file__).resolve().parent / '../css/html_instruct_style.css', 'r') as f:
     instruct_css = f.read()
 
@@ -116,63 +114,6 @@ def generate_basic_html(string):
     string = convert_to_markdown(string)
     string = f'<style>{readable_css}</style><div class="readable-container">{string}</div>'
     return string
-
-
-def process_post(post, c):
-    t = post.split('\n')
-    number = t[0].split(' ')[1]
-    if len(t) > 1:
-        src = '\n'.join(t[1:])
-    else:
-        src = ''
-    src = re.sub('>', '&gt;', src)
-    src = re.sub('(&gt;&gt;[0-9]*)', '<span class="quote">\\1</span>', src)
-    src = re.sub('\n', '<br>\n', src)
-    src = f'<blockquote class="message_4chan">{src}\n'
-    src = f'<span class="name">Anonymous </span> <span class="number">No.{number}</span>\n{src}'
-    return src
-
-
-def generate_4chan_html(f):
-    posts = []
-    post = ''
-    c = -2
-    for line in f.splitlines():
-        line += "\n"
-        if line == '-----\n':
-            continue
-        elif line.startswith('--- '):
-            c += 1
-            if post != '':
-                src = process_post(post, c)
-                posts.append(src)
-            post = line
-        else:
-            post += line
-
-    if post != '':
-        src = process_post(post, c)
-        posts.append(src)
-
-    for i in range(len(posts)):
-        if i == 0:
-            posts[i] = f'<div class="op">{posts[i]}</div>\n'
-        else:
-            posts[i] = f'<div class="reply">{posts[i]}</div>\n'
-
-    output = ''
-    output += f'<style>{_4chan_css}</style><div id="parent"><div id="container">'
-    for post in posts:
-        output += post
-
-    output += '</div></div>'
-    output = output.split('\n')
-    for i in range(len(output)):
-        output[i] = re.sub(r'^(&gt;(.*?)(<br>|</div>))', r'<span class="greentext">\1</span>', output[i])
-        output[i] = re.sub(r'^<blockquote class="message_4chan">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message_4chan"><span class="greentext">\1</span>', output[i])
-
-    output = '\n'.join(output)
-    return output
 
 
 def make_thumbnail(image):

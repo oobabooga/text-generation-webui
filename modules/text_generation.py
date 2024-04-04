@@ -22,7 +22,7 @@ from modules.callbacks import (
 from modules.extensions import apply_extensions
 from modules.grammar.grammar_utils import initialize_grammar
 from modules.grammar.logits_process import GrammarConstrainedLogitsProcessor
-from modules.html_generator import generate_4chan_html, generate_basic_html
+from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
 from modules.models import clear_torch_cache, local_rank
 
@@ -186,23 +186,7 @@ def generate_reply_wrapper(question, state, stopping_strings=None):
 
 
 def formatted_outputs(reply, model_name):
-    if any(s in model_name for s in ['gpt-4chan', 'gpt4chan']):
-        reply = fix_gpt4chan(reply)
-        return html.unescape(reply), generate_4chan_html(reply)
-    else:
-        return html.unescape(reply), generate_basic_html(reply)
-
-
-def fix_gpt4chan(s):
-    """
-    Removes empty replies from gpt4chan outputs
-    """
-    for i in range(10):
-        s = re.sub("--- [0-9]*\n>>[0-9]*\n---", "---", s)
-        s = re.sub("--- [0-9]*\n *\n---", "---", s)
-        s = re.sub("--- [0-9]*\n\n\n---", "---", s)
-
-    return s
+    return html.unescape(reply), generate_basic_html(reply)
 
 
 def fix_galactica(s):
