@@ -10,7 +10,6 @@
 | AutoGPTQ       |       ✅       |           ❌            |       ❌       |          ✅          |           ✅          |
 | AutoAWQ        |       ?        |           ❌            |       ?        |          ?           |           ✅          |
 | GPTQ-for-LLaMa |       ✅\*\*   |           ✅\*\*\*      |       ✅       |          ✅          |           ✅          |
-| ctransformers  |       ❌       |           ❌            |       ❌       |          ❌          |           ❌          |
 | QuIP#          |       ?        |           ?             |       ?        |          ?           |           ✅          |
 | HQQ            |       ?        |           ?             |       ?        |          ?           |           ✅          |
 
