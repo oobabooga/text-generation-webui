@@ -105,12 +105,6 @@ It has an additional parameter:
 
 * **logits_all**: Needs to be checked if you want to evaluate the perplexity of the llama.cpp model using the "Training" > "Perplexity evaluation" tab. Otherwise, leave it unchecked, as it makes prompt processing slower.
 
-### ctransformers
-
-Loads: GGUF/GGML models.
-
-Similar to llama.cpp but it works for certain GGUF/GGML models not originally supported by llama.cpp like Falcon, StarCoder, StarChat, and GPT-J.
-
 ### AutoAWQ
 
 Loads: AWQ models.
