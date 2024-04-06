@@ -154,6 +154,8 @@ def huggingface_loader(model_name):
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1, shared.args.disable_exllama, shared.args.disable_exllamav2]):
         logger.info("TRANSFORMERS_PARAMS=")
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(params)
+        print()
+
         model = LoaderClass.from_pretrained(path_to_model, **params)
         if not (hasattr(model, 'is_loaded_in_4bit') and model.is_loaded_in_4bit):
             if torch.backends.mps.is_available():
