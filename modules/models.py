@@ -137,7 +137,7 @@ def huggingface_loader(model_name):
         params['use_flash_attention_2'] = True
 
     if shared.args.force_safetensors:
-        params['max_memory'] = True
+        params['force_safetensors'] = True
 
     config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
 
