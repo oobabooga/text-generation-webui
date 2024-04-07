@@ -13,6 +13,7 @@ optimum==1.17.*
 pandas
 peft==0.8.*
 Pillow>=9.5.0
+psutil
 pyyaml
 requests
 rich
