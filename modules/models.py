@@ -242,6 +242,7 @@ def huggingface_loader(model_name):
 
         logger.info("TRANSFORMERS_PARAMS=")
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(params)
+        print()
         model = LoaderClass.from_pretrained(path_to_model, **params)
 
     return model
