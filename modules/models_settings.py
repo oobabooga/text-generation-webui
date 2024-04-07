@@ -117,6 +117,9 @@ def get_model_metadata(model):
         metadata = json.loads(open(path, 'r', encoding='utf-8').read())
         if 'chat_template' in metadata:
             template = metadata['chat_template']
+            if isinstance(template, list):
+                template = template[0]['template']
+
             for k in ['eos_token', 'bos_token']:
                 if k in metadata:
                     value = metadata[k]

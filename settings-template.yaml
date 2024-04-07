@@ -74,5 +74,4 @@ chat-instruct_command: |-
 autoload_model: false
 gallery-items_per_page: 50
 gallery-open: false
-default_extensions:
-- gallery
+default_extensions: []

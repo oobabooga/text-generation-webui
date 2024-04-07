@@ -1,6 +1,7 @@
 import gc
 import logging
 import os
+import pprint
 import re
 import time
 import traceback
@@ -126,15 +127,19 @@ def huggingface_loader(model_name):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     params = {
         'low_cpu_mem_usage': True,
-        'trust_remote_code': shared.args.trust_remote_code,
         'torch_dtype': torch.bfloat16 if shared.args.bf16 else torch.float16,
-        'use_safetensors': True if shared.args.force_safetensors else None
     }
+
+    if shared.args.trust_remote_code:
+        params['trust_remote_code'] = True
 
     if shared.args.use_flash_attention_2:
         params['use_flash_attention_2'] = True
 
-    config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=params['trust_remote_code'])
+    if shared.args.force_safetensors:
+        params['force_safetensors'] = True
+
+    config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
 
     if 'chatglm' in model_name.lower():
         LoaderClass = AutoModel
@@ -147,6 +152,10 @@ def huggingface_loader(model_name):
 
     # Load the model without any special settings
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1, shared.args.disable_exllama, shared.args.disable_exllamav2]):
+        logger.info("TRANSFORMERS_PARAMS=")
+        pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(params)
+        print()
+
         model = LoaderClass.from_pretrained(path_to_model, **params)
         if not (hasattr(model, 'is_loaded_in_4bit') and model.is_loaded_in_4bit):
             if torch.backends.mps.is_available():
@@ -175,7 +184,9 @@ def huggingface_loader(model_name):
             params['torch_dtype'] = torch.float32
         else:
             params['device_map'] = 'auto'
-            params['max_memory'] = get_max_memory_dict()
+            if x := get_max_memory_dict():
+                params['max_memory'] = x
+
             if shared.args.load_in_4bit:
                 # See https://github.com/huggingface/transformers/pull/23479/files
                 # and https://huggingface.co/blog/4bit-transformers-bitsandbytes
@@ -186,7 +197,6 @@ def huggingface_loader(model_name):
                     'bnb_4bit_use_double_quant': shared.args.use_double_quant,
                 }
 
-                logger.info('Using the following 4-bit params: ' + str(quantization_config_params))
                 params['quantization_config'] = BitsAndBytesConfig(**quantization_config_params)
 
             elif shared.args.load_in_8bit:
@@ -230,6 +240,9 @@ def huggingface_loader(model_name):
         elif shared.args.alpha_value > 1:
             params['rope_scaling'] = {'type': 'dynamic', 'factor': RoPE.get_alpha_value(shared.args.alpha_value, shared.args.rope_freq_base)}
 
+        logger.info("TRANSFORMERS_PARAMS=")
+        pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(params)
+        print()
         model = LoaderClass.from_pretrained(path_to_model, **params)
 
     return model
