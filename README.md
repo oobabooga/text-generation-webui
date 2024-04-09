@@ -52,7 +52,7 @@ If you ever need to install something manually in the `installer_files` environm
 
 ### Manual installation using Conda
 
-Recommended if you have some experience with the command-line.
+Recommended if you have some experience with the command-line. 
 
 #### 0. Install Conda
 
