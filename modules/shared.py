@@ -36,7 +36,7 @@ settings = {
     'chat_style': 'cai-chat',
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
-    'preset': 'simple-1',
+    'preset': 'min_p',
     'max_new_tokens': 512,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
