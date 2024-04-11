@@ -10,7 +10,11 @@ from pathlib import Path
 import torch
 import transformers
 from accelerate import infer_auto_device_map, init_empty_weights
-from accelerate.utils import is_ccl_available, is_xpu_available
+from accelerate.utils import (
+    is_ccl_available,
+    is_npu_available,
+    is_xpu_available
+)
 from transformers import (
     AutoConfig,
     AutoModel,
@@ -45,6 +49,9 @@ if shared.args.deepspeed:
     if is_xpu_available() and is_ccl_available():
         torch.xpu.set_device(local_rank)
         deepspeed.init_distributed(backend="ccl")
+    elif is_npu_available():
+        torch.npu.set_device(local_rank)
+        deepspeed.init_distributed(dist_backend="hccl")
     else:
         torch.cuda.set_device(local_rank)
         deepspeed.init_distributed()
@@ -163,6 +170,9 @@ def huggingface_loader(model_name):
                 model = model.to(device)
             elif is_xpu_available():
                 device = torch.device("xpu")
+                model = model.to(device)
+            elif is_npu_available():
+                device = torch.device("npu")
                 model = model.to(device)
             else:
                 model = model.cuda()
