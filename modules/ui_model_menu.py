@@ -330,7 +330,7 @@ def update_truncation_length(current_length, state):
     if 'loader' in state:
         if state['loader'].lower().startswith('exllama'):
             return state['max_seq_len']
-        elif state['loader'] in ['llama.cpp', 'llamacpp_HF', 'ctransformers']:
+        elif state['loader'] in ['llama.cpp', 'llamacpp_HF']:
             return state['n_ctx']
 
     return current_length

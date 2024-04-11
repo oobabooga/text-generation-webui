@@ -464,3 +464,22 @@ function handleVisibilityChange(isVisible) {
 }
 
 respondToRenameVisibility(renameTextArea, handleVisibilityChange);
+
+//------------------------------------------------
+// Adjust the chat tab margin if no extension UI
+// is present at the bottom
+//------------------------------------------------
+
+if (document.getElementById('extensions') === null) {
+  document.getElementById("chat-tab").style.marginBottom = "-29px";
+}
+
+//------------------------------------------------
+// Focus on the chat input after starting a new chat
+//------------------------------------------------
+
+document.querySelectorAll('.focus-on-chat-input').forEach(element => {
+  element.addEventListener('click', function() {
+      document.querySelector('#chat-input textarea').focus();
+  });
+});
