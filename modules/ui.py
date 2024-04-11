@@ -137,7 +137,6 @@ def list_interface_input_elements():
         'dry_multiplier',
         'dry_base',
         'dry_sequence_breakers',
-        'dry_range',
         'repetition_penalty',
         'presence_penalty',
         'frequency_penalty',

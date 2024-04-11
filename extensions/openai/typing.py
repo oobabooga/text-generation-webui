@@ -26,7 +26,6 @@ class GenerationOptions(BaseModel):
     dry_multiplier: float = 0
     dry_base: float = 1.75
     dry_sequence_breakers: str = '["\\n", ":", "\\"", "*"]'
-    dry_range: int = 0
     guidance_scale: float = 1
     negative_prompt: str = ''
     penalty_alpha: float = 0

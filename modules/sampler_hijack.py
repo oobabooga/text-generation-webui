@@ -221,7 +221,7 @@ class TopALogitsWarper(LogitsWarper):
         return scores
 
 
-class DRYLogitsWarper(LogitsWarper):
+class DRYLogitsProcessor(LogitsProcessor):
     def __init__(self, allowed_length: int, multiplier: float, base: float, sequence_breakers: set[int], _range: int):
         self.allowed_length = allowed_length
         self.multiplier = multiplier
@@ -421,21 +421,6 @@ def get_logits_warper_patch(self, generation_config):
             )
         )
 
-    if generation_config.dry_multiplier is not None and generation_config.dry_multiplier > 0.0:
-        sequence_breaker_strings = json.loads(generation_config.dry_sequence_breakers)
-        # Prefix with 'a' to get the correct encoding of the token at the end of a text.
-        sequence_breakers = {shared.tokenizer.encode(f'a{s}')[-1] for s in sequence_breaker_strings}
-
-        warpers_to_add.append(
-            DRYLogitsWarper(
-                allowed_length=generation_config.dry_allowed_length,
-                multiplier=generation_config.dry_multiplier,
-                base=generation_config.dry_base,
-                sequence_breakers=sequence_breakers,
-                _range=generation_config.dry_range,
-            )
-        )
-
     if generation_config.min_p is not None and 0.0 < generation_config.min_p <= 1.0:
         warpers_to_add.append(
             MinPLogitsWarper(
@@ -495,7 +480,6 @@ def get_logits_warper_patch(self, generation_config):
         'DynamicTemperatureLogitsWarper': 'dynamic_temperature',
         'EpsilonLogitsWarper': 'epsilon_cutoff',
         'EtaLogitsWarper': 'eta_cutoff',
-        'DRYLogitsWarper': 'dry',
         'MinPLogitsWarper': 'min_p',
         'MirostatLogitsWarper': 'mirostat',
         'QuadraticSamplingLogitsWarper': 'quadratic_sampling',
@@ -533,20 +517,38 @@ def get_logits_warper_patch(self, generation_config):
 
 
 def get_logits_processor_patch(self, **kwargs):
-    repetition_penalty = kwargs['generation_config'].repetition_penalty
-    presence_penalty = kwargs['generation_config'].presence_penalty
-    frequency_penalty = kwargs['generation_config'].frequency_penalty
-    repetition_penalty_range = kwargs['generation_config'].repetition_penalty_range
-    do_rep_pen_hijack = (repetition_penalty > 1) or (presence_penalty != 0) or (frequency_penalty != 0)
+    generation_config = kwargs['generation_config']
+
+    do_rep_pen_hijack = (generation_config.repetition_penalty > 1) or (generation_config.presence_penalty != 0) or (generation_config.frequency_penalty != 0)
     if do_rep_pen_hijack:
-        kwargs['generation_config'].repetition_penalty = 1.1  # Set to value > 1 to ensure RepetitionPenaltyLogitsProcessor is created
+        generation_config.repetition_penalty = 1.1  # Set to value > 1 to ensure RepetitionPenaltyLogitsProcessor is created
 
     result = self._get_logits_processor_old(**kwargs)
 
     if do_rep_pen_hijack:
         for i in range(len(result)):
             if result[i].__class__.__name__ == 'RepetitionPenaltyLogitsProcessor':
-                result[i] = RepetitionPenaltyLogitsProcessorWithRange(repetition_penalty, presence_penalty, frequency_penalty, repetition_penalty_range)
+                result[i] = RepetitionPenaltyLogitsProcessorWithRange(
+                    generation_config.repetition_penalty,
+                    generation_config.presence_penalty,
+                    generation_config.frequency_penalty,
+                    generation_config.repetition_penalty_range
+                )
+
+    if generation_config.dry_multiplier is not None and generation_config.dry_multiplier > 0.0:
+        sequence_breaker_strings = json.loads(generation_config.dry_sequence_breakers)
+        # Prefix with 'a' to get the correct encoding of the token at the end of a text.
+        sequence_breakers = {shared.tokenizer.encode(f'a{s}')[-1] for s in sequence_breaker_strings}
+
+        warpers_to_add.append(
+            DRYLogitsProcessor(
+                allowed_length=generation_config.dry_allowed_length,
+                multiplier=generation_config.dry_multiplier,
+                base=generation_config.dry_base,
+                sequence_breakers=sequence_breakers,
+                _range=generation_config.repetition_penalty_range,
+            )
+        )
 
     return result
 
@@ -566,7 +568,6 @@ def generation_config_init_patch(self, **kwargs):
     self.dry_multiplier = kwargs.pop("dry_multiplier", 0.0)
     self.dry_base = kwargs.pop("dry_base", 1.75)
     self.dry_sequence_breakers = kwargs.pop("dry_sequence_breakers", '["\\n", ":", "\\"", "*"]')
-    self.dry_range = kwargs.pop("dry_range", 0)
     self.mirostat_mode = kwargs.pop("mirostat_mode", 0)
     self.mirostat_eta = kwargs.pop("mirostat_eta", 0.1)
     self.mirostat_tau = kwargs.pop("mirostat_tau", 5)
@@ -574,7 +575,7 @@ def generation_config_init_patch(self, **kwargs):
     self.presence_penalty = kwargs.pop("presence_penalty", 0)
     self.frequency_penalty = kwargs.pop("frequency_penalty", 0)
     self.temperature_last = kwargs.pop("temperature_last", False)
-    self.sampler_priority = kwargs.pop("sampler_priority", ['temperature', 'dynamic_temperature', 'quadratic_sampling', 'dry', 'top_k', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'tfs', 'top_a', 'min_p', 'mirostat'])
+    self.sampler_priority = kwargs.pop("sampler_priority", ['temperature', 'dynamic_temperature', 'quadratic_sampling', 'top_k', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'tfs', 'top_a', 'min_p', 'mirostat'])
 
 
 def hijack_samplers():
