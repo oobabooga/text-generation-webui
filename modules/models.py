@@ -172,8 +172,6 @@ def huggingface_loader(model_name):
                 device = torch.device("xpu")
                 model = model.to(device)
             elif is_npu_available():
-                # workaround for https://gitee.com/ascend/pytorch/issues/I8KECW?from=project-issue, please remove me after fixed it.
-                torch.npu.set_device(0)
                 device = torch.device("npu")
                 model = model.to(device)
             else:

@@ -143,8 +143,6 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     elif is_torch_xpu_available():
         return input_ids.to("xpu:0")
     elif is_torch_npu_available():
-        # workaround for https://gitee.com/ascend/pytorch/issues/I8KECW?from=project-issue, please remove me after fixed it.
-        torch.npu.set_device(0)
         return input_ids.to("npu:0")
     else:
         return input_ids.cuda()
@@ -381,9 +379,6 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
                 kwargs['stopping_criteria'].append(Stream(callback_func=callback))
                 clear_torch_cache()
                 with torch.no_grad():
-                    # workaround for https://gitee.com/ascend/pytorch/issues/I8KECW?from=project-issue, please remove me after fixed it.
-                    if is_torch_npu_available():
-                        torch.npu.set_device(0)
                     shared.model.generate(**kwargs)
 
             def generate_with_streaming(**kwargs):
