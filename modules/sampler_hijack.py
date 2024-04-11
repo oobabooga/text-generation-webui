@@ -540,7 +540,7 @@ def get_logits_processor_patch(self, **kwargs):
         # Prefix with 'a' to get the correct encoding of the token at the end of a text.
         sequence_breakers = {shared.tokenizer.encode(f'a{s}')[-1] for s in sequence_breaker_strings}
 
-        warpers_to_add.append(
+        result.append(
             DRYLogitsProcessor(
                 multiplier=generation_config.dry_multiplier,
                 base=generation_config.dry_base,
