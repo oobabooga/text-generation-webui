@@ -3,8 +3,13 @@ from pathlib import Path
 import gradio as gr
 
 from modules.html_generator import get_image_cache
-from modules.shared import gradio, settings
+from modules.shared import gradio
 
+
+params = {
+    'items_per_page': 50,
+    'open': False,
+}
 
 cards = []
 
@@ -104,7 +109,7 @@ def custom_js():
 
 
 def ui():
-    with gr.Accordion("Character gallery", open=settings["gallery-open"], elem_id='gallery-extension'):
+    with gr.Accordion("Character gallery", open=params["open"], elem_id='gallery-extension'):
         gr.HTML(value="<style>" + generate_css() + "</style>")
         with gr.Row():
             filter_box = gr.Textbox(label='', placeholder='Filter', lines=1, max_lines=1, container=False, elem_id='gallery-filter-box')
@@ -116,10 +121,10 @@ def ui():
             label="",
             samples=generate_html(),
             elem_classes=["character-gallery"],
-            samples_per_page=settings["gallery-items_per_page"]
+            samples_per_page=params["items_per_page"]
         )
 
-    filter_box.change(lambda: None, None, None, _js=f'() => {{{custom_js()}; gotoFirstPage()}}').success(
+    filter_box.change(lambda: None, None, None, js=f'() => {{{custom_js()}; gotoFirstPage()}}').success(
         filter_cards, filter_box, gallery).then(
         lambda x: gr.update(elem_classes='highlighted-border' if x != '' else ''), filter_box, filter_box, show_progress=False)
 

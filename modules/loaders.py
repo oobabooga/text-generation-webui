@@ -46,6 +46,8 @@ loaders_and_params = OrderedDict({
         'no_offload_kqv',
         'row_split',
         'tensorcores',
+        'streaming_llm',
+        'attention_sink_size',
     ],
     'llamacpp_HF': [
         'n_ctx',
@@ -69,6 +71,8 @@ loaders_and_params = OrderedDict({
         'no_offload_kqv',
         'row_split',
         'tensorcores',
+        'streaming_llm',
+        'attention_sink_size',
         'llamacpp_HF_info',
     ],
     'ExLlamav2_HF': [
@@ -78,6 +82,7 @@ loaders_and_params = OrderedDict({
         'no_flash_attn',
         'num_experts_per_token',
         'cache_8bit',
+        'cache_4bit',
         'autosplit',
         'alpha_value',
         'compress_pos_emb',
@@ -90,6 +95,7 @@ loaders_and_params = OrderedDict({
         'no_flash_attn',
         'num_experts_per_token',
         'cache_8bit',
+        'cache_4bit',
         'autosplit',
         'alpha_value',
         'compress_pos_emb',
@@ -132,15 +138,6 @@ loaders_and_params = OrderedDict({
         'no_use_fast',
         'gptq_for_llama_info',
     ],
-    'ctransformers': [
-        'n_ctx',
-        'n_gpu_layers',
-        'n_batch',
-        'threads',
-        'model_type',
-        'no_mmap',
-        'mlock'
-    ],
     'QuIP#': [
         'trust_remote_code',
         'no_use_fast',
@@ -179,13 +176,9 @@ def transformers_samplers():
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',
-        'min_length',
         'seed',
         'do_sample',
         'penalty_alpha',
-        'num_beams',
-        'length_penalty',
-        'early_stopping',
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
@@ -256,7 +249,6 @@ loaders_samplers = {
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',
-        'min_length',
         'seed',
         'do_sample',
         'mirostat_mode',
@@ -315,7 +307,6 @@ loaders_samplers = {
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',
-        'min_length',
         'seed',
         'do_sample',
         'mirostat_mode',
@@ -332,13 +323,6 @@ loaders_samplers = {
         'skip_special_tokens',
         'auto_max_new_tokens',
     },
-    'ctransformers': {
-        'temperature',
-        'top_p',
-        'top_k',
-        'repetition_penalty',
-        'repetition_penalty_range',
-    },
 }
 
 loaders_model_types = {
@@ -347,19 +331,6 @@ loaders_model_types = {
         "llama",
         "opt",
         "gptj"
-    ],
-    'ctransformers': [
-        "None",
-        "gpt2",
-        "gptj",
-        "gptneox",
-        "llama",
-        "mpt",
-        "dollyv2",
-        "replit",
-        "starcoder",
-        "gptbigcode",
-        "falcon"
     ],
 }
 

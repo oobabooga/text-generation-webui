@@ -33,10 +33,6 @@ class GenerationOptions(BaseModel):
     seed: int = -1
     encoder_repetition_penalty: float = 1
     no_repeat_ngram_size: int = 0
-    min_length: int = 0
-    num_beams: int = 1
-    length_penalty: float = 1
-    early_stopping: bool = False
     truncation_length: int = 0
     max_tokens_second: int = 0
     prompt_lookup_num_tokens: int = 0
@@ -103,10 +99,11 @@ class ChatCompletionRequestParams(BaseModel):
     instruction_template_str: str | None = Field(default=None, description="A Jinja2 instruction template. If set, will take precedence over everything else.")
 
     character: str | None = Field(default=None, description="A character defined under text-generation-webui/characters. If not set, the default \"Assistant\" character will be used.")
-    user_name: str | None = Field(default=None, description="Your name (the user). By default, it's \"You\".", alias="name1")
     bot_name: str | None = Field(default=None, description="Overwrites the value set by character field.", alias="name2")
     context: str | None = Field(default=None, description="Overwrites the value set by character field.")
     greeting: str | None = Field(default=None, description="Overwrites the value set by character field.")
+    user_name: str | None = Field(default=None, description="Your name (the user). By default, it's \"You\".", alias="name1")
+    user_bio: str | None = Field(default=None, description="The user description/personality.")
     chat_template_str: str | None = Field(default=None, description="Jinja2 template for chat.")
 
     chat_instruct_command: str | None = None

@@ -219,6 +219,16 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
     return result
 
 
+def generate_alphabetic_sequence(index):
+    result = ''
+    while index >= 0:
+        index, remainder = divmod(index, 26)
+        result = chr(ord('A') + remainder) + result
+        index -= 1
+
+    return result
+
+
 def get_user_choice(question, options_dict):
     print()
     print(question)
@@ -335,9 +345,13 @@ def install_webui():
     update_requirements(initial_installation=True)
 
 
+def get_extensions_names():
+    return [foldername for foldername in os.listdir('extensions') if os.path.isfile(os.path.join('extensions', foldername, 'requirements.txt'))]
+
+
 def install_extensions_requirements():
-    print_big_message("Installing extensions requirements.\nSome of these may fail on Windows. Don\'t worry if you see error messages. They will not affect the main program.")
-    extensions = [foldername for foldername in os.listdir('extensions') if os.path.isfile(os.path.join('extensions', foldername, 'requirements.txt'))]
+    print_big_message("Installing extensions requirements.\nSome of these may fail on Windows.\nDon\'t worry if you see error messages, as they will not affect the main program.")
+    extensions = get_extensions_names()
     for i, extension in enumerate(extensions):
         print(f"\n\n--- [{i+1}/{len(extensions)}]: {extension}\n\n")
         extension_req_path = os.path.join("extensions", extension, "requirements.txt")
@@ -355,7 +369,7 @@ def update_requirements(initial_installation=False, pull=True):
 
         files_to_check = [
             'start_linux.sh', 'start_macos.sh', 'start_windows.bat', 'start_wsl.bat',
-            'update_linux.sh', 'update_macos.sh', 'update_windows.bat', 'update_wsl.bat',
+            'update_wizard_linux.sh', 'update_wizard_macos.sh', 'update_wizard_windows.bat', 'update_wizard_wsl.bat',
             'one_click.py'
         ]
 
@@ -368,6 +382,9 @@ def update_requirements(initial_installation=False, pull=True):
             if before_pull_hashes[file_name] != after_pull_hashes[file_name]:
                 print_big_message(f"File '{file_name}' was updated during 'git pull'. Please run the script again.")
                 exit(1)
+
+    if os.environ.get("INSTALL_EXTENSIONS", "").lower() in ("yes", "y", "true", "1", "t", "on"):
+        install_extensions_requirements()
 
     # Update PyTorch
     if not initial_installation:
@@ -402,7 +419,7 @@ def update_requirements(initial_installation=False, pull=True):
     if is_cuda118:
         textgen_requirements = [req.replace('+cu121', '+cu118').replace('+cu122', '+cu118') for req in textgen_requirements]
     if is_windows() and is_cuda118:  # No flash-attention on Windows for CUDA 11
-        textgen_requirements = [req for req in textgen_requirements if 'jllllll/flash-attention' not in req]
+        textgen_requirements = [req for req in textgen_requirements if 'oobabooga/flash-attention' not in req]
 
     with open('temp_requirements.txt', 'w') as file:
         file.write('\n'.join(textgen_requirements))
@@ -443,25 +460,38 @@ if __name__ == "__main__":
     args, _ = parser.parse_known_args()
 
     if args.update_wizard:
-        choice = get_user_choice(
-            "What would you like to do?",
-            {
-                'A': 'Update the web UI',
-                'B': 'Install/update extensions requirements',
-                'C': 'Revert local changes to repository files with \"git reset --hard\"',
-                'N': 'Nothing (exit)'
-            },
-        )
+        while True:
+            choice = get_user_choice(
+                "What would you like to do?",
+                {
+                    'A': 'Update the web UI',
+                    'B': 'Install/update extensions requirements',
+                    'C': 'Revert local changes to repository files with \"git reset --hard\"',
+                    'N': 'Nothing (exit)'
+                },
+            )
 
-        if choice == 'A':
-            update_requirements()
-        elif choice == 'B':
-            install_extensions_requirements()
-            update_requirements(pull=False)
-        elif choice == 'C':
-            run_cmd("git reset --hard", assert_success=True, environment=True)
-        elif choice == 'N':
-            sys.exit()
+            if choice == 'A':
+                update_requirements()
+            elif choice == 'B':
+                choices = {'A': 'All extensions'}
+                for i, name in enumerate(get_extensions_names()):
+                    key = generate_alphabetic_sequence(i + 1)
+                    choices[key] = name
+
+                choice = get_user_choice("What extension?", choices)
+
+                if choice == 'A':
+                    install_extensions_requirements()
+                else:
+                    extension_req_path = os.path.join("extensions", choices[choice], "requirements.txt")
+                    run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
+
+                update_requirements(pull=False)
+            elif choice == 'C':
+                run_cmd("git reset --hard", assert_success=True, environment=True)
+            elif choice == 'N':
+                sys.exit()
     else:
         if not is_installed():
             install_webui()

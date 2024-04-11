@@ -1,3 +1,4 @@
+import functools
 import html
 import os
 import re
@@ -15,8 +16,6 @@ image_cache = {}
 
 with open(Path(__file__).resolve().parent / '../css/html_readable_style.css', 'r') as f:
     readable_css = f.read()
-with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') as css_f:
-    _4chan_css = css_f.read()
 with open(Path(__file__).resolve().parent / '../css/html_instruct_style.css', 'r') as f:
     instruct_css = f.read()
 
@@ -47,6 +46,7 @@ def replace_blockquote(m):
     return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
 
+@functools.lru_cache(maxsize=4096)
 def convert_to_markdown(string):
 
     # Blockquote
@@ -99,67 +99,21 @@ def convert_to_markdown(string):
     return html_output
 
 
+def convert_to_markdown_wrapped(string, use_cache=True):
+    '''
+    Used to avoid caching convert_to_markdown calls during streaming.
+    '''
+
+    if use_cache:
+        return convert_to_markdown(string)
+
+    return convert_to_markdown.__wrapped__(string)
+
+
 def generate_basic_html(string):
     string = convert_to_markdown(string)
     string = f'<style>{readable_css}</style><div class="readable-container">{string}</div>'
     return string
-
-
-def process_post(post, c):
-    t = post.split('\n')
-    number = t[0].split(' ')[1]
-    if len(t) > 1:
-        src = '\n'.join(t[1:])
-    else:
-        src = ''
-    src = re.sub('>', '&gt;', src)
-    src = re.sub('(&gt;&gt;[0-9]*)', '<span class="quote">\\1</span>', src)
-    src = re.sub('\n', '<br>\n', src)
-    src = f'<blockquote class="message_4chan">{src}\n'
-    src = f'<span class="name">Anonymous </span> <span class="number">No.{number}</span>\n{src}'
-    return src
-
-
-def generate_4chan_html(f):
-    posts = []
-    post = ''
-    c = -2
-    for line in f.splitlines():
-        line += "\n"
-        if line == '-----\n':
-            continue
-        elif line.startswith('--- '):
-            c += 1
-            if post != '':
-                src = process_post(post, c)
-                posts.append(src)
-            post = line
-        else:
-            post += line
-
-    if post != '':
-        src = process_post(post, c)
-        posts.append(src)
-
-    for i in range(len(posts)):
-        if i == 0:
-            posts[i] = f'<div class="op">{posts[i]}</div>\n'
-        else:
-            posts[i] = f'<div class="reply">{posts[i]}</div>\n'
-
-    output = ''
-    output += f'<style>{_4chan_css}</style><div id="parent"><div id="container">'
-    for post in posts:
-        output += post
-
-    output += '</div></div>'
-    output = output.split('\n')
-    for i in range(len(output)):
-        output[i] = re.sub(r'^(&gt;(.*?)(<br>|</div>))', r'<span class="greentext">\1</span>', output[i])
-        output[i] = re.sub(r'^<blockquote class="message_4chan">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message_4chan"><span class="greentext">\1</span>', output[i])
-
-    output = '\n'.join(output)
-    return output
 
 
 def make_thumbnail(image):
@@ -185,7 +139,7 @@ def get_image_cache(path):
             old_p.rename(p)
 
         output_file = p
-        img.convert('RGB').save(output_file, format='PNG')
+        img.convert('RGBA').save(output_file, format='PNG')
         image_cache[path] = [mtime, output_file.as_posix()]
 
     return image_cache[path][1]
@@ -194,7 +148,7 @@ def get_image_cache(path):
 def generate_instruct_html(history):
     output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
     for i, _row in enumerate(history):
-        row = [convert_to_markdown(entry) for entry in _row]
+        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
 
         if row[0]:  # don't display empty user messages
             output += f"""
@@ -230,7 +184,7 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
     img_me = f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">' if Path("cache/pfp_me.png").exists() else ''
 
     for i, _row in enumerate(history):
-        row = [convert_to_markdown(entry) for entry in _row]
+        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
 
         if row[0]:  # don't display empty user messages
             output += f"""
@@ -273,7 +227,7 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
     output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat"><div class="messages">'
 
     for i, _row in enumerate(history):
-        row = [convert_to_markdown(entry) for entry in _row]
+        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
 
         if row[0]:  # don't display empty user messages
             output += f"""

@@ -64,7 +64,7 @@ def ui():
 
     audio.change(
         auto_transcribe, [audio, auto_submit, whipser_model, whipser_language], [shared.gradio['textbox'], audio]).then(
-        None, auto_submit, None, _js="(check) => {if (check) { document.getElementById('Generate').click() }}")
+        None, auto_submit, None, js="(check) => {if (check) { document.getElementById('Generate').click() }}")
 
     whipser_model.change(lambda x: params.update({"whipser_model": x}), whipser_model, None)
     whipser_language.change(lambda x: params.update({"whipser_language": x}), whipser_language, None)

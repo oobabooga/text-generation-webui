@@ -89,6 +89,11 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     flex-wrap: nowrap;
 }
 
+gradio-app > :first-child {
+    padding-left: var(--size-4) !important;
+    padding-right: var(--size-4) !important;
+}
+
 .header_bar {
     background-color: #f7f7f7;
     box-shadow: 0 2px 3px rgba(22 22 22 / 35%);
@@ -522,6 +527,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: absolute;
     background-color: transparent;
     left: -2px;
+    top: 4px;
     padding: var(--block-padding);
 }
 

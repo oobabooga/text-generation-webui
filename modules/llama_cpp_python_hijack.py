@@ -2,6 +2,9 @@ from typing import Sequence
 
 from tqdm import tqdm
 
+from modules import shared
+from modules.cache_utils import process_llamacpp_cache
+
 try:
     import llama_cpp
 except:
@@ -36,7 +39,7 @@ def eval_with_progress(self, tokens: Sequence[int]):
         progress_bar = range(0, len(tokens), self.n_batch)
 
     for i in progress_bar:
-        batch = tokens[i: min(len(tokens), i + self.n_batch)]
+        batch = tokens[i : min(len(tokens), i + self.n_batch)]
         n_past = self.n_tokens
         n_tokens = len(batch)
         self._batch.set_batch(
@@ -44,20 +47,41 @@ def eval_with_progress(self, tokens: Sequence[int]):
         )
         self._ctx.decode(self._batch)
         # Save tokens
-        self.input_ids[n_past: n_past + n_tokens] = batch
+        self.input_ids[n_past : n_past + n_tokens] = batch
         # Save logits
-        rows = n_tokens
-        cols = self._n_vocab
-        offset = (
-            0 if self.context_params.logits_all else n_tokens - 1
-        )  # NOTE: Only save the last token logits if logits_all is False
-        self.scores[n_past + offset: n_past + n_tokens, :].reshape(-1)[
-            :
-        ] = self._ctx.get_logits()[offset * cols: rows * cols]
+        if self.context_params.logits_all:
+            rows = n_tokens
+            cols = self._n_vocab
+            logits = self._ctx.get_logits()[: rows * cols]
+            self.scores[n_past : n_past + n_tokens, :].reshape(-1)[: :] = logits
+        else:
+            rows = 1
+            cols = self._n_vocab
+            logits = self._ctx.get_logits()[: rows * cols]
+            self.scores[n_past + n_tokens - 1, :].reshape(-1)[: :] = logits
         # Update n_tokens
         self.n_tokens += n_tokens
+
+
+def monkey_patch_generate(lib):
+
+    def my_generate(self, *args, **kwargs):
+
+        if shared.args.streaming_llm:
+            new_sequence = args[0]
+            past_sequence = self._input_ids
+
+            # Do the cache trimming for StreamingLLM
+            process_llamacpp_cache(self, new_sequence, past_sequence)
+
+        for output in self.original_generate(*args, **kwargs):
+            yield output
+
+    lib.Llama.original_generate = lib.Llama.generate
+    lib.Llama.generate = my_generate
 
 
 for lib in [llama_cpp, llama_cpp_cuda, llama_cpp_cuda_tensorcores]:
     if lib is not None:
         lib.Llama.eval = eval_with_progress
+        monkey_patch_generate(lib)

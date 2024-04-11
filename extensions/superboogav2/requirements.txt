@@ -1,5 +1,5 @@
 beautifulsoup4==4.12.2
-chromadb==0.3.18
+chromadb==0.4.24
 lxml
 optuna
 pandas==2.0.3

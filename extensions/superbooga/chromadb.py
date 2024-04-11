@@ -1,43 +1,24 @@
+import random
+
 import chromadb
 import posthog
-import torch
 from chromadb.config import Settings
-from sentence_transformers import SentenceTransformer
+from chromadb.utils import embedding_functions
 
-from modules.logging_colors import logger
-
-logger.info('Intercepting all calls to posthog :)')
+# Intercept calls to posthog
 posthog.capture = lambda *args, **kwargs: None
 
 
-class Collecter():
+embedder = embedding_functions.SentenceTransformerEmbeddingFunction("sentence-transformers/all-mpnet-base-v2")
+
+
+class ChromaCollector():
     def __init__(self):
-        pass
+        name = ''.join(random.choice('ab') for _ in range(10))
 
-    def add(self, texts: list[str]):
-        pass
-
-    def get(self, search_strings: list[str], n_results: int) -> list[str]:
-        pass
-
-    def clear(self):
-        pass
-
-
-class Embedder():
-    def __init__(self):
-        pass
-
-    def embed(self, text: str) -> list[torch.Tensor]:
-        pass
-
-
-class ChromaCollector(Collecter):
-    def __init__(self, embedder: Embedder):
-        super().__init__()
+        self.name = name
         self.chroma_client = chromadb.Client(Settings(anonymized_telemetry=False))
-        self.embedder = embedder
-        self.collection = self.chroma_client.create_collection(name="context", embedding_function=embedder.embed)
+        self.collection = self.chroma_client.create_collection(name=name, embedding_function=embedder)
         self.ids = []
 
     def add(self, texts: list[str]):
@@ -102,24 +83,15 @@ class ChromaCollector(Collecter):
         return sorted(ids)
 
     def clear(self):
-        self.collection.delete(ids=self.ids)
         self.ids = []
-
-
-class SentenceTransformerEmbedder(Embedder):
-    def __init__(self) -> None:
-        self.model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
-        self.embed = self.model.encode
+        self.chroma_client.delete_collection(name=self.name)
+        self.collection = self.chroma_client.create_collection(name=self.name, embedding_function=embedder)
 
 
 def make_collector():
-    global embedder
-    return ChromaCollector(embedder)
+    return ChromaCollector()
 
 
 def add_chunks_to_collector(chunks, collector):
     collector.clear()
     collector.add(chunks)
-
-
-embedder = SentenceTransformerEmbedder()

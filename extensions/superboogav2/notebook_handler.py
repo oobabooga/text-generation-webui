@@ -4,12 +4,11 @@ This module is responsible for handling and modifying the notebook text.
 import re
 
 import extensions.superboogav2.parameters as parameters
-
-from modules import shared
-from modules.logging_colors import logger
 from extensions.superboogav2.utils import create_context_text
+from modules.logging_colors import logger
 
 from .data_processor import preprocess_text
+
 
 def _remove_special_tokens(string):
     pattern = r'(<\|begin-user-input\|>|<\|end-user-input\|>|<\|injection-point\|>)'

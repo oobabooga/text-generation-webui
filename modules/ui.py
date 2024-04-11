@@ -35,7 +35,8 @@ theme = gr.themes.Default(
     border_color_primary='#c5c5d2',
     button_large_padding='6px 12px',
     body_text_color_subdued='#484848',
-    background_fill_secondary='#eaeaea'
+    background_fill_secondary='#eaeaea',
+    background_fill_primary='#fafafa',
 )
 
 if Path("notification.mp3").exists():
@@ -76,6 +77,7 @@ def list_model_elements():
         'no_flash_attn',
         'num_experts_per_token',
         'cache_8bit',
+        'cache_4bit',
         'autosplit',
         'threads',
         'threads_batch',
@@ -96,6 +98,8 @@ def list_model_elements():
         'no_offload_kqv',
         'row_split',
         'tensorcores',
+        'streaming_llm',
+        'attention_sink_size',
         'hqq_backend',
     ]
     if is_torch_xpu_available():
@@ -113,7 +117,6 @@ def list_interface_input_elements():
         'max_new_tokens',
         'auto_max_new_tokens',
         'max_tokens_second',
-        'max_updates_second',
         'prompt_lookup_num_tokens',
         'seed',
         'temperature',
@@ -136,12 +139,8 @@ def list_interface_input_elements():
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',
-        'min_length',
         'do_sample',
         'penalty_alpha',
-        'num_beams',
-        'length_penalty',
-        'early_stopping',
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
@@ -167,6 +166,7 @@ def list_interface_input_elements():
         'character_menu',
         'history',
         'name1',
+        'user_bio',
         'name2',
         'greeting',
         'context',
@@ -217,7 +217,7 @@ def apply_interface_values(state, use_persistent=False):
 
 def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output = copy.deepcopy(shared.settings)
-    exclude = ['name2', 'greeting', 'context', 'turn_template']
+    exclude = ['name2', 'greeting', 'context', 'turn_template', 'truncation_length']
     for k in state:
         if k in shared.settings and k not in exclude:
             output[k] = state[k]
@@ -233,14 +233,16 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
 
     # Save extension values in the UI
     for extension_name in extensions_list:
-        extension = getattr(extensions, extension_name).script
-        if hasattr(extension, 'params'):
-            params = getattr(extension, 'params')
-            for param in params:
-                _id = f"{extension_name}-{param}"
-                # Only save if different from default value
-                if param not in shared.default_settings or params[param] != shared.default_settings[param]:
-                    output[_id] = params[param]
+        extension = getattr(extensions, extension_name, None)
+        if extension:
+            extension = extension.script
+            if hasattr(extension, 'params'):
+                params = getattr(extension, 'params')
+                for param in params:
+                    _id = f"{extension_name}-{param}"
+                    # Only save if different from default value
+                    if param not in shared.default_settings or params[param] != shared.default_settings[param]:
+                        output[_id] = params[param]
 
     # Do not save unchanged settings
     for key in list(output.keys()):
