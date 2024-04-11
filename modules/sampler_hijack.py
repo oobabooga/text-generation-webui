@@ -222,7 +222,7 @@ class TopALogitsWarper(LogitsWarper):
 
 
 class DRYLogitsProcessor(LogitsProcessor):
-    def __init__(self, allowed_length: int, multiplier: float, base: float, sequence_breakers: set[int], _range: int):
+    def __init__(self, multiplier: float, base: float, allowed_length: int, sequence_breakers: set[int], _range: int):
         self.allowed_length = allowed_length
         self.multiplier = multiplier
         self.base = base
@@ -542,9 +542,9 @@ def get_logits_processor_patch(self, **kwargs):
 
         warpers_to_add.append(
             DRYLogitsProcessor(
-                allowed_length=generation_config.dry_allowed_length,
                 multiplier=generation_config.dry_multiplier,
                 base=generation_config.dry_base,
+                allowed_length=generation_config.dry_allowed_length,
                 sequence_breakers=sequence_breakers,
                 _range=generation_config.repetition_penalty_range,
             )
@@ -564,9 +564,9 @@ def generation_config_init_patch(self, **kwargs):
     self.smoothing_curve = kwargs.pop("smoothing_curve", 1.0)
     self.tfs = kwargs.pop("tfs", 1.0)
     self.top_a = kwargs.pop("top_a", 0.0)
-    self.dry_allowed_length = kwargs.pop("dry_allowed_length", 2)
     self.dry_multiplier = kwargs.pop("dry_multiplier", 0.0)
     self.dry_base = kwargs.pop("dry_base", 1.75)
+    self.dry_allowed_length = kwargs.pop("dry_allowed_length", 2)
     self.dry_sequence_breakers = kwargs.pop("dry_sequence_breakers", '["\\n", ":", "\\"", "*"]')
     self.mirostat_mode = kwargs.pop("mirostat_mode", 0)
     self.mirostat_eta = kwargs.pop("mirostat_eta", 0.1)
