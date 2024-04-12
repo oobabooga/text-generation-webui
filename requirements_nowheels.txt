@@ -2,7 +2,7 @@ accelerate==0.27.*
 colorama
 datasets
 einops
-gradio==4.25.*
+gradio==4.26.*
 hqq==0.1.5
 jinja2==3.1.2
 lm_eval==0.3.0
@@ -28,5 +28,5 @@ wandb
 # API
 SpeechRecognition==3.10.0
 flask_cloudflared==0.0.14
-sse-starlette==1.6.5
+sse-starlette==2.1.0
 tiktoken

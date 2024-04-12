@@ -139,7 +139,7 @@ def get_image_cache(path):
             old_p.rename(p)
 
         output_file = p
-        img.convert('RGB').save(output_file, format='PNG')
+        img.convert('RGBA').save(output_file, format='PNG')
         image_cache[path] = [mtime, output_file.as_posix()]
 
     return image_cache[path][1]
