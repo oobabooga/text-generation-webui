@@ -11,7 +11,7 @@ lm_eval==0.3.0
 markdown
 numba==0.59.*
 numpy==1.26.*
-optimum==1.17.*
+optimum==1.18.*
 pandas
 peft==0.8.*
 Pillow>=9.5.0
