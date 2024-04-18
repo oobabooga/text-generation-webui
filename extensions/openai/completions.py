@@ -135,6 +135,7 @@ def convert_history(history):
     current_message = ""
     current_reply = ""
     user_input = ""
+    user_input_last = True
     system_message = ""
 
     # Multimodal: convert OpenAI format to multimodal extension format
@@ -188,6 +189,7 @@ def convert_history(history):
 
         if role == "user":
             user_input = content
+            user_input_last = True
             if current_message:
                 chat_dialogue.append([current_message, ''])
                 current_message = ""
@@ -195,6 +197,7 @@ def convert_history(history):
             current_message = content
         elif role == "assistant":
             current_reply = content
+            user_input_last = False
             if current_message:
                 chat_dialogue.append([current_message, current_reply])
                 current_message = ""
@@ -203,6 +206,9 @@ def convert_history(history):
                 chat_dialogue.append(['', current_reply])
         elif role == "system":
             system_message = content
+
+    if not user_input_last:
+        user_input = ""
 
     return user_input, system_message, {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
 
@@ -308,7 +314,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         return chunk
 
     # generate reply #######################################
-    prompt = generate_chat_prompt(user_input, generate_params)
+    prompt = generate_chat_prompt(user_input, generate_params, _continue=continue_)
     if prompt_only:
         yield {'prompt': prompt}
         return
