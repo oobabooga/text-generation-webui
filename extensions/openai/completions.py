@@ -204,13 +204,10 @@ def convert_history(history):
         elif role == "system":
             system_message = content
 
-    # if current_message:
-    #     chat_dialogue.append([current_message, ''])
-
     return user_input, system_message, {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
 
 
-def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -> dict:
+def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, prompt_only=False) -> dict:
     if body.get('functions', []):
         raise InvalidRequestError(message="functions is not supported.", param='functions')
 
@@ -310,13 +307,17 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
         #    chunk[resp_list][0]["logprobs"] = None
         return chunk
 
-    if stream:
-        yield chat_streaming_chunk('')
-
     # generate reply #######################################
     prompt = generate_chat_prompt(user_input, generate_params)
+    if prompt_only:
+        yield {'prompt': prompt}
+        return
+
     token_count = len(encode(prompt)[0])
     debug_msg({'prompt': prompt, 'generate_params': generate_params})
+
+    if stream:
+        yield chat_streaming_chunk('')
 
     generator = generate_chat_reply(
         user_input, generate_params, regenerate=False, _continue=continue_, loading_message=False)
