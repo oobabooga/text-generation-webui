@@ -194,8 +194,7 @@ def huggingface_loader(model_name):
             params['torch_dtype'] = torch.float32
         else:
             params['device_map'] = 'auto'
-            if x := get_max_memory_dict():
-                params['max_memory'] = x
+            params['max_memory'] = get_max_memory_dict()
 
             if shared.args.load_in_4bit:
                 # See https://github.com/huggingface/transformers/pull/23479/files
