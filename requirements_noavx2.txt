@@ -23,14 +23,14 @@ safetensors==0.4.*
 scipy
 sentencepiece
 tensorboard
-transformers==4.39.*
+transformers==4.40.*
 tqdm
 wandb
 
 # API
 SpeechRecognition==3.10.0
 flask_cloudflared==0.0.14
-sse-starlette==2.1.0
+sse-starlette==1.6.5
 tiktoken
 
 # llama-cpp-python (CPU only, no AVX2)
