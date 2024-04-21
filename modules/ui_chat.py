@@ -316,13 +316,12 @@ def create_event_handlers():
     shared.gradio['delete_character'].click(lambda: gr.update(visible=True), None, gradio('character_deleter'))
 
     shared.gradio['load_template'].click(
-        chat.load_instruction_template, gradio('instruction_template'), gradio('instruction_template_str')).then(
-        lambda: "Select template to load...", None, gradio('instruction_template'))
+        chat.load_instruction_template, gradio(['instruction_template', 'instruction_template_str', 'chat_template_str']), gradio(['instruction_template_str', 'chat_template_str']))
 
     shared.gradio['save_template'].click(
-        lambda: 'My Template.yaml', None, gradio('save_filename')).then(
+        lambda x: x + '.yaml', gradio('instruction_template'), gradio('save_filename')).then(
         lambda: 'instruction-templates/', None, gradio('save_root')).then(
-        chat.generate_instruction_template_yaml, gradio('instruction_template_str'), gradio('save_contents')).then(
+        chat.generate_instruction_template_yaml, gradio(['instruction_template_str', 'chat_template_str']), gradio('save_contents')).then(
         lambda: gr.update(visible=True), None, gradio('file_saver'))
 
     shared.gradio['delete_template'].click(

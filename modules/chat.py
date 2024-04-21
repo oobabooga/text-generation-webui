@@ -704,22 +704,22 @@ def load_character(character, name1, name2):
     return name1, name2, picture, greeting, context
 
 
-def load_instruction_template(template):
+def load_instruction_template(template, current_instruction_template=None, current_chat_template=None):
     if template == 'None':
-        return ''
+        return '', current_chat_template
 
     for filepath in [Path(f'instruction-templates/{template}.yaml'), Path('instruction-templates/Alpaca.yaml')]:
         if filepath.exists():
             break
     else:
-        return ''
+        return '', current_chat_template
 
     file_contents = open(filepath, 'r', encoding='utf-8').read()
     data = yaml.safe_load(file_contents)
     if 'instruction_template' in data:
-        return data['instruction_template']
+        return data['instruction_template'], data['chat_template'] if 'chat_template' in data else current_chat_template
     else:
-        return jinja_template_from_old_format(data)
+        return jinja_template_from_old_format(data), current_chat_template
 
 
 @functools.cache
@@ -821,9 +821,10 @@ def generate_character_yaml(name, greeting, context):
     return yaml.dump(data, sort_keys=False, width=float("inf"))
 
 
-def generate_instruction_template_yaml(instruction_template):
+def generate_instruction_template_yaml(instruction_template, chat_template):
     data = {
-        'instruction_template': instruction_template
+        'instruction_template': instruction_template,
+        'chat_template': chat_template
     }
 
     return my_yaml_output(data)
