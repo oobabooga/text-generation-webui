@@ -170,7 +170,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 if len(suffix) > 0:
                     prompt = prompt[:-len(suffix)]
             else:
-                prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
+                prefix = get_generation_prompt(renderer, impersonate=impersonate, strip_trailing_spaces=False)[0]
                 if state['mode'] == 'chat' and not impersonate:
                     prefix = apply_extensions('bot_prefix', prefix, state)
 
