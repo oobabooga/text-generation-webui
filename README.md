@@ -34,6 +34,10 @@ The script accepts command-line flags. Alternatively, you can edit the `CMD_FLAG
 
 To get updates in the future, run `update_wizard_linux.sh`, `update_wizard_windows.bat`, `update_wizard_macos.sh`, or `update_wizard_wsl.bat`.
 
+### Using Docker
+
+Look at the [Docker docs](docs/09%20-%20Docker.md) or in the wiki.
+
 <details>
 <summary>
 Setup details and information about installing manually
