@@ -49,6 +49,11 @@ class ModelDownloader:
         return session
 
     def sanitize_model_and_branch_names(self, model, branch):
+        if model == "":
+            raise ValueError(
+                "URL cannot be empty"
+            )
+
         if model[-1] == '/':
             model = model[:-1]
 
