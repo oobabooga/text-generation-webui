@@ -1,5 +1,6 @@
 import gradio as gr
 import speech_recognition as sr
+import numpy as np
 
 from modules import shared
 
@@ -45,6 +46,11 @@ def do_stt(audio, whipser_model, whipser_language):
 def auto_transcribe(audio, auto_submit, whipser_model, whipser_language):
     if audio is None:
         return "", ""
+    sample_rate, audio_data = audio
+    if type(audio_data[0]) != np.ndarray:      # workaround for chrome audio. Mono?
+        # Convert to 2 dimensions, so each sample consists of two value [val_1, val2]
+        audio_data = np.column_stack((audio_data, audio_data))
+        audio = (sample_rate, audio_data)
     transcription = do_stt(audio, whipser_model, whipser_language)
     if auto_submit:
         input_hijack.update({"state": True, "value": [transcription, transcription]})
@@ -55,7 +61,7 @@ def auto_transcribe(audio, auto_submit, whipser_model, whipser_language):
 def ui():
     with gr.Accordion("Whisper STT", open=True):
         with gr.Row():
-            audio = gr.Audio(source="microphone")
+            audio = gr.Audio(source="microphone", type="numpy")
         with gr.Row():
             with gr.Accordion("Settings", open=False):
                 auto_submit = gr.Checkbox(label='Submit the transcribed audio automatically', value=params['auto_submit'])
