@@ -112,8 +112,8 @@ Requirements file to use:
 | NVIDIA | `requirements.txt` |
 | AMD | `requirements_amd.txt` |
 | CPU only | `requirements_cpu_only.txt` |
-| Apple | Intel | `requirements_apple_intel.txt` |
-| Apple | Apple Silicon | `requirements_apple_silicon.txt` |
+| Apple Intel | `requirements_apple_intel.txt` |
+| Apple Silicon | `requirements_apple_silicon.txt` |
 
 ### Start the web UI
 
