@@ -1,6 +1,7 @@
 import re
 from functools import partial
 
+import llama_cpp
 import numpy as np
 import torch
 
@@ -8,32 +9,6 @@ from modules import RoPE, llama_cpp_python_hijack, shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
-
-try:
-    import llama_cpp
-except:
-    llama_cpp = None
-
-try:
-    import llama_cpp_cuda
-except:
-    llama_cpp_cuda = None
-
-try:
-    import llama_cpp_cuda_tensorcores
-except:
-    llama_cpp_cuda_tensorcores = None
-
-
-def llama_cpp_lib():
-    if shared.args.cpu and llama_cpp is not None:
-        return llama_cpp
-    elif shared.args.tensorcores and llama_cpp_cuda_tensorcores is not None:
-        return llama_cpp_cuda_tensorcores
-    elif llama_cpp_cuda is not None:
-        return llama_cpp_cuda
-    else:
-        return llama_cpp
 
 
 def ban_eos_logits_processor(eos_token, input_ids, logits):
@@ -60,8 +35,8 @@ class LlamaCppModel:
     @classmethod
     def from_pretrained(self, path):
 
-        Llama = llama_cpp_lib().Llama
-        LlamaCache = llama_cpp_lib().LlamaCache
+        Llama = llama_cpp.Llama
+        LlamaCache = llama_cpp.LlamaCache
 
         result = self()
         cache_capacity = 0
@@ -126,12 +101,12 @@ class LlamaCppModel:
         if string != self.grammar_string:
             self.grammar_string = string
             if string.strip() != '':
-                self.grammar = llama_cpp_lib().LlamaGrammar.from_string(string)
+                self.grammar = llama_cpp.LlamaGrammar.from_string(string)
             else:
                 self.grammar = None
 
     def generate(self, prompt, state, callback=None):
-        LogitsProcessorList = llama_cpp_lib().LogitsProcessorList
+        LogitsProcessorList = llama_cpp.LogitsProcessorList
         prompt = prompt if type(prompt) is str else prompt.decode()
 
         # Handle truncation
