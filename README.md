@@ -108,7 +108,7 @@ pip install -r <requirements file according to table below>
 Requirements file to use:
 
 | GPU | requirements file to use |
-|--------|---------|---------|
+|--------|---------|
 | NVIDIA | `requirements.txt` |
 | AMD | `requirements_amd.txt` |
 | CPU only | `requirements_cpu_only.txt` |
