@@ -107,16 +107,13 @@ pip install -r <requirements file according to table below>
 
 Requirements file to use:
 
-| GPU | CPU | requirements file to use |
-|--------|---------|---------|
-| NVIDIA | has AVX2 | `requirements.txt` |
-| NVIDIA | no AVX2 | `requirements_noavx2.txt` |
-| AMD | has AVX2 | `requirements_amd.txt` |
-| AMD | no AVX2 | `requirements_amd_noavx2.txt` |
-| CPU only | has AVX2 | `requirements_cpu_only.txt` |
-| CPU only | no AVX2 | `requirements_cpu_only_noavx2.txt` |
-| Apple | Intel | `requirements_apple_intel.txt` |
-| Apple | Apple Silicon | `requirements_apple_silicon.txt` |
+| GPU | requirements file to use |
+|--------|---------|
+| NVIDIA | `requirements.txt` |
+| AMD | `requirements_amd.txt` |
+| CPU only | `requirements_cpu_only.txt` |
+| Apple Intel | `requirements_apple_intel.txt` |
+| Apple Silicon | `requirements_apple_silicon.txt` |
 
 ### Start the web UI
 
@@ -132,7 +129,7 @@ Then browse to
 
 ##### AMD GPU on Windows
 
-1) Use `requirements_cpu_only.txt` or `requirements_cpu_only_noavx2.txt` in the command above.
+1) Use `requirements_cpu_only.txt` in the command above.
 
 2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-with-hardware-acceleration).
     * Use the `LLAMA_HIPBLAS=on` toggle.
@@ -255,7 +252,6 @@ List of command-line flags
 
 | Flag        | Description |
 |-------------|-------------|
-| `--tensorcores`  | Use llama-cpp-python compiled with tensor cores support. This increases performance on RTX cards. NVIDIA only. |
 | `--n_ctx N_CTX` | Size of the prompt context. |
 | `--threads` | Number of threads to use. |
 | `--threads-batch THREADS_BATCH` | Number of threads to use for batches/prompt processing. |

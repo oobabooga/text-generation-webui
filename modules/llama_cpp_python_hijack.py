@@ -1,24 +1,10 @@
 from typing import Sequence
 
+import llama_cpp
 from tqdm import tqdm
 
 from modules import shared
 from modules.cache_utils import process_llamacpp_cache
-
-try:
-    import llama_cpp
-except:
-    llama_cpp = None
-
-try:
-    import llama_cpp_cuda
-except:
-    llama_cpp_cuda = None
-
-try:
-    import llama_cpp_cuda_tensorcores
-except:
-    llama_cpp_cuda_tensorcores = None
 
 
 def eval_with_progress(self, tokens: Sequence[int]):
@@ -81,7 +67,7 @@ def monkey_patch_generate(lib):
     lib.Llama.generate = my_generate
 
 
-for lib in [llama_cpp, llama_cpp_cuda, llama_cpp_cuda_tensorcores]:
+for lib in [llama_cpp]:
     if lib is not None:
         lib.Llama.eval = eval_with_progress
         monkey_patch_generate(lib)
