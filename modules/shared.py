@@ -113,7 +113,6 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
-group.add_argument('--tensorcores', action='store_true', help='Use llama-cpp-python compiled with tensor cores support. This increases performance on RTX cards. NVIDIA only.')
 group.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
@@ -204,7 +203,8 @@ group = parser.add_argument_group('Multimodal')
 group.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
 
 # Deprecated parameters
-# group = parser.add_argument_group('Deprecated')
+group = parser.add_argument_group('Deprecated')
+group.add_argument('--tensorcores', action='store_true', help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -214,7 +214,7 @@ for arg in sys.argv[1:]:
     if hasattr(args, arg):
         provided_arguments.append(arg)
 
-deprecated_args = []
+deprecated_args = ['tensorcores']
 
 
 def do_cmd_flags_warnings():
