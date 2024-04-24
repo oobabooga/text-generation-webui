@@ -18,4 +18,4 @@ COPY CMD_FLAGS.txt /home/app/text-generation-webui/
 EXPOSE ${CONTAINER_PORT:-7860} ${CONTAINER_API_PORT:-5000} ${CONTAINER_API_STREAM_PORT:-5005}
 WORKDIR /home/app/text-generation-webui
 # set umask to ensure group read / write at runtime
-CMD umask 0002 && export HOME=/home/app/text-generation-webui && ./start_linux.sh
+CMD umask 0002 && export HOME=/home/app/text-generation-webui && ./start_linux.sh --listen
