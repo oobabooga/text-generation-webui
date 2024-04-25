@@ -196,3 +196,9 @@
   instruction_template: 'Command-R'
 .*xwin-lm-70b-v0.1:
   instruction_template: 'Vicuna-v1.1'
+.*platypus-yi-34b:
+  instruction_template: 'Vicuna-v1.1'
+.*CausalLM-RP-34B:
+  instruction_template: 'ChatML'
+34b-beta:
+  instruction_template: 'ChatML'
