@@ -1,3 +1,4 @@
+If you can't find a quantized version of the model you need on HuggingFace, you can quantize the model yourself using this guide.
 # GGUF
 ### Requirements:
 - Python 3.10/3.11
