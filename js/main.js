@@ -159,6 +159,8 @@ const observer = new MutationObserver(function(mutations) {
       document.getElementById("Generate").style.display = "flex";
     }
 
+    hljs.highlightAll();
+
   });
 });
 

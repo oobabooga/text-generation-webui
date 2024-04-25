@@ -437,12 +437,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     border-radius: 5px;
     font-size: 82%;
     padding: 1px 3px;
-    background: white !important;
-}
-
-.dark .message-body code {
-    background: black !important;
-    color: #fdfdfd;
+    background: #0d1117 !important;
+    color: rgb(201, 209, 217);
 }
 
 .message-body pre > code {
