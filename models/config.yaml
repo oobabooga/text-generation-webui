@@ -194,3 +194,5 @@
   instruction_template: 'ChatML'
 .*command-r:
   instruction_template: 'Command-R'
+.*xwin-lm-70b-v0.1:
+  instruction_template: 'Vicuna-v1.1'
