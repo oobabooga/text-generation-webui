@@ -220,7 +220,7 @@ button {
 }
 
 .pretty_scrollbar::-webkit-scrollbar {
-    width: 5px;
+    width: 7px;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-track {
@@ -229,12 +229,12 @@ button {
 
 .pretty_scrollbar::-webkit-scrollbar-thumb,
 .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #c5c5d2;
+    background: var(--neutral-300);
 }
 
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb,
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #374151;
+    background: var(--neutral-700);
 }
 
 .pretty_scrollbar::-webkit-resizer {
@@ -433,11 +433,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .message-body code {
     white-space: pre-wrap !important;
     word-wrap: break-word !important;
-    border: 1px solid var(--border-color-primary);
-    border-radius: var(--radius-sm);
-    background: var(--background-fill-secondary);
-    font-size: 90%;
+    border: 1px solid #666666;
+    border-radius: 5px;
+    font-size: 82%;
     padding: 1px 3px;
+    background: black !important;
+    color: #fdfdfd;
 }
 
 .message-body pre > code {
@@ -518,8 +519,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     text-overflow: ellipsis;
 }
 
+.dark #show-controls span {
+    color: var(--neutral-400);
+}
+
 #show-controls span {
-    opacity: 0.6;
+    color: var(--neutral-600);
 }
 
 #typing-container {

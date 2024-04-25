@@ -1,13 +1,12 @@
 .chat {
-    background: var(--block-background-fill);
+    background: transparent;
     padding: 24px 19px;
     padding-right: 19px !important;
     padding-top: 0;
-    border: 1px solid var(--block-border-color);
 }
 
 .chat > .messages {
-    padding-top: 28px !important;
+    padding-top: 18px !important;
 }
 
 .message {
@@ -50,23 +49,24 @@
 
 .gradio-container .chat .assistant-message {
     padding: 20px;
-    background: var(--background-fill-secondary);
-    margin-top: 12px !important;
-    margin-bottom: 24px !important;
-    margin-right: 16px;
-    border-radius: 22px;
-    border-bottom-left-radius: 0;
+    background: var(--color-grey-200);
+    margin-top: 9px !important;
+    margin-bottom: 12px !important;
+    border-radius: 7px;
     border: 1px solid var(--border-color-primary);
+}
+
+.dark .chat .assistant-message {
+    background: var(--color-grey-800);
 }
 
 .gradio-container .chat .user-message {
     padding: 20px;
-    background-color: var(--color-accent-soft);
-    margin-bottom: 12px !important;
-    margin-left: 16px;
-    border-radius: 22px;
+    padding-left: 0px;
+    padding-right: 0px;
+    background-color: transparent;
+    border-radius: 8px;
     border-bottom-right-radius: 0;
-    border: 1px solid var(--border-color-accent-subdued);
 }
 
 .gradio-container .chat .assistant-message:last-child, .gradio-container .chat .user-message:last-child {
