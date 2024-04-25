@@ -96,7 +96,7 @@ gradio-app > :first-child {
 
 .header_bar {
     background-color: #f7f7f7;
-    box-shadow: 0 2px 3px rgba(22 22 22 / 35%);
+    box-shadow: 0 0px 3px rgba(22 22 22 / 35%);
     margin-bottom: 0;
     overflow-x: scroll;
     margin-left: calc(-1 * var(--size-4));
@@ -437,6 +437,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     border-radius: 5px;
     font-size: 82%;
     padding: 1px 3px;
+    background: white !important;
+}
+
+.dark .message-body code {
     background: black !important;
     color: #fdfdfd;
 }
@@ -595,8 +599,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: absolute;
     bottom: 80%;
     left: 0;
-    background-color: var(--background-fill-secondary);
-    box-shadow: 0 0 10px rgb(0 0 0 / 50%);
+    background-color: var(--background-fill-primary);
+    box-shadow: 0 0 5px rgb(0 0 0 / 25%);
     z-index: 10000;
     min-width: 330px;
     flex-direction: column;
@@ -606,6 +610,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: 100%;
     background: transparent !important;
     border-radius: 0 !important;
+    border-color: var(--border-color-primary);
     justify-content: space-between;
     margin: 0 !important;
     height: 36px;
@@ -616,7 +621,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .hover-menu button:not(#clear-history-confirm):last-child {
-    border-bottom: var(--button-border-width) solid var(--button-secondary-border-color) !important;
+    border-bottom: var(--button-border-width) solid var(--border-color-primary) !important;
 }
 
 .hover-menu button:hover {
