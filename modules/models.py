@@ -293,14 +293,12 @@ def AutoAWQ_loader(model_name):
 
     model_dir = Path(f'{shared.args.model_dir}/{model_name}')
 
-    model = AutoAWQForCausalLM.from_quantized(
-        quant_path=model_dir,
-        max_new_tokens=shared.args.max_seq_len,
-        trust_remote_code=shared.args.trust_remote_code,
-        fuse_layers=not shared.args.no_inject_fused_attention,
-        max_memory=get_max_memory_dict(),
-        batch_size=1,
-        safetensors=any(model_dir.glob('*.safetensors')),
+    logger.warning("AutoAWQ is supported with basic configs.")
+    logger.warning("This is overwriting all configs.")
+
+    model = AutoAWQForCausalLM.from_pretrained(
+        model_path=model_dir,
+        device_map="auto"
     )
 
     return model
