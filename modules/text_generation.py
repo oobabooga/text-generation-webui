@@ -3,7 +3,6 @@ import copy
 import html
 import pprint
 import random
-import re
 import time
 import traceback
 
@@ -194,20 +193,6 @@ def generate_reply_wrapper(question, state, stopping_strings=None):
 
 def formatted_outputs(reply, model_name):
     return html.unescape(reply), generate_basic_html(reply)
-
-
-def fix_galactica(s):
-    """
-    Fix the LaTeX equations in GALACTICA
-    """
-    s = s.replace(r'\[', r'$')
-    s = s.replace(r'\]', r'$')
-    s = s.replace(r'\(', r'$')
-    s = s.replace(r'\)', r'$')
-    s = s.replace(r'$$', r'$')
-    s = re.sub(r'\n', r'\n\n', s)
-    s = re.sub(r"\n{3,}", "\n\n", s)
-    return s
 
 
 def set_manual_seed(seed):
