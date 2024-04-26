@@ -224,6 +224,7 @@ class ModelDownloader:
             except (RequestException, ConnectionError, Timeout) as e:
                 print(f"Error downloading {filename}: {e}")
                 if attempt < max_retries:
+                    print(f"Retrying in {retry_delay * attempt} seconds... (Attempt {attempt}/{max_retries})")
                     sleep(retry_delay * attempt)  # Exponential backoff
                 else:
                     print(f"Failed to download {filename} after {max_retries} attempts.")
