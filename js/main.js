@@ -137,6 +137,9 @@ targetElement.addEventListener("scroll", function() {
   } else {
     isScrolled = true;
   }
+
+  doSyntaxHighlighting();
+
 });
 
 // Create a MutationObserver instance
@@ -155,19 +158,12 @@ const observer = new MutationObserver(function(mutations) {
       document.getElementById("Generate").style.display = "flex";
     }
 
-    // Find the first element with the class "messages" using querySelector
-    var messagesElement = document.querySelector(".messages");
-
-    // Check if the element exists before executing the code
-    if (messagesElement) {
-    }
-
+    doSyntaxHighlighting();
   });
 
   if(!isScrolled) {
     targetElement.scrollTop = targetElement.scrollHeight;
   }
-
 
 });
 
@@ -197,11 +193,11 @@ function isElementVisibleOnScreen(element) {
 }
 
 function getVisibleMessagesIndexes() {
-  const elements = document.querySelectorAll('.message-body');
+  const elements = document.querySelectorAll(".message-body");
   const visibleIndexes = [];
 
   elements.forEach((element, index) => {
-    if (isElementVisibleOnScreen(element)) {
+    if (isElementVisibleOnScreen(element) && !element.hasAttribute("data-highlighted")) {
       visibleIndexes.push(index);
     }
   });
@@ -211,7 +207,7 @@ function getVisibleMessagesIndexes() {
 
 function doSyntaxHighlighting() {
   const indexes = getVisibleMessagesIndexes();
-  const elements = document.querySelectorAll('.message-body');
+  const elements = document.querySelectorAll(".message-body");
 
   if (indexes.length > 0) {
     observer.disconnect();
@@ -219,15 +215,24 @@ function doSyntaxHighlighting() {
     indexes.forEach((index) => {
       const element = elements[index];
 
-      hljs.highlightElement(element);
+      // Perform syntax highlighting
+      const codeBlocks = element.querySelectorAll("pre code");
+
+      codeBlocks.forEach((codeBlock) => {
+        hljs.highlightElement(codeBlock);
+      });
+
       renderMathInElement(element, {
         delimiters: [
           { left: "$$", right: "$$", display: true },
           { left: "$", right: "$", display: false },
           { left: "\\(", right: "\\)", display: false },
-          { left: "\\[", right: "\\]", display: true }
+          { left: "\\[", right: "\\]", display: true },
         ],
       });
+
+      // Tag this element to indicate it has been syntax highlighted
+      element.setAttribute("data-highlighted", "true");
     });
 
     observer.observe(targetElement, config);
