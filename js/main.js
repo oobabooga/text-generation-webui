@@ -160,19 +160,8 @@ const observer = new MutationObserver(function(mutations) {
 
     // Check if the element exists before executing the code
     if (messagesElement) {
-      observer.disconnect();
-      hljs.highlightAll();
-      renderMathInElement(messagesElement, {
-        delimiters: [
-          { left: "$$", right: "$$", display: true },
-          { left: "$", right: "$", display: false },
-          { left: "\\(", right: "\\)", display: false },
-          { left: "\\[", right: "\\]", display: true }
-        ],
-      });
     }
 
-    observer.observe(targetElement, config);
   });
 
   if(!isScrolled) {
@@ -193,6 +182,57 @@ const config = {
 
 // Start observing the target element
 observer.observe(targetElement, config);
+
+//------------------------------------------------
+// Handle syntax highlighting / LaTeX
+//------------------------------------------------
+function isElementVisibleOnScreen(element) {
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.left < window.innerWidth &&
+    rect.right > 0 &&
+    rect.top < window.innerHeight &&
+    rect.bottom > 0
+  );
+}
+
+function getVisibleMessagesIndexes() {
+  const elements = document.querySelectorAll('.message-body');
+  const visibleIndexes = [];
+
+  elements.forEach((element, index) => {
+    if (isElementVisibleOnScreen(element)) {
+      visibleIndexes.push(index);
+    }
+  });
+
+  return visibleIndexes;
+}
+
+function doSyntaxHighlighting() {
+  const indexes = getVisibleMessagesIndexes();
+  const elements = document.querySelectorAll('.message-body');
+
+  if (indexes.length > 0) {
+    observer.disconnect();
+
+    indexes.forEach((index) => {
+      const element = elements[index];
+
+      hljs.highlightElement(element);
+      renderMathInElement(element, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false },
+          { left: "\\(", right: "\\)", display: false },
+          { left: "\\[", right: "\\]", display: true }
+        ],
+      });
+    });
+
+    observer.observe(targetElement, config);
+  }
+}
 
 //------------------------------------------------
 // Add some scrollbars
