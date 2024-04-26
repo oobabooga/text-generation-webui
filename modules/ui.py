@@ -41,6 +41,8 @@ theme = gr.themes.Default(
     body_text_color_subdued='#484848',
     background_fill_secondary='#eaeaea',
     background_fill_primary='var(--neutral-50)',
+    button_secondary_background_fill_dark='*neutral_900',
+    button_secondary_background_fill_hover_dark='*neutral_800',
 )
 
 if Path("notification.mp3").exists():
