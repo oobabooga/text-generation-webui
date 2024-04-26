@@ -184,7 +184,7 @@ class ModelDownloader:
         output_path = output_folder / filename
 
         # Setup retries with exponential backoff
-        max_retries = 5
+        max_retries = 7
         retry_delay = 2  # Initial delay in seconds
         attempt = 0
 
@@ -227,6 +227,9 @@ class ModelDownloader:
                             for data in r.iter_content(block_size):
                                 f.write(data)
                                 t.update(len(data))
+                                if total_size != 0 and self.progress_bar is not None:
+                                    count += len(data)
+                                    self.progress_bar(float(count) / float(total_size), f"{filename}")
 
                     break  # Exit loop if successful
             except (RequestException, ConnectionError, Timeout) as e:
