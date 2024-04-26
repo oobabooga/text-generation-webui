@@ -179,7 +179,6 @@ class ModelDownloader:
         return output_folder
 
     def get_single_file(self, url, output_folder, start_from_scratch=False):
-        session = self.get_session()
         filename = Path(url.rsplit('/', 1)[1])
         output_path = output_folder / filename
 
@@ -190,6 +189,7 @@ class ModelDownloader:
 
         while attempt < max_retries:
             attempt += 1
+            session = self.get_session()
             headers = {}
             mode = 'wb'
 
