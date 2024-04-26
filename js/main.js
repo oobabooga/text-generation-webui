@@ -144,10 +144,6 @@ const observer = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
     updateCssProperties();
 
-    if(!isScrolled) {
-      targetElement.scrollTop = targetElement.scrollHeight;
-    }
-
     const firstChild = targetElement.children[0];
     if (firstChild.classList.contains("generating")) {
       typing.parentNode.classList.add("visible-dots");
@@ -159,9 +155,31 @@ const observer = new MutationObserver(function(mutations) {
       document.getElementById("Generate").style.display = "flex";
     }
 
-    hljs.highlightAll();
+    // Find the first element with the class "messages" using querySelector
+    var messagesElement = document.querySelector(".messages");
 
+    // Check if the element exists before executing the code
+    if (messagesElement) {
+      observer.disconnect();
+      hljs.highlightAll();
+      renderMathInElement(messagesElement, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false },
+          { left: "\\(", right: "\\)", display: false },
+          { left: "\\[", right: "\\]", display: true }
+        ],
+      });
+    }
+
+    observer.observe(targetElement, config);
   });
+
+  if(!isScrolled) {
+    targetElement.scrollTop = targetElement.scrollHeight;
+  }
+
+
 });
 
 // Configure the observer to watch for changes in the subtree and attributes
@@ -472,7 +490,7 @@ respondToRenameVisibility(renameTextArea, handleVisibilityChange);
 // is present at the bottom
 //------------------------------------------------
 
-if (document.getElementById('extensions') === null) {
+if (document.getElementById("extensions") === null) {
   document.getElementById("chat-tab").style.marginBottom = "-29px";
 }
 
@@ -480,8 +498,8 @@ if (document.getElementById('extensions') === null) {
 // Focus on the chat input after starting a new chat
 //------------------------------------------------
 
-document.querySelectorAll('.focus-on-chat-input').forEach(element => {
-  element.addEventListener('click', function() {
-      document.querySelector('#chat-input textarea').focus();
+document.querySelectorAll(".focus-on-chat-input").forEach(element => {
+  element.addEventListener("click", function() {
+    document.querySelector("#chat-input textarea").focus();
   });
 });
