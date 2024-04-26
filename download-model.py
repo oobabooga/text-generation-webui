@@ -224,6 +224,7 @@ class ModelDownloader:
 
                     with open(output_path, mode) as f:
                         with tqdm.tqdm(**tqdm_kwargs) as t:
+                            count = 0
                             for data in r.iter_content(block_size):
                                 f.write(data)
                                 t.update(len(data))
