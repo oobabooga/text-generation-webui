@@ -56,6 +56,8 @@ def my_open(*args, **kwargs):
             b'\n  </head>'
         )
 
+        file_contents = file_contents.replace(b'</head>', b'\n    <script src="file/js/highlightjs/highlight.min.js"></script>\n    <script src="file/js/highlightjs/highlightjs-copy.min.js"></script><script>hljs.addPlugin(new CopyButtonPlugin());</script>\n  </head>')
+
         return io.BytesIO(file_contents)
     else:
         return original_open(*args, **kwargs)
