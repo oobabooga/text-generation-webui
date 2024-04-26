@@ -14,11 +14,14 @@ import json
 import os
 import re
 import sys
+import threading
 from pathlib import Path
+from time import sleep
 
 import requests
 import tqdm
 from requests.adapters import HTTPAdapter
+from requests.exceptions import ConnectionError, RequestException, Timeout
 from tqdm.contrib.concurrent import thread_map
 
 base = os.environ.get("HF_ENDPOINT") or "https://huggingface.co"
@@ -180,47 +183,50 @@ class ModelDownloader:
         session = self.get_session()
         filename = Path(url.rsplit('/', 1)[1])
         output_path = output_folder / filename
-        headers = {}
-        mode = 'wb'
-        if output_path.exists() and not start_from_scratch:
 
-            # Check if the file has already been downloaded completely
-            r = session.get(url, stream=True, timeout=10)
-            total_size = int(r.headers.get('content-length', 0))
-            if output_path.stat().st_size >= total_size:
-                return
+        # Setup retries with exponential backoff
+        max_retries = 5
+        retry_delay = 2  # Initial delay in seconds
+        attempt = 0
 
-            # Otherwise, resume the download from where it left off
-            headers = {'Range': f'bytes={output_path.stat().st_size}-'}
-            mode = 'ab'
+        while attempt < max_retries:
+            attempt += 1
+            headers = {}
+            mode = 'wb'
 
-        with session.get(url, stream=True, headers=headers, timeout=10) as r:
-            r.raise_for_status()  # Do not continue the download if the request was unsuccessful
-            total_size = int(r.headers.get('content-length', 0))
-            block_size = 1024 * 1024  # 1MB
+            if output_path.exists() and not start_from_scratch:
+                # Resume download
+                r = session.get(url, stream=True, timeout=20)
+                total_size = int(r.headers.get('content-length', 0))
+                if output_path.stat().st_size >= total_size:
+                    return
 
-            tqdm_kwargs = {
-                'total': total_size,
-                'unit': 'iB',
-                'unit_scale': True,
-                'bar_format': '{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}'
-            }
+                headers = {'Range': f'bytes={output_path.stat().st_size}-'}
+                mode = 'ab'
 
-            if 'COLAB_GPU' in os.environ:
-                tqdm_kwargs.update({
-                    'position': 0,
-                    'leave': True
-                })
+            try:
+                with session.get(url, stream=True, headers=headers, timeout=30) as r:
+                    r.raise_for_status()  # If status is not 2xx, raise an error
+                    total_size = int(r.headers.get('content-length', 0))
+                    block_size = 1024 * 1024  # 1MB
 
-            with open(output_path, mode) as f:
-                with tqdm.tqdm(**tqdm_kwargs) as t:
-                    count = 0
-                    for data in r.iter_content(block_size):
-                        t.update(len(data))
-                        f.write(data)
-                        if total_size != 0 and self.progress_bar is not None:
-                            count += len(data)
-                            self.progress_bar(float(count) / float(total_size), f"{filename}")
+                    with open(output_path, mode) as f:
+                        with tqdm.tqdm(
+                            total=total_size,
+                            unit='iB',
+                            unit_scale=True,
+                            bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} {rate_fmt}'
+                        ) as t:
+                            for data in r.iter_content(block_size):
+                                f.write(data)
+                                t.update(len(data))
+                    break  # Exit loop if successful
+            except (RequestException, ConnectionError, Timeout) as e:
+                print(f"Error downloading {filename}: {e}")
+                if attempt < max_retries:
+                    sleep(retry_delay * attempt)  # Exponential backoff
+                else:
+                    print(f"Failed to download {filename} after {max_retries} attempts.")
 
     def start_download_threads(self, file_list, output_folder, start_from_scratch=False, threads=4):
         thread_map(lambda url: self.get_single_file(url, output_folder, start_from_scratch=start_from_scratch), file_list, max_workers=threads, disable=True)
