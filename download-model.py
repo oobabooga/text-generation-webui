@@ -14,7 +14,6 @@ import json
 import os
 import re
 import sys
-import threading
 from pathlib import Path
 from time import sleep
 
@@ -210,16 +209,25 @@ class ModelDownloader:
                     total_size = int(r.headers.get('content-length', 0))
                     block_size = 1024 * 1024  # 1MB
 
+                    tqdm_kwargs = {
+                        'total': total_size,
+                        'unit': 'iB',
+                        'unit_scale': True,
+                        'bar_format': '{l_bar}{bar}| {n_fmt}/{total_fmt} {rate_fmt}'
+                    }
+
+                    if 'COLAB_GPU' in os.environ:
+                        tqdm_kwargs.update({
+                            'position': 0,
+                            'leave': True
+                        })
+
                     with open(output_path, mode) as f:
-                        with tqdm.tqdm(
-                            total=total_size,
-                            unit='iB',
-                            unit_scale=True,
-                            bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} {rate_fmt}'
-                        ) as t:
+                        with tqdm.tqdm(**tqdm_kwargs) as t:
                             for data in r.iter_content(block_size):
                                 f.write(data)
                                 t.update(len(data))
+
                     break  # Exit loop if successful
             except (RequestException, ConnectionError, Timeout) as e:
                 print(f"Error downloading {filename}: {e}")
