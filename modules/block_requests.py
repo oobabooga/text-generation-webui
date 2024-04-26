@@ -47,7 +47,6 @@ def my_open(*args, **kwargs):
         file_contents = file_contents.replace(b'cdnjs.cloudflare.com', b'127.0.0.1')
         file_contents = file_contents.replace(
             b'</head>',
-            b'\n    <link rel="stylesheet" href="file/css/katex/katex.min.css">'
             b'\n    <script src="file/js/katex/katex.min.js"></script>'
             b'\n    <script src="file/js/katex/auto-render.min.js"></script>'
             b'\n    <script src="file/js/highlightjs/highlight.min.js"></script>'
