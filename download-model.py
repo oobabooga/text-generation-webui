@@ -235,7 +235,7 @@ class ModelDownloader:
                 print(f"That was attempt {attempt}/{max_retries}.", end=' ')
                 if attempt < max_retries:
                     print(f"Retry begins in {2 ** attempt} seconds.")
-                    sleep(2 ** attempt)  # Exponential backoff
+                    sleep(2 ** attempt)
                 else:
                     print("Failed to download after the maximum number of attempts.")
 
