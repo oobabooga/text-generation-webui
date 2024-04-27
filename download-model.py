@@ -231,12 +231,13 @@ class ModelDownloader:
 
                     break  # Exit loop if successful
             except (RequestException, ConnectionError, Timeout) as e:
-                print(f"Error downloading {filename}: {e}")
+                print(f"Error downloading {filename}: {e}.")
+                print(f"That was attempt {attempt}/{max_retries}.", end=' ')
                 if attempt < max_retries:
-                    print(f"Retry {attempt}/{max_retries} begins in {2 ** attempt} seconds.")
+                    print(f"Retry begins in {2 ** attempt} seconds.")
                     sleep(2 ** attempt)  # Exponential backoff
                 else:
-                    print(f"Failed to download {filename} after {max_retries} attempts.")
+                    print("Failed to download after the maximum number of attempts.")
 
     def start_download_threads(self, file_list, output_folder, start_from_scratch=False, threads=4):
         thread_map(lambda url: self.get_single_file(url, output_folder, start_from_scratch=start_from_scratch), file_list, max_workers=threads, disable=True)
