@@ -182,11 +182,8 @@ class ModelDownloader:
         filename = Path(url.rsplit('/', 1)[1])
         output_path = output_folder / filename
 
-        # Setup retries with exponential backoff
         max_retries = 7
-        retry_delay = 2  # Initial delay in seconds
         attempt = 0
-
         while attempt < max_retries:
             attempt += 1
             session = self.get_session()
@@ -236,8 +233,8 @@ class ModelDownloader:
             except (RequestException, ConnectionError, Timeout) as e:
                 print(f"Error downloading {filename}: {e}")
                 if attempt < max_retries:
-                    print(f"Retry {attempt}/{max_retries} begins in {retry_delay ** attempt} seconds.")
-                    sleep(retry_delay ** attempt)  # Exponential backoff
+                    print(f"Retry {attempt}/{max_retries} begins in {2 ** attempt} seconds.")
+                    sleep(2 ** attempt)  # Exponential backoff
                 else:
                     print(f"Failed to download {filename} after {max_retries} attempts.")
 
