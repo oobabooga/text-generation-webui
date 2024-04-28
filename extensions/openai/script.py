@@ -374,6 +374,8 @@ async def handle_unload_model():
     async with io_semaphore:
         await run_in_executor(unload_model)
 
+    return JSONResponse(content="OK")
+
 
 @app.get("/v1/internal/lora/list", response_model=LoraListResponse, dependencies=check_admin_key)
 async def handle_list_loras():
