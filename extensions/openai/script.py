@@ -366,7 +366,7 @@ async def handle_load_model(request_data: LoadModelRequest):
         return JSONResponse(content="OK")
     except:
         traceback.print_exc()
-        return HTTPException(status_code=400, detail="Failed to load the model.")
+        raise HTTPException(status_code=400, detail="Failed to load the model.")
 
 
 @app.post("/v1/internal/model/unload", dependencies=check_admin_key)
@@ -391,7 +391,7 @@ async def handle_load_loras(request_data: LoadLorasRequest):
         return JSONResponse(content="OK")
     except:
         traceback.print_exc()
-        return HTTPException(status_code=400, detail="Failed to apply the LoRA(s).")
+        raise HTTPException(status_code=400, detail="Failed to apply the LoRA(s).")
 
 
 @app.post("/v1/internal/lora/unload", dependencies=check_admin_key)
