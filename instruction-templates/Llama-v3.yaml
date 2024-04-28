@@ -5,7 +5,7 @@ instruction_template: |-
           {%- set ns.found = true -%}
       {%- endif -%}
   {%- endfor -%}
-  {%- for message in messages %}
+  {%- for message in messages -%}
       {{- '<|start_header_id|>' + message['role'] + '<|end_header_id|>\n\n' + message['content'].rstrip() + '<|eot_id|>' -}}
   {%- endfor -%}
   {%- if add_generation_prompt -%}
