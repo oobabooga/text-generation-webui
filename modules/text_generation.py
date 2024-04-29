@@ -3,7 +3,6 @@ import copy
 import html
 import pprint
 import random
-import re
 import time
 import traceback
 
@@ -85,6 +84,10 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
         state = copy.deepcopy(state)
         state['stream'] = True
 
+    min_update_interval = 0
+    if state.get('max_updates_second', 0) > 0:
+        min_update_interval = 1 / state['max_updates_second']
+
     # Generate
     for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
@@ -102,7 +105,14 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
                 last_update = time.time()
                 yield reply
+
+            # Limit updates to avoid lag in the Gradio UI
+            # API updates are not limited
             else:
+                if cur_time - last_update > min_update_interval:
+                    last_update = cur_time
+                    yield reply
+
                 yield reply
 
         if stop_found or (state['max_tokens_second'] > 0 and shared.stop_everything):
@@ -194,20 +204,6 @@ def generate_reply_wrapper(question, state, stopping_strings=None):
 
 def formatted_outputs(reply, model_name):
     return html.unescape(reply), generate_basic_html(reply)
-
-
-def fix_galactica(s):
-    """
-    Fix the LaTeX equations in GALACTICA
-    """
-    s = s.replace(r'\[', r'$')
-    s = s.replace(r'\]', r'$')
-    s = s.replace(r'\(', r'$')
-    s = s.replace(r'\)', r'$')
-    s = s.replace(r'$$', r'$')
-    s = re.sub(r'\n', r'\n\n', s)
-    s = re.sub(r"\n{3,}", "\n\n", s)
-    return s
 
 
 def set_manual_seed(seed):
