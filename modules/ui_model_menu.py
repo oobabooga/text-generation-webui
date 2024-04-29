@@ -290,11 +290,6 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
         yield ("Getting the output folder")
         output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp)
 
-        if output_folder == Path("models"):
-            output_folder = Path(shared.args.model_dir)
-        elif output_folder == Path("loras"):
-            output_folder = Path(shared.args.lora_dir)
-
         if check:
             progress(0.5)
 

@@ -22,6 +22,7 @@ import tqdm
 from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, RequestException, Timeout
 from tqdm.contrib.concurrent import thread_map
+from modules import shared
 
 base = os.environ.get("HF_ENDPOINT") or "https://huggingface.co"
 
@@ -165,7 +166,7 @@ class ModelDownloader:
         return links, sha256, is_lora, is_llamacpp
 
     def get_output_folder(self, model, branch, is_lora, is_llamacpp=False):
-        base_folder = 'models' if not is_lora else 'loras'
+        base_folder = shared.args.model_dir if not is_lora else shared.args.lora_dir
 
         # If the model is of type GGUF, save directly in the base_folder
         if is_llamacpp:
