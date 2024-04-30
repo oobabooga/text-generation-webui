@@ -58,6 +58,32 @@ def is_x86_64():
     return platform.machine() == "x86_64"
 
 
+def cpu_has_avx2():
+    try:
+        import cpuinfo
+
+        info = cpuinfo.get_cpu_info()
+        if 'avx2' in info['flags']:
+            return True
+        else:
+            return False
+    except:
+        return True
+
+
+def cpu_has_amx():
+    try:
+        import cpuinfo
+
+        info = cpuinfo.get_cpu_info()
+        if 'amx' in info['flags']:
+            return True
+        else:
+            return False
+    except:
+        return True
+
+
 def torch_version():
     site_packages_path = None
     for sitedir in site.getsitepackages():
@@ -279,7 +305,7 @@ def install_webui():
 
     # Install Git and then Pytorch
     print_big_message("Installing PyTorch.")
-    run_cmd(f"conda install -y -k ninja git && {install_pytorch}", assert_success=True, environment=True)
+    run_cmd(f"conda install -y -k ninja git && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
 
     if selected_gpu == "INTEL":
         # Install oneAPI dependencies via conda
@@ -346,13 +372,13 @@ def update_requirements(initial_installation=False, pull=True):
     is_cpu = '+cpu' in torver  # 2.0.1+cpu
 
     if is_rocm:
-        base_requirements = "requirements_amd.txt"
+        base_requirements = "requirements_amd" + ("_noavx2" if not cpu_has_avx2() else "") + ".txt"
     elif is_cpu or is_intel:
-        base_requirements = "requirements_cpu_only.txt"
+        base_requirements = "requirements_cpu_only" + ("_noavx2" if not cpu_has_avx2() else "") + ".txt"
     elif is_macos():
         base_requirements = "requirements_apple_" + ("intel" if is_x86_64() else "silicon") + ".txt"
     else:
-        base_requirements = "requirements.txt"
+        base_requirements = "requirements" + ("_noavx2" if not cpu_has_avx2() else "") + ".txt"
 
     requirements_file = base_requirements
 
@@ -363,7 +389,6 @@ def update_requirements(initial_installation=False, pull=True):
     textgen_requirements = open(requirements_file).read().splitlines()
     if is_cuda118:
         textgen_requirements = [req.replace('+cu121', '+cu118').replace('+cu122', '+cu118') for req in textgen_requirements]
-        textgen_requirements = [req for req in textgen_requirements if '-cu121' not in req]
     if is_windows() and is_cuda118:  # No flash-attention on Windows for CUDA 11
         textgen_requirements = [req for req in textgen_requirements if 'oobabooga/flash-attention' not in req]
 

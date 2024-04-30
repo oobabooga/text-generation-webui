@@ -1,0 +1,38 @@
+accelerate==0.27.*
+colorama
+datasets
+einops
+gradio==4.26.*
+hqq==0.1.5
+jinja2==3.1.2
+lm_eval==0.3.0
+markdown
+numba==0.59.*
+numpy==1.26.*
+optimum==1.17.*
+pandas
+peft==0.8.*
+Pillow>=9.5.0
+psutil
+pyyaml
+requests
+rich
+safetensors==0.4.*
+scipy
+sentencepiece
+tensorboard
+transformers==4.40.*
+tqdm
+wandb
+
+# API
+SpeechRecognition==3.10.0
+flask_cloudflared==0.0.14
+sse-starlette==1.6.5
+tiktoken
+
+# llama-cpp-python (CPU only, no AVX2)
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.2.65+cpuavx-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.2.65+cpuavx-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.2.65+cpuavx-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.2.65+cpuavx-cp310-cp310-win_amd64.whl; platform_system == "Windows" and python_version == "3.10"
