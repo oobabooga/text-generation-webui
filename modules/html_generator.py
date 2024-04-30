@@ -57,6 +57,14 @@ def convert_to_markdown(string):
     # Code
     string = string.replace('\\begin{code}', '```')
     string = string.replace('\\end{code}', '```')
+    string = string.replace('\\begin{align*}', '$$')
+    string = string.replace('\\end{align*}', '$$')
+    string = string.replace('\\begin{align}', '$$')
+    string = string.replace('\\end{align}', '$$')
+    string = string.replace('\\begin{equation}', '$$')
+    string = string.replace('\\end{equation}', '$$')
+    string = string.replace('\\begin{equation*}', '$$')
+    string = string.replace('\\end{equation*}', '$$')
     string = re.sub(r"(.)```", r"\1\n```", string)
 
     result = ''
