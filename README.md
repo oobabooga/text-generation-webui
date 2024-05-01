@@ -425,3 +425,9 @@ If you would like to contribute to the project, check out the [Contributing guid
 ## Acknowledgment
 
 In August 2023, [Andreessen Horowitz](https://a16z.com/) (a16z) provided a generous grant to encourage and support my independent work on this project. I am **extremely** grateful for their trust and recognition.
+
+## GitHub Sponsors
+
+The following is a list of top-tier sponsors for this project here on GitHub:
+
+* Be the first one! Visit https://github.com/sponsors/oobabooga/.
