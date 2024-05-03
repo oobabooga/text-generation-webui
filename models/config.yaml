@@ -204,3 +204,5 @@
   instruction_template: 'ChatML'
 .*airoboros-3_1-yi-34b-200k:
   instruction_template: 'Llama-v2'
+.*chatqa:
+  instruction_template: 'NVIDIA-ChatQA'

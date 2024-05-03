@@ -256,6 +256,7 @@ List of command-line flags
 | Flag        | Description |
 |-------------|-------------|
 | `--tensorcores`  | Use llama-cpp-python compiled with tensor cores support. This increases performance on RTX cards. NVIDIA only. |
+| `--flash-attn`   | Use flash-attention. |
 | `--n_ctx N_CTX` | Size of the prompt context. |
 | `--threads` | Number of threads to use. |
 | `--threads-batch THREADS_BATCH` | Number of threads to use for batches/prompt processing. |
