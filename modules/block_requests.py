@@ -43,19 +43,19 @@ def my_open(*args, **kwargs):
         with original_open(*args, **kwargs) as f:
             file_contents = f.read()
 
-        file_contents = file_contents.replace(b'\t\t<script\n\t\t\tsrc="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"\n\t\t\tasync\n\t\t></script>', b'')
-        file_contents = file_contents.replace(b'cdnjs.cloudflare.com', b'127.0.0.1')
+        # file_contents = file_contents.replace(b'\t\t<script\n\t\t\tsrc="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"\n\t\t\tasync\n\t\t></script>', b'') # // there is no need for this, the line after suffices
+        file_contents = file_contents.replace('cdnjs.cloudflare.com', b'127.0.0.1') 
         file_contents = file_contents.replace(
-            b'</head>',
-            b'\n    <script src="file/js/katex/katex.min.js"></script>'
-            b'\n    <script src="file/js/katex/auto-render.min.js"></script>'
-            b'\n    <script src="file/js/highlightjs/highlight.min.js"></script>'
-            b'\n    <script src="file/js/highlightjs/highlightjs-copy.min.js"></script>'
-            b'\n    <script>hljs.addPlugin(new CopyButtonPlugin());</script>'
-            b'\n  </head>'
+            '</head>',
+            '\n    <script src="file/js/katex/katex.min.js"></script>'
+            '\n    <script src="file/js/katex/auto-render.min.js"></script>'
+            '\n    <script src="file/js/highlightjs/highlight.min.js"></script>'
+            '\n    <script src="file/js/highlightjs/highlightjs-copy.min.js"></script>'
+            '\n    <script>hljs.addPlugin(new CopyButtonPlugin());</script>'
+            '\n  </head>'
         )
 
-        return io.BytesIO(file_contents)
+        return io.StringIO(file_contents)
     else:
         return original_open(*args, **kwargs)
 
