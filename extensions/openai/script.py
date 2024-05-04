@@ -363,7 +363,8 @@ async def handle_last_hidden_state(request_data: LastHiddenStateRequest):
     inputs = inputs.to(shared.model.device)
     outputs = shared.model(**inputs, output_hidden_states=True)
     last_hidden_state = outputs.hidden_states[-1].squeeze()
-    return JSONResponse(content=last_hidden_state.tolist())
+    return JSONResponse(content={'last_hidden_state': last_hidden_state.tolist()})
+
 
 def run_server():
     server_addr = '0.0.0.0' if shared.args.listen else '127.0.0.1'
