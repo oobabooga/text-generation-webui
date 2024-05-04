@@ -359,11 +359,17 @@ async def handle_last_hidden_state(request_data: LastHiddenStateRequest):
     '''
     Given a prompt, returns the last hidden state as an array of floats.
     '''
-    inputs = shared.tokenizer(request_data.text, return_tensors='pt')
-    inputs = inputs.to(shared.model.device)
-    outputs = shared.model(**inputs, output_hidden_states=True)
-    last_hidden_state = outputs.hidden_states[-1].squeeze()
-    return JSONResponse(content={'last_hidden_state': last_hidden_state.tolist()})
+    try:
+        inputs = shared.tokenizer(request_data.text, return_tensors='pt')
+        inputs = inputs.to(shared.model.device)
+        outputs = shared.model(**inputs, output_hidden_states=True)
+        if not hasattr(outputs, 'hidden_states') or not outputs.hidden_states:
+            return HTTPException(status_code=500, detail='Model does not return a hidden state')
+        last_hidden_state = outputs.hidden_states[-1][0, -1].squeeze()
+        return JSONResponse(content={'last_hidden_state': last_hidden_state.tolist()})
+    except:
+        traceback.print_exc()
+        return HTTPException(status_code=500, detail='Failed getting hidden state')
 
 
 def run_server():
