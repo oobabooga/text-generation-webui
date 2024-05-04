@@ -41,6 +41,8 @@ from .typing import (
     EmbeddingsResponse,
     EncodeRequest,
     EncodeResponse,
+    LastHiddenStateResponse,
+    LastHiddenStateRequest,
     LoadLorasRequest,
     LoadModelRequest,
     LogitsRequest,
@@ -351,6 +353,17 @@ async def handle_unload_loras():
     OAImodels.unload_all_loras()
     return JSONResponse(content="OK")
 
+
+@app.post("/v1/internal/last_hidden_state", response_model=LastHiddenStateResponse, dependencies=check_key)
+async def handle_last_hidden_state(request_data: LastHiddenStateRequest):
+    '''
+    Given a prompt, returns the last hidden state as an array of floats.
+    '''
+    inputs = shared.tokenizer(request_data.text, return_tensors='pt')
+    inputs = inputs.to(shared.model.device)
+    outputs = shared.model(**inputs, output_hidden_states=True)
+    last_hidden_state = outputs.hidden_states[-1].squeeze()
+    return JSONResponse(content=last_hidden_state.tolist())
 
 def run_server():
     server_addr = '0.0.0.0' if shared.args.listen else '127.0.0.1'

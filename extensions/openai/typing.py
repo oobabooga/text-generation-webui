@@ -173,6 +173,14 @@ class LogitsRequestParams(BaseModel):
     top_p: float | None = 1
 
 
+class LastHiddenStateResponse(BaseModel):
+    last_hidden_state: List[float]
+
+
+class LastHiddenStateRequest(BaseModel):
+    text: str
+
+
 class LogitsRequest(GenerationOptions, LogitsRequestParams):
     pass
 
