@@ -394,7 +394,7 @@ def get_max_memory_dict():
         memory_map = list(map(lambda x: x.strip(), shared.args.gpu_memory))
         for i in range(len(memory_map)):
             if re.match('^0[a-z]ib$', memory_map[i].lower()):
-                memory_map[i] = '0'
+                max_memory[i] = '0'
             else:
                 max_memory[i] = f'{memory_map[i]}GiB' if not re.match('.*ib$', memory_map[i].lower()) else memory_map[i]
 
