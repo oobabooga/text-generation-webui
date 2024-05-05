@@ -6,11 +6,11 @@ instruction_template: |-
       {%- endif -%}
   {%- endfor -%}
   {%- if not ns.found -%}
-      {{- bos_token ~ '<|start_header_id|>system<|end_header_id|>\n\n' + 'You are a helpful assistant' + '<|eot_id|>' -}}
+      {{- '<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n' + 'You are a helpful assistant' + '<|eot_id|>' -}}
   {%- endif %}
   {%- for message in messages %}
       {%- if message['role'] == 'system' -%}
-          {{- bos_token ~ '<|start_header_id|>system<|end_header_id|>\n\n' + message['content'] | trim + '<|eot_id|>' -}}
+          {{- '<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n' + message['content'] | trim + '<|eot_id|>' -}}
       {%- else -%}
           {%- if message['role'] == 'user' -%}
               {{- '<|start_header_id|>user<|end_header_id|>\n\n' + message['content'] | trim + '<|eot_id|>'-}}
