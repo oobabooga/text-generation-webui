@@ -217,7 +217,8 @@ class LlamacppHF(PreTrainedModel):
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
             'logits_all': shared.args.logits_all,
             'offload_kqv': not shared.args.no_offload_kqv,
-            'split_mode': 1 if not shared.args.row_split else 2
+            'split_mode': 1 if not shared.args.row_split else 2,
+            'flash_attn': shared.args.flash_attn
         }
 
         Llama = llama_cpp_lib().Llama
