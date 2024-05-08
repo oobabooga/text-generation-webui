@@ -39,6 +39,7 @@ The extensions framework is based on special functions and variables that you ca
 | `def custom_js()` | Same as above but for javascript. |
 | `def input_modifier(string, state, is_chat=False)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
 | `def output_modifier(string, state, is_chat=False)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
+| `def output_modifier_stream(string, state, is_finalized=False)`  | (chat mode only) Modifies the output string in streaming mode before it is presented in the UI. Applied to the bot's streamed reply. When the bot reply finished streaming (`string` is complete), `is_finalized` will be set to True. |
 | `def chat_input_modifier(text, visible_text, state)` | Modifies both the visible and internal inputs in chat mode. Can be used to hijack the chat input with custom content. |
 | `def bot_prefix_modifier(string, state)`  | Applied in chat mode to the prefix for the bot's reply. |
 | `def state_modifier(state)`  | Modifies the dictionary containing the UI input parameters before it is used by the text generation functions. |
@@ -199,6 +200,16 @@ def output_modifier(string, state, is_chat=False):
     Modifies the LLM output before it gets presented.
 
     In chat mode, the modified version goes into history['visible'],
+    and the original version goes into history['internal'].
+    """
+    return string
+
+def output_modifier_stream(string, state, is_finalized=False):
+    """
+    Modifies the streamed LLM output before it gets presented.
+    Only for chat mode.
+
+    The modified version goes into history['visible'],
     and the original version goes into history['internal'].
     """
     return string

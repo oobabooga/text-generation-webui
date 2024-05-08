@@ -154,7 +154,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
             else:
                 prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
                 if not impersonate:
-                    prefix = apply_extensions('bot_prefix', prefix, state)
+                    prefix = apply_extensions('bot_prefix', prefix, state, is_chat=False)
 
             outer_messages.append({"role": "user", "content": command})
             outer_messages.append({"role": "assistant", "content": prefix})
@@ -172,7 +172,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
             else:
                 prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
                 if state['mode'] == 'chat' and not impersonate:
-                    prefix = apply_extensions('bot_prefix', prefix, state)
+                    prefix = apply_extensions('bot_prefix', prefix, state, is_chat=False)
 
                 prompt += prefix
 
@@ -322,7 +322,13 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
     # Generate
     reply = None
+    output_noext = output['visible'][-1][1]
     for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True, for_ui=for_ui)):
+        if shared.stop_everything:
+            output['visible'][-1][1] = apply_extensions('output_stream', output_noext, state, is_finalized=True)
+            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+            yield output
+            return
 
         # Extract the reply
         visible_reply = reply
@@ -331,22 +337,24 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
         visible_reply = html.escape(visible_reply)
 
-        if shared.stop_everything:
-            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
-            yield output
-            return
-
         if _continue:
             output['internal'][-1] = [text, last_reply[0] + reply]
             output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
+            output_noext = output['visible'][-1][1]
+            output['visible'][-1][1] = apply_extensions('output_stream', output['visible'][-1][1], state,
+                                                        is_finalized=False)
             if is_stream:
                 yield output
         elif not (j == 0 and visible_reply.strip() == ''):
             output['internal'][-1] = [text, reply.lstrip(' ')]
             output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
+            output_noext = output['visible'][-1][1]
+            output['visible'][-1][1] = apply_extensions('output_stream', output['visible'][-1][1], state,
+                                                        is_finalized=False)
             if is_stream:
                 yield output
 
+    output['visible'][-1][1] = apply_extensions('output_stream', output_noext, state, is_finalized=True)
     output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
     yield output
 
@@ -411,7 +419,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         send_dummy_message(text, state)
         send_dummy_reply(state['start_with'], state)
 
-    for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True, for_ui=True)):
+    for history in generate_chat_reply(text, state, regenerate, _continue, loading_message=True, for_ui=True):
         yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
 
 

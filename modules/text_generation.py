@@ -63,7 +63,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
     original_question = question
     if not is_chat:
         state = apply_extensions('state', state)
-        question = apply_extensions('input', question, state)
+        question = apply_extensions('input', question, state, is_chat=False)
 
     # Find the stopping strings
     all_stop_strings = []
@@ -119,7 +119,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             break
 
     if not is_chat:
-        reply = apply_extensions('output', reply, state)
+        reply = apply_extensions('output', reply, state, is_chat=False)
 
     yield reply
 

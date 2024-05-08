@@ -61,32 +61,23 @@ def iterator():
 
 
 # Extension functions that map string -> string
-def _apply_string_extensions(function_name, text, state, is_chat=False):
+def _apply_string_extensions(function_name, text, state, **kwargs):
     for extension, _ in iterator():
         if hasattr(extension, function_name):
             func = getattr(extension, function_name)
 
-            # Handle old extensions without the 'state' arg or
-            # the 'is_chat' kwarg
-            count = 0
-            has_chat = False
+            # Handle kwargs (non-present skipped)
+            count, kwargs_present = 0, {}
             for k in signature(func).parameters:
-                if k == 'is_chat':
-                    has_chat = True
+                if k in kwargs:
+                    kwargs_present[k] = kwargs[k]
                 else:
                     count += 1
 
-            if count == 2:
-                args = [text, state]
-            else:
-                args = [text]
+            # Handle old extensions without the 'state' arg
+            args = [text, state] if count == 2 else [text]
 
-            if has_chat:
-                kwargs = {'is_chat': is_chat}
-            else:
-                kwargs = {}
-
-            text = func(*args, **kwargs)
+            text = func(*args, **kwargs_present)
 
     return text
 
@@ -210,6 +201,7 @@ def create_extensions_tabs():
 EXTENSION_MAP = {
     "input": partial(_apply_string_extensions, "input_modifier"),
     "output": partial(_apply_string_extensions, "output_modifier"),
+    "output_stream": partial(_apply_string_extensions, "output_stream_modifier"),
     "chat_input": _apply_chat_input_extensions,
     "state": _apply_state_modifier_extensions,
     "history": _apply_history_modifier_extensions,
