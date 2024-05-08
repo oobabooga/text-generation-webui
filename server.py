@@ -150,7 +150,7 @@ def create_interface():
         shared.gradio['interface'].load(lambda: None, None, None, js=f"() => {{{js}}}")
         shared.gradio['interface'].load(lambda x: None, gradio('show_controls'), None, js=f'(x) => {{{ui.show_controls_js}; toggle_controls(x)}}')
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
-        shared.gradio['interface'].load(chat.redraw_html, gradio(ui_chat.reload_arr), gradio('display'))
+        shared.gradio['interface'].load(chat.redraw_html, gradio(ui_chat.reload_arr), gradio('chat_html_holder'))
 
         extensions_module.create_extensions_tabs()  # Extensions tabs
         extensions_module.create_extensions_block()  # Extensions block
