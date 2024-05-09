@@ -17,7 +17,7 @@ clear_arr = ('delete_chat-confirm', 'delete_chat', 'delete_chat-cancel')
 js_chat_html_update = """
 (newHTML) => {
     function areNodesEqualOrTagsMatch(n1, n2) {
-        if (!n1 || !n2 || n1.nodeType !== n2.nodeType)
+        if (n1.nodeType !== n2.nodeType)
             return false;
         if (n1.nodeType !== Node.ELEMENT_NODE)
             return n1.isEqualNode(n2);
