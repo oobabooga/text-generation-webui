@@ -145,25 +145,9 @@ targetElement.addEventListener("scroll", function() {
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
   updateCssProperties();
-
-  const firstChild = targetElement.children[0];
-  if (firstChild.classList.contains("generating")) {
-    typing.parentNode.classList.add("visible-dots");
-    document.getElementById("stop").style.display = "flex";
-    document.getElementById("Generate").style.display = "none";
-  } else {
-    typing.parentNode.classList.remove("visible-dots");
-    document.getElementById("stop").style.display = "none";
-    document.getElementById("Generate").style.display = "flex";
-  }
-
-
   doSyntaxHighlighting();
-
-  if(!isScrolled) {
+  if(!isScrolled)
     targetElement.scrollTop = targetElement.scrollHeight;
-  }
-
 });
 
 // Configure the observer to watch for changes in the subtree and attributes
@@ -177,6 +161,32 @@ const config = {
 
 // Start observing the target element
 observer.observe(targetElement, config);
+
+//------------------------------------------------
+// Chat HTML holder generation
+//------------------------------------------------
+const chatHtmlHolder = document.getElementById("chat_html_holder");
+
+const observerChatHtmlHolder = new MutationObserver(function(mutations) {
+  const isGenerating = Array.from(chatHtmlHolder.children).some(el => el.classList.contains('generating'));
+  if (isGenerating) {
+    typing.parentNode.classList.add("visible-dots");
+    document.getElementById("stop").style.display = "flex";
+    document.getElementById("Generate").style.display = "none";
+  } else {
+    typing.parentNode.classList.remove("visible-dots");
+    document.getElementById("stop").style.display = "none";
+    document.getElementById("Generate").style.display = "flex";
+  }
+});
+
+const configChatHtmlHolder = {
+  subtree: true,
+  attributeFilter: ["class"]
+};
+
+// Start observing the chat HTML holder
+observerChatHtmlHolder.observe(chatHtmlHolder, configChatHtmlHolder);
 
 //------------------------------------------------
 // Handle syntax highlighting / LaTeX
