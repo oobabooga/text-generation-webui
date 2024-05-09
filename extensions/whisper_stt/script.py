@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import gradio as gr
 import speech_recognition as sr
 import numpy as np
@@ -75,3 +77,13 @@ def ui():
     whipser_model.change(lambda x: params.update({"whipser_model": x}), whipser_model, None)
     whipser_language.change(lambda x: params.update({"whipser_language": x}), whipser_language, None)
     auto_submit.change(lambda x: params.update({"auto_submit": x}), auto_submit, None)
+
+
+def custom_js():
+    """
+    Returns custom javascript as a string. It is applied whenever the web UI is
+    loaded.
+    :return:
+    """
+    with open(Path(__file__).parent.resolve() / "script.js", "r") as f:
+        return f.read()
