@@ -144,22 +144,21 @@ targetElement.addEventListener("scroll", function() {
 
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
-  mutations.forEach(function(mutation) {
-    updateCssProperties();
+  updateCssProperties();
 
-    const firstChild = targetElement.children[0];
-    if (firstChild.classList.contains("generating")) {
-      typing.parentNode.classList.add("visible-dots");
-      document.getElementById("stop").style.display = "flex";
-      document.getElementById("Generate").style.display = "none";
-    } else {
-      typing.parentNode.classList.remove("visible-dots");
-      document.getElementById("stop").style.display = "none";
-      document.getElementById("Generate").style.display = "flex";
-    }
+  const firstChild = targetElement.children[0];
+  if (firstChild.classList.contains("generating")) {
+    typing.parentNode.classList.add("visible-dots");
+    document.getElementById("stop").style.display = "flex";
+    document.getElementById("Generate").style.display = "none";
+  } else {
+    typing.parentNode.classList.remove("visible-dots");
+    document.getElementById("stop").style.display = "none";
+    document.getElementById("Generate").style.display = "flex";
+  }
 
-    doSyntaxHighlighting();
-  });
+
+  doSyntaxHighlighting();
 
   if(!isScrolled) {
     targetElement.scrollTop = targetElement.scrollHeight;
@@ -215,6 +214,9 @@ function doSyntaxHighlighting() {
     indexes.forEach((index) => {
       const element = elements[index];
 
+      // Tag this element to prevent it from being highlighted twice
+      element.setAttribute("data-highlighted", "true");
+
       // Perform syntax highlighting
       const codeBlocks = element.querySelectorAll("pre code");
 
@@ -231,8 +233,6 @@ function doSyntaxHighlighting() {
         ],
       });
 
-      // Tag this element to indicate it has been syntax highlighted
-      element.setAttribute("data-highlighted", "true");
     });
 
     observer.observe(targetElement, config);
