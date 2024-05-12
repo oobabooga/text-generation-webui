@@ -138,9 +138,12 @@ class ModelDownloader:
             cursor = cursor.replace(b'=', b'%3D')
 
         # If both pytorch and safetensors are available, download safetensors only
-        if (has_pytorch or has_pt) and has_safetensors:
+        # Also if GGUF and safetensors are available, download only safetensors
+        # (why do people do this?)
+        if (has_pytorch or has_pt or has_gguf) and has_safetensors:
+            has_gguf = False
             for i in range(len(classifications) - 1, -1, -1):
-                if classifications[i] in ['pytorch', 'pt']:
+                if classifications[i] in ['pytorch', 'pt', 'gguf']:
                     links.pop(i)
 
         # For GGUF, try to download only the Q4_K_M if no specific file is specified.
