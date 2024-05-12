@@ -273,6 +273,10 @@ def load_lora_wrapper(selected_loras):
 
 def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False, check=False):
     try:
+        if repo_id == "":
+            yield ("Please enter a model path")
+            return
+
         downloader = importlib.import_module("download-model").ModelDownloader()
 
         progress(0.0)
