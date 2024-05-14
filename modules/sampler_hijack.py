@@ -536,7 +536,13 @@ def get_logits_processor_patch(self, **kwargs):
                 )
 
     if generation_config.dry_multiplier is not None and generation_config.dry_multiplier > 0.0:
-        sequence_breaker_strings = json.loads(generation_config.dry_sequence_breakers)
+        dry_sequence_breakers = generation_config.dry_sequence_breakers
+
+        # Support both JSON array notation and comma-separated strings.
+        if not dry_sequence_breakers.startswith("["):
+            dry_sequence_breakers = "[" + dry_sequence_breakers + "]"
+
+        sequence_breaker_strings = json.loads(dry_sequence_breakers)
         # Prefix with 'a' to get the correct encoding of the token at the end of a text.
         sequence_breakers = {shared.tokenizer.encode(f'a{s}')[-1] for s in sequence_breaker_strings}
 
@@ -567,7 +573,7 @@ def generation_config_init_patch(self, **kwargs):
     self.dry_multiplier = kwargs.pop("dry_multiplier", 0.0)
     self.dry_base = kwargs.pop("dry_base", 1.75)
     self.dry_allowed_length = kwargs.pop("dry_allowed_length", 2)
-    self.dry_sequence_breakers = kwargs.pop("dry_sequence_breakers", '["\\n", ":", "\\"", "*"]')
+    self.dry_sequence_breakers = kwargs.pop("dry_sequence_breakers", '"\\n", ":", "\\"", "*"')
     self.mirostat_mode = kwargs.pop("mirostat_mode", 0)
     self.mirostat_eta = kwargs.pop("mirostat_eta", 0.1)
     self.mirostat_tau = kwargs.pop("mirostat_tau", 5)

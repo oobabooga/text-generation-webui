@@ -35,7 +35,7 @@ def default_preset():
         'dry_multiplier': 0,
         'dry_base': 1.75,
         'dry_allowed_length': 2,
-        'dry_sequence_breakers': '["\\n", ":", "\\"", "*"]',
+        'dry_sequence_breakers': '"\\n", ":", "\\"", "*"',
         'guidance_scale': 1,
         'penalty_alpha': 0,
         'mirostat_mode': 0,
