@@ -223,9 +223,9 @@ class TopALogitsWarper(LogitsWarper):
 
 class DRYLogitsProcessor(LogitsProcessor):
     def __init__(self, multiplier: float, base: float, allowed_length: int, sequence_breakers: set[int], _range: int):
-        self.allowed_length = allowed_length
         self.multiplier = multiplier
         self.base = base
+        self.allowed_length = allowed_length
         self.sequence_breakers = sequence_breakers
         self._range = _range
 
