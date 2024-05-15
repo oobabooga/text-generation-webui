@@ -139,9 +139,12 @@ class ModelDownloader:
             cursor = cursor.replace(b'=', b'%3D')
 
         # If both pytorch and safetensors are available, download safetensors only
-        if (has_pytorch or has_pt) and has_safetensors:
+        # Also if GGUF and safetensors are available, download only safetensors
+        # (why do people do this?)
+        if (has_pytorch or has_pt or has_gguf) and has_safetensors:
+            has_gguf = False
             for i in range(len(classifications) - 1, -1, -1):
-                if classifications[i] in ['pytorch', 'pt']:
+                if classifications[i] in ['pytorch', 'pt', 'gguf']:
                     links.pop(i)
 
         # For GGUF, try to download only the Q4_K_M if no specific file is specified.
@@ -191,17 +194,17 @@ class ModelDownloader:
             headers = {}
             mode = 'wb'
 
-            if output_path.exists() and not start_from_scratch:
-                # Resume download
-                r = session.get(url, stream=True, timeout=20)
-                total_size = int(r.headers.get('content-length', 0))
-                if output_path.stat().st_size >= total_size:
-                    return
-
-                headers = {'Range': f'bytes={output_path.stat().st_size}-'}
-                mode = 'ab'
-
             try:
+                if output_path.exists() and not start_from_scratch:
+                    # Resume download
+                    r = session.get(url, stream=True, timeout=20)
+                    total_size = int(r.headers.get('content-length', 0))
+                    if output_path.stat().st_size >= total_size:
+                        return
+
+                    headers = {'Range': f'bytes={output_path.stat().st_size}-'}
+                    mode = 'ab'
+
                 with session.get(url, stream=True, headers=headers, timeout=30) as r:
                     r.raise_for_status()  # If status is not 2xx, raise an error
                     total_size = int(r.headers.get('content-length', 0))
