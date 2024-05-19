@@ -1,5 +1,6 @@
 accelerate==0.27.*
 aqlm[gpu,cpu]==1.1.3; platform_system == "Linux"
+auto-gptq==0.7.1
 bitsandbytes==0.43.*
 colorama
 datasets
@@ -52,10 +53,6 @@ https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/te
 https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda_tensorcores-0.2.75+cu121-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
 
 # CUDA wheels
-https://github.com/jllllll/AutoGPTQ/releases/download/v0.6.0/auto_gptq-0.6.0+cu121-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
-https://github.com/jllllll/AutoGPTQ/releases/download/v0.6.0/auto_gptq-0.6.0+cu121-cp310-cp310-win_amd64.whl; platform_system == "Windows" and python_version == "3.10"
-https://github.com/jllllll/AutoGPTQ/releases/download/v0.6.0/auto_gptq-0.6.0+cu121-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
-https://github.com/jllllll/AutoGPTQ/releases/download/v0.6.0/auto_gptq-0.6.0+cu121-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
 https://github.com/oobabooga/exllamav2/releases/download/v0.0.20/exllamav2-0.0.20+cu121-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
 https://github.com/oobabooga/exllamav2/releases/download/v0.0.20/exllamav2-0.0.20+cu121-cp310-cp310-win_amd64.whl; platform_system == "Windows" and python_version == "3.10"
 https://github.com/oobabooga/exllamav2/releases/download/v0.0.20/exllamav2-0.0.20+cu121-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
