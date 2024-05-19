@@ -206,5 +206,3 @@
   instruction_template: 'Llama-v2'
 .*chatqa:
   instruction_template: 'NVIDIA-ChatQA'
-.*llama(-?)(3|v3):
-instruction_template: 'Llama-v3'
