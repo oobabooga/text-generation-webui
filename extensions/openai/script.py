@@ -41,6 +41,8 @@ from .typing import (
     EmbeddingsResponse,
     EncodeRequest,
     EncodeResponse,
+    LastHiddenStateResponse,
+    LastHiddenStateRequest,
     LoadLorasRequest,
     LoadModelRequest,
     LogitsRequest,
@@ -350,6 +352,24 @@ async def handle_load_loras(request_data: LoadLorasRequest):
 async def handle_unload_loras():
     OAImodels.unload_all_loras()
     return JSONResponse(content="OK")
+
+
+@app.post("/v1/internal/last_hidden_state", response_model=LastHiddenStateResponse, dependencies=check_key)
+async def handle_last_hidden_state(request_data: LastHiddenStateRequest):
+    '''
+    Given a prompt, returns the last hidden state as an array of floats.
+    '''
+    try:
+        inputs = shared.tokenizer(request_data.text, return_tensors='pt')
+        inputs = inputs.to(shared.model.device)
+        outputs = shared.model(**inputs, output_hidden_states=True)
+        if not hasattr(outputs, 'hidden_states') or not outputs.hidden_states:
+            return HTTPException(status_code=500, detail='Model does not return a hidden state')
+        last_hidden_state = outputs.hidden_states[-1][0, -1].squeeze()
+        return JSONResponse(content={'last_hidden_state': last_hidden_state.tolist()})
+    except:
+        traceback.print_exc()
+        return HTTPException(status_code=500, detail='Failed getting hidden state')
 
 
 def run_server():

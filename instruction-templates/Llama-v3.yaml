@@ -1,0 +1,24 @@
+instruction_template: |-
+  {%- set ns = namespace(found=false) -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set ns.found = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not ns.found -%}
+      {{- '<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n' + 'You are a helpful assistant' + '<|eot_id|>' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{- '<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n' + message['content'] | trim + '<|eot_id|>' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{- '<|start_header_id|>user<|end_header_id|>\n\n' + message['content'] | trim + '<|eot_id|>'-}}
+          {%- else -%}
+              {{- '<|start_header_id|>assistant<|end_header_id|>\n\n' + message['content'] + '<|eot_id|>' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{- '<|start_header_id|>assistant<|end_header_id|>\n\n' -}}
+  {%- endif -%}
