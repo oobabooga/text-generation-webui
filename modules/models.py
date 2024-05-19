@@ -326,12 +326,12 @@ def ExLlamav2_HF_loader(model_name):
 
 def HQQ_loader(model_name):
     from hqq.core.quantize import HQQBackend, HQQLinear
-    from hqq.engine.hf import HQQModelForCausalLM
+    from hqq.models.hf.base import AutoHQQHFModel
 
     logger.info(f"Loading HQQ model with backend: \"{shared.args.hqq_backend}\"")
 
     model_dir = Path(f'{shared.args.model_dir}/{model_name}')
-    model = HQQModelForCausalLM.from_quantized(str(model_dir))
+    model = AutoHQQHFModel.from_quantized(str(model_dir))
     HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
     return model
 
