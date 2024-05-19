@@ -56,6 +56,7 @@ def get_model_metadata(model):
             model_file = list(path.glob('*.gguf'))[0]
 
         metadata = metadata_gguf.load_metadata(model_file)
+
         for k in metadata:
             if k.endswith('context_length'):
                 model_settings['n_ctx'] = metadata[k]
@@ -63,6 +64,9 @@ def get_model_metadata(model):
                 model_settings['rope_freq_base'] = metadata[k]
             elif k.endswith('rope.scale_linear'):
                 model_settings['compress_pos_emb'] = metadata[k]
+            elif k.endswith('block_count'):
+                model_settings['n_gpu_layers'] = metadata[k] + 1
+
         if 'tokenizer.chat_template' in metadata:
             template = metadata['tokenizer.chat_template']
             eos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.eos_token_id']]
