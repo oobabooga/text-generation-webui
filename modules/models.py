@@ -61,6 +61,9 @@ if shared.args.deepspeed:
 sampler_hijack.hijack_samplers()
 
 
+last_generation_time = time.time()
+
+
 def load_model(model_name, loader=None):
     logger.info(f"Loading \"{model_name}\"")
     t0 = time.time()
@@ -428,6 +431,7 @@ def clear_torch_cache():
 
 def unload_model():
     shared.model = shared.tokenizer = None
+    shared.previous_model_name = shared.model_name
     shared.model_name = 'None'
     shared.lora_names = []
     shared.model_dirty_from_training = False
@@ -437,3 +441,21 @@ def unload_model():
 def reload_model():
     unload_model()
     shared.model, shared.tokenizer = load_model(shared.model_name)
+
+
+def unload_model_if_idle():
+    global last_generation_time
+
+    logger.info(f"Setting a timeout of {shared.args.idle_timeout} minutes to unload the model in case of inactivity.")
+
+    while True:
+        shared.generation_lock.acquire()
+        try:
+            if time.time() - last_generation_time > shared.args.idle_timeout * 60:
+                if shared.model is not None:
+                    logger.info("Unloading the model for inactivity.")
+                    unload_model()
+        finally:
+            shared.generation_lock.release()
+
+        time.sleep(60)

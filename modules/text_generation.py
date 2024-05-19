@@ -16,6 +16,7 @@ from transformers import (
 )
 
 import modules.shared as shared
+from modules import models
 from modules.cache_utils import process_llamacpp_cache
 from modules.callbacks import (
     Iteratorize,
@@ -27,15 +28,19 @@ from modules.grammar.grammar_utils import initialize_grammar
 from modules.grammar.logits_process import GrammarConstrainedLogitsProcessor
 from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
-from modules.models import clear_torch_cache
+from modules.models import clear_torch_cache, load_model
 
 
 def generate_reply(*args, **kwargs):
+    if shared.args.idle_timeout > 0 and shared.model is None and shared.previous_model_name not in [None, 'None']:
+        shared.model, shared.tokenizer = load_model(shared.previous_model_name)
+
     shared.generation_lock.acquire()
     try:
         for result in _generate_reply(*args, **kwargs):
             yield result
     finally:
+        models.last_generation_time = time.time()
         shared.generation_lock.release()
 
 
