@@ -147,12 +147,15 @@ group.add_argument('--num_experts_per_token', type=int, default=2, help='Number 
 # AutoGPTQ
 group = parser.add_argument_group('AutoGPTQ')
 group.add_argument('--triton', action='store_true', help='Use triton.')
-group.add_argument('--no_inject_fused_attention', action='store_true', help='Disable the use of fused attention, which will use less VRAM at the cost of slower inference.')
 group.add_argument('--no_inject_fused_mlp', action='store_true', help='Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference.')
 group.add_argument('--no_use_cuda_fp16', action='store_true', help='This can make models faster on some systems.')
 group.add_argument('--desc_act', action='store_true', help='For models that do not have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.')
 group.add_argument('--disable_exllama', action='store_true', help='Disable ExLlama kernel, which can improve inference speed on some systems.')
 group.add_argument('--disable_exllamav2', action='store_true', help='Disable ExLlamav2 kernel.')
+
+# AutoAWQ
+group = parser.add_argument_group('AutoAWQ')
+group.add_argument('--no_inject_fused_attention', action='store_true', help='Disable the use of fused attention, which will use less VRAM at the cost of slower inference.')
 
 # GPTQ-for-LLaMa
 group = parser.add_argument_group('GPTQ-for-LLaMa')
