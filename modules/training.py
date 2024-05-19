@@ -329,10 +329,6 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
 
         time.sleep(5)
 
-    if shared.args.loader == 'GPTQ-for-LLaMa' and not shared.args.monkey_patch:
-        yield "LoRA training with GPTQ-for-LLaMa requires loading with `--monkey-patch`"
-        return
-
     if cutoff_len <= 0 or micro_batch_size <= 0 or batch_size <= 0 or actual_lr <= 0 or lora_rank <= 0 or lora_alpha <= 0:
         yield "Cannot input zeroes."
         return

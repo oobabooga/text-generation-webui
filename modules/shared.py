@@ -87,7 +87,7 @@ group.add_argument('--chat-buttons', action='store_true', help='Show buttons on 
 
 # Model loader
 group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, AutoGPTQ, AutoAWQ, GPTQ-for-LLaMa.')
+group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, AutoGPTQ, AutoAWQ.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
@@ -152,19 +152,12 @@ group.add_argument('--no_use_cuda_fp16', action='store_true', help='This can mak
 group.add_argument('--desc_act', action='store_true', help='For models that do not have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.')
 group.add_argument('--disable_exllama', action='store_true', help='Disable ExLlama kernel, which can improve inference speed on some systems.')
 group.add_argument('--disable_exllamav2', action='store_true', help='Disable ExLlamav2 kernel.')
+group.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
+group.add_argument('--groupsize', type=int, default=-1, help='Group size.')
 
 # AutoAWQ
 group = parser.add_argument_group('AutoAWQ')
 group.add_argument('--no_inject_fused_attention', action='store_true', help='Disable the use of fused attention, which will use less VRAM at the cost of slower inference.')
-
-# GPTQ-for-LLaMa
-group = parser.add_argument_group('GPTQ-for-LLaMa')
-group.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
-group.add_argument('--model_type', type=str, help='Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
-group.add_argument('--groupsize', type=int, default=-1, help='Group size.')
-group.add_argument('--pre_layer', type=int, nargs='+', help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. For multi-gpu, write the numbers separated by spaces, eg --pre_layer 30 60.')
-group.add_argument('--checkpoint', type=str, help='The path to the quantized checkpoint file. If not specified, it will be automatically detected.')
-group.add_argument('--monkey-patch', action='store_true', help='Apply the monkey patch for using LoRAs with quantized models.')
 
 # HQQ
 group = parser.add_argument_group('HQQ')
@@ -209,7 +202,11 @@ group = parser.add_argument_group('Multimodal')
 group.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
 
 # Deprecated parameters
-# group = parser.add_argument_group('Deprecated')
+group = parser.add_argument_group('Deprecated')
+group.add_argument('--model_type', type=str, help='DEPRECATED')
+group.add_argument('--pre_layer', type=int, nargs='+', help='DEPRECATED')
+group.add_argument('--checkpoint', type=str, help='DEPRECATED')
+group.add_argument('--monkey-patch', action='store_true', help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -254,8 +251,6 @@ def fix_loader_name(name):
         return 'Transformers'
     elif name in ['autogptq', 'auto-gptq', 'auto_gptq', 'auto gptq']:
         return 'AutoGPTQ'
-    elif name in ['gptq-for-llama', 'gptqforllama', 'gptqllama', 'gptq for llama', 'gptq_for_llama']:
-        return 'GPTQ-for-LLaMa'
     elif name in ['exllama', 'ex-llama', 'ex_llama', 'exlama']:
         return 'ExLlama'
     elif name in ['exllamav2', 'exllama-v2', 'ex_llama-v2', 'exlamav2', 'exlama-v2', 'exllama2', 'exllama-2']:
