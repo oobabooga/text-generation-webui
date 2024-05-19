@@ -20,7 +20,6 @@ def get_next_logits(*args, **kwargs):
         result = _get_next_logits(*args, **kwargs)
     except:
         result = None
-        pass
 
     models.last_generation_time = time.time()
     shared.generation_lock.release()
@@ -28,14 +27,9 @@ def get_next_logits(*args, **kwargs):
 
 
 def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, return_dict=False):
-    if shared.args.idle_timeout > 0 and shared.model is None and shared.previous_model_name is not None:
-        load_model(shared.previous_model_name)
-
     if shared.model is None:
         logger.error("No model is loaded! Select one in the Model tab.")
         return 'Error: No model is loaded1 Select one in the Model tab.', previous
-
-    models.last_generation_time = time.time()
 
     is_non_hf_exllamav2 = shared.model.__class__.__name__ == 'Exllamav2Model'
     is_non_hf_llamacpp = shared.model.__class__.__name__ == 'LlamaCppModel'
