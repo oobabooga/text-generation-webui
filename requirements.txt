@@ -1,4 +1,4 @@
-accelerate==0.27.*
+accelerate==0.30.*
 aqlm[gpu,cpu]==1.1.3; platform_system == "Linux"
 bitsandbytes==0.43.*
 colorama
