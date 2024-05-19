@@ -76,7 +76,6 @@ def load_model(model_name, loader=None):
         'ExLlamav2': ExLlamav2_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'AutoAWQ': AutoAWQ_loader,
-        'QuIP#': QuipSharp_loader,
         'HQQ': HQQ_loader,
     }
 
@@ -302,37 +301,6 @@ def AutoAWQ_loader(model_name):
         max_memory=get_max_memory_dict(),
         batch_size=1,
         safetensors=any(model_dir.glob('*.safetensors')),
-    )
-
-    return model
-
-
-def QuipSharp_loader(model_name):
-    try:
-        with RelativeImport("repositories/quip-sharp"):
-            from lib.utils.unsafe_import import model_from_hf_path
-    except:
-        logger.error(
-            "\nQuIP# has not been found. It must be installed manually for now.\n"
-            "For instructions on how to do that, please consult:\n"
-            "https://github.com/oobabooga/text-generation-webui/pull/4803\n"
-        )
-        return None, None
-
-    # This fixes duplicate logging messages after the import above.
-    handlers = logging.getLogger().handlers
-    if len(handlers) > 1:
-        logging.getLogger().removeHandler(handlers[1])
-
-    model_dir = Path(f'{shared.args.model_dir}/{model_name}')
-    if not all((model_dir / file).exists() for file in ['tokenizer_config.json', 'special_tokens_map.json', 'tokenizer.model']):
-        logger.error(f"Could not load the model because the tokenizer files could not be found in the model folder. Please download the following files from the original (unquantized) model into {model_dir}: special_tokens_map.json, tokenizer.json, tokenizer.model, tokenizer_config.json.")
-        return None, None
-
-    model, model_str = model_from_hf_path(
-        model_dir,
-        use_cuda_graph=False,
-        use_flash_attn=not shared.args.no_flash_attn
     )
 
     return model

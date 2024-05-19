@@ -140,12 +140,6 @@ loaders_and_params = OrderedDict({
         'no_use_fast',
         'gptq_for_llama_info',
     ],
-    'QuIP#': [
-        'trust_remote_code',
-        'no_use_fast',
-        'no_flash_attn',
-        'quipsharp_info',
-    ],
     'HQQ': [
         'hqq_backend',
         'trust_remote_code',
@@ -203,7 +197,6 @@ loaders_samplers = {
     'AutoGPTQ': transformers_samplers(),
     'GPTQ-for-LLaMa': transformers_samplers(),
     'AutoAWQ': transformers_samplers(),
-    'QuIP#': transformers_samplers(),
     'HQQ': transformers_samplers(),
     'ExLlamav2': {
         'temperature',

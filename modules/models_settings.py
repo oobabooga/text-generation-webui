@@ -40,12 +40,7 @@ def get_model_metadata(model):
         hf_metadata = None
 
     if 'loader' not in model_settings:
-        if hf_metadata is not None and 'quip_params' in hf_metadata:
-            loader = 'QuIP#'
-        else:
-            loader = infer_loader(model, model_settings)
-
-        model_settings['loader'] = loader
+        model_settings['loader'] = infer_loader(model, model_settings)
 
     # GGUF metadata
     if model_settings['loader'] in ['llama.cpp', 'llamacpp_HF']:
