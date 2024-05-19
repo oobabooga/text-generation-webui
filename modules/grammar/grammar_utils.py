@@ -131,6 +131,8 @@ def parse_char(src):
             return "\n", src[2:]
         elif esc == "t":
             return "\t", src[2:]
+        elif esc == "\\":
+            return "\\", src[2:]
         raise RuntimeError("unknown escape at " + src)
     elif src:
         return src[0], src[1:]
