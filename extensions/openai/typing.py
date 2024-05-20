@@ -22,10 +22,6 @@ class GenerationOptions(BaseModel):
     top_a: float = 0
     epsilon_cutoff: float = 0
     eta_cutoff: float = 0
-    dry_multiplier: float = 0
-    dry_base: float = 1.75
-    dry_allowed_length: int = 2
-    dry_sequence_breakers: str = '"\\n", ":", "\\"", "*"'
     guidance_scale: float = 1
     negative_prompt: str = ''
     penalty_alpha: float = 0
@@ -37,6 +33,10 @@ class GenerationOptions(BaseModel):
     seed: int = -1
     encoder_repetition_penalty: float = 1
     no_repeat_ngram_size: int = 0
+    dry_multiplier: float = 0
+    dry_base: float = 1.75
+    dry_allowed_length: int = 2
+    dry_sequence_breakers: str = '"\\n", ":", "\\"", "*"'
     truncation_length: int = 0
     max_tokens_second: int = 0
     prompt_lookup_num_tokens: int = 0
