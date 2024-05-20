@@ -96,7 +96,7 @@ gradio-app > :first-child {
 
 .header_bar {
     background-color: #f7f7f7;
-    box-shadow: 0 2px 3px rgba(22 22 22 / 35%);
+    box-shadow: 0 0px 3px rgba(22 22 22 / 35%);
     margin-bottom: 0;
     overflow-x: scroll;
     margin-left: calc(-1 * var(--size-4));
@@ -220,7 +220,7 @@ button {
 }
 
 .pretty_scrollbar::-webkit-scrollbar {
-    width: 5px;
+    width: 7px;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-track {
@@ -229,12 +229,12 @@ button {
 
 .pretty_scrollbar::-webkit-scrollbar-thumb,
 .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #c5c5d2;
+    background: var(--neutral-300);
 }
 
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb,
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #374151;
+    background: var(--neutral-700);
 }
 
 .pretty_scrollbar::-webkit-resizer {
@@ -433,11 +433,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .message-body code {
     white-space: pre-wrap !important;
     word-wrap: break-word !important;
-    border: 1px solid var(--border-color-primary);
-    border-radius: var(--radius-sm);
-    background: var(--background-fill-secondary);
-    font-size: 90%;
+    border: 1px solid #666666;
+    border-radius: 5px;
+    font-size: 82%;
     padding: 1px 3px;
+    background: #0d1117 !important;
+    color: rgb(201, 209, 217);
 }
 
 .message-body pre > code {
@@ -518,8 +519,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     text-overflow: ellipsis;
 }
 
+.dark #show-controls span {
+    color: var(--neutral-400);
+}
+
 #show-controls span {
-    opacity: 0.6;
+    color: var(--neutral-600);
 }
 
 #typing-container {
@@ -590,8 +595,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: absolute;
     bottom: 80%;
     left: 0;
-    background-color: var(--background-fill-secondary);
-    box-shadow: 0 0 10px rgb(0 0 0 / 50%);
+    background-color: var(--background-fill-primary);
+    box-shadow: 0 0 5px rgb(0 0 0 / 25%);
     z-index: 10000;
     min-width: 330px;
     flex-direction: column;
@@ -601,6 +606,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: 100%;
     background: transparent !important;
     border-radius: 0 !important;
+    border-color: var(--border-color-primary);
     justify-content: space-between;
     margin: 0 !important;
     height: 36px;
@@ -611,7 +617,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .hover-menu button:not(#clear-history-confirm):last-child {
-    border-bottom: var(--button-border-width) solid var(--button-secondary-border-color) !important;
+    border-bottom: var(--button-border-width) solid var(--border-color-primary) !important;
 }
 
 .hover-menu button:hover {

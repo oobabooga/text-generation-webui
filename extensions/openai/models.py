@@ -9,7 +9,8 @@ from modules.utils import get_available_loras, get_available_models
 def get_current_model_info():
     return {
         'model_name': shared.model_name,
-        'lora_names': shared.lora_names
+        'lora_names': shared.lora_names,
+        'loader': shared.args.loader
     }
 
 

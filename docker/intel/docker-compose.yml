@@ -5,22 +5,19 @@ services:
       context: .
       args:
         # Requirements file to use: 
-        # | GPU | CPU | requirements file to use |
-        # |--------|---------|---------|
-        # | NVIDIA | has AVX2 | `requirements.txt` |
-        # | NVIDIA | no AVX2 | `requirements_noavx2.txt` |
-        # | AMD | has AVX2 | `requirements_amd.txt` |
-        # | AMD | no AVX2 | `requirements_amd_noavx2.txt` |
-        # | CPU only | has AVX2 | `requirements_cpu_only.txt` |
-        # | CPU only | no AVX2 | `requirements_cpu_only_noavx2.txt` |
-        # | Apple | Intel | `requirements_apple_intel.txt` |
-        # | Apple | Apple Silicon | `requirements_apple_silicon.txt` |
+        # | GPU | requirements file to use |
+        # |--------|---------|
+        # | NVIDIA | `requirements.txt` |
+        # | AMD | `requirements_amd.txt` |
+        # | CPU only | `requirements_cpu_only.txt` |
+        # | Apple Intel | `requirements_apple_intel.txt` |
+        # | Apple Silicon | `requirements_apple_silicon.txt` |
         # Default: requirements.txt`
         # BUILD_REQUIREMENTS: requirements.txt
-        
+
         # Extension requirements to build: 
         # BUILD_EXTENSIONS: 
-        
+
         # specify which cuda version your card supports: https://developer.nvidia.com/cuda-gpus
         TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST:-7.5} 
         BUILD_EXTENSIONS: ${BUILD_EXTENSIONS:-}

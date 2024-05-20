@@ -3,16 +3,20 @@ import copy
 import html
 import pprint
 import random
-import re
 import time
 import traceback
 
 import numpy as np
 import torch
 import transformers
-from transformers import LogitsProcessorList, is_torch_xpu_available
+from transformers import (
+    LogitsProcessorList,
+    is_torch_npu_available,
+    is_torch_xpu_available
+)
 
 import modules.shared as shared
+from modules import models
 from modules.cache_utils import process_llamacpp_cache
 from modules.callbacks import (
     Iteratorize,
@@ -24,15 +28,19 @@ from modules.grammar.grammar_utils import initialize_grammar
 from modules.grammar.logits_process import GrammarConstrainedLogitsProcessor
 from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
-from modules.models import clear_torch_cache, local_rank
+from modules.models import clear_torch_cache, load_model
 
 
 def generate_reply(*args, **kwargs):
+    if shared.args.idle_timeout > 0 and shared.model is None and shared.previous_model_name not in [None, 'None']:
+        shared.model, shared.tokenizer = load_model(shared.previous_model_name)
+
     shared.generation_lock.acquire()
     try:
         for result in _generate_reply(*args, **kwargs):
             yield result
     finally:
+        models.last_generation_time = time.time()
         shared.generation_lock.release()
 
 
@@ -53,8 +61,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
     if generate_func != generate_reply_HF and shared.args.verbose:
         logger.info("PROMPT=")
-        print(question)
-        print()
+        print_prompt(question)
 
     # Prepare the input
     original_question = question
@@ -81,6 +88,10 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
         state = copy.deepcopy(state)
         state['stream'] = True
 
+    min_update_interval = 0
+    if state.get('max_updates_second', 0) > 0:
+        min_update_interval = 1 / state['max_updates_second']
+
     # Generate
     for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
@@ -98,7 +109,14 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
                 last_update = time.time()
                 yield reply
+
+            # Limit updates to avoid lag in the Gradio UI
+            # API updates are not limited
             else:
+                if cur_time - last_update > min_update_interval:
+                    last_update = cur_time
+                    yield reply
+
                 yield reply
 
         if stop_found or (state['max_tokens_second'] > 0 and shared.stop_everything):
@@ -131,12 +149,15 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     if shared.model.__class__.__name__ in ['LlamaCppModel', 'Exllamav2Model'] or shared.args.cpu:
         return input_ids
     elif shared.args.deepspeed:
-        return input_ids.to(device=local_rank)
+        import deepspeed
+        return input_ids.to(deepspeed.get_accelerator().current_device_name())
     elif torch.backends.mps.is_available():
         device = torch.device('mps')
         return input_ids.to(device)
     elif is_torch_xpu_available():
         return input_ids.to("xpu:0")
+    elif is_torch_npu_available():
+        return input_ids.to("npu:0")
     else:
         return input_ids.cuda()
 
@@ -189,20 +210,6 @@ def formatted_outputs(reply, model_name):
     return html.unescape(reply), generate_basic_html(reply)
 
 
-def fix_galactica(s):
-    """
-    Fix the LaTeX equations in GALACTICA
-    """
-    s = s.replace(r'\[', r'$')
-    s = s.replace(r'\]', r'$')
-    s = s.replace(r'\(', r'$')
-    s = s.replace(r'\)', r'$')
-    s = s.replace(r'$$', r'$')
-    s = re.sub(r'\n', r'\n\n', s)
-    s = re.sub(r"\n{3,}", "\n\n", s)
-    return s
-
-
 def set_manual_seed(seed):
     seed = int(seed)
     if seed == -1:
@@ -213,6 +220,8 @@ def set_manual_seed(seed):
         torch.cuda.manual_seed_all(seed)
     elif is_torch_xpu_available():
         torch.xpu.manual_seed_all(seed)
+    elif is_torch_npu_available():
+        torch.npu.manual_seed_all(seed)
 
     return seed
 
@@ -338,8 +347,7 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         print()
 
         logger.info("PROMPT=")
-        print(decode(input_ids[0], skip_special_tokens=False))
-        print()
+        print_prompt(decode(input_ids[0], skip_special_tokens=False))
 
     # Handle StreamingLLM for llamacpp_HF
     if shared.model.__class__.__name__ == 'LlamacppHF' and shared.args.streaming_llm:
@@ -428,3 +436,18 @@ def generate_reply_custom(question, original_question, seed, state, stopping_str
         new_tokens = len(encode(original_question + reply)[0]) - original_tokens
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
+
+
+def print_prompt(prompt, max_chars=2000):
+    DARK_YELLOW = "\033[38;5;3m"
+    RESET = "\033[0m"
+
+    if len(prompt) > max_chars:
+        half_chars = max_chars // 2
+        hidden_len = len(prompt[half_chars:-half_chars])
+        hidden_msg = f"{DARK_YELLOW}[...{hidden_len} characters hidden...]{RESET}"
+        print(prompt[:half_chars] + hidden_msg + prompt[-half_chars:])
+    else:
+        print(prompt)
+
+    print()

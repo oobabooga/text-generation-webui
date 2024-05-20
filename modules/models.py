@@ -10,7 +10,11 @@ from pathlib import Path
 import torch
 import transformers
 from accelerate import infer_auto_device_map, init_empty_weights
-from accelerate.utils import is_ccl_available, is_xpu_available
+from accelerate.utils import (
+    is_ccl_available,
+    is_npu_available,
+    is_xpu_available
+)
 from transformers import (
     AutoConfig,
     AutoModel,
@@ -45,6 +49,9 @@ if shared.args.deepspeed:
     if is_xpu_available() and is_ccl_available():
         torch.xpu.set_device(local_rank)
         deepspeed.init_distributed(backend="ccl")
+    elif is_npu_available():
+        torch.npu.set_device(local_rank)
+        deepspeed.init_distributed(dist_backend="hccl")
     else:
         torch.cuda.set_device(local_rank)
         deepspeed.init_distributed()
@@ -52,6 +59,9 @@ if shared.args.deepspeed:
     dschf = HfDeepSpeedConfig(ds_config)  # Keep this object alive for the Transformers integration
 
 sampler_hijack.hijack_samplers()
+
+
+last_generation_time = time.time()
 
 
 def load_model(model_name, loader=None):
@@ -100,10 +110,10 @@ def load_model(model_name, loader=None):
     elif loader in ['llama.cpp', 'llamacpp_HF']:
         shared.settings['truncation_length'] = shared.args.n_ctx
 
+    logger.info(f"Loaded \"{model_name}\" in {(time.time()-t0):.2f} seconds.")
     logger.info(f"LOADER: \"{loader}\"")
     logger.info(f"TRUNCATION LENGTH: {shared.settings['truncation_length']}")
     logger.info(f"INSTRUCTION TEMPLATE: \"{metadata['instruction_template']}\"")
-    logger.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
 
 
@@ -164,12 +174,15 @@ def huggingface_loader(model_name):
             elif is_xpu_available():
                 device = torch.device("xpu")
                 model = model.to(device)
+            elif is_npu_available():
+                device = torch.device("npu")
+                model = model.to(device)
             else:
                 model = model.cuda()
 
     # DeepSpeed ZeRO-3
     elif shared.args.deepspeed:
-        model = LoaderClass.from_pretrained(path_to_model, torch_dtype=params['torch_dtype'], trust_remote_code=params['trust_remote_code'])
+        model = LoaderClass.from_pretrained(path_to_model, torch_dtype=params['torch_dtype'], trust_remote_code=params.get('trust_remote_code'))
         model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
         model.module.eval()  # Inference
         logger.info(f'DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}')
@@ -195,6 +208,7 @@ def huggingface_loader(model_name):
                     'bnb_4bit_compute_dtype': eval("torch.{}".format(shared.args.compute_dtype)) if shared.args.compute_dtype in ["bfloat16", "float16", "float32"] else None,
                     'bnb_4bit_quant_type': shared.args.quant_type,
                     'bnb_4bit_use_double_quant': shared.args.use_double_quant,
+                    'llm_int8_enable_fp32_cpu_offload': True
                 }
 
                 params['quantization_config'] = BitsAndBytesConfig(**quantization_config_params)
@@ -205,15 +219,15 @@ def huggingface_loader(model_name):
                 else:
                     params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True)
 
-                if params['max_memory'] is not None:
+                if params.get('max_memory') is not None:
                     with init_empty_weights():
-                        model = LoaderClass.from_config(config, trust_remote_code=params['trust_remote_code'])
+                        model = LoaderClass.from_config(config, trust_remote_code=params.get('trust_remote_code'))
 
                     model.tie_weights()
                     params['device_map'] = infer_auto_device_map(
                         model,
                         dtype=torch.int8,
-                        max_memory=params['max_memory'],
+                        max_memory=params.get('max_memory'),
                         no_split_module_classes=model._no_split_modules
                     )
 
@@ -255,7 +269,7 @@ def llamacpp_loader(model_name):
     if path.is_file():
         model_file = path
     else:
-        model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0]
+        model_file = sorted(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0] 
 
     logger.info(f"llama.cpp weights detected: \"{model_file}\"")
     model, tokenizer = LlamaCppModel.from_pretrained(model_file)
@@ -417,6 +431,7 @@ def clear_torch_cache():
 
 def unload_model():
     shared.model = shared.tokenizer = None
+    shared.previous_model_name = shared.model_name
     shared.model_name = 'None'
     shared.lora_names = []
     shared.model_dirty_from_training = False
@@ -426,3 +441,21 @@ def unload_model():
 def reload_model():
     unload_model()
     shared.model, shared.tokenizer = load_model(shared.model_name)
+
+
+def unload_model_if_idle():
+    global last_generation_time
+
+    logger.info(f"Setting a timeout of {shared.args.idle_timeout} minutes to unload the model in case of inactivity.")
+
+    while True:
+        shared.generation_lock.acquire()
+        try:
+            if time.time() - last_generation_time > shared.args.idle_timeout * 60:
+                if shared.model is not None:
+                    logger.info("Unloading the model for inactivity.")
+                    unload_model()
+        finally:
+            shared.generation_lock.release()
+
+        time.sleep(60)

@@ -194,3 +194,15 @@
   instruction_template: 'ChatML'
 .*command-r:
   instruction_template: 'Command-R'
+.*xwin-lm-70b-v0.1:
+  instruction_template: 'Vicuna-v1.1'
+.*platypus-yi-34b:
+  instruction_template: 'Vicuna-v1.1'
+.*CausalLM-RP-34B:
+  instruction_template: 'ChatML'
+34b-beta:
+  instruction_template: 'ChatML'
+.*airoboros-3_1-yi-34b-200k:
+  instruction_template: 'Llama-v2'
+.*chatqa:
+  instruction_template: 'NVIDIA-ChatQA'

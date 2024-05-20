@@ -32,7 +32,7 @@ import sys
 import time
 from functools import partial
 from pathlib import Path
-from threading import Lock
+from threading import Lock, Thread
 
 import yaml
 
@@ -52,7 +52,7 @@ from modules import (
 )
 from modules.extensions import apply_extensions
 from modules.LoRA import add_lora_to_model
-from modules.models import load_model
+from modules.models import load_model, unload_model_if_idle
 from modules.models_settings import (
     get_fallback_settings,
     get_model_metadata,
@@ -244,6 +244,11 @@ if __name__ == "__main__":
             add_lora_to_model(shared.args.lora)
 
     shared.generation_lock = Lock()
+
+    if shared.args.idle_timeout > 0:
+        timer_thread = Thread(target=unload_model_if_idle)
+        timer_thread.daemon = True
+        timer_thread.start()
 
     if shared.args.nowebui:
         # Start the API in standalone mode

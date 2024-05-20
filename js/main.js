@@ -137,29 +137,33 @@ targetElement.addEventListener("scroll", function() {
   } else {
     isScrolled = true;
   }
+
+  doSyntaxHighlighting();
+
 });
 
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
-  mutations.forEach(function(mutation) {
-    updateCssProperties();
+  updateCssProperties();
 
-    if(!isScrolled) {
-      targetElement.scrollTop = targetElement.scrollHeight;
-    }
+  const firstChild = targetElement.children[0];
+  if (firstChild.classList.contains("generating")) {
+    typing.parentNode.classList.add("visible-dots");
+    document.getElementById("stop").style.display = "flex";
+    document.getElementById("Generate").style.display = "none";
+  } else {
+    typing.parentNode.classList.remove("visible-dots");
+    document.getElementById("stop").style.display = "none";
+    document.getElementById("Generate").style.display = "flex";
+  }
 
-    const firstChild = targetElement.children[0];
-    if (firstChild.classList.contains("generating")) {
-      typing.parentNode.classList.add("visible-dots");
-      document.getElementById("stop").style.display = "flex";
-      document.getElementById("Generate").style.display = "none";
-    } else {
-      typing.parentNode.classList.remove("visible-dots");
-      document.getElementById("stop").style.display = "none";
-      document.getElementById("Generate").style.display = "flex";
-    }
 
-  });
+  doSyntaxHighlighting();
+
+  if(!isScrolled) {
+    targetElement.scrollTop = targetElement.scrollHeight;
+  }
+
 });
 
 // Configure the observer to watch for changes in the subtree and attributes
@@ -173,6 +177,67 @@ const config = {
 
 // Start observing the target element
 observer.observe(targetElement, config);
+
+//------------------------------------------------
+// Handle syntax highlighting / LaTeX
+//------------------------------------------------
+function isElementVisibleOnScreen(element) {
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.left < window.innerWidth &&
+    rect.right > 0 &&
+    rect.top < window.innerHeight &&
+    rect.bottom > 0
+  );
+}
+
+function getVisibleMessagesIndexes() {
+  const elements = document.querySelectorAll(".message-body");
+  const visibleIndexes = [];
+
+  elements.forEach((element, index) => {
+    if (isElementVisibleOnScreen(element) && !element.hasAttribute("data-highlighted")) {
+      visibleIndexes.push(index);
+    }
+  });
+
+  return visibleIndexes;
+}
+
+function doSyntaxHighlighting() {
+  const indexes = getVisibleMessagesIndexes();
+  const elements = document.querySelectorAll(".message-body");
+
+  if (indexes.length > 0) {
+    observer.disconnect();
+
+    indexes.forEach((index) => {
+      const element = elements[index];
+
+      // Tag this element to prevent it from being highlighted twice
+      element.setAttribute("data-highlighted", "true");
+
+      // Perform syntax highlighting
+      const codeBlocks = element.querySelectorAll("pre code");
+
+      codeBlocks.forEach((codeBlock) => {
+        hljs.highlightElement(codeBlock);
+      });
+
+      renderMathInElement(element, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false },
+          { left: "\\(", right: "\\)", display: false },
+          { left: "\\[", right: "\\]", display: true },
+        ],
+      });
+
+    });
+
+    observer.observe(targetElement, config);
+  }
+}
 
 //------------------------------------------------
 // Add some scrollbars
@@ -470,7 +535,7 @@ respondToRenameVisibility(renameTextArea, handleVisibilityChange);
 // is present at the bottom
 //------------------------------------------------
 
-if (document.getElementById('extensions') === null) {
+if (document.getElementById("extensions") === null) {
   document.getElementById("chat-tab").style.marginBottom = "-29px";
 }
 
@@ -478,8 +543,8 @@ if (document.getElementById('extensions') === null) {
 // Focus on the chat input after starting a new chat
 //------------------------------------------------
 
-document.querySelectorAll('.focus-on-chat-input').forEach(element => {
-  element.addEventListener('click', function() {
-      document.querySelector('#chat-input textarea').focus();
+document.querySelectorAll(".focus-on-chat-input").forEach(element => {
+  element.addEventListener("click", function() {
+    document.querySelector("#chat-input textarea").focus();
   });
 });
