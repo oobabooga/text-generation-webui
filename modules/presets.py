@@ -40,6 +40,10 @@ def default_preset():
         'do_sample': True,
         'encoder_repetition_penalty': 1,
         'no_repeat_ngram_size': 0,
+        'dry_multiplier': 0,
+        'dry_base': 1.75,
+        'dry_allowed_length': 2,
+        'dry_sequence_breakers': '"\\n", ":", "\\"", "*"',
         'sampler_priority': 'temperature\ndynamic_temperature\nquadratic_sampling\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nmirostat'
     }
 
