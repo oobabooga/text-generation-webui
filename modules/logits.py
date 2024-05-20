@@ -1,14 +1,32 @@
+import time
+
 import torch
 from transformers import is_torch_npu_available, is_torch_xpu_available
 
-from modules import sampler_hijack, shared
+from modules import models, sampler_hijack, shared
 from modules.logging_colors import logger
+from modules.models import load_model
 from modules.text_generation import generate_reply
 
 global_scores = None
 
 
-def get_next_logits(prompt, state, use_samplers, previous, top_logits=25, return_dict=False):
+def get_next_logits(*args, **kwargs):
+    if shared.args.idle_timeout > 0 and shared.model is None and shared.previous_model_name not in [None, 'None']:
+        shared.model, shared.tokenizer = load_model(shared.previous_model_name)
+
+    shared.generation_lock.acquire()
+    try:
+        result = _get_next_logits(*args, **kwargs)
+    except:
+        result = None
+
+    models.last_generation_time = time.time()
+    shared.generation_lock.release()
+    return result
+
+
+def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, return_dict=False):
     if shared.model is None:
         logger.error("No model is loaded! Select one in the Model tab.")
         return 'Error: No model is loaded1 Select one in the Model tab.', previous
