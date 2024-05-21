@@ -13,6 +13,7 @@ from modules.logging_colors import logger
 model = None
 tokenizer = None
 model_name = 'None'
+previous_model_name = 'None'
 is_seq2seq = False
 model_dirty_from_training = False
 lora_names = []
@@ -84,6 +85,7 @@ group.add_argument('--settings', type=str, help='Load the default interface sett
 group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 group.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 group.add_argument('--chat-buttons', action='store_true', help='Show buttons on the chat tab instead of a hover menu.')
+group.add_argument('--idle-timeout', type=int, default=0, help='Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.')
 
 # Model loader
 group = parser.add_argument_group('Model loader')

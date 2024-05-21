@@ -16,6 +16,7 @@ from transformers import (
 )
 
 import modules.shared as shared
+from modules import models
 from modules.cache_utils import process_llamacpp_cache
 from modules.callbacks import (
     Iteratorize,
@@ -27,15 +28,19 @@ from modules.grammar.grammar_utils import initialize_grammar
 from modules.grammar.logits_process import GrammarConstrainedLogitsProcessor
 from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
-from modules.models import clear_torch_cache
+from modules.models import clear_torch_cache, load_model
 
 
 def generate_reply(*args, **kwargs):
+    if shared.args.idle_timeout > 0 and shared.model is None and shared.previous_model_name not in [None, 'None']:
+        shared.model, shared.tokenizer = load_model(shared.previous_model_name)
+
     shared.generation_lock.acquire()
     try:
         for result in _generate_reply(*args, **kwargs):
             yield result
     finally:
+        models.last_generation_time = time.time()
         shared.generation_lock.release()
 
 
@@ -267,7 +272,7 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
 
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
     generate_params = {}
-    for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynatemp_low', 'dynatemp_high', 'dynatemp_exponent', 'smoothing_factor', 'smoothing_curve', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size']:
+    for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynatemp_low', 'dynatemp_high', 'dynatemp_exponent', 'smoothing_factor', 'smoothing_curve', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'dry_multiplier', 'dry_base', 'dry_allowed_length', 'dry_sequence_breakers']:
         if k in state:
             generate_params[k] = state[k]
 
