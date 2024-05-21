@@ -176,8 +176,8 @@ def create_ui():
 
                 with gr.Tab("Customize instruction template"):
                     with gr.Row():
-                        shared.gradio['customized_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), value='None', label='Select the desired instruction template', elem_classes='slim-dropdown')
-                        ui.create_refresh_button(shared.gradio['customized_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button', interactive=not mu)
+                        shared.gradio['customized_template'] = gr.Dropdown(choices=utils.get_available_templates(path="instruction-templates"), value='None', label='Select the desired instruction template', elem_classes='slim-dropdown')
+                        ui.create_refresh_button(shared.gradio['customized_template'], lambda: None, lambda: {'choices': utils.get_available_templates(path="instruction-templates")}, 'refresh-button', interactive=not mu)
 
                     shared.gradio['customized_template_submit'] = gr.Button("Submit", variant="primary", interactive=not mu)
                     gr.Markdown("This allows you to set a customized template for the model currently selected in the \"Model loader\" menu. Whenever the model gets loaded, this template will be used in place of the template specified in the model's medatada, which sometimes is wrong.")

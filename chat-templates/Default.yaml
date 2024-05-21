@@ -1,0 +1,17 @@
+chat_template: |-
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {%- if message['content'] -%}
+              {{- message['content'] + '\n\n' -}}
+          {%- endif -%}
+          {%- if user_bio -%}
+              {{- user_bio + '\n\n' -}}
+          {%- endif -%}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{- name1 + ': ' + message['content'] + '\n'-}}
+          {%- else -%}
+              {{- name2 + ': ' + message['content'] + '\n' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}

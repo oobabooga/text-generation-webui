@@ -108,8 +108,7 @@ def get_available_characters():
     return sorted(set((k.stem for k in paths)), key=natural_keys)
 
 
-def get_available_instruction_templates():
-    path = "instruction-templates"
+def get_available_templates(path):
     paths = []
     if os.path.exists(path):
         paths = (x for x in Path(path).iterdir() if x.suffix in ('.json', '.yaml', '.yml'))

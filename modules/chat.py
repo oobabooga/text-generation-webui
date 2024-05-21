@@ -722,6 +722,24 @@ def load_instruction_template(template):
         return jinja_template_from_old_format(data)
 
 
+def load_chat_template(template):
+    if template == 'None':
+        return ''
+
+    for filepath in [Path(f'chat-templates/{template}.yaml'), Path('chat-templates/Default.yaml')]:
+        if filepath.exists():
+            break
+    else:
+        return ''
+
+    file_contents = open(filepath, 'r', encoding='utf-8').read()
+    data = yaml.safe_load(file_contents)
+    if 'chat_template' in data:
+        return data['chat_template']
+    else:
+        return jinja_template_from_old_format(data)
+
+
 @functools.cache
 def load_character_memoized(character, name1, name2):
     return load_character(character, name1, name2)
@@ -824,6 +842,14 @@ def generate_character_yaml(name, greeting, context):
 def generate_instruction_template_yaml(instruction_template):
     data = {
         'instruction_template': instruction_template
+    }
+
+    return my_yaml_output(data)
+
+
+def generate_chat_template_yaml(chat_template):
+    data = {
+        'chat_template': chat_template
     }
 
     return my_yaml_output(data)
