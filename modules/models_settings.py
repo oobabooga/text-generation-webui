@@ -12,7 +12,6 @@ def get_fallback_settings():
         'wbits': 'None',
         'groupsize': 'None',
         'desc_act': False,
-        'model_type': 'None',
         'max_seq_len': 2048,
         'n_ctx': 2048,
         'rope_freq_base': 0,
@@ -199,7 +198,7 @@ def update_model_parameters(state, initial=False):
             continue
 
         # Setting null defaults
-        if element in ['wbits', 'groupsize', 'model_type'] and value == 'None':
+        if element in ['wbits', 'groupsize'] and value == 'None':
             value = vars(shared.args_defaults)[element]
         elif element in ['cpu_memory'] and value == 0:
             value = vars(shared.args_defaults)[element]
