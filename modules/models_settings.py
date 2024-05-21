@@ -40,12 +40,7 @@ def get_model_metadata(model):
         hf_metadata = None
 
     if 'loader' not in model_settings:
-        if hf_metadata is not None and 'quip_params' in hf_metadata:
-            loader = 'QuIP#'
-        else:
-            loader = infer_loader(model, model_settings)
-
-        model_settings['loader'] = loader
+        model_settings['loader'] = infer_loader(model, model_settings)
 
     # GGUF metadata
     if model_settings['loader'] in ['llama.cpp', 'llamacpp_HF']:
@@ -242,7 +237,7 @@ def apply_model_settings_to_state(model, state):
         loader = model_settings.pop('loader')
 
         # If the user is using an alternative loader for the same model type, let them keep using it
-        if not (loader == 'ExLlamav2_HF' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlamav2', 'AutoGPTQ']):
+        if not (loader == 'ExLlamav2_HF' and state['loader'] in ['ExLlamav2', 'AutoGPTQ']):
             state['loader'] = loader
 
     for k in model_settings:
