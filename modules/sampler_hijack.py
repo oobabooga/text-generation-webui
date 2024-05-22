@@ -234,21 +234,28 @@ class DRYLogitsProcessor(LogitsProcessor):
             input_ids = input_ids[:, -self._range:]
 
         for input_ids_row, scores_row in zip(input_ids, scores):
+
+            # Use normal Python data types for improved performance
+            s = input_ids_row.tolist()
+            
             # Raw integer must be extracted here to check for set membership.
-            last_token = input_ids_row[-1].item()
+            last_token = s[-1]
 
             if last_token in self.sequence_breakers:
                 continue
 
             # Exclude the last token as it always matches.
-            match_indices = (input_ids_row[:-1] == last_token).nonzero()
+            match_indices = []
+            for idx, val in enumerate(s[:-1]):
+                if val == last_token:
+                    match_indices.append(idx)
 
             # Stores the maximum matching sequence length
             # for each token immediately following the sequence in the input.
             match_lengths = {}
 
             for i in match_indices:
-                next_token = input_ids_row[i+1].item()
+                next_token = s[i+1]
 
                 if next_token in self.sequence_breakers:
                     continue
@@ -264,8 +271,8 @@ class DRYLogitsProcessor(LogitsProcessor):
                         # Start of input reached.
                         break
 
-                    previous_token = input_ids_row[-(match_length+1)].item()
-                    if input_ids_row[j] != previous_token:
+                    previous_token = s[-(match_length+1)]
+                    if s[j] != previous_token:
                         # Start of match reached.
                         break
 
