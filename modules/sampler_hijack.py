@@ -237,61 +237,74 @@ class DRYLogitsProcessor(LogitsProcessor):
 
             # Use normal Python data types for improved performance
             s = input_ids_row.tolist()
-            
-            # Raw integer must be extracted here to check for set membership.
             last_token = s[-1]
 
             if last_token in self.sequence_breakers:
-                continue
+                # This check does not affect results, but it saves a tiny bit of compute.
+                return scores
 
-            # Exclude the last token as it always matches.
-            match_indices = []
-            for idx, val in enumerate(s[:-1]):
-                if val == last_token:
-                    match_indices.append(idx)
+            # Create z array where each value indicates match length starting from that index going backwards.
+            # For performance reasons this is implemented with a variant of the "Z algorithm", which runs in linear time.
+            z = [0] * len(s)
+            end = len(s) - 1
+            # we will move a window through the input tokens (excluding the last token)
+            # using a two pointer technique where the pointers only move in one direction (thus guaranteeing linear runtime)
+            right = end - 1
+            left = end - 1
+            while right >= 0:
+                while left == right and left >= 0:
+                    # We are looking for the start of a new match
+                    if s[right] == s[end]:
+                        # Start of new match found
+                        break
+                    else:
+                        # Match not found
+                        right -= 1
+                        left -= 1
 
-            # Stores the maximum matching sequence length
-            # for each token immediately following the sequence in the input.
-            match_lengths = {}
+                while left >= 0 and s[left] == s[end - (right - left)]:
+                    # Current match continues, update match_length starting from token at right pointer
+                    z[right] += 1
+                    # Move left pointer to expand the window
+                    left -= 1
 
-            for i in match_indices:
-                next_token = s[i+1]
-
-                if next_token in self.sequence_breakers:
-                    continue
-
-                # We have already found that `last_token` matches at this index,
-                # so the match is at least of length 1.
-                match_length = 1
-
-                # Extend the match backwards as far as possible.
-                while True:
-                    j = i - match_length
-                    if j < 0:
-                        # Start of input reached.
+                helper = right
+                while right > left:
+                    # Move right pointer to contract the window
+                    right -= 1
+                    # Check if window is collapsed to size 0
+                    if left == right:
+                        break
+                    # This is the magical step in z algorithm where we use previously computed z values to avoid quadratic runtime!
+                    z[right] = min(z[end - (helper - right)], right - left)
+                    # Check if the result we got is complete result or partial result
+                    if left >= 0 and right - z[right] <= left:
+                        # We can't know if the match extends beyond current window, so we need to expand the window one or more times and possibly update the result
                         break
 
-                    previous_token = s[-(match_length+1)]
-                    if s[j] != previous_token:
-                        # Start of match reached.
-                        break
+            # Sequence breakers: find the first sequence breaker from the end of input, so that we can count how long is the maximum repeatable sequence
+            max_match_length = 0
+            while max_match_length < len(s) and s[len(s) - max_match_length - 1] not in self.sequence_breakers:
+                max_match_length += 1
 
-                    if previous_token in self.sequence_breakers:
-                        # Sequence-breaking token reached.
-                        break
+            # Sequence breakers: cap all match_length values so that none of the sequences cross over a sequence breaker
+            z = [min(match_length, max_match_length) for match_length in z]
 
-                    match_length += 1
-
-                if next_token in match_lengths:
-                    match_lengths[next_token] = max(match_length, match_lengths[next_token])
-                else:
-                    match_lengths[next_token] = match_length
-
-            # Apply penalties.
-            for token, match_length in match_lengths.items():
+            # Compute penalties per token (excluding the last token)
+            penalties = {}
+            for idx, match_length in enumerate(z[:-1]):
+                # No penalty unless match length exceeds allowed length
                 if match_length >= self.allowed_length:
+                    # idx is the last token of the repeated sequence, and we want to attribute the penalty to the next token after that one
+                    token = s[idx + 1]
+                    # Penalty formula is unchanged from original DRY implementation
                     penalty = self.multiplier * self.base ** (match_length - self.allowed_length)
-                    scores_row[token] -= penalty
+                    # If the same token appears multiple times in input, take the maximum penalty of these occurrences
+                    penalties[token] = max(penalty, penalties.get(token, 0))
+
+            # Apply penalties
+            for token, penalty in penalties.items():
+                scores_row[token] -= penalty
 
         return scores
 
