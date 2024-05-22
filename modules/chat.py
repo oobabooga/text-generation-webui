@@ -53,10 +53,10 @@ def extract_message_prefix_suffix(renderer, strip_trailing_spaces=True):
     '''
 
     messages = [
-        {"role": "user", "content": f"<<|user-message-1|>>"},
-        {"role": "assistant", "content": f"<<|assistant-message-1|>>"},
-        {"role": "user", "content": f"<<|user-message-2|>>"},
-        {"role": "assistant", "content": f"<<|assistant-message-2|>>"},
+        {"role": "user", "content": "<<|user-message-1|>>"},
+        {"role": "assistant", "content": "<<|assistant-message-1|>>"},
+        {"role": "user", "content": "<<|user-message-2|>>"},
+        {"role": "assistant", "content": "<<|assistant-message-2|>>"},
     ]
 
     prompt = renderer(messages=messages)
@@ -126,9 +126,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
         messages.append({"role": "user", "content": user_input})
 
     def remove_extra_bos(prompt):
-        for bos_token in ['<s>', '<|startoftext|>', '<BOS_TOKEN>', '<|endoftext|>']:
-            while prompt.startswith(bos_token):
-                prompt = prompt[len(bos_token):]
+        bos_token = shared.tokenizer.decode(shared.tokenizer.bos_token_id)
+        while prompt.startswith(bos_token):
+            prompt = prompt[len(bos_token):]
 
         return prompt
 
@@ -161,7 +161,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
             outer_messages.append({"role": "assistant", "content": prefix})
 
             prompt = instruction_template.render(messages=outer_messages)
-            suffix = extract_message_prefix_suffix(instruct_renderer, message_role="assistant")[2]
             if len(suffix) > 0:
                 prompt = prompt[:-len(suffix)]
 
