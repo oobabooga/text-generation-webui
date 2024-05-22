@@ -114,7 +114,7 @@ class LlamaCppModel:
         return self.model.tokenize(string)
 
     def decode(self, ids, **kwargs):
-        return self.model.detokenize(ids).decode('utf-8')
+        return self.model.detokenize(ids).decode('utf-8', 'replace')
 
     def get_logits(self, tokens):
         self.model.reset()
