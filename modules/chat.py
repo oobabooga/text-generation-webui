@@ -45,34 +45,35 @@ yaml.add_representer(str, str_presenter)
 yaml.representer.SafeRepresenter.add_representer(str, str_presenter)
 
 
-def get_generation_prompt(renderer, impersonate=False, strip_trailing_spaces=True):
+def extract_message_prefix_suffix(renderer, strip_trailing_spaces=True):
     '''
-    Given a Jinja template, reverse-engineers the prefix and the suffix for
-    an assistant message (if impersonate=False) or an user message
-    (if impersonate=True)
+    Given a Jinja template, extracts the prefix and suffix for
+    an assistant message or a user message. It assumes that they
+    share the same suffix.
     '''
 
-    if impersonate:
-        messages = [
-            {"role": "user", "content": "<<|user-message-1|>>"},
-            {"role": "user", "content": "<<|user-message-2|>>"},
-        ]
-    else:
-        messages = [
-            {"role": "assistant", "content": "<<|user-message-1|>>"},
-            {"role": "assistant", "content": "<<|user-message-2|>>"},
-        ]
+    messages = [
+        {"role": "user", "content": f"<<|user-message-1|>>"},
+        {"role": "assistant", "content": f"<<|assistant-message-1|>>"},
+        {"role": "user", "content": f"<<|user-message-2|>>"},
+        {"role": "assistant", "content": f"<<|assistant-message-2|>>"},
+    ]
 
     prompt = renderer(messages=messages)
+    unwanted_suffix = renderer(messages=[])
 
-    suffix_plus_prefix = prompt.split("<<|user-message-1|>>")[1].split("<<|user-message-2|>>")[0]
-    suffix = prompt.split("<<|user-message-2|>>")[1]
-    prefix = suffix_plus_prefix[len(suffix):]
+    suffix = prompt.split('<<|assistant-message-2|>>')[1]
+    if unwanted_suffix != '':
+        suffix = suffix[:-len(unwanted_suffix)]
+
+    prefix_user = prompt.split('<<|assistant-message-1|>>')[1].split('<<|user-message-2|>>')[0][len(suffix):]
+    prefix_assistant = prompt.split('<<|user-message-1|>>')[1].split('<<|assistant-message-1|>>')[0][len(suffix):]
 
     if strip_trailing_spaces:
-        prefix = prefix.rstrip(' ')
+        prefix_user = prefix_user.rstrip(' ')
+        prefix_assistant = prefix_assistant.rstrip(' ')
 
-    return prefix, suffix
+    return prefix_user, prefix_assistant, suffix
 
 
 def generate_chat_prompt(user_input, state, **kwargs):
@@ -148,29 +149,30 @@ def generate_chat_prompt(user_input, state, **kwargs):
             command = command.replace('<|prompt|>', prompt)
             command = replace_character_names(command, state['name1'], state['name2'])
 
+            prefix_user, prefix_assistant, suffix = extract_message_prefix_suffix(renderer, strip_trailing_spaces=not _continue)
+            prefix = prefix_user if impersonate else prefix_assistant
+
             if _continue:
-                prefix = get_generation_prompt(renderer, impersonate=impersonate, strip_trailing_spaces=False)[0]
                 prefix += messages[-1]["content"]
-            else:
-                prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
-                if not impersonate:
-                    prefix = apply_extensions('bot_prefix', prefix, state)
+            elif not impersonate:
+                prefix = apply_extensions('bot_prefix', prefix, state)
 
             outer_messages.append({"role": "user", "content": command})
             outer_messages.append({"role": "assistant", "content": prefix})
 
             prompt = instruction_template.render(messages=outer_messages)
-            suffix = get_generation_prompt(instruct_renderer, impersonate=False)[1]
+            suffix = extract_message_prefix_suffix(instruct_renderer, message_role="assistant")[2]
             if len(suffix) > 0:
                 prompt = prompt[:-len(suffix)]
 
         else:
+            prefix_user, prefix_assistant, suffix = extract_message_prefix_suffix(renderer, strip_trailing_spaces=not _continue)
+
             if _continue:
-                suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
                 if len(suffix) > 0:
                     prompt = prompt[:-len(suffix)]
             else:
-                prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
+                prefix = prefix_user if impersonate else prefix_assistant
                 if state['mode'] == 'chat' and not impersonate:
                     prefix = apply_extensions('bot_prefix', prefix, state)
 
@@ -249,15 +251,11 @@ def get_stopping_strings(state):
         renderers.append(renderer)
 
     for renderer in renderers:
-        prefix_bot, suffix_bot = get_generation_prompt(renderer, impersonate=False)
-        prefix_user, suffix_user = get_generation_prompt(renderer, impersonate=True)
+        prefix_user, prefix_assistant, suffix = extract_message_prefix_suffix(renderer)
 
-        stopping_strings += [
-            suffix_user + prefix_bot,
-            suffix_user + prefix_user,
-            suffix_bot + prefix_bot,
-            suffix_bot + prefix_user,
-        ]
+        for item in [suffix + prefix_assistant, suffix + prefix_user, suffix]:
+            stopping_strings.append(item)
+            stopping_strings.append(item.rstrip())
 
     if 'stopping_strings' in state and isinstance(state['stopping_strings'], list):
         stopping_strings += state.pop('stopping_strings')
