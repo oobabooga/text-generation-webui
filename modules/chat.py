@@ -143,6 +143,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
         else:
             prompt = renderer(messages=messages)
 
+        prefix_user, prefix_assistant, suffix = extract_message_prefix_suffix(renderer, strip_trailing_spaces=not _continue)
+        prefix = prefix_user if impersonate else prefix_assistant
+
         if state['mode'] == 'chat-instruct':
             outer_messages = []
             if state['custom_system_message'].strip() != '':
@@ -154,8 +157,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
             command = command.replace('<|prompt|>', prompt)
             command = replace_character_names(command, state['name1'], state['name2'])
 
-            prefix_user, prefix_assistant, suffix = extract_message_prefix_suffix(renderer, strip_trailing_spaces=not _continue)
-            prefix = prefix_user if impersonate else prefix_assistant
 
             if _continue:
                 prefix += messages[-1]["content"]
@@ -170,13 +171,11 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 prompt = prompt[:-len(suffix)]
 
         else:
-            prefix_user, prefix_assistant, suffix = extract_message_prefix_suffix(renderer, strip_trailing_spaces=not _continue)
 
             if _continue:
                 if len(suffix) > 0:
                     prompt = prompt[:-len(suffix)]
             else:
-                prefix = prefix_user if impersonate else prefix_assistant
                 if state['mode'] == 'chat' and not impersonate:
                     prefix = apply_extensions('bot_prefix', prefix, state)
 
