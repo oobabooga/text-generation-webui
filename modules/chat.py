@@ -48,7 +48,7 @@ yaml.representer.SafeRepresenter.add_representer(str, str_presenter)
 def extract_message_prefix_suffix(renderer, strip_trailing_spaces=True):
     '''
     Given a Jinja template, extracts the prefix and suffix for
-    an assistant message or a user message. It assumes that they
+    an assistant message and a user message. It assumes that they
     share the same suffix.
     '''
 
@@ -126,9 +126,14 @@ def generate_chat_prompt(user_input, state, **kwargs):
         messages.append({"role": "user", "content": user_input})
 
     def remove_extra_bos(prompt):
-        bos_token = shared.tokenizer.decode(shared.tokenizer.bos_token_id)
-        while prompt.startswith(bos_token):
-            prompt = prompt[len(bos_token):]
+        if hasattr(shared.tokenizer, 'bos_token_id'):
+           bos_tokens = [shared.tokenizer.decode(shared.tokenizer.bos_token_id)]
+        else:
+            bos_tokens = ['<s>', '<|startoftext|>', '<BOS_TOKEN>']
+
+        for bos_token in bos_tokens:
+            while prompt.startswith(bos_token):
+                prompt = prompt[len(bos_token):]
 
         return prompt
 
