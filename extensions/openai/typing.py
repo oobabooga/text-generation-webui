@@ -148,6 +148,18 @@ class TranscriptionsResponse(BaseModel):
     text: str
 
 
+class ImageGenerationRequest(BaseModel):
+    prompt: str
+    size: str = Field(default='1024x1024')
+    response_format: str = Field(default='url')
+    n: int = Field(default=1)
+
+
+class ImageGenerationResponse(BaseModel):
+    created: int
+    data: list[dict]
+
+
 class EmbeddingsRequest(BaseModel):
     input: str | List[str] | List[int] | List[List[int]]
     model: str | None = Field(default=None, description="Unused parameter. To change the model, set the OPENEDAI_EMBEDDING_MODEL and OPENEDAI_EMBEDDING_DEVICE environment variables before starting the server.")
