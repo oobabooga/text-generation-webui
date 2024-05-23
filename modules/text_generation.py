@@ -139,8 +139,14 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     else:
         input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', add_special_tokens=add_special_tokens)
         if not add_bos_token:
+            # Check if we need to remove a bos token which may have been added due to add_special_tokens
             while len(input_ids[0]) > 0 and input_ids[0][0] == shared.tokenizer.bos_token_id:
                 input_ids = input_ids[:, 1:]
+        if add_bos_token and input_ids[0][0] != shared.tokenizer.bos_token_id:
+            # We need to insert a bos token. It has not been added, even though it usually would have been added by add_special_tokens.
+            # (There are many models out there which are configured in a way such that bos token doesn't get added by add_special_tokens, so we check that here.)
+            bos_tensor = torch.tensor([[shared.tokenizer.bos_token_id]])
+            input_ids = torch.cat((bos_tensor, input_ids), 1)
 
     # Handling truncation
     if truncation_length is not None:
