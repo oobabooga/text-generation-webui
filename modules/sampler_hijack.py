@@ -236,70 +236,36 @@ class DRYLogitsProcessor(LogitsProcessor):
         for input_ids_row, scores_row in zip(input_ids, scores):
 
             # Use normal Python data types for improved performance
-            s = input_ids_row.tolist()
-            last_token = s[-1]
+            input_ids_list = input_ids_row.tolist()
 
+            # Check if last token is a sequence breaker, so we can save a bit of compute (results are not affected if you remove this check)
+            last_token = input_ids_list[-1]
             if last_token in self.sequence_breakers:
-                # This check does not affect results, but it saves a tiny bit of compute.
                 return scores
 
-            # Create z array where each value indicates match length starting from that index going backwards.
-            # For performance reasons this is implemented with a variant of the "Z algorithm", which runs in linear time.
-            z = [0] * len(s)
-            end = len(s) - 1
-            # we will move a window through the input tokens (excluding the last token)
-            # using a two pointer technique where the pointers only move in one direction (thus guaranteeing linear runtime)
-            right = end - 1
-            left = end - 1
-            while right >= 0:
-                while left == right and left >= 0:
-                    # We are looking for the start of a new match
-                    if s[right] == s[end]:
-                        # Start of new match found
-                        break
-                    else:
-                        # Match not found
-                        right -= 1
-                        left -= 1
-
-                while left >= 0 and s[left] == s[end - (right - left)]:
-                    # Current match continues, update match_length starting from token at right pointer
-                    z[right] += 1
-                    # Move left pointer to expand the window
-                    left -= 1
-
-                helper = right
-                while right > left:
-                    # Move right pointer to contract the window
-                    right -= 1
-                    # Check if window is collapsed to size 0
-                    if left == right:
-                        break
-                    # This is the magical step in z algorithm where we use previously computed z values to avoid quadratic runtime!
-                    z[right] = min(z[end - (helper - right)], right - left)
-                    # Check if the result we got is complete result or partial result
-                    if left >= 0 and right - z[right] <= left:
-                        # We can't know if the match extends beyond current window, so we need to expand the window one or more times and possibly update the result
-                        break
+            # Find where the repetitions are: for each position in the input, count how many tokens to the left of that position (inclusive) are repeating the end of the input.
+            # example input:  [7,6,7,5,6,7]
+            # example output: [1,0,2,0,0,-] (exclude last token from consideration)
+            match_lengths = self.count_matches(input_ids_list)
 
             # Sequence breakers: find the first sequence breaker from the end of input, so that we can count how long is the maximum repeatable sequence
             max_match_length = 0
             MAX_MATCH_LENGTH_TO_AVOID_EXPONENT_OVERFLOW = 1000
-            MAX = min(len(s), MAX_MATCH_LENGTH_TO_AVOID_EXPONENT_OVERFLOW)
-            while max_match_length < MAX and s[len(s) - max_match_length - 1] not in self.sequence_breakers:
+            MAX = min(len(input_ids_list), MAX_MATCH_LENGTH_TO_AVOID_EXPONENT_OVERFLOW)
+            while max_match_length < MAX and input_ids_list[len(input_ids_list) - max_match_length - 1] not in self.sequence_breakers:
                 max_match_length += 1
 
             # Sequence breakers: cap all match_length values so that none of the sequences cross over a sequence breaker
-            z = [min(match_length, max_match_length) for match_length in z]
+            match_lengths = [min(match_length, max_match_length) for match_length in match_lengths]
 
             # Compute penalties per token (excluding the last token)
             penalties = {}
-            for idx, match_length in enumerate(z[:-1]):
+            for idx, match_length in enumerate(match_lengths[:-1]):
                 # No penalty unless match length exceeds allowed length
                 if match_length >= self.allowed_length:
                     # idx is the last token of the repeated sequence, and we want to attribute the penalty to the next token after that one
-                    token = s[idx + 1]
-                    # Penalty formula is unchanged from original DRY implementation
+                    token = input_ids_list[idx + 1]
+                    # Penalty formula
                     penalty = self.multiplier * self.base ** (match_length - self.allowed_length)
                     # If the same token appears multiple times in input, take the maximum penalty of these occurrences
                     penalties[token] = max(penalty, penalties.get(token, 0))
@@ -309,6 +275,53 @@ class DRYLogitsProcessor(LogitsProcessor):
                 scores_row[token] -= penalty
 
         return scores
+
+    # count_matches will count how much the end of a sequence is repeated at different positions of the sequence
+    # practical use case: when prompting LLM "roses are red roses are", the DRY sampler should penalize token "red" due to repetition
+    # example input:  [1,4,3,1,2,3,1,2,3,1,4,3,1,2,3,1]
+    # example output: [1,0,0,2,0,0,7,0,0,5,0,0,2,0,0,0]
+    #                              ^ that 7 means "repetition of length 7 from this position to the left"
+    def count_matches(self, s):
+        # Create z array where each value indicates match length starting from that index going backwards.
+        # For performance reasons this is implemented with a variant of the "Z algorithm", which runs in linear time.
+        z = [0] * len(s)
+        end = len(s) - 1
+        # we will move a window through the input tokens (excluding the last token)
+        # using a two pointer technique where the pointers only move in one direction (thus guaranteeing linear runtime)
+        right = end - 1
+        left = end - 1
+        while right >= 0:
+            while left == right and left >= 0:
+                # We are looking for the start of a new match
+                if s[right] == s[end]:
+                    # Start of new match found
+                    break
+                else:
+                    # Match not found
+                    right -= 1
+                    left -= 1
+
+            while left >= 0 and s[left] == s[end - (right - left)]:
+                # Current match continues, update match_length starting from token at right pointer
+                z[right] += 1
+                # Move left pointer to expand the window
+                left -= 1
+
+            helper = right
+            while right > left:
+                # Move right pointer to contract the window
+                right -= 1
+                # Check if window is collapsed to size 0
+                if left == right:
+                    break
+                # This is the magical step in z algorithm where we use previously computed z values to avoid quadratic runtime!
+                z[right] = min(z[end - (helper - right)], right - left)
+                # Check if the result we got is complete result or partial result
+                if left >= 0 and right - z[right] <= left:
+                    # We can't know if the match extends beyond current window, so we need to expand the window one or more times and possibly update the result
+                    break
+
+        return z
 
 
 class MirostatLogitsWarper(LogitsWarper):
