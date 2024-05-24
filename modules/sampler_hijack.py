@@ -284,7 +284,9 @@ class DRYLogitsProcessor(LogitsProcessor):
 
             # Sequence breakers: find the first sequence breaker from the end of input, so that we can count how long is the maximum repeatable sequence
             max_match_length = 0
-            while max_match_length < len(s) and s[len(s) - max_match_length - 1] not in self.sequence_breakers:
+            MAX_MATCH_LENGTH_TO_AVOID_EXPONENT_OVERFLOW = 1000
+            MAX = min(len(s), MAX_MATCH_LENGTH_TO_AVOID_EXPONENT_OVERFLOW)
+            while max_match_length < MAX and s[len(s) - max_match_length - 1] not in self.sequence_breakers:
                 max_match_length += 1
 
             # Sequence breakers: cap all match_length values so that none of the sequences cross over a sequence breaker
