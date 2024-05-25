@@ -264,8 +264,8 @@ class DRYLogitsProcessor(LogitsProcessor):
                 # so the match is at least of length 1.
                 match_length = 1
 
-                # Extend the match backwards as far as possible.
-                while True:
+                # Extend the match backwards (at most to 1000 to prevent exponent overflow at penalty calculation) (this cap also improves performance on worst case)
+                while match_length < 1000:
                     j = i - match_length
                     if j < 0:
                         # Start of input reached.
