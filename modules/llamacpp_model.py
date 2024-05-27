@@ -114,7 +114,18 @@ class LlamaCppModel:
         return self.model.tokenize(string)
 
     def decode(self, ids, **kwargs):
-        return self.model.detokenize(ids).decode('utf-8', 'replace')
+        detokenized = self.model.detokenize(ids)
+        s = ""
+        try:
+            s = detokenized.decode('utf-8', 'strict')
+        except UnicodeDecodeError:
+            try:
+                logger.warning("Detokenized result can't be decoded in utf-8 charset. Fallback to latin.")
+                s = detokenized.decode('latin', 'strict')
+            except UnicodeDecodeError as e:
+                logger.warning("Detokenized result can't be decoded in latin charset. Will attempt to decode as utf-8 with invalid characters replaced with '?' (U+FFFD).")
+                s = detokenized.decode('utf-8', 'replace')
+        return s
 
     def get_logits(self, tokens):
         self.model.reset()
