@@ -118,12 +118,12 @@ class LlamaCppModel:
         s = ""
         try:
             s = detokenized.decode('utf-8', 'strict')
-        except UnicodeDecodeError:
+        except UnicodeDecodeError as e1:
             try:
-                logger.warning("Detokenized result can't be decoded in utf-8 charset. Fallback to latin.")
+                logger.warning(f"Detokenized result can't be decoded in utf-8 charset. Fallback to latin.\n {e1}")
                 s = detokenized.decode('latin', 'strict')
-            except UnicodeDecodeError as e:
-                logger.warning("Detokenized result can't be decoded in latin charset. Will attempt to decode as utf-8 with invalid characters replaced with '?' (U+FFFD).")
+            except UnicodeDecodeError as e2:
+                logger.warning(f"Detokenized result can't be decoded in latin charset. Will attempt to decode as utf-8 with invalid characters replaced with '?' (U+FFFD).\n{e2}")
                 s = detokenized.decode('utf-8', 'replace')
         return s
 
