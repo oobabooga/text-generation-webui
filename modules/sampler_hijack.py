@@ -234,13 +234,10 @@ class DRYLogitsProcessor(LogitsProcessor):
             input_ids = input_ids[:, -self._range:]
 
         for input_ids_row, scores_row in zip(input_ids, scores):
-
             # Use normal Python data types for improved performance
             input_ids = input_ids_row.tolist()
-            
-            # Raw integer must be extracted here to check for set membership.
-            last_token = input_ids[-1]
 
+            last_token = input_ids[-1]
             if last_token in self.sequence_breakers:
                 continue
 
