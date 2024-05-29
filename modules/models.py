@@ -150,6 +150,15 @@ def huggingface_loader(model_name):
 
     if 'chatglm' in model_name.lower():
         LoaderClass = AutoModel
+    elif 'llava' in model_name.lower():
+        from transformers import LlamaConfig, LlamaForCausalLM
+        class LlavaConfig(LlamaConfig):
+            model_type = "llava"
+        class LlavaLlamaForCausalLM(LlamaForCausalLM):
+            config_class = LlavaConfig
+        AutoConfig.register("llava", LlavaConfig, exist_ok=True)
+        AutoModelForCausalLM.register(LlavaConfig, LlavaLlamaForCausalLM, exist_ok=True)
+        LoaderClass = LlavaLlamaForCausalLM
     else:
         if config.to_dict().get('is_encoder_decoder', False):
             LoaderClass = AutoModelForSeq2SeqLM

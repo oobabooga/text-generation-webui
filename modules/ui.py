@@ -108,6 +108,13 @@ def list_model_elements():
         'streaming_llm',
         'attention_sink_size',
         'hqq_backend',
+        'multimodal-pipeline',
+        'add_all_images_to_prompt',
+        'vision_device',
+        'vision_bits',
+        'projector_device',
+        'projector_bits',
+        'shortest_edge_size',
     ]
     if is_torch_xpu_available():
         for i in range(torch.xpu.device_count()):

@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 
 from modules.logging_colors import logger
+from modules.multimodal_embedder import MultimodalEmbedder
 
 # Model variables
 model = None
@@ -16,6 +17,13 @@ model_name = 'None'
 is_seq2seq = False
 model_dirty_from_training = False
 lora_names = []
+
+# Multimodal variables
+multimodal_embedder: MultimodalEmbedder = None
+input_hijack = {
+    'state': False,
+    'value': ["", ""]
+}
 
 # Generation variables
 stop_everything = False
@@ -204,6 +212,12 @@ group.add_argument('--nowebui', action='store_true', help='Do not launch the Gra
 # Multimodal
 group = parser.add_argument_group('Multimodal')
 group.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
+group.add_argument('--add_all_images_to_prompt', action='store_true', default=False, help='Add all images to the prompt.')
+group.add_argument('--vision_device', type=str, default=None, help='The device to use for vision encoder.')
+group.add_argument('--vision_bits', type=int, default=32, help='Bits to load vision encoder in, either 16 or 32.')
+group.add_argument('--projector_device', type=str, default=None, help='The device to use for multimodal projector.')
+group.add_argument('--projector_bits', type=int, default=32, help='Bits to load multimodal projector in, either 16 or 32.')
+group.add_argument('--shortest_edge_size', type=int, default=336, help='The shortest edge size to resize images to before passing them to the vision encoder.')
 
 # Deprecated parameters
 # group = parser.add_argument_group('Deprecated')

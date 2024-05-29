@@ -14,6 +14,7 @@ from modules import loaders, shared, ui, utils
 from modules.logging_colors import logger
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
+from modules.multimodal_utils import get_available_devices, get_available_pipelines
 from modules.models_settings import (
     apply_model_settings_to_state,
     get_model_metadata,
@@ -110,9 +111,16 @@ def create_ui():
                                 shared.gradio['rope_freq_base'] = gr.Slider(label='rope_freq_base', minimum=0, maximum=1000000, step=1000, info='If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63)', value=shared.args.rope_freq_base)
                                 shared.gradio['compress_pos_emb'] = gr.Slider(label='compress_pos_emb', minimum=1, maximum=8, step=1, info='Positional embeddings compression factor. Should be set to (context length) / (model\'s original context length). Equal to 1/rope_freq_scale.', value=shared.args.compress_pos_emb)
 
-                            shared.gradio['autogptq_info'] = gr.Markdown('ExLlamav2_HF is recommended over AutoGPTQ for models derived from Llama.')
-                            shared.gradio['quipsharp_info'] = gr.Markdown('QuIP# has to be installed manually at the moment.')
-
+                            with gr.Blocks():
+                                shared.gradio['multimodal_info'] = gr.Markdown('Multimodal params:')
+                                shared.gradio['multimodal-pipeline'] = gr.Dropdown(label="multimodal-pipeline", choices=get_available_pipelines(loader=None), value=shared.args.multimodal_pipeline)
+                                shared.gradio['add_all_images_to_prompt'] = gr.Checkbox(label="add_all_images_to_prompt", value=shared.args.add_all_images_to_prompt)
+                                shared.gradio['vision_device'] = gr.Dropdown(label="vision_device", choices=get_available_devices(), value=shared.args.vision_device)
+                                shared.gradio['vision_bits'] = gr.Dropdown(label="vision_bits", choices=[32, 16], value=shared.args.vision_bits)
+                                shared.gradio['projector_device'] = gr.Dropdown(label="projector_device", choices=get_available_devices(), value=shared.args.projector_device)
+                                shared.gradio['projector_bits'] = gr.Dropdown(label="projector_bits", choices=[32, 16], value=shared.args.projector_bits)
+                                shared.gradio['shortest_edge_size'] = gr.Slider(label="shortest_edge_size", minimum=224, maximum=500, step=1, value=shared.args.shortest_edge_size)
+                                
                         with gr.Column():
                             shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
                             shared.gradio['load_in_4bit'] = gr.Checkbox(label="load-in-4bit", value=shared.args.load_in_4bit)
@@ -153,6 +161,8 @@ def create_ui():
                             shared.gradio['gptq_for_llama_info'] = gr.Markdown('Legacy loader for compatibility with older GPUs. ExLlamav2_HF or AutoGPTQ are preferred for GPTQ models when supported.')
                             shared.gradio['exllamav2_info'] = gr.Markdown("ExLlamav2_HF is recommended over ExLlamav2 for better integration with extensions and more consistent sampling behavior across loaders.")
                             shared.gradio['llamacpp_HF_info'] = gr.Markdown("llamacpp_HF loads llama.cpp as a Transformers model. To use it, you need to place your GGUF in a subfolder of models/ with the necessary tokenizer files.\n\nYou can use the \"llamacpp_HF creator\" menu to do that automatically.")
+                            shared.gradio['autogptq_info'] = gr.Markdown('ExLlamav2_HF is recommended over AutoGPTQ for models derived from Llama.')
+                            shared.gradio['quipsharp_info'] = gr.Markdown('QuIP# has to be installed manually at the moment.')
 
             with gr.Column():
                 with gr.Row():
@@ -189,7 +199,8 @@ def create_ui():
 def create_event_handlers():
     shared.gradio['loader'].change(
         loaders.make_loader_params_visible, gradio('loader'), gradio(loaders.get_all_params())).then(
-        lambda value: gr.update(choices=loaders.get_model_types(value)), gradio('loader'), gradio('model_type'))
+        lambda value: gr.update(choices=loaders.get_model_types(value)), gradio('loader'), gradio('model_type')).then(
+        lambda value: gr.update(choices=get_available_pipelines(value)), gradio('loader'), gradio('multimodal-pipeline'))
 
     # In this event handler, the interface state is read and updated
     # with the model defaults (if any), and then the model is loaded

@@ -6,6 +6,7 @@ import gradio as gr
 from PIL import Image
 
 from modules import chat, shared, ui, utils
+from modules import multimodal_utils
 from modules.html_generator import chat_html_wrapper
 from modules.text_generation import stop_everything_event
 from modules.utils import gradio
@@ -76,6 +77,8 @@ def create_ui():
                     shared.gradio['rename_to'] = gr.Textbox(label='Rename to:', placeholder='New name', visible=False, elem_classes=['no-background'])
                     shared.gradio['rename_to-confirm'] = gr.Button('Confirm', visible=False, elem_classes=['refresh-button', 'focus-on-chat-input'])
                     shared.gradio['rename_to-cancel'] = gr.Button('Cancel', visible=False, elem_classes=['refresh-button', 'focus-on-chat-input'])
+                    
+                shared.gradio['picture_select'] = gr.Image(label='Send a picture', type='pil', visible=lambda: True if shared.args.multimodal_pipeline else False)
 
         with gr.Row(elem_id='chat-controls', elem_classes=['pretty_scrollbar']):
             with gr.Column():
@@ -281,6 +284,17 @@ def create_event_handlers():
         lambda: [gr.update(visible=False)] * 3, None, gradio('rename_to', 'rename_to-confirm', 'rename_to-cancel'), show_progress=False).then(
         lambda x, y: gr.update(choices=chat.find_all_histories(x), value=y), gradio('interface_state', 'rename_to'), gradio('unique_id'))
 
+    shared.gradio['picture_select'].upload(
+        lambda picture: shared.input_hijack.update({"state": True, "value": partial(multimodal_utils.add_chat_picture, picture)}),
+        [shared.gradio['picture_select']],
+        None)
+    
+    shared.gradio['picture_select'].clear(lambda: shared.input_hijack.update({"state": False, "value": ["", ""]}), None, None)
+    
+    shared.gradio['Generate'].click(lambda: None, None, shared.gradio['picture_select'])
+    
+    shared.gradio['textbox'].submit(lambda: None, None, shared.gradio['picture_select'])
+    
     shared.gradio['load_chat_history'].upload(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.start_new_chat, gradio('interface_state'), gradio('history')).then(

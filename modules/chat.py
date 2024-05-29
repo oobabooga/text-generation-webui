@@ -278,6 +278,11 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     # Prepare the input
     if not (regenerate or _continue):
         visible_text = html.escape(text)
+        
+        # Multimodal chat input modifications
+        if shared.input_hijack['state'] and shared.args.multimodal_pipeline is not None and not shared.args.loader in ['llama.cpp', 'llamacpp_HF']:
+            shared.input_hijack['state'] = False
+            text, visible_text = shared.input_hijack['value'](text, visible_text)
 
         # Apply extensions
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
