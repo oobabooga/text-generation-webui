@@ -1,4 +1,5 @@
 import os
+import importlib
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -189,10 +190,23 @@ class LlamacppHF(PreTrainedModel):
             pretrained_model_name_or_path = Path(pretrained_model_name_or_path)
 
         path = Path(f'{shared.args.model_dir}') / Path(pretrained_model_name_or_path)
+        model_file = None
+        mmproj_file = None
         if path.is_file():
             model_file = path
         else:
-            model_file = sorted(path.glob('*.gguf'))[0]
+            gguf_files = list(path.glob('*.gguf'))
+
+            for file in gguf_files:
+                if 'mmproj' not in file.name:
+                    model_file = file
+                    break
+            mmproj_files = list(path.glob('*mmproj*.gguf')) + list(path.glob('*mmproj*.bin'))
+            if mmproj_files:
+                mmproj_file = mmproj_files[0]
+                logger.info(f"llama.cpp clip weights detected: \"{mmproj_file}\"")
+            else:
+                mmproj_file = None
 
         logger.info(f"llama.cpp weights detected: {model_file}\n")
 
@@ -200,9 +214,15 @@ class LlamacppHF(PreTrainedModel):
             tensor_split_list = None
         else:
             tensor_split_list = [float(x) for x in shared.args.tensor_split.strip().split(",")]
+            
+        if mmproj_file is not None and shared.args.multimodal_pipeline is not None:
+            llama_chat_format_module = importlib.import_module(f"{llama_cpp_lib().__name__}.llama_chat_format")
+            ChatHandler = getattr(llama_chat_format_module, shared.args.multimodal_pipeline)
+            chat_handler = ChatHandler(clip_model_path=str(mmproj_file))
 
         params = {
             'model_path': str(model_file),
+            'chat_handler': chat_handler,
             'n_ctx': shared.args.n_ctx,
             'n_threads': shared.args.threads or None,
             'n_threads_batch': shared.args.threads_batch or None,
