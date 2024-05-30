@@ -113,7 +113,7 @@ def create_ui():
 
                             with gr.Blocks():
                                 shared.gradio['multimodal_info'] = gr.Markdown('Multimodal params:')
-                                shared.gradio['multimodal-pipeline'] = gr.Dropdown(label="multimodal-pipeline", choices=get_available_pipelines(loader=None), value=shared.args.multimodal_pipeline)
+                                shared.gradio['multimodal_pipeline'] = gr.Dropdown(label="multimodal-pipeline", choices=get_available_pipelines(loader=None), value=shared.args.multimodal_pipeline)
                                 shared.gradio['add_all_images_to_prompt'] = gr.Checkbox(label="add_all_images_to_prompt", value=shared.args.add_all_images_to_prompt)
                                 shared.gradio['vision_device'] = gr.Dropdown(label="vision_device", choices=get_available_devices(), value=shared.args.vision_device)
                                 shared.gradio['vision_bits'] = gr.Dropdown(label="vision_bits", choices=[32, 16], value=shared.args.vision_bits)
@@ -126,7 +126,7 @@ def create_ui():
                             shared.gradio['load_in_4bit'] = gr.Checkbox(label="load-in-4bit", value=shared.args.load_in_4bit)
                             shared.gradio['use_double_quant'] = gr.Checkbox(label="use_double_quant", value=shared.args.use_double_quant)
                             shared.gradio['use_flash_attention_2'] = gr.Checkbox(label="use_flash_attention_2", value=shared.args.use_flash_attention_2, info='Set use_flash_attention_2=True while loading the model.')
-                            shared.gradio['flash-attn'] = gr.Checkbox(label="flash-attn", value=shared.args.flash_attn, info='Use flash-attention.')
+                            shared.gradio['flash_attn'] = gr.Checkbox(label="flash-attn", value=shared.args.flash_attn, info='Use flash-attention.')
                             shared.gradio['auto_devices'] = gr.Checkbox(label="auto-devices", value=shared.args.auto_devices)
                             shared.gradio['tensorcores'] = gr.Checkbox(label="tensorcores", value=shared.args.tensorcores, info='NVIDIA only: use llama-cpp-python compiled with tensor cores support. This increases performance on RTX cards.')
                             shared.gradio['streaming_llm'] = gr.Checkbox(label="streaming_llm", value=shared.args.streaming_llm, info='(experimental) Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
@@ -200,7 +200,7 @@ def create_event_handlers():
     shared.gradio['loader'].change(
         loaders.make_loader_params_visible, gradio('loader'), gradio(loaders.get_all_params())).then(
         lambda value: gr.update(choices=loaders.get_model_types(value)), gradio('loader'), gradio('model_type')).then(
-        lambda value: gr.update(choices=get_available_pipelines(value)), gradio('loader'), gradio('multimodal-pipeline'))
+        lambda value: gr.update(choices=get_available_pipelines(value)), gradio('loader'), gradio('multimodal_pipeline'))
 
     # In this event handler, the interface state is read and updated
     # with the model defaults (if any), and then the model is loaded

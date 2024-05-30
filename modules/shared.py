@@ -314,9 +314,6 @@ def load_user_config():
 
 args.loader = fix_loader_name(args.loader)
 
-# Activate the multimodal extension
-if args.multimodal_pipeline is not None:
-    add_extension('multimodal')
 
 # Activate the API extension
 if args.api or args.public_api:

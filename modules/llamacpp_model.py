@@ -1,10 +1,12 @@
 import re
+import importlib
 from functools import partial
 
 import numpy as np
 import torch
 
 from modules import RoPE, llama_cpp_python_hijack, shared
+from modules.utils import gradio
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
@@ -58,10 +60,11 @@ class LlamaCppModel:
         del self.model
 
     @classmethod
-    def from_pretrained(self, path):
+    def from_pretrained(self, path, clip_path=None):
 
         Llama = llama_cpp_lib().Llama
         LlamaCache = llama_cpp_lib().LlamaCache
+        chat_handler = None
 
         result = self()
         cache_capacity = 0
@@ -81,8 +84,14 @@ class LlamaCppModel:
         else:
             tensor_split_list = [float(x) for x in shared.args.tensor_split.strip().split(",")]
 
+        if clip_path is not None and shared.args.multimodal_pipeline is not None:
+            llama_chat_format_module = importlib.import_module(f"{llama_cpp_lib().__name__}.llama_chat_format")
+            ChatHandler = getattr(llama_chat_format_module, shared.args.multimodal_pipeline)
+            chat_handler = ChatHandler(clip_model_path=str(clip_path))
+
         params = {
             'model_path': str(path),
+            'chat_handler': chat_handler,
             'n_ctx': shared.args.n_ctx,
             'n_threads': shared.args.threads or None,
             'n_threads_batch': shared.args.threads_batch or None,

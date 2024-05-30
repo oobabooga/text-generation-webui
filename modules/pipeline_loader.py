@@ -39,7 +39,7 @@ def load_pipeline(params: dict) -> Tuple[AbstractMultimodalPipeline, str]:
                 if pipeline is not None:
                     return (pipeline, k)
 
-    available = get_available_pipelines().remove(None)
+    available = get_available_pipelines(shared.gradio['loader']).remove(None)
 
     if shared.args.multimodal_pipeline is not None:
         log = f'Multimodal - ERROR: Failed to load multimodal pipeline "{shared.args.multimodal_pipeline}", available pipelines are: {available}.'
