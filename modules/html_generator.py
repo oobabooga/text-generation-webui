@@ -11,261 +11,142 @@ from PIL import Image, ImageOps
 from modules import shared
 from modules.utils import get_available_chat_styles
 
-# This is to store the paths to the thumbnails of the profile pictures
+# Cache for profile picture thumbnails
 image_cache = {}
 
-with open(Path(__file__).resolve().parent / '../css/html_readable_style.css', 'r') as f:
-    readable_css = f.read()
-with open(Path(__file__).resolve().parent / '../css/html_instruct_style.css', 'r') as f:
-    instruct_css = f.read()
+# Load CSS files
+def load_css(file_name):
+    with open(Path(__file__).resolve().parent / f'../css/{file_name}', 'r') as f:
+        return f.read()
 
-# Custom chat styles
-chat_styles = {}
-for k in get_available_chat_styles():
-    chat_styles[k] = open(Path(f'css/chat_style-{k}.css'), 'r').read()
+readable_css = load_css('html_readable_style.css')
+instruct_css = load_css('html_instruct_style.css')
 
-# Handle styles that derive from other styles
-for k in chat_styles:
-    lines = chat_styles[k].split('\n')
-    input_string = lines[0]
-    match = re.search(r'chat_style-([a-z\-]*)\.css', input_string)
+# Load custom chat styles
+chat_styles = {style: load_css(f'chat_style-{style}.css') for style in get_available_chat_styles()}
 
-    if match:
-        style = match.group(1)
-        chat_styles[k] = chat_styles.get(style, '') + '\n\n' + '\n'.join(lines[1:])
+# Handle derived styles
+for key, style_css in chat_styles.items():
+    lines = style_css.split('\n')
+    if match := re.match(r'chat_style-([a-z\-]*)\.css', lines[0]):
+        base_style = match.group(1)
+        chat_styles[key] = chat_styles.get(base_style, '') + '\n\n' + '\n'.join(lines[1:])
 
 
 def fix_newlines(string):
-    string = string.replace('\n', '\n\n')
-    string = re.sub(r"\n{3,}", "\n\n", string)
-    string = string.strip()
-    return string
+    return re.sub(r"\n{3,}", "\n\n", string.replace('\n', '\n\n')).strip()
 
 
-def replace_blockquote(m):
-    return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
+def replace_blockquote(match):
+    return match.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
 
 @functools.lru_cache(maxsize=4096)
 def convert_to_markdown(string):
+    try:
+        # Blockquote and code replacements
+        string = re.sub(r'(^|[\n])&gt;', r'\1>', string)
+        string = re.sub(r'\\begin{blockquote}(.*?)\\end{blockquote}', replace_blockquote, string, flags=re.DOTALL)
+        string = string.replace('\\begin{code}', '```').replace('\\end{code}', '```')
+        for env in ['align*', 'align', 'equation', 'equation*']:
+            string = string.replace(f'\\begin{{{env}}}', '$$').replace(f'\\end{{{env}}}', '$$')
+        string = re.sub(r"(.)```", r"\1\n```", string)
 
-    # Blockquote
-    string = re.sub(r'(^|[\n])&gt;', r'\1>', string)
-    pattern = re.compile(r'\\begin{blockquote}(.*?)\\end{blockquote}', re.DOTALL)
-    string = pattern.sub(replace_blockquote, string)
+        # Process lines and handle unfinished code blocks
+        result = ''
+        is_code = False
+        for line in string.split('\n'):
+            is_code = not is_code if line.lstrip(' ').startswith('```') else is_code
+            result += line + ('\n' if is_code or line.startswith('|') else '\n\n')
+        result = result.strip()
+        result += '\n```' if is_code else ''
 
-    # Code
-    string = string.replace('\\begin{code}', '```')
-    string = string.replace('\\end{code}', '```')
-    string = string.replace('\\begin{align*}', '$$')
-    string = string.replace('\\end{align*}', '$$')
-    string = string.replace('\\begin{align}', '$$')
-    string = string.replace('\\end{align}', '$$')
-    string = string.replace('\\begin{equation}', '$$')
-    string = string.replace('\\end{equation}', '$$')
-    string = string.replace('\\begin{equation*}', '$$')
-    string = string.replace('\\end{equation*}', '$$')
-    string = re.sub(r"(.)```", r"\1\n```", string)
-
-    result = ''
-    is_code = False
-    for line in string.split('\n'):
-        if line.lstrip(' ').startswith('```'):
-            is_code = not is_code
-
-        result += line
-        if is_code or line.startswith('|'):  # Don't add an extra \n for tables or code
-            result += '\n'
-        else:
-            result += '\n\n'
-
-    result = result.strip()
-    if is_code:
-        result += '\n```'  # Unfinished code block
-
-    # Unfinished list, like "\n1.". A |delete| string is added and then
-    # removed to force a <ol> or <ul> to be generated instead of a <p>.
-    if re.search(r'(\n\d+\.?|\n\*\s*)$', result):
-        delete_str = '|delete|'
-
-        if re.search(r'(\d+\.?)$', result) and not result.endswith('.'):
-            result += '.'
-
-        result = re.sub(r'(\n\d+\.?|\n\*\s*)$', r'\g<1> ' + delete_str, result)
-
+        # Markdown conversion and unescape code blocks
         html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
-        pos = html_output.rfind(delete_str)
-        if pos > -1:
-            html_output = html_output[:pos] + html_output[pos + len(delete_str):]
-    else:
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        html_output = re.sub(r'<code[^>]*>(.*?)</code>', lambda x: html.unescape(x.group()), html_output, flags=re.DOTALL)
 
-    # Unescape code blocks
-    pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)
-    html_output = pattern.sub(lambda x: html.unescape(x.group()), html_output)
-
-    return html_output
+        return html_output
+    except Exception as e:
+        print(f"Error in convert_to_markdown: {e}")
+        return html.escape(string)
 
 
 def convert_to_markdown_wrapped(string, use_cache=True):
-    '''
-    Used to avoid caching convert_to_markdown calls during streaming.
-    '''
-
-    if use_cache:
-        return convert_to_markdown(string)
-
-    return convert_to_markdown.__wrapped__(string)
+    return convert_to_markdown(string) if use_cache else convert_to_markdown.__wrapped__(string)
 
 
 def generate_basic_html(string):
-    string = convert_to_markdown(string)
-    string = f'<style>{readable_css}</style><div class="readable-container">{string}</div>'
-    return string
+    try:
+        return f'<style>{readable_css}</style><div class="readable-container">{convert_to_markdown(string)}</div>'
+    except Exception as e:
+        print(f"Error in generate_basic_html: {e}")
+        return html.escape(string)
 
 
 def make_thumbnail(image):
-    image = image.resize((350, round(image.size[1] / image.size[0] * 350)), Image.Resampling.LANCZOS)
-    if image.size[1] > 470:
-        image = ImageOps.fit(image, (350, 470), Image.LANCZOS)
-
-    return image
+    try:
+        image = image.resize((350, round(image.size[1] / image.size[0] * 350)), Image.Resampling.LANCZOS)
+        return ImageOps.fit(image, (350, 470), Image.LANCZOS) if image.size[1] > 470 else image
+    except Exception as e:
+        print(f"Error in make_thumbnail: {e}")
+        return image
 
 
 def get_image_cache(path):
-    cache_folder = Path(shared.args.disk_cache_dir)
-    if not cache_folder.exists():
-        cache_folder.mkdir()
+    try:
+        cache_folder = Path(shared.args.disk_cache_dir)
+        cache_folder.mkdir(exist_ok=True)
 
-    mtime = os.stat(path).st_mtime
-    if (path in image_cache and mtime != image_cache[path][0]) or (path not in image_cache):
-        img = make_thumbnail(Image.open(path))
+        mtime = os.stat(path).st_mtime
+        if path not in image_cache or image_cache[path][0] != mtime:
+            img = make_thumbnail(Image.open(path))
+            output_file = cache_folder / f'cache_{path.name}.png'
+            img.convert('RGBA').save(output_file, format='PNG')
+            image_cache[path] = [mtime, output_file.as_posix()]
 
-        old_p = Path(f'{cache_folder}/{path.name}_cache.png')
-        p = Path(f'{cache_folder}/cache_{path.name}.png')
-        if old_p.exists():
-            old_p.rename(p)
-
-        output_file = p
-        img.convert('RGBA').save(output_file, format='PNG')
-        image_cache[path] = [mtime, output_file.as_posix()]
-
-    return image_cache[path][1]
+        return image_cache[path][1]
+    except Exception as e:
+        print(f"Error in get_image_cache: {e}")
+        return ""
 
 
 def generate_instruct_html(history):
-    output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
-    for i, _row in enumerate(history):
-        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
-
-        if row[0]:  # don't display empty user messages
-            output += f"""
-                  <div class="user-message">
-                    <div class="text">
-                      <div class="message-body">
-                        {row[0]}
-                      </div>
-                    </div>
-                  </div>
-                """
-
-        output += f"""
-              <div class="assistant-message">
-                <div class="text">
-                  <div class="message-body">
-                    {row[1]}
-                  </div>
-                </div>
-              </div>
-            """
-
-    output += "</div></div>"
-
-    return output
+    try:
+        messages = ''.join([
+            f'<div class="user-message"><div class="text"><div class="message-body">{convert_to_markdown_wrapped(row[0], use_cache=i != len(history) - 1)}</div></div></div>'
+            if row[0] else ''
+            f'<div class="assistant-message"><div class="text"><div class="message-body">{convert_to_markdown_wrapped(row[1], use_cache=i != len(history) - 1)}</div></div></div>'
+            for i, row in enumerate(history)
+        ])
+        return f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">{messages}</div></div>'
+    except Exception as e:
+        print(f"Error in generate_instruct_html: {e}")
+        return ""
 
 
-def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=False):
-    output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat"><div class="messages">'
+def generate_chat_html(history, name1, name2, style, character, reset_cache=False):
+    try:
+        img_bot = f'<img src="file/cache/pfp_character_thumb.png?{character}" class="pfp_character">' if Path("cache/pfp_character_thumb.png").exists() else ''
+        img_me = f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">' if Path("cache/pfp_me.png").exists() else ''
 
-    # We use ?character and ?time.time() to force the browser to reset caches
-    img_bot = f'<img src="file/cache/pfp_character_thumb.png?{character}" class="pfp_character">' if Path("cache/pfp_character_thumb.png").exists() else ''
-    img_me = f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">' if Path("cache/pfp_me.png").exists() else ''
+        messages = ''.join([
+            f'<div class="message"><div class="circle-you">{img_me}</div><div class="text"><div class="username">{name1}</div><div class="message-body">{convert_to_markdown_wrapped(row[0], use_cache=i != len(history) - 1)}</div></div></div>'
+            if row[0] else ''
+            f'<div class="message"><div class="circle-bot">{img_bot}</div><div class="text"><div class="username">{name2}</div><div class="message-body">{convert_to_markdown_wrapped(row[1], use_cache=i != len(history) - 1)}</div></div></div>'
+            for i, row in enumerate(history)
+        ])
 
-    for i, _row in enumerate(history):
-        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
-
-        if row[0]:  # don't display empty user messages
-            output += f"""
-                  <div class="message">
-                    <div class="circle-you">
-                      {img_me}
-                    </div>
-                    <div class="text">
-                      <div class="username">
-                        {name1}
-                      </div>
-                      <div class="message-body">
-                        {row[0]}
-                      </div>
-                    </div>
-                  </div>
-                """
-
-        output += f"""
-              <div class="message">
-                <div class="circle-bot">
-                  {img_bot}
-                </div>
-                <div class="text">
-                  <div class="username">
-                    {name2}
-                  </div>
-                  <div class="message-body">
-                    {row[1]}
-                  </div>
-                </div>
-              </div>
-            """
-
-    output += "</div></div>"
-    return output
-
-
-def generate_chat_html(history, name1, name2, reset_cache=False):
-    output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat"><div class="messages">'
-
-    for i, _row in enumerate(history):
-        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
-
-        if row[0]:  # don't display empty user messages
-            output += f"""
-              <div class="message">
-                <div class="text-you">
-                  <div class="message-body">
-                    {row[0]}
-                  </div>
-                </div>
-              </div>
-            """
-
-        output += f"""
-          <div class="message">
-            <div class="text-bot">
-              <div class="message-body">
-                {row[1]}
-              </div>
-            </div>
-          </div>
-        """
-
-    output += "</div></div>"
-    return output
+        return f'<style>{chat_styles[style]}</style><div class="chat" id="chat"><div class="messages">{messages}</div></div>'
+    except Exception as e:
+        print(f"Error in generate_chat_html: {e}")
+        return ""
 
 
 def chat_html_wrapper(history, name1, name2, mode, style, character, reset_cache=False):
-    if mode == 'instruct':
-        return generate_instruct_html(history['visible'])
-    elif style == 'wpp':
-        return generate_chat_html(history['visible'], name1, name2)
-    else:
-        return generate_cai_chat_html(history['visible'], name1, name2, style, character, reset_cache)
+    try:
+        if mode == 'instruct':
+            return generate_instruct_html(history['visible'])
+        return generate_chat_html(history['visible'], name1, name2, style, character, reset_cache)
+    except Exception as e:
+        print(f"Error in chat_html_wrapper: {e}")
+        return ""
