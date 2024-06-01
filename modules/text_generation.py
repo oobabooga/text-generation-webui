@@ -16,7 +16,6 @@ from transformers import (
 )
 
 import modules.shared as shared
-import modules.multimodal_embedder as multimodal_embedder
 import modules.multimodal_utils as multimodal_utils
 from modules.cache_utils import process_llamacpp_cache
 from modules.callbacks import (
@@ -168,7 +167,7 @@ def decode(output_ids, skip_special_tokens=True):
 
 def get_encoded_length(prompt):
     if shared.args.multimodal_pipeline is not None and not shared.args.loader in ['llama.cpp', 'llamacpp_HF']:
-        return multimodal_embedder.len_in_tokens(prompt)
+        return shared.multimodal_embedder.len_in_tokens(prompt)
     length_after_extensions = apply_extensions('tokenized_length', prompt)
     if length_after_extensions is not None:
         return length_after_extensions
