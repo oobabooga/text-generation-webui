@@ -17,6 +17,7 @@ from transformers import (
 
 import modules.shared as shared
 import modules.multimodal_utils as multimodal_utils
+from modules.multimodal_embedder import MultimodalEmbedder
 from modules.cache_utils import process_llamacpp_cache
 from modules.callbacks import (
     Iteratorize,
@@ -166,7 +167,16 @@ def decode(output_ids, skip_special_tokens=True):
 
 
 def get_encoded_length(prompt):
-    if shared.args.multimodal_pipeline is not None and not shared.args.loader in ['llama.cpp', 'llamacpp_HF']:
+    # if shared.args.multimodal_pipeline is not None and not shared.args.loader in ['llama.cpp', 'llamacpp_HF']:
+    if shared.args.multimodal_pipeline is not None:
+        multimodal_params = {
+            "add_all_images_to_prompt": shared.args.add_all_images_to_prompt,
+            "vision_device": shared.args.vision_device,
+            "vision_bits": shared.args.vision_bits,
+            "projector_device": shared.args.projector_device,
+            "projector_bits": shared.args.projector_bits,
+        }
+        shared.multimodal_embedder = MultimodalEmbedder(multimodal_params)
         return shared.multimodal_embedder.len_in_tokens(prompt)
     length_after_extensions = apply_extensions('tokenized_length', prompt)
     if length_after_extensions is not None:
@@ -312,8 +322,9 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         generate_params['max_new_tokens'] = state['truncation_length'] - input_ids.shape[-1]
 
     # Add the encoded tokens to generate_params
-    if shared.args.multimodal_pipeline is not None and not shared.args.loader in ['llama.cpp', 'llamacpp_HF']:
-        question, input_ids, inputs_embeds = multimodal_utils.tokenizer_modifier(state, question, input_ids, inputs_embeds)
+    # if shared.args.multimodal_pipeline is not None and not shared.args.loader in ['llama.cpp', 'llamacpp_HF']:
+    if shared.args.multimodal_pipeline is not None:
+        question, input_ids, inputs_embeds = multimodal_utils.tokenizer_modifier(state, question, input_ids, None)
     question, input_ids, inputs_embeds = apply_extensions('tokenizer', state, question, input_ids, None)
     original_input_ids = input_ids
     generate_params.update({'inputs': input_ids})

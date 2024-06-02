@@ -18,12 +18,6 @@ is_seq2seq = False
 model_dirty_from_training = False
 lora_names = []
 
-# Multimodal variables
-multimodal_embedder: MultimodalEmbedder = None
-input_hijack = {
-    'state': False,
-    'value': ["", ""]
-}
 
 # Generation variables
 stop_everything = False
@@ -331,3 +325,11 @@ user_config = load_user_config()
 
 model_config = OrderedDict(model_config)
 user_config = OrderedDict(user_config)
+
+# Multimodal variables
+multimodal_embedder: MultimodalEmbedder = None
+input_hijack = {
+    'state': False,
+    'value': ["", ""]
+}
+llava_cpp_mmproj_path = None

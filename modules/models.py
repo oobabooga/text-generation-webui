@@ -273,7 +273,6 @@ def llamacpp_loader(model_name):
 
     path = Path(f'{shared.args.model_dir}/{model_name}')
     model_file = None
-    mmproj_file = None
     
     if path.is_file():
         model_file = path
@@ -286,13 +285,13 @@ def llamacpp_loader(model_name):
                 break
         mmproj_files = list(path.glob('*mmproj*.gguf')) + list(path.glob('*mmproj*.bin'))
         if mmproj_files:
-            mmproj_file = mmproj_files[0]
-            logger.info(f"llama.cpp clip weights detected: \"{mmproj_file}\"")
+            shared.llava_cpp_mmproj_path = mmproj_files[0]
+            logger.info(f"llama.cpp clip weights detected: \"{shared.llava_cpp_mmproj_path}\"")
         else:
-            mmproj_file = None
+            shared.llava_cpp_mmproj_path = None
 
     logger.info(f"llama.cpp weights detected: \"{model_file}\"")
-    model, tokenizer = LlamaCppModel.from_pretrained(path=model_file, clip_path=mmproj_file)
+    model, tokenizer = LlamaCppModel.from_pretrained(path=model_file)
     return model, tokenizer
 
 

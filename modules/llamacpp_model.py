@@ -60,7 +60,7 @@ class LlamaCppModel:
         del self.model
 
     @classmethod
-    def from_pretrained(self, path, clip_path=None):
+    def from_pretrained(self, path):
 
         Llama = llama_cpp_lib().Llama
         LlamaCache = llama_cpp_lib().LlamaCache
@@ -84,14 +84,14 @@ class LlamaCppModel:
         else:
             tensor_split_list = [float(x) for x in shared.args.tensor_split.strip().split(",")]
 
-        if clip_path is not None and shared.args.multimodal_pipeline is not None:
+        if shared.llava_cpp_mmproj_path is not None and shared.args.multimodal_pipeline is not None:
             llama_chat_format_module = importlib.import_module(f"{llama_cpp_lib().__name__}.llama_chat_format")
             ChatHandler = getattr(llama_chat_format_module, shared.args.multimodal_pipeline)
-            chat_handler = ChatHandler(clip_model_path=str(clip_path))
+            chat_handler = ChatHandler(clip_model_path=str(shared.llava_cpp_mmproj_path))
 
         params = {
             'model_path': str(path),
-            'chat_handler': chat_handler,
+            # 'chat_handler': chat_handler, Load this in llava_cpp pipeline
             'n_ctx': shared.args.n_ctx,
             'n_threads': shared.args.threads or None,
             'n_threads_batch': shared.args.threads_batch or None,

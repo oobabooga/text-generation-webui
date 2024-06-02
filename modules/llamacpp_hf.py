@@ -191,7 +191,6 @@ class LlamacppHF(PreTrainedModel):
 
         path = Path(f'{shared.args.model_dir}') / Path(pretrained_model_name_or_path)
         model_file = None
-        mmproj_file = None
         if path.is_file():
             model_file = path
         else:
@@ -203,10 +202,10 @@ class LlamacppHF(PreTrainedModel):
                     break
             mmproj_files = list(path.glob('*mmproj*.gguf')) + list(path.glob('*mmproj*.bin'))
             if mmproj_files:
-                mmproj_file = mmproj_files[0]
-                logger.info(f"llama.cpp clip weights detected: \"{mmproj_file}\"")
+                shared.llava_cpp_mmproj_path = mmproj_files[0]
+                logger.info(f"llama.cpp clip weights detected: \"{shared.llava_cpp_mmproj_path}\"")
             else:
-                mmproj_file = None
+                shared.llava_cpp_mmproj_path = None
 
         logger.info(f"llama.cpp weights detected: {model_file}\n")
 
@@ -215,14 +214,14 @@ class LlamacppHF(PreTrainedModel):
         else:
             tensor_split_list = [float(x) for x in shared.args.tensor_split.strip().split(",")]
             
-        if mmproj_file is not None and shared.args.multimodal_pipeline is not None:
+        if shared.llava_cpp_mmproj_path is not None and shared.args.multimodal_pipeline is not None:
             llama_chat_format_module = importlib.import_module(f"{llama_cpp_lib().__name__}.llama_chat_format")
             ChatHandler = getattr(llama_chat_format_module, shared.args.multimodal_pipeline)
-            chat_handler = ChatHandler(clip_model_path=str(mmproj_file))
+            chat_handler = ChatHandler(clip_model_path=str(shared.llava_cpp_mmproj_path))
 
         params = {
             'model_path': str(model_file),
-            'chat_handler': chat_handler,
+            # 'chat_handler': chat_handler, Load this in llava_cpp pipeline
             'n_ctx': shared.args.n_ctx,
             'n_threads': shared.args.threads or None,
             'n_threads_batch': shared.args.threads_batch or None,

@@ -7,7 +7,7 @@ from huggingface_hub import hf_hub_download
 from PIL import Image
 from transformers import CLIPImageProcessor, CLIPVisionModel
 
-from extensions.multimodal.abstract_pipeline import AbstractMultimodalPipeline
+from modules.abstract_pipeline import AbstractMultimodalPipeline
 from modules import shared
 from modules.logging_colors import logger
 from modules.text_generation import encode

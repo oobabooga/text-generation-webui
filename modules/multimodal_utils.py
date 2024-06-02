@@ -33,9 +33,7 @@ def get_available_devices():
     return devices
 
 def get_available_pipelines(loader):
-    if loader in ['llama.cpp', 'llamacpp_HF']:
-        return [None, 'Llava15ChatHandler', 'Llava16ChatHandler', 'MoondreamChatHandler', 'NanollavaChatHandler', 'Llama3VisionAlphaChatHandler']
-    else:
+    if loader in ['llama.cpp', 'llamacpp_HF', 'AutoGPTQ', 'GPTQ-for-LLaMa']:
         pipelines_dir = Path(__file__).parent / 'pipelines'
         available_pipelines = [None]
 
@@ -50,6 +48,8 @@ def get_available_pipelines(loader):
                         available_pipelines.extend(pipelines_module.available_pipelines)
 
         return available_pipelines
+    else:
+        return [None]
 
 def add_chat_picture(picture, text, visible_text):
     # resize the image, so that shortest edge is at least 224 (size for CLIP), and at most 300 (to keep history manageable)
