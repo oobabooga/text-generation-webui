@@ -200,25 +200,30 @@ class DRYLogitsProcessor(LogitsProcessor):
         self._range = _range
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+        # Operations used for the algorithm are faster on CPU with numpy.
+        if input_ids.device.type != 'cpu':
+            input_ids = input_ids.to('cpu')
+        input_ids = input_ids.numpy()
+
         if self._range > 0:
             input_ids = input_ids[:, -self._range:]
 
         for input_ids_row, scores_row in zip(input_ids, scores):
             # Raw integer must be extracted here to check for set membership.
-            last_token = input_ids_row[-1].item()
+            last_token = input_ids_row[-1]
 
             if last_token in self.sequence_breakers:
                 continue
 
             # Exclude the last token as it always matches.
-            match_indices = (input_ids_row[:-1] == last_token).nonzero()
+            match_indices = (input_ids_row[:-1] == last_token).nonzero()[0]
 
             # Stores the maximum matching sequence length
             # for each token immediately following the sequence in the input.
             match_lengths = {}
 
             for i in match_indices:
-                next_token = input_ids_row[i+1].item()
+                next_token = input_ids_row[i + 1]
 
                 if next_token in self.sequence_breakers:
                     continue
@@ -234,7 +239,7 @@ class DRYLogitsProcessor(LogitsProcessor):
                         # Start of input reached.
                         break
 
-                    previous_token = input_ids_row[-(match_length+1)].item()
+                    previous_token = input_ids_row[-(match_length + 1)]
                     if input_ids_row[j] != previous_token:
                         # Start of match reached.
                         break
