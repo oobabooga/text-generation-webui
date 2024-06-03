@@ -207,20 +207,21 @@ class LlamacppHF(PreTrainedModel):
             else:
                 shared.llava_cpp_mmproj_path = None
 
-        logger.info(f"llama.cpp weights detected: {model_file}\n")
+        logger.info(f"llama.cpp weights detected: \"{model_file}\"\n")
 
         if shared.args.tensor_split is None or shared.args.tensor_split.strip() == '':
             tensor_split_list = None
         else:
             tensor_split_list = [float(x) for x in shared.args.tensor_split.strip().split(",")]
             
-        if shared.llava_cpp_mmproj_path is not None and shared.args.multimodal_pipeline is not None:
-            llama_chat_format_module = importlib.import_module(f"{llama_cpp_lib().__name__}.llama_chat_format")
-            ChatHandler = getattr(llama_chat_format_module, shared.args.multimodal_pipeline)
-            chat_handler = ChatHandler(clip_model_path=str(shared.llava_cpp_mmproj_path))
+        # if shared.llava_cpp_mmproj_path is not None and shared.args.multimodal_pipeline is not None:
+        #     llama_chat_format_module = importlib.import_module(f"{llama_cpp_lib().__name__}.llama_chat_format")
+        #     ChatHandler = getattr(llama_chat_format_module, shared.args.multimodal_pipeline)
+        #     chat_handler = ChatHandler(clip_model_path=str(shared.llava_cpp_mmproj_path))
 
         params = {
             'model_path': str(model_file),
+            'embedding': True,
             # 'chat_handler': chat_handler, Load this in llava_cpp pipeline
             'n_ctx': shared.args.n_ctx,
             'n_threads': shared.args.threads or None,

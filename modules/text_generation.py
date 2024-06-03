@@ -176,7 +176,8 @@ def get_encoded_length(prompt):
             "projector_device": shared.args.projector_device,
             "projector_bits": shared.args.projector_bits,
         }
-        shared.multimodal_embedder = MultimodalEmbedder(multimodal_params)
+        if shared.multimodal_embedder is None:
+            shared.multimodal_embedder = MultimodalEmbedder(multimodal_params)
         return shared.multimodal_embedder.len_in_tokens(prompt)
     length_after_extensions = apply_extensions('tokenized_length', prompt)
     if length_after_extensions is not None:

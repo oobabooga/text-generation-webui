@@ -47,22 +47,14 @@ class LLaVA_Cpp_Pipeline(AbstractMultimodalPipeline):
         
         if not os.path.exists(self.mmproj_model_path):
             raise ValueError(f"Mmprojector not found at {self.mmproj_model_path}")
+            
+        self.clip_ctx = self._load_clip_model()
         
-        with llama_cpp_lib().suppress_stdout_stderr(disable=self.verbose):
-            clip_ctx = self._llava_cpp.clip_model_load(
-                self.mmproj_model_path.encode(), 0
-            )
-            
-            if clip_ctx is None:
-                raise ValueError(f"Failed to load Mmprojector from {self.mmproj_model_path}")
-            
-            self.clip_ctx = clip_ctx
-            
-            def clip_free():
-                with llama_cpp_lib().suppress_stdout_stderr(disable=self.verbose):
-                    self._llava_cpp.clip_free(self.clip_ctx)
-                    
-            self._exit_stack.callback(clip_free)
+        def clip_free():
+            with llama_cpp_lib().suppress_stdout_stderr(disable=self.verbose):
+                self._llava_cpp.clip_free(self.clip_ctx)
+                
+        self._exit_stack.callback(clip_free)
         
         def last_image_embed_free():
             with llama_cpp_lib().suppress_stdout_stderr(disable=self.verbose):
@@ -73,6 +65,16 @@ class LLaVA_Cpp_Pipeline(AbstractMultimodalPipeline):
                     
         self._exit_stack.callback(last_image_embed_free)
 
+    def _load_clip_model(self):
+        with llama_cpp_lib().suppress_stdout_stderr(disable=self.verbose):
+            clip_ctx = self._llava_cpp.clip_model_load(
+                self.mmproj_model_path.encode(), 0
+            )
+            
+            if clip_ctx is None:
+                raise ValueError(f"Failed to load Mmprojector from {self.mmproj_model_path}")
+            
+        return clip_ctx
 
     @staticmethod
     def name() -> str:
@@ -95,14 +97,29 @@ class LLaVA_Cpp_Pipeline(AbstractMultimodalPipeline):
         return 576
 
     def embed_tokens(self, input_ids: torch.Tensor) -> torch.Tensor:
+        # Step 1: Convert input_ids to list of token IDs
+        input_ids_list = input_ids.tolist()
+        
+        # Step 2: Decode each token ID to corresponding tokens
+        input_text = [shared.tokenizer.decode(token_id) for token_id in input_ids_list]
+        
+        # Step 3: Join tokens to form the input string
+        input_string = ''.join(input_text)
+
+        # Step 4: Use create_embedding method from llama_cpp to get the embedding
+        embedding_response = shared.model.model.create_embedding(input=input_string)
+        
+        # Step 5: Extract embedding data and check dimensions
         embeddings = []
-        for i in range(input_ids.size(0)):
-            embed_ptr = llama_cpp_lib().llama_get_embeddings_ith(self.clip_ctx, int(input_ids[i]))
-            if embed_ptr is None:
-                raise ValueError(f"Failed to get embeddings for token id {input_ids[i]}")
-            embed_array = np.ctypeslib.as_array(embed_ptr, (4096,))
-            embeddings.append(torch.tensor(embed_array))
-        return torch.stack(embeddings)
+        for embed in embedding_response["data"]:
+            embedding_tensor = torch.tensor(embed["embedding"]).to(self.projector_device)
+            embeddings.append(embedding_tensor)
+    
+        # Step 6: Stitch embeddings into a single (1*n) tensor
+        embeddings_tensor = torch.cat(embeddings, dim=0)
+        print(f"Embeddings tensor shape: {embeddings_tensor.shape}")
+        
+        return embeddings_tensor
 
     @staticmethod
     def placeholder_embeddings() -> torch.Tensor:
@@ -128,12 +145,13 @@ class LLaVA_Cpp_Pipeline(AbstractMultimodalPipeline):
                 raise ValueError("llava_image_embed_make_with_bytes returned NULL pointer")
 
             image_embed = image_embed_ptr.contents
-            embed_array = np.ctypeslib.as_array(image_embed.embed, (image_embed.n_image_pos,))
-            image_embeddings.append(torch.tensor(embed_array))
+            embed_array = np.ctypeslib.as_array(image_embed.embed, (image_embed.n_image_pos, shared.model.model.n_embd()))
+            image_embedding = torch.tensor(embed_array)
+            image_embeddings.append(image_embedding)
+            print(f"Image embedding shape: {image_embedding.shape}")
 
-        if not image_embeddings:
-            raise ValueError("No valid image embeddings were generated")
 
         image_embeddings_tensor = torch.stack(image_embeddings)
+        print(f"Image embeddings tensor shape: {image_embeddings_tensor.shape}")
         image_embeddings_tensor = image_embeddings_tensor.to(self.projector_device, dtype=self.projector_dtype)
         return image_embeddings_tensor
