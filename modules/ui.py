@@ -104,7 +104,7 @@ def list_model_elements():
         'no_offload_kqv',
         'row_split',
         'tensorcores',
-        'flash-attn',
+        'flash_attn',
         'streaming_llm',
         'attention_sink_size',
         'hqq_backend',
