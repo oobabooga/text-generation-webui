@@ -3,11 +3,9 @@ name: Docker Image CI
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
-  build:
+  build_and_push:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -17,5 +15,9 @@ jobs:
         echo "Running pre-build commands"
         ln -s docker/{nvidia/Dockerfile,.dockerignore} .
     
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag text-generation-webui:$(date +%s)
+    - name: Build and publish a Docker image for ${{ github.repository }}
+      uses: macbre/push-to-ghcr@master
+      with:
+        image_name: ${{ github.repository }}  # it will be lowercased internally
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        image_tag: $(date:yyyyMMdd)$(rev:.r)
