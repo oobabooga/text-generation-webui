@@ -14,6 +14,6 @@ jobs:
       - uses: tgymnich/fork-sync@v2.0
         with:
           token: ${{ secrets.PERSONAL_TOKEN }}
-          owner: llvm
+          owner: oobabooga
           base: master
           head: master
