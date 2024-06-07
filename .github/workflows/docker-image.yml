@@ -20,4 +20,4 @@ jobs:
       with:
         image_name: ${{ github.repository }}  # it will be lowercased internally
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        image_tag: $(date:yyyyMMdd)$(rev:.r)
+        image_tag: ${{ env.DATE }}.${{ github.run_number }}
