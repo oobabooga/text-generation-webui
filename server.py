@@ -32,7 +32,7 @@ import sys
 import time
 from functools import partial
 from pathlib import Path
-from threading import Lock, Thread
+from threading import RLock, Thread
 
 import yaml
 
@@ -243,7 +243,7 @@ if __name__ == "__main__":
         if shared.args.lora:
             add_lora_to_model(shared.args.lora)
 
-    shared.generation_lock = Lock()
+    shared.generation_lock = RLock()
 
     if shared.args.idle_timeout > 0:
         timer_thread = Thread(target=unload_model_if_idle)
