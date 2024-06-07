@@ -1,0 +1,21 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run pre-build commands
+      run: |
+        echo "Running pre-build commands"
+        ln -s docker/{nvidia/Dockerfile,.dockerignore} .
+    
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag text-generation-webui:$(date +%s)
