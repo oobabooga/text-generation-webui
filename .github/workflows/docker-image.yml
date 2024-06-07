@@ -14,6 +14,7 @@ jobs:
       run: |
         echo "Running pre-build commands"
         ln -s docker/{nvidia/Dockerfile,.dockerignore} .
+        DATE=$(date "+%Y%m%d")
         echo "DATE=$DATE" >> $GITHUB_ENV
     
     - name: Build and publish a Docker image for ${{ github.repository }}
