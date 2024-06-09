@@ -16,6 +16,7 @@ def get_fallback_settings():
         'n_ctx': 2048,
         'rope_freq_base': 0,
         'compress_pos_emb': 1,
+        'alpha_value': 1,
         'truncation_length': shared.settings['truncation_length'],
         'skip_special_tokens': shared.settings['skip_special_tokens'],
         'custom_stopping_strings': shared.settings['custom_stopping_strings'],
@@ -57,6 +58,8 @@ def get_model_metadata(model):
             elif k.endswith('rope.freq_base'):
                 model_settings['rope_freq_base'] = metadata[k]
             elif k.endswith('rope.scale_linear'):
+                model_settings['compress_pos_emb'] = metadata[k]
+            elif k.endswith('rope.scaling.factor'):
                 model_settings['compress_pos_emb'] = metadata[k]
             elif k.endswith('block_count'):
                 model_settings['n_gpu_layers'] = metadata[k] + 1
