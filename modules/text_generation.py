@@ -139,7 +139,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     else:
         input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', add_special_tokens=add_special_tokens)
 
-        if hasattr(shared.tokenizer, 'bos_token_id'):
+        if hasattr(shared.tokenizer, 'bos_token_id') and shared.tokenizer.bos_token_id is not None:
             if add_bos_token:
                 if (len(input_ids[0]) > 0 and input_ids[0][0] != shared.tokenizer.bos_token_id) or len(input_ids[0]) == 0:
                     # Add a missing bos token (it may not have been added due to faulty model metadata)
