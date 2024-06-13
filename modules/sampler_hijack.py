@@ -222,7 +222,7 @@ class DRYLogitsProcessor(LogitsProcessor):
             match_lengths = {}
 
             for i in match_indices:
-                next_token = input_ids[i+1]
+                next_token = input_ids[i + 1]
 
                 if next_token in self.sequence_breakers:
                     continue
@@ -238,7 +238,7 @@ class DRYLogitsProcessor(LogitsProcessor):
                         # Start of input reached.
                         break
 
-                    previous_token = input_ids[-(match_length+1)]
+                    previous_token = input_ids[-(match_length + 1)]
                     if input_ids[j] != previous_token:
                         # Start of match reached.
                         break
