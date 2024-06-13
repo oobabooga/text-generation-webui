@@ -146,9 +146,9 @@ def create_interface():
         ui_model_menu.create_event_handlers()
 
         # Interface launch events
-        shared.gradio['interface'].load(lambda: None, None, None, js=f"() => {{if ({str(shared.settings['dark_theme']).lower()}) {{ document.getElementsByTagName('body')[0].classList.add('dark'); }} }}")
-        shared.gradio['interface'].load(lambda: None, None, None, js=f"() => {{{js}}}")
-        shared.gradio['interface'].load(lambda x: None, gradio('show_controls'), None, js=f'(x) => {{{ui.show_controls_js}; toggle_controls(x)}}')
+        shared.gradio['interface'].load(None, None, None, js=f"() => {{if ({str(shared.settings['dark_theme']).lower()}) {{ document.getElementsByTagName('body')[0].classList.add('dark'); }} }}")
+        shared.gradio['interface'].load(None, None, None, js=f"() => {{{js}}}")
+        shared.gradio['interface'].load(None, gradio('show_controls'), None, js=f'(x) => {{{ui.show_controls_js}; toggle_controls(x)}}')
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         shared.gradio['interface'].load(chat.redraw_html, gradio(ui_chat.reload_arr), gradio('display'))
 
