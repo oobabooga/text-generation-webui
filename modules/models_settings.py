@@ -204,13 +204,10 @@ def update_model_parameters(state, initial=False):
             value = vars(shared.args_defaults)[element]
 
         # Making some simple conversions
-        if element in ['wbits', 'groupsize', 'pre_layer']:
+        if element in ['wbits', 'groupsize']:
             value = int(value)
         elif element == 'cpu_memory' and value is not None:
             value = f"{value}MiB"
-
-        if element in ['pre_layer']:
-            value = [value] if value > 0 else None
 
         setattr(shared.args, element, value)
 

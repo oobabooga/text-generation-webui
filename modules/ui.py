@@ -70,7 +70,6 @@ def list_model_elements():
         'use_double_quant',
         'wbits',
         'groupsize',
-        'pre_layer',
         'triton',
         'desc_act',
         'no_inject_fused_attention',
