@@ -19,7 +19,7 @@ Use these commands to launch the image:
 
 ```
 cd text-generation-webui
-ln -s docker/{nvidia/Dockerfile,docker-compose.yml,.dockerignore} .
+ln -s docker/{nvidia/Dockerfile,nvidia/docker-compose.yml,.dockerignore} .
 cp docker/.env.example .env
 # Edit .env and set TORCH_CUDA_ARCH_LIST based on your GPU model
 docker compose up --build

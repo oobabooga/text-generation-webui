@@ -13,28 +13,6 @@ Source: https://github.com/AUTOMATIC1111/stable-diffusion-webui/pull/1126
 
 This file will be automatically detected the next time you start the web UI.
 
-## Using LoRAs with GPTQ-for-LLaMa
-
-This requires using a monkey patch that is supported by this web UI: https://github.com/johnsmith0031/alpaca_lora_4bit
-
-To use it:
-
-Install alpaca_lora_4bit using pip
-
-```
-git clone https://github.com/johnsmith0031/alpaca_lora_4bit.git
-cd alpaca_lora_4bit
-git fetch origin winglian-setup_pip
-git checkout winglian-setup_pip
-pip install .
-```
-
-Start the UI with the --monkey-patch flag:
-
-```
-python server.py --model llama-7b-4bit-128g --listen --lora tloen_alpaca-lora-7b --monkey-patch
-```
-
 ## DeepSpeed
 
 `DeepSpeed ZeRO-3` is an alternative offloading strategy for full-precision (16-bit) transformers models.
