@@ -1,5 +1,4 @@
 import gc
-import logging
 import os
 import pprint
 import re
@@ -29,7 +28,6 @@ import modules.shared as shared
 from modules import RoPE, sampler_hijack
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
-from modules.relative_imports import RelativeImport
 
 transformers.logging.set_verbosity_error()
 
@@ -267,7 +265,7 @@ def llamacpp_loader(model_name):
     if path.is_file():
         model_file = path
     else:
-        model_file = sorted(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0] 
+        model_file = sorted(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0]
 
     logger.info(f"llama.cpp weights detected: \"{model_file}\"")
     model, tokenizer = LlamaCppModel.from_pretrained(model_file)
