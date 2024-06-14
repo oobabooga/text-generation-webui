@@ -66,7 +66,9 @@ def get_model_metadata(model):
             eos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.eos_token_id']]
             if 'tokenizer.ggml.bos_token_id' in metadata:
                 bos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.bos_token_id']]
-            else: bos_token = None
+            else:
+                bos_token = ""
+
             template = template.replace('eos_token', "'{}'".format(eos_token))
             template = template.replace('bos_token', "'{}'".format(bos_token))
 
