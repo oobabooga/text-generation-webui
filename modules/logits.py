@@ -16,7 +16,7 @@ def get_next_logits(*args, **kwargs):
     if shared.args.idle_timeout > 0 and shared.model is None and shared.previous_model_name not in [None, 'None']:
         shared.model, shared.tokenizer = load_model(shared.previous_model_name)
 
-    needs_lock = kwargs.get('use_samplers', False)
+    needs_lock = not args[2]  # use_samplers
     if needs_lock:
         shared.generation_lock.acquire()
 
@@ -33,7 +33,7 @@ def get_next_logits(*args, **kwargs):
     return result
 
 
-def _get_next_logits(prompt, state, use_samplers=False, previous="", top_logits=25, return_dict=False):
+def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, return_dict=False):
     if shared.model is None:
         logger.error("No model is loaded! Select one in the Model tab.")
         return 'Error: No model is loaded1 Select one in the Model tab.', previous
