@@ -1,11 +1,12 @@
-accelerate==0.27.*
-aqlm[gpu,cpu]==1.1.3; platform_system == "Linux"
+accelerate==0.30.*
+aqlm[gpu,cpu]==1.1.5; platform_system == "Linux"
+auto-gptq==0.7.1
 bitsandbytes==0.43.*
 colorama
 datasets
 einops
 gradio==4.26.*
-hqq==0.1.5
+hqq==0.1.7.post2
 jinja2==3.1.2
 lm_eval==0.3.0
 markdown
@@ -23,7 +24,7 @@ safetensors==0.4.*
 scipy
 sentencepiece
 tensorboard
-transformers==4.40.*
+transformers==4.41.*
 tqdm
 wandb
 
@@ -52,10 +53,6 @@ https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/te
 https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda_tensorcores-0.2.75+cu121-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
 
 # CUDA wheels
-https://github.com/jllllll/AutoGPTQ/releases/download/v0.6.0/auto_gptq-0.6.0+cu121-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
-https://github.com/jllllll/AutoGPTQ/releases/download/v0.6.0/auto_gptq-0.6.0+cu121-cp310-cp310-win_amd64.whl; platform_system == "Windows" and python_version == "3.10"
-https://github.com/jllllll/AutoGPTQ/releases/download/v0.6.0/auto_gptq-0.6.0+cu121-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
-https://github.com/jllllll/AutoGPTQ/releases/download/v0.6.0/auto_gptq-0.6.0+cu121-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
 https://github.com/oobabooga/exllamav2/releases/download/v0.0.20/exllamav2-0.0.20+cu121-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
 https://github.com/oobabooga/exllamav2/releases/download/v0.0.20/exllamav2-0.0.20+cu121-cp310-cp310-win_amd64.whl; platform_system == "Windows" and python_version == "3.10"
 https://github.com/oobabooga/exllamav2/releases/download/v0.0.20/exllamav2-0.0.20+cu121-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
@@ -65,8 +62,4 @@ https://github.com/oobabooga/flash-attention/releases/download/v2.5.6/flash_attn
 https://github.com/oobabooga/flash-attention/releases/download/v2.5.6/flash_attn-2.5.6+cu122torch2.2.0cxx11abiFALSE-cp310-cp310-win_amd64.whl; platform_system == "Windows" and python_version == "3.10"
 https://github.com/Dao-AILab/flash-attention/releases/download/v2.5.6/flash_attn-2.5.6+cu122torch2.2cxx11abiFALSE-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
 https://github.com/Dao-AILab/flash-attention/releases/download/v2.5.6/flash_attn-2.5.6+cu122torch2.2cxx11abiFALSE-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
-https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.1/gptq_for_llama-0.1.1+cu121-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
-https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.1/gptq_for_llama-0.1.1+cu121-cp310-cp310-win_amd64.whl; platform_system == "Windows" and python_version == "3.10"
-https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.1/gptq_for_llama-0.1.1+cu121-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
-https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.1/gptq_for_llama-0.1.1+cu121-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
-autoawq==0.2.3; platform_system == "Linux" or platform_system == "Windows"
+autoawq==0.2.5; platform_system == "Linux" or platform_system == "Windows"

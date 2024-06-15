@@ -64,14 +64,6 @@ Loads: GPTQ models.
 * **no_use_cuda_fp16**: On some systems, the performance can be very bad with this unset. Can usually be ignored.
 * **desc_act**: For ancient models without proper metadata, sets the model "act-order" parameter manually. Can usually be ignored.
 
-### GPTQ-for-LLaMa
-
-Loads: GPTQ models.
-
-Ancient loader, the first one to implement 4-bit quantization. It works on older GPUs for which ExLlamaV2 and AutoGPTQ do not work, and it doesn't work with "act-order", so you should use it with simple 4-bit-128g models.
-
-* **pre_layer**: Used for CPU offloading. The higher the number, the more layers will be sent to the GPU. GPTQ-for-LLaMa CPU offloading was faster than the one implemented in AutoGPTQ the last time I checked.
-
 ### llama.cpp
 
 Loads: GGUF models. Note: GGML models have been deprecated and do not work anymore.
