@@ -2,7 +2,7 @@ import base64
 import os
 import time
 import traceback
-from typing import Callable, Optional, AsyncGenerator, Generator
+from typing import Any, Callable, Optional, AsyncGenerator, Generator
 
 import numpy as np
 from modules import shared
@@ -58,7 +58,7 @@ def _start_cloudflared(port: int, tunnel_id: str, max_attempts: int = 3, on_star
         raise Exception('Could not start cloudflared.')
 
 
-def get_next_generator_result(gen: Generator) -> tuple[any, bool]:
+def get_next_generator_result(gen: Generator) -> tuple[Any, bool]:
     """
     Because StopIteration interacts badly with generators and cannot be raised into a Future
     """
@@ -69,7 +69,7 @@ def get_next_generator_result(gen: Generator) -> tuple[any, bool]:
         return None, True
 
 
-async def generate_in_executor(partial: partial, loop: AbstractEventLoop = None) -> AsyncGenerator[any, any]:
+async def generate_in_executor(partial: partial, loop: AbstractEventLoop|None = None) -> AsyncGenerator[Any, Any]:
     """
     Converts a blocking generator to an async one
     """
@@ -84,7 +84,7 @@ async def generate_in_executor(partial: partial, loop: AbstractEventLoop = None)
         yield result
 
 
-async def run_in_executor(partial: partial, loop: AbstractEventLoop = None) -> Future:
+async def run_in_executor(partial: partial, loop: AbstractEventLoop|None = None) -> Future:
     """
     Runs a blocking function in a new thread so it can be awaited.
     """

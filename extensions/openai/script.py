@@ -239,7 +239,7 @@ async def handle_embeddings(request: Request, request_data: EmbeddingsRequest):
     if not input:
         raise HTTPException(status_code=400, detail="Missing required argument input")
 
-    if type(input) is str:
+    if isinstance(input, str):
         input = [input]
 
     async with embedding_semaphore:
