@@ -492,7 +492,7 @@ def save_history(history, unique_id, character, mode):
         p.parent.mkdir(parents=True)
 
     with open(p, 'w', encoding='utf-8') as f:
-        f.write(json.dumps(history, indent=4))
+        f.write(json.dumps(history, indent=4, ensure_ascii=False))
 
 
 def rename_history(old_id, new_id, character, mode):
