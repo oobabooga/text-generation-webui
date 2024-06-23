@@ -219,7 +219,7 @@ print()
 
 ### Environment variables
 
-The following environment variables can be used (they take precendence over everything else):
+The following environment variables can be used (they take precedence over everything else):
 
 | Variable Name          | Description                                                                                        | Example Value              |
 |------------------------|------------------------------------|----------------------------|
