@@ -131,6 +131,11 @@ loaders_and_params = OrderedDict({
         'hqq_backend',
         'trust_remote_code',
         'no_use_fast',
+    ],
+    'TensorRT-LLM': [
+        'max_seq_len',
+        'cpp_runner',
+        'tensorrt_llm_info',
     ]
 })
 
@@ -316,6 +321,16 @@ loaders_samplers = {
         'skip_special_tokens',
         'auto_max_new_tokens',
     },
+    'TensorRT-LLM': {
+        'temperature',
+        'top_p',
+        'top_k',
+        'repetition_penalty',
+        'presence_penalty',
+        'frequency_penalty',
+        'ban_eos_token',
+        'auto_max_new_tokens',
+    }
 }
 
 

@@ -77,6 +77,7 @@ def load_model(model_name, loader=None):
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'AutoAWQ': AutoAWQ_loader,
         'HQQ': HQQ_loader,
+        'TensorRT-LLM': TensorRT_LLM_loader,
     }
 
     metadata = get_model_metadata(model_name)
@@ -101,7 +102,7 @@ def load_model(model_name, loader=None):
             tokenizer = load_tokenizer(model_name, model)
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
-    if loader.lower().startswith('exllama'):
+    if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt'):
         shared.settings['truncation_length'] = shared.args.max_seq_len
     elif loader in ['llama.cpp', 'llamacpp_HF']:
         shared.settings['truncation_length'] = shared.args.n_ctx
@@ -334,6 +335,13 @@ def HQQ_loader(model_name):
     model_dir = Path(f'{shared.args.model_dir}/{model_name}')
     model = AutoHQQHFModel.from_quantized(str(model_dir))
     HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
+    return model
+
+
+def TensorRT_LLM_loader(model_name):
+    from modules.tensorrt_llm import TensorRTLLMModel
+
+    model = TensorRTLLMModel.from_pretrained(model_name)
     return model
 
 
