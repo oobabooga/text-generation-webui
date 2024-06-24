@@ -3,7 +3,7 @@ colorama
 datasets
 einops
 gradio==4.26.*
-hqq==0.1.7.post2
+hqq==0.1.7.post3
 jinja2==3.1.2
 lm_eval==0.3.0
 markdown
