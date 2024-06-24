@@ -46,6 +46,7 @@ loaders_and_params = OrderedDict({
         'no_offload_kqv',
         'row_split',
         'tensorcores',
+        'flash_attn',
         'streaming_llm',
         'attention_sink_size',
     ],
@@ -71,6 +72,7 @@ loaders_and_params = OrderedDict({
         'no_offload_kqv',
         'row_split',
         'tensorcores',
+        'flash_attn',
         'streaming_llm',
         'attention_sink_size',
         'llamacpp_HF_info',
@@ -103,7 +105,6 @@ loaders_and_params = OrderedDict({
     ],
     'AutoGPTQ': [
         'triton',
-        'no_inject_fused_attention',
         'no_inject_fused_mlp',
         'no_use_cuda_fp16',
         'wbits',
@@ -128,30 +129,6 @@ loaders_and_params = OrderedDict({
         'no_inject_fused_attention',
         'trust_remote_code',
         'no_use_fast',
-    ],
-    'GPTQ-for-LLaMa': [
-        'wbits',
-        'groupsize',
-        'model_type',
-        'pre_layer',
-        'trust_remote_code',
-        'no_use_fast',
-        'gptq_for_llama_info',
-    ],
-    'ctransformers': [
-        'n_ctx',
-        'n_gpu_layers',
-        'n_batch',
-        'threads',
-        'model_type',
-        'no_mmap',
-        'mlock'
-    ],
-    'QuIP#': [
-        'trust_remote_code',
-        'no_use_fast',
-        'no_flash_attn',
-        'quipsharp_info',
     ],
     'HQQ': [
         'hqq_backend',
@@ -190,13 +167,13 @@ def transformers_samplers():
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',
-        'min_length',
+        'dry_multiplier',
+        'dry_base',
+        'dry_allowed_length',
+        'dry_sequence_breakers',
         'seed',
         'do_sample',
         'penalty_alpha',
-        'num_beams',
-        'length_penalty',
-        'early_stopping',
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
@@ -217,9 +194,7 @@ def transformers_samplers():
 loaders_samplers = {
     'Transformers': transformers_samplers(),
     'AutoGPTQ': transformers_samplers(),
-    'GPTQ-for-LLaMa': transformers_samplers(),
     'AutoAWQ': transformers_samplers(),
-    'QuIP#': transformers_samplers(),
     'HQQ': transformers_samplers(),
     'ExLlamav2': {
         'temperature',
@@ -267,7 +242,10 @@ loaders_samplers = {
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',
-        'min_length',
+        'dry_multiplier',
+        'dry_base',
+        'dry_allowed_length',
+        'dry_sequence_breakers',
         'seed',
         'do_sample',
         'mirostat_mode',
@@ -326,7 +304,10 @@ loaders_samplers = {
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',
-        'min_length',
+        'dry_multiplier',
+        'dry_base',
+        'dry_allowed_length',
+        'dry_sequence_breakers',
         'seed',
         'do_sample',
         'mirostat_mode',
@@ -343,13 +324,6 @@ loaders_samplers = {
         'skip_special_tokens',
         'auto_max_new_tokens',
     },
-    'ctransformers': {
-        'temperature',
-        'top_p',
-        'top_k',
-        'repetition_penalty',
-        'repetition_penalty_range',
-    },
     'TensorRT-LLM': {
         'temperature',
         'top_p',
@@ -360,28 +334,6 @@ loaders_samplers = {
         'ban_eos_token',
         'auto_max_new_tokens',
     }
-}
-
-loaders_model_types = {
-    'GPTQ-for-LLaMa': [
-        "None",
-        "llama",
-        "opt",
-        "gptj"
-    ],
-    'ctransformers': [
-        "None",
-        "gpt2",
-        "gptj",
-        "gptneox",
-        "llama",
-        "mpt",
-        "dollyv2",
-        "replit",
-        "starcoder",
-        "gptbigcode",
-        "falcon"
-    ],
 }
 
 
@@ -409,13 +361,6 @@ def blacklist_samplers(loader, dynamic_temperature):
             output.append(gr.update(visible=False))
 
     return output
-
-
-def get_model_types(loader):
-    if loader in loaders_model_types:
-        return loaders_model_types[loader]
-
-    return ["None"]
 
 
 def get_gpu_memory_keys():

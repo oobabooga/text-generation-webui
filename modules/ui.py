@@ -13,6 +13,12 @@ with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r
     css = f.read()
 with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
     css += f.read()
+with open(Path(__file__).resolve().parent / '../css/katex/katex.min.css', 'r') as f:
+    css += f.read()
+with open(Path(__file__).resolve().parent / '../css/highlightjs/github-dark.min.css', 'r') as f:
+    css += f.read()
+with open(Path(__file__).resolve().parent / '../css/highlightjs/highlightjs-copy.min.css', 'r') as f:
+    css += f.read()
 with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
     js = f.read()
 with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
@@ -36,7 +42,7 @@ theme = gr.themes.Default(
     button_large_padding='6px 12px',
     body_text_color_subdued='#484848',
     background_fill_secondary='#eaeaea',
-    background_fill_primary='#fafafa',
+    background_fill_primary='var(--neutral-50)',
 )
 
 if Path("notification.mp3").exists():
@@ -64,8 +70,6 @@ def list_model_elements():
         'use_double_quant',
         'wbits',
         'groupsize',
-        'model_type',
-        'pre_layer',
         'triton',
         'desc_act',
         'no_inject_fused_attention',
@@ -98,6 +102,7 @@ def list_model_elements():
         'no_offload_kqv',
         'row_split',
         'tensorcores',
+        'flash_attn',
         'streaming_llm',
         'attention_sink_size',
         'hqq_backend',
@@ -141,12 +146,12 @@ def list_interface_input_elements():
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',
-        'min_length',
+        'dry_multiplier',
+        'dry_base',
+        'dry_allowed_length',
+        'dry_sequence_breakers',
         'do_sample',
         'penalty_alpha',
-        'num_beams',
-        'length_penalty',
-        'early_stopping',
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
@@ -239,14 +244,16 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
 
     # Save extension values in the UI
     for extension_name in extensions_list:
-        extension = getattr(extensions, extension_name).script
-        if hasattr(extension, 'params'):
-            params = getattr(extension, 'params')
-            for param in params:
-                _id = f"{extension_name}-{param}"
-                # Only save if different from default value
-                if param not in shared.default_settings or params[param] != shared.default_settings[param]:
-                    output[_id] = params[param]
+        extension = getattr(extensions, extension_name, None)
+        if extension:
+            extension = extension.script
+            if hasattr(extension, 'params'):
+                params = getattr(extension, 'params')
+                for param in params:
+                    _id = f"{extension_name}-{param}"
+                    # Only save if different from default value
+                    if param not in shared.default_settings or params[param] != shared.default_settings[param]:
+                        output[_id] = params[param]
 
     # Do not save unchanged settings
     for key in list(output.keys()):

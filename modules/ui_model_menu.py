@@ -8,7 +8,7 @@ from pathlib import Path
 import gradio as gr
 import psutil
 import torch
-from transformers import is_torch_xpu_available
+from transformers import is_torch_npu_available, is_torch_xpu_available
 
 from modules import loaders, shared, ui, utils
 from modules.logging_colors import logger
@@ -32,6 +32,9 @@ def create_ui():
     if is_torch_xpu_available():
         for i in range(torch.xpu.device_count()):
             total_mem.append(math.floor(torch.xpu.get_device_properties(i).total_memory / (1024 * 1024)))
+    elif is_torch_npu_available():
+        for i in range(torch.npu.device_count()):
+            total_mem.append(math.floor(torch.npu.get_device_properties(i).total_memory / (1024 * 1024)))
     else:
         for i in range(torch.cuda.device_count()):
             total_mem.append(math.floor(torch.cuda.get_device_properties(i).total_memory / (1024 * 1024)))
@@ -75,7 +78,7 @@ def create_ui():
         with gr.Row():
             with gr.Column():
                 shared.gradio['loader'] = gr.Dropdown(label="Model loader", choices=loaders.loaders_and_params.keys(), value=None)
-                with gr.Box():
+                with gr.Blocks():
                     with gr.Row():
                         with gr.Column():
                             with gr.Blocks():
@@ -90,31 +93,29 @@ def create_ui():
                                 shared.gradio['quant_type'] = gr.Dropdown(label="quant_type", choices=["nf4", "fp4"], value=shared.args.quant_type)
 
                             shared.gradio['hqq_backend'] = gr.Dropdown(label="hqq_backend", choices=["PYTORCH", "PYTORCH_COMPILE", "ATEN"], value=shared.args.hqq_backend)
-                            shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=256, value=shared.args.n_gpu_layers, info='This must be set to more than 0 for your GPU to be used.')
+                            shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=256, value=shared.args.n_gpu_layers, info='Must be set to more than 0 for your GPU to be used.')
                             shared.gradio['n_ctx'] = gr.Slider(minimum=0, maximum=shared.settings['truncation_length_max'], step=256, label="n_ctx", value=shared.args.n_ctx, info='Context length. Try lowering this if you run out of memory while loading the model.')
                             shared.gradio['tensor_split'] = gr.Textbox(label='tensor_split', info='List of proportions to split the model across multiple GPUs. Example: 18,17')
                             shared.gradio['n_batch'] = gr.Slider(label="n_batch", minimum=1, maximum=2048, step=1, value=shared.args.n_batch)
-                            shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
-                            shared.gradio['threads_batch'] = gr.Slider(label="threads_batch", minimum=0, step=1, maximum=32, value=shared.args.threads_batch)
+                            shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=256, value=shared.args.threads)
+                            shared.gradio['threads_batch'] = gr.Slider(label="threads_batch", minimum=0, step=1, maximum=256, value=shared.args.threads_batch)
                             shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
                             shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
-                            shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None"], value=shared.args.model_type or "None")
-                            shared.gradio['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer[0] if shared.args.pre_layer is not None else 0)
                             shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info='Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7')
                             shared.gradio['max_seq_len'] = gr.Slider(label='max_seq_len', minimum=0, maximum=shared.settings['truncation_length_max'], step=256, info='Context length. Try lowering this if you run out of memory while loading the model.', value=shared.args.max_seq_len)
                             with gr.Blocks():
                                 shared.gradio['alpha_value'] = gr.Slider(label='alpha_value', minimum=1, maximum=8, step=0.05, info='Positional embeddings alpha factor for NTK RoPE scaling. Recommended values (NTKv1): 1.75 for 1.5x context, 2.5 for 2x context. Use either this or compress_pos_emb, not both.', value=shared.args.alpha_value)
-                                shared.gradio['rope_freq_base'] = gr.Slider(label='rope_freq_base', minimum=0, maximum=1000000, step=1000, info='If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63)', value=shared.args.rope_freq_base)
-                                shared.gradio['compress_pos_emb'] = gr.Slider(label='compress_pos_emb', minimum=1, maximum=8, step=1, info='Positional embeddings compression factor. Should be set to (context length) / (model\'s original context length). Equal to 1/rope_freq_scale.', value=shared.args.compress_pos_emb)
+                                shared.gradio['rope_freq_base'] = gr.Slider(label='rope_freq_base', minimum=0, maximum=20000000, step=1000, info='If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63)', value=shared.args.rope_freq_base)
+                                shared.gradio['compress_pos_emb'] = gr.Slider(label='compress_pos_emb', minimum=1, maximum=8, step=0.1, info='Positional embeddings compression factor. Should be set to (context length) / (model\'s original context length). Equal to 1/rope_freq_scale.', value=shared.args.compress_pos_emb)
 
                             shared.gradio['autogptq_info'] = gr.Markdown('ExLlamav2_HF is recommended over AutoGPTQ for models derived from Llama.')
-                            shared.gradio['quipsharp_info'] = gr.Markdown('QuIP# has to be installed manually at the moment.')
 
                         with gr.Column():
                             shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
                             shared.gradio['load_in_4bit'] = gr.Checkbox(label="load-in-4bit", value=shared.args.load_in_4bit)
                             shared.gradio['use_double_quant'] = gr.Checkbox(label="use_double_quant", value=shared.args.use_double_quant)
                             shared.gradio['use_flash_attention_2'] = gr.Checkbox(label="use_flash_attention_2", value=shared.args.use_flash_attention_2, info='Set use_flash_attention_2=True while loading the model.')
+                            shared.gradio['flash_attn'] = gr.Checkbox(label="flash_attn", value=shared.args.flash_attn, info='Use flash-attention.')
                             shared.gradio['auto_devices'] = gr.Checkbox(label="auto-devices", value=shared.args.auto_devices)
                             shared.gradio['tensorcores'] = gr.Checkbox(label="tensorcores", value=shared.args.tensorcores, info='NVIDIA only: use llama-cpp-python compiled with tensor cores support. This increases performance on RTX cards.')
                             shared.gradio['streaming_llm'] = gr.Checkbox(label="streaming_llm", value=shared.args.streaming_llm, info='(experimental) Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
@@ -185,9 +186,7 @@ def create_ui():
 
 
 def create_event_handlers():
-    shared.gradio['loader'].change(
-        loaders.make_loader_params_visible, gradio('loader'), gradio(loaders.get_all_params())).then(
-        lambda value: gr.update(choices=loaders.get_model_types(value)), gradio('loader'), gradio('model_type'))
+    shared.gradio['loader'].change(loaders.make_loader_params_visible, gradio('loader'), gradio(loaders.get_all_params()))
 
     # In this event handler, the interface state is read and updated
     # with the model defaults (if any), and then the model is loaded
@@ -271,6 +270,10 @@ def load_lora_wrapper(selected_loras):
 
 def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False, check=False):
     try:
+        if repo_id == "":
+            yield ("Please enter a model path")
+            return
+
         downloader = importlib.import_module("download-model").ModelDownloader()
 
         progress(0.0)
@@ -288,7 +291,19 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
             return
 
         yield ("Getting the output folder")
-        output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp)
+        output_folder = downloader.get_output_folder(
+            model,
+            branch,
+            is_lora,
+            is_llamacpp=is_llamacpp,
+            model_dir=shared.args.model_dir if shared.args.model_dir != shared.args_defaults.model_dir else None
+        )
+
+        if output_folder == Path("models"):
+            output_folder = Path(shared.args.model_dir)
+        elif output_folder == Path("loras"):
+            output_folder = Path(shared.args.lora_dir)
+
         if check:
             progress(0.5)
 
@@ -332,7 +347,7 @@ def update_truncation_length(current_length, state):
     if 'loader' in state:
         if state['loader'].lower().startswith('exllama'):
             return state['max_seq_len']
-        elif state['loader'] in ['llama.cpp', 'llamacpp_HF', 'ctransformers']:
+        elif state['loader'] in ['llama.cpp', 'llamacpp_HF']:
             return state['n_ctx']
 
     return current_length

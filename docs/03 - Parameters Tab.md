@@ -61,10 +61,6 @@ For more information about the parameters, the [transformers documentation](http
 * **Seed**: Set the Pytorch seed to this number. Note that some loaders do not use Pytorch (notably llama.cpp), and others are not deterministic (ExLlamaV2). For these loaders, the seed has no effect.
 * **encoder_repetition_penalty**: Also known as the "Hallucinations filter". Used to penalize tokens that are *not* in the prior text. Higher value = more likely to stay in context, lower value = more likely to diverge.
 * **no_repeat_ngram_size**: If not set to 0, specifies the length of token sets that are completely blocked from repeating at all. Higher values = blocks larger phrases, lower values = blocks words or letters from repeating. Only 0 or high values are a good idea in most cases.
-* **min_length**: Minimum generation length in tokens. This is a built-in parameter in the transformers library that has never been very useful. Typically you want to check "Ban the eos_token" instead.
-* **num_beams**: Number of beams for beam search. 1 means no beam search.
-* **length_penalty**: Used by beam search only. `length_penalty > 0.0` promotes longer sequences, while `length_penalty < 0.0` encourages shorter sequences.
-* **early_stopping**: Used by beam search only. When checked, the generation stops as soon as there are "num_beams" complete candidates; otherwise, a heuristic is applied and the generation stops when is it very unlikely to find better candidates (I just copied this from the transformers documentation and have never gotten beam search to generate good results).
 
 To the right (or below if you are on mobile), the following parameters are present:
 

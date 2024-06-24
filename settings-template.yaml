@@ -5,7 +5,7 @@ mode: chat
 chat_style: cai-chat
 prompt-default: QA
 prompt-notebook: QA
-preset: simple-1
+preset: min_p
 max_new_tokens: 512
 max_new_tokens_min: 1
 max_new_tokens_max: 4096
@@ -75,5 +75,4 @@ chat-instruct_command: |-
 autoload_model: false
 gallery-items_per_page: 50
 gallery-open: false
-default_extensions:
-- gallery
+default_extensions: []

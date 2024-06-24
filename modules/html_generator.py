@@ -1,8 +1,8 @@
+import functools
 import html
 import os
 import re
 import time
-import functools
 from pathlib import Path
 
 import markdown
@@ -16,8 +16,6 @@ image_cache = {}
 
 with open(Path(__file__).resolve().parent / '../css/html_readable_style.css', 'r') as f:
     readable_css = f.read()
-with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') as css_f:
-    _4chan_css = css_f.read()
 with open(Path(__file__).resolve().parent / '../css/html_instruct_style.css', 'r') as f:
     instruct_css = f.read()
 
@@ -59,6 +57,14 @@ def convert_to_markdown(string):
     # Code
     string = string.replace('\\begin{code}', '```')
     string = string.replace('\\end{code}', '```')
+    string = string.replace('\\begin{align*}', '$$')
+    string = string.replace('\\end{align*}', '$$')
+    string = string.replace('\\begin{align}', '$$')
+    string = string.replace('\\end{align}', '$$')
+    string = string.replace('\\begin{equation}', '$$')
+    string = string.replace('\\end{equation}', '$$')
+    string = string.replace('\\begin{equation*}', '$$')
+    string = string.replace('\\end{equation*}', '$$')
     string = re.sub(r"(.)```", r"\1\n```", string)
 
     result = ''
@@ -118,63 +124,6 @@ def generate_basic_html(string):
     return string
 
 
-def process_post(post, c):
-    t = post.split('\n')
-    number = t[0].split(' ')[1]
-    if len(t) > 1:
-        src = '\n'.join(t[1:])
-    else:
-        src = ''
-    src = re.sub('>', '&gt;', src)
-    src = re.sub('(&gt;&gt;[0-9]*)', '<span class="quote">\\1</span>', src)
-    src = re.sub('\n', '<br>\n', src)
-    src = f'<blockquote class="message_4chan">{src}\n'
-    src = f'<span class="name">Anonymous </span> <span class="number">No.{number}</span>\n{src}'
-    return src
-
-
-def generate_4chan_html(f):
-    posts = []
-    post = ''
-    c = -2
-    for line in f.splitlines():
-        line += "\n"
-        if line == '-----\n':
-            continue
-        elif line.startswith('--- '):
-            c += 1
-            if post != '':
-                src = process_post(post, c)
-                posts.append(src)
-            post = line
-        else:
-            post += line
-
-    if post != '':
-        src = process_post(post, c)
-        posts.append(src)
-
-    for i in range(len(posts)):
-        if i == 0:
-            posts[i] = f'<div class="op">{posts[i]}</div>\n'
-        else:
-            posts[i] = f'<div class="reply">{posts[i]}</div>\n'
-
-    output = ''
-    output += f'<style>{_4chan_css}</style><div id="parent"><div id="container">'
-    for post in posts:
-        output += post
-
-    output += '</div></div>'
-    output = output.split('\n')
-    for i in range(len(output)):
-        output[i] = re.sub(r'^(&gt;(.*?)(<br>|</div>))', r'<span class="greentext">\1</span>', output[i])
-        output[i] = re.sub(r'^<blockquote class="message_4chan">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message_4chan"><span class="greentext">\1</span>', output[i])
-
-    output = '\n'.join(output)
-    return output
-
-
 def make_thumbnail(image):
     image = image.resize((350, round(image.size[1] / image.size[0] * 350)), Image.Resampling.LANCZOS)
     if image.size[1] > 470:
@@ -198,7 +147,7 @@ def get_image_cache(path):
             old_p.rename(p)
 
         output_file = p
-        img.convert('RGB').save(output_file, format='PNG')
+        img.convert('RGBA').save(output_file, format='PNG')
         image_cache[path] = [mtime, output_file.as_posix()]
 
     return image_cache[path][1]

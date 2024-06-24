@@ -64,14 +64,6 @@ Loads: GPTQ models.
 * **no_use_cuda_fp16**: On some systems, the performance can be very bad with this unset. Can usually be ignored.
 * **desc_act**: For ancient models without proper metadata, sets the model "act-order" parameter manually. Can usually be ignored.
 
-### GPTQ-for-LLaMa
-
-Loads: GPTQ models.
-
-Ancient loader, the first one to implement 4-bit quantization. It works on older GPUs for which ExLlamaV2 and AutoGPTQ do not work, and it doesn't work with "act-order", so you should use it with simple 4-bit-128g models.
-
-* **pre_layer**: Used for CPU offloading. The higher the number, the more layers will be sent to the GPU. GPTQ-for-LLaMa CPU offloading was faster than the one implemented in AutoGPTQ the last time I checked.
-
 ### llama.cpp
 
 Loads: GGUF models. Note: GGML models have been deprecated and do not work anymore.
@@ -104,12 +96,6 @@ To use it, you need to download a tokenizer. There are two options:
 It has an additional parameter:
 
 * **logits_all**: Needs to be checked if you want to evaluate the perplexity of the llama.cpp model using the "Training" > "Perplexity evaluation" tab. Otherwise, leave it unchecked, as it makes prompt processing slower.
-
-### ctransformers
-
-Loads: GGUF/GGML models.
-
-Similar to llama.cpp but it works for certain GGUF/GGML models not originally supported by llama.cpp like Falcon, StarCoder, StarChat, and GPT-J.
 
 ### AutoAWQ
 

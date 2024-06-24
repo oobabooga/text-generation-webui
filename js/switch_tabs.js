@@ -32,27 +32,27 @@ function switch_to_chat() {
 }
 
 function switch_to_default() {
-  let default_tab_button = main_parent.childNodes[0].childNodes[4];
+  let default_tab_button = main_parent.childNodes[0].childNodes[5];
   default_tab_button.click();
   scrollToTop();
 }
 
 function switch_to_notebook() {
-  let notebook_tab_button = main_parent.childNodes[0].childNodes[7];
+  let notebook_tab_button = main_parent.childNodes[0].childNodes[9];
   notebook_tab_button.click();
   findButtonsByText("Raw")[1].click();
   scrollToTop();
 }
 
 function switch_to_generation_parameters() {
-  let parameters_tab_button = main_parent.childNodes[0].childNodes[10];
+  let parameters_tab_button = main_parent.childNodes[0].childNodes[13];
   parameters_tab_button.click();
   findButtonsByText("Generation")[0].click();
   scrollToTop();
 }
 
 function switch_to_character() {
-  let parameters_tab_button = main_parent.childNodes[0].childNodes[10];
+  let parameters_tab_button = main_parent.childNodes[0].childNodes[13];
   parameters_tab_button.click();
   findButtonsByText("Character")[0].click();
   scrollToTop();
