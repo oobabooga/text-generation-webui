@@ -98,20 +98,6 @@ document.addEventListener("keydown", function(event) {
     document.getElementById("Impersonate").click();
   }
 
-  // Switch between tabs on Tab
-  else if (!event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey && event.key === "Tab") {
-    event.preventDefault();
-    var parametersButton = document.getElementById("parameters-button");
-    var parentContainer = parametersButton.parentNode;
-    var selectedChild = parentContainer.querySelector(".selected");
-
-    if (selectedChild.id == "parameters-button") {
-      document.getElementById(previousTabId).click();
-    } else {
-      previousTabId = selectedChild.id;
-      parametersButton.click();
-    }
-  }
 });
 
 //------------------------------------------------
