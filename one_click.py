@@ -16,9 +16,9 @@ import sys
 
 
 # Define the required PyTorch version
-TORCH_VERSION = "2.2.1"
-TORCHVISION_VERSION = "0.17.1"
-TORCHAUDIO_VERSION = "2.2.1"
+TORCH_VERSION = "2.2.2"
+TORCHVISION_VERSION = "0.17.2"
+TORCHAUDIO_VERSION = "2.2.2"
 
 # Environment
 script_dir = os.getcwd()
@@ -315,7 +315,7 @@ def install_webui():
         run_cmd("conda install -y libuv")
 
     # Install the webui requirements
-    update_requirements(initial_installation=True)
+    update_requirements(initial_installation=True, pull=False)
 
 
 def get_extensions_names():
@@ -388,7 +388,7 @@ def update_requirements(initial_installation=False, pull=True):
     # Prepare the requirements file
     textgen_requirements = open(requirements_file).read().splitlines()
     if is_cuda118:
-        textgen_requirements = [req.replace('+cu121', '+cu118').replace('+cu122', '+cu118') for req in textgen_requirements]
+        textgen_requirements = [req.replace('+cu121', '+cu118').replace('+cu122', '+cu118') for req in textgen_requirements if "auto-gptq" not in req]
     if is_windows() and is_cuda118:  # No flash-attention on Windows for CUDA 11
         textgen_requirements = [req for req in textgen_requirements if 'oobabooga/flash-attention' not in req]
 

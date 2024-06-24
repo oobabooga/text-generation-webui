@@ -62,8 +62,8 @@
 
 .gradio-container .chat .user-message {
     padding: 20px;
-    padding-left: 0px;
-    padding-right: 0px;
+    padding-left: 0;
+    padding-right: 0;
     background-color: transparent;
     border-radius: 8px;
     border-bottom-right-radius: 0;

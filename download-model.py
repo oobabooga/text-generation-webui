@@ -138,9 +138,12 @@ class ModelDownloader:
             cursor = cursor.replace(b'=', b'%3D')
 
         # If both pytorch and safetensors are available, download safetensors only
-        if (has_pytorch or has_pt) and has_safetensors:
+        # Also if GGUF and safetensors are available, download only safetensors
+        # (why do people do this?)
+        if (has_pytorch or has_pt or has_gguf) and has_safetensors:
+            has_gguf = False
             for i in range(len(classifications) - 1, -1, -1):
-                if classifications[i] in ['pytorch', 'pt']:
+                if classifications[i] in ['pytorch', 'pt', 'gguf']:
                     links.pop(i)
 
         # For GGUF, try to download only the Q4_K_M if no specific file is specified.
@@ -164,8 +167,11 @@ class ModelDownloader:
         is_llamacpp = has_gguf and specific_file is not None
         return links, sha256, is_lora, is_llamacpp
 
-    def get_output_folder(self, model, branch, is_lora, is_llamacpp=False):
-        base_folder = 'models' if not is_lora else 'loras'
+    def get_output_folder(self, model, branch, is_lora, is_llamacpp=False, model_dir=None):
+        if model_dir:
+            base_folder = model_dir
+        else:
+            base_folder = 'models' if not is_lora else 'loras'
 
         # If the model is of type GGUF, save directly in the base_folder
         if is_llamacpp:
@@ -190,17 +196,17 @@ class ModelDownloader:
             headers = {}
             mode = 'wb'
 
-            if output_path.exists() and not start_from_scratch:
-                # Resume download
-                r = session.get(url, stream=True, timeout=20)
-                total_size = int(r.headers.get('content-length', 0))
-                if output_path.stat().st_size >= total_size:
-                    return
-
-                headers = {'Range': f'bytes={output_path.stat().st_size}-'}
-                mode = 'ab'
-
             try:
+                if output_path.exists() and not start_from_scratch:
+                    # Resume download
+                    r = session.get(url, stream=True, timeout=20)
+                    total_size = int(r.headers.get('content-length', 0))
+                    if output_path.stat().st_size >= total_size:
+                        return
+
+                    headers = {'Range': f'bytes={output_path.stat().st_size}-'}
+                    mode = 'ab'
+
                 with session.get(url, stream=True, headers=headers, timeout=30) as r:
                     r.raise_for_status()  # If status is not 2xx, raise an error
                     total_size = int(r.headers.get('content-length', 0))
@@ -301,7 +307,8 @@ if __name__ == '__main__':
     parser.add_argument('--threads', type=int, default=4, help='Number of files to download simultaneously.')
     parser.add_argument('--text-only', action='store_true', help='Only download text files (txt/json).')
     parser.add_argument('--specific-file', type=str, default=None, help='Name of the specific file to download (if not provided, downloads all).')
-    parser.add_argument('--output', type=str, default=None, help='The folder where the model should be saved.')
+    parser.add_argument('--output', type=str, default=None, help='Save the model files to this folder.')
+    parser.add_argument('--model-dir', type=str, default=None, help='Save the model files to a subfolder of this folder instead of the default one (text-generation-webui/models).')
     parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
     parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
     parser.add_argument('--max-retries', type=int, default=5, help='Max retries count when get error in download time.')
@@ -330,7 +337,7 @@ if __name__ == '__main__':
     if args.output:
         output_folder = Path(args.output)
     else:
-        output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp)
+        output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp, model_dir=args.model_dir)
 
     if args.check:
         # Check previously downloaded files
