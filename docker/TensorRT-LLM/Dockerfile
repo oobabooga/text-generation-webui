@@ -13,7 +13,6 @@ WORKDIR /app
 RUN git clone https://github.com/oobabooga/text-generation-webui
 WORKDIR /app/text-generation-webui
 RUN pip install -r requirements.txt
-RUN pip uninstall -y flash_attn  # Incompatible with the PyTorch version installed by TensorRT-LLM
 
 # This is needed to avoid an error about "Failed to build mpi4py" in the next command
 ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
