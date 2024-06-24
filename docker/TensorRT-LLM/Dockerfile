@@ -19,7 +19,7 @@ RUN pip uninstall -y flash_attn  # Incompatible with the PyTorch version install
 ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
 
 # Install TensorRT-LLM
-RUN pip3 install tensorrt_llm==0.9.0.dev2024030500 -U --pre --extra-index-url https://pypi.nvidia.com
+RUN pip3 install tensorrt_llm==0.10.0 -U --pre --extra-index-url https://pypi.nvidia.com
 
 # Expose the necessary port for the Python server
 EXPOSE 7860 5000
