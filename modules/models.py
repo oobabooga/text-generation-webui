@@ -25,7 +25,7 @@ from transformers import (
 )
 
 import modules.shared as shared
-from modules import RoPE, sampler_hijack
+from modules import sampler_hijack
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
 
@@ -249,7 +249,7 @@ def huggingface_loader(model_name):
         if shared.args.compress_pos_emb > 1:
             params['rope_scaling'] = {'type': 'linear', 'factor': shared.args.compress_pos_emb}
         elif shared.args.alpha_value > 1:
-            params['rope_scaling'] = {'type': 'dynamic', 'factor': RoPE.get_alpha_value(shared.args.alpha_value, shared.args.rope_freq_base)}
+            params['rope_scaling'] = {'type': 'dynamic', 'factor': shared.args.alpha_value}
 
         logger.info("TRANSFORMERS_PARAMS=")
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(params)
