@@ -510,6 +510,57 @@ def rename_history(old_id, new_id, character, mode):
         old_p.rename(new_p)
 
 
+def find_all_histories_with_first_prompts(state):
+    if shared.args.multi_user:
+        return []
+
+    if state['mode'] == 'instruct':
+        paths = Path('logs/instruct').glob('*.json')
+    else:
+        character = state['character_menu']
+
+        # Handle obsolete filenames and paths
+        old_p = Path(f'logs/{character}_persistent.json')
+        new_p = Path(f'logs/persistent_{character}.json')
+        if old_p.exists():
+            logger.warning(f"Renaming \"{old_p}\" to \"{new_p}\"")
+            old_p.rename(new_p)
+
+        if new_p.exists():
+            unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
+            p = get_history_file_path(unique_id, character, state['mode'])
+            logger.warning(f"Moving \"{new_p}\" to \"{p}\"")
+            p.parent.mkdir(exist_ok=True)
+            new_p.rename(p)
+
+        paths = Path(f'logs/chat/{character}').glob('*.json')
+
+    histories = sorted(paths, key=lambda x: x.stat().st_mtime, reverse=True)
+
+    result = []
+    for path in histories:
+        filename = path.stem
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            if 'visible' in data and len(data['visible']) > 0:
+                if data['internal'][0][0] == '<|BEGIN-VISIBLE-CHAT|>':
+                    first_prompt = data['visible'][1][0] if len(data['visible']) > 1 else ''
+                else:
+                    first_prompt = data['visible'][0][0]
+
+                first_prompt = html.unescape(first_prompt)
+            else:
+                first_prompt = ''
+
+            # Truncate the first prompt if it's longer than 32 characters
+            if len(first_prompt) > 32:
+                first_prompt = first_prompt[:29] + '...'
+
+            result.append((first_prompt[:32], filename))
+
+    return result
+
+
 def find_all_histories(state):
     if shared.args.multi_user:
         return ['']
@@ -569,17 +620,17 @@ def load_history_after_deletion(state, idx):
     if shared.args.multi_user:
         return start_new_chat(state)
 
-    histories = find_all_histories(state)
+    histories = find_all_histories_with_first_prompts(state)
     idx = min(int(idx), len(histories) - 1)
     idx = max(0, idx)
 
     if len(histories) > 0:
-        history = load_history(histories[idx], state['character_menu'], state['mode'])
+        history = load_history(histories[idx][1], state['character_menu'], state['mode'])
     else:
         history = start_new_chat(state)
-        histories = find_all_histories(state)
+        histories = find_all_histories_with_first_prompts
 
-    return history, gr.update(choices=histories, value=histories[idx])
+    return history, gr.update(choices=histories, value=histories[idx][1])
 
 
 def update_character_menu_after_deletion(idx):
