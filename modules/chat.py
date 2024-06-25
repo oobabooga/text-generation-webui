@@ -510,12 +510,9 @@ def rename_history(old_id, new_id, character, mode):
         old_p.rename(new_p)
 
 
-def find_all_histories_with_first_prompts(state):
-    if shared.args.multi_user:
-        return []
-
+def get_paths(state):
     if state['mode'] == 'instruct':
-        paths = Path('logs/instruct').glob('*.json')
+        return Path('logs/instruct').glob('*.json')
     else:
         character = state['character_menu']
 
@@ -533,8 +530,23 @@ def find_all_histories_with_first_prompts(state):
             p.parent.mkdir(exist_ok=True)
             new_p.rename(p)
 
-        paths = Path(f'logs/chat/{character}').glob('*.json')
+        return Path(f'logs/chat/{character}').glob('*.json')
 
+
+def find_all_histories(state):
+    if shared.args.multi_user:
+        return ['']
+
+    paths = get_paths(state)
+    histories = sorted(paths, key=lambda x: x.stat().st_mtime, reverse=True)
+    return [path.stem for path in histories]
+
+
+def find_all_histories_with_first_prompts(state):
+    if shared.args.multi_user:
+        return []
+
+    paths = get_paths(state)
     histories = sorted(paths, key=lambda x: x.stat().st_mtime, reverse=True)
 
     result = []
@@ -559,37 +571,6 @@ def find_all_histories_with_first_prompts(state):
             result.append((first_prompt[:32], filename))
 
     return result
-
-
-def find_all_histories(state):
-    if shared.args.multi_user:
-        return ['']
-
-    if state['mode'] == 'instruct':
-        paths = Path('logs/instruct').glob('*.json')
-    else:
-        character = state['character_menu']
-
-        # Handle obsolete filenames and paths
-        old_p = Path(f'logs/{character}_persistent.json')
-        new_p = Path(f'logs/persistent_{character}.json')
-        if old_p.exists():
-            logger.warning(f"Renaming \"{old_p}\" to \"{new_p}\"")
-            old_p.rename(new_p)
-
-        if new_p.exists():
-            unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
-            p = get_history_file_path(unique_id, character, state['mode'])
-            logger.warning(f"Moving \"{new_p}\" to \"{p}\"")
-            p.parent.mkdir(exist_ok=True)
-            new_p.rename(p)
-
-        paths = Path(f'logs/chat/{character}').glob('*.json')
-
-    histories = sorted(paths, key=lambda x: x.stat().st_mtime, reverse=True)
-    histories = [path.stem for path in histories]
-
-    return histories
 
 
 def load_latest_history(state):
