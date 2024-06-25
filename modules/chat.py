@@ -550,7 +550,7 @@ def find_all_histories_with_first_prompts(state):
     histories = sorted(paths, key=lambda x: x.stat().st_mtime, reverse=True)
 
     result = []
-    for path in histories:
+    for i, path in enumerate(histories):
         filename = path.stem
         with open(path, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -561,6 +561,8 @@ def find_all_histories_with_first_prompts(state):
                     first_prompt = data['visible'][0][0]
 
                 first_prompt = html.unescape(first_prompt)
+            elif i == 0:
+                first_prompt = "New chat"
             else:
                 first_prompt = ''
 
