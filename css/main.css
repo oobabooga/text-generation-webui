@@ -752,7 +752,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #past-chats {
     max-height: calc(100vh - 195px);
     overflow-y: scroll !important;
-    border-radius: 0px;
+    border-radius: 0;
     scrollbar-width: none; /* Hide scrollbar in Firefox by default */
 }
 
@@ -761,7 +761,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     background-color: transparent !important;
     background: none;
     border: 0;
-    border-radius: 0px;
+    border-radius: 0;
     padding-top: 8px;
     padding-bottom: 8px;
 }
@@ -771,7 +771,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #past-chats > :nth-child(3) {
-    gap: 0px;
+    gap: 0;
 }
 
 #past-chats::-webkit-scrollbar {
