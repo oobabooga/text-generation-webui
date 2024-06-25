@@ -534,3 +534,8 @@ document.querySelectorAll(".focus-on-chat-input").forEach(element => {
     document.querySelector("#chat-input textarea").focus();
   });
 });
+
+//------------------------------------------------
+// Fix a border around the "past chats" menu
+//------------------------------------------------
+document.getElementById("past-chats").parentNode.style.borderRadius = "0px";
