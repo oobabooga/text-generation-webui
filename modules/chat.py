@@ -495,21 +495,6 @@ def save_history(history, unique_id, character, mode):
         f.write(json.dumps(history, indent=4, ensure_ascii=False))
 
 
-def rename_history(old_id, new_id, character, mode):
-    if shared.args.multi_user:
-        return
-
-    old_p = get_history_file_path(old_id, character, mode)
-    new_p = get_history_file_path(new_id, character, mode)
-    if new_p.parent != old_p.parent:
-        logger.error(f"The following path is not allowed: \"{new_p}\".")
-    elif new_p == old_p:
-        logger.info("The provided path is identical to the old one.")
-    else:
-        logger.info(f"Renaming \"{old_p}\" to \"{new_p}\"")
-        old_p.rename(new_p)
-
-
 def get_paths(state):
     if state['mode'] == 'instruct':
         return Path('logs/instruct').glob('*.json')
