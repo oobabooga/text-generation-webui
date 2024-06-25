@@ -688,13 +688,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 /* ----------------------------------------------
-  Past chats menus
----------------------------------------------- */
-#rename-row label {
-    margin-top: var(--layout-gap);
-}
-
-/* ----------------------------------------------
   Past chat histories in a side bar on desktop
 ---------------------------------------------- */
 @media screen and (width >= 1327px) {
