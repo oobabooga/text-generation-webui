@@ -539,17 +539,18 @@ def find_all_histories_with_first_prompts(state):
         filename = path.stem
         with open(path, 'r', encoding='utf-8') as f:
             data = json.load(f)
+
+            first_prompt = ""
             if 'visible' in data and len(data['visible']) > 0:
                 if data['internal'][0][0] == '<|BEGIN-VISIBLE-CHAT|>':
-                    first_prompt = data['visible'][1][0] if len(data['visible']) > 1 else ''
+                    if len(data['visible']) > 1:
+                        first_prompt = html.unescape(data['visible'][1][0])
+                    elif i == 0:
+                        first_prompt = "New chat"
                 else:
-                    first_prompt = data['visible'][0][0]
-
-                first_prompt = html.unescape(first_prompt)
+                    first_prompt = html.unescape(data['visible'][0][0])
             elif i == 0:
                 first_prompt = "New chat"
-            else:
-                first_prompt = ''
 
             first_prompt = first_prompt.strip()
 
@@ -598,7 +599,7 @@ def load_history_after_deletion(state, idx):
         history = load_history(histories[idx][1], state['character_menu'], state['mode'])
     else:
         history = start_new_chat(state)
-        histories = find_all_histories_with_first_prompts
+        histories = find_all_histories_with_first_prompts(state)
 
     return history, gr.update(choices=histories, value=histories[idx][1])
 
