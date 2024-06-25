@@ -489,6 +489,34 @@ updateDocumentWidth();
 window.addEventListener("resize", updateDocumentWidth);
 
 //------------------------------------------------
+// Focus on the rename text area when it becomes visible
+//------------------------------------------------
+const renameTextArea = document.getElementById("rename-row").querySelector("textarea");
+
+function respondToRenameVisibility(element, callback) {
+  var options = {
+    root: document.documentElement,
+  };
+
+  var observer = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      callback(entry.intersectionRatio > 0);
+    });
+  }, options);
+
+  observer.observe(element);
+}
+
+
+function handleVisibilityChange(isVisible) {
+  if (isVisible) {
+    renameTextArea.focus();
+  }
+}
+
+respondToRenameVisibility(renameTextArea, handleVisibilityChange);
+
+//------------------------------------------------
 // Adjust the chat tab margin if no extension UI
 // is present at the bottom
 //------------------------------------------------
