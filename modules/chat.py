@@ -74,6 +74,21 @@ def get_generation_prompt(renderer, impersonate=False, strip_trailing_spaces=Tru
 
     return prefix, suffix
 
+def generate_cheerful_request(optimism_pessimism_value):
+    # Ensure the value is within the range of 0.0 to 1.0
+    optimism_pessimism_value = min(1.0, max(0.0, optimism_pessimism_value))
+    
+    negative_scale = 1.0 - optimism_pessimism_value
+    positive_scale = optimism_pessimism_value
+    
+    cheerful_request = (
+        f"The AI response in a tone that is {positive_scale * 100:.0f}% optimist "
+        f"and {negative_scale * 100:.0f}% pessimist."
+        # f"Please respond in a tone that is {positive_scale * 100:.0f}% optimist "
+        # f"and {negative_scale * 100:.0f}% pessimist."
+    )
+    
+    return cheerful_request
 
 def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs.get('impersonate', False)
@@ -98,16 +113,25 @@ def generate_chat_prompt(user_input, state, **kwargs):
     )
 
     messages = []
-
+    	
+    # # Add the cheerful tone request to the system message
+    # cheerful_request = "Please respond in a very very positive and cheerful tone."
+    
+    # cheerful_request = "Please respond in a very very negative and serious tone."
+    cheerful_request = generate_cheerful_request(state['optimism_pessimism'])
+    print(f"optimism_pessimism: {state['optimism_pessimism']},   cheerful_request:{cheerful_request}")
+    
     if state['mode'] == 'instruct':
         renderer = instruct_renderer
         if state['custom_system_message'].strip() != '':
-            messages.append({"role": "system", "content": state['custom_system_message']})
+            messages.append({"role": "system", "content": state['custom_system_message'] + " " + cheerful_request})
+        else:
+            messages.append({"role": "system", "content": cheerful_request})
     else:
         renderer = chat_renderer
         if state['context'].strip() != '' or state['user_bio'].strip() != '':
             context = replace_character_names(state['context'], state['name1'], state['name2'])
-            messages.append({"role": "system", "content": context})
+            messages.append({"role": "system", "content": context + " " + cheerful_request})
 
     insert_pos = len(messages)
     for user_msg, assistant_msg in reversed(history):
@@ -227,7 +251,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
             prompt = make_prompt(messages)
             encoded_length = get_encoded_length(prompt)
-
+    print("prompt: " + f"{prompt}")
     if also_return_rows:
         return prompt, [message['content'] for message in messages]
     else:

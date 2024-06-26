@@ -185,6 +185,7 @@ def list_interface_input_elements():
         'instruction_template_str',
         'chat_template_str',
         'chat_style',
+        'optimism_pessimism',
         'chat-instruct_command',
     ]
 
