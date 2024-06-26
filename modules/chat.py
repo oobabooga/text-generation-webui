@@ -505,6 +505,8 @@ def rename_history(old_id, new_id, character, mode):
         logger.error(f"The following path is not allowed: \"{new_p}\".")
     elif new_p == old_p:
         logger.info("The provided path is identical to the old one.")
+    elif new_p.exists():
+        logger.error(f"The new path already exists and will not be overwritten: \"{new_p}\".")
     else:
         logger.info(f"Renaming \"{old_p}\" to \"{new_p}\"")
         old_p.rename(new_p)
@@ -552,28 +554,31 @@ def find_all_histories_with_first_prompts(state):
     result = []
     for i, path in enumerate(histories):
         filename = path.stem
-        with open(path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        if re.match(r'^[0-9]{8}-[0-9]{2}-[0-9]{2}-[0-9]{2}$', filename):
+            with open(path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
 
-            first_prompt = ""
-            if 'visible' in data and len(data['visible']) > 0:
-                if data['internal'][0][0] == '<|BEGIN-VISIBLE-CHAT|>':
-                    if len(data['visible']) > 1:
-                        first_prompt = html.unescape(data['visible'][1][0])
-                    elif i == 0:
-                        first_prompt = "New chat"
-                else:
-                    first_prompt = html.unescape(data['visible'][0][0])
-            elif i == 0:
-                first_prompt = "New chat"
+                first_prompt = ""
+                if 'visible' in data and len(data['visible']) > 0:
+                    if data['internal'][0][0] == '<|BEGIN-VISIBLE-CHAT|>':
+                        if len(data['visible']) > 1:
+                            first_prompt = html.unescape(data['visible'][1][0])
+                        elif i == 0:
+                            first_prompt = "New chat"
+                    else:
+                        first_prompt = html.unescape(data['visible'][0][0])
+                elif i == 0:
+                    first_prompt = "New chat"
+        else:
+            first_prompt = filename
 
-            first_prompt = first_prompt.strip()
+        first_prompt = first_prompt.strip()
 
-            # Truncate the first prompt if it's longer than 32 characters
-            if len(first_prompt) > 32:
-                first_prompt = first_prompt[:29] + '...'
+        # Truncate the first prompt if it's longer than 32 characters
+        if len(first_prompt) > 32:
+            first_prompt = first_prompt[:29] + '...'
 
-            result.append((first_prompt, filename))
+        result.append((first_prompt, filename))
 
     return result
 

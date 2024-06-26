@@ -267,7 +267,7 @@ def create_event_handlers():
         lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, gradio(clear_arr))
 
     shared.gradio['rename_chat'].click(
-        lambda x: x, gradio('unique_id'), gradio('rename_to')).then(
+        lambda: "My New Chat", None, gradio('rename_to')).then(
         lambda: [gr.update(visible=True)] * 3, None, gradio('rename_to', 'rename_to-confirm', 'rename_to-cancel'), show_progress=False)
 
     shared.gradio['rename_to-cancel'].click(
