@@ -67,21 +67,21 @@ def create_event_handlers():
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        lambda: None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
+        None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['textbox-default'].submit(
         lambda x: x, gradio('textbox-default'), gradio('last_input-default')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        lambda: None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
+        None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['markdown_render-default'].click(lambda x: x, gradio('output_textbox'), gradio('markdown-default'), queue=False)
     shared.gradio['Continue-default'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, [shared.gradio['output_textbox']] + gradio(inputs)[1:], gradio(outputs), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        lambda: None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
+        None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['Stop-default'].click(stop_everything_event, None, None, queue=False)
     shared.gradio['prompt_menu-default'].change(load_prompt, gradio('prompt_menu-default'), gradio('textbox-default'), show_progress=False)

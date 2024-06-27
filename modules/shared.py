@@ -165,6 +165,10 @@ group.add_argument('--no_inject_fused_attention', action='store_true', help='Dis
 group = parser.add_argument_group('HQQ')
 group.add_argument('--hqq-backend', type=str, default='PYTORCH_COMPILE', help='Backend for the HQQ loader. Valid options: PYTORCH, PYTORCH_COMPILE, ATEN.')
 
+# TensorRT-LLM
+group = parser.add_argument_group('TensorRT-LLM')
+group.add_argument('--cpp-runner', action='store_true', help='Use the ModelRunnerCpp runner, which is faster than the default ModelRunner but doesn\'t support streaming yet.')
+
 # DeepSpeed
 group = parser.add_argument_group('DeepSpeed')
 group.add_argument('--deepspeed', action='store_true', help='Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.')
@@ -263,6 +267,8 @@ def fix_loader_name(name):
         return 'AutoAWQ'
     elif name in ['hqq']:
         return 'HQQ'
+    elif name in ['tensorrt', 'tensorrtllm', 'tensorrt_llm', 'tensorrt-llm', 'tensort', 'tensortllm']:
+        return 'TensorRT-LLM'
 
 
 def add_extension(name, last=False):

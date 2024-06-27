@@ -16,6 +16,7 @@ def get_fallback_settings():
         'n_ctx': 2048,
         'rope_freq_base': 0,
         'compress_pos_emb': 1,
+        'alpha_value': 1,
         'truncation_length': shared.settings['truncation_length'],
         'skip_special_tokens': shared.settings['skip_special_tokens'],
         'custom_stopping_strings': shared.settings['custom_stopping_strings'],
@@ -58,13 +59,19 @@ def get_model_metadata(model):
                 model_settings['rope_freq_base'] = metadata[k]
             elif k.endswith('rope.scale_linear'):
                 model_settings['compress_pos_emb'] = metadata[k]
+            elif k.endswith('rope.scaling.factor'):
+                model_settings['compress_pos_emb'] = metadata[k]
             elif k.endswith('block_count'):
                 model_settings['n_gpu_layers'] = metadata[k] + 1
 
         if 'tokenizer.chat_template' in metadata:
             template = metadata['tokenizer.chat_template']
             eos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.eos_token_id']]
-            bos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.bos_token_id']]
+            if 'tokenizer.ggml.bos_token_id' in metadata:
+                bos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.bos_token_id']]
+            else:
+                bos_token = ""
+
             template = template.replace('eos_token', "'{}'".format(eos_token))
             template = template.replace('bos_token', "'{}'".format(bos_token))
 
@@ -77,6 +84,9 @@ def get_model_metadata(model):
         # Transformers metadata
         if hf_metadata is not None:
             metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+            if 'pretrained_config' in metadata:
+                metadata = metadata['pretrained_config']
+
             for k in ['max_position_embeddings', 'model_max_length', 'max_seq_len']:
                 if k in metadata:
                     model_settings['truncation_length'] = metadata[k]

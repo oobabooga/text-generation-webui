@@ -3,7 +3,7 @@ colorama
 datasets
 einops
 gradio==4.26.*
-hqq==0.1.7.post2
+hqq==0.1.7.post3
 jinja2==3.1.2
 lm_eval==0.3.0
 markdown
@@ -32,12 +32,12 @@ sse-starlette==1.6.5
 tiktoken
 
 # Mac wheels
-https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.75-cp311-cp311-macosx_11_0_arm64.whl; platform_system == "Darwin" and platform_release >= "20.0.0" and platform_release < "21.0.0" and python_version == "3.11"
-https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.75-cp310-cp310-macosx_11_0_arm64.whl; platform_system == "Darwin" and platform_release >= "20.0.0" and platform_release < "21.0.0" and python_version == "3.10"
-https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.75-cp311-cp311-macosx_12_0_arm64.whl; platform_system == "Darwin" and platform_release >= "21.0.0" and platform_release < "22.0.0" and python_version == "3.11"
-https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.75-cp310-cp310-macosx_12_0_arm64.whl; platform_system == "Darwin" and platform_release >= "21.0.0" and platform_release < "22.0.0" and python_version == "3.10"
-https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.75-cp311-cp311-macosx_13_0_arm64.whl; platform_system == "Darwin" and platform_release >= "22.0.0" and platform_release < "23.0.0" and python_version == "3.11"
-https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.75-cp310-cp310-macosx_13_0_arm64.whl; platform_system == "Darwin" and platform_release >= "22.0.0" and platform_release < "23.0.0" and python_version == "3.10"
-https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.75-cp311-cp311-macosx_14_0_arm64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0" and python_version == "3.11"
-https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.75-cp310-cp310-macosx_14_0_arm64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0" and python_version == "3.10"
-https://github.com/oobabooga/exllamav2/releases/download/v0.0.20/exllamav2-0.0.20-py3-none-any.whl
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.79-cp311-cp311-macosx_11_0_arm64.whl; platform_system == "Darwin" and platform_release >= "20.0.0" and platform_release < "21.0.0" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.79-cp310-cp310-macosx_11_0_arm64.whl; platform_system == "Darwin" and platform_release >= "20.0.0" and platform_release < "21.0.0" and python_version == "3.10"
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.79-cp311-cp311-macosx_12_0_arm64.whl; platform_system == "Darwin" and platform_release >= "21.0.0" and platform_release < "22.0.0" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.79-cp310-cp310-macosx_12_0_arm64.whl; platform_system == "Darwin" and platform_release >= "21.0.0" and platform_release < "22.0.0" and python_version == "3.10"
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.79-cp311-cp311-macosx_13_0_arm64.whl; platform_system == "Darwin" and platform_release >= "22.0.0" and platform_release < "23.0.0" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.79-cp310-cp310-macosx_13_0_arm64.whl; platform_system == "Darwin" and platform_release >= "22.0.0" and platform_release < "23.0.0" and python_version == "3.10"
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.79-cp311-cp311-macosx_14_0_arm64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.79-cp310-cp310-macosx_14_0_arm64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0" and python_version == "3.10"
+https://github.com/oobabooga/exllamav2/releases/download/v0.1.6/exllamav2-0.1.6-py3-none-any.whl
