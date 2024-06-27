@@ -96,7 +96,7 @@ gradio-app > :first-child {
 
 .header_bar {
     background-color: #f7f7f7;
-    box-shadow: 0 0px 3px rgba(22 22 22 / 35%);
+    box-shadow: 0 0 3px rgba(22 22 22 / 35%);
     margin-bottom: 0;
     overflow-x: scroll;
     margin-left: calc(-1 * var(--size-4));
@@ -221,6 +221,7 @@ button {
 
 .pretty_scrollbar::-webkit-scrollbar {
     width: 7px;
+    height: 7px;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-track {
@@ -243,6 +244,10 @@ button {
 
 .dark .pretty_scrollbar::-webkit-resizer {
     background: #374151;
+}
+
+.pretty_scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
 }
 
 audio {
@@ -433,12 +438,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .message-body code {
     white-space: pre-wrap !important;
     word-wrap: break-word !important;
-    border: 1px solid #666666;
+    border: 1px solid #666;
     border-radius: 5px;
     font-size: 82%;
     padding: 1px 3px;
     background: #0d1117 !important;
-    color: rgb(201, 209, 217);
+    color: rgb(201 209 217);
 }
 
 .message-body pre > code {
@@ -695,7 +700,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 @media screen and (width >= 1327px) {
     #past-chats-row {
         position: absolute;
-        top: 16px;
+        top: 36px;
         left: 0;
         width: calc(0.5*(var(--document-width) - 880px - 120px - 16px*2));
         max-width: 300px;
@@ -743,3 +748,47 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         display: none;
     }
 }
+
+#past-chats {
+    max-height: calc(100vh - 195px);
+    overflow-y: scroll !important;
+    border-radius: 0;
+    scrollbar-width: none; /* Hide scrollbar in Firefox by default */
+}
+
+#past-chats label {
+    width: 100%;
+    background-color: transparent !important;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+#past-chats > :nth-child(2) {
+    display: none;
+}
+
+#past-chats > :nth-child(3) {
+    gap: 0;
+}
+
+#past-chats::-webkit-scrollbar {
+    display: none;
+}
+
+#past-chats:hover {
+    scrollbar-width: auto;
+}
+
+#past-chats:hover::-webkit-scrollbar {
+    display: block;
+}
+
+@media screen and (width < 1327px) {
+    #past-chats {
+        max-height: 300px;
+    }
+}
+

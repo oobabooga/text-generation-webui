@@ -70,8 +70,6 @@ def list_model_elements():
         'use_double_quant',
         'wbits',
         'groupsize',
-        'model_type',
-        'pre_layer',
         'triton',
         'desc_act',
         'no_inject_fused_attention',
@@ -104,10 +102,11 @@ def list_model_elements():
         'no_offload_kqv',
         'row_split',
         'tensorcores',
-        'flash-attn',
+        'flash_attn',
         'streaming_llm',
         'attention_sink_size',
         'hqq_backend',
+        'cpp_runner',
     ]
     if is_torch_xpu_available():
         for i in range(torch.xpu.device_count()):
@@ -147,6 +146,10 @@ def list_interface_input_elements():
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',
+        'dry_multiplier',
+        'dry_base',
+        'dry_allowed_length',
+        'dry_sequence_breakers',
         'do_sample',
         'penalty_alpha',
         'mirostat_mode',
