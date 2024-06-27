@@ -85,7 +85,7 @@ def convert_to_markdown(string):
 
     # Unfinished list, like "\n1.". A |delete| string is added and then
     # removed to force a <ol> or <ul> to be generated instead of a <p>.
-    list_item_pattern = r'(\n\d+\.?|\n\*\s*|\n\s*[-*+]\s*)$'
+    list_item_pattern = r'(\n\d+\.?|\n\s*[-*+]\s*([*_~]{1,3})?)$'
     if re.search(list_item_pattern, result):
         delete_str = '|delete|'
 
