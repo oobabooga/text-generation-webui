@@ -207,6 +207,9 @@ def convert_history(history):
         elif role == "system":
             system_message = content
 
+    if current_message:
+        chat_dialogue.append([current_message, current_reply])  # Ensure the last message is added. System prompt is now enabled. Tested.
+
     if not user_input_last:
         user_input = ""
 
