@@ -1,4 +1,4 @@
-accelerate==0.30.*
+accelerate==0.31.*
 aqlm[gpu,cpu]==1.1.5; platform_system == "Linux"
 auto-gptq==0.7.1
 bitsandbytes==0.43.*
