@@ -32,9 +32,7 @@ from modules.models import clear_torch_cache, load_model
 
 
 def generate_reply(*args, **kwargs):
-    print("*" * 100 + "before generating replay")
     if shared.args.idle_timeout > 0 and shared.model is None and shared.previous_model_name not in [None, 'None']:
-        print("*" * 100 + "before loading model")
         shared.model, shared.tokenizer = load_model(shared.previous_model_name)
 
     shared.generation_lock.acquire()
@@ -419,7 +417,7 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
         new_tokens = len(output) - (original_tokens if not shared.is_seq2seq else 0)
-        print(f'Output generated in 1  {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
+        print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
 
 
@@ -448,7 +446,7 @@ def generate_reply_custom(question, original_question, seed, state, stopping_str
         t1 = time.time()
         original_tokens = len(encode(original_question)[0])
         new_tokens = len(encode(original_question + reply)[0]) - original_tokens
-        print(f'Output generated in 2  {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
+        print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
 
 
