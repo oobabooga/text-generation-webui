@@ -87,13 +87,14 @@ def create_ui():
 
                 with gr.Row():
                     shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
-                
+
                 with gr.Column():
                     shared.gradio['attitude_description'] = gr.Textbox(label='Attitude Description', placeholder='Enter attitude description', elem_id='attitude-description', info='Describe the attitude')
                     shared.gradio['attitude_value'] = gr.Slider(minimum=0, maximum=1, step=0.1, label='Attitude Scale', value=0, interactive=True, info='Slide to choose the level of this attitude from 0 (no effect) to 1 (full effect)', elem_id='attitude-slider')
 
                 with gr.Row():
                     shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=16, label='Command for chat-instruct mode', info='<|character|> and <|prompt|> get replaced with the bot name and the regular chat prompt respectively.', visible=False, elem_classes=['add_scrollbar'])
+
 
 def create_chat_settings_ui():
     mu = shared.args.multi_user
