@@ -1,5 +1,8 @@
+from pathlib import Path
+
 import gradio as gr
 import speech_recognition as sr
+import numpy as np
 
 from modules import shared
 
@@ -45,6 +48,11 @@ def do_stt(audio, whipser_model, whipser_language):
 def auto_transcribe(audio, auto_submit, whipser_model, whipser_language):
     if audio is None:
         return "", ""
+    sample_rate, audio_data = audio
+    if not isinstance(audio_data[0], np.ndarray):      # workaround for chrome audio. Mono?
+        # Convert to 2 channels, so each sample s_i consists of the same value in both channels [val_i, val_i]
+        audio_data = np.column_stack((audio_data, audio_data))
+        audio = (sample_rate, audio_data)
     transcription = do_stt(audio, whipser_model, whipser_language)
     if auto_submit:
         input_hijack.update({"state": True, "value": [transcription, transcription]})
@@ -55,7 +63,7 @@ def auto_transcribe(audio, auto_submit, whipser_model, whipser_language):
 def ui():
     with gr.Accordion("Whisper STT", open=True):
         with gr.Row():
-            audio = gr.Audio(source="microphone")
+            audio = gr.Audio(source="microphone", type="numpy")
         with gr.Row():
             with gr.Accordion("Settings", open=False):
                 auto_submit = gr.Checkbox(label='Submit the transcribed audio automatically', value=params['auto_submit'])
@@ -69,3 +77,13 @@ def ui():
     whipser_model.change(lambda x: params.update({"whipser_model": x}), whipser_model, None)
     whipser_language.change(lambda x: params.update({"whipser_language": x}), whipser_language, None)
     auto_submit.change(lambda x: params.update({"auto_submit": x}), auto_submit, None)
+
+
+def custom_js():
+    """
+    Returns custom javascript as a string. It is applied whenever the web UI is
+    loaded.
+    :return:
+    """
+    with open(Path(__file__).parent.resolve() / "script.js", "r") as f:
+        return f.read()
