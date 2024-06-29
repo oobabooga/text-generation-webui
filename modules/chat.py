@@ -245,7 +245,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
             prompt = make_prompt(messages)
             encoded_length = get_encoded_length(prompt)
-    print("prompt: " + f"{prompt}")
+
     if also_return_rows:
         return prompt, [message['content'] for message in messages]
     else:
