@@ -22,7 +22,6 @@ loaders_and_params = OrderedDict({
         'no_use_fast',
         'use_flash_attention_2',
         'alpha_value',
-        'rope_freq_base',
         'compress_pos_emb',
         'disable_exllama',
         'disable_exllamav2',
@@ -38,12 +37,14 @@ loaders_and_params = OrderedDict({
         'no_mmap',
         'mlock',
         'no_mul_mat_q',
-        'alpha_value',
         'rope_freq_base',
         'compress_pos_emb',
+        'cpu',
         'numa',
         'no_offload_kqv',
         'row_split',
+        'tensorcores',
+        'flash_attn',
         'streaming_llm',
         'attention_sink_size',
     ],
@@ -57,9 +58,9 @@ loaders_and_params = OrderedDict({
         'no_mmap',
         'mlock',
         'no_mul_mat_q',
-        'alpha_value',
         'rope_freq_base',
         'compress_pos_emb',
+        'cpu',
         'numa',
         'cfg_cache',
         'trust_remote_code',
@@ -67,6 +68,8 @@ loaders_and_params = OrderedDict({
         'logits_all',
         'no_offload_kqv',
         'row_split',
+        'tensorcores',
+        'flash_attn',
         'streaming_llm',
         'attention_sink_size',
         'llamacpp_HF_info',
@@ -99,7 +102,6 @@ loaders_and_params = OrderedDict({
     ],
     'AutoGPTQ': [
         'triton',
-        'no_inject_fused_attention',
         'no_inject_fused_mlp',
         'no_use_cuda_fp16',
         'wbits',
@@ -125,25 +127,15 @@ loaders_and_params = OrderedDict({
         'trust_remote_code',
         'no_use_fast',
     ],
-    'GPTQ-for-LLaMa': [
-        'wbits',
-        'groupsize',
-        'model_type',
-        'pre_layer',
-        'trust_remote_code',
-        'no_use_fast',
-        'gptq_for_llama_info',
-    ],
-    'QuIP#': [
-        'trust_remote_code',
-        'no_use_fast',
-        'no_flash_attn',
-        'quipsharp_info',
-    ],
     'HQQ': [
         'hqq_backend',
         'trust_remote_code',
         'no_use_fast',
+    ],
+    'TensorRT-LLM': [
+        'max_seq_len',
+        'cpp_runner',
+        'tensorrt_llm_info',
     ]
 })
 
@@ -172,6 +164,10 @@ def transformers_samplers():
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',
+        'dry_multiplier',
+        'dry_base',
+        'dry_allowed_length',
+        'dry_sequence_breakers',
         'seed',
         'do_sample',
         'penalty_alpha',
@@ -195,9 +191,7 @@ def transformers_samplers():
 loaders_samplers = {
     'Transformers': transformers_samplers(),
     'AutoGPTQ': transformers_samplers(),
-    'GPTQ-for-LLaMa': transformers_samplers(),
     'AutoAWQ': transformers_samplers(),
-    'QuIP#': transformers_samplers(),
     'HQQ': transformers_samplers(),
     'ExLlamav2': {
         'temperature',
@@ -245,6 +239,10 @@ loaders_samplers = {
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',
+        'dry_multiplier',
+        'dry_base',
+        'dry_allowed_length',
+        'dry_sequence_breakers',
         'seed',
         'do_sample',
         'mirostat_mode',
@@ -303,6 +301,10 @@ loaders_samplers = {
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',
+        'dry_multiplier',
+        'dry_base',
+        'dry_allowed_length',
+        'dry_sequence_breakers',
         'seed',
         'do_sample',
         'mirostat_mode',
@@ -319,15 +321,16 @@ loaders_samplers = {
         'skip_special_tokens',
         'auto_max_new_tokens',
     },
-}
-
-loaders_model_types = {
-    'GPTQ-for-LLaMa': [
-        "None",
-        "llama",
-        "opt",
-        "gptj"
-    ],
+    'TensorRT-LLM': {
+        'temperature',
+        'top_p',
+        'top_k',
+        'repetition_penalty',
+        'presence_penalty',
+        'frequency_penalty',
+        'ban_eos_token',
+        'auto_max_new_tokens',
+    }
 }
 
 
@@ -355,13 +358,6 @@ def blacklist_samplers(loader, dynamic_temperature):
             output.append(gr.update(visible=False))
 
     return output
-
-
-def get_model_types(loader):
-    if loader in loaders_model_types:
-        return loaders_model_types[loader]
-
-    return ["None"]
 
 
 def get_gpu_memory_keys():

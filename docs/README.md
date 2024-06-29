@@ -1,4 +1,4 @@
-These files is a mirror of the documentation at:
+These files are a mirror of the documentation at:
 
 # https://github.com/oobabooga/text-generation-webui/wiki
 

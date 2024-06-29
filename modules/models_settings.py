@@ -12,11 +12,11 @@ def get_fallback_settings():
         'wbits': 'None',
         'groupsize': 'None',
         'desc_act': False,
-        'model_type': 'None',
         'max_seq_len': 2048,
         'n_ctx': 2048,
         'rope_freq_base': 0,
         'compress_pos_emb': 1,
+        'alpha_value': 1,
         'truncation_length': shared.settings['truncation_length'],
         'skip_special_tokens': shared.settings['skip_special_tokens'],
         'custom_stopping_strings': shared.settings['custom_stopping_strings'],
@@ -40,12 +40,7 @@ def get_model_metadata(model):
         hf_metadata = None
 
     if 'loader' not in model_settings:
-        if hf_metadata is not None and 'quip_params' in hf_metadata:
-            loader = 'QuIP#'
-        else:
-            loader = infer_loader(model, model_settings)
-
-        model_settings['loader'] = loader
+        model_settings['loader'] = infer_loader(model, model_settings)
 
     # GGUF metadata
     if model_settings['loader'] in ['llama.cpp', 'llamacpp_HF']:
@@ -56,6 +51,7 @@ def get_model_metadata(model):
             model_file = list(path.glob('*.gguf'))[0]
 
         metadata = metadata_gguf.load_metadata(model_file)
+
         for k in metadata:
             if k.endswith('context_length'):
                 model_settings['n_ctx'] = metadata[k]
@@ -63,10 +59,19 @@ def get_model_metadata(model):
                 model_settings['rope_freq_base'] = metadata[k]
             elif k.endswith('rope.scale_linear'):
                 model_settings['compress_pos_emb'] = metadata[k]
+            elif k.endswith('rope.scaling.factor'):
+                model_settings['compress_pos_emb'] = metadata[k]
+            elif k.endswith('block_count'):
+                model_settings['n_gpu_layers'] = metadata[k] + 1
+
         if 'tokenizer.chat_template' in metadata:
             template = metadata['tokenizer.chat_template']
             eos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.eos_token_id']]
-            bos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.bos_token_id']]
+            if 'tokenizer.ggml.bos_token_id' in metadata:
+                bos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.bos_token_id']]
+            else:
+                bos_token = ""
+
             template = template.replace('eos_token', "'{}'".format(eos_token))
             template = template.replace('bos_token', "'{}'".format(bos_token))
 
@@ -79,6 +84,9 @@ def get_model_metadata(model):
         # Transformers metadata
         if hf_metadata is not None:
             metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+            if 'pretrained_config' in metadata:
+                metadata = metadata['pretrained_config']
+
             for k in ['max_position_embeddings', 'model_max_length', 'max_seq_len']:
                 if k in metadata:
                     model_settings['truncation_length'] = metadata[k]
@@ -200,19 +208,16 @@ def update_model_parameters(state, initial=False):
             continue
 
         # Setting null defaults
-        if element in ['wbits', 'groupsize', 'model_type'] and value == 'None':
+        if element in ['wbits', 'groupsize'] and value == 'None':
             value = vars(shared.args_defaults)[element]
         elif element in ['cpu_memory'] and value == 0:
             value = vars(shared.args_defaults)[element]
 
         # Making some simple conversions
-        if element in ['wbits', 'groupsize', 'pre_layer']:
+        if element in ['wbits', 'groupsize']:
             value = int(value)
         elif element == 'cpu_memory' and value is not None:
             value = f"{value}MiB"
-
-        if element in ['pre_layer']:
-            value = [value] if value > 0 else None
 
         setattr(shared.args, element, value)
 
@@ -238,7 +243,7 @@ def apply_model_settings_to_state(model, state):
         loader = model_settings.pop('loader')
 
         # If the user is using an alternative loader for the same model type, let them keep using it
-        if not (loader == 'ExLlamav2_HF' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlamav2', 'AutoGPTQ']):
+        if not (loader == 'ExLlamav2_HF' and state['loader'] in ['ExLlamav2', 'AutoGPTQ']):
             state['loader'] = loader
 
     for k in model_settings:

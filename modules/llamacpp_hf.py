@@ -2,14 +2,39 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
-import llama_cpp
 import torch
 from torch.nn import CrossEntropyLoss
 from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
-from modules import RoPE, llama_cpp_python_hijack, shared
+from modules import llama_cpp_python_hijack, shared
 from modules.logging_colors import logger
+
+try:
+    import llama_cpp
+except:
+    llama_cpp = None
+
+try:
+    import llama_cpp_cuda
+except:
+    llama_cpp_cuda = None
+
+try:
+    import llama_cpp_cuda_tensorcores
+except:
+    llama_cpp_cuda_tensorcores = None
+
+
+def llama_cpp_lib():
+    if shared.args.cpu and llama_cpp is not None:
+        return llama_cpp
+    elif shared.args.tensorcores and llama_cpp_cuda_tensorcores is not None:
+        return llama_cpp_cuda_tensorcores
+    elif llama_cpp_cuda is not None:
+        return llama_cpp_cuda
+    else:
+        return llama_cpp
 
 
 class LlamacppHF(PreTrainedModel):
@@ -32,7 +57,7 @@ class LlamacppHF(PreTrainedModel):
                 'n_tokens': self.model.n_tokens,
                 'input_ids': self.model.input_ids.copy(),
                 'scores': self.model.scores.copy(),
-                'ctx': llama_cpp.llama_new_context_with_model(model.model, model.context_params)
+                'ctx': llama_cpp_lib().llama_new_context_with_model(model.model, model.context_params)
             }
 
     def _validate_model_class(self):
@@ -187,15 +212,16 @@ class LlamacppHF(PreTrainedModel):
             'mul_mat_q': not shared.args.no_mul_mat_q,
             'numa': shared.args.numa,
             'n_gpu_layers': shared.args.n_gpu_layers,
-            'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
+            'rope_freq_base': shared.args.rope_freq_base,
             'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
             'logits_all': shared.args.logits_all,
             'offload_kqv': not shared.args.no_offload_kqv,
-            'split_mode': 1 if not shared.args.row_split else 2
+            'split_mode': 1 if not shared.args.row_split else 2,
+            'flash_attn': shared.args.flash_attn
         }
 
-        Llama = llama_cpp.Llama
+        Llama = llama_cpp_lib().Llama
         model = Llama(**params)
 
         return LlamacppHF(model, model_file)

@@ -98,20 +98,6 @@ document.addEventListener("keydown", function(event) {
     document.getElementById("Impersonate").click();
   }
 
-  // Switch between tabs on Tab
-  else if (!event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey && event.key === "Tab") {
-    event.preventDefault();
-    var parametersButton = document.getElementById("parameters-button");
-    var parentContainer = parametersButton.parentNode;
-    var selectedChild = parentContainer.querySelector(".selected");
-
-    if (selectedChild.id == "parameters-button") {
-      document.getElementById(previousTabId).click();
-    } else {
-      previousTabId = selectedChild.id;
-      parametersButton.click();
-    }
-  }
 });
 
 //------------------------------------------------
@@ -137,29 +123,33 @@ targetElement.addEventListener("scroll", function() {
   } else {
     isScrolled = true;
   }
+
+  doSyntaxHighlighting();
+
 });
 
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
-  mutations.forEach(function(mutation) {
-    updateCssProperties();
+  updateCssProperties();
 
-    if(!isScrolled) {
-      targetElement.scrollTop = targetElement.scrollHeight;
-    }
+  const firstChild = targetElement.children[0];
+  if (firstChild.classList.contains("generating")) {
+    typing.parentNode.classList.add("visible-dots");
+    document.getElementById("stop").style.display = "flex";
+    document.getElementById("Generate").style.display = "none";
+  } else {
+    typing.parentNode.classList.remove("visible-dots");
+    document.getElementById("stop").style.display = "none";
+    document.getElementById("Generate").style.display = "flex";
+  }
 
-    const firstChild = targetElement.children[0];
-    if (firstChild.classList.contains("generating")) {
-      typing.parentNode.classList.add("visible-dots");
-      document.getElementById("stop").style.display = "flex";
-      document.getElementById("Generate").style.display = "none";
-    } else {
-      typing.parentNode.classList.remove("visible-dots");
-      document.getElementById("stop").style.display = "none";
-      document.getElementById("Generate").style.display = "flex";
-    }
 
-  });
+  doSyntaxHighlighting();
+
+  if(!isScrolled) {
+    targetElement.scrollTop = targetElement.scrollHeight;
+  }
+
 });
 
 // Configure the observer to watch for changes in the subtree and attributes
@@ -173,6 +163,67 @@ const config = {
 
 // Start observing the target element
 observer.observe(targetElement, config);
+
+//------------------------------------------------
+// Handle syntax highlighting / LaTeX
+//------------------------------------------------
+function isElementVisibleOnScreen(element) {
+  const rect = element.getBoundingClientRect();
+  return (
+    rect.left < window.innerWidth &&
+    rect.right > 0 &&
+    rect.top < window.innerHeight &&
+    rect.bottom > 0
+  );
+}
+
+function getVisibleMessagesIndexes() {
+  const elements = document.querySelectorAll(".message-body");
+  const visibleIndexes = [];
+
+  elements.forEach((element, index) => {
+    if (isElementVisibleOnScreen(element) && !element.hasAttribute("data-highlighted")) {
+      visibleIndexes.push(index);
+    }
+  });
+
+  return visibleIndexes;
+}
+
+function doSyntaxHighlighting() {
+  const indexes = getVisibleMessagesIndexes();
+  const elements = document.querySelectorAll(".message-body");
+
+  if (indexes.length > 0) {
+    observer.disconnect();
+
+    indexes.forEach((index) => {
+      const element = elements[index];
+
+      // Tag this element to prevent it from being highlighted twice
+      element.setAttribute("data-highlighted", "true");
+
+      // Perform syntax highlighting
+      const codeBlocks = element.querySelectorAll("pre code");
+
+      codeBlocks.forEach((codeBlock) => {
+        hljs.highlightElement(codeBlock);
+      });
+
+      renderMathInElement(element, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false },
+          { left: "\\(", right: "\\)", display: false },
+          { left: "\\[", right: "\\]", display: true },
+        ],
+      });
+
+    });
+
+    observer.observe(targetElement, config);
+  }
+}
 
 //------------------------------------------------
 // Add some scrollbars
@@ -470,7 +521,7 @@ respondToRenameVisibility(renameTextArea, handleVisibilityChange);
 // is present at the bottom
 //------------------------------------------------
 
-if (document.getElementById('extensions') === null) {
+if (document.getElementById("extensions") === null) {
   document.getElementById("chat-tab").style.marginBottom = "-29px";
 }
 
@@ -478,8 +529,70 @@ if (document.getElementById('extensions') === null) {
 // Focus on the chat input after starting a new chat
 //------------------------------------------------
 
-document.querySelectorAll('.focus-on-chat-input').forEach(element => {
-  element.addEventListener('click', function() {
-      document.querySelector('#chat-input textarea').focus();
+document.querySelectorAll(".focus-on-chat-input").forEach(element => {
+  element.addEventListener("click", function() {
+    document.querySelector("#chat-input textarea").focus();
   });
 });
+
+//------------------------------------------------
+// Fix a border around the "past chats" menu
+//------------------------------------------------
+document.getElementById("past-chats").parentNode.style.borderRadius = "0px";
+
+//------------------------------------------------
+// Allow the character dropdown to coexist at the
+// Chat tab and the Parameters > Character tab
+//------------------------------------------------
+
+const headerBar = document.querySelector(".header_bar");
+let originalParent;
+let originalIndex; // To keep track of the original position
+let movedElement;
+
+function moveToChatTab() {
+  const characterMenu = document.getElementById("character-menu");
+  const grandParent = characterMenu.parentElement.parentElement;
+
+  if (!originalParent) {
+    originalParent = grandParent.parentElement;
+    originalIndex = Array.from(originalParent.children).indexOf(grandParent);
+    movedElement = grandParent;
+  }
+
+  const instructRadio = document.querySelector("#chat-mode input[value=\"instruct\"]");
+  if (instructRadio && instructRadio.checked) {
+    grandParent.style.display = "none";
+  }
+
+  const chatControlsFirstChild = document.querySelector("#chat-controls").firstElementChild;
+  const newParent = chatControlsFirstChild;
+  let newPosition = newParent.children.length - 2;
+
+  newParent.insertBefore(grandParent, newParent.children[newPosition]);
+}
+
+function restoreOriginalPosition() {
+  if (originalParent && movedElement) {
+    if (originalIndex >= originalParent.children.length) {
+      originalParent.appendChild(movedElement);
+    } else {
+      originalParent.insertBefore(movedElement, originalParent.children[originalIndex]);
+    }
+
+    movedElement.style.display = "";
+  }
+}
+
+headerBar.addEventListener("click", (e) => {
+  if (e.target.tagName === "BUTTON") {
+    const tabName = e.target.textContent.trim();
+    if (tabName === "Chat") {
+      moveToChatTab();
+    } else {
+      restoreOriginalPosition();
+    }
+  }
+});
+
+moveToChatTab();

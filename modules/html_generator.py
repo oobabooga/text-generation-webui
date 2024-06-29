@@ -57,6 +57,14 @@ def convert_to_markdown(string):
     # Code
     string = string.replace('\\begin{code}', '```')
     string = string.replace('\\end{code}', '```')
+    string = string.replace('\\begin{align*}', '$$')
+    string = string.replace('\\end{align*}', '$$')
+    string = string.replace('\\begin{align}', '$$')
+    string = string.replace('\\end{align}', '$$')
+    string = string.replace('\\begin{equation}', '$$')
+    string = string.replace('\\end{equation}', '$$')
+    string = string.replace('\\begin{equation*}', '$$')
+    string = string.replace('\\end{equation*}', '$$')
     string = re.sub(r"(.)```", r"\1\n```", string)
 
     result = ''
@@ -77,15 +85,20 @@ def convert_to_markdown(string):
 
     # Unfinished list, like "\n1.". A |delete| string is added and then
     # removed to force a <ol> or <ul> to be generated instead of a <p>.
-    if re.search(r'(\n\d+\.?|\n\*\s*)$', result):
+    list_item_pattern = r'(\n\d+\.?|\n\s*[-*+]\s*([*_~]{1,3})?)$'
+    if re.search(list_item_pattern, result):
         delete_str = '|delete|'
 
         if re.search(r'(\d+\.?)$', result) and not result.endswith('.'):
             result += '.'
 
-        result = re.sub(r'(\n\d+\.?|\n\*\s*)$', r'\g<1> ' + delete_str, result)
+        # Add the delete string after the list item
+        result = re.sub(list_item_pattern, r'\g<1> ' + delete_str, result)
 
+        # Convert to HTML using markdown
         html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+
+        # Remove the delete string from the HTML output
         pos = html_output.rfind(delete_str)
         if pos > -1:
             html_output = html_output[:pos] + html_output[pos + len(delete_str):]
