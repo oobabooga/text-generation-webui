@@ -554,12 +554,14 @@ function moveToChatTab() {
   const characterMenu = document.getElementById("character-menu");
   const grandParent = characterMenu.parentElement.parentElement;
 
+  // Save the initial location for the character dropdown
   if (!originalParent) {
     originalParent = grandParent.parentElement;
     originalIndex = Array.from(originalParent.children).indexOf(grandParent);
     movedElement = grandParent;
   }
 
+  // Do not show the Character dropdown in the Chat tab when "instruct" mode is selected
   const instructRadio = document.querySelector("#chat-mode input[value=\"instruct\"]");
   if (instructRadio && instructRadio.checked) {
     grandParent.style.display = "none";
@@ -570,6 +572,7 @@ function moveToChatTab() {
   let newPosition = newParent.children.length - 2;
 
   newParent.insertBefore(grandParent, newParent.children[newPosition]);
+  document.getElementById("save-character").style.display = "none";
 }
 
 function restoreOriginalPosition() {
@@ -580,6 +583,7 @@ function restoreOriginalPosition() {
       originalParent.insertBefore(movedElement, originalParent.children[originalIndex]);
     }
 
+    document.getElementById("save-character").style.display = "";
     movedElement.style.display = "";
   }
 }
