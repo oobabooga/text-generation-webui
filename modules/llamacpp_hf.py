@@ -221,6 +221,13 @@ class LlamacppHF(PreTrainedModel):
             'flash_attn': shared.args.flash_attn
         }
 
+        if shared.args.cache_4bit:
+            params["type_k"] = 2
+            params["type_v"] = 2
+        elif shared.args.cache_8bit:
+            params["type_k"] = 8
+            params["type_v"] = 8
+
         Llama = llama_cpp_lib().Llama
         model = Llama(**params)
 
