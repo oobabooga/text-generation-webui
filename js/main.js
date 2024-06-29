@@ -539,3 +539,60 @@ document.querySelectorAll(".focus-on-chat-input").forEach(element => {
 // Fix a border around the "past chats" menu
 //------------------------------------------------
 document.getElementById("past-chats").parentNode.style.borderRadius = "0px";
+
+//------------------------------------------------
+// Allow the character dropdown to coexist at the
+// Chat tab and the Parameters > Character tab
+//------------------------------------------------
+
+const headerBar = document.querySelector(".header_bar");
+let originalParent;
+let originalIndex; // To keep track of the original position
+let movedElement;
+
+function moveToChatTab() {
+  const characterMenu = document.getElementById("character-menu");
+  const grandParent = characterMenu.parentElement.parentElement;
+
+  if (!originalParent) {
+    originalParent = grandParent.parentElement;
+    originalIndex = Array.from(originalParent.children).indexOf(grandParent);
+    movedElement = grandParent;
+  }
+
+  const instructRadio = document.querySelector("#chat-mode input[value=\"instruct\"]");
+  if (instructRadio && instructRadio.checked) {
+    grandParent.style.display = "none";
+  }
+
+  const chatControlsFirstChild = document.querySelector("#chat-controls").firstElementChild;
+  const newParent = chatControlsFirstChild;
+  let newPosition = newParent.children.length - 2;
+
+  newParent.insertBefore(grandParent, newParent.children[newPosition]);
+}
+
+function restoreOriginalPosition() {
+  if (originalParent && movedElement) {
+    if (originalIndex >= originalParent.children.length) {
+      originalParent.appendChild(movedElement);
+    } else {
+      originalParent.insertBefore(movedElement, originalParent.children[originalIndex]);
+    }
+
+    movedElement.style.display = "";
+  }
+}
+
+headerBar.addEventListener("click", (e) => {
+  if (e.target.tagName === "BUTTON") {
+    const tabName = e.target.textContent.trim();
+    if (tabName === "Chat") {
+      moveToChatTab();
+    } else {
+      restoreOriginalPosition();
+    }
+  }
+});
+
+moveToChatTab();
