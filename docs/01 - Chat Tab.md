@@ -143,6 +143,12 @@ This defines the visual style of the chat UI. Each option is a CSS file defined 
 
 The styles are only applied to chat and chat-instruct modes. Instruct mode has its separate style defined in `text-generation-webui/css/html_instruct_style.css`.
 
+## Attitude Description
+This textbox allows the user to enter a the chat response attitude style (like optimistic, official and so on.)
+
+## Attitude Scale
+Slide to choose the level of this attitude from default - 0 (no effect) to 1 (full effect). Only relevant if the user has filled in the Attitude Description textbox.
+
 ## Character gallery
 
 This menu is a built-in extension defined under `text-generation-webui/extensions/gallery`. It displays a gallery with your characters, and if you click on a character, it will be automatically selected in the menu under "Parameters" > "Character".

@@ -74,19 +74,13 @@ def get_generation_prompt(renderer, impersonate=False, strip_trailing_spaces=Tru
 
     return prefix, suffix
 
-def generate_cheerful_request(optimism_pessimism_value):
-    # Ensure the value is within the range of 0.0 to 1.0
-    optimism_pessimism_value = min(1.0, max(0.0, optimism_pessimism_value))
+def generate_attitude_request(attitude_description, attitude_value):
+    # Ensure the value is within the range of -1.0 to 1.0
+    attitude_value = min(1.0, max(-1.0, attitude_value))
+    if not attitude_value or not attitude_description.strip():
+        return ''
     
-    negative_scale = 1.0 - optimism_pessimism_value
-    positive_scale = optimism_pessimism_value
-    
-    cheerful_request = (
-        f"The AI response in a tone that is {positive_scale * 100:.0f}% optimist "
-        f"and {negative_scale * 100:.0f}% pessimist."
-        # f"Please respond in a tone that is {positive_scale * 100:.0f}% optimist "
-        # f"and {negative_scale * 100:.0f}% pessimist."
-    )
+    cheerful_request = f"The AI response should exhibit {int(attitude_value * 100)}% {attitude_description}."
     
     return cheerful_request
 
@@ -118,8 +112,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
     # cheerful_request = "Please respond in a very very positive and cheerful tone."
     
     # cheerful_request = "Please respond in a very very negative and serious tone."
-    cheerful_request = generate_cheerful_request(state['optimism_pessimism'])
-    print(f"optimism_pessimism: {state['optimism_pessimism']},   cheerful_request:{cheerful_request}")
+    cheerful_request = generate_attitude_request(state['attitude_description'], state['attitude_value'])
+    # print(f"optimism_pessimism: {state['attitude_value']},   cheerful_request:{cheerful_request}")
     
     if state['mode'] == 'instruct':
         renderer = instruct_renderer

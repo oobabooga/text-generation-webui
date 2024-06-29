@@ -65,6 +65,8 @@ settings = {
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'autoload_model': False,
     'default_extensions': [],
+    'attitude_value': 0.0,
+    'attitude_description': ''
 }
 
 default_settings = copy.deepcopy(settings)
