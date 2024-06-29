@@ -49,7 +49,7 @@ def auto_transcribe(audio, auto_submit, whipser_model, whipser_language):
     if audio is None:
         return "", ""
     sample_rate, audio_data = audio
-    if type(audio_data[0]) != np.ndarray:      # workaround for chrome audio. Mono?
+    if not isinstance(audio_data[0], np.ndarray):      # workaround for chrome audio. Mono?
         # Convert to 2 channels, so each sample s_i consists of the same value in both channels [val_i, val_i]
         audio_data = np.column_stack((audio_data, audio_data))
         audio = (sample_rate, audio_data)
