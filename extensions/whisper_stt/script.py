@@ -1,19 +1,26 @@
 import gradio as gr
-import speech_recognition as sr
-
+import torch
 from modules import shared
+import numpy as np
+from pydub import AudioSegment
+import whisper
+import gc
+
 
 input_hijack = {
     'state': False,
     'value': ["", ""]
 }
 
-# parameters which can be customized in settings.json of webui
+# parameters which can be customized in settings.yaml of webui
 params = {
     'whipser_language': 'english',
     'whipser_model': 'small.en',
     'auto_submit': True
 }
+
+startup_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+WHISPERMODEL = whisper.load_model(params['whipser_model'], device=startup_device)
 
 
 def chat_input_modifier(text, visible_text, state):
@@ -25,47 +32,77 @@ def chat_input_modifier(text, visible_text, state):
         return text, visible_text
 
 
-def do_stt(audio, whipser_model, whipser_language):
-    transcription = ""
-    r = sr.Recognizer()
+def do_stt(audio, whipser_language):
+    sample_rate, data = audio
 
-    # Convert to AudioData
-    audio_data = sr.AudioData(sample_rate=audio[0], frame_data=audio[1], sample_width=4)
+    # use pydub to convert sample_rate and sample_width for whisper input
+    dubaudio = AudioSegment(data.tobytes(),
+                            frame_rate=sample_rate,
+                            sample_width=data.dtype.itemsize,
+                            channels=(1 if len(data.shape) == 1 else data.shape[1]),
+                            )
+    dubaudio = dubaudio.set_frame_rate(16000)
+    dubaudio = dubaudio.set_sample_width(2)
 
-    try:
-        transcription = r.recognize_whisper(audio_data, language=whipser_language, model=whipser_model)
-    except sr.UnknownValueError:
-        print("Whisper could not understand audio")
-    except sr.RequestError as e:
-        print("Could not request results from Whisper", e)
+    # same method to get the array as openai whisper repo used from wav file
+    audio_np = np.frombuffer(dubaudio.raw_data, np.int16).flatten().astype(np.float32) / 32768.0
 
-    return transcription
+    if len(whipser_language) == 0:
+        result = WHISPERMODEL.transcribe(audio=audio_np)
+    else:
+        result = WHISPERMODEL.transcribe(audio=audio_np, language=whipser_language)
+
+    return result["text"]
 
 
-def auto_transcribe(audio, auto_submit, whipser_model, whipser_language):
+def auto_transcribe(audio, auto_submit, whipser_language):
     if audio is None:
         return "", ""
-    transcription = do_stt(audio, whipser_model, whipser_language)
+    transcription = do_stt(audio, whipser_language)
     if auto_submit:
         input_hijack.update({"state": True, "value": [transcription, transcription]})
 
     return transcription, None
 
 
+def reload_whispermodel(whisper_model_name: str, whisper_language: str, device: str):
+    if len(whisper_model_name) > 0:
+        global WHISPERMODEL
+        WHISPERMODEL = None
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        gc.collect()
+
+        if device != "none":
+            if device == "cuda":
+                device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+            WHISPERMODEL = whisper.load_model(whisper_model_name, device=device)
+            params.update({"whipser_model": whisper_model_name})
+            if ".en" in whisper_model_name:
+                whisper_language = "english"
+            audio_update = gr.Audio.update(interactive=True)
+        else:
+            audio_update = gr.Audio.update(interactive=False)
+        return [whisper_model_name, whisper_language, device, audio_update]
+
+
 def ui():
     with gr.Accordion("Whisper STT", open=True):
         with gr.Row():
-            audio = gr.Audio(source="microphone")
+            audio = gr.Audio(source="microphone", type="numpy", interactive=True)
         with gr.Row():
             with gr.Accordion("Settings", open=False):
                 auto_submit = gr.Checkbox(label='Submit the transcribed audio automatically', value=params['auto_submit'])
-                whipser_model = gr.Dropdown(label='Whisper Model', value=params['whipser_model'], choices=["tiny.en", "base.en", "small.en", "medium.en", "tiny", "base", "small", "medium", "large"])
-                whipser_language = gr.Dropdown(label='Whisper Language', value=params['whipser_language'], choices=["chinese", "german", "spanish", "russian", "korean", "french", "japanese", "portuguese", "turkish", "polish", "catalan", "dutch", "arabic", "swedish", "italian", "indonesian", "hindi", "finnish", "vietnamese", "hebrew", "ukrainian", "greek", "malay", "czech", "romanian", "danish", "hungarian", "tamil", "norwegian", "thai", "urdu", "croatian", "bulgarian", "lithuanian", "latin", "maori", "malayalam", "welsh", "slovak", "telugu", "persian", "latvian", "bengali", "serbian", "azerbaijani", "slovenian", "kannada", "estonian", "macedonian", "breton", "basque", "icelandic", "armenian", "nepali", "mongolian", "bosnian", "kazakh", "albanian", "swahili", "galician", "marathi", "punjabi", "sinhala", "khmer", "shona", "yoruba", "somali", "afrikaans", "occitan", "georgian", "belarusian", "tajik", "sindhi", "gujarati", "amharic", "yiddish", "lao", "uzbek", "faroese", "haitian creole", "pashto", "turkmen", "nynorsk", "maltese", "sanskrit", "luxembourgish", "myanmar", "tibetan", "tagalog", "malagasy", "assamese", "tatar", "hawaiian", "lingala", "hausa", "bashkir", "javanese", "sundanese"])
+                device_dropd = gr.Dropdown(label='Device', value=startup_device, choices=["cuda", "cpu", "none"])
+                whisper_model_dropd = gr.Dropdown(label='Whisper Model', value=params['whipser_model'], choices=["tiny.en", "base.en", "small.en", "medium.en", "tiny", "base", "small", "medium", "large"])
+                whisper_language = gr.Dropdown(label='Whisper Language', value=params['whipser_language'], choices=["english", "chinese", "german", "spanish", "russian", "korean", "french", "japanese", "portuguese", "turkish", "polish", "catalan", "dutch", "arabic", "swedish", "italian", "indonesian", "hindi", "finnish", "vietnamese", "hebrew", "ukrainian", "greek", "malay", "czech", "romanian", "danish", "hungarian", "tamil", "norwegian", "thai", "urdu", "croatian", "bulgarian", "lithuanian", "latin", "maori", "malayalam", "welsh", "slovak", "telugu", "persian", "latvian", "bengali", "serbian", "azerbaijani", "slovenian", "kannada", "estonian", "macedonian", "breton", "basque", "icelandic", "armenian", "nepali", "mongolian", "bosnian", "kazakh", "albanian", "swahili", "galician", "marathi", "punjabi", "sinhala", "khmer", "shona", "yoruba", "somali", "afrikaans", "occitan", "georgian", "belarusian", "tajik", "sindhi", "gujarati", "amharic", "yiddish", "lao", "uzbek", "faroese", "haitian creole", "pashto", "turkmen", "nynorsk", "maltese", "sanskrit", "luxembourgish", "myanmar", "tibetan", "tagalog", "malagasy", "assamese", "tatar", "hawaiian", "lingala", "hausa", "bashkir", "javanese", "sundanese"])
 
-    audio.stop_recording(
-        auto_transcribe, [audio, auto_submit, whipser_model, whipser_language], [shared.gradio['textbox'], audio]).then(
-        None, auto_submit, None, js="(check) => {if (check) { document.getElementById('Generate').click() }}")
+    audio.change(
+        auto_transcribe, [audio, auto_submit, whisper_language], [shared.gradio['textbox'], audio]).then(
+        None, auto_submit, None, _js="(check) => {if (check) { document.getElementById('Generate').click() }}")
 
-    whipser_model.change(lambda x: params.update({"whipser_model": x}), whipser_model, None)
-    whipser_language.change(lambda x: params.update({"whipser_language": x}), whipser_language, None)
+    device_dropd.change(reload_whispermodel, [whisper_model_dropd, whisper_language, device_dropd], [whisper_model_dropd, whisper_language, device_dropd, audio])
+    whisper_model_dropd.change(reload_whispermodel, [whisper_model_dropd, whisper_language, device_dropd], [whisper_model_dropd, whisper_language, device_dropd, audio])
+    whisper_language.change(lambda x: params.update({"whipser_language": x}), whisper_language, None)
     auto_submit.change(lambda x: params.update({"auto_submit": x}), auto_submit, None)
