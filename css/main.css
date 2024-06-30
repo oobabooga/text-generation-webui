@@ -336,6 +336,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         padding-left: 0;
         padding-right: 0;
     }
+
+    .chat {
+        padding-left: 0;
+        padding-right: 0;
+    }
 }
 
 .chat {
