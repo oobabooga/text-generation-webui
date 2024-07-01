@@ -77,11 +77,11 @@ class Info:
 
 class ChromaCollector():
     def __init__(self):
-        name = ''.join(random.choice('ab') for _ in range(10))
-
+        name = 'static_test_name'  # Use a static name for debugging
         self.name = name
         self.chroma_client = chromadb.Client(Settings(anonymized_telemetry=False))
         self.collection = self.chroma_client.create_collection(name=name, embedding_function=embedder)
+        logger.info(f'Collection {self.name} created successfully.')
 
         self.ids = []
         self.id_to_info = {}
@@ -213,9 +213,12 @@ class ChromaCollector():
         return filtered_infos
 
     def _merge_infos(self, infos: list[Info]):
+        if not infos:
+            return []  # Return an empty list if there are no infos to merge
+    
         merged_infos = []
         current_info = infos[0]
-
+    
         for next_info in infos[1:]:
             merged = current_info.merge_with(next_info)
             if merged is not None:
@@ -223,9 +226,10 @@ class ChromaCollector():
             else:
                 merged_infos.append(current_info)
                 current_info = next_info
-
+    
         merged_infos.append(current_info)
         return merged_infos
+
 
     # Main function for retrieving chunks by distance. It performs merging, time weighing, and mean filtering.
 
@@ -335,13 +339,16 @@ class ChromaCollector():
 
     def clear(self):
         with self.lock:
-            self.chroma_client.reset()
+            try:
+                logger.info(f"Attempting to clear collection {self.name}. Current collections: {self.chroma_client.list_collections()}")
+                self.chroma_client.delete_collection(name=self.name)
+                logger.info(f"Collection {self.name} cleared successfully.")
+                self.collection = self.chroma_client.create_collection(name=self.name, embedding_function=embedder)
+            except Exception as e:
+                logger.error(f"Failed to clear collection: {e}. Available collections: {self.chroma_client.list_collections()}")
 
-            self.ids = []
-            self.chroma_client.delete_collection(name=self.name)
-            self.collection = self.chroma_client.create_collection(name=self.name, embedding_function=embedder)
 
-            logger.info('Successfully cleared all records and reset chromaDB.')
+
 
 
 def make_collector():
