@@ -64,6 +64,7 @@ def list_model_elements():
         'trust_remote_code',
         'no_use_fast',
         'use_flash_attention_2',
+        'use_eager_attention',
         'load_in_4bit',
         'compute_dtype',
         'quant_type',
