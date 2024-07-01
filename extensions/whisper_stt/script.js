@@ -11,51 +11,51 @@ window.startStopRecording = function() {
     }
 
     if (isRecording == false) {
-        console.log("Start recording function called");
+        //console.log("Start recording function called");
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
-                console.log("Got audio stream");
+                //console.log("Got audio stream");
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = []; // Reset audio chunks
                 mediaRecorder.start();
-                console.log("MediaRecorder started");
+                //console.log("MediaRecorder started");
                 recButton.icon
                 recordButton.innerHTML = recButton.innerHTML = "Stop";
                 isRecording = true;
 
                 mediaRecorder.addEventListener("dataavailable", event => {
-                    console.log("Data available event, data size: ", event.data.size);
+                    //console.log("Data available event, data size: ", event.data.size);
                     audioChunks.push(event.data);
                 });
                 
                 mediaRecorder.addEventListener("stop", () => {
-                    console.log("MediaRecorder stopped");
+                    //console.log("MediaRecorder stopped");
                     if (audioChunks.length > 0) {
                         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                        console.log("Audio blob created, size: ", audioBlob.size);
+                        //console.log("Audio blob created, size: ", audioBlob.size);
                         const reader = new FileReader();
                         reader.readAsDataURL(audioBlob);
                         reader.onloadend = function() {
                             const base64data = reader.result;
-                            console.log("Audio converted to base64, length: ", base64data.length);
+                            //console.log("Audio converted to base64, length: ", base64data.length);
                             
                             const audioBase64Input = document.querySelector('#audio-base64 textarea');
                             if (audioBase64Input) {
                                 audioBase64Input.value = base64data;
                                 audioBase64Input.dispatchEvent(new Event("input", { bubbles: true }));
                                 audioBase64Input.dispatchEvent(new Event("change", { bubbles: true }));
-                                console.log("Updated textarea with base64 data");
+                                //console.log("Updated textarea with base64 data");
                             } else {
                                 console.error("Could not find audio-base64 textarea");
                             }
                         }
                     } else {
-                        console.error("No audio data recorded");
+                        console.error("No audio data recorded for Whisper");
                     }
                 });
             })
     } else {
-        console.log("Stopping MediaRecorder");
+        //console.log("Stopping MediaRecorder");
         recordButton.innerHTML = recButton.innerHTML = "Rec.";
         isRecording = false;
         mediaRecorder.stop();
@@ -82,5 +82,5 @@ recButton.style.setProperty("margin-left", "-10px");
 recButton.innerHTML = "Rec.";
 
 recButton.addEventListener("click", function() {
-    recordButton.click();   
+    recordButton.click();
 });

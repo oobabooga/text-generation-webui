@@ -54,7 +54,7 @@ def do_stt(audio, whipser_language):
 
 def auto_transcribe(audio, auto_submit, whipser_language):
     if audio is None or audio == "":
-        print("No audio data received")
+        print("Whisper received no audio data")
         return "", ""
     audio_bytes = base64.b64decode(audio.split(',')[1])
 
