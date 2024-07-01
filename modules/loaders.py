@@ -21,6 +21,7 @@ loaders_and_params = OrderedDict({
         'trust_remote_code',
         'no_use_fast',
         'use_flash_attention_2',
+        'use_eager_attention',
         'alpha_value',
         'compress_pos_emb',
         'disable_exllama',
