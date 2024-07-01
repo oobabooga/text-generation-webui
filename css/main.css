@@ -396,7 +396,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 .chat .message:last-child {
     margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
+    padding-bottom: 15px !important;
 }
 
 .message-body li {
