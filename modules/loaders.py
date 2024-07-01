@@ -31,6 +31,8 @@ loaders_and_params = OrderedDict({
     'llama.cpp': [
         'n_ctx',
         'n_gpu_layers',
+        'cache_8bit',
+        'cache_4bit',
         'tensor_split',
         'n_batch',
         'threads',
@@ -52,6 +54,8 @@ loaders_and_params = OrderedDict({
     'llamacpp_HF': [
         'n_ctx',
         'n_gpu_layers',
+        'cache_8bit',
+        'cache_4bit',
         'tensor_split',
         'n_batch',
         'threads',
