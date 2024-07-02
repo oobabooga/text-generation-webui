@@ -76,6 +76,17 @@ def get_generation_prompt(renderer, impersonate=False, strip_trailing_spaces=Tru
     return prefix, suffix
 
 
+def generate_attitude_request(attitude_description, attitude_value):
+    # Ensure the value is within the range of -1.0 to 1.0
+    attitude_value = min(1.0, max(-1.0, attitude_value))
+    if not attitude_value or not attitude_description.strip():
+        return ''
+
+    cheerful_request = f"The AI response should exhibit {int(attitude_value * 100)}% {attitude_description}."
+
+    return cheerful_request
+
+
 def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs.get('impersonate', False)
     _continue = kwargs.get('_continue', False)
@@ -100,15 +111,19 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
     messages = []
 
+    cheerful_request = generate_attitude_request(state['attitude_description'], state['attitude_value'])
+
     if state['mode'] == 'instruct':
         renderer = instruct_renderer
         if state['custom_system_message'].strip() != '':
-            messages.append({"role": "system", "content": state['custom_system_message']})
+            messages.append({"role": "system", "content": state['custom_system_message'] + " " + cheerful_request})
+        else:
+            messages.append({"role": "system", "content": cheerful_request})
     else:
         renderer = chat_renderer
         if state['context'].strip() != '' or state['user_bio'].strip() != '':
             context = replace_character_names(state['context'], state['name1'], state['name2'])
-            messages.append({"role": "system", "content": context})
+            messages.append({"role": "system", "content": context + " " + cheerful_request})
 
     insert_pos = len(messages)
     for user_msg, assistant_msg in reversed(history):
