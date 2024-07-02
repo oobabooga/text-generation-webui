@@ -1,10 +1,10 @@
-accelerate==0.30.*
+accelerate==0.31.*
 colorama
 datasets
 einops
 gradio==4.26.*
 hqq==0.1.7.post3
-jinja2==3.1.2
+jinja2==3.1.4
 lm_eval==0.3.0
 markdown
 numba==0.59.*
@@ -21,7 +21,7 @@ safetensors==0.4.*
 scipy
 sentencepiece
 tensorboard
-transformers==4.41.*
+transformers==4.42.*
 tqdm
 wandb
 

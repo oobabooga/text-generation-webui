@@ -49,7 +49,7 @@
 
 .gradio-container .chat .assistant-message {
     padding: 20px;
-    background: var(--color-grey-200);
+    background: #f4f4f4;
     margin-top: 9px !important;
     margin-bottom: 12px !important;
     border-radius: 7px;

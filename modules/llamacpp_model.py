@@ -100,6 +100,13 @@ class LlamaCppModel:
             'flash_attn': shared.args.flash_attn
         }
 
+        if shared.args.cache_4bit:
+            params["type_k"] = 2
+            params["type_v"] = 2
+        elif shared.args.cache_8bit:
+            params["type_k"] = 8
+            params["type_v"] = 8
+
         result.model = Llama(**params)
         if cache_capacity > 0:
             result.model.set_cache(LlamaCache(capacity_bytes=cache_capacity))
