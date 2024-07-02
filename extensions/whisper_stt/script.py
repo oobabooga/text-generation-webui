@@ -1,14 +1,15 @@
 import base64
+import gc
 import io
 from pathlib import Path
-import gradio as gr
-import torch
-from modules import shared
-import numpy as np
-from pydub import AudioSegment
-import whisper
-import gc
 
+import gradio as gr
+import numpy as np
+import torch
+import whisper
+from pydub import AudioSegment
+
+from modules import shared
 
 input_hijack = {
     'state': False,
