@@ -3,6 +3,7 @@ import time
 from typing import Dict, List
 
 from pydantic import BaseModel, Field
+from fastapi import UploadFile, Form
 
 
 class GenerationOptions(BaseModel):
@@ -130,6 +131,37 @@ class ChatCompletionResponse(BaseModel):
 
 class ChatPromptResponse(BaseModel):
     prompt: str
+
+
+class TranscriptionsRequest(BaseModel):
+    file: UploadFile
+    language: str | None = Field(default=None)
+    model: str = Field(default='tiny')
+
+    @classmethod
+    def as_form(
+        cls,
+        file: UploadFile = UploadFile(...),
+        language: str | None = Form(None),
+        model: str = Form('tiny'),
+    ) -> 'TranscriptionsRequest':
+        return cls(file=file, language=language, model=model)
+
+
+class TranscriptionsResponse(BaseModel):
+    text: str
+
+
+class ImageGenerationRequest(BaseModel):
+    prompt: str
+    size: str = Field(default='1024x1024')
+    response_format: str = Field(default='url')
+    n: int = Field(default=1)
+
+
+class ImageGenerationResponse(BaseModel):
+    created: int
+    data: list[dict]
 
 
 class EmbeddingsRequest(BaseModel):

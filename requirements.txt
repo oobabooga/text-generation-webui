@@ -33,6 +33,8 @@ SpeechRecognition==3.10.0
 flask_cloudflared==0.0.14
 sse-starlette==1.6.5
 tiktoken
+soundfile
+openai-whisper
 
 # llama-cpp-python (CPU only, AVX2)
 https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.2.79+cpuavx2-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
