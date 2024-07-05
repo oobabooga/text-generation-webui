@@ -7,30 +7,30 @@ main_parent.parentNode.style = "gap: 0";
 main_parent.parentNode.parentNode.style = "padding: 0";
 
 document.querySelector(".header_bar").addEventListener("click", function(event) {
-  if (event.target.tagName === "BUTTON") {
-    const buttonText = event.target.textContent.trim();
+  if (event.target.tagName !== "BUTTON") return;
 
-    let chat_visible = (buttonText == "Chat");
-    let default_visible = (buttonText == "Default");
-    let notebook_visible = (buttonText == "Notebook");
+  const buttonText = event.target.textContent.trim();
+  const extensionsVisible = ["Chat", "Default", "Notebook"].includes(buttonText);
+  const chatVisible = buttonText === "Chat";
+  const showControlsChecked = document.querySelector("#show-controls input").checked;
+  const extensions = document.querySelector("#extensions");
 
-    // Check if one of the generation tabs is visible
-    if (chat_visible || notebook_visible || default_visible) {
-      extensions && (extensions.style.display = "flex");
-
-      if (chat_visible) {
-        this.style.marginBottom = "0px";
-        extensions && (extensions.style.maxWidth = "880px");
-        extensions && (extensions.style.padding = "0px");
-      } else {
-        this.style.marginBottom = "19px";
-        extensions && (extensions.style.maxWidth = "none");
-        extensions && (extensions.style.padding = "15px");
-      }
-    } else {
-      this.style.marginBottom = "19px";
-      extensions && (extensions.style.display = "none");
+  if (extensionsVisible) {
+    if (extensions) {
+      extensions.style.display = "flex";
+      extensions.style.maxWidth = chatVisible ? "880px" : "none";
+      extensions.style.padding = chatVisible ? "0px" : "15px";
     }
+    this.style.marginBottom = chatVisible ? "0px" : "19px";
+
+    if (chatVisible && !showControlsChecked) {
+      document.querySelectorAll("#chat-tab > div > :nth-child(n+2), #extensions").forEach(element => {
+        element.style.display = "none";
+      });
+    }
+  } else {
+    this.style.marginBottom = "19px";
+    if (extensions) extensions.style.display = "none";
   }
 });
 
@@ -539,3 +539,64 @@ document.querySelectorAll(".focus-on-chat-input").forEach(element => {
 // Fix a border around the "past chats" menu
 //------------------------------------------------
 document.getElementById("past-chats").parentNode.style.borderRadius = "0px";
+
+//------------------------------------------------
+// Allow the character dropdown to coexist at the
+// Chat tab and the Parameters > Character tab
+//------------------------------------------------
+
+const headerBar = document.querySelector(".header_bar");
+let originalParent;
+let originalIndex; // To keep track of the original position
+let movedElement;
+
+function moveToChatTab() {
+  const characterMenu = document.getElementById("character-menu");
+  const grandParent = characterMenu.parentElement.parentElement;
+
+  // Save the initial location for the character dropdown
+  if (!originalParent) {
+    originalParent = grandParent.parentElement;
+    originalIndex = Array.from(originalParent.children).indexOf(grandParent);
+    movedElement = grandParent;
+  }
+
+  // Do not show the Character dropdown in the Chat tab when "instruct" mode is selected
+  const instructRadio = document.querySelector("#chat-mode input[value=\"instruct\"]");
+  if (instructRadio && instructRadio.checked) {
+    grandParent.style.display = "none";
+  }
+
+  const chatControlsFirstChild = document.querySelector("#chat-controls").firstElementChild;
+  const newParent = chatControlsFirstChild;
+  let newPosition = newParent.children.length - 2;
+
+  newParent.insertBefore(grandParent, newParent.children[newPosition]);
+  document.getElementById("save-character").style.display = "none";
+}
+
+function restoreOriginalPosition() {
+  if (originalParent && movedElement) {
+    if (originalIndex >= originalParent.children.length) {
+      originalParent.appendChild(movedElement);
+    } else {
+      originalParent.insertBefore(movedElement, originalParent.children[originalIndex]);
+    }
+
+    document.getElementById("save-character").style.display = "";
+    movedElement.style.display = "";
+  }
+}
+
+headerBar.addEventListener("click", (e) => {
+  if (e.target.tagName === "BUTTON") {
+    const tabName = e.target.textContent.trim();
+    if (tabName === "Chat") {
+      moveToChatTab();
+    } else {
+      restoreOriginalPosition();
+    }
+  }
+});
+
+moveToChatTab();

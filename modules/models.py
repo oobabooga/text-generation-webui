@@ -146,6 +146,9 @@ def huggingface_loader(model_name):
     if shared.args.force_safetensors:
         params['force_safetensors'] = True
 
+    if shared.args.use_eager_attention:
+        params['attn_implementation'] = 'eager'
+
     config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
 
     if 'chatglm' in model_name.lower():

@@ -16,7 +16,6 @@ outputs = ('output_textbox', 'html-default')
 def create_ui():
     mu = shared.args.multi_user
     with gr.Tab('Default', elem_id='default-tab'):
-        shared.gradio['last_input-default'] = gr.State('')
         with gr.Row():
             with gr.Column():
                 with gr.Row():
@@ -63,14 +62,12 @@ def create_ui():
 
 def create_event_handlers():
     shared.gradio['Generate-default'].click(
-        lambda x: x, gradio('textbox-default'), gradio('last_input-default')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['textbox-default'].submit(
-        lambda x: x, gradio('textbox-default'), gradio('last_input-default')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(

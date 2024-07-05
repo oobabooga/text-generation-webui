@@ -21,6 +21,7 @@ loaders_and_params = OrderedDict({
         'trust_remote_code',
         'no_use_fast',
         'use_flash_attention_2',
+        'use_eager_attention',
         'alpha_value',
         'compress_pos_emb',
         'disable_exllama',
@@ -30,6 +31,8 @@ loaders_and_params = OrderedDict({
     'llama.cpp': [
         'n_ctx',
         'n_gpu_layers',
+        'cache_8bit',
+        'cache_4bit',
         'tensor_split',
         'n_batch',
         'threads',
@@ -51,6 +54,8 @@ loaders_and_params = OrderedDict({
     'llamacpp_HF': [
         'n_ctx',
         'n_gpu_layers',
+        'cache_8bit',
+        'cache_4bit',
         'tensor_split',
         'n_batch',
         'threads',
