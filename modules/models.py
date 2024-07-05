@@ -147,7 +147,7 @@ def huggingface_loader(model_name):
         params['force_safetensors'] = True
 
     if shared.args.use_eager_attention:
-        params['attn_implementation']  = 'eager'
+        params['attn_implementation'] = 'eager'
 
     config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
 
