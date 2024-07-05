@@ -577,7 +577,7 @@ def find_all_histories_with_first_prompts(state):
                 data = json.load(f)
 
                 first_prompt = ""
-                if 'visible' in data and len(data['visible']) > 0:
+                if data and 'visible' in data and len(data['visible']) > 0:
                     if data['internal'][0][0] == '<|BEGIN-VISIBLE-CHAT|>':
                         if len(data['visible']) > 1:
                             first_prompt = html.unescape(data['visible'][1][0])
