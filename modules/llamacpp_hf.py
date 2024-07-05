@@ -7,34 +7,9 @@ from torch.nn import CrossEntropyLoss
 from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
-from modules import llama_cpp_python_hijack, shared
+from modules import shared
+from modules.llama_cpp_python_hijack import llama_cpp_lib
 from modules.logging_colors import logger
-
-try:
-    import llama_cpp
-except:
-    llama_cpp = None
-
-try:
-    import llama_cpp_cuda
-except:
-    llama_cpp_cuda = None
-
-try:
-    import llama_cpp_cuda_tensorcores
-except:
-    llama_cpp_cuda_tensorcores = None
-
-
-def llama_cpp_lib():
-    if shared.args.cpu and llama_cpp is not None:
-        return llama_cpp
-    elif shared.args.tensorcores and llama_cpp_cuda_tensorcores is not None:
-        return llama_cpp_cuda_tensorcores
-    elif llama_cpp_cuda is not None:
-        return llama_cpp_cuda
-    else:
-        return llama_cpp
 
 
 class LlamacppHF(PreTrainedModel):

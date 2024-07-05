@@ -1,3 +1,4 @@
+import importlib
 from typing import Sequence
 
 from tqdm import tqdm
@@ -5,20 +6,38 @@ from tqdm import tqdm
 from modules import shared
 from modules.cache_utils import process_llamacpp_cache
 
-try:
-    import llama_cpp
-except:
-    llama_cpp = None
 
-try:
-    import llama_cpp_cuda
-except:
-    llama_cpp_cuda = None
+def llama_cpp_lib():
+    return_lib = None
 
-try:
-    import llama_cpp_cuda_tensorcores
-except:
-    llama_cpp_cuda_tensorcores = None
+    if shared.args.cpu:
+        try:
+            return_lib = importlib.import_module('llama_cpp')
+        except:
+            pass
+
+    if shared.args.tensorcores and return_lib is None:
+        try:
+            return_lib = importlib.import_module('llama_cpp_cuda_tensorcores')
+        except:
+            pass
+
+    if return_lib is None:
+        try:
+            return_lib = importlib.import_module('llama_cpp_cuda')
+        except:
+            pass
+
+    if return_lib is None and not shared.args.cpu:
+        try:
+            return_lib = importlib.import_module('llama_cpp')
+        except:
+            pass
+
+    if return_lib is not None:
+        monkey_patch_llama_cpp_python(return_lib)
+
+    return return_lib
 
 
 def eval_with_progress(self, tokens: Sequence[int]):
@@ -63,7 +82,7 @@ def eval_with_progress(self, tokens: Sequence[int]):
         self.n_tokens += n_tokens
 
 
-def monkey_patch_generate(lib):
+def monkey_patch_llama_cpp_python(lib):
 
     def my_generate(self, *args, **kwargs):
 
@@ -77,11 +96,6 @@ def monkey_patch_generate(lib):
         for output in self.original_generate(*args, **kwargs):
             yield output
 
+    lib.Llama.eval = eval_with_progress
     lib.Llama.original_generate = lib.Llama.generate
     lib.Llama.generate = my_generate
-
-
-for lib in [llama_cpp, llama_cpp_cuda, llama_cpp_cuda_tensorcores]:
-    if lib is not None:
-        lib.Llama.eval = eval_with_progress
-        monkey_patch_generate(lib)
