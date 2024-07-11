@@ -13,11 +13,21 @@ imported_module = None
 def llama_cpp_lib():
     global imported_module
 
+    def module_to_purpose(module_name):
+        if module_name == 'llama_cpp':
+            return 'CPU'
+        elif module_name == 'llama_cpp_cuda_tensorcores':
+            return 'tensorcores'
+        elif module_name == 'llama_cpp_cuda':
+            return 'default'
+
+        return 'unknown'
+
     return_lib = None
 
     if shared.args.cpu:
         if imported_module and imported_module != 'llama_cpp':
-            raise Exception(f"Cannot import 'llama_cpp' because '{imported_module}' is already imported. See issue #1575 in llama-cpp-python. Please restart the server before attempting to use a different version of llama-cpp-python.")
+            raise Exception(f"The {module_to_purpose(imported_module)} version of llama-cpp-python is already loaded. Switching to the CPU version currently requires a server restart.")
         try:
             return_lib = importlib.import_module('llama_cpp')
             imported_module = 'llama_cpp'
@@ -26,7 +36,7 @@ def llama_cpp_lib():
 
     if shared.args.tensorcores and return_lib is None:
         if imported_module and imported_module != 'llama_cpp_cuda_tensorcores':
-            raise Exception(f"Cannot import 'llama_cpp_cuda_tensorcores' because '{imported_module}' is already imported. See issue #1575 in llama-cpp-python. Please restart the server before attempting to use a different version of llama-cpp-python.")
+            raise Exception(f"The {module_to_purpose(imported_module)} version of llama-cpp-python is already loaded. Switching to the tensorcores version currently requires a server restart.")
         try:
             return_lib = importlib.import_module('llama_cpp_cuda_tensorcores')
             imported_module = 'llama_cpp_cuda_tensorcores'
@@ -35,7 +45,7 @@ def llama_cpp_lib():
 
     if return_lib is None:
         if imported_module and imported_module != 'llama_cpp_cuda':
-            raise Exception(f"Cannot import 'llama_cpp_cuda' because '{imported_module}' is already imported. See issue #1575 in llama-cpp-python. Please restart the server before attempting to use a different version of llama-cpp-python.")
+            raise Exception(f"The {module_to_purpose(imported_module)} version of llama-cpp-python is already loaded. Switching to the default version currently requires a server restart.")
         try:
             return_lib = importlib.import_module('llama_cpp_cuda')
             imported_module = 'llama_cpp_cuda'
@@ -44,7 +54,7 @@ def llama_cpp_lib():
 
     if return_lib is None and not shared.args.cpu:
         if imported_module and imported_module != 'llama_cpp':
-            raise Exception(f"Cannot import 'llama_cpp' because '{imported_module}' is already imported. See issue #1575 in llama-cpp-python. Please restart the server before attempting to use a different version of llama-cpp-python.")
+            raise Exception(f"The {module_to_purpose(imported_module)} version of llama-cpp-python is already loaded. Switching to the CPU version currently requires a server restart.")
         try:
             return_lib = importlib.import_module('llama_cpp')
             imported_module = 'llama_cpp'
