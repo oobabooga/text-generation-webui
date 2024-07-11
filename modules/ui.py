@@ -85,6 +85,8 @@ def list_model_elements():
         'disable_exllamav2',
         'cfg_cache',
         'no_flash_attn',
+        'no_xformers',
+        'no_sdpa',
         'num_experts_per_token',
         'cache_8bit',
         'cache_4bit',
