@@ -392,16 +392,18 @@ Run `python download-model.py --help` to see all the options.
 
 https://colab.research.google.com/github/oobabooga/text-generation-webui/blob/main/Colab-TextGen-GPU.ipynb
 
-## Community
-
-* Subreddit: https://www.reddit.com/r/oobabooga/
-* Discord: https://discord.gg/jwZCF2dPQN
-
 ## Acknowledgment
 
 In August 2023, [Andreessen Horowitz](https://a16z.com/) (a16z) provided a generous grant to encourage and support my independent work on this project. I am **extremely** grateful for their trust and recognition.
 
-## Support
+## Links
+
+#### Community
+
+* Subreddit: https://www.reddit.com/r/oobabooga/
+* Discord: https://discord.gg/jwZCF2dPQN
+
+#### Support
 
 * ko-fi: https://ko-fi.com/oobabooga
 * GitHub Sponsors: https://github.com/sponsors/oobabooga
