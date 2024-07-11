@@ -143,6 +143,8 @@ group.add_argument('--autosplit', action='store_true', help='Autosplit the model
 group.add_argument('--max_seq_len', type=int, default=2048, help='Maximum sequence length.')
 group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.')
 group.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
+group.add_argument('--no_xformers', action='store_true', help='Force xformers to not be used.')
+group.add_argument('--no_sdpa', action='store_true', help='Force Torch SDPA to not be used.')
 group.add_argument('--cache_8bit', action='store_true', help='Use 8-bit cache to save VRAM.')
 group.add_argument('--cache_4bit', action='store_true', help='Use Q4 cache to save VRAM.')
 group.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
