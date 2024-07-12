@@ -43,21 +43,23 @@ def llama_cpp_lib():
         except:
             pass
 
-    if return_lib is None:
-        if imported_module and imported_module != 'llama_cpp_cuda':
-            raise Exception(f"The {module_to_purpose(imported_module)} version of llama-cpp-python is already loaded. Switching to the default version currently requires a server restart.")
-        try:
-            return_lib = importlib.import_module('llama_cpp_cuda')
-            imported_module = 'llama_cpp_cuda'
-        except:
-            pass
-
-    if return_lib is None and not shared.args.cpu:
+    if return_lib is None and not shared.args.cpu and imported_module != 'llama_cpp_cuda':
         if imported_module and imported_module != 'llama_cpp':
-            raise Exception(f"The {module_to_purpose(imported_module)} version of llama-cpp-python is already loaded. Switching to the CPU version currently requires a server restart.")
+            raise Exception(
+                f"The {module_to_purpose(imported_module)} version of llama-cpp-python is already loaded. Switching to the CPU version currently requires a server restart.")
         try:
             return_lib = importlib.import_module('llama_cpp')
             imported_module = 'llama_cpp'
+        except:
+            pass
+
+    if return_lib is None:
+        if imported_module and imported_module != 'llama_cpp_cuda':
+            raise Exception(
+                f"The {module_to_purpose(imported_module)} version of llama-cpp-python is already loaded. Switching to the default version currently requires a server restart.")
+        try:
+            return_lib = importlib.import_module('llama_cpp_cuda')
+            imported_module = 'llama_cpp_cuda'
         except:
             pass
 
