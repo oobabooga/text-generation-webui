@@ -22,7 +22,10 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## How to install
 
-1) Clone or [download](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) the repository.
+1) Clone or [download](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) the repository. 
+   - `cd ~/` navigage to your home directory
+   - `git clone https://github.com/oobabooga/text-generation-webui` clone the project
+   -  `cd text-generation-webui`
 2) Run the `start_linux.sh`, `start_windows.bat`, `start_macos.sh`, or `start_wsl.bat` script depending on your OS.
 3) Select your GPU vendor when asked.
 4) Once the installation ends, browse to `http://localhost:7860/?__theme=dark`.
