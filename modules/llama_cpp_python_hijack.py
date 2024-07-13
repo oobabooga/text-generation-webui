@@ -1,4 +1,5 @@
 import importlib
+import platform
 from typing import Sequence
 
 from tqdm import tqdm
@@ -13,58 +14,39 @@ imported_module = None
 def llama_cpp_lib():
     global imported_module
 
-    def module_to_purpose(module_name):
-        if module_name == 'llama_cpp':
-            return 'CPU'
-        elif module_name == 'llama_cpp_cuda_tensorcores':
-            return 'tensorcores'
-        elif module_name == 'llama_cpp_cuda':
-            return 'default'
+    # Determine the platform
+    is_macos = platform.system() == 'Darwin'
 
-        return 'unknown'
+    # Define the library names based on the platform
+    if is_macos:
+        lib_names = [
+            (None, 'llama_cpp')
+        ]
+    else:
+        lib_names = [
+            ('cpu', 'llama_cpp'),
+            ('tensorcores', 'llama_cpp_cuda_tensorcores'),
+            (None, 'llama_cpp_cuda'),
+            (None, 'llama_cpp')
+        ]
 
-    return_lib = None
+    for arg, lib_name in lib_names:
+        should_import = (arg is None or getattr(shared.args, arg))
 
-    if shared.args.cpu:
-        if imported_module and imported_module != 'llama_cpp':
-            raise Exception(f"The {module_to_purpose(imported_module)} version of llama-cpp-python is already loaded. Switching to the CPU version currently requires a server restart.")
-        try:
-            return_lib = importlib.import_module('llama_cpp')
-            imported_module = 'llama_cpp'
-        except:
-            pass
+        if should_import:
+            if imported_module and imported_module != lib_name:
+                # Conflict detected, raise an exception
+                raise Exception(f"Cannot import `{lib_name}` because `{imported_module}` is already imported. Switching to a different version of llama-cpp-python currently requires a server restart.")
 
-    if shared.args.tensorcores and return_lib is None:
-        if imported_module and imported_module != 'llama_cpp_cuda_tensorcores':
-            raise Exception(f"The {module_to_purpose(imported_module)} version of llama-cpp-python is already loaded. Switching to the tensorcores version currently requires a server restart.")
-        try:
-            return_lib = importlib.import_module('llama_cpp_cuda_tensorcores')
-            imported_module = 'llama_cpp_cuda_tensorcores'
-        except:
-            pass
+            try:
+                return_lib = importlib.import_module(lib_name)
+                imported_module = lib_name
+                monkey_patch_llama_cpp_python(return_lib)
+                return return_lib
+            except ImportError:
+                continue
 
-    if return_lib is None:
-        if imported_module and imported_module != 'llama_cpp_cuda':
-            raise Exception(f"The {module_to_purpose(imported_module)} version of llama-cpp-python is already loaded. Switching to the default version currently requires a server restart.")
-        try:
-            return_lib = importlib.import_module('llama_cpp_cuda')
-            imported_module = 'llama_cpp_cuda'
-        except:
-            pass
-
-    if return_lib is None and not shared.args.cpu:
-        if imported_module and imported_module != 'llama_cpp':
-            raise Exception(f"The {module_to_purpose(imported_module)} version of llama-cpp-python is already loaded. Switching to the CPU version currently requires a server restart.")
-        try:
-            return_lib = importlib.import_module('llama_cpp')
-            imported_module = 'llama_cpp'
-        except:
-            pass
-
-    if return_lib is not None:
-        monkey_patch_llama_cpp_python(return_lib)
-
-    return return_lib
+    return None
 
 
 def eval_with_progress(self, tokens: Sequence[int]):
