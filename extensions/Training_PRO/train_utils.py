@@ -101,8 +101,6 @@ def split_sentences(text: str, cutoff_len: int):
 # always uses all the text
 # hard cut defined by hard_cut_string or </s> will always end at the end of data block
 # no overlapping blocks will be created across hard cut or across </s> token
-
-
 def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool, cutoff_len: int, hard_cut_string: str, debug_slicer: bool):
 
     EOSX_str = '<//>'  # hardcut placeholder
@@ -290,8 +288,6 @@ def sliding_block_cut(text: str, min_chars_cut: int, eos_to_hc: bool, cutoff_len
 
 # Example usage:
 # download_file_from_url('https://example.com/path/to/your/file.ext', '/output/directory')
-
-
 def download_file_from_url(url, overwrite, output_dir_in, valid_extensions={'.txt', '.json'}):
     try:
         # Validate and sanitize the URL

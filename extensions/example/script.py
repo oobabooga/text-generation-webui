@@ -7,6 +7,7 @@ functions are declared in the same order that they are called at
 generation time.
 """
 
+import torch
 from transformers import LogitsProcessor
 
 from modules import chat

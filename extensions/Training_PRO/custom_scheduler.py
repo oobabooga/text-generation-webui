@@ -93,8 +93,6 @@ def _get_fp_cosine_raise_and_fall_lr_lambda(current_step: int, *, num_warmup_ste
     return max(0.0, 0.5 * (1.0 + math.cos(math.pi * float(num_cycles) * 2.0 * progress)))
 
 # constant to the first epochs then cosine down to 0 over the rest epochs
-
-
 def _get_fp_cosine_schedule_with_warmup_lr_lambda(current_step: int, *, num_warmup_steps: int, num_training_steps: int, num_firstepoch_steps: int):
 
     global last_print_label
@@ -125,8 +123,6 @@ def _get_fp_cosine_schedule_with_warmup_lr_lambda(current_step: int, *, num_warm
     return max(0.0, 0.5 * (1.0 + math.cos(math.pi * float(num_cycles) * 2.0 * progress)))
 
 # halve lr each epoch
-
-
 def _get_fp_cdrop_rate_schedule_with_warmup_lr_lambda(current_step: int, *, num_warmup_steps: int, num_training_steps: int, num_firstepoch_steps: int):
 
     global last_print_label
@@ -161,8 +157,6 @@ def _get_fp_cdrop_rate_schedule_with_warmup_lr_lambda(current_step: int, *, num_
     return learning_rate
 
 # epoch decay: 1/(1 + decay * epoch)
-
-
 def custom_cosine_scheduler_with_warmup(optimizer, num_warmup_steps, num_training_steps, num_firstepoch_steps, last_epoch=-1):
     """
     Args:
