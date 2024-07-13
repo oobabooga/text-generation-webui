@@ -16,9 +16,9 @@ import sys
 
 
 # Define the required PyTorch version
-TORCH_VERSION = "2.2.1"
-TORCHVISION_VERSION = "0.17.1"
-TORCHAUDIO_VERSION = "2.2.1"
+TORCH_VERSION = "2.2.2"
+TORCHVISION_VERSION = "0.17.2"
+TORCHAUDIO_VERSION = "2.2.2"
 
 # Environment
 script_dir = os.getcwd()
@@ -315,7 +315,7 @@ def install_webui():
         run_cmd("conda install -y libuv")
 
     # Install the webui requirements
-    update_requirements(initial_installation=True)
+    update_requirements(initial_installation=True, pull=False)
 
 
 def get_extensions_names():

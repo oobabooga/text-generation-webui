@@ -1,5 +1,4 @@
 import gc
-import logging
 import os
 import pprint
 import re
@@ -26,10 +25,9 @@ from transformers import (
 )
 
 import modules.shared as shared
-from modules import RoPE, sampler_hijack
+from modules import sampler_hijack
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
-from modules.relative_imports import RelativeImport
 
 transformers.logging.set_verbosity_error()
 
@@ -79,6 +77,7 @@ def load_model(model_name, loader=None):
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'AutoAWQ': AutoAWQ_loader,
         'HQQ': HQQ_loader,
+        'TensorRT-LLM': TensorRT_LLM_loader,
     }
 
     metadata = get_model_metadata(model_name)
@@ -103,7 +102,7 @@ def load_model(model_name, loader=None):
             tokenizer = load_tokenizer(model_name, model)
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
-    if loader.lower().startswith('exllama'):
+    if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt'):
         shared.settings['truncation_length'] = shared.args.max_seq_len
     elif loader in ['llama.cpp', 'llamacpp_HF']:
         shared.settings['truncation_length'] = shared.args.n_ctx
@@ -146,6 +145,9 @@ def huggingface_loader(model_name):
 
     if shared.args.force_safetensors:
         params['force_safetensors'] = True
+
+    if shared.args.use_eager_attention:
+        params['attn_implementation'] = 'eager'
 
     config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
 
@@ -250,7 +252,7 @@ def huggingface_loader(model_name):
         if shared.args.compress_pos_emb > 1:
             params['rope_scaling'] = {'type': 'linear', 'factor': shared.args.compress_pos_emb}
         elif shared.args.alpha_value > 1:
-            params['rope_scaling'] = {'type': 'dynamic', 'factor': RoPE.get_alpha_value(shared.args.alpha_value, shared.args.rope_freq_base)}
+            params['rope_scaling'] = {'type': 'dynamic', 'factor': shared.args.alpha_value}
 
         logger.info("TRANSFORMERS_PARAMS=")
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(params)
@@ -267,7 +269,7 @@ def llamacpp_loader(model_name):
     if path.is_file():
         model_file = path
     else:
-        model_file = sorted(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0] 
+        model_file = sorted(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0]
 
     logger.info(f"llama.cpp weights detected: \"{model_file}\"")
     model, tokenizer = LlamaCppModel.from_pretrained(model_file)
@@ -336,6 +338,13 @@ def HQQ_loader(model_name):
     model_dir = Path(f'{shared.args.model_dir}/{model_name}')
     model = AutoHQQHFModel.from_quantized(str(model_dir))
     HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
+    return model
+
+
+def TensorRT_LLM_loader(model_name):
+    from modules.tensorrt_llm import TensorRTLLMModel
+
+    model = TensorRTLLMModel.from_pretrained(model_name)
     return model
 
 

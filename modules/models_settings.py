@@ -9,6 +9,8 @@ from modules import chat, loaders, metadata_gguf, shared, ui
 
 def get_fallback_settings():
     return {
+        'bf16': False,
+        'use_eager_attention': False,
         'wbits': 'None',
         'groupsize': 'None',
         'desc_act': False,
@@ -16,6 +18,7 @@ def get_fallback_settings():
         'n_ctx': 2048,
         'rope_freq_base': 0,
         'compress_pos_emb': 1,
+        'alpha_value': 1,
         'truncation_length': shared.settings['truncation_length'],
         'skip_special_tokens': shared.settings['skip_special_tokens'],
         'custom_stopping_strings': shared.settings['custom_stopping_strings'],
@@ -58,13 +61,19 @@ def get_model_metadata(model):
                 model_settings['rope_freq_base'] = metadata[k]
             elif k.endswith('rope.scale_linear'):
                 model_settings['compress_pos_emb'] = metadata[k]
+            elif k.endswith('rope.scaling.factor'):
+                model_settings['compress_pos_emb'] = metadata[k]
             elif k.endswith('block_count'):
                 model_settings['n_gpu_layers'] = metadata[k] + 1
 
         if 'tokenizer.chat_template' in metadata:
             template = metadata['tokenizer.chat_template']
             eos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.eos_token_id']]
-            bos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.bos_token_id']]
+            if 'tokenizer.ggml.bos_token_id' in metadata:
+                bos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.bos_token_id']]
+            else:
+                bos_token = ""
+
             template = template.replace('eos_token', "'{}'".format(eos_token))
             template = template.replace('bos_token', "'{}'".format(bos_token))
 
@@ -77,6 +86,9 @@ def get_model_metadata(model):
         # Transformers metadata
         if hf_metadata is not None:
             metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+            if 'pretrained_config' in metadata:
+                metadata = metadata['pretrained_config']
+
             for k in ['max_position_embeddings', 'model_max_length', 'max_seq_len']:
                 if k in metadata:
                     model_settings['truncation_length'] = metadata[k]
@@ -87,9 +99,17 @@ def get_model_metadata(model):
             elif 'attn_config' in metadata and 'rope_theta' in metadata['attn_config']:
                 model_settings['rope_freq_base'] = metadata['attn_config']['rope_theta']
 
-            if 'rope_scaling' in metadata and type(metadata['rope_scaling']) is dict and all(key in metadata['rope_scaling'] for key in ('type', 'factor')):
+            if 'rope_scaling' in metadata and isinstance(metadata['rope_scaling'], dict) and all(key in metadata['rope_scaling'] for key in ('type', 'factor')):
                 if metadata['rope_scaling']['type'] == 'linear':
                     model_settings['compress_pos_emb'] = metadata['rope_scaling']['factor']
+
+            # For Gemma-2
+            if 'torch_dtype' in metadata and metadata['torch_dtype'] == 'bfloat16':
+                model_settings['bf16'] = True
+
+            # For Gemma-2
+            if 'architectures' in metadata and isinstance(metadata['architectures'], list) and 'Gemma2ForCausalLM' in metadata['architectures']:
+                model_settings['use_eager_attention'] = True
 
             # Read GPTQ metadata for old GPTQ loaders
             if 'quantization_config' in metadata and metadata['quantization_config'].get('quant_method', '') != 'exl2':
@@ -123,7 +143,7 @@ def get_model_metadata(model):
             for k in ['eos_token', 'bos_token']:
                 if k in metadata:
                     value = metadata[k]
-                    if type(value) is dict:
+                    if isinstance(value, dict):
                         value = value['content']
 
                     template = template.replace(k, "'{}'".format(value))
@@ -158,7 +178,7 @@ def infer_loader(model_name, model_settings):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     if not path_to_model.exists():
         loader = None
-    elif (path_to_model / 'quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):
+    elif (path_to_model / 'quantize_config.json').exists() or ('wbits' in model_settings and isinstance(model_settings['wbits'], int) and model_settings['wbits'] > 0):
         loader = 'ExLlamav2_HF'
     elif (path_to_model / 'quant_config.json').exists() or re.match(r'.*-awq', model_name.lower()):
         loader = 'AutoAWQ'
@@ -204,13 +224,10 @@ def update_model_parameters(state, initial=False):
             value = vars(shared.args_defaults)[element]
 
         # Making some simple conversions
-        if element in ['wbits', 'groupsize', 'pre_layer']:
+        if element in ['wbits', 'groupsize']:
             value = int(value)
         elif element == 'cpu_memory' and value is not None:
             value = f"{value}MiB"
-
-        if element in ['pre_layer']:
-            value = [value] if value > 0 else None
 
         setattr(shared.args, element, value)
 

@@ -43,6 +43,11 @@ theme = gr.themes.Default(
     body_text_color_subdued='#484848',
     background_fill_secondary='#eaeaea',
     background_fill_primary='var(--neutral-50)',
+    body_background_fill="white",
+    block_background_fill="#f4f4f4",
+    body_text_color="#333",
+    button_secondary_background_fill="#f4f4f4",
+    button_secondary_border_color="var(--border-color-primary)"
 )
 
 if Path("notification.mp3").exists():
@@ -64,13 +69,13 @@ def list_model_elements():
         'trust_remote_code',
         'no_use_fast',
         'use_flash_attention_2',
+        'use_eager_attention',
         'load_in_4bit',
         'compute_dtype',
         'quant_type',
         'use_double_quant',
         'wbits',
         'groupsize',
-        'pre_layer',
         'triton',
         'desc_act',
         'no_inject_fused_attention',
@@ -80,6 +85,8 @@ def list_model_elements():
         'disable_exllamav2',
         'cfg_cache',
         'no_flash_attn',
+        'no_xformers',
+        'no_sdpa',
         'num_experts_per_token',
         'cache_8bit',
         'cache_4bit',
@@ -103,10 +110,11 @@ def list_model_elements():
         'no_offload_kqv',
         'row_split',
         'tensorcores',
-        'flash-attn',
+        'flash_attn',
         'streaming_llm',
         'attention_sink_size',
         'hqq_backend',
+        'cpp_runner',
     ]
     if is_torch_xpu_available():
         for i in range(torch.xpu.device_count()):

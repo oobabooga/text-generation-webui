@@ -106,6 +106,7 @@ group.add_argument('--trust-remote-code', action='store_true', help='Set trust_r
 group.add_argument('--force-safetensors', action='store_true', help='Set use_safetensors=True while loading the model. This prevents arbitrary code execution.')
 group.add_argument('--no_use_fast', action='store_true', help='Set use_fast=False while loading the tokenizer (it\'s True by default). Use this if you have any problems related to use_fast.')
 group.add_argument('--use_flash_attention_2', action='store_true', help='Set use_flash_attention_2=True while loading the model.')
+group.add_argument('--use_eager_attention', action='store_true', help='Set attn_implementation= eager while loading the model.')
 
 # bitsandbytes 4-bit
 group = parser.add_argument_group('bitsandbytes 4-bit')
@@ -142,6 +143,8 @@ group.add_argument('--autosplit', action='store_true', help='Autosplit the model
 group.add_argument('--max_seq_len', type=int, default=2048, help='Maximum sequence length.')
 group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.')
 group.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
+group.add_argument('--no_xformers', action='store_true', help='Force xformers to not be used.')
+group.add_argument('--no_sdpa', action='store_true', help='Force Torch SDPA to not be used.')
 group.add_argument('--cache_8bit', action='store_true', help='Use 8-bit cache to save VRAM.')
 group.add_argument('--cache_4bit', action='store_true', help='Use Q4 cache to save VRAM.')
 group.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
@@ -164,6 +167,10 @@ group.add_argument('--no_inject_fused_attention', action='store_true', help='Dis
 # HQQ
 group = parser.add_argument_group('HQQ')
 group.add_argument('--hqq-backend', type=str, default='PYTORCH_COMPILE', help='Backend for the HQQ loader. Valid options: PYTORCH, PYTORCH_COMPILE, ATEN.')
+
+# TensorRT-LLM
+group = parser.add_argument_group('TensorRT-LLM')
+group.add_argument('--cpp-runner', action='store_true', help='Use the ModelRunnerCpp runner, which is faster than the default ModelRunner but doesn\'t support streaming yet.')
 
 # DeepSpeed
 group = parser.add_argument_group('DeepSpeed')
@@ -263,6 +270,8 @@ def fix_loader_name(name):
         return 'AutoAWQ'
     elif name in ['hqq']:
         return 'HQQ'
+    elif name in ['tensorrt', 'tensorrtllm', 'tensorrt_llm', 'tensorrt-llm', 'tensort', 'tensortllm']:
+        return 'TensorRT-LLM'
 
 
 def add_extension(name, last=False):

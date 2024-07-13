@@ -48,6 +48,8 @@ class Exllamav2Model:
         config.scale_pos_emb = shared.args.compress_pos_emb
         config.scale_alpha_value = shared.args.alpha_value
         config.no_flash_attn = shared.args.no_flash_attn
+        config.no_xformers = shared.args.no_xformers
+        config.no_sdpa = shared.args.no_sdpa
         config.num_experts_per_token = int(shared.args.num_experts_per_token)
 
         model = ExLlamaV2(config)

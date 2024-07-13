@@ -32,10 +32,10 @@ def create_ui():
         # Reset interface event
         shared.gradio['reset_interface'].click(
             set_interface_arguments, gradio('extensions_menu', 'bool_menu'), None).then(
-            lambda: None, None, None, js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;padding-top:20%;margin:0;height:100vh;color:lightgray;text-align:center;background:var(--body-background-fill)">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
+            None, None, None, js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;padding-top:20%;margin:0;height:100vh;color:lightgray;text-align:center;background:var(--body-background-fill)">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
 
         shared.gradio['toggle_dark_mode'].click(
-            lambda: None, None, None, js='() => {document.getElementsByTagName("body")[0].classList.toggle("dark")}').then(
+            None, None, None, js='() => {document.getElementsByTagName("body")[0].classList.toggle("dark")}').then(
             lambda x: 'dark' if x == 'light' else 'light', gradio('theme_state'), gradio('theme_state'))
 
         shared.gradio['save_settings'].click(

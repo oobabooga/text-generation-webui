@@ -21,8 +21,8 @@ loaders_and_params = OrderedDict({
         'trust_remote_code',
         'no_use_fast',
         'use_flash_attention_2',
+        'use_eager_attention',
         'alpha_value',
-        'rope_freq_base',
         'compress_pos_emb',
         'disable_exllama',
         'disable_exllamav2',
@@ -31,6 +31,8 @@ loaders_and_params = OrderedDict({
     'llama.cpp': [
         'n_ctx',
         'n_gpu_layers',
+        'cache_8bit',
+        'cache_4bit',
         'tensor_split',
         'n_batch',
         'threads',
@@ -38,7 +40,6 @@ loaders_and_params = OrderedDict({
         'no_mmap',
         'mlock',
         'no_mul_mat_q',
-        'alpha_value',
         'rope_freq_base',
         'compress_pos_emb',
         'cpu',
@@ -46,13 +47,15 @@ loaders_and_params = OrderedDict({
         'no_offload_kqv',
         'row_split',
         'tensorcores',
-        'flash-attn',
+        'flash_attn',
         'streaming_llm',
         'attention_sink_size',
     ],
     'llamacpp_HF': [
         'n_ctx',
         'n_gpu_layers',
+        'cache_8bit',
+        'cache_4bit',
         'tensor_split',
         'n_batch',
         'threads',
@@ -60,7 +63,6 @@ loaders_and_params = OrderedDict({
         'no_mmap',
         'mlock',
         'no_mul_mat_q',
-        'alpha_value',
         'rope_freq_base',
         'compress_pos_emb',
         'cpu',
@@ -72,7 +74,7 @@ loaders_and_params = OrderedDict({
         'no_offload_kqv',
         'row_split',
         'tensorcores',
-        'flash-attn',
+        'flash_attn',
         'streaming_llm',
         'attention_sink_size',
         'llamacpp_HF_info',
@@ -82,6 +84,8 @@ loaders_and_params = OrderedDict({
         'max_seq_len',
         'cfg_cache',
         'no_flash_attn',
+        'no_xformers',
+        'no_sdpa',
         'num_experts_per_token',
         'cache_8bit',
         'cache_4bit',
@@ -95,6 +99,8 @@ loaders_and_params = OrderedDict({
         'gpu_split',
         'max_seq_len',
         'no_flash_attn',
+        'no_xformers',
+        'no_sdpa',
         'num_experts_per_token',
         'cache_8bit',
         'cache_4bit',
@@ -134,6 +140,11 @@ loaders_and_params = OrderedDict({
         'hqq_backend',
         'trust_remote_code',
         'no_use_fast',
+    ],
+    'TensorRT-LLM': [
+        'max_seq_len',
+        'cpp_runner',
+        'tensorrt_llm_info',
     ]
 })
 
@@ -319,6 +330,16 @@ loaders_samplers = {
         'skip_special_tokens',
         'auto_max_new_tokens',
     },
+    'TensorRT-LLM': {
+        'temperature',
+        'top_p',
+        'top_k',
+        'repetition_penalty',
+        'presence_penalty',
+        'frequency_penalty',
+        'ban_eos_token',
+        'auto_max_new_tokens',
+    }
 }
 
 
