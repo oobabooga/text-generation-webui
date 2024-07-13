@@ -37,6 +37,7 @@ def llama_cpp_lib():
             if imported_module and imported_module != lib_name:
                 # Conflict detected, raise an exception
                 raise Exception(f"Cannot import `{lib_name}` because `{imported_module}` is already imported. Switching to a different version of llama-cpp-python currently requires a server restart.")
+
             try:
                 return_lib = importlib.import_module(lib_name)
                 imported_module = lib_name
