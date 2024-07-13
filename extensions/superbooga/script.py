@@ -90,7 +90,7 @@ def apply_settings(chunk_count, chunk_count_initial, time_weight):
     params['chunk_count_initial'] = int(chunk_count_initial)
     params['time_weight'] = time_weight
     settings_to_display = {k: params[k] for k in params if k in ['chunk_count', 'chunk_count_initial', 'time_weight']}
-    yield f"The following settings are now active: {str(settings_to_display)}"
+    yield f"The following settings are now active: {settings_to_display!s}"
 
 
 def custom_generate_chat_prompt(user_input, state, **kwargs):

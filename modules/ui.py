@@ -9,25 +9,25 @@ from transformers import is_torch_xpu_available
 import extensions
 from modules import shared
 
-with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r') as f:
+with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css') as f:
     css = f.read()
-with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
+with open(Path(__file__).resolve().parent / '../css/main.css') as f:
     css += f.read()
-with open(Path(__file__).resolve().parent / '../css/katex/katex.min.css', 'r') as f:
+with open(Path(__file__).resolve().parent / '../css/katex/katex.min.css') as f:
     css += f.read()
-with open(Path(__file__).resolve().parent / '../css/highlightjs/github-dark.min.css', 'r') as f:
+with open(Path(__file__).resolve().parent / '../css/highlightjs/github-dark.min.css') as f:
     css += f.read()
-with open(Path(__file__).resolve().parent / '../css/highlightjs/highlightjs-copy.min.css', 'r') as f:
+with open(Path(__file__).resolve().parent / '../css/highlightjs/highlightjs-copy.min.css') as f:
     css += f.read()
-with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/main.js') as f:
     js = f.read()
-with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/save_files.js') as f:
     save_files_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/switch_tabs.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/switch_tabs.js') as f:
     switch_tabs_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/show_controls.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/show_controls.js') as f:
     show_controls_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/update_big_picture.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/update_big_picture.js') as f:
     update_big_picture_js = f.read()
 
 refresh_symbol = '🔄'
@@ -256,7 +256,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
         if extension:
             extension = extension.script
             if hasattr(extension, 'params'):
-                params = getattr(extension, 'params')
+                params = extension.params
                 for param in params:
                     _id = f"{extension_name}-{param}"
                     # Only save if different from default value

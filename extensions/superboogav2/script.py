@@ -12,7 +12,7 @@ import textwrap
 
 import gradio as gr
 
-import extensions.superboogav2.parameters as parameters
+from extensions.superboogav2 import parameters
 from modules import shared
 from modules.logging_colors import logger
 
@@ -162,7 +162,7 @@ def _apply_settings(optimization_steps, time_power, time_steepness, significant_
             elif (not parameters.get_api_on()) and api_manager.is_server_running():
                 api_manager.stop_server()
     except Exception as e:
-        logger.warn(f'Could not properly apply settings: {str(e)}')
+        logger.warn(f'Could not properly apply settings: {e!s}')
 
 
 def custom_generate_chat_prompt(user_input, state, **kwargs):

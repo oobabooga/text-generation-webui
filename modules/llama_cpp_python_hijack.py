@@ -7,7 +7,6 @@ from tqdm import tqdm
 from modules import shared
 from modules.cache_utils import process_llamacpp_cache
 
-
 imported_module = None
 
 
@@ -67,7 +66,7 @@ def eval_with_progress(self, tokens: Sequence[int]):
         progress_bar = range(0, len(tokens), self.n_batch)
 
     for i in progress_bar:
-        batch = tokens[i : min(len(tokens), i + self.n_batch)]
+        batch = tokens[i: min(len(tokens), i + self.n_batch)]
         n_past = self.n_tokens
         n_tokens = len(batch)
         self._batch.set_batch(
@@ -75,18 +74,18 @@ def eval_with_progress(self, tokens: Sequence[int]):
         )
         self._ctx.decode(self._batch)
         # Save tokens
-        self.input_ids[n_past : n_past + n_tokens] = batch
+        self.input_ids[n_past: n_past + n_tokens] = batch
         # Save logits
         if self.context_params.logits_all:
             rows = n_tokens
             cols = self._n_vocab
             logits = self._ctx.get_logits()[: rows * cols]
-            self.scores[n_past : n_past + n_tokens, :].reshape(-1)[: :] = logits
+            self.scores[n_past: n_past + n_tokens, :].reshape(-1)[::] = logits
         else:
             rows = 1
             cols = self._n_vocab
             logits = self._ctx.get_logits()[: rows * cols]
-            self.scores[n_past + n_tokens - 1, :].reshape(-1)[: :] = logits
+            self.scores[n_past + n_tokens - 1, :].reshape(-1)[::] = logits
         # Update n_tokens
         self.n_tokens += n_tokens
 

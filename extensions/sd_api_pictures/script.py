@@ -10,7 +10,6 @@ import requests
 import torch
 from PIL import Image
 
-from modules import shared
 from modules.models import reload_model, unload_model
 from modules.ui import create_refresh_button
 
@@ -111,7 +110,7 @@ def input_modifier(string):
 
     global params
 
-    if not params['mode'] == 1:  # if not in immersive/interactive mode, do nothing
+    if params['mode'] != 1:  # if not in immersive/interactive mode, do nothing
         return string
 
     if triggers_are_in(string):  # if we're in it, check for trigger words
@@ -126,6 +125,8 @@ def input_modifier(string):
     return string
 
 # Get and save the Stable Diffusion-generated picture
+
+
 def get_SD_pictures(description, character):
 
     global params
@@ -189,6 +190,8 @@ def get_SD_pictures(description, character):
 
 # TODO: how do I make the UI history ignore the resulting pictures (I don't want HTML to appear in history)
 # and replace it with 'text' for the purposes of logging?
+
+
 def output_modifier(string, state):
     """
     This function is applied to the model outputs.
@@ -269,7 +272,7 @@ def SD_api_address_update(address):
 
 def custom_css():
     path_to_css = Path(__file__).parent.resolve() / 'style.css'
-    return open(path_to_css, 'r').read()
+    return open(path_to_css).read()
 
 
 def get_checkpoints():

@@ -37,7 +37,7 @@ def get_model_metadata(model):
 
     path = Path(f'{shared.args.model_dir}/{model}/config.json')
     if path.exists():
-        hf_metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+        hf_metadata = json.loads(open(path, encoding='utf-8').read())
     else:
         hf_metadata = None
 
@@ -59,9 +59,7 @@ def get_model_metadata(model):
                 model_settings['n_ctx'] = metadata[k]
             elif k.endswith('rope.freq_base'):
                 model_settings['rope_freq_base'] = metadata[k]
-            elif k.endswith('rope.scale_linear'):
-                model_settings['compress_pos_emb'] = metadata[k]
-            elif k.endswith('rope.scaling.factor'):
+            elif k.endswith('rope.scale_linear') or k.endswith('rope.scaling.factor'):
                 model_settings['compress_pos_emb'] = metadata[k]
             elif k.endswith('block_count'):
                 model_settings['n_gpu_layers'] = metadata[k] + 1
@@ -74,8 +72,8 @@ def get_model_metadata(model):
             else:
                 bos_token = ""
 
-            template = template.replace('eos_token', "'{}'".format(eos_token))
-            template = template.replace('bos_token', "'{}'".format(bos_token))
+            template = template.replace('eos_token', f"'{eos_token}'")
+            template = template.replace('bos_token', f"'{bos_token}'")
 
             template = re.sub(r'raise_exception\([^)]*\)', "''", template)
             template = re.sub(r'{% if add_generation_prompt %}.*', '', template, flags=re.DOTALL)
@@ -85,7 +83,7 @@ def get_model_metadata(model):
     else:
         # Transformers metadata
         if hf_metadata is not None:
-            metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+            metadata = json.loads(open(path, encoding='utf-8').read())
             if 'pretrained_config' in metadata:
                 metadata = metadata['pretrained_config']
 
@@ -123,7 +121,7 @@ def get_model_metadata(model):
         # Read AutoGPTQ metadata
         path = Path(f'{shared.args.model_dir}/{model}/quantize_config.json')
         if path.exists():
-            metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+            metadata = json.loads(open(path, encoding='utf-8').read())
             if 'bits' in metadata:
                 model_settings['wbits'] = metadata['bits']
             if 'group_size' in metadata:
@@ -134,7 +132,7 @@ def get_model_metadata(model):
     # Try to find the Jinja instruct template
     path = Path(f'{shared.args.model_dir}/{model}') / 'tokenizer_config.json'
     if path.exists():
-        metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+        metadata = json.loads(open(path, encoding='utf-8').read())
         if 'chat_template' in metadata:
             template = metadata['chat_template']
             if isinstance(template, list):
@@ -146,7 +144,7 @@ def get_model_metadata(model):
                     if isinstance(value, dict):
                         value = value['content']
 
-                    template = template.replace(k, "'{}'".format(value))
+                    template = template.replace(k, f"'{value}'")
 
             template = re.sub(r'raise_exception\([^)]*\)', "''", template)
             template = re.sub(r'{% if add_generation_prompt %}.*', '', template, flags=re.DOTALL)
@@ -184,9 +182,7 @@ def infer_loader(model_name, model_settings):
         loader = 'AutoAWQ'
     elif len(list(path_to_model.glob('*.gguf'))) > 0 and path_to_model.is_dir() and (path_to_model / 'tokenizer_config.json').exists():
         loader = 'llamacpp_HF'
-    elif len(list(path_to_model.glob('*.gguf'))) > 0:
-        loader = 'llama.cpp'
-    elif re.match(r'.*\.gguf', model_name.lower()):
+    elif len(list(path_to_model.glob('*.gguf'))) > 0 or re.match(r'.*\.gguf', model_name.lower()):
         loader = 'llama.cpp'
     elif re.match(r'.*exl2', model_name.lower()):
         loader = 'ExLlamav2_HF'
@@ -218,9 +214,7 @@ def update_model_parameters(state, initial=False):
             continue
 
         # Setting null defaults
-        if element in ['wbits', 'groupsize'] and value == 'None':
-            value = vars(shared.args_defaults)[element]
-        elif element in ['cpu_memory'] and value == 0:
+        if element in ['wbits', 'groupsize'] and value == 'None' or element in ['cpu_memory'] and value == 0:
             value = vars(shared.args_defaults)[element]
 
         # Making some simple conversions

@@ -160,7 +160,7 @@ def output_modifier(string, state):
 
 def custom_css():
     path_to_css = Path(f"{this_dir}/style.css")
-    return open(path_to_css, 'r').read()
+    return open(path_to_css).read()
 
 
 def setup():

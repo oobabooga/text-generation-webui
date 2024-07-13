@@ -63,7 +63,7 @@ class Parameters:
     def _load_from_json(self, file_path):
         logger.debug('Loading hyperparameters...')
 
-        with open(file_path, 'r') as file:
+        with open(file_path) as file:
             data = json.load(file)
 
         # Replace variable names in the dict and create Categorical objects

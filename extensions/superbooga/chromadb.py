@@ -12,7 +12,7 @@ posthog.capture = lambda *args, **kwargs: None
 embedder = embedding_functions.SentenceTransformerEmbeddingFunction("sentence-transformers/all-mpnet-base-v2")
 
 
-class ChromaCollector():
+class ChromaCollector:
     def __init__(self):
         name = ''.join(random.choice('ab') for _ in range(10))
 

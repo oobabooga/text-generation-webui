@@ -184,7 +184,7 @@ def replace_abbreviation(string):
 
 
 def match_mapping(char):
-    for mapping in alphabet_map.keys():
+    for mapping in alphabet_map:
         if char == mapping:
             return alphabet_map[char]
 

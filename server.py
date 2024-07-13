@@ -79,7 +79,7 @@ def create_interface():
     if shared.args.gradio_auth:
         auth.extend(x.strip() for x in shared.args.gradio_auth.strip('"').replace('\n', '').split(',') if x.strip())
     if shared.args.gradio_auth_path:
-        with open(shared.args.gradio_auth_path, 'r', encoding="utf8") as file:
+        with open(shared.args.gradio_auth_path, encoding="utf8") as file:
             auth.extend(x.strip() for line in file for x in line.split(',') if x.strip())
     auth = [tuple(cred.split(':')) for cred in auth]
 
@@ -189,7 +189,7 @@ if __name__ == "__main__":
 
     if settings_file is not None:
         logger.info(f"Loading settings from \"{settings_file}\"")
-        file_contents = open(settings_file, 'r', encoding='utf-8').read()
+        file_contents = open(settings_file, encoding='utf-8').read()
         new_settings = json.loads(file_contents) if settings_file.suffix == "json" else yaml.safe_load(file_contents)
         shared.settings.update(new_settings)
 

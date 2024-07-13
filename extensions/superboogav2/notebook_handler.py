@@ -3,7 +3,7 @@ This module is responsible for handling and modifying the notebook text.
 """
 import re
 
-import extensions.superboogav2.parameters as parameters
+from extensions.superboogav2 import parameters
 from extensions.superboogav2.utils import create_context_text
 from modules.logging_colors import logger
 

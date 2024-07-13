@@ -8,7 +8,7 @@ import posthog
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 
-import extensions.superboogav2.parameters as parameters
+from extensions.superboogav2 import parameters
 from modules.logging_colors import logger
 from modules.text_generation import decode, encode
 
@@ -57,12 +57,11 @@ class Info:
                 else:
                     overlap = max(0, s1_start + len(s1) - s2_start)
                     return Info(s1_start, s1 + s2[overlap:], new_dist, self.id)
+            elif s2_start + len(s2) >= s1_start + len(s1):  # if s2 completely covers s1
+                return Info(s2_start, s2, new_dist, other_info.id)
             else:
-                if s2_start + len(s2) >= s1_start + len(s1):  # if s2 completely covers s1
-                    return Info(s2_start, s2, new_dist, other_info.id)
-                else:
-                    overlap = max(0, s2_start + len(s2) - s1_start)
-                    return Info(s2_start, s2 + s1[overlap:], new_dist, other_info.id)
+                overlap = max(0, s2_start + len(s2) - s1_start)
+                return Info(s2_start, s2 + s1[overlap:], new_dist, other_info.id)
 
         return None
 
@@ -75,7 +74,7 @@ class Info:
         return not (s1_end < s2_start or s2_end < s1_start)
 
 
-class ChromaCollector():
+class ChromaCollector:
     def __init__(self):
         name = ''.join(random.choice('ab') for _ in range(10))
 

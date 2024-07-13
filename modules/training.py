@@ -215,7 +215,7 @@ def do_interrupt():
 def do_copy_params(lora_name: str, *args):
     f_name = f"{shared.args.lora_dir}/{clean_path(None, lora_name)}/training_parameters.json"
     if Path(f_name).is_file():
-        with open(f_name, 'r', encoding='utf-8') as format_file:
+        with open(f_name, encoding='utf-8') as format_file:
             params: dict[str, str] = json.load(format_file)
     else:
         params = {}
@@ -402,7 +402,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
         fullpath = clean_path('training/datasets', f'{raw_text_file}')
         fullpath = Path(fullpath)
         if fullpath.is_dir():
-            logger.info('Training path directory {}'.format(raw_text_file))
+            logger.info(f'Training path directory {raw_text_file}')
             raw_text = ""
             file_paths = sorted(fullpath.glob('*.txt'), key=lambda path: natural_keys(path.name))
             for file_path in file_paths:
@@ -412,7 +412,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
 
                     logger.info(f"Loaded training file: {file_path.name}")
         else:
-            with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
+            with open(clean_path('training/datasets', f'{raw_text_file}.txt'), encoding='utf-8') as file:
                 raw_text = file.read().replace('\r', '')
 
         cut_string = hard_cut_string.replace('\\n', '\n')
@@ -457,7 +457,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
 
         train_template["template_type"] = "dataset"
 
-        with open(clean_path('training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
+        with open(clean_path('training/formats', f'{format}.json'), encoding='utf-8-sig') as formatFile:
             format_data: dict[str, str] = json.load(formatFile)
 
         # == store training prompt ==
@@ -543,7 +543,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
         yield traceback.format_exc().replace('\n', '\n\n')
         return
 
-    class Tracked():
+    class Tracked:
         def __init__(self):
             self.current_steps = 0
             self.max_steps = 0

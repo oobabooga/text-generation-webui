@@ -12,7 +12,7 @@ if not os.path.isfile(bias_file):
         f.write("*I am so happy*\n*I am so sad*\n*I am so excited*\n*I am so bored*\n*I am so angry*")
 
 # read bias options from the text file
-with open(bias_file, "r") as f:
+with open(bias_file) as f:
     bias_options = [line.strip() for line in f.readlines()]
 
 params = {

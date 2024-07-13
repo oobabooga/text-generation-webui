@@ -27,21 +27,21 @@ def load_pipeline(params: dict) -> Tuple[AbstractMultimodalPipeline, str]:
     if shared.args.multimodal_pipeline is not None:
         for k in pipeline_modules:
             if hasattr(pipeline_modules[k], 'get_pipeline'):
-                pipeline = getattr(pipeline_modules[k], 'get_pipeline')(shared.args.multimodal_pipeline, params)
+                pipeline = pipeline_modules[k].get_pipeline(shared.args.multimodal_pipeline, params)
                 if pipeline is not None:
                     return (pipeline, k)
     else:
         model_name = shared.args.model.lower()
         for k in pipeline_modules:
             if hasattr(pipeline_modules[k], 'get_pipeline_from_model_name'):
-                pipeline = getattr(pipeline_modules[k], 'get_pipeline_from_model_name')(model_name, params)
+                pipeline = pipeline_modules[k].get_pipeline_from_model_name(model_name, params)
                 if pipeline is not None:
                     return (pipeline, k)
 
     available = []
     for k in pipeline_modules:
         if hasattr(pipeline_modules[k], 'available_pipelines'):
-            pipelines = getattr(pipeline_modules[k], 'available_pipelines')
+            pipelines = pipeline_modules[k].available_pipelines
             available += pipelines
 
     if shared.args.multimodal_pipeline is not None:

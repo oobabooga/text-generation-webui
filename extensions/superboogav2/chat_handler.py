@@ -3,7 +3,7 @@ This module is responsible for modifying the chat prompt and history.
 """
 import re
 
-import extensions.superboogav2.parameters as parameters
+from extensions.superboogav2 import parameters
 from extensions.superboogav2.utils import (
     create_context_text,
     create_metadata_source
@@ -38,9 +38,9 @@ def _should_query(input: str):
 
 def _format_single_exchange(name, text):
     if re.search(r':\s*$', name):
-        return '{} {}\n'.format(name, text)
+        return f'{name} {text}\n'
     else:
-        return '{}: {}\n'.format(name, text)
+        return f'{name}: {text}\n'
 
 
 def _get_names(state: dict):

@@ -315,14 +315,14 @@ def print_rule(file, grammar_encoding, index, symbol_id_names):
                 )
                 pos += 2
             else:
-                print("<{}>[".format(pos), end="", file=file)
+                print(f"<{pos}>[", end="", file=file)
                 num_chars = grammar_encoding[pos]
                 pos += 1
 
                 for i in range(0, num_chars, 2):
-                    print("{}-".format(chr(grammar_encoding[pos + i])), end="", file=file)
+                    print(f"{chr(grammar_encoding[pos + i])}-", end="", file=file)
                     if i + 1 < num_chars:
-                        print("{}".format(chr(grammar_encoding[pos + i + 1])), end="", file=file)
+                        print(f"{chr(grammar_encoding[pos + i + 1])}", end="", file=file)
                 print("]", end=" ", file=file)
                 pos += num_chars
         pos += 1

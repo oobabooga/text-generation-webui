@@ -7,27 +7,22 @@ functions are declared in the same order that they are called at
 generation time.
 """
 
-import gradio as gr
-import torch
 from transformers import LogitsProcessor
 
-from modules import chat, shared
-from modules.text_generation import (
-    decode,
-    encode,
-    generate_reply,
-)
+from modules import chat
 
 params = {
     "display_name": "Example Extension",
     "is_tab": False,
 }
 
+
 class MyLogits(LogitsProcessor):
     """
     Manipulates the probabilities for the next token before it gets sampled.
     Used in the logits_processor_modifier function below.
     """
+
     def __init__(self):
         pass
 
@@ -37,12 +32,14 @@ class MyLogits(LogitsProcessor):
         # scores = torch.log(probs / (1 - probs))
         return scores
 
+
 def history_modifier(history):
     """
     Modifies the chat history.
     Only used in chat mode.
     """
     return history
+
 
 def state_modifier(state):
     """
@@ -51,6 +48,7 @@ def state_modifier(state):
     """
     return state
 
+
 def chat_input_modifier(text, visible_text, state):
     """
     Modifies the user input string in chat mode (visible_text).
@@ -58,6 +56,7 @@ def chat_input_modifier(text, visible_text, state):
     input (text) to change how it will appear in the prompt.
     """
     return text, visible_text
+
 
 def input_modifier(string, state, is_chat=False):
     """
@@ -68,12 +67,14 @@ def input_modifier(string, state, is_chat=False):
     """
     return string
 
+
 def bot_prefix_modifier(string, state):
     """
     Modifies the prefix for the next bot reply in chat mode.
     By default, the prefix will be something like "Bot Name:".
     """
     return string
+
 
 def tokenizer_modifier(state, prompt, input_ids, input_embeds):
     """
@@ -82,6 +83,7 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
     Only used by loaders that use the transformers library for sampling.
     """
     return prompt, input_ids, input_embeds
+
 
 def logits_processor_modifier(processor_list, input_ids):
     """
@@ -92,6 +94,7 @@ def logits_processor_modifier(processor_list, input_ids):
     processor_list.append(MyLogits())
     return processor_list
 
+
 def output_modifier(string, state, is_chat=False):
     """
     Modifies the LLM output before it gets presented.
@@ -101,6 +104,7 @@ def output_modifier(string, state, is_chat=False):
     """
     return string
 
+
 def custom_generate_chat_prompt(user_input, state, **kwargs):
     """
     Replaces the function that generates the prompt from the chat history.
@@ -109,11 +113,13 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     result = chat.generate_chat_prompt(user_input, state, **kwargs)
     return result
 
+
 def custom_css():
     """
     Returns a CSS string that gets appended to the CSS for the webui.
     """
     return ''
+
 
 def custom_js():
     """
@@ -122,11 +128,13 @@ def custom_js():
     """
     return ''
 
+
 def setup():
     """
     Gets executed only once, when the extension is imported.
     """
     pass
+
 
 def ui():
     """

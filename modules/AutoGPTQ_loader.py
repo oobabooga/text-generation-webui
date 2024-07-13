@@ -3,7 +3,7 @@ from pathlib import Path
 from accelerate.utils import is_xpu_available
 from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
 
-import modules.shared as shared
+from modules import shared
 from modules.logging_colors import logger
 from modules.models import get_max_memory_dict
 

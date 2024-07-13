@@ -115,5 +115,5 @@ def custom_js():
     loaded.
     :return:
     """
-    with open(Path(__file__).parent.resolve() / "script.js", "r") as f:
+    with open(Path(__file__).parent.resolve() / "script.js") as f:
         return f.read()

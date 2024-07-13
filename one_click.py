@@ -27,7 +27,7 @@ conda_env_path = os.path.join(script_dir, "installer_files", "env")
 # Command-line flags
 cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
 if os.path.exists(cmd_flags_path):
-    with open(cmd_flags_path, 'r') as f:
+    with open(cmd_flags_path) as f:
         CMD_FLAGS = ' '.join(line.strip().rstrip('\\').strip() for line in f if line.strip().rstrip('\\').strip() and not line.strip().startswith('#'))
 else:
     CMD_FLAGS = ''
@@ -190,11 +190,11 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
             cmd = f'. "{conda_sh_path}" && conda activate "{conda_env_path}" && {cmd}'
 
     # Run shell commands
-    result = subprocess.run(cmd, shell=True, capture_output=capture_output, env=env)
+    result = subprocess.run(cmd, shell=True, capture_output=capture_output, env=env, check=False)
 
     # Assert the command ran successfully
     if assert_success and result.returncode != 0:
-        print(f"Command '{cmd}' failed with exit status code '{str(result.returncode)}'.\n\nExiting now.\nTry running the start/update script again.")
+        print(f"Command '{cmd}' failed with exit status code '{result.returncode!s}'.\n\nExiting now.\nTry running the start/update script again.")
         sys.exit(1)
 
     return result

@@ -14,8 +14,7 @@ import yaml
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 from PIL import Image
 
-import modules.shared as shared
-from modules import utils
+from modules import shared, utils
 from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.logging_colors import logger
@@ -165,17 +164,16 @@ def generate_chat_prompt(user_input, state, **kwargs):
             if len(suffix) > 0:
                 prompt = prompt[:-len(suffix)]
 
+        elif _continue:
+            suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
+            if len(suffix) > 0:
+                prompt = prompt[:-len(suffix)]
         else:
-            if _continue:
-                suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
-                if len(suffix) > 0:
-                    prompt = prompt[:-len(suffix)]
-            else:
-                prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
-                if state['mode'] == 'chat' and not impersonate:
-                    prefix = apply_extensions('bot_prefix', prefix, state)
+            prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
+            if state['mode'] == 'chat' and not impersonate:
+                prefix = apply_extensions('bot_prefix', prefix, state)
 
-                prompt += prefix
+            prompt += prefix
 
         prompt = remove_extra_bos(prompt)
         return prompt
@@ -463,7 +461,7 @@ def send_dummy_message(text, state):
 
 def send_dummy_reply(text, state):
     history = state['history']
-    if len(history['visible']) > 0 and not history['visible'][-1][1] == '':
+    if len(history['visible']) > 0 and history['visible'][-1][1] != '':
         history['visible'].append(['', ''])
         history['internal'].append(['', ''])
 
@@ -573,7 +571,7 @@ def find_all_histories_with_first_prompts(state):
     for i, path in enumerate(histories):
         filename = path.stem
         if re.match(r'^[0-9]{8}-[0-9]{2}-[0-9]{2}-[0-9]{2}$', filename):
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, encoding='utf-8') as f:
                 data = json.load(f)
 
                 first_prompt = ""
@@ -724,7 +722,7 @@ def load_character(character, name1, name2):
         logger.error(f"Could not find the character \"{character}\" inside characters/. No character has been loaded.")
         raise ValueError
 
-    file_contents = open(filepath, 'r', encoding='utf-8').read()
+    file_contents = open(filepath, encoding='utf-8').read()
     data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
     cache_folder = Path(shared.args.disk_cache_dir)
 
@@ -766,7 +764,7 @@ def load_instruction_template(template):
     else:
         return ''
 
-    file_contents = open(filepath, 'r', encoding='utf-8').read()
+    file_contents = open(filepath, encoding='utf-8').read()
     data = yaml.safe_load(file_contents)
     if 'instruction_template' in data:
         return data['instruction_template']

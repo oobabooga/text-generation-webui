@@ -24,8 +24,7 @@ from transformers import (
     GPTQConfig
 )
 
-import modules.shared as shared
-from modules import sampler_hijack
+from modules import sampler_hijack, shared
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
 
@@ -153,12 +152,11 @@ def huggingface_loader(model_name):
 
     if 'chatglm' in model_name.lower():
         LoaderClass = AutoModel
+    elif config.to_dict().get('is_encoder_decoder', False):
+        LoaderClass = AutoModelForSeq2SeqLM
+        shared.is_seq2seq = True
     else:
-        if config.to_dict().get('is_encoder_decoder', False):
-            LoaderClass = AutoModelForSeq2SeqLM
-            shared.is_seq2seq = True
-        else:
-            LoaderClass = AutoModelForCausalLM
+        LoaderClass = AutoModelForCausalLM
 
     # Load the model without any special settings
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1, shared.args.disable_exllama, shared.args.disable_exllamav2]):
@@ -205,7 +203,7 @@ def huggingface_loader(model_name):
                 # and https://huggingface.co/blog/4bit-transformers-bitsandbytes
                 quantization_config_params = {
                     'load_in_4bit': True,
-                    'bnb_4bit_compute_dtype': eval("torch.{}".format(shared.args.compute_dtype)) if shared.args.compute_dtype in ["bfloat16", "float16", "float32"] else None,
+                    'bnb_4bit_compute_dtype': eval(f"torch.{shared.args.compute_dtype}") if shared.args.compute_dtype in ["bfloat16", "float16", "float32"] else None,
                     'bnb_4bit_quant_type': shared.args.quant_type,
                     'bnb_4bit_use_double_quant': shared.args.use_double_quant,
                     'llm_int8_enable_fp32_cpu_offload': True

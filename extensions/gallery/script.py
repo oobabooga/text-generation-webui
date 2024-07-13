@@ -5,7 +5,6 @@ import gradio as gr
 from modules.html_generator import get_image_cache
 from modules.shared import gradio
 
-
 params = {
     'items_per_page': 50,
     'open': False,
@@ -105,7 +104,7 @@ def select_character(evt: gr.SelectData):
 
 def custom_js():
     path_to_js = Path(__file__).parent.resolve() / 'script.js'
-    return open(path_to_js, 'r').read()
+    return open(path_to_js).read()
 
 
 def ui():

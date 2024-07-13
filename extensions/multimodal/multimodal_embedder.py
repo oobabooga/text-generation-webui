@@ -79,7 +79,7 @@ class MultimodalEmbedder:
     def _encode_single_text(self, part: PromptPart, add_bos_token: bool) -> PromptPart:
         """Encode a single prompt `part` to `input_ids`. Returns a `PromptPart`"""
         if part.is_image:
-            placeholders = torch.ones((self.pipeline.num_image_embeds())) * self.pipeline.placeholder_token_id()
+            placeholders = torch.ones(self.pipeline.num_image_embeds()) * self.pipeline.placeholder_token_id()
             part.input_ids = placeholders.to(shared.model.device, dtype=torch.int64)
         else:
             part.input_ids = encode(part.text, add_bos_token=add_bos_token)[0].to(shared.model.device, dtype=torch.int64)

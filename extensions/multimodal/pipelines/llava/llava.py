@@ -65,7 +65,7 @@ class LLaVA_v0_Pipeline(AbstractMultimodalPipeline):
             modules.append(torch.nn.Linear(projector_shape[0], projector_shape[1]))
             for i in range(2, len(projector_shape)):
                 modules.append(torch.nn.GELU())
-                modules.append(torch.nn.Linear(projector_shape[i-1], projector_shape[i]))
+                modules.append(torch.nn.Linear(projector_shape[i - 1], projector_shape[i]))
             return torch.nn.Sequential(*modules)
 
     @staticmethod
@@ -94,7 +94,7 @@ class LLaVA_v0_Pipeline(AbstractMultimodalPipeline):
 
     @staticmethod
     def placeholder_embeddings() -> torch.Tensor:
-        return LLaVA_v0_Pipeline.embed_tokens(encode("<im_patch>"*256, add_bos_token=False)[0])
+        return LLaVA_v0_Pipeline.embed_tokens(encode("<im_patch>" * 256, add_bos_token=False)[0])
 
     def embed_images(self, images: List[Image.Image]) -> torch.Tensor:
         images = self.image_processor(images, return_tensors='pt')['pixel_values']
@@ -200,7 +200,7 @@ class LLaVA_LLaMA_2_13B_Pipeline(LLaVA_v0_13B_Pipeline):
 
     @staticmethod
     def placeholder_embeddings() -> torch.Tensor:
-        return LLaVA_v0_Pipeline.embed_tokens(encode("<unk>"*256, add_bos_token=False)[0])
+        return LLaVA_v0_Pipeline.embed_tokens(encode("<unk>" * 256, add_bos_token=False)[0])
 
 
 class LLaVA_v1_5_13B_Pipeline(LLaVA_v0_13B_Pipeline):
@@ -240,14 +240,15 @@ class LLaVA_v1_5_13B_Pipeline(LLaVA_v0_13B_Pipeline):
     def embed_images(self, images: List[Image.Image]) -> torch.Tensor:
         # pad it to square first
         images = [
-            expand2square(image, tuple(int(x*255) for x in self.image_processor.image_mean))
+            expand2square(image, tuple(int(x * 255) for x in self.image_processor.image_mean))
             for image in images
         ]
         return super().embed_images(images)
 
     @staticmethod
     def placeholder_embeddings() -> torch.Tensor:
-        return LLaVA_v0_Pipeline.embed_tokens(encode("<unk>"*576, add_bos_token=False)[0])
+        return LLaVA_v0_Pipeline.embed_tokens(encode("<unk>" * 576, add_bos_token=False)[0])
+
 
 class LLaVA_v1_5_7B_Pipeline(LLaVA_v1_5_13B_Pipeline):
     @staticmethod
@@ -257,6 +258,7 @@ class LLaVA_v1_5_7B_Pipeline(LLaVA_v1_5_13B_Pipeline):
     @staticmethod
     def llava_projector_shape() -> Tuple[int, int]:
         return (1024, 4096, 4096)
+
     @staticmethod
     def llava_projector_repo() -> str:
         return "liuhaotian/llava-v1.5-7b"

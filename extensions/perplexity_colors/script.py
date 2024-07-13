@@ -1,4 +1,3 @@
-import time
 
 import gradio
 import numpy as np

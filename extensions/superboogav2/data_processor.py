@@ -7,7 +7,7 @@ It will only include full words.
 import bisect
 import re
 
-import extensions.superboogav2.parameters as parameters
+from extensions.superboogav2 import parameters
 
 from .chromadb import ChromaCollector
 from .data_preprocessor import TextPreprocessorBuilder, TextSummarizer

@@ -55,27 +55,26 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
             pass
 
         scores = sampler_hijack.global_scores[-1]
-    else:
-        if is_non_hf_exllamav2:
-            if is_torch_xpu_available():
-                tokens = shared.tokenizer.encode(prompt).to("xpu:0")
-            elif is_torch_npu_available():
-                tokens = shared.tokenizer.encode(prompt).to("npu:0")
-            else:
-                tokens = shared.tokenizer.encode(prompt).cuda()
-            scores = shared.model.get_logits(tokens)[-1][-1]
-        elif is_non_hf_llamacpp:
-            tokens = shared.tokenizer.encode(prompt)
-            scores = shared.model.get_logits(tokens)[-1][-1]
+    elif is_non_hf_exllamav2:
+        if is_torch_xpu_available():
+            tokens = shared.tokenizer.encode(prompt).to("xpu:0")
+        elif is_torch_npu_available():
+            tokens = shared.tokenizer.encode(prompt).to("npu:0")
         else:
-            if is_torch_xpu_available():
-                tokens = shared.tokenizer.encode(prompt, return_tensors='pt').to("xpu:0")
-            elif is_torch_npu_available():
-                tokens = shared.tokenizer.encode(prompt, return_tensors='pt').to("npu:0")
-            else:
-                tokens = shared.tokenizer.encode(prompt, return_tensors='pt').cuda()
-            output = shared.model(input_ids=tokens)
-            scores = output['logits'][-1][-1]
+            tokens = shared.tokenizer.encode(prompt).cuda()
+        scores = shared.model.get_logits(tokens)[-1][-1]
+    elif is_non_hf_llamacpp:
+        tokens = shared.tokenizer.encode(prompt)
+        scores = shared.model.get_logits(tokens)[-1][-1]
+    else:
+        if is_torch_xpu_available():
+            tokens = shared.tokenizer.encode(prompt, return_tensors='pt').to("xpu:0")
+        elif is_torch_npu_available():
+            tokens = shared.tokenizer.encode(prompt, return_tensors='pt').to("npu:0")
+        else:
+            tokens = shared.tokenizer.encode(prompt, return_tensors='pt').cuda()
+        output = shared.model(input_ids=tokens)
+        scores = output['logits'][-1][-1]
 
     probs = torch.softmax(scores, dim=-1, dtype=torch.float)
     topk_values, topk_indices = torch.topk(probs, k=top_logits, largest=True, sorted=True)
@@ -105,6 +104,6 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
         topk_values = [f"{float(i):.5f}" for i in topk_values]
         output = ''
         for row in list(zip(topk_values, tokens)):
-            output += f"{row[0]}  -  {repr(row[1])}\n"
+            output += f"{row[0]}  -  {row[1]!r}\n"
 
         return output, previous

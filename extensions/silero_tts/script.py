@@ -180,7 +180,7 @@ def language_change(lang):
 
 def custom_css():
     path_to_css = Path(__file__).parent.resolve() / 'style.css'
-    return open(path_to_css, 'r').read()
+    return open(path_to_css).read()
 
 
 def ui():
@@ -191,7 +191,7 @@ def ui():
             autoplay = gr.Checkbox(value=params['autoplay'], label='Play TTS automatically')
 
         show_text = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
-        
+
         with gr.Row():
             language = gr.Dropdown(value=params['language'], choices=sorted(languages.keys()), label='Language')
             voice = gr.Dropdown(value=params['speaker'], choices=languages[params['language']]["voices"], label='TTS voice')

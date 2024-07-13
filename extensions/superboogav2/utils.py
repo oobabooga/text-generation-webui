@@ -2,7 +2,7 @@
 This module contains common functions across multiple other modules.
 """
 
-import extensions.superboogav2.parameters as parameters
+from extensions.superboogav2 import parameters
 
 
 # Create the context using the prefix + data_separator + postfix from parameters.

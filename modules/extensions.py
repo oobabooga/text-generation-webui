@@ -6,7 +6,7 @@ from inspect import signature
 import gradio as gr
 
 import extensions
-import modules.shared as shared
+from modules import shared
 from modules.logging_colors import logger
 
 state = {}
@@ -113,7 +113,7 @@ def _apply_custom_generate_chat_prompt(text, state, **kwargs):
 def _apply_state_modifier_extensions(state):
     for extension, _ in iterator():
         if hasattr(extension, "state_modifier"):
-            state = getattr(extension, "state_modifier")(state)
+            state = extension.state_modifier(state)
 
     return state
 
@@ -122,7 +122,7 @@ def _apply_state_modifier_extensions(state):
 def _apply_history_modifier_extensions(history):
     for extension, _ in iterator():
         if hasattr(extension, "history_modifier"):
-            history = getattr(extension, "history_modifier")(history)
+            history = extension.history_modifier(history)
 
     return history
 
@@ -153,7 +153,7 @@ def _apply_logits_processor_extensions(function_name, processor_list, input_ids)
 def _apply_custom_tokenized_length(prompt):
     for extension, _ in iterator():
         if hasattr(extension, 'custom_tokenized_length'):
-            return getattr(extension, 'custom_tokenized_length')(prompt)
+            return extension.custom_tokenized_length(prompt)
 
     return None
 
@@ -162,7 +162,7 @@ def _apply_custom_tokenized_length(prompt):
 def _apply_custom_generate_reply():
     for extension, _ in iterator():
         if hasattr(extension, 'custom_generate_reply'):
-            return getattr(extension, 'custom_generate_reply')
+            return extension.custom_generate_reply
 
     return None
 
@@ -171,7 +171,7 @@ def _apply_custom_css():
     all_css = ''
     for extension, _ in iterator():
         if hasattr(extension, 'custom_css'):
-            all_css += getattr(extension, 'custom_css')()
+            all_css += extension.custom_css()
 
     return all_css
 
@@ -180,7 +180,7 @@ def _apply_custom_js():
     all_js = ''
     for extension, _ in iterator():
         if hasattr(extension, 'custom_js'):
-            all_js += getattr(extension, 'custom_js')()
+            all_js += extension.custom_js()
 
     return all_js
 

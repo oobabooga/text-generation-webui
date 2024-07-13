@@ -1,17 +1,18 @@
-import os
 import json
+import os
+
 
 def create_graph(lora_path, lora_name):
     try:
         import matplotlib.pyplot as plt
         from matplotlib.ticker import ScalarFormatter
-        
+
         peft_model_path = f'{lora_path}/training_graph.json'
         image_model_path = f'{lora_path}/training_graph.png'
         # Check if the JSON file exists
         if os.path.exists(peft_model_path):
             # Load data from JSON file
-            with open(peft_model_path, 'r') as file:
+            with open(peft_model_path) as file:
                 data = json.load(file)
             # Extract x, y1, and y2 values
             x = [item['epoch'] for item in data]
@@ -20,7 +21,6 @@ def create_graph(lora_path, lora_name):
 
             # Create the line chart
             fig, ax1 = plt.subplots(figsize=(10, 6))
-        
 
             # Plot y1 (learning rate) on the first y-axis
             ax1.plot(x, y1, 'b-', label='Learning Rate')
@@ -38,7 +38,7 @@ def create_graph(lora_path, lora_name):
 
             # Set the y-axis formatter to display numbers in scientific notation
             ax1.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-            ax1.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+            ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
 
             # Add grid
             ax1.grid(True)
@@ -57,6 +57,6 @@ def create_graph(lora_path, lora_name):
             print(f"Graph saved in {image_model_path}")
         else:
             print(f"File 'training_graph.json' does not exist in the {lora_path}")
-      
+
     except ImportError:
         print("matplotlib is not installed. Please install matplotlib to create PNG graphs")

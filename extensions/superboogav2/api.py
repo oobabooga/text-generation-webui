@@ -15,7 +15,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 from urllib.parse import parse_qs, urlparse
 
-import extensions.superboogav2.parameters as parameters
+from extensions.superboogav2 import parameters
 from modules import shared
 from modules.logging_colors import logger
 

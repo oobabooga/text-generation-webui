@@ -4,7 +4,7 @@ import torch
 from peft import PeftModel
 from transformers import is_torch_xpu_available
 
-import modules.shared as shared
+from modules import shared
 from modules.logging_colors import logger
 from modules.models import reload_model
 

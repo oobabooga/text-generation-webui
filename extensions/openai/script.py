@@ -364,11 +364,10 @@ def run_server():
             logger.info(f'OpenAI-compatible API URL:\n\n{public_url}\n')
 
         _start_cloudflared(port, shared.args.public_api_id, max_attempts=3, on_start=on_start)
+    elif ssl_keyfile and ssl_certfile:
+        logger.info(f'OpenAI-compatible API URL:\n\nhttps://{server_addr}:{port}\n')
     else:
-        if ssl_keyfile and ssl_certfile:
-            logger.info(f'OpenAI-compatible API URL:\n\nhttps://{server_addr}:{port}\n')
-        else:
-            logger.info(f'OpenAI-compatible API URL:\n\nhttp://{server_addr}:{port}\n')
+        logger.info(f'OpenAI-compatible API URL:\n\nhttp://{server_addr}:{port}\n')
 
     if shared.args.api_key:
         if not shared.args.admin_key:

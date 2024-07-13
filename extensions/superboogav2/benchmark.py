@@ -23,7 +23,7 @@ def benchmark(config_path, collector):
 
     # Open the log file in append mode
     with open(filename, 'a') as log:
-        with open(config_path, 'r') as f:
+        with open(config_path) as f:
             data = json.load(f)
 
         total_points = 0
@@ -36,7 +36,7 @@ def benchmark(config_path, collector):
             # Check if the file exists
             if os.path.isfile(Path(filepath)):
                 # Open the file and read its content
-                with open(Path(filepath), 'r') as file:
+                with open(Path(filepath)) as file:
                     corpus = file.read()
                 process_and_add_to_collector(corpus, collector, True, create_metadata_source('benchmark'))
             else:
