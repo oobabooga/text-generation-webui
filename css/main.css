@@ -370,7 +370,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
  * when not hovered. */
 @media (hover: hover) and (pointer: fine) {
     .chat-parent {
-        visibility: hidden;
+/*        visibility: hidden;*/
     }
 
     .chat-parent:focus, .chat-parent:hover {
