@@ -52,7 +52,7 @@ def create_event_handlers():
     shared.gradio['delete_cancel'].click(lambda: gr.update(visible=False), None, gradio('file_deleter'))
     shared.gradio['save_cancel'].click(lambda: gr.update(visible=False), None, gradio('file_saver'))
     shared.gradio['save_character_confirm'].click(handle_save_character_confirm_click, gradio('name2', 'greeting', 'context', 'character_picture', 'save_character_filename'), gradio('character_menu', 'character_saver'), show_progress=False)
-    shared.gradio['delete_character_confirm'].click(handle_delete_confirm_click, gradio('character_menu'), gradio('character_menu', 'character_deleter'), show_progress=False)
+    shared.gradio['delete_character_confirm'].click(handle_delete_character_confirm_click, gradio('character_menu'), gradio('character_menu', 'character_deleter'), show_progress=False)
     shared.gradio['save_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_saver'), show_progress=False)
     shared.gradio['delete_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_deleter'), show_progress=False)
     shared.gradio['save_preset'].click(
@@ -75,6 +75,7 @@ def handle_delete_confirm_click(delete_root, delete_filename):
     utils.delete_file(delete_root + delete_filename)
     return gr.update(visible=False)
 
+
 def handle_save_character_confirm_click(name2, greeting, context, character_picture, filename):
     chat.save_character(name2, greeting, context, character_picture, filename)
     available_characters = utils.get_available_characters()
@@ -84,11 +85,13 @@ def handle_save_character_confirm_click(name2, greeting, context, character_pict
         gr.update(visible=False)
     ]
 
+
 def handle_delete_character_confirm_click(character):
     index = utils.get_available_characters().index(character)
     chat.delete_character(character)
     output = chat.update_character_menu_after_deletion(index)
     return output + [gr.update(visible=False)]
+
 
 def handle_save_preset_click(state):
     contents = presets.generate_preset_yaml(state)
@@ -98,13 +101,15 @@ def handle_save_preset_click(state):
         gr.update(visible=True)
     ]
 
+
 def handle_save_preset_confirm_click(filename, contents):
     utils.save_file(f'presets/{filename}.yaml', contents)
     available_presets = utils.get_available_presets()
     return [
-        gr.update(visible=False),
-        gr.update(choices=available_presets, value=filename)
+        gr.update(choices=available_presets, value=filename),
+        gr.update(visible=False)
     ]
+
 
 def handle_delete_preset_click(preset):
     return [
@@ -113,6 +118,7 @@ def handle_delete_preset_click(preset):
         gr.update(visible=True)
     ]
 
+
 def handle_save_grammar_click(grammar_string):
     return [
         grammar_string,
@@ -120,6 +126,7 @@ def handle_save_grammar_click(grammar_string):
         "grammars/",
         gr.update(visible=True)
     ]
+
 
 def handle_delete_grammar_click(grammar):
     return [
