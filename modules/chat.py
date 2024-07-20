@@ -25,6 +25,8 @@ from modules.text_generation import (
     get_max_prompt_length
 )
 from modules.utils import delete_file, get_available_characters, save_file
+from modules.text_generation import stop_everything_event
+
 
 # Copied from the Transformers library
 jinja_env = ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
@@ -421,8 +423,19 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         send_dummy_message(text, state)
         send_dummy_reply(state['start_with'], state)
 
+    mode = state['mode']
+    history = state['history']
+    name1 = state['name1']
+    name2 = state['name2']
+    mode = state['mode']
+    style = state['chat_style']
+    character = state['character_menu']
+    unique_id = state['unique_id']
+
     for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True, for_ui=True)):
-        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
+        yield chat_html_wrapper(history, name1, name2, mode, style, character), history
+
+    save_history(history, unique_id, character, mode)
 
 
 def remove_last_message(history):
@@ -995,3 +1008,288 @@ def my_yaml_output(data):
             result += "  " + line.rstrip(' ') + "\n"
 
     return result
+
+
+def handle_replace_last_reply_click(text, state):
+    mode = state['mode']
+    history = state['history']
+    name1 = state['name1']
+    name2 = state['name2']
+    mode = state['mode']
+    style = state['chat_style']
+    character = state['character_menu']
+    unique_id = state['unique_id']
+
+    history = replace_last_reply(text, state)
+    save_history(history, unique_id, character, mode)
+    html = redraw_html(history, name1, name2, mode, style, character)
+
+    return [history, html, ""]
+
+def handle_send_dummy_message_click(text, state):
+    mode = state['mode']
+    history = state['history']
+    name1 = state['name1']
+    name2 = state['name2']
+    mode = state['mode']
+    style = state['chat_style']
+    character = state['character_menu']
+    unique_id = state['unique_id']
+
+    history = send_dummy_message(text, state)
+    save_history(history, unique_id, character, mode)
+    html = redraw_html(history, name1, name2, mode, style, character)
+
+    return [history, html, ""]
+
+def handle_send_dummy_reply_click(text, state):
+    mode = state['mode']
+    history = state['history']
+    name1 = state['name1']
+    name2 = state['name2']
+    mode = state['mode']
+    style = state['chat_style']
+    character = state['character_menu']
+    unique_id = state['unique_id']
+
+    history = send_dummy_reply(text, state)
+    save_history(history, unique_id, character, mode)
+    html = redraw_html(history, name1, name2, mode, style, character)
+
+    return [history, html, ""]
+
+def handle_remove_last_click(state):
+    mode = state['mode']
+    history = state['history']
+    name1 = state['name1']
+    name2 = state['name2']
+    mode = state['mode']
+    style = state['chat_style']
+    character = state['character_menu']
+    unique_id = state['unique_id']
+
+    last_input, history = remove_last_message(history)
+    save_history(history, unique_id, character, mode)
+    html = redraw_html(history, name1, name2, mode, style, character)
+
+    return [history, html, last_input]
+
+def handle_stop_click(state):
+    mode = state['mode']
+    history = state['history']
+    name1 = state['name1']
+    name2 = state['name2']
+    mode = state['mode']
+    style = state['chat_style']
+    character = state['character_menu']
+
+    stop_everything_event()
+    html = redraw_html(history, name1, name2, mode, style, character)
+
+    return html
+
+def handle_unique_id_select(state):
+    mode = state['mode']
+    history = state['history']
+    name1 = state['name1']
+    name2 = state['name2']
+    mode = state['mode']
+    style = state['chat_style']
+    character = state['character_menu']
+    unique_id = state['unique_id']
+
+    history = load_history(unique_id, character, mode)
+    html = redraw_html(history, name1, name2, mode, style, character)
+
+    return [history, html]
+
+def handle_start_new_chat_click(state):
+    mode = state['mode']
+    history = state['history']
+    name1 = state['name1']
+    name2 = state['name2']
+    mode = state['mode']
+    style = state['chat_style']
+    character = state['character_menu']
+
+    history = start_new_chat(state)
+    histories = find_all_histories_with_first_prompts(state)
+    html = redraw_html(history, name1, name2, mode, style, character)
+
+    return [history, html, gr.update(choices=histories, value=histories[0][1])]
+
+def handle_delete_chat_confirm_click(state):
+    mode = state['mode']
+    history = state['history']
+    name1 = state['name1']
+    name2 = state['name2']
+    mode = state['mode']
+    style = state['chat_style']
+    character = state['character_menu']
+    unique_id = state['unique_id']
+
+    index = find_all_histories(state).index(unique_id)
+    delete_history(unique_id, character, mode)
+    history, unique_id = load_history_after_deletion(state, index)
+    html = redraw_html(history, name1, name2, mode, style, character)
+
+    return [
+        history,
+        html,
+        gr.update(visible=False),
+        gr.update(visible=True),
+        gr.update(visible=False)
+    ]
+
+def handle_rename_chat_click():
+    return [
+        gr.update(visible=True, value="My New Chat"),
+        gr.update(visible=True),
+        gr.update(visible=True)
+    ]
+
+def handle_rename_chat_confirm(rename_to, state):
+    mode = state['mode']
+    mode = state['mode']
+    character = state['character_menu']
+    unique_id = state['unique_id']
+
+    rename_history(unique_id, rename_to, character, mode)
+    histories = find_all_histories_with_first_prompts(state)
+
+    return [
+        gr.update(choices=histories, value=rename_to),
+        gr.update(visible=False),
+        gr.update(visible=False),
+        gr.update(visible=False)
+    ]
+
+def handle_load_chat_history_upload(load_chat_history, state):
+    mode = state['mode']
+    history = state['history']
+    name1 = state['name1']
+    name2 = state['name2']
+    mode = state['mode']
+    style = state['chat_style']
+    character = state['character_menu']
+    unique_id = state['unique_id']
+
+    history = start_new_chat(state)
+    history = load_history_json(load_chat_history, history)
+    histories = find_all_histories_with_first_prompts(state)
+    save_history(history, unique_id, character, mode)
+
+    html = redraw_html(history, name1, name2, mode, style, character)
+
+    return [
+        history,
+        html,
+        gr.update(choices=histories, value=histories[0][1])
+    ]
+
+def handle_character_menu_change(state):
+    mode = state['mode']
+    history = state['history']
+    name1 = state['name1']
+    name2 = state['name2']
+    mode = state['mode']
+    style = state['chat_style']
+    character = state['character_menu']
+
+    name1, name2, picture, greeting, context = load_character(character, name1, name2)
+    state['name1'] = name1
+    state['name2'] = name2
+    state['character_picture'] = picture
+    state['greeting'] = greeting
+    state['context'] = context
+
+    history = load_latest_history(state)
+
+    html = redraw_html(history, name1, name2, mode, style, character)
+    histories = find_all_histories_with_first_prompts(state)
+
+    return [
+        history,
+        html,
+        gr.update(choices=histories, value=histories[0][1]),
+    ]
+
+def handle_mode_change(state):
+    mode = state['mode']
+    history = state['history']
+    name1 = state['name1']
+    name2 = state['name2']
+    mode = state['mode']
+    style = state['chat_style']
+    character = state['character_menu']
+
+    history = load_latest_history(state)
+    histories = find_all_histories_with_first_prompts(state)
+    html = redraw_html(history, name1, name2, mode, style, character)
+
+    return [
+        history,
+        html,
+        gr.update(visible=mode != 'instruct'),
+        gr.update(visible=mode == 'chat-instruct'),
+        gr.update(choices=histories, value=histories[0][1])
+    ]
+
+def handle_save_character_click(name2):
+    return [
+        name2,
+        gr.update(visible=True)
+    ]
+
+def handle_load_template_click(instruction_template):
+    output = load_instruction_template(instruction_template)
+    return [
+        output,
+        "Select template to load..."
+    ]
+
+def handle_save_template_click(instruction_template_str, state):
+    contents = generate_instruction_template_yaml(instruction_template_str)
+    return [
+        'My Template.yaml',
+        'instruction-templates/',
+        contents,
+        gr.update(visible=True)
+    ]
+
+def handle_delete_template_click(template):
+    return [
+        f'{template}.yaml',
+        'instruction-templates/',
+        gr.update(visible=True)
+    ]
+
+def handle_your_picture_change(picture, state):
+    mode = state['mode']
+    history = state['history']
+    name1 = state['name1']
+    name2 = state['name2']
+    mode = state['mode']
+    style = state['chat_style']
+    character = state['character_menu']
+
+    upload_your_profile_picture(picture)
+    html = redraw_html(history, name1, name2, mode, style, character, reset_cache=True)
+
+    return html
+
+def handle_send_instruction_click(state):
+    state['mode'] = 'instruct'
+    state['history'] = {
+        'internal': [],
+        'visible': []
+    }
+
+    output = generate_chat_prompt("Input", state)
+
+    return output
+
+def handle_send_chat_click(state):
+    output = generate_chat_prompt("", state, _continue=True)
+
+    return output 
