@@ -1212,6 +1212,11 @@ def handle_character_menu_change(state):
     return [
         history,
         html,
+        name1,
+        name2,
+        picture,
+        greeting,
+        context,
         gr.update(choices=histories, value=histories[0][1]),
     ]
 
