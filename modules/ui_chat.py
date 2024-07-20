@@ -237,7 +237,7 @@ def create_event_handlers():
     shared.gradio['delete_chat-cancel'].click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, gradio(clear_arr))
     shared.gradio['delete_chat-confirm'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_delete_chat_confirm_click, gradio('interface_state'), gradio('history', 'display') + gradio(clear_arr), show_progress=False)
+        chat.handle_delete_chat_confirm_click, gradio('interface_state'), gradio('history', 'display', 'unique_id') + gradio(clear_arr), show_progress=False)
 
     shared.gradio['rename_chat'].click(chat.handle_rename_chat_click, None, gradio('rename_to', 'rename_to-confirm', 'rename_to-cancel'), show_progress=False)
     shared.gradio['rename_to-cancel'].click(lambda: [gr.update(visible=False)] * 3, None, gradio('rename_to', 'rename_to-confirm', 'rename_to-cancel'), show_progress=False)
@@ -256,12 +256,12 @@ def create_event_handlers():
 
     shared.gradio['character_menu'].change(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_character_menu_change, gradio('interface_state'), gradio('history', 'display', 'unique_id')).then(
+        chat.handle_character_menu_change, gradio('interface_state'), gradio('history', 'display', 'unique_id'), show_progress=False).then(
         None, None, None, js=f'() => {{{ui.update_big_picture_js}; updateBigPicture()}}')
 
     shared.gradio['mode'].change(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_mode_change, gradio('history', 'display', 'chat_style', 'chat-instruct_command', 'unique_id')).then(
+        chat.handle_mode_change, gradio('interface_state'), gradio('history', 'display', 'chat_style', 'chat-instruct_command', 'unique_id'), show_progress=False).then(
         None, gradio('mode'), None, js="(mode) => {mode === 'instruct' ? document.getElementById('character-menu').parentNode.parentNode.style.display = 'none' : document.getElementById('character-menu').parentNode.parentNode.style.display = ''}")
 
     shared.gradio['chat_style'].change(chat.redraw_html, gradio(reload_arr), gradio('display'))
