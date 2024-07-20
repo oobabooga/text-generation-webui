@@ -38,12 +38,17 @@ def create_ui():
             None, None, None, js='() => {document.getElementsByTagName("body")[0].classList.toggle("dark")}').then(
             lambda x: 'dark' if x == 'light' else 'light', gradio('theme_state'), gradio('theme_state'))
 
-        shared.gradio['save_settings'].click(
-            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            ui.save_settings, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls', 'theme_state'), gradio('save_contents')).then(
-            lambda: './', None, gradio('save_root')).then(
-            lambda: 'settings.yaml', None, gradio('save_filename')).then(
-            lambda: gr.update(visible=True), None, gradio('file_saver'))
+        shared.gradio['save_settings'].click(handle_save_settings, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls', 'theme_state'), gradio('save_contents', 'save_filename', 'save_root', 'file_saver'), show_progress=False)
+
+
+def handle_save_settings(state, preset_menu, extensions_menu, show_controls, theme_state):
+    contents = ui.save_settings(state, preset_menu, extensions_menu, show_controls, theme_state)
+    return [
+        contents,
+        'settings.yaml',
+        './',
+        gr.update(visible=True)
+    ]
 
 
 def set_interface_arguments(extensions, bool_active):
