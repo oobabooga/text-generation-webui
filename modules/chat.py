@@ -422,7 +422,6 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         send_dummy_message(text, state)
         send_dummy_reply(state['start_with'], state)
 
-    mode = state['mode']
     history = state['history']
     name1 = state['name1']
     name2 = state['name2']
@@ -1010,7 +1009,6 @@ def my_yaml_output(data):
 
 
 def handle_replace_last_reply_click(text, state):
-    mode = state['mode']
     history = state['history']
     name1 = state['name1']
     name2 = state['name2']
@@ -1027,7 +1025,6 @@ def handle_replace_last_reply_click(text, state):
 
 
 def handle_send_dummy_message_click(text, state):
-    mode = state['mode']
     history = state['history']
     name1 = state['name1']
     name2 = state['name2']
@@ -1044,7 +1041,6 @@ def handle_send_dummy_message_click(text, state):
 
 
 def handle_send_dummy_reply_click(text, state):
-    mode = state['mode']
     history = state['history']
     name1 = state['name1']
     name2 = state['name2']
@@ -1061,7 +1057,6 @@ def handle_send_dummy_reply_click(text, state):
 
 
 def handle_remove_last_click(state):
-    mode = state['mode']
     history = state['history']
     name1 = state['name1']
     name2 = state['name2']
@@ -1078,7 +1073,6 @@ def handle_remove_last_click(state):
 
 
 def handle_stop_click(state):
-    mode = state['mode']
     history = state['history']
     name1 = state['name1']
     name2 = state['name2']
@@ -1093,7 +1087,6 @@ def handle_stop_click(state):
 
 
 def handle_unique_id_select(state):
-    mode = state['mode']
     history = state['history']
     name1 = state['name1']
     name2 = state['name2']
@@ -1109,7 +1102,6 @@ def handle_unique_id_select(state):
 
 
 def handle_start_new_chat_click(state):
-    mode = state['mode']
     history = state['history']
     name1 = state['name1']
     name2 = state['name2']
@@ -1125,7 +1117,6 @@ def handle_start_new_chat_click(state):
 
 
 def handle_delete_chat_confirm_click(state):
-    mode = state['mode']
     history = state['history']
     name1 = state['name1']
     name2 = state['name2']
@@ -1159,7 +1150,6 @@ def handle_rename_chat_click():
 
 def handle_rename_chat_confirm(rename_to, state):
     mode = state['mode']
-    mode = state['mode']
     character = state['character_menu']
     unique_id = state['unique_id']
 
@@ -1175,7 +1165,6 @@ def handle_rename_chat_confirm(rename_to, state):
 
 
 def handle_load_chat_history_upload(load_chat_history, state):
-    mode = state['mode']
     history = state['history']
     name1 = state['name1']
     name2 = state['name2']
@@ -1199,7 +1188,6 @@ def handle_load_chat_history_upload(load_chat_history, state):
 
 
 def handle_character_menu_change(state):
-    mode = state['mode']
     history = state['history']
     name1 = state['name1']
     name2 = state['name2']
@@ -1232,7 +1220,6 @@ def handle_character_menu_change(state):
 
 
 def handle_mode_change(state):
-    mode = state['mode']
     history = state['history']
     name1 = state['name1']
     name2 = state['name2']
@@ -1287,7 +1274,6 @@ def handle_delete_template_click(template):
 
 
 def handle_your_picture_change(picture, state):
-    mode = state['mode']
     history = state['history']
     name1 = state['name1']
     name2 = state['name2']
