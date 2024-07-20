@@ -169,6 +169,7 @@ def create_interface():
             ssl_verify=False if (shared.args.ssl_keyfile or shared.args.ssl_certfile) else True,
             ssl_keyfile=shared.args.ssl_keyfile,
             ssl_certfile=shared.args.ssl_certfile,
+            root_path=shared.args.subpath,
             allowed_paths=["cache", "css", "extensions", "js"]
         )
 
