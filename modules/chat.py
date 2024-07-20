@@ -22,11 +22,10 @@ from modules.logging_colors import logger
 from modules.text_generation import (
     generate_reply,
     get_encoded_length,
-    get_max_prompt_length
+    get_max_prompt_length,
+    stop_everything_event
 )
 from modules.utils import delete_file, get_available_characters, save_file
-from modules.text_generation import stop_everything_event
-
 
 # Copied from the Transformers library
 jinja_env = ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
