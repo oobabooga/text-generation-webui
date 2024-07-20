@@ -149,8 +149,8 @@ def create_interface():
         shared.gradio['interface'].load(None, None, None, js=f"() => {{if ({str(shared.settings['dark_theme']).lower()}) {{ document.getElementsByTagName('body')[0].classList.add('dark'); }} }}")
         shared.gradio['interface'].load(None, None, None, js=f"() => {{{js}}}")
         shared.gradio['interface'].load(None, gradio('show_controls'), None, js=f'(x) => {{{ui.show_controls_js}; toggle_controls(x)}}')
-        shared.gradio['interface'].load(partial(
-            ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False).then(
+        shared.gradio['interface'].load(
+            partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False).then(
             chat.redraw_html, gradio(ui_chat.reload_arr), gradio('display'), show_progress=False)
 
         extensions_module.create_extensions_tabs()  # Extensions tabs
