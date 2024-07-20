@@ -1025,6 +1025,7 @@ def handle_replace_last_reply_click(text, state):
 
     return [history, html, ""]
 
+
 def handle_send_dummy_message_click(text, state):
     mode = state['mode']
     history = state['history']
@@ -1040,6 +1041,7 @@ def handle_send_dummy_message_click(text, state):
     html = redraw_html(history, name1, name2, mode, style, character)
 
     return [history, html, ""]
+
 
 def handle_send_dummy_reply_click(text, state):
     mode = state['mode']
@@ -1057,6 +1059,7 @@ def handle_send_dummy_reply_click(text, state):
 
     return [history, html, ""]
 
+
 def handle_remove_last_click(state):
     mode = state['mode']
     history = state['history']
@@ -1073,6 +1076,7 @@ def handle_remove_last_click(state):
 
     return [history, html, last_input]
 
+
 def handle_stop_click(state):
     mode = state['mode']
     history = state['history']
@@ -1086,6 +1090,7 @@ def handle_stop_click(state):
     html = redraw_html(history, name1, name2, mode, style, character)
 
     return html
+
 
 def handle_unique_id_select(state):
     mode = state['mode']
@@ -1102,6 +1107,7 @@ def handle_unique_id_select(state):
 
     return [history, html]
 
+
 def handle_start_new_chat_click(state):
     mode = state['mode']
     history = state['history']
@@ -1116,6 +1122,7 @@ def handle_start_new_chat_click(state):
     html = redraw_html(history, name1, name2, mode, style, character)
 
     return [history, html, gr.update(choices=histories, value=histories[0][1])]
+
 
 def handle_delete_chat_confirm_click(state):
     mode = state['mode']
@@ -1141,12 +1148,14 @@ def handle_delete_chat_confirm_click(state):
         gr.update(visible=False)
     ]
 
+
 def handle_rename_chat_click():
     return [
         gr.update(visible=True, value="My New Chat"),
         gr.update(visible=True),
         gr.update(visible=True)
     ]
+
 
 def handle_rename_chat_confirm(rename_to, state):
     mode = state['mode']
@@ -1163,6 +1172,7 @@ def handle_rename_chat_confirm(rename_to, state):
         gr.update(visible=False),
         gr.update(visible=False)
     ]
+
 
 def handle_load_chat_history_upload(load_chat_history, state):
     mode = state['mode']
@@ -1186,6 +1196,7 @@ def handle_load_chat_history_upload(load_chat_history, state):
         html,
         gr.update(choices=histories, value=histories[0][1])
     ]
+
 
 def handle_character_menu_change(state):
     mode = state['mode']
@@ -1219,6 +1230,7 @@ def handle_character_menu_change(state):
         gr.update(choices=histories, value=histories[0][1]),
     ]
 
+
 def handle_mode_change(state):
     mode = state['mode']
     history = state['history']
@@ -1240,11 +1252,13 @@ def handle_mode_change(state):
         gr.update(choices=histories, value=histories[0][1])
     ]
 
+
 def handle_save_character_click(name2):
     return [
         name2,
         gr.update(visible=True)
     ]
+
 
 def handle_load_template_click(instruction_template):
     output = load_instruction_template(instruction_template)
@@ -1252,6 +1266,7 @@ def handle_load_template_click(instruction_template):
         output,
         "Select template to load..."
     ]
+
 
 def handle_save_template_click(instruction_template_str, state):
     contents = generate_instruction_template_yaml(instruction_template_str)
@@ -1262,12 +1277,14 @@ def handle_save_template_click(instruction_template_str, state):
         gr.update(visible=True)
     ]
 
+
 def handle_delete_template_click(template):
     return [
         f'{template}.yaml',
         'instruction-templates/',
         gr.update(visible=True)
     ]
+
 
 def handle_your_picture_change(picture, state):
     mode = state['mode']
@@ -1283,6 +1300,7 @@ def handle_your_picture_change(picture, state):
 
     return html
 
+
 def handle_send_instruction_click(state):
     state['mode'] = 'instruct'
     state['history'] = {
@@ -1294,7 +1312,8 @@ def handle_send_instruction_click(state):
 
     return output
 
+
 def handle_send_chat_click(state):
     output = generate_chat_prompt("", state, _continue=True)
 
-    return output 
+    return output
