@@ -7,6 +7,7 @@ from modules.text_generation import (
     get_token_ids,
     stop_everything_event
 )
+from modules.ui_default import handle_delete_prompt, handle_save_prompt
 from modules.utils import gradio
 
 inputs = ('textbox-notebook', 'interface_state')
@@ -84,17 +85,8 @@ def create_event_handlers():
 
     shared.gradio['Stop-notebook'].click(stop_everything_event, None, None, queue=False)
     shared.gradio['prompt_menu-notebook'].change(load_prompt, gradio('prompt_menu-notebook'), gradio('textbox-notebook'), show_progress=False)
-    shared.gradio['save_prompt-notebook'].click(
-        lambda x: x, gradio('textbox-notebook'), gradio('save_contents')).then(
-        lambda: 'prompts/', None, gradio('save_root')).then(
-        lambda: utils.current_time() + '.txt', None, gradio('save_filename')).then(
-        lambda: gr.update(visible=True), None, gradio('file_saver'))
-
-    shared.gradio['delete_prompt-notebook'].click(
-        lambda: 'prompts/', None, gradio('delete_root')).then(
-        lambda x: x + '.txt', gradio('prompt_menu-notebook'), gradio('delete_filename')).then(
-        lambda: gr.update(visible=True), None, gradio('file_deleter'))
-
+    shared.gradio['save_prompt-notebook'].click(handle_save_prompt, gradio('textbox-notebook'), gradio('save_contents', 'save_filename', 'save_root', 'file_saver'), show_progress=False)
+    shared.gradio['delete_prompt-notebook'].click(handle_delete_prompt, gradio('prompt_menu-notebook'), gradio('delete_filename', 'delete_root', 'file_deleter'), show_progress=False)
     shared.gradio['textbox-notebook'].input(lambda x: f"<span>{count_tokens(x)}</span>", gradio('textbox-notebook'), gradio('token-counter-notebook'), show_progress=False)
     shared.gradio['get_logits-notebook'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
