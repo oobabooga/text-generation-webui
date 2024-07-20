@@ -66,14 +66,12 @@ def create_event_handlers():
         lambda x: x, gradio('textbox-notebook'), gradio('last_input-notebook')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
-        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['textbox-notebook'].submit(
         lambda x: x, gradio('textbox-notebook'), gradio('last_input-notebook')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
-        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['Undo'].click(lambda x: x, gradio('last_input-notebook'), gradio('textbox-notebook'), show_progress=False)
@@ -82,7 +80,6 @@ def create_event_handlers():
         lambda x: x, gradio('last_input-notebook'), gradio('textbox-notebook'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
-        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['Stop-notebook'].click(stop_everything_event, None, None, queue=False)
