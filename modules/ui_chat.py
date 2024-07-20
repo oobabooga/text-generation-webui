@@ -264,28 +264,28 @@ def create_event_handlers():
         chat.handle_mode_change, gradio('interface_state'), gradio('history', 'display', 'chat_style', 'chat-instruct_command', 'unique_id'), show_progress=False).then(
         None, gradio('mode'), None, js="(mode) => {mode === 'instruct' ? document.getElementById('character-menu').parentNode.parentNode.style.display = 'none' : document.getElementById('character-menu').parentNode.parentNode.style.display = ''}")
 
-    shared.gradio['chat_style'].change(chat.redraw_html, gradio(reload_arr), gradio('display'))
+    shared.gradio['chat_style'].change(chat.redraw_html, gradio(reload_arr), gradio('display'), show_progress=False)
     shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, gradio('history'), gradio('textbox'), show_progress=False)
 
     # Save/delete a character
-    shared.gradio['save_character'].click(chat.handle_save_character_click, gradio('name2'), gradio('save_character_filename', 'character_saver'))
-    shared.gradio['delete_character'].click(lambda: gr.update(visible=True), None, gradio('character_deleter'))
-    shared.gradio['load_template'].click(chat.handle_load_template_click, gradio('instruction_template'), gradio('instruction_template_str', 'instruction_template'))
+    shared.gradio['save_character'].click(chat.handle_save_character_click, gradio('name2'), gradio('save_character_filename', 'character_saver'), show_progress=False)
+    shared.gradio['delete_character'].click(lambda: gr.update(visible=True), None, gradio('character_deleter'), show_progress=False)
+    shared.gradio['load_template'].click(chat.handle_load_template_click, gradio('instruction_template'), gradio('instruction_template_str', 'instruction_template'), show_progress=False)
     shared.gradio['save_template'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_save_template_click, gradio('instruction_template_str', 'interface_state'), gradio('save_filename', 'save_root', 'save_contents', 'file_saver'))
+        chat.handle_save_template_click, gradio('instruction_template_str', 'interface_state'), gradio('save_filename', 'save_root', 'save_contents', 'file_saver'), show_progress=False)
 
-    shared.gradio['delete_template'].click(chat.handle_delete_template_click, gradio('instruction_template'), gradio('delete_filename', 'delete_root', 'file_deleter'))
+    shared.gradio['delete_template'].click(chat.handle_delete_template_click, gradio('instruction_template'), gradio('delete_filename', 'delete_root', 'file_deleter'), show_progress=False)
     shared.gradio['save_chat_history'].click(
         lambda x: json.dumps(x, indent=4), gradio('history'), gradio('temporary_text')).then(
         None, gradio('temporary_text', 'character_menu', 'mode'), None, js=f'(hist, char, mode) => {{{ui.save_files_js}; saveHistory(hist, char, mode)}}')
 
     shared.gradio['Submit character'].click(
-        chat.upload_character, gradio('upload_json', 'upload_img_bot'), gradio('character_menu')).then(
+        chat.upload_character, gradio('upload_json', 'upload_img_bot'), gradio('character_menu'), show_progress=False).then(
         None, None, None, js=f'() => {{{ui.switch_tabs_js}; switch_to_character()}}')
 
     shared.gradio['Submit tavern character'].click(
-        chat.upload_tavern_character, gradio('upload_img_tavern', 'tavern_json'), gradio('character_menu')).then(
+        chat.upload_tavern_character, gradio('upload_img_tavern', 'tavern_json'), gradio('character_menu'), show_progress=False).then(
         None, None, None, js=f'() => {{{ui.switch_tabs_js}; switch_to_character()}}')
 
     shared.gradio['upload_json'].upload(lambda: gr.update(interactive=True), None, gradio('Submit character'))
@@ -298,27 +298,27 @@ def create_event_handlers():
 
     shared.gradio['send_instruction_to_default'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_send_instruction_click, gradio('interface_state'), gradio('textbox-default')).then(
+        chat.handle_send_instruction_click, gradio('interface_state'), gradio('textbox-default'), show_progress=False).then(
         None, None, None, js=f'() => {{{ui.switch_tabs_js}; switch_to_default()}}')
 
     shared.gradio['send_instruction_to_notebook'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_send_instruction_click, gradio('interface_state'), gradio('textbox-notebook')).then(
+        chat.handle_send_instruction_click, gradio('interface_state'), gradio('textbox-notebook'), show_progress=False).then(
         None, None, None, js=f'() => {{{ui.switch_tabs_js}; switch_to_notebook()}}')
 
     shared.gradio['send_instruction_to_negative_prompt'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_send_instruction_click, gradio('interface_state'), gradio('negative_prompt')).then(
+        chat.handle_send_instruction_click, gradio('interface_state'), gradio('negative_prompt'), show_progress=False).then(
         None, None, None, js=f'() => {{{ui.switch_tabs_js}; switch_to_generation_parameters()}}')
 
     shared.gradio['send-chat-to-default'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_send_chat_click, gradio('interface_state'), gradio('textbox-default')).then(
+        chat.handle_send_chat_click, gradio('interface_state'), gradio('textbox-default'), show_progress=False).then(
         None, None, None, js=f'() => {{{ui.switch_tabs_js}; switch_to_default()}}')
 
     shared.gradio['send-chat-to-notebook'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_send_chat_click, gradio('interface_state'), gradio('textbox-notebook')).then(
+        chat.handle_send_chat_click, gradio('interface_state'), gradio('textbox-notebook'), show_progress=False).then(
         None, None, None, js=f'() => {{{ui.switch_tabs_js}; switch_to_notebook()}}')
 
     shared.gradio['show_controls'].change(None, gradio('show_controls'), None, js=f'(x) => {{{ui.show_controls_js}; toggle_controls(x)}}')
