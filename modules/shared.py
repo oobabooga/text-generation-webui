@@ -33,7 +33,7 @@ settings = {
     'dark_theme': True,
     'show_controls': True,
     'start_with': '',
-    'mode': 'chat',
+    'mode': 'chat-instruct',
     'chat_style': 'cai-chat',
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
