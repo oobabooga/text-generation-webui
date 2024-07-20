@@ -1,13 +1,14 @@
 import concurrent.futures
-import requests
 import re
 
+import requests
 from bs4 import BeautifulSoup
 
 import extensions.superboogav2.parameters as parameters
 
 from .data_processor import process_and_add_to_collector
 from .utils import create_metadata_source
+
 
 def _download_single(url):
     response = requests.get(url, timeout=5)

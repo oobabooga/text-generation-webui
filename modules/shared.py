@@ -1,4 +1,5 @@
 import argparse
+import copy
 import os
 import sys
 from collections import OrderedDict
@@ -12,6 +13,7 @@ from modules.logging_colors import logger
 model = None
 tokenizer = None
 model_name = 'None'
+previous_model_name = 'None'
 is_seq2seq = False
 model_dirty_from_training = False
 lora_names = []
@@ -31,11 +33,11 @@ settings = {
     'dark_theme': True,
     'show_controls': True,
     'start_with': '',
-    'mode': 'chat',
+    'mode': 'chat-instruct',
     'chat_style': 'cai-chat',
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
-    'preset': 'simple-1',
+    'preset': 'min_p',
     'max_new_tokens': 512,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
@@ -46,6 +48,7 @@ settings = {
     'truncation_length_max': 200000,
     'max_tokens_second': 0,
     'max_updates_second': 0,
+    'prompt_lookup_num_tokens': 0,
     'custom_stopping_strings': '',
     'custom_token_bans': '',
     'auto_max_new_tokens': False,
@@ -55,16 +58,16 @@ settings = {
     'stream': True,
     'character': 'Assistant',
     'name1': 'You',
+    'user_bio': '',
     'custom_system_message': '',
     'instruction_template_str': "{%- set ns = namespace(found=false) -%}\n{%- for message in messages -%}\n    {%- if message['role'] == 'system' -%}\n        {%- set ns.found = true -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if not ns.found -%}\n    {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\\n\\n' -}}\n{%- endif %}\n{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- '' + message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{-'### Instruction:\\n' + message['content'] + '\\n\\n'-}}\n        {%- else -%}\n            {{-'### Response:\\n' + message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{-'### Response:\\n'-}}\n{%- endif -%}",
-    'chat_template_str': "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}",
+    'chat_template_str': "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {%- if message['content'] -%}\n            {{- message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n        {%- if user_bio -%}\n            {{- user_bio + '\\n\\n' -}}\n        {%- endif -%}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}",
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'autoload_model': False,
-    'gallery-items_per_page': 50,
-    'gallery-open': False,
-    'default_extensions': ['gallery'],
+    'default_extensions': [],
 }
 
+default_settings = copy.deepcopy(settings)
 
 # Parser copied from https://github.com/vladmandic/automatic
 parser = argparse.ArgumentParser(description="Text generation web UI", conflict_handler='resolve', add_help=True, formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=55, indent_increment=2, width=200))
@@ -82,10 +85,11 @@ group.add_argument('--settings', type=str, help='Load the default interface sett
 group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 group.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 group.add_argument('--chat-buttons', action='store_true', help='Show buttons on the chat tab instead of a hover menu.')
+group.add_argument('--idle-timeout', type=int, default=0, help='Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.')
 
 # Model loader
 group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlama_HF, ExLlamav2_HF, AutoGPTQ, AutoAWQ, GPTQ-for-LLaMa, ExLlama, ExLlamav2, ctransformers, QuIP#.')
+group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, AutoGPTQ, AutoAWQ.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
@@ -98,12 +102,11 @@ group.add_argument('--disk-cache-dir', type=str, default='cache', help='Director
 group.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision (using bitsandbytes).')
 group.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
 group.add_argument('--no-cache', action='store_true', help='Set use_cache to False while generating text. This reduces VRAM usage slightly, but it comes at a performance cost.')
-group.add_argument('--xformers', action='store_true', help='Use xformer\'s memory efficient attention. This is really old and probably doesn\'t do anything.')
-group.add_argument('--sdp-attention', action='store_true', help='Use PyTorch 2.0\'s SDP attention. Same as above.')
 group.add_argument('--trust-remote-code', action='store_true', help='Set trust_remote_code=True while loading the model. Necessary for some models.')
 group.add_argument('--force-safetensors', action='store_true', help='Set use_safetensors=True while loading the model. This prevents arbitrary code execution.')
 group.add_argument('--no_use_fast', action='store_true', help='Set use_fast=False while loading the tokenizer (it\'s True by default). Use this if you have any problems related to use_fast.')
 group.add_argument('--use_flash_attention_2', action='store_true', help='Set use_flash_attention_2=True while loading the model.')
+group.add_argument('--use_eager_attention', action='store_true', help='Set attn_implementation= eager while loading the model.')
 
 # bitsandbytes 4-bit
 group = parser.add_argument_group('bitsandbytes 4-bit')
@@ -114,6 +117,7 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
+group.add_argument('--flash-attn', action='store_true', help='Use flash-attention.')
 group.add_argument('--tensorcores', action='store_true', help='Use llama-cpp-python compiled with tensor cores support. This increases performance on RTX cards. NVIDIA only.')
 group.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
@@ -128,49 +132,51 @@ group.add_argument('--numa', action='store_true', help='Activate NUMA task alloc
 group.add_argument('--logits_all', action='store_true', help='Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower.')
 group.add_argument('--no_offload_kqv', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
 group.add_argument('--cache-capacity', type=str, help='Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed.')
+group.add_argument('--row_split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
+group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
+group.add_argument('--attention-sink-size', type=int, default=5, help='StreamingLLM: number of sink tokens. Only used if the trimmed prompt does not share a prefix with the old prompt.')
 
-# ExLlama
-group = parser.add_argument_group('ExLlama')
+# ExLlamaV2
+group = parser.add_argument_group('ExLlamaV2')
 group.add_argument('--gpu-split', type=str, help='Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.')
+group.add_argument('--autosplit', action='store_true', help='Autosplit the model tensors across the available GPUs. This causes --gpu-split to be ignored.')
 group.add_argument('--max_seq_len', type=int, default=2048, help='Maximum sequence length.')
-group.add_argument('--cfg-cache', action='store_true', help='ExLlama_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader, but not necessary for CFG with base ExLlama.')
+group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.')
 group.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
+group.add_argument('--no_xformers', action='store_true', help='Force xformers to not be used.')
+group.add_argument('--no_sdpa', action='store_true', help='Force Torch SDPA to not be used.')
 group.add_argument('--cache_8bit', action='store_true', help='Use 8-bit cache to save VRAM.')
+group.add_argument('--cache_4bit', action='store_true', help='Use Q4 cache to save VRAM.')
 group.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
 
 # AutoGPTQ
 group = parser.add_argument_group('AutoGPTQ')
 group.add_argument('--triton', action='store_true', help='Use triton.')
-group.add_argument('--no_inject_fused_attention', action='store_true', help='Disable the use of fused attention, which will use less VRAM at the cost of slower inference.')
 group.add_argument('--no_inject_fused_mlp', action='store_true', help='Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference.')
 group.add_argument('--no_use_cuda_fp16', action='store_true', help='This can make models faster on some systems.')
 group.add_argument('--desc_act', action='store_true', help='For models that do not have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.')
 group.add_argument('--disable_exllama', action='store_true', help='Disable ExLlama kernel, which can improve inference speed on some systems.')
 group.add_argument('--disable_exllamav2', action='store_true', help='Disable ExLlamav2 kernel.')
-
-# GPTQ-for-LLaMa
-group = parser.add_argument_group('GPTQ-for-LLaMa')
 group.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
-group.add_argument('--model_type', type=str, help='Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
 group.add_argument('--groupsize', type=int, default=-1, help='Group size.')
-group.add_argument('--pre_layer', type=int, nargs='+', help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. For multi-gpu, write the numbers separated by spaces, eg --pre_layer 30 60.')
-group.add_argument('--checkpoint', type=str, help='The path to the quantized checkpoint file. If not specified, it will be automatically detected.')
-group.add_argument('--monkey-patch', action='store_true', help='Apply the monkey patch for using LoRAs with quantized models.')
+
+# AutoAWQ
+group = parser.add_argument_group('AutoAWQ')
+group.add_argument('--no_inject_fused_attention', action='store_true', help='Disable the use of fused attention, which will use less VRAM at the cost of slower inference.')
 
 # HQQ
 group = parser.add_argument_group('HQQ')
 group.add_argument('--hqq-backend', type=str, default='PYTORCH_COMPILE', help='Backend for the HQQ loader. Valid options: PYTORCH, PYTORCH_COMPILE, ATEN.')
+
+# TensorRT-LLM
+group = parser.add_argument_group('TensorRT-LLM')
+group.add_argument('--cpp-runner', action='store_true', help='Use the ModelRunnerCpp runner, which is faster than the default ModelRunner but doesn\'t support streaming yet.')
 
 # DeepSpeed
 group = parser.add_argument_group('DeepSpeed')
 group.add_argument('--deepspeed', action='store_true', help='Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.')
 group.add_argument('--nvme-offload-dir', type=str, help='DeepSpeed: Directory to use for ZeRO-3 NVME offloading.')
 group.add_argument('--local_rank', type=int, default=0, help='DeepSpeed: Optional argument for distributed setups.')
-
-# RWKV
-group = parser.add_argument_group('RWKV')
-group.add_argument('--rwkv-strategy', type=str, default=None, help='RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8".')
-group.add_argument('--rwkv-cuda-on', action='store_true', help='RWKV: Compile the CUDA kernel for better performance.')
 
 # RoPE
 group = parser.add_argument_group('RoPE')
@@ -207,14 +213,10 @@ group.add_argument('--multimodal-pipeline', type=str, default=None, help='The mu
 
 # Deprecated parameters
 group = parser.add_argument_group('Deprecated')
-group.add_argument('--notebook', action='store_true', help='DEPRECATED')
-group.add_argument('--chat', action='store_true', help='DEPRECATED')
-group.add_argument('--no-stream', action='store_true', help='DEPRECATED')
-group.add_argument('--mul_mat_q', action='store_true', help='DEPRECATED')
-group.add_argument('--api-blocking-port', type=int, default=5000, help='DEPRECATED')
-group.add_argument('--api-streaming-port', type=int, default=5005, help='DEPRECATED')
-group.add_argument('--llama_cpp_seed', type=int, default=0, help='DEPRECATED')
-group.add_argument('--use_fast', action='store_true', help='DEPRECATED')
+group.add_argument('--model_type', type=str, help='DEPRECATED')
+group.add_argument('--pre_layer', type=int, nargs='+', help='DEPRECATED')
+group.add_argument('--checkpoint', type=str, help='DEPRECATED')
+group.add_argument('--monkey-patch', action='store_true', help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -224,7 +226,7 @@ for arg in sys.argv[1:]:
     if hasattr(args, arg):
         provided_arguments.append(arg)
 
-deprecated_args = ['notebook', 'chat', 'no_stream', 'mul_mat_q', 'use_fast']
+deprecated_args = []
 
 
 def do_cmd_flags_warnings():
@@ -259,24 +261,18 @@ def fix_loader_name(name):
         return 'Transformers'
     elif name in ['autogptq', 'auto-gptq', 'auto_gptq', 'auto gptq']:
         return 'AutoGPTQ'
-    elif name in ['gptq-for-llama', 'gptqforllama', 'gptqllama', 'gptq for llama', 'gptq_for_llama']:
-        return 'GPTQ-for-LLaMa'
     elif name in ['exllama', 'ex-llama', 'ex_llama', 'exlama']:
         return 'ExLlama'
-    elif name in ['exllama-hf', 'exllama_hf', 'exllama hf', 'ex-llama-hf', 'ex_llama_hf']:
-        return 'ExLlama_HF'
     elif name in ['exllamav2', 'exllama-v2', 'ex_llama-v2', 'exlamav2', 'exlama-v2', 'exllama2', 'exllama-2']:
         return 'ExLlamav2'
     elif name in ['exllamav2-hf', 'exllamav2_hf', 'exllama-v2-hf', 'exllama_v2_hf', 'exllama-v2_hf', 'exllama2-hf', 'exllama2_hf', 'exllama-2-hf', 'exllama_2_hf', 'exllama-2_hf']:
         return 'ExLlamav2_HF'
-    elif name in ['ctransformers', 'ctranforemrs', 'ctransformer']:
-        return 'ctransformers'
     elif name in ['autoawq', 'awq', 'auto-awq']:
         return 'AutoAWQ'
-    elif name in ['quip#', 'quip-sharp', 'quipsharp', 'quip_sharp']:
-        return 'QuIP#'
     elif name in ['hqq']:
         return 'HQQ'
+    elif name in ['tensorrt', 'tensorrtllm', 'tensorrt_llm', 'tensorrt-llm', 'tensort', 'tensortllm']:
+        return 'TensorRT-LLM'
 
 
 def add_extension(name, last=False):
@@ -291,6 +287,23 @@ def add_extension(name, last=False):
 
 def is_chat():
     return True
+
+
+def load_user_config():
+    '''
+    Loads custom model-specific settings
+    '''
+    if Path(f'{args.model_dir}/config-user.yaml').exists():
+        file_content = open(f'{args.model_dir}/config-user.yaml', 'r').read().strip()
+
+        if file_content:
+            user_config = yaml.safe_load(file_content)
+        else:
+            user_config = {}
+    else:
+        user_config = {}
+
+    return user_config
 
 
 args.loader = fix_loader_name(args.loader)
@@ -311,11 +324,7 @@ with Path(f'{args.model_dir}/config.yaml') as p:
         model_config = {}
 
 # Load custom model-specific settings
-with Path(f'{args.model_dir}/config-user.yaml') as p:
-    if p.exists():
-        user_config = yaml.safe_load(open(p, 'r').read())
-    else:
-        user_config = {}
+user_config = load_user_config()
 
 model_config = OrderedDict(model_config)
 user_config = OrderedDict(user_config)

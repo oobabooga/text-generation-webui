@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 
 import gradio as gr
+import torch
 from TTS.api import TTS
 from TTS.utils.synthesizer import Synthesizer
 
@@ -23,7 +24,7 @@ params = {
     "voice": "female_01.wav",
     "language": "English",
     "model_name": "tts_models/multilingual/multi-dataset/xtts_v2",
-    "device": "cuda"
+    "device": "cuda" if torch.cuda.is_available() else "cpu"
 }
 
 this_dir = str(Path(__file__).parent.resolve())

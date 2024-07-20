@@ -7,6 +7,7 @@ from modules.logging_colors import logger
 
 original_open = open
 original_get = requests.get
+original_print = print
 
 
 class RequestBlocker:
@@ -22,9 +23,11 @@ class OpenMonkeyPatch:
 
     def __enter__(self):
         builtins.open = my_open
+        builtins.print = my_print
 
     def __exit__(self, exc_type, exc_value, traceback):
         builtins.open = original_open
+        builtins.print = original_print
 
 
 def my_get(url, **kwargs):
@@ -40,8 +43,38 @@ def my_open(*args, **kwargs):
         with original_open(*args, **kwargs) as f:
             file_contents = f.read()
 
-        file_contents = file_contents.replace(b'\t\t<script\n\t\t\tsrc="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.7/iframeResizer.contentWindow.min.js"\n\t\t\tasync\n\t\t></script>', b'')
-        file_contents = file_contents.replace(b'cdnjs.cloudflare.com', b'127.0.0.1')
-        return io.BytesIO(file_contents)
+        if len(args) > 1 and args[1] == 'rb':
+            file_contents = file_contents.decode('utf-8')
+
+        file_contents = file_contents.replace('\t\t<script\n\t\t\tsrc="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"\n\t\t\tasync\n\t\t></script>', '')
+        file_contents = file_contents.replace('cdnjs.cloudflare.com', '127.0.0.1')
+        file_contents = file_contents.replace(
+            '</head>',
+            '\n    <script src="file/js/katex/katex.min.js"></script>'
+            '\n    <script src="file/js/katex/auto-render.min.js"></script>'
+            '\n    <script src="file/js/highlightjs/highlight.min.js"></script>'
+            '\n    <script src="file/js/highlightjs/highlightjs-copy.min.js"></script>'
+            '\n    <script>hljs.addPlugin(new CopyButtonPlugin());</script>'
+            '\n  </head>'
+        )
+
+        if len(args) > 1 and args[1] == 'rb':
+            file_contents = file_contents.encode('utf-8')
+            return io.BytesIO(file_contents)
+        else:
+            return io.StringIO(file_contents)
+
     else:
         return original_open(*args, **kwargs)
+
+
+def my_print(*args, **kwargs):
+    if len(args) > 0 and 'To create a public link, set `share=True`' in args[0]:
+        return
+    else:
+        if len(args) > 0 and 'Running on local URL' in args[0]:
+            args = list(args)
+            args[0] = f"\n{args[0].strip()}\n"
+            args = tuple(args)
+
+        original_print(*args, **kwargs)

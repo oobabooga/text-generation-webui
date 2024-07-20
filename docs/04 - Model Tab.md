@@ -32,31 +32,21 @@ Options:
 * **use_flash_attention_2**: Set use_flash_attention_2=True while loading the model. Possibly useful for training.
 * **disable_exllama**: Only applies when you are loading a GPTQ model through the transformers loader. It needs to be checked if you intend to train LoRAs with the model.
 
-### ExLlama_HF
+### ExLlamav2_HF
 
-Loads: GPTQ models. They usually have GPTQ in the model name, or alternatively something like "-4bit-128g" in the name.
+Loads: GPTQ and EXL2 models. EXL2 models usually have "EXL2" in the model name, while GPTQ models usually have GPTQ in the model name, or alternatively something like "-4bit-128g" in the name.
 
-Example: https://huggingface.co/TheBloke/Llama-2-13B-chat-GPTQ
+Examples:
 
-ExLlama_HF is the v1 of ExLlama (https://github.com/turboderp/exllama) connected to the transformers library for sampling, tokenizing, and detokenizing. It is very fast and memory-efficient.
+* https://huggingface.co/turboderp/Llama2-70B-exl2
+* https://huggingface.co/TheBloke/Llama-2-13B-chat-GPTQ
 
 * **gpu-split**: If you have multiple GPUs, the amount of memory to allocate per GPU should be set in this field. Make sure to set a lower value for the first GPU, as that's where the cache is allocated.
-* **max_seq_len**: The maximum sequence length for the model. In ExLlama, the cache is preallocated, so the higher this value, the higher the VRAM. It is automatically set to the maximum sequence length for the model based on its metadata, but you may need to lower this value be able to fit the model into your GPU. After loading the model, the "Truncate the prompt up to this length" parameter under "Parameters" > "Generation" is automatically set to your chosen "max_seq_len" so that you don't have to set the same thing twice.
+* **max_seq_len**: The maximum sequence length for the model. In ExLlamaV2, the cache is preallocated, so the higher this value, the higher the VRAM. It is automatically set to the maximum sequence length for the model based on its metadata, but you may need to lower this value be able to fit the model into your GPU. After loading the model, the "Truncate the prompt up to this length" parameter under "Parameters" > "Generation" is automatically set to your chosen "max_seq_len" so that you don't have to set the same thing twice.
 * **cfg-cache**: Creates a second cache to hold the CFG negative prompts. You need to set this if and only if you intend to use CFG in the "Parameters" > "Generation" tab. Checking this parameter doubles the cache VRAM usage.
 * **no_flash_attn**: Disables flash attention. Otherwise, it is automatically used as long as the library is installed.
 * **cache_8bit**: Create a 8-bit precision cache instead of a 16-bit one. This saves VRAM but increases perplexity (I don't know by how much).
-
-### ExLlamav2_HF
-
-Loads: GPTQ and EXL2 models. EXL2 models usually have "EXL2" in the model name.
-
-Example: https://huggingface.co/turboderp/Llama2-70B-exl2
-
-The parameters are the same as in ExLlama_HF.
-
-### ExLlama
-
-The same as ExLlama_HF but using the internal samplers of ExLlama instead of the ones in the Transformers library.
+* **cache_4bit**: Creates a Q4 cache using grouped quantization.
 
 ### ExLlamav2
 
@@ -68,19 +58,11 @@ Loads: GPTQ models.
 
 * **wbits**: For ancient models without proper metadata, sets the model precision in bits manually. Can usually be ignored.
 * **groupsize**: For ancient models without proper metadata, sets the model group size manually. Can usually be ignored.
-* **triton**: Only available on Linux. Necessary to use models with both act-order and groupsize simultaneously. Note that ExLlama can load these same models on Windows without triton.
+* **triton**: Only available on Linux. Necessary to use models with both act-order and groupsize simultaneously. Note that ExLlamaV2 can load these same models on Windows without triton.
 * **no_inject_fused_attention**: Improves performance while increasing the VRAM usage.
 * **no_inject_fused_mlp**: Similar to the previous parameter but for Triton only.
 * **no_use_cuda_fp16**: On some systems, the performance can be very bad with this unset. Can usually be ignored.
 * **desc_act**: For ancient models without proper metadata, sets the model "act-order" parameter manually. Can usually be ignored.
-
-### GPTQ-for-LLaMa
-
-Loads: GPTQ models.
-
-Ancient loader, the first one to implement 4-bit quantization. It works on older GPUs for which ExLlama and AutoGPTQ do not work, and it doesn't work with "act-order", so you should use it with simple 4-bit-128g models.
-
-* **pre_layer**: Used for CPU offloading. The higher the number, the more layers will be sent to the GPU. GPTQ-for-LLaMa CPU offloading was faster than the one implemented in AutoGPTQ the last time I checked.
 
 ### llama.cpp
 
@@ -90,16 +72,17 @@ Example: https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF
 
 * **n-gpu-layers**: The number of layers to allocate to the GPU. If set to 0, only the CPU will be used. If you want to offload all layers, you can simply set this to the maximum value.
 * **n_ctx**: Context length of the model. In llama.cpp, the cache is preallocated, so the higher this value, the higher the VRAM. It is automatically set to the maximum sequence length for the model based on the metadata inside the GGUF file, but you may need to lower this value be able to fit the model into your GPU. After loading the model, the "Truncate the prompt up to this length" parameter under "Parameters" > "Generation" is automatically set to your chosen "n_ctx" so that you don't have to set the same thing twice.
+* **tensor_split**: For multi-gpu only. Sets the amount of memory to allocate per GPU as proportions. Not to be confused with other loaders where this is set in GB; here you can set something like `30,70` for 30%/70%.
+* **n_batch**: Batch size for prompt processing. Higher values are supposed to make generation faster, but I have never obtained any benefit from changing this value.
 * **threads**: Number of threads. Recommended value: your number of physical cores. 
 * **threads_batch**: Number of threads for batch processing. Recommended value: your total number of cores (physical + virtual).
-* **n_batch**: Batch size for prompt processing. Higher values are supposed to make generation faster, but I have never obtained any benefit from changing this value.
+* **tensorcores**: Use llama.cpp compiled with "tensor cores" support, which improves performance on NVIDIA RTX cards in most cases.
+* **streamingllm**: Experimental feature to avoid re-evaluating the entire prompt when part of it is removed, for instance, when you hit the context length for the model in chat mode and an old message is removed.
+* **cpu**: Force a version of llama.cpp compiled without GPU acceleration to be used. Can usually be ignored. Only set this if you want to use CPU only and llama.cpp doesn't work otherwise. 
 * **no_mul_mat_q**: Disable the mul_mat_q kernel. This kernel usually improves generation speed significantly. This option to disable it is included in case it doesn't work on some system.
 * **no-mmap**: Loads the model into memory at once, possibly preventing I/O operations later on at the cost of a longer load time.
 * **mlock**: Force the system to keep the model in RAM rather than swapping or compressing (no idea what this means, never used it).
 * **numa**: May improve performance on certain multi-cpu systems.
-* **cpu**: Force a version of llama.cpp compiled without GPU acceleration to be used. Can usually be ignored. Only set this if you want to use CPU only and llama.cpp doesn't work otherwise. 
-* **tensor_split**: For multi-gpu only. Sets the amount of memory to allocate per GPU.
-* **Seed**: The seed for the llama.cpp random number generator. Not very useful as it can only be set once (that I'm aware).
 
 ### llamacpp_HF
 
@@ -113,12 +96,6 @@ To use it, you need to download a tokenizer. There are two options:
 It has an additional parameter:
 
 * **logits_all**: Needs to be checked if you want to evaluate the perplexity of the llama.cpp model using the "Training" > "Perplexity evaluation" tab. Otherwise, leave it unchecked, as it makes prompt processing slower.
-
-### ctransformers
-
-Loads: GGUF/GGML models.
-
-Similar to llama.cpp but it works for certain GGUF/GGML models not originally supported by llama.cpp like Falcon, StarCoder, StarChat, and GPT-J.
 
 ### AutoAWQ
 

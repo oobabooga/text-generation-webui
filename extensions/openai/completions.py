@@ -22,7 +22,12 @@ from modules.chat import (
     load_instruction_template_memoized
 )
 from modules.presets import load_preset_memoized
-from modules.text_generation import decode, encode, generate_reply
+from modules.text_generation import (
+    decode,
+    encode,
+    generate_reply,
+    get_reply_from_output_ids
+)
 
 
 class LogitsBiasProcessor(LogitsProcessor):
@@ -56,7 +61,7 @@ class LogprobProcessor(LogitsProcessor):
         if self.logprobs is not None:  # 0-5
             log_e_probabilities = F.log_softmax(logits, dim=1)
             top_values, top_indices = torch.topk(log_e_probabilities, k=self.logprobs + 1)
-            top_tokens = [decode(tok) for tok in top_indices[0]]
+            top_tokens = [get_reply_from_output_ids([tok]) for tok in top_indices[0]]
             top_probs = [float(x) for x in top_values[0]]
             self.token_alternatives = dict(zip(top_tokens, top_probs))
             debug_msg(repr(self))
@@ -87,6 +92,10 @@ def process_parameters(body, is_legacy=False):
     if generate_params['truncation_length'] == 0:
         generate_params['truncation_length'] = shared.settings['truncation_length']
 
+    if generate_params['temperature'] == 0:
+        generate_params['do_sample'] = False
+        generate_params['top_k'] = 1
+
     if body['preset'] is not None:
         preset = load_preset_memoized(body['preset'])
         generate_params.update(preset)
@@ -101,22 +110,6 @@ def process_parameters(body, is_legacy=False):
     logits_processor = []
     logit_bias = body.get('logit_bias', None)
     if logit_bias:  # {str: float, ...}
-        # XXX convert tokens from tiktoken based on requested model
-        # Ex.: 'logit_bias': {'1129': 100, '11442': 100, '16243': 100}
-        try:
-            encoder = tiktoken.encoding_for_model(generate_params['model'])
-            new_logit_bias = {}
-            for logit, bias in logit_bias.items():
-                for x in encode(encoder.decode([int(logit)]), add_special_tokens=False)[0]:
-                    if int(x) in [0, 1, 2, 29871]:  # XXX LLAMA tokens
-                        continue
-
-                    new_logit_bias[str(int(x))] = bias
-            debug_msg('logit_bias_map', logit_bias, '->', new_logit_bias)
-            logit_bias = new_logit_bias
-        except KeyError:
-            pass  # assume native tokens if we can't find the tokenizer
-
         logits_processor = [LogitsBiasProcessor(logit_bias)]
 
     logprobs = None  # coming to chat eventually
@@ -142,7 +135,32 @@ def convert_history(history):
     current_message = ""
     current_reply = ""
     user_input = ""
+    user_input_last = True
     system_message = ""
+
+    # Multimodal: convert OpenAI format to multimodal extension format
+    if any('content' in entry and isinstance(entry['content'], list) for entry in history):
+        new_history = []
+        for entry in history:
+            if isinstance(entry['content'], list):
+                image_url = None
+                content = None
+                for item in entry['content']:
+                    if not isinstance(item, dict):
+                        continue
+
+                    if item['type'] == 'image_url' and isinstance(item['image_url'], dict):
+                        image_url = item['image_url']['url']
+                    elif item['type'] == 'text' and isinstance(item['text'], str):
+                        content = item['text']
+
+                if image_url and content:
+                    new_history.append({"image_url": image_url, "role": "user"})
+                    new_history.append({"content": content, "role": "user"})
+            else:
+                new_history.append(entry)
+
+        history = new_history
 
     for entry in history:
         if "image_url" in entry:
@@ -158,6 +176,9 @@ def convert_history(history):
                     raise 'Image cannot be loaded from the URL!'
 
             buffered = BytesIO()
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
+
             img.save(buffered, format="JPEG")
             img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
             content = f'<img src="data:image/jpeg;base64,{img_str}">'
@@ -168,12 +189,15 @@ def convert_history(history):
 
         if role == "user":
             user_input = content
+            user_input_last = True
             if current_message:
                 chat_dialogue.append([current_message, ''])
                 current_message = ""
+
             current_message = content
         elif role == "assistant":
             current_reply = content
+            user_input_last = False
             if current_message:
                 chat_dialogue.append([current_message, current_reply])
                 current_message = ""
@@ -183,13 +207,13 @@ def convert_history(history):
         elif role == "system":
             system_message = content
 
-    # if current_message:
-    #     chat_dialogue.append([current_message, ''])
+    if not user_input_last:
+        user_input = ""
 
     return user_input, system_message, {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
 
 
-def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -> dict:
+def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, prompt_only=False) -> dict:
     if body.get('functions', []):
         raise InvalidRequestError(message="functions is not supported.", param='functions')
 
@@ -229,17 +253,18 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     else:
         instruction_template_str = shared.settings['instruction_template_str']
 
-    chat_template_str = body['chat_template_str'] or shared.settings['chat_template_str']
-    chat_instruct_command = body['chat_instruct_command'] or shared.settings['chat-instruct_command']
+    chat_template_str = body['chat_template_str'] or shared.default_settings['chat_template_str']
+    chat_instruct_command = body['chat_instruct_command'] or shared.default_settings['chat-instruct_command']
 
     # Chat character
-    character = body['character'] or shared.settings['character']
+    character = body['character'] or shared.default_settings['character']
     character = "Assistant" if character == "None" else character
-    name1 = body['name1'] or shared.settings['name1']
+    name1 = body['user_name'] or shared.default_settings['name1']
     name1, name2, _, greeting, context = load_character_memoized(character, name1, '')
-    name2 = body['name2'] or name2
+    name2 = body['bot_name'] or name2
     context = body['context'] or context
     greeting = body['greeting'] or greeting
+    user_bio = body['user_bio'] or ''
 
     # History
     user_input, custom_system_message, history = convert_history(messages)
@@ -250,6 +275,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
         'name2': name2,
         'context': context,
         'greeting': greeting,
+        'user_bio': user_bio,
         'instruction_template_str': instruction_template_str,
         'custom_system_message': custom_system_message,
         'chat_template_str': chat_template_str,
@@ -276,8 +302,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
             resp_list: [{
                 "index": 0,
                 "finish_reason": None,
-                # So yeah... do both methods? delta and messages.
-                "message": {'role': 'assistant', 'content': content},
                 "delta": {'role': 'assistant', 'content': content},
             }],
         }
@@ -289,13 +313,17 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
         #    chunk[resp_list][0]["logprobs"] = None
         return chunk
 
-    if stream:
-        yield chat_streaming_chunk('')
-
     # generate reply #######################################
-    prompt = generate_chat_prompt(user_input, generate_params)
+    prompt = generate_chat_prompt(user_input, generate_params, _continue=continue_)
+    if prompt_only:
+        yield {'prompt': prompt}
+        return
+
     token_count = len(encode(prompt)[0])
     debug_msg({'prompt': prompt, 'generate_params': generate_params})
+
+    if stream:
+        yield chat_streaming_chunk('')
 
     generator = generate_chat_reply(
         user_input, generate_params, regenerate=False, _continue=continue_, loading_message=False)

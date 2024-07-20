@@ -32,7 +32,7 @@ def clone_or_pull_repository(github_url):
         yield f"Cloning {github_url}..."
         clone_output = subprocess.check_output(["git", "clone", github_url, repo_path], stderr=subprocess.STDOUT)
         new_extensions.add(repo_name)
-        yield f"The extension `{repo_name}` has been downloaded.\n\nPlease close the the web UI completely and launch it again to be able to load it."
+        yield f"The extension `{repo_name}` has been downloaded.\n\nPlease close the web UI completely and launch it again to be able to load it."
         return clone_output.decode()
     except subprocess.CalledProcessError as e:
         return str(e)

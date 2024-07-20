@@ -6,11 +6,18 @@ import torch
 import yaml
 from transformers import is_torch_xpu_available
 
+import extensions
 from modules import shared
 
 with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r') as f:
     css = f.read()
 with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
+    css += f.read()
+with open(Path(__file__).resolve().parent / '../css/katex/katex.min.css', 'r') as f:
+    css += f.read()
+with open(Path(__file__).resolve().parent / '../css/highlightjs/github-dark.min.css', 'r') as f:
+    css += f.read()
+with open(Path(__file__).resolve().parent / '../css/highlightjs/highlightjs-copy.min.css', 'r') as f:
     css += f.read()
 with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
     js = f.read()
@@ -34,7 +41,13 @@ theme = gr.themes.Default(
     border_color_primary='#c5c5d2',
     button_large_padding='6px 12px',
     body_text_color_subdued='#484848',
-    background_fill_secondary='#eaeaea'
+    background_fill_secondary='#eaeaea',
+    background_fill_primary='var(--neutral-50)',
+    body_background_fill="white",
+    block_background_fill="#f4f4f4",
+    body_text_color="#333",
+    button_secondary_background_fill="#f4f4f4",
+    button_secondary_border_color="var(--border-color-primary)"
 )
 
 if Path("notification.mp3").exists():
@@ -56,14 +69,13 @@ def list_model_elements():
         'trust_remote_code',
         'no_use_fast',
         'use_flash_attention_2',
+        'use_eager_attention',
         'load_in_4bit',
         'compute_dtype',
         'quant_type',
         'use_double_quant',
         'wbits',
         'groupsize',
-        'model_type',
-        'pre_layer',
         'triton',
         'desc_act',
         'no_inject_fused_attention',
@@ -73,8 +85,12 @@ def list_model_elements():
         'disable_exllamav2',
         'cfg_cache',
         'no_flash_attn',
+        'no_xformers',
+        'no_sdpa',
         'num_experts_per_token',
         'cache_8bit',
+        'cache_4bit',
+        'autosplit',
         'threads',
         'threads_batch',
         'n_batch',
@@ -92,8 +108,13 @@ def list_model_elements():
         'numa',
         'logits_all',
         'no_offload_kqv',
+        'row_split',
         'tensorcores',
+        'flash_attn',
+        'streaming_llm',
+        'attention_sink_size',
         'hqq_backend',
+        'cpp_runner',
     ]
     if is_torch_xpu_available():
         for i in range(torch.xpu.device_count()):
@@ -111,9 +132,16 @@ def list_interface_input_elements():
         'auto_max_new_tokens',
         'max_tokens_second',
         'max_updates_second',
+        'prompt_lookup_num_tokens',
         'seed',
         'temperature',
         'temperature_last',
+        'dynamic_temperature',
+        'dynatemp_low',
+        'dynatemp_high',
+        'dynatemp_exponent',
+        'smoothing_factor',
+        'smoothing_curve',
         'top_p',
         'min_p',
         'top_k',
@@ -126,12 +154,12 @@ def list_interface_input_elements():
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',
-        'min_length',
+        'dry_multiplier',
+        'dry_base',
+        'dry_allowed_length',
+        'dry_sequence_breakers',
         'do_sample',
         'penalty_alpha',
-        'num_beams',
-        'length_penalty',
-        'early_stopping',
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
@@ -141,6 +169,7 @@ def list_interface_input_elements():
         'add_bos_token',
         'ban_eos_token',
         'custom_token_bans',
+        'sampler_priority',
         'truncation_length',
         'custom_stopping_strings',
         'skip_special_tokens',
@@ -156,6 +185,7 @@ def list_interface_input_elements():
         'character_menu',
         'history',
         'name1',
+        'user_bio',
         'name2',
         'greeting',
         'context',
@@ -204,9 +234,9 @@ def apply_interface_values(state, use_persistent=False):
         return [state[k] if k in state else gr.update() for k in elements]
 
 
-def save_settings(state, preset, extensions, show_controls):
+def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output = copy.deepcopy(shared.settings)
-    exclude = ['name2', 'greeting', 'context', 'turn_template']
+    exclude = ['name2', 'greeting', 'context', 'turn_template', 'truncation_length']
     for k in state:
         if k in shared.settings and k not in exclude:
             output[k] = state[k]
@@ -215,9 +245,28 @@ def save_settings(state, preset, extensions, show_controls):
     output['prompt-default'] = state['prompt_menu-default']
     output['prompt-notebook'] = state['prompt_menu-notebook']
     output['character'] = state['character_menu']
-    output['default_extensions'] = extensions
+    output['default_extensions'] = extensions_list
     output['seed'] = int(output['seed'])
     output['show_controls'] = show_controls
+    output['dark_theme'] = True if theme_state == 'dark' else False
+
+    # Save extension values in the UI
+    for extension_name in extensions_list:
+        extension = getattr(extensions, extension_name, None)
+        if extension:
+            extension = extension.script
+            if hasattr(extension, 'params'):
+                params = getattr(extension, 'params')
+                for param in params:
+                    _id = f"{extension_name}-{param}"
+                    # Only save if different from default value
+                    if param not in shared.default_settings or params[param] != shared.default_settings[param]:
+                        output[_id] = params[param]
+
+    # Do not save unchanged settings
+    for key in list(output.keys()):
+        if key in shared.default_settings and output[key] == shared.default_settings[key]:
+            output.pop(key)
 
     return yaml.dump(output, sort_keys=False, width=float("inf"))
 
@@ -230,14 +279,11 @@ def create_refresh_button(refresh_component, refresh_method, refreshed_args, ele
         refresh_method()
         args = refreshed_args() if callable(refreshed_args) else refreshed_args
 
-        for k, v in args.items():
-            setattr(refresh_component, k, v)
-
         return gr.update(**(args or {}))
 
     refresh_button = gr.Button(refresh_symbol, elem_classes=elem_class, interactive=interactive)
     refresh_button.click(
-        fn=refresh,
+        fn=lambda: {k: tuple(v) if type(k) is list else v for k, v in refresh().items()},
         inputs=[],
         outputs=[refresh_component]
     )

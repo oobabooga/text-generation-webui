@@ -6,6 +6,7 @@ from exllamav2 import (
     ExLlamaV2,
     ExLlamaV2Cache,
     ExLlamaV2Cache_8bit,
+    ExLlamaV2Cache_Q4,
     ExLlamaV2Config,
     ExLlamaV2Tokenizer
 )
@@ -47,22 +48,30 @@ class Exllamav2Model:
         config.scale_pos_emb = shared.args.compress_pos_emb
         config.scale_alpha_value = shared.args.alpha_value
         config.no_flash_attn = shared.args.no_flash_attn
+        config.no_xformers = shared.args.no_xformers
+        config.no_sdpa = shared.args.no_sdpa
         config.num_experts_per_token = int(shared.args.num_experts_per_token)
 
         model = ExLlamaV2(config)
 
-        split = None
-        if shared.args.gpu_split:
-            split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
+        if not shared.args.autosplit:
+            split = None
+            if shared.args.gpu_split:
+                split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
 
-        model.load(split)
+            model.load(split)
+
+        if shared.args.cache_8bit:
+            cache = ExLlamaV2Cache_8bit(model, lazy=shared.args.autosplit)
+        elif shared.args.cache_4bit:
+            cache = ExLlamaV2Cache_Q4(model, lazy=shared.args.autosplit)
+        else:
+            cache = ExLlamaV2Cache(model, lazy=shared.args.autosplit)
+
+        if shared.args.autosplit:
+            model.load_autosplit(cache)
 
         tokenizer = ExLlamaV2Tokenizer(config)
-        if shared.args.cache_8bit:
-            cache = ExLlamaV2Cache_8bit(model)
-        else:
-            cache = ExLlamaV2Cache(model)
-
         generator = ExLlamaV2StreamingGenerator(model, cache, tokenizer)
 
         result = self()
@@ -93,17 +102,27 @@ class Exllamav2Model:
 
     def generate_with_streaming(self, prompt, state):
         settings = ExLlamaV2Sampler.Settings()
+
+        settings.token_repetition_penalty = state['repetition_penalty']
+        settings.token_repetition_range = -1 if state['repetition_penalty_range'] <= 0 else state['repetition_penalty_range']
+
+        settings.token_frequency_penalty = state['frequency_penalty']
+        settings.token_presence_penalty = state['presence_penalty']
+
         settings.temperature = state['temperature']
         settings.top_k = state['top_k']
         settings.top_p = state['top_p']
+        settings.top_a = state['top_a']
         settings.min_p = state['min_p']
         settings.tfs = state['tfs']
         settings.typical = state['typical_p']
+
+        settings.temperature_last = state['temperature_last']
+
         settings.mirostat = state['mirostat_mode'] == 2
         settings.mirostat_tau = state['mirostat_tau']
         settings.mirostat_eta = state['mirostat_eta']
-        settings.token_repetition_penalty = state['repetition_penalty']
-        settings.token_repetition_range = -1 if state['repetition_penalty_range'] <= 0 else state['repetition_penalty_range']
+
         if state['ban_eos_token']:
             settings.disallow_tokens(self.tokenizer, [self.tokenizer.eos_token_id])
 

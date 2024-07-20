@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import traceback
+from collections import deque
 from threading import Thread
 
 import speech_recognition as sr
@@ -31,6 +32,7 @@ from modules.text_generation import stop_everything_event
 from .typing import (
     ChatCompletionRequest,
     ChatCompletionResponse,
+    ChatPromptResponse,
     CompletionRequest,
     CompletionResponse,
     DecodeRequest,
@@ -174,13 +176,13 @@ async def handle_audio_transcription(request: Request):
 
     # Create AudioData object
     audio_data = sr.AudioData(raw_data, audio_data.frame_rate, audio_data.sample_width)
-    whipser_language = form.getvalue('language', None)
-    whipser_model = form.getvalue('model', 'tiny')  # Use the model from the form data if it exists, otherwise default to tiny
+    whisper_language = form.getvalue('language', None)
+    whisper_model = form.getvalue('model', 'tiny')  # Use the model from the form data if it exists, otherwise default to tiny
 
     transcription = {"text": ""}
 
     try:
-        transcription["text"] = r.recognize_whisper(audio_data, language=whipser_language, model=whipser_model)
+        transcription["text"] = r.recognize_whisper(audio_data, language=whisper_language, model=whisper_model)
     except sr.UnknownValueError:
         print("Whisper could not understand audio")
         transcription["text"] = "Whisper could not understand audio UnknownValueError"
@@ -256,6 +258,15 @@ async def handle_logits(request_data: LogitsRequest):
     The keys are the tokens, and the values are the probabilities.
     '''
     response = OAIlogits._get_next_logits(to_dict(request_data))
+    return JSONResponse(response)
+
+
+@app.post('/v1/internal/chat-prompt', response_model=ChatPromptResponse, dependencies=check_key)
+async def handle_chat_prompt(request: Request, request_data: ChatCompletionRequest):
+    path = request.url.path
+    is_legacy = "/generate" in path
+    generator = OAIcompletions.chat_completions_common(to_dict(request_data), is_legacy=is_legacy, prompt_only=True)
+    response = deque(generator, maxlen=1).pop()
     return JSONResponse(response)
 
 

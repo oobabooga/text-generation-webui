@@ -8,6 +8,12 @@ from pydantic import BaseModel, Field
 class GenerationOptions(BaseModel):
     preset: str | None = Field(default=None, description="The name of a file under text-generation-webui/presets (without the .yaml extension). The sampling parameters that get overwritten by this option are the keys in the default_preset() function in modules/presets.py.")
     min_p: float = 0
+    dynamic_temperature: bool = False
+    dynatemp_low: float = 1
+    dynatemp_high: float = 1
+    dynatemp_exponent: float = 1
+    smoothing_factor: float = 0
+    smoothing_curve: float = 1
     top_k: int = 0
     repetition_penalty: float = 1
     repetition_penalty_range: int = 1024
@@ -27,13 +33,15 @@ class GenerationOptions(BaseModel):
     seed: int = -1
     encoder_repetition_penalty: float = 1
     no_repeat_ngram_size: int = 0
-    min_length: int = 0
-    num_beams: int = 1
-    length_penalty: float = 1
-    early_stopping: bool = False
+    dry_multiplier: float = 0
+    dry_base: float = 1.75
+    dry_allowed_length: int = 2
+    dry_sequence_breakers: str = '"\\n", ":", "\\"", "*"'
     truncation_length: int = 0
     max_tokens_second: int = 0
+    prompt_lookup_num_tokens: int = 0
     custom_token_bans: str = ""
+    sampler_priority: List[str] | str | None = Field(default=None, description="List of samplers where the first items will appear first in the stack. Example: [\"top_k\", \"temperature\", \"top_p\"].")
     auto_max_new_tokens: bool = False
     ban_eos_token: bool = False
     add_bos_token: bool = True
@@ -95,10 +103,11 @@ class ChatCompletionRequestParams(BaseModel):
     instruction_template_str: str | None = Field(default=None, description="A Jinja2 instruction template. If set, will take precedence over everything else.")
 
     character: str | None = Field(default=None, description="A character defined under text-generation-webui/characters. If not set, the default \"Assistant\" character will be used.")
-    name1: str | None = Field(default=None, description="Your name (the user). By default, it's \"You\".")
-    name2: str | None = Field(default=None, description="Overwrites the value set by character.")
-    context: str | None = Field(default=None, description="Overwrites the value set by character.")
-    greeting: str | None = Field(default=None, description="Overwrites the value set by character.")
+    bot_name: str | None = Field(default=None, description="Overwrites the value set by character field.", alias="name2")
+    context: str | None = Field(default=None, description="Overwrites the value set by character field.")
+    greeting: str | None = Field(default=None, description="Overwrites the value set by character field.")
+    user_name: str | None = Field(default=None, description="Your name (the user). By default, it's \"You\".", alias="name1")
+    user_bio: str | None = Field(default=None, description="The user description/personality.")
     chat_template_str: str | None = Field(default=None, description="Jinja2 template for chat.")
 
     chat_instruct_command: str | None = None
@@ -117,6 +126,10 @@ class ChatCompletionResponse(BaseModel):
     model: str
     object: str = "chat.completion"
     usage: dict
+
+
+class ChatPromptResponse(BaseModel):
+    prompt: str
 
 
 class EmbeddingsRequest(BaseModel):

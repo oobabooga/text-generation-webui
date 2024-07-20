@@ -8,6 +8,7 @@ from exllamav2 import (
     ExLlamaV2,
     ExLlamaV2Cache,
     ExLlamaV2Cache_8bit,
+    ExLlamaV2Cache_Q4,
     ExLlamaV2Config
 )
 from torch.nn import CrossEntropyLoss
@@ -36,24 +37,34 @@ class Exllamav2HF(PreTrainedModel):
     def __init__(self, config: ExLlamaV2Config):
         super().__init__(PretrainedConfig())
         self.ex_config = config
-        self.ex_model = ExLlamaV2(config)
-        split = None
-        if shared.args.gpu_split:
-            split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
-
-        self.ex_model.load(split)
-        self.generation_config = GenerationConfig()
         self.loras = None
+        self.generation_config = GenerationConfig()
+
+        self.ex_model = ExLlamaV2(config)
+
+        if not shared.args.autosplit:
+            split = None
+            if shared.args.gpu_split:
+                split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
+
+            self.ex_model.load(split)
 
         if shared.args.cache_8bit:
-            self.ex_cache = ExLlamaV2Cache_8bit(self.ex_model)
+            self.ex_cache = ExLlamaV2Cache_8bit(self.ex_model, lazy=shared.args.autosplit)
+        elif shared.args.cache_4bit:
+            self.ex_cache = ExLlamaV2Cache_Q4(self.ex_model, lazy=shared.args.autosplit)
         else:
-            self.ex_cache = ExLlamaV2Cache(self.ex_model)
+            self.ex_cache = ExLlamaV2Cache(self.ex_model, lazy=shared.args.autosplit)
+
+        if shared.args.autosplit:
+            self.ex_model.load_autosplit(self.ex_cache)
 
         self.past_seq = None
         if shared.args.cfg_cache:
             if shared.args.cache_8bit:
                 self.ex_cache_negative = ExLlamaV2Cache_8bit(self.ex_model)
+            elif shared.args.cache_4bit:
+                self.ex_cache_negative = ExLlamaV2Cache_Q4(self.ex_model)
             else:
                 self.ex_cache_negative = ExLlamaV2Cache(self.ex_model)
 
@@ -165,6 +176,8 @@ class Exllamav2HF(PreTrainedModel):
         config.scale_pos_emb = shared.args.compress_pos_emb
         config.scale_alpha_value = shared.args.alpha_value
         config.no_flash_attn = shared.args.no_flash_attn
+        config.no_xformers = shared.args.no_xformers
+        config.no_sdpa = shared.args.no_sdpa
         config.num_experts_per_token = int(shared.args.num_experts_per_token)
 
         return Exllamav2HF(config)

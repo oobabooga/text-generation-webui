@@ -1,3 +1,4 @@
+import importlib
 import traceback
 from functools import partial
 from inspect import signature
@@ -19,10 +20,9 @@ def apply_settings(extension, name):
 
     for param in extension.params:
         _id = f"{name}-{param}"
-        if _id not in shared.settings:
-            continue
-
-        extension.params[param] = shared.settings[_id]
+        shared.default_settings[_id] = extension.params[param]
+        if _id in shared.settings:
+            extension.params[param] = shared.settings[_id]
 
 
 def load_extensions():
@@ -34,16 +34,18 @@ def load_extensions():
                 logger.info(f'Loading the extension "{name}"')
             try:
                 try:
-                    exec(f"import extensions.{name}.script")
+                    extension = importlib.import_module(f"extensions.{name}.script")
                 except ModuleNotFoundError:
-                    logger.error(f"Could not import the requirements for '{name}'. Make sure to install the requirements for the extension.\n\nLinux / Mac:\n\npip install -r extensions/{name}/requirements.txt --upgrade\n\nWindows:\n\npip install -r extensions\\{name}\\requirements.txt --upgrade\n\nIf you used the one-click installer, paste the command above in the terminal window opened after launching the cmd script for your OS.")
+                    logger.error(f"Could not import the requirements for '{name}'. Make sure to install the requirements for the extension.\n\n* To install requirements for all available extensions, launch the\n  update_wizard script for your OS and choose the B option.\n\n* To install the requirements for this extension alone, launch the\n  cmd script for your OS and paste the following command in the\n  terminal window that appears:\n\nLinux / Mac:\n\npip install -r extensions/{name}/requirements.txt --upgrade\n\nWindows:\n\npip install -r extensions\\{name}\\requirements.txt --upgrade\n")
                     raise
 
-                extension = getattr(extensions, name).script
-                apply_settings(extension, name)
-                if extension not in setup_called and hasattr(extension, "setup"):
+                # Only run setup() and apply settings from settings.yaml once
+                if extension not in setup_called:
+                    apply_settings(extension, name)
+                    if hasattr(extension, "setup"):
+                        extension.setup()
+
                     setup_called.add(extension)
-                    extension.setup()
 
                 state[name] = [True, i]
             except:

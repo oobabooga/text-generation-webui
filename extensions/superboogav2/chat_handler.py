@@ -1,45 +1,38 @@
 """
 This module is responsible for modifying the chat prompt and history.
 """
-import json
 import re
 
 import extensions.superboogav2.parameters as parameters
-
-from modules import chat
-from modules.text_generation import get_encoded_length
+from extensions.superboogav2.utils import (
+    create_context_text,
+    create_metadata_source
+)
+from modules import chat, shared
+from modules.chat import load_character_memoized
 from modules.logging_colors import logger
-from extensions.superboogav2.utils import create_context_text, create_metadata_source
+from modules.text_generation import get_encoded_length
 
-from .data_processor import process_and_add_to_collector
 from .chromadb import ChromaCollector
-
+from .data_processor import process_and_add_to_collector
 
 CHAT_METADATA = create_metadata_source('automatic-chat-insert')
-
-INSTRUCT_MODE = 'instruct'
-CHAT_INSTRUCT_MODE = 'chat-instruct'
-
-
-def _is_instruct_mode(state: dict):
-    mode = state.get('mode')
-    return mode == INSTRUCT_MODE or mode == CHAT_INSTRUCT_MODE
 
 
 def _remove_tag_if_necessary(user_input: str):
     if not parameters.get_is_manual():
         return user_input
-    
+
     return re.sub(r'^\s*!c\s*|\s*!c\s*$', '', user_input)
 
 
 def _should_query(input: str):
     if not parameters.get_is_manual():
         return True
-    
+
     if re.search(r'^\s*!c|!c\s*$', input, re.MULTILINE):
         return True
-    
+
     return False
 
 
@@ -51,17 +44,11 @@ def _format_single_exchange(name, text):
 
 
 def _get_names(state: dict):
-    if _is_instruct_mode(state):
-        user_name = state['name1_instruct']
-        bot_name = state['name2_instruct']
-    else:
-        user_name = state['name1']
-        bot_name = state['name2']
-
-    if not user_name:
-        user_name = 'User'
-    if not bot_name:
-        bot_name = 'Assistant'
+    default_char = shared.settings.get('character', "Assistant")
+    default_user = shared.settings.get('name1', "You")
+    character = state.get('character', default_char)
+    user_name = state.get('name1', default_user)
+    user_name, bot_name, _, _, _ = load_character_memoized(character, user_name, '')
 
     return user_name, bot_name
 
@@ -83,7 +70,7 @@ def _concatinate_history(history: dict, state: dict):
         if len(exchange) >= 2:
             full_history_text += _format_single_exchange(bot_name, exchange[1])
 
-    return full_history_text[:-1] # Remove the last new line.
+    return full_history_text[:-1]  # Remove the last new line.
 
 
 def _hijack_last(context_text: str, history: dict, max_len: int, state: dict):
@@ -96,20 +83,20 @@ def _hijack_last(context_text: str, history: dict, max_len: int, state: dict):
     for i, messages in enumerate(reversed(history['internal'])):
         for j, message in enumerate(reversed(messages)):
             num_message_tokens = get_encoded_length(_format_single_exchange(names[j], message))
-            
+
             # TODO: This is an extremely naive solution. A more robust implementation must be made.
             if history_tokens + num_context_tokens <= max_len:
                 # This message can be replaced
                 replace_position = (i, j)
-            
+
             history_tokens += num_message_tokens
-    
+
     if replace_position is None:
         logger.warn("The provided context_text is too long to replace any message in the history.")
     else:
         # replace the message at replace_position with context_text
         i, j = replace_position
-        history['internal'][-i-1][-j-1] = context_text
+        history['internal'][-i - 1][-j - 1] = context_text
 
 
 def custom_generate_chat_prompt_internal(user_input: str, state: dict, collector: ChromaCollector, **kwargs):
@@ -134,5 +121,5 @@ def custom_generate_chat_prompt_internal(user_input: str, state: dict, collector
             user_input = create_context_text(results) + user_input
         elif parameters.get_injection_strategy() == parameters.HIJACK_LAST_IN_CONTEXT:
             _hijack_last(create_context_text(results), kwargs['history'], state['truncation_length'], state)
-    
+
     return chat.generate_chat_prompt(user_input, state, **kwargs)

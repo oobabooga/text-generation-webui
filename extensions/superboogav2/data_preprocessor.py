@@ -11,31 +11,28 @@ This module contains utils for preprocessing the text before converting it to em
     * removing specific parts of speech (adverbs and interjections)
 - TextSummarizer extracts the most important sentences from a long string using text-ranking.
 """
-import pytextrank
-import string
-import spacy
 import math
-import nltk
 import re
+import string
 
+import nltk
+import spacy
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from num2words import num2words
 
 
 class TextPreprocessorBuilder:
-     # Define class variables as None initially
+    # Define class variables as None initially
     _stop_words = set(stopwords.words('english'))
     _lemmatizer = WordNetLemmatizer()
-    
+
     # Some of the functions are expensive. We cache the results.
     _lemmatizer_cache = {}
     _pos_remove_cache = {}
 
-
     def __init__(self, text: str):
         self.text = text
-
 
     def to_lower(self):
         # Match both words and non-word characters
@@ -49,7 +46,6 @@ class TextPreprocessorBuilder:
         self.text = "".join(tokens)
         return self
 
-
     def num_to_word(self, min_len: int = 1):
         # Match both words and non-word characters
         tokens = re.findall(r'\b\w+\b|\W+', self.text)
@@ -58,10 +54,9 @@ class TextPreprocessorBuilder:
             if token.isdigit() and len(token) >= min_len:
                 # This is done to pay better attention to numbers (e.g. ticket numbers, thread numbers, post numbers)
                 # 740700 will become "seven hundred and forty thousand seven hundred".
-                tokens[i] = num2words(int(token)).replace(",","") # Remove commas from num2words.
+                tokens[i] = num2words(int(token)).replace(",", "")  # Remove commas from num2words.
         self.text = "".join(tokens)
         return self
-
 
     def num_to_char_long(self, min_len: int = 1):
         # Match both words and non-word characters
@@ -71,11 +66,13 @@ class TextPreprocessorBuilder:
             if token.isdigit() and len(token) >= min_len:
                 # This is done to pay better attention to numbers (e.g. ticket numbers, thread numbers, post numbers)
                 # 740700 will become HHHHHHEEEEEAAAAHHHAAA
-                convert_token = lambda token: ''.join((chr(int(digit) + 65) * (i + 1)) for i, digit in enumerate(token[::-1]))[::-1]
+                def convert_token(token):
+                    return ''.join((chr(int(digit) + 65) * (i + 1)) for i, digit in enumerate(token[::-1]))[::-1]
+
                 tokens[i] = convert_token(tokens[i])
         self.text = "".join(tokens)
         return self
-    
+
     def num_to_char(self, min_len: int = 1):
         # Match both words and non-word characters
         tokens = re.findall(r'\b\w+\b|\W+', self.text)
@@ -87,15 +84,15 @@ class TextPreprocessorBuilder:
                 tokens[i] = ''.join(chr(int(digit) + 65) for digit in token)
         self.text = "".join(tokens)
         return self
-    
+
     def merge_spaces(self):
         self.text = re.sub(' +', ' ', self.text)
         return self
-    
+
     def strip(self):
         self.text = self.text.strip()
         return self
-        
+
     def remove_punctuation(self):
         self.text = self.text.translate(str.maketrans('', '', string.punctuation))
         return self
@@ -103,7 +100,7 @@ class TextPreprocessorBuilder:
     def remove_stopwords(self):
         self.text = "".join([word for word in re.findall(r'\b\w+\b|\W+', self.text) if word not in TextPreprocessorBuilder._stop_words])
         return self
-    
+
     def remove_specific_pos(self):
         """
         In the English language, adverbs and interjections rarely provide meaningul information.
@@ -140,7 +137,7 @@ class TextPreprocessorBuilder:
         if processed_text:
             self.text = processed_text
             return self
-        
+
         new_text = "".join([TextPreprocessorBuilder._lemmatizer.lemmatize(word) for word in re.findall(r'\b\w+\b|\W+', self.text)])
         TextPreprocessorBuilder._lemmatizer_cache[self.text] = new_text
         self.text = new_text
@@ -149,6 +146,7 @@ class TextPreprocessorBuilder:
 
     def build(self):
         return self.text
+
 
 class TextSummarizer:
     _nlp_pipeline = None
@@ -165,7 +163,7 @@ class TextSummarizer:
     @staticmethod
     def process_long_text(text: str, min_num_sent: int) -> list[str]:
         """
-        This function applies a text summarization process on a given text string, extracting 
+        This function applies a text summarization process on a given text string, extracting
         the most important sentences based on the principle that 20% of the content is responsible
         for 80% of the meaning (the Pareto Principle).
 
@@ -193,7 +191,7 @@ class TextSummarizer:
 
         else:
             result = [text]
-        
+
         # Store the result in cache before returning it
         TextSummarizer._cache[cache_key] = result
         return result

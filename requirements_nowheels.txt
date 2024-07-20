@@ -1,28 +1,32 @@
-accelerate==0.25.*
+accelerate==0.32.*
 colorama
 datasets
 einops
-exllamav2==0.0.11
-gradio==3.50.*
-hqq==0.1.1.post1
+gradio==4.26.*
+hqq==0.1.8
+jinja2==3.1.4
 lm_eval==0.3.0
 markdown
-numpy==1.24.*
-optimum==1.16.*
+numba==0.59.*
+numpy==1.26.*
+optimum==1.17.*
 pandas
-peft==0.7.*
+peft==0.8.*
 Pillow>=9.5.0
+psutil
 pyyaml
 requests
 rich
-safetensors==0.4.1
+safetensors==0.4.*
 scipy
 sentencepiece
 tensorboard
-transformers==4.36.*
+transformers==4.42.*
 tqdm
 wandb
 
-# bitsandbytes
-bitsandbytes==0.41.1; platform_system != "Windows"
-https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.1-py3-none-win_amd64.whl; platform_system == "Windows"
+# API
+SpeechRecognition==3.10.0
+flask_cloudflared==0.0.14
+sse-starlette==1.6.5
+tiktoken

@@ -31,7 +31,7 @@ if [ "$conda_exists" == "F" ]; then
     echo "Downloading Miniconda from $MINICONDA_DOWNLOAD_URL to $INSTALL_DIR/miniconda_installer.sh"
 
     mkdir -p "$INSTALL_DIR"
-    curl -Lk "$MINICONDA_DOWNLOAD_URL" > "$INSTALL_DIR/miniconda_installer.sh"
+    curl -L "$MINICONDA_DOWNLOAD_URL" > "$INSTALL_DIR/miniconda_installer.sh"
 
     chmod u+x "$INSTALL_DIR/miniconda_installer.sh"
     bash "$INSTALL_DIR/miniconda_installer.sh" -b -p $CONDA_ROOT_PREFIX
@@ -39,6 +39,9 @@ if [ "$conda_exists" == "F" ]; then
     # test the conda binary
     echo "Miniconda version:"
     "$CONDA_ROOT_PREFIX/bin/conda" --version
+
+    # delete the Miniconda installer
+    rm "$INSTALL_DIR/miniconda_installer.sh"
 fi
 
 # create the installer env
