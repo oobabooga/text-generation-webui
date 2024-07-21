@@ -15,8 +15,6 @@ with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
     css += f.read()
 with open(Path(__file__).resolve().parent / '../css/katex/katex.min.css', 'r') as f:
     css += f.read()
-with open(Path(__file__).resolve().parent / '../css/highlightjs/github-dark.min.css', 'r') as f:
-    css += f.read()
 with open(Path(__file__).resolve().parent / '../css/highlightjs/highlightjs-copy.min.css', 'r') as f:
     css += f.read()
 with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
@@ -29,6 +27,8 @@ with open(Path(__file__).resolve().parent / '../js/show_controls.js', 'r') as f:
     show_controls_js = f.read()
 with open(Path(__file__).resolve().parent / '../js/update_big_picture.js', 'r') as f:
     update_big_picture_js = f.read()
+with open(Path(__file__).resolve().parent / '../js/dark_theme.js', 'r') as f:
+    dark_theme_js = f.read()
 
 refresh_symbol = '🔄'
 delete_symbol = '🗑️'
