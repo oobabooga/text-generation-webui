@@ -46,6 +46,7 @@
 .message-body p {
     font-size: 15px !important;
     line-height: 22.5px !important;
+    font-weight: 500;
 }
 
 .message-body p, .chat .message-body ul, .chat .message-body ol {
