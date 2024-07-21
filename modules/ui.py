@@ -237,7 +237,7 @@ def apply_interface_values(state, use_persistent=False):
 
 def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output = copy.deepcopy(shared.settings)
-    exclude = ['name2', 'greeting', 'context', 'turn_template', 'truncation_length']
+    exclude = ['name2', 'greeting', 'context', 'truncation_length', 'instruction_template_str']
     for k in state:
         if k in shared.settings and k not in exclude:
             output[k] = state[k]
@@ -269,7 +269,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
         if key in shared.default_settings and output[key] == shared.default_settings[key]:
             output.pop(key)
 
-    return yaml.dump(output, sort_keys=False, width=float("inf"))
+    return yaml.dump(output, sort_keys=False, width=float("inf"), allow_unicode=True)
 
 
 def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_class, interactive=True):
