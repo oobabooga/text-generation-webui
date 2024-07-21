@@ -2,6 +2,7 @@ import gradio as gr
 
 from modules import chat, presets, shared, ui, utils
 from modules.utils import gradio
+import traceback
 
 
 def create_ui():
@@ -68,31 +69,67 @@ def create_event_handlers():
     shared.gradio['delete_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_deleter'), show_progress=False)
 
 
+def handle_save_preset_confirm_click(filename, contents):
+    try:
+        utils.save_file(f"presets/{filename}.yaml", contents)
+        available_presets = utils.get_available_presets()
+        output = gr.update(choices=available_presets, value=filename),
+    except Exception:
+        output = gr.update()
+        traceback.print_exc()
+
+    return [
+        output,
+        gr.update(visible=False)
+    ]
+
+
 def handle_save_confirm_click(root, filename, contents):
-    utils.save_file(root + filename, contents)
+    try:
+        utils.save_file(root + filename, contents)
+    except Exception:
+        traceback.print_exc()
+
     return gr.update(visible=False)
 
 
 def handle_delete_confirm_click(root, filename):
-    utils.delete_file(root + filename)
+    try:
+        utils.delete_file(root + filename)
+    except Exception:
+        traceback.print_exc()
+
     return gr.update(visible=False)
 
 
 def handle_save_character_confirm_click(name2, greeting, context, character_picture, filename):
-    chat.save_character(name2, greeting, context, character_picture, filename)
-    available_characters = utils.get_available_characters()
+    try:
+        chat.save_character(name2, greeting, context, character_picture, filename)
+        available_characters = utils.get_available_characters()
+        output = gr.update(choices=available_characters, value=filename),
+    except Exception:
+        output = gr.update()
+        traceback.print_exc()
 
     return [
-        gr.update(choices=available_characters, value=filename),
+        output,
         gr.update(visible=False)
     ]
 
 
 def handle_delete_character_confirm_click(character):
-    index = str(utils.get_available_characters().index(character))
-    chat.delete_character(character)
-    output = chat.update_character_menu_after_deletion(index)
-    return [output, gr.update(visible=False)]
+    try:
+        index = str(utils.get_available_characters().index(character))
+        chat.delete_character(character)
+        output = chat.update_character_menu_after_deletion(index)
+    except Exception:
+        output = gr.update()
+        traceback.print_exc()
+
+    return [
+        output,
+        gr.update(visible=False)
+    ]
 
 
 def handle_save_preset_click(state):
@@ -101,15 +138,6 @@ def handle_save_preset_click(state):
         contents,
         "My Preset",
         gr.update(visible=True)
-    ]
-
-
-def handle_save_preset_confirm_click(filename, contents):
-    utils.save_file(f"presets/{filename}.yaml", contents)
-    available_presets = utils.get_available_presets()
-    return [
-        gr.update(choices=available_presets, value=filename),
-        gr.update(visible=False)
     ]
 
 
