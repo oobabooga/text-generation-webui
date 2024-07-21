@@ -90,7 +90,7 @@ def handle_delete_character_confirm_click(character):
     index = str(utils.get_available_characters().index(character))
     chat.delete_character(character)
     output = chat.update_character_menu_after_deletion(index)
-    return output + [gr.update(visible=False)]
+    return [output, gr.update(visible=False)]
 
 
 def handle_save_preset_click(state):

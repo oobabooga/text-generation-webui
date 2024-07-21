@@ -136,7 +136,7 @@ def create_chat_settings_ui():
                                 shared.gradio['tavern_json'] = gr.State()
                             with gr.Column():
                                 shared.gradio['tavern_name'] = gr.Textbox(value='', lines=1, label='Name', interactive=False)
-                                shared.gradio['tavern_desc'] = gr.Textbox(value='', lines=4, max_lines=4, label='Description', interactive=False)
+                                shared.gradio['tavern_desc'] = gr.Textbox(value='', lines=10, label='Description', interactive=False, elem_classes=['add_scrollbar'])
 
                         shared.gradio['Submit tavern character'] = gr.Button(value='Submit', interactive=False)
 
