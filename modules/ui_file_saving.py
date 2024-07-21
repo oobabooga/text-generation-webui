@@ -66,13 +66,13 @@ def create_event_handlers():
     shared.gradio['delete_grammar'].click(handle_delete_grammar_click, gradio('grammar_file'), gradio('delete_filename', 'delete_root', 'file_deleter'), show_progress=False)
 
 
-def handle_save_confirm_click(save_root, save_filename, save_contents):
-    utils.save_file(save_root + save_filename, save_contents)
+def handle_save_confirm_click(root, filename, contents):
+    utils.save_file(root + filename, contents)
     return gr.update(visible=False)
 
 
-def handle_delete_confirm_click(delete_root, delete_filename):
-    utils.delete_file(delete_root + delete_filename)
+def handle_delete_confirm_click(root, ilename):
+    utils.delete_file(root + filename)
     return gr.update(visible=False)
 
 
@@ -87,7 +87,7 @@ def handle_save_character_confirm_click(name2, greeting, context, character_pict
 
 
 def handle_delete_character_confirm_click(character):
-    index = utils.get_available_characters().index(character)
+    index = str(utils.get_available_characters().index(character))
     chat.delete_character(character)
     output = chat.update_character_menu_after_deletion(index)
     return output + [gr.update(visible=False)]
@@ -103,7 +103,7 @@ def handle_save_preset_click(state):
 
 
 def handle_save_preset_confirm_click(filename, contents):
-    utils.save_file(f'presets/{filename}.yaml', contents)
+    utils.save_file(f"presets/{filename}.yaml", contents)
     available_presets = utils.get_available_presets()
     return [
         gr.update(choices=available_presets, value=filename),
@@ -113,8 +113,8 @@ def handle_save_preset_confirm_click(filename, contents):
 
 def handle_delete_preset_click(preset):
     return [
-        f'{preset}.yaml',
-        'presets/',
+        f"{preset}.yaml",
+        "presets/",
         gr.update(visible=True)
     ]
 
@@ -128,9 +128,9 @@ def handle_save_grammar_click(grammar_string):
     ]
 
 
-def handle_delete_grammar_click(grammar):
+def handle_delete_grammar_click(grammar_file):
     return [
-        grammar,
+        grammar_file,
         "grammars/",
         gr.update(visible=True)
     ]

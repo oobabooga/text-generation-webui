@@ -92,15 +92,15 @@ def create_event_handlers():
 def handle_save_prompt(text):
     return [
         text,
-        utils.current_time() + '.txt',
-        'prompts/',
+        utils.current_time() + ".txt",
+        "prompts/",
         gr.update(visible=True)
     ]
 
 
 def handle_delete_prompt(prompt):
     return [
-        prompt + '.txt',
-        'prompts/',
+        prompt + ".txt",
+        "prompts/",
         gr.update(visible=True)
     ]
