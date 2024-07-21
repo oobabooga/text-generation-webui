@@ -195,6 +195,7 @@ group.add_argument('--gradio-auth', type=str, help='Set Gradio authentication pa
 group.add_argument('--gradio-auth-path', type=str, help='Set the Gradio authentication file path. The file should contain one or more user:password pairs in the same format as above.', default=None)
 group.add_argument('--ssl-keyfile', type=str, help='The path to the SSL certificate key file.', default=None)
 group.add_argument('--ssl-certfile', type=str, help='The path to the SSL certificate cert file.', default=None)
+group.add_argument('--subpath', type=str, help='Customize the subpath for gradio, use with reverse proxy')
 
 # API
 group = parser.add_argument_group('API')
