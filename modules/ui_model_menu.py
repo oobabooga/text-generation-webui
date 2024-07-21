@@ -66,7 +66,6 @@ def create_ui():
                             ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': utils.get_available_models()}, 'refresh-button', interactive=not mu)
                             shared.gradio['load_model'] = gr.Button("Load", visible=not shared.settings['autoload_model'], elem_classes='refresh-button', interactive=not mu)
                             shared.gradio['unload_model'] = gr.Button("Unload", elem_classes='refresh-button', interactive=not mu)
-                            shared.gradio['reload_model'] = gr.Button("Reload", elem_classes='refresh-button', interactive=not mu)
                             shared.gradio['save_model_settings'] = gr.Button("Save settings", elem_classes='refresh-button', interactive=not mu)
 
                     with gr.Column():
@@ -188,39 +187,24 @@ def create_ui():
 
 
 def create_event_handlers():
-    shared.gradio['loader'].change(loaders.make_loader_params_visible, gradio('loader'), gradio(loaders.get_all_params()))
+    shared.gradio['loader'].change(loaders.make_loader_params_visible, gradio('loader'), gradio(loaders.get_all_params()), show_progress=False)
 
     # In this event handler, the interface state is read and updated
     # with the model defaults (if any), and then the model is loaded
     # unless "autoload_model" is unchecked
     shared.gradio['model_menu'].change(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        apply_model_settings_to_state, gradio('model_menu', 'interface_state'), gradio('interface_state')).then(
-        ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False).then(
-        update_model_parameters, gradio('interface_state'), None).then(
+        handle_load_model_event_initial, gradio('model_menu', 'interface_state'), gradio(ui.list_interface_input_elements()) + gradio('interface_state'), show_progress=False).then(
         load_model_wrapper, gradio('model_menu', 'loader', 'autoload_model'), gradio('model_status'), show_progress=False).success(
-        update_truncation_length, gradio('truncation_length', 'interface_state'), gradio('truncation_length')).then(
-        lambda x: x, gradio('loader'), gradio('filter_by_loader'))
+        handle_load_model_event_final, gradio('truncation_length', 'loader', 'interface_state'), gradio('truncation_length', 'filter_by_loader'), show_progress=False)
 
     shared.gradio['load_model'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         update_model_parameters, gradio('interface_state'), None).then(
         partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False).success(
-        update_truncation_length, gradio('truncation_length', 'interface_state'), gradio('truncation_length')).then(
-        lambda x: x, gradio('loader'), gradio('filter_by_loader'))
+        handle_load_model_event_final, gradio('truncation_length', 'loader', 'interface_state'), gradio('truncation_length', 'filter_by_loader'), show_progress=False)
 
-    shared.gradio['reload_model'].click(
-        unload_model, None, None).then(
-        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        update_model_parameters, gradio('interface_state'), None).then(
-        partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False).success(
-        update_truncation_length, gradio('truncation_length', 'interface_state'), gradio('truncation_length')).then(
-        lambda x: x, gradio('loader'), gradio('filter_by_loader'))
-
-    shared.gradio['unload_model'].click(
-        unload_model, None, None).then(
-        lambda: "Model unloaded", None, gradio('model_status'))
-
+    shared.gradio['unload_model'].click(handle_unload_model_click, None, gradio('model_status'), show_progress=False)
     shared.gradio['save_model_settings'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         save_model_settings, gradio('model_menu', 'interface_state'), gradio('model_status'), show_progress=False)
@@ -353,3 +337,20 @@ def update_truncation_length(current_length, state):
             return state['n_ctx']
 
     return current_length
+
+
+def handle_load_model_event_initial(model, state):
+    state = apply_model_settings_to_state(model, state)
+    output = ui.apply_interface_values(state)
+    update_model_parameters(state)
+    return output + [state]
+
+
+def handle_load_model_event_final(truncation_length, loader, state):
+    truncation_length = update_truncation_length(truncation_length, state)
+    return [truncation_length, loader]
+
+
+def handle_unload_model_click():
+    unload_model()
+    return "Model unloaded"
