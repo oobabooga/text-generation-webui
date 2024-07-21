@@ -1180,7 +1180,7 @@ def handle_delete_template_click(template):
 
 def handle_your_picture_change(picture, state):
     upload_your_profile_picture(picture)
-    html = redraw_html(state['history'], state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+    html = redraw_html(state['history'], state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'], reset_cache=True)
 
     return html
 
