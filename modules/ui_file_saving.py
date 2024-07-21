@@ -71,7 +71,7 @@ def handle_save_confirm_click(root, filename, contents):
     return gr.update(visible=False)
 
 
-def handle_delete_confirm_click(root, ilename):
+def handle_delete_confirm_click(root, filename):
     utils.delete_file(root + filename)
     return gr.update(visible=False)
 
