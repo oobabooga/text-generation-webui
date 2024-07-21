@@ -378,6 +378,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 }
 
+.chat-parent .prose {
+    visibility: visible;
+}
+
 .old-ui .chat-parent {
     height: calc(100dvh - 192px - var(--header-height) - var(--input-delta));
     margin-bottom: var(--input-delta) !important;
