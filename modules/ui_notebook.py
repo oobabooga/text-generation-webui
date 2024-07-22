@@ -67,22 +67,28 @@ def create_event_handlers():
         lambda x: x, gradio('textbox-notebook'), gradio('last_input-notebook')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
+        lambda state, text: state.update({'textbox-notebook': text}), gradio('interface_state', 'textbox-notebook'), None).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['textbox-notebook'].submit(
         lambda x: x, gradio('textbox-notebook'), gradio('last_input-notebook')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
+        lambda state, text: state.update({'textbox-notebook': text}), gradio('interface_state', 'textbox-notebook'), None).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
-    shared.gradio['Undo'].click(lambda x: x, gradio('last_input-notebook'), gradio('textbox-notebook'), show_progress=False)
-    shared.gradio['markdown_render-notebook'].click(lambda x: x, gradio('textbox-notebook'), gradio('markdown-notebook'), queue=False)
     shared.gradio['Regenerate-notebook'].click(
         lambda x: x, gradio('last_input-notebook'), gradio('textbox-notebook'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
+        lambda state, text: state.update({'textbox-notebook': text}), gradio('interface_state', 'textbox-notebook'), None).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
+    shared.gradio['Undo'].click(
+        lambda x: x, gradio('last_input-notebook'), gradio('textbox-notebook'), show_progress=False).then(
+        lambda state, text: state.update({'textbox-notebook': text}), gradio('interface_state', 'textbox-notebook'), None)
+
+    shared.gradio['markdown_render-notebook'].click(lambda x: x, gradio('textbox-notebook'), gradio('markdown-notebook'), queue=False)
     shared.gradio['Stop-notebook'].click(stop_everything_event, None, None, queue=False)
     shared.gradio['prompt_menu-notebook'].change(load_prompt, gradio('prompt_menu-notebook'), gradio('textbox-notebook'), show_progress=False)
     shared.gradio['save_prompt-notebook'].click(handle_save_prompt, gradio('textbox-notebook'), gradio('save_contents', 'save_filename', 'save_root', 'file_saver'), show_progress=False)
