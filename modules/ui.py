@@ -116,6 +116,7 @@ def list_model_elements():
         'hqq_backend',
         'cpp_runner',
     ]
+
     if is_torch_xpu_available():
         for i in range(torch.xpu.device_count()):
             elements.append(f'gpu_memory_{i}')
@@ -214,9 +215,11 @@ def list_interface_input_elements():
 
 
 def gather_interface_values(*args):
+    interface_elements = list_interface_input_elements()
+
     output = {}
-    for i, element in enumerate(list_interface_input_elements()):
-        output[element] = args[i]
+    for element, value in zip(interface_elements, args):
+        output[element] = value
 
     if not shared.args.multi_user:
         shared.persistent_interface_state = output
