@@ -1,8 +1,9 @@
+import traceback
+
 import gradio as gr
 
 from modules import chat, presets, shared, ui, utils
 from modules.utils import gradio
-import traceback
 
 
 def create_ui():
