@@ -4,7 +4,6 @@ import platform
 from modules import shared
 from modules.cache_utils import process_llamacpp_cache
 
-
 imported_module = None
 
 
@@ -22,7 +21,6 @@ def llama_cpp_lib():
     else:
         lib_names = [
             ('cpu', 'llama_cpp'),
-            ('tensorcores', 'llama_cpp_cuda_tensorcores'),
             (None, 'llama_cpp_cuda'),
             (None, 'llama_cpp')
         ]
