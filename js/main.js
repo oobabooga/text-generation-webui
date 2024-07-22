@@ -445,14 +445,12 @@ function updateCssProperties() {
 
   // Check if the chat container is visible
   if (chatContainer.clientHeight > 0) {
-
-    // Calculate new chat height and adjust CSS properties
     var numericHeight = chatContainer.parentNode.clientHeight - chatInputHeight + 40 - 100;
     if (document.getElementById("chat-tab").style.paddingBottom != "") {
       numericHeight += 20;
     }
-    const newChatHeight = `${numericHeight}px`;
 
+    const newChatHeight = `${numericHeight}px`;
     document.documentElement.style.setProperty("--chat-height", newChatHeight);
     document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
 
@@ -463,15 +461,14 @@ function updateCssProperties() {
 
     // Adjust scrollTop based on input height change
     if (chatInputHeight !== currentChatInputHeight) {
-      chatContainer.scrollTop += chatInputHeight > currentChatInputHeight ? chatInputHeight : -chatInputHeight + 40;
+      chatContainer.scrollTop += chatInputHeight - currentChatInputHeight;
       currentChatInputHeight = chatInputHeight;
     }
   }
 }
 
 // Observe textarea size changes and call update function
-new ResizeObserver(updateCssProperties)
-  .observe(document.querySelector("#chat-input textarea"));
+new ResizeObserver(updateCssProperties).observe(document.querySelector("#chat-input textarea"));
 
 // Handle changes in window size
 window.addEventListener("resize", updateCssProperties);
