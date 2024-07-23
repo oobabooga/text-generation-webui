@@ -33,7 +33,7 @@ settings = {
     'dark_theme': True,
     'show_controls': True,
     'start_with': '',
-    'mode': 'chat',
+    'mode': 'chat-instruct',
     'chat_style': 'cai-chat',
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
@@ -118,7 +118,7 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
 group.add_argument('--flash-attn', action='store_true', help='Use flash-attention.')
-group.add_argument('--tensorcores', action='store_true', help='Use llama-cpp-python compiled with tensor cores support. This increases performance on RTX cards. NVIDIA only.')
+group.add_argument('--tensorcores', action='store_true', help='NVIDIA only: use llama-cpp-python compiled with tensor cores support. This may increase performance on newer cards.')
 group.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
@@ -127,7 +127,7 @@ group.add_argument('--n_batch', type=int, default=512, help='Maximum number of p
 group.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 group.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
 group.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
-group.add_argument('--tensor_split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 18,17.')
+group.add_argument('--tensor_split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.')
 group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
 group.add_argument('--logits_all', action='store_true', help='Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower.')
 group.add_argument('--no_offload_kqv', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
@@ -195,6 +195,7 @@ group.add_argument('--gradio-auth', type=str, help='Set Gradio authentication pa
 group.add_argument('--gradio-auth-path', type=str, help='Set the Gradio authentication file path. The file should contain one or more user:password pairs in the same format as above.', default=None)
 group.add_argument('--ssl-keyfile', type=str, help='The path to the SSL certificate key file.', default=None)
 group.add_argument('--ssl-certfile', type=str, help='The path to the SSL certificate cert file.', default=None)
+group.add_argument('--subpath', type=str, help='Customize the subpath for gradio, use with reverse proxy')
 
 # API
 group = parser.add_argument_group('API')

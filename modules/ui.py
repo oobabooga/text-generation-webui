@@ -15,8 +15,6 @@ with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
     css += f.read()
 with open(Path(__file__).resolve().parent / '../css/katex/katex.min.css', 'r') as f:
     css += f.read()
-with open(Path(__file__).resolve().parent / '../css/highlightjs/github-dark.min.css', 'r') as f:
-    css += f.read()
 with open(Path(__file__).resolve().parent / '../css/highlightjs/highlightjs-copy.min.css', 'r') as f:
     css += f.read()
 with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
@@ -29,6 +27,8 @@ with open(Path(__file__).resolve().parent / '../js/show_controls.js', 'r') as f:
     show_controls_js = f.read()
 with open(Path(__file__).resolve().parent / '../js/update_big_picture.js', 'r') as f:
     update_big_picture_js = f.read()
+with open(Path(__file__).resolve().parent / '../js/dark_theme.js', 'r') as f:
+    dark_theme_js = f.read()
 
 refresh_symbol = '🔄'
 delete_symbol = '🗑️'
@@ -116,6 +116,7 @@ def list_model_elements():
         'hqq_backend',
         'cpp_runner',
     ]
+
     if is_torch_xpu_available():
         for i in range(torch.xpu.device_count()):
             elements.append(f'gpu_memory_{i}')
@@ -184,6 +185,7 @@ def list_interface_input_elements():
         'start_with',
         'character_menu',
         'history',
+        'unique_id',
         'name1',
         'user_bio',
         'name2',
@@ -213,9 +215,11 @@ def list_interface_input_elements():
 
 
 def gather_interface_values(*args):
+    interface_elements = list_interface_input_elements()
+
     output = {}
-    for i, element in enumerate(list_interface_input_elements()):
-        output[element] = args[i]
+    for element, value in zip(interface_elements, args):
+        output[element] = value
 
     if not shared.args.multi_user:
         shared.persistent_interface_state = output
@@ -226,8 +230,14 @@ def gather_interface_values(*args):
 def apply_interface_values(state, use_persistent=False):
     if use_persistent:
         state = shared.persistent_interface_state
+        if 'textbox-default' in state:
+            state.pop('prompt_menu-default')
+
+        if 'textbox-notebook' in state:
+            state.pop('prompt_menu-notebook')
 
     elements = list_interface_input_elements()
+
     if len(state) == 0:
         return [gr.update() for k in elements]  # Dummy, do nothing
     else:
@@ -236,7 +246,7 @@ def apply_interface_values(state, use_persistent=False):
 
 def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output = copy.deepcopy(shared.settings)
-    exclude = ['name2', 'greeting', 'context', 'turn_template', 'truncation_length']
+    exclude = ['name2', 'greeting', 'context', 'truncation_length', 'instruction_template_str']
     for k in state:
         if k in shared.settings and k not in exclude:
             output[k] = state[k]
@@ -268,7 +278,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
         if key in shared.default_settings and output[key] == shared.default_settings[key]:
             output.pop(key)
 
-    return yaml.dump(output, sort_keys=False, width=float("inf"))
+    return yaml.dump(output, sort_keys=False, width=float("inf"), allow_unicode=True)
 
 
 def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_class, interactive=True):

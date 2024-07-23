@@ -1,7 +1,7 @@
 dark_theme: true
 show_controls: true
 start_with: ''
-mode: chat
+mode: chat-instruct
 chat_style: cai-chat
 prompt-default: QA
 prompt-notebook: QA

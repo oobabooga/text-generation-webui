@@ -62,10 +62,6 @@ ol li p, ul li p {
     border: 0;
 }
 
-.gradio-container-3-18-0 .prose * h1, h2, h3, h4 {
-    color: white;
-}
-
 .gradio-container {
     max-width: 100% !important;
     padding-top: 0 !important;
@@ -378,6 +374,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 }
 
+.chat-parent .prose {
+    visibility: visible;
+}
+
 .old-ui .chat-parent {
     height: calc(100dvh - 192px - var(--header-height) - var(--input-delta));
     margin-bottom: var(--input-delta) !important;
@@ -397,6 +397,13 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .chat .message:last-child {
     margin-bottom: 0 !important;
     padding-bottom: 15px !important;
+}
+
+.message-body h1,
+.message-body h2,
+.message-body h3,
+.message-body h4 {
+    color: var(--body-text-color);
 }
 
 .message-body li {
@@ -447,6 +454,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     border-radius: 5px;
     font-size: 82%;
     padding: 1px 3px;
+    background: white !important;
+    color: #1f2328;
+}
+
+.dark .message-body code {
     background: #0d1117 !important;
     color: rgb(201 209 217);
 }
@@ -796,4 +808,3 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         max-height: 300px;
     }
 }
-
