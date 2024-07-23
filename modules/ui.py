@@ -78,7 +78,6 @@ def list_model_elements():
         'groupsize',
         'triton',
         'desc_act',
-        'no_inject_fused_attention',
         'no_inject_fused_mlp',
         'no_use_cuda_fp16',
         'disable_exllama',

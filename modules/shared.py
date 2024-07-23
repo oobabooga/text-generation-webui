@@ -89,7 +89,7 @@ group.add_argument('--idle-timeout', type=int, default=0, help='Unload model aft
 
 # Model loader
 group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, AutoGPTQ, AutoAWQ.')
+group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, AutoGPTQ.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
@@ -160,10 +160,6 @@ group.add_argument('--disable_exllamav2', action='store_true', help='Disable ExL
 group.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
 group.add_argument('--groupsize', type=int, default=-1, help='Group size.')
 
-# AutoAWQ
-group = parser.add_argument_group('AutoAWQ')
-group.add_argument('--no_inject_fused_attention', action='store_true', help='Disable the use of fused attention, which will use less VRAM at the cost of slower inference.')
-
 # HQQ
 group = parser.add_argument_group('HQQ')
 group.add_argument('--hqq-backend', type=str, default='PYTORCH_COMPILE', help='Backend for the HQQ loader. Valid options: PYTORCH, PYTORCH_COMPILE, ATEN.')
@@ -217,6 +213,7 @@ group.add_argument('--model_type', type=str, help='DEPRECATED')
 group.add_argument('--pre_layer', type=int, nargs='+', help='DEPRECATED')
 group.add_argument('--checkpoint', type=str, help='DEPRECATED')
 group.add_argument('--monkey-patch', action='store_true', help='DEPRECATED')
+group.add_argument('--no_inject_fused_attention', action='store_true', help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -267,8 +264,6 @@ def fix_loader_name(name):
         return 'ExLlamav2'
     elif name in ['exllamav2-hf', 'exllamav2_hf', 'exllama-v2-hf', 'exllama_v2_hf', 'exllama-v2_hf', 'exllama2-hf', 'exllama2_hf', 'exllama-2-hf', 'exllama_2_hf', 'exllama-2_hf']:
         return 'ExLlamav2_HF'
-    elif name in ['autoawq', 'awq', 'auto-awq']:
-        return 'AutoAWQ'
     elif name in ['hqq']:
         return 'HQQ'
     elif name in ['tensorrt', 'tensorrtllm', 'tensorrt_llm', 'tensorrt-llm', 'tensort', 'tensortllm']:

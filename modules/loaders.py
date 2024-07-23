@@ -127,15 +127,6 @@ loaders_and_params = OrderedDict({
         'no_use_fast',
         'autogptq_info',
     ],
-    'AutoAWQ': [
-        'cpu_memory',
-        'gpu_memory',
-        'auto_devices',
-        'max_seq_len',
-        'no_inject_fused_attention',
-        'trust_remote_code',
-        'no_use_fast',
-    ],
     'HQQ': [
         'hqq_backend',
         'trust_remote_code',
@@ -200,7 +191,6 @@ def transformers_samplers():
 loaders_samplers = {
     'Transformers': transformers_samplers(),
     'AutoGPTQ': transformers_samplers(),
-    'AutoAWQ': transformers_samplers(),
     'HQQ': transformers_samplers(),
     'ExLlamav2': {
         'temperature',

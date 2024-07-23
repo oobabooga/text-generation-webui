@@ -180,8 +180,6 @@ def infer_loader(model_name, model_settings):
         loader = None
     elif (path_to_model / 'quantize_config.json').exists() or ('wbits' in model_settings and isinstance(model_settings['wbits'], int) and model_settings['wbits'] > 0):
         loader = 'ExLlamav2_HF'
-    elif (path_to_model / 'quant_config.json').exists() or re.match(r'.*-awq', model_name.lower()):
-        loader = 'AutoAWQ'
     elif len(list(path_to_model.glob('*.gguf'))) > 0 and path_to_model.is_dir() and (path_to_model / 'tokenizer_config.json').exists():
         loader = 'llamacpp_HF'
     elif len(list(path_to_model.glob('*.gguf'))) > 0:
