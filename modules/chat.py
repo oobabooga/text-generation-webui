@@ -488,7 +488,7 @@ def start_new_chat(state):
         greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
         if greeting != '':
             history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            history['visible'] += [['', apply_extensions('output', greeting, state, is_chat=True)]]
+            history['visible'] += [['', apply_extensions('output', html.escape(greeting), state, is_chat=True)]]
 
     unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
     save_history(history, unique_id, state['character_menu'], state['mode'])
