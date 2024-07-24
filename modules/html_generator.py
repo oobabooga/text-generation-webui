@@ -69,7 +69,7 @@ def replace_blockquote(m):
     return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
 
-@functools.lru_cache(maxsize=4096)
+@functools.lru_cache(maxsize=None)
 def convert_to_markdown(string):
 
     # Quote to <q></q>
