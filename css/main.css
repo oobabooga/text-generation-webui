@@ -406,6 +406,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     color: var(--body-text-color);
 }
 
+.dark .message q {
+    color: #f5b031;
+}
+
+.message q::before, .message q::after {
+    content: "";
+}
+
 .message-body li {
     list-style-position: outside;
 }

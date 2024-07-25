@@ -21,7 +21,7 @@ safetensors==0.4.*
 scipy
 sentencepiece
 tensorboard
-transformers==4.42.*
+transformers==4.43.*
 tqdm
 wandb
 
@@ -38,4 +38,4 @@ https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/me
 https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.83-cp310-cp310-macosx_13_0_arm64.whl; platform_system == "Darwin" and platform_release >= "22.0.0" and platform_release < "23.0.0" and python_version == "3.10"
 https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.83-cp311-cp311-macosx_14_0_arm64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0" and python_version == "3.11"
 https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.83-cp310-cp310-macosx_14_0_arm64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0" and python_version == "3.10"
-https://github.com/oobabooga/exllamav2/releases/download/v0.1.7/exllamav2-0.1.7-py3-none-any.whl
+https://github.com/oobabooga/exllamav2/releases/download/v0.1.8/exllamav2-0.1.8-py3-none-any.whl
