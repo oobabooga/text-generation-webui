@@ -337,7 +337,6 @@ def update_requirements(initial_installation=False, pull=True):
         git_creation_cmd = 'git init -b main && git remote add origin https://github.com/oobabooga/text-generation-webui && git fetch && git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main && git reset --hard origin/main && git branch --set-upstream-to=origin/main'
         run_cmd(git_creation_cmd, environment=True, assert_success=True)
 
-    repository_updated = False
     if pull:
         print_big_message("Updating the local copy of the repository with \"git pull\"")
 
@@ -348,12 +347,8 @@ def update_requirements(initial_installation=False, pull=True):
         ]
 
         before_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
-        pull_output = run_cmd("git pull --autostash", assert_success=True, environment=True, capture_output=True)
+        run_cmd("git pull --autostash", assert_success=True, environment=True)
         after_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
-
-        # Check if git pull actually updated anything
-        if "Already up to date." not in pull_output.stdout.decode('utf-8'):
-            repository_updated = True
 
         # Check for differences in installation file hashes
         for file_name in files_to_check:
@@ -387,43 +382,43 @@ def update_requirements(initial_installation=False, pull=True):
 
     requirements_file = base_requirements
 
-    if repository_updated or initial_installation:
-        print_big_message(f"Installing webui requirements from file: {requirements_file}")
-        print(f"TORCH: {torver}\n")
+    print_big_message(f"Installing webui requirements from file: {requirements_file}")
+    print(f"TORCH: {torver}\n")
 
-        # Prepare the requirements file
-        textgen_requirements = open(requirements_file).read().splitlines()
+    # Prepare the requirements file
+    textgen_requirements = open(requirements_file).read().splitlines()
+    if is_cuda118:
+        textgen_requirements = [
+            req.replace('+cu121', '+cu118').replace('+cu122', '+cu118')
+            for req in textgen_requirements
+            if "auto-gptq" not in req.lower() and "autoawq" not in req.lower()
+        ]
 
-        if is_cuda118:
-            textgen_requirements = [
-                req.replace('+cu121', '+cu118').replace('+cu122', '+cu118')
-                for req in textgen_requirements
-                if "auto-gptq" not in req.lower() and "autoawq" not in req.lower()
-            ]
-        if is_windows() and is_cuda118:  # No flash-attention on Windows for CUDA 11
-            textgen_requirements = [req for req in textgen_requirements if 'oobabooga/flash-attention' not in req]
+    if is_windows() and is_cuda118:  # No flash-attention on Windows for CUDA 11
+        textgen_requirements = [req for req in textgen_requirements if 'oobabooga/flash-attention' not in req]
 
-        with open('temp_requirements.txt', 'w') as file:
-            file.write('\n'.join(textgen_requirements))
+    with open('temp_requirements.txt', 'w') as file:
+        file.write('\n'.join(textgen_requirements))
 
-        # Workaround for git+ packages not updating properly.
-        git_requirements = [req for req in textgen_requirements if req.startswith("git+")]
-        for req in git_requirements:
-            url = req.replace("git+", "")
-            package_name = url.split("/")[-1].split("@")[0].rstrip(".git")
-            run_cmd(f"python -m pip uninstall -y {package_name}", environment=True)
-            print(f"Uninstalled {package_name}")
+    # Workaround for git+ packages not updating properly.
+    git_requirements = [req for req in textgen_requirements if req.startswith("git+")]
+    for req in git_requirements:
+        url = req.replace("git+", "")
+        package_name = url.split("/")[-1].split("@")[0].rstrip(".git")
+        run_cmd(f"python -m pip uninstall -y {package_name}", environment=True)
+        print(f"Uninstalled {package_name}")
 
-        # Install/update the project requirements
-        run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
-        os.remove('temp_requirements.txt')
-    else:
-        print("Repository is already up to date. Skipping requirements installation.")
+    # Install/update the project requirements
+    run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
+    os.remove('temp_requirements.txt')
 
     # Check for '+cu' or '+rocm' in version string to determine if torch uses CUDA or ROCm. Check for pytorch-cuda as well for backwards compatibility
     if not any((is_cuda, is_rocm)) and run_cmd("conda list -f pytorch-cuda | grep pytorch-cuda", environment=True, capture_output=True).returncode == 1:
         clear_cache()
         return
+
+    if not os.path.exists("repositories/"):
+        os.mkdir("repositories")
 
     clear_cache()
 
