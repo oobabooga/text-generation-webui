@@ -352,7 +352,7 @@ def update_requirements(initial_installation=False, pull=True):
         after_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
 
         # Check if git pull actually updated anything
-        if "Already up to date." not in pull_output:
+        if "Already up to date." not in pull_output.stdout.decode('utf-8'):
             repository_updated = True
 
         # Check for differences in installation file hashes
