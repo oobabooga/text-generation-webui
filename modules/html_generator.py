@@ -150,6 +150,7 @@ def convert_to_markdown_wrapped(string, use_cache=True):
 
 
 def generate_basic_html(string):
+    convert_to_markdown.cache_clear()
     string = convert_to_markdown(string)
     string = f'<style>{readable_css}</style><div class="readable-container">{string}</div>'
     return string
