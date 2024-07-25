@@ -107,7 +107,7 @@ def handle_save_character_confirm_click(name2, greeting, context, character_pict
     try:
         chat.save_character(name2, greeting, context, character_picture, filename)
         available_characters = utils.get_available_characters()
-        output = gr.update(choices=available_characters, value=filename),
+        output = gr.update(choices=available_characters, value=filename)
     except Exception:
         output = gr.update()
         traceback.print_exc()
