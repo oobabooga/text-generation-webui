@@ -410,7 +410,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     color: #f5b031;
 }
 
-.message q::before, .message q::after {
+.message-body q::before, .message-body q::after {
     content: "";
 }
 
