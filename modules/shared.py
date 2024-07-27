@@ -142,8 +142,11 @@ group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF: Creat
 group.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
 group.add_argument('--no_xformers', action='store_true', help='Force xformers to not be used.')
 group.add_argument('--no_sdpa', action='store_true', help='Force Torch SDPA to not be used.')
-group.add_argument('--cache_8bit', action='store_true', help='Use 8-bit cache to save VRAM.')
-group.add_argument('--cache_4bit', action='store_true', help='Use Q4 cache to save VRAM.')
+group.add_argument('--cache_4bit', action='store_true', help='Use 4-bit cache to save VRAM (llama.cpp).')
+group.add_argument('--cache_8bit', action='store_true', help='Use 8-bit (FP8) cache to save VRAM.')
+group.add_argument('--cache_q4', action='store_true', help='Use Q4 cache to save VRAM.')
+group.add_argument('--cache_q6', action='store_true', help='Use Q6 cache to save VRAM.')
+group.add_argument('--cache_q8', action='store_true', help='Use Q8 cache to save VRAM.')
 group.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
 
 # AutoGPTQ
