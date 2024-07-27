@@ -223,7 +223,7 @@ def create_event_handlers():
 
     shared.gradio['Stop'].click(
         stop_everything_event, None, None, queue=False).then(
-        chat.redraw_html, gradio(reload_arr), gradio('display'))
+        chat.redraw_html, gradio(reload_arr), gradio('display'), show_progress=False)
 
     if not shared.args.multi_user:
         shared.gradio['unique_id'].select(
