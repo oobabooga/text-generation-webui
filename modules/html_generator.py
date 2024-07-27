@@ -72,6 +72,14 @@ def replace_blockquote(m):
 @functools.lru_cache(maxsize=None)
 def convert_to_markdown(string):
 
+    # Make \[ \]  LaTeX equations inline
+    pattern = r'^\s*\\\[\s*\n([\s\S]*?)\n\s*\\\]\s*$'
+    replacement = r'\\[ \1 \\]'
+    string = re.sub(pattern, replacement, string, flags=re.MULTILINE)
+
+    # Escape backslashes
+    string = string.replace('\\', '\\\\')
+
     # Quote to <q></q>
     string = replace_quotes(string)
 
