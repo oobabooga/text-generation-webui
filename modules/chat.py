@@ -92,8 +92,16 @@ def generate_chat_prompt(user_input, state, **kwargs):
         chat_template_str = replace_character_names(chat_template_str, state['name1'], state['name2'])
 
     instruction_template = jinja_env.from_string(state['instruction_template_str'])
-    instruct_renderer = partial(instruction_template.render, add_generation_prompt=False)
     chat_template = jinja_env.from_string(chat_template_str)
+
+    instruct_renderer = partial(
+        instruction_template.render,
+        builtin_tools=None,
+        tools=None,
+        tools_in_user_message=False,
+        add_generation_prompt=False
+    )
+
     chat_renderer = partial(
         chat_template.render,
         add_generation_prompt=False,
