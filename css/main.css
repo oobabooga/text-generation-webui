@@ -404,13 +404,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .message-body h3,
 .message-body h4 {
     color: var(--body-text-color);
+    margin: 20px 0 10px 0;
 }
 
 .dark .message q {
     color: #f5b031;
 }
 
-.message q::before, .message q::after {
+.message-body q::before, .message-body q::after {
     content: "";
 }
 

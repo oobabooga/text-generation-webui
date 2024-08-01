@@ -13,7 +13,6 @@ from modules.logging_colors import logger
 model = None
 tokenizer = None
 model_name = 'None'
-previous_model_name = 'None'
 is_seq2seq = False
 model_dirty_from_training = False
 lora_names = []
@@ -44,8 +43,6 @@ settings = {
     'negative_prompt': '',
     'seed': -1,
     'truncation_length': 2048,
-    'truncation_length_min': 0,
-    'truncation_length_max': 200000,
     'max_tokens_second': 0,
     'max_updates_second': 0,
     'prompt_lookup_num_tokens': 0,

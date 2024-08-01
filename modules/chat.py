@@ -26,8 +26,7 @@ from modules.logging_colors import logger
 from modules.text_generation import (
     generate_reply,
     get_encoded_length,
-    get_max_prompt_length,
-    stop_everything_event
+    get_max_prompt_length
 )
 from modules.utils import delete_file, get_available_characters, save_file
 
@@ -93,8 +92,16 @@ def generate_chat_prompt(user_input, state, **kwargs):
         chat_template_str = replace_character_names(chat_template_str, state['name1'], state['name2'])
 
     instruction_template = jinja_env.from_string(state['instruction_template_str'])
-    instruct_renderer = partial(instruction_template.render, add_generation_prompt=False)
     chat_template = jinja_env.from_string(chat_template_str)
+
+    instruct_renderer = partial(
+        instruction_template.render,
+        builtin_tools=None,
+        tools=None,
+        tools_in_user_message=False,
+        add_generation_prompt=False
+    )
+
     chat_renderer = partial(
         chat_template.render,
         add_generation_prompt=False,
@@ -1034,13 +1041,6 @@ def handle_remove_last_click(state):
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     return [history, html, last_input]
-
-
-def handle_stop_click(state):
-    stop_everything_event()
-    html = redraw_html(state['history'], state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
-
-    return html
 
 
 def handle_unique_id_select(state):

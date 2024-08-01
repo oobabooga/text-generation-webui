@@ -72,6 +72,14 @@ def replace_blockquote(m):
 @functools.lru_cache(maxsize=None)
 def convert_to_markdown(string):
 
+    # Make \[ \]  LaTeX equations inline
+    pattern = r'^\s*\\\[\s*\n([\s\S]*?)\n\s*\\\]\s*$'
+    replacement = r'\\[ \1 \\]'
+    string = re.sub(pattern, replacement, string, flags=re.MULTILINE)
+
+    # Escape backslashes
+    string = string.replace('\\', '\\\\')
+
     # Quote to <q></q>
     string = replace_quotes(string)
 
@@ -95,12 +103,27 @@ def convert_to_markdown(string):
 
     result = ''
     is_code = False
+    is_latex = False
     for line in string.split('\n'):
-        if line.lstrip(' ').startswith('```'):
+        stripped_line = line.strip()
+
+        if stripped_line.startswith('```'):
             is_code = not is_code
+        elif stripped_line.startswith('$$'):
+            is_latex = not is_latex
+        elif stripped_line.endswith('$$'):
+            is_latex = False
+        elif stripped_line.startswith('\\\\['):
+            is_latex = True
+        elif stripped_line.startswith('\\\\]'):
+            is_latex = False
+        elif stripped_line.endswith('\\\\]'):
+            is_latex = False
 
         result += line
-        if is_code or line.startswith('|'):  # Don't add an extra \n for tables or code
+
+        # Don't add an extra \n for tables, code, or LaTeX
+        if is_code or is_latex or line.startswith('|'):
             result += '\n'
         else:
             result += '\n\n'

@@ -32,8 +32,8 @@ from modules.models import clear_torch_cache, load_model
 
 
 def generate_reply(*args, **kwargs):
-    if shared.args.idle_timeout > 0 and shared.model is None and shared.previous_model_name not in [None, 'None']:
-        shared.model, shared.tokenizer = load_model(shared.previous_model_name)
+    if shared.args.idle_timeout > 0 and shared.model is None and shared.model_name not in [None, 'None']:
+        shared.model, shared.tokenizer = load_model(shared.model_name)
 
     shared.generation_lock.acquire()
     try:
