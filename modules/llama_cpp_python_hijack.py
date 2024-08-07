@@ -1,9 +1,9 @@
 import importlib
 import platform
+import torch
+
 from typing import Sequence
-
 from tqdm import tqdm
-
 from modules import shared
 from modules.cache_utils import process_llamacpp_cache
 
@@ -22,6 +22,11 @@ def llama_cpp_lib():
         lib_names = [
             (None, 'llama_cpp')
         ]
+    elif torch.version.hip:
+        lib_names = [
+            ('cpu', 'llama_cpp'),
+            (None, 'llama_cpp')
+        ]    
     else:
         lib_names = [
             ('cpu', 'llama_cpp'),
