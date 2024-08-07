@@ -1059,6 +1059,9 @@ def handle_start_new_chat_click(state):
 
     convert_to_markdown.cache_clear()
 
+    if len(histories) == 0:
+        return [history, html, gr.update(choices=histories)]
+
     return [history, html, gr.update(choices=histories, value=histories[0][1])]
 
 
@@ -1110,6 +1113,13 @@ def handle_upload_chat_history(load_chat_history, state):
 
     convert_to_markdown.cache_clear()
 
+    if len(histories) == 0:
+        return [
+            history,
+            html,
+            gr.update(choices=histories)
+        ]
+
     return [
         history,
         html,
@@ -1132,6 +1142,18 @@ def handle_character_menu_change(state):
 
     convert_to_markdown.cache_clear()
 
+    if len(histories) == 0:
+        return [
+            history,
+            html,
+            name1,
+            name2,
+            picture,
+            greeting,
+            context,
+            gr.update(choices=histories)
+        ]
+
     return [
         history,
         html,
@@ -1150,6 +1172,15 @@ def handle_mode_change(state):
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     convert_to_markdown.cache_clear()
+
+    if len(histories) == 0:
+        return [
+            history,
+            html,
+            gr.update(visible=state['mode'] != 'instruct'),
+            gr.update(visible=state['mode'] == 'chat-instruct'),
+            gr.update(choices=histories)
+        ]
 
     return [
         history,
