@@ -2,9 +2,13 @@ import base64
 import os
 import time
 import traceback
-from typing import Callable, Optional
+from typing import Any, Callable, Optional, AsyncGenerator, Generator
 
 import numpy as np
+from modules import shared
+from functools import partial
+import asyncio
+from asyncio import AbstractEventLoop, Future
 
 
 def float_list_to_base64(float_array: np.ndarray) -> str:
@@ -52,3 +56,37 @@ def _start_cloudflared(port: int, tunnel_id: str, max_attempts: int = 3, on_star
             time.sleep(3)
 
         raise Exception('Could not start cloudflared.')
+
+
+def get_next_generator_result(gen: Generator) -> tuple[Any, bool]:
+    """
+    Because StopIteration interacts badly with generators and cannot be raised into a Future
+    """
+    try:
+        result = next(gen)
+        return result, False
+    except StopIteration:
+        return None, True
+
+
+async def generate_in_executor(partial: partial, loop: AbstractEventLoop|None = None) -> AsyncGenerator[Any, Any]:
+    """
+    Converts a blocking generator to an async one
+    """
+    loop = loop or asyncio.get_running_loop()
+    gen = await loop.run_in_executor(None, partial)
+
+    while not shared.stop_everything:
+        result, is_done = await loop.run_in_executor(None, get_next_generator_result, gen)
+        if is_done:
+            break
+
+        yield result
+
+
+async def run_in_executor(partial: partial, loop: AbstractEventLoop|None = None) -> Future:
+    """
+    Runs a blocking function in a new thread so it can be awaited.
+    """
+    loop = loop or asyncio.get_running_loop()
+    return await loop.run_in_executor(None, partial)
