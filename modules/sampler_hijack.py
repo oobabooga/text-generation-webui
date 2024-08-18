@@ -1,6 +1,7 @@
 import json
 import math
 import pprint
+import random
 
 import torch
 import transformers
@@ -185,6 +186,40 @@ class TopALogitsWarper(LogitsWarper):
         if self.min_tokens_to_keep > 1:
             # Keep at least min_tokens_to_keep
             sorted_indices_to_remove[..., : self.min_tokens_to_keep] = 0
+
+        indices_to_remove = sorted_indices_to_remove.scatter(1, sorted_indices, sorted_indices_to_remove)
+        scores = scores.masked_fill(indices_to_remove, self.filter_value)
+        return scores
+
+
+# Exclude Top Choices (XTC)
+class XTCLogitsWarper(LogitsWarper):
+    def __init__(self, threshold: float, probability: float, filter_value: float = -float("Inf")):
+        self.threshold = threshold
+        self.probability = probability
+        self.filter_value = filter_value
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+        # `random` returns values in the half-open range [0, 1), so setting `probability`
+        # to 0 means the sampler never takes action, while setting it to 1 means the sampler
+        # always takes action.
+        #
+        # Note that while XTC is most intuitively described as "if multiple tokens meet
+        # the threshold, then with probability...", reversing the two conditions is logically
+        # equivalent, and improves performance because processing can immediately be stopped
+        # if the random check fails.
+        if random.random() >= self.probability:
+            return scores
+
+        sorted_logits, sorted_indices = torch.sort(scores, descending=True)
+        probs = sorted_logits.softmax(dim=-1)
+
+        sorted_indices_to_remove = torch.full_like(probs, False, dtype=torch.bool)
+
+        # This operation sets exactly those indices to `True` for which the next index has
+        # probability above the threshold. Since `probs` is sorted, those are the indices
+        # of all tokens that meet the threshold, *except* the least probable one.
+        sorted_indices_to_remove[..., :-1] = probs[..., 1:] >= self.threshold
 
         indices_to_remove = sorted_indices_to_remove.scatter(1, sorted_indices, sorted_indices_to_remove)
         scores = scores.masked_fill(indices_to_remove, self.filter_value)
@@ -395,6 +430,14 @@ def get_logits_warper_patch(self, generation_config, **kwargs):
             )
         )
 
+    if generation_config.xtc_probability is not None and generation_config.xtc_probability > 0:
+        warpers_to_add.append(
+            XTCLogitsWarper(
+                threshold=generation_config.xtc_threshold,
+                probability=generation_config.xtc_probability,
+            )
+        )
+
     if generation_config.dynamic_temperature:
         warpers_to_add.append(
             DynamicTemperatureLogitsWarper(
@@ -454,7 +497,8 @@ def get_logits_warper_patch(self, generation_config, **kwargs):
         'TopALogitsWarper': 'top_a',
         'TopKLogitsWarper': 'top_k',
         'TopPLogitsWarper': 'top_p',
-        'TypicalLogitsWarper': 'typical_p'
+        'TypicalLogitsWarper': 'typical_p',
+        'XTCLogitsWarper': 'xtc',
     }
 
     def custom_sort_key(obj):
@@ -546,8 +590,10 @@ def generation_config_init_patch(self, **kwargs):
     self.dry_base = kwargs.pop("dry_base", 1.75)
     self.dry_allowed_length = kwargs.pop("dry_allowed_length", 2)
     self.dry_sequence_breakers = kwargs.pop("dry_sequence_breakers", '"\\n", ":", "\\"", "*"')
+    self.xtc_threshold = kwargs.pop("xtc_threshold", 0.1)
+    self.xtc_probability = kwargs.pop("xtc_probability", 0)
     self.temperature_last = kwargs.pop("temperature_last", False)
-    self.sampler_priority = kwargs.pop("sampler_priority", ['temperature', 'dynamic_temperature', 'quadratic_sampling', 'top_k', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'tfs', 'top_a', 'min_p', 'mirostat'])
+    self.sampler_priority = kwargs.pop("sampler_priority", ['temperature', 'dynamic_temperature', 'quadratic_sampling', 'top_k', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'tfs', 'top_a', 'min_p', 'mirostat', 'xtc'])
 
 
 def hijack_samplers():
