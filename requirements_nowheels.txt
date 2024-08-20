@@ -1,4 +1,4 @@
-accelerate==0.32.*
+accelerate==0.33.*
 colorama
 datasets
 einops
@@ -11,7 +11,7 @@ numba==0.59.*
 numpy==1.26.*
 optimum==1.17.*
 pandas
-peft==0.8.*
+peft==0.12.*
 Pillow>=9.5.0
 psutil
 pyyaml
@@ -21,7 +21,7 @@ safetensors==0.4.*
 scipy
 sentencepiece
 tensorboard
-transformers==4.43.*
+transformers==4.44.*
 tqdm
 wandb
 
