@@ -404,7 +404,7 @@ https://colab.research.google.com/github/oobabooga/text-generation-webui/blob/ma
 
 ## Community
 
-* Subreddit: https://www.reddit.com/r/oobabooga/
+* Subreddit: https://www.reddit.com/r/Oobabooga/
 * Discord: https://discord.gg/jwZCF2dPQN
 
 ## Acknowledgment
