@@ -1,4 +1,4 @@
-accelerate==0.32.*
+accelerate==0.33.*
 aqlm[gpu,cpu]==1.1.6; platform_system == "Linux"
 auto-gptq==0.7.1
 bitsandbytes==0.43.*
@@ -14,7 +14,7 @@ numba==0.59.*
 numpy==1.26.*
 optimum==1.17.*
 pandas
-peft==0.8.*
+peft==0.12.*
 Pillow>=9.5.0
 psutil
 pyyaml
