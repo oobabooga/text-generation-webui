@@ -10,9 +10,9 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Features
 
-* Multiple backends for text generation in a single UI and API, including [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp) (through [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM). The Transformers loader also supports models quantized through [AutoAWQ](https://github.com/casper-hansen/AutoAWQ) and [HQQ](https://github.com/mobiusml/hqq).
+* Multiple backends for text generation in a single UI and API, including [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp) (through [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM). [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [HQQ](https://github.com/mobiusml/hqq), and [AQLM](https://github.com/Vahe1994/AQLM) are also supported through the Transformers loader.
 * OpenAI-compatible API server with Chat and Completions endpoints – see the [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
-* Automatic prompt formatting for each model using the Jinja2 template in its metadata, ensuring high-quality outputs without manual intervention.
+* Automatic prompt formatting for each model using the Jinja2 template in its metadata, ensuring high-quality outputs without manual setup.
 * Three chat modes: `instruct`, `chat-instruct`, and `chat`, allowing for both task-based interactions and casual conversations with characters. `chat-instruct` mode automatically applies the model's template to the chat's prompt, leading to higher quality outputs.
 * Easy switching between conversations and starting new ones through the "Past chats" menu in the main interface tab.
 * Flexible text generation through autocompletion in the Default/Notebook tabs without being limited to chat turns. Send formatted chat conversations from the Chat tab to these tabs.
