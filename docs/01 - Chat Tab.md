@@ -6,23 +6,28 @@ The following buttons can be found. Note that the hover menu can be replaced wit
 
 * **Generate**: sends your message and makes the model start a reply.
 * **Stop**: stops an ongoing generation as soon as the next token is generated (which can take a while for a slow model).
+* **Regenerate**: similar to Generate, but your last message is used as input instead of the text in the input field. Note that if the `temperature`/`top_p`/`top_k` parameters are low in the "Parameters" tab of the UI, the new reply may end up identical to the previous one.
 * **Continue**: makes the model attempt to continue the existing reply. In some cases, the model may simply end the existing turn immediately without generating anything new, but in other cases, it may generate a longer reply.
-* **Regenerate**: similar to Generate, but your last message is used as input instead of the text in the input field. Note that if the temperature/top_p/top_k parameters are low in the "Parameters" tab of the UI, the new reply may end up identical to the previous one.
 * **Remove last reply**: removes the last input/output pair from the history and sends your last message back into the input field.
 * **Replace last reply**: replaces the last reply with whatever you typed into the input field. Useful in conjunction with "Copy last reply" if you want to edit the bot response.
 * **Copy last reply**: sends the contents of the bot's last reply to the input field.
 * **Impersonate**: makes the model generate a new message on your behalf in the input field, taking into consideration the existing chat history.
 * **Send dummy message**: adds a new message to the chat history without causing the model to generate a reply.
 * **Send dummy reply**: adds a new reply to the chat history as if the model had generated this reply. Useful in conjunction with "Send dummy message".
-* **Start new chat**: starts a new conversation while keeping the old one saved. If you are talking to a character that has a "Greeting" message defined, this message will be automatically added to the new history.
 * **Send to default**: sends the entire chat prompt up to now to the "Default" tab.
 * **Send to notebook**: sends the entire chat prompt up to now to the "Notebook" tab.
 
-The **Show controls** checkbox causes the input fields below the input textbox to disappear. It is useful for making the page fit entirely into view and not scroll.
+* **Start new chat**: starts a new conversation while keeping the old one saved. If you are talking to a character that has a "Greeting" message defined, this message will be automatically added to the new history.
+
+The **Show controls** checkbox causes the input fields below the input textbox, as well as the elements to the left and right of the chat area, to disappear. This is useful for making the page fit entirely into view without scrolling.
 
 ## Past chats
 
-Allows you to switch between the current and previous conversations with the current character, or between the current and previous instruct conversations (if in "instruct" mode). The **Rename** menu can be used to give a unique name to the selected conversation, and the 🗑️ button allows you to delete it.
+Allows you to switch between the current and previous conversations with the current character, or between the current and previous instruct conversations (if in "instruct" mode). 
+
+* The **Rename** button can be used to give a unique name to the active conversation.
+* The 🗑️ button deletes the active conversation.
+* The "New chat" button starts a new chat, keeping your previous chat saved.
 
 ## Start reply with
 
@@ -30,7 +35,7 @@ Whatever you type there will appear at the start of every reply by the bot. This
 
 ## Mode
 
-The most important input field. It defines how the chat prompt is formatted. There are 3 options: chat, chat-instruct, and instruct. It is worth going into more detail about this because it seems to not be obvious to a lot of people.
+The most important input field. It defines how the chat prompt is formatted. There are 3 options: `chat`, `chat-instruct`, and `instruct`. It is worth going into more detail about this because it seems to not be obvious to a lot of people.
 
 ### Instruction-following models
 
