@@ -18,7 +18,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Free-form generation in the Default/Notebook tabs without being limited to chat turns. Send formatted chat conversations from the Chat tab to these tabs.
 * Multiple sampling parameters and generation options for sophisticated text generation control.
 * Easy switching between different models through the UI without restarting, using the "Model" tab.
-* Simple LoRA fine-tuning tool to customize models with your data.
+* LoRA fine-tuning to customize models with your data.
 * All in one folder. The requirements are installed in a self-contained `installer_files` folder that doesn't interfere with the system's environment.
 * Extensions support, including numerous built-in and user-contributed extensions. See [the wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [the extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
 
@@ -30,9 +30,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 4) Once the installation ends, browse to `http://localhost:7860`.
 5) Have fun!
 
-To restart the web UI in the future, run the `start_` script again.
-
-This script creates an `installer_files` folder where it sets up the project's requirements. If you need to reinstall the requirements, just delete that folder and start the web UI again.
+To launch the webu UI again in the future, run the same `start_` script.
 
 The script accepts command-line flags, such as `./start_linux.sh --help`. Alternatively, you can edit the `CMD_FLAGS.txt` file with a text editor and add your flags there, such as `--api` in case you need to use the API.
 
@@ -43,14 +41,14 @@ To get updates in the future, run `update_wizard_linux.sh`, `update_wizard_windo
 Setup details and information about installing manually
 </summary>
 
-### One-click-installer
+### One-click installer
 
-The script uses Miniconda to set up a Conda environment in the `installer_files` folder.
+The script uses Miniconda to set up a Conda environment in the `installer_files` folder. If you need to reinstall the requirements, just delete that folder and start the web UI again.
 
 If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, `cmd_macos.sh`, or `cmd_wsl.bat`.
 
 * There is no need to run any of those scripts (`start_`, `update_wizard_`, or `cmd_`) as admin/root.
-* To install the requirements for extensions, you can use the `extensions_reqs` script for your OS. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
+* The `update_wizard_` script can be used to install requirements for extensions.
 * For additional instructions about AMD and WSL setup, consult [the documentation](https://github.com/oobabooga/text-generation-webui/wiki).
 * For automated installation, you can use the `GPU_CHOICE`, `USE_CUDA118`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A USE_CUDA118=FALSE LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh`.
 
@@ -87,7 +85,7 @@ conda activate textgen
 | Windows | NVIDIA | `pip3 install torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 --index-url https://download.pytorch.org/whl/cu121` |
 | Windows | CPU only | `pip3 install torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2` |
 
-The up-to-date commands can be found here: https://pytorch.org/get-started/locally/.
+Note that it's necessary to install the exact versions specified above. For more information about PyTorch installation, consult: https://pytorch.org/get-started/locally/.
 
 For NVIDIA, you also need to install the CUDA runtime libraries:
 
@@ -132,18 +130,15 @@ python server.py
 
 Then browse to
 
-`http://localhost:7860/?__theme=dark`
+`http://localhost:7860`
 
 ##### AMD GPU on Windows
 
 1) Use `requirements_cpu_only.txt` or `requirements_cpu_only_noavx2.txt` in the command above.
 
-2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-with-hardware-acceleration).
-    * Use the `LLAMA_HIPBLAS=on` toggle.
-    * Note the [Windows remarks](https://github.com/abetlen/llama-cpp-python#windows-remarks).
-
-3) Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#install-from-source).
-    * Perform the from-source installation - there are no prebuilt ROCm packages for Windows.
+2) Manually install `llama-cpp-python` using the appropriate command for your hardware: [llama-cpp-python README](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends).
+    * Use the `GGML_HIPBLAS=on` toggle.
+    * Note the [Windows remarks](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#windows-notes).
 
 ##### Older NVIDIA GPUs
 
@@ -154,39 +149,46 @@ pip3 install torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 --index-url http
 conda install -y -c "nvidia/label/cuda-11.8.0" cuda-runtime
 ```
 
-2) bitsandbytes >= 0.39 may not work. In that case, to use `--load-in-8bit`, you may have to downgrade like this:
+2) `bitsandbytes >= 0.39` may not work. In that case, to use `--load-in-8bit`, you may have to downgrade like this:
     * Linux: `pip install bitsandbytes==0.38.1`
     * Windows: `pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl`
 
 ##### Manual install
 
-The `requirements*.txt` above contain various wheels precompiled through GitHub Actions. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
+The `requirements*.txt` above contain various wheels precompiled through GitHub Actions. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired backends manually.
 
 ### Alternative: Docker
 
 ```
-For NVIDIA GPU:
+# For NVIDIA GPU:
 ln -s docker/{nvidia/Dockerfile,nvidia/docker-compose.yml,.dockerignore} .
-For AMD GPU: 
+
+# For AMD GPU:
 ln -s docker/{amd/Dockerfile,intel/docker-compose.yml,.dockerignore} .
-For Intel GPU:
+
+# For Intel GPU:
 ln -s docker/{intel/Dockerfile,amd/docker-compose.yml,.dockerignore} .
-For CPU only
+
+# For CPU only
 ln -s docker/{cpu/Dockerfile,cpu/docker-compose.yml,.dockerignore} .
+
 cp docker/.env.example .env
-#Create logs/cache dir : 
+
+# Create logs/cache dir:
 mkdir -p logs cache
-# Edit .env and set: 
+
+# Edit .env and set:
 #   TORCH_CUDA_ARCH_LIST based on your GPU model
 #   APP_RUNTIME_GID      your host user's group id (run `id -g` in a terminal)
 #   BUILD_EXTENIONS      optionally add comma separated list of extensions to build
 # Edit CMD_FLAGS.txt and add in it the options you want to execute (like --listen --cpu)
-# 
+#
+
 docker compose up --build
 ```
 
 * You need to have Docker Compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/wiki/09-%E2%80%90-Docker) for instructions.
-* For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui-docker).
+* For additional Docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui-docker). These may be better than what is found in this repository (I don't use Docker).
 
 ### Updating the requirements
 
@@ -360,7 +362,7 @@ https://github.com/oobabooga/text-generation-webui/wiki
 
 Models should be placed in the folder `text-generation-webui/models`. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads).
 
-* GGUF models are a single file and should be placed directly into `models`. Example:
+* GGUF models are a single file and can be placed directly into `models`. Example:
 
 ```
 text-generation-webui
@@ -368,7 +370,7 @@ text-generation-webui
     └── llama-2-13b-chat.Q4_K_M.gguf
 ```
 
-* The remaining model types (like 16-bit transformers models and GPTQ models) are made of several files and must be placed in a subfolder. Example:
+* The remaining model types (like 16-bit Transformers models and EXL2 models) are made of several files and must be placed in a subfolder. Example:
 
 ```
 text-generation-webui
@@ -389,7 +391,7 @@ text-generation-webui
 │   │   └── tokenizer.model
 ```
 
-In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download it via the command-line with 
+In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download it via the command-line with
 
 ```
 python download-model.py organization/model
