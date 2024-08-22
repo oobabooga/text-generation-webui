@@ -371,6 +371,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
 
         yield chunk
     else:
+        role = 'user' if impersonate else 'assistant'
         resp = {
             "id": cmpl_id,
             "object": object_type,
@@ -379,7 +380,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             resp_list: [{
                 "index": 0,
                 "finish_reason": stop_reason,
-                "message": {"role": "assistant", "content": answer}
+                "message": {"role": role, "content": answer}
             }],
             "usage": {
                 "prompt_tokens": token_count,
