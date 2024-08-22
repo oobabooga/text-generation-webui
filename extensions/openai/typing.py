@@ -114,6 +114,8 @@ class ChatCompletionRequestParams(BaseModel):
 
     continue_: bool = Field(default=False, description="Makes the last bot message in the history be continued instead of starting a new message.")
 
+    impersonate: bool = Field(default=False, description="Impersonate the user in the chat. Makes the model continue generate the last user message.")
+
 
 class ChatCompletionRequest(GenerationOptions, ChatCompletionRequestParams):
     pass
