@@ -320,11 +320,10 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
 
     # generate reply #######################################
     prompt = generate_chat_prompt(user_input, generate_params, _continue=continue_, impersonate=impersonate)
+    if impersonate:
+        prompt += user_input
     if prompt_only:
-        if impersonate:
-            yield {'prompt': prompt + user_input}
-        else:
-            yield {'prompt': prompt}
+        yield {'prompt': prompt}
         return
 
     debug_msg({'prompt': prompt, 'generate_params': generate_params})
@@ -334,8 +333,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
 
     if impersonate:
         stopping_strings = get_stopping_strings(generate_params)
-        generator = generate_reply(prompt + user_input, generate_params, stopping_strings=stopping_strings, is_chat=True)
-
+        generator = generate_reply(prompt, generate_params, stopping_strings=stopping_strings, is_chat=True)
     else:
         generator = generate_chat_reply(
             user_input, generate_params, regenerate=False, _continue=continue_, loading_message=False)
