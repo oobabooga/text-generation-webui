@@ -245,7 +245,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
     continue_ = body['continue_']
     impersonate = body['impersonate']
     if impersonate:
-        continue_ = False
+        continue_ = False # While impersonate, continue_ should be False. References impersonate_wrapper in chat.py
 
     # Instruction template
     if body['instruction_template_str']:
@@ -342,7 +342,12 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
     seen_content = ''
 
     for a in generator:
-        answer = a if impersonate else a['internal'][-1][1]
+        if impersonate:
+            # The generate_chat_reply returns the entire message, but generate_reply will only start from new content.
+            # So we need to add the user_input to keep output consistent.
+            answer = user_input + a
+        else:
+            answer = a['internal'][-1][1]
         if stream:
             len_seen = len(seen_content)
             new_content = answer[len_seen:]
