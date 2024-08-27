@@ -188,23 +188,41 @@ def _apply_custom_js():
 def create_extensions_block():
     to_display = []
     for extension, name in iterator():
-        if hasattr(extension, "ui") and not (hasattr(extension, 'params') and extension.params.get('is_tab', False)):
+        # Use ui_block if it is defined, otherwise use the old ui
+        if hasattr(extension, "ui_block"):
+            to_display.append((extension, name))
+        elif hasattr(extension, "ui") and not (hasattr(extension, 'params') and extension.params.get('is_tab', False)):
             to_display.append((extension, name))
 
-    # Creating the extension ui elements
     if len(to_display) > 0:
         with gr.Column(elem_id="extensions"):
             for row in to_display:
                 extension, _ = row
-                extension.ui()
+                if hasattr(extension, "ui_block"):
+                    extension.ui_block()
+                else:
+                    extension.ui()
 
 
 def create_extensions_tabs():
     for extension, name in iterator():
-        if hasattr(extension, "ui") and (hasattr(extension, 'params') and extension.params.get('is_tab', False)):
+        # Use ui_tab if it is defined, otherwise use the old ui with the is_tab parameter
+        if hasattr(extension, "ui_tab"):
+            display_name = getattr(extension, 'params', {}).get('display_name', name)
+            with gr.Tab(display_name, elem_classes="extension-tab"):
+                extension.ui_tab()
+        elif hasattr(extension, "ui") and (hasattr(extension, 'params') and extension.params.get('is_tab', False)):
             display_name = getattr(extension, 'params', {}).get('display_name', name)
             with gr.Tab(display_name, elem_classes="extension-tab"):
                 extension.ui()
+
+# Creates a tab in Parameters to hold the extension settings
+def create_extensions_params():
+    for extension, name in iterator():
+        if hasattr(extension, "ui_params"):
+            display_name = getattr(extension, 'params', {}).get('display_name', name)
+            with gr.Tab(display_name):
+                extension.ui_params()
 
 
 EXTENSION_MAP = {
