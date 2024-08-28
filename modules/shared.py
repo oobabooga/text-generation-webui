@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 
 from modules.logging_colors import logger
+from modules import localization
 
 # Model variables
 model = None
@@ -25,7 +26,9 @@ processing_message = '*Is typing...*'
 # UI variables
 gradio = {}
 persistent_interface_state = {}
+localizations = {}
 need_restart = False
+lang = 'None'
 
 # UI defaults
 settings = {
@@ -77,6 +80,7 @@ group.add_argument('--model', type=str, help='Name of the model to load by defau
 group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
 group.add_argument('--model-dir', type=str, default='models/', help='Path to directory with all the models.')
 group.add_argument('--lora-dir', type=str, default='loras/', help='Path to directory with all the loras.')
+group.add_argument('--localizations-dir', type=str, default='localizations/', help='Path to directory with all the localizations.')
 group.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
 group.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
@@ -300,6 +304,8 @@ def load_user_config():
 
 
 args.loader = fix_loader_name(args.loader)
+
+localization.list_localizations(args.localizations_dir)
 
 # Activate the multimodal extension
 if args.multimodal_pipeline is not None:

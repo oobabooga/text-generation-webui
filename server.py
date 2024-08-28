@@ -1,7 +1,7 @@
 import os
 import warnings
 
-from modules import shared
+from modules import shared, localization
 
 import accelerate  # This early import makes Intel GPUs happy
 
@@ -154,7 +154,9 @@ def create_interface():
                 if ({str(shared.settings['dark_theme']).lower()}) {{
                     document.getElementsByTagName('body')[0].classList.add('dark');
                 }}
+                {localization.localization_js(shared.lang)}
                 {js}
+                {ui.localization_js}
                 {ui.show_controls_js}
                 toggle_controls(x);
             }}"""

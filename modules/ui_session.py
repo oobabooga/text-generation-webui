@@ -1,6 +1,6 @@
 import gradio as gr
 
-from modules import shared, ui, utils
+from modules import shared, ui, utils, localization
 from modules.github import clone_or_pull_repository
 from modules.utils import gradio
 
@@ -24,6 +24,10 @@ def create_ui():
 
             with gr.Column():
                 extension_name = gr.Textbox(lines=1, label='Install or update an extension', info='Enter the GitHub URL below and press Enter. For a list of extensions, see: https://github.com/oobabooga/text-generation-webui-extensions ⚠️  WARNING ⚠️ : extensions can execute arbitrary code. Make sure to inspect their source code before activating them.', interactive=not mu)
+                with gr.Row():
+                    shared.gradio['localization_menu'] = gr.Dropdown(choices=utils.get_available_localizations(), value=lambda: shared.lang, label='Localization', elem_classes='slim-dropdown')
+                    ui.create_refresh_button(shared.gradio['localization_menu'], lambda: None, lambda: {'choices': utils.get_available_localizations()}, 'refresh-button')
+                shared.gradio['download_localization'] = gr.Button(value='Download localization template', elem_id='download_localization')
                 extension_status = gr.Markdown()
 
         shared.gradio['theme_state'] = gr.Textbox(visible=False, value='dark' if shared.settings['dark_theme'] else 'light')
@@ -41,6 +45,13 @@ def create_ui():
         shared.gradio['save_settings'].click(
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
             handle_save_settings, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls', 'theme_state'), gradio('save_contents', 'save_filename', 'save_root', 'file_saver'), show_progress=False)
+
+        # Execute download_localization js function from localization.js
+        shared.gradio['download_localization'].click(
+            None, None, None, js=f'() => {{{ui.localization_js}; download_localization()}}')
+        
+        shared.gradio['localization_menu'].change(
+            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state'))
 
 
 def handle_save_settings(state, preset, extensions, show_controls, theme):

@@ -19,6 +19,8 @@ with open(Path(__file__).resolve().parent / '../css/highlightjs/highlightjs-copy
     css += f.read()
 with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
     js = f.read()
+with open(Path(__file__).resolve().parent / '../js/localization.js', 'r') as f:
+    localization_js = f.read()
 with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
     save_files_js = f.read()
 with open(Path(__file__).resolve().parent / '../js/switch_tabs.js', 'r') as f:

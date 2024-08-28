@@ -10,8 +10,8 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
   if (event.target.tagName !== "BUTTON") return;
 
   const buttonText = event.target.textContent.trim();
-  const extensionsVisible = ["Chat", "Default", "Notebook"].includes(buttonText);
-  const chatVisible = buttonText === "Chat";
+  const extensionsVisible = [localization["Chat"], localization["Default"], localization["Notebook"]].includes(buttonText);
+  const chatVisible = buttonText === localization["Chat"];
   const showControlsChecked = document.querySelector("#show-controls input").checked;
   const extensions = document.querySelector("#extensions");
 
@@ -592,7 +592,7 @@ function restoreOriginalPosition() {
 headerBar.addEventListener("click", (e) => {
   if (e.target.tagName === "BUTTON") {
     const tabName = e.target.textContent.trim();
-    if (tabName === "Chat") {
+    if (tabName === localization["Chat"]) {
       moveToChatTab();
     } else {
       restoreOriginalPosition();
