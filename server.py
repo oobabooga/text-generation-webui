@@ -154,7 +154,7 @@ def create_interface():
                 if ({str(shared.settings['dark_theme']).lower()}) {{
                     document.getElementsByTagName('body')[0].classList.add('dark');
                 }}
-                {localization.localization_js(shared.lang)}
+                {localization.localization_js(shared.settings['localization'])}
                 {js}
                 {ui.localization_js}
                 {ui.show_controls_js}

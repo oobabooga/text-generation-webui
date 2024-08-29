@@ -245,7 +245,7 @@ def apply_interface_values(state, use_persistent=False):
         return [state[k] if k in state else gr.update() for k in elements]
 
 
-def save_settings(state, preset, extensions_list, show_controls, theme_state):
+def save_settings(state, preset, extensions_list, localization, show_controls, theme_state):
     output = copy.deepcopy(shared.settings)
     exclude = ['name2', 'greeting', 'context', 'truncation_length', 'instruction_template_str']
     for k in state:
@@ -257,6 +257,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output['prompt-notebook'] = state['prompt_menu-notebook']
     output['character'] = state['character_menu']
     output['default_extensions'] = extensions_list
+    output['localization'] = localization
     output['seed'] = int(output['seed'])
     output['show_controls'] = show_controls
     output['dark_theme'] = True if theme_state == 'dark' else False

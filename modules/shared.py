@@ -28,7 +28,6 @@ gradio = {}
 persistent_interface_state = {}
 localizations = {}
 need_restart = False
-lang = 'None'
 
 # UI defaults
 settings = {
@@ -65,6 +64,7 @@ settings = {
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'autoload_model': False,
     'default_extensions': [],
+    'localization': 'None',
 }
 
 default_settings = copy.deepcopy(settings)
