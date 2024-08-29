@@ -1,14 +1,26 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Aug 29 18:06:29 2024
+
+@author: myself
+"""
+
 import traceback
 from pathlib import Path
 
 import torch
 from exllamav2 import (
-    ExLlamaV2,
+      ExLlamaV2,
+    ExLlamaV2Config,
     ExLlamaV2Cache,
     ExLlamaV2Cache_8bit,
     ExLlamaV2Cache_Q4,
-    ExLlamaV2Config,
-    ExLlamaV2Tokenizer
+    ExLlamaV2Cache_Q6,
+    ExLlamaV2Cache_Q8,
+    ExLlamaV2Cache_TP,
+    ExLlamaV2Tokenizer,
+    model_init,
 )
 from exllamav2.generator import ExLlamaV2Sampler, ExLlamaV2StreamingGenerator
 
@@ -54,21 +66,34 @@ class Exllamav2Model:
 
         model = ExLlamaV2(config)
 
-        if not shared.args.autosplit:
+        # Check if TP is enabled and load model with TP
+        if shared.args.enable_tp:
             split = None
             if shared.args.gpu_split:
                 split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
-
-            model.load(split)
-
-        if shared.args.cache_8bit:
-            cache = ExLlamaV2Cache_8bit(model, lazy=shared.args.autosplit)
-        elif shared.args.cache_4bit:
-            cache = ExLlamaV2Cache_Q4(model, lazy=shared.args.autosplit)
+            model.load_tp(split)  # Ensure TP loading is used
         else:
-            cache = ExLlamaV2Cache(model, lazy=shared.args.autosplit)
+            if not shared.args.autosplit:
+                split = None
+                if shared.args.gpu_split:
+                    split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
+                model.load(split)
 
-        if shared.args.autosplit:
+        # Determine the correct cache type
+        if shared.args.cache_8bit:
+            cache_type = ExLlamaV2Cache_8bit
+        elif shared.args.cache_4bit:
+            cache_type = ExLlamaV2Cache_Q4
+        else:
+            cache_type = ExLlamaV2Cache
+
+        # Use TP if specified
+        if shared.args.enable_tp:
+            cache = ExLlamaV2Cache_TP(model, base=cache_type)
+        else:
+            cache = cache_type(model, lazy=shared.args.autosplit)
+
+        if shared.args.autosplit and not shared.args.enable_tp:
             model.load_autosplit(cache)
 
         tokenizer = ExLlamaV2Tokenizer(config)
