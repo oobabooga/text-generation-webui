@@ -400,7 +400,7 @@
     "新列": "新列",
     "Save comments": "保存评论",
     "Refresh the table": "刷新表格",
-    "Apply flags/extensions and restart": "应用命令行参数/扩展并重启",
+    "Apply flags/extensions/localization and restart": "应用命令行参数/扩展/语言并重启",
     "Save UI defaults to settings.yaml": "将UI默认设置保存到settings.yaml",
     "Available extensions": "可用扩展",
     "Note that some of these extensions may require manually installing Python requirements through the command: pip install -r extensions/extension_name/requirements.txt": "注意，一些扩展可能需要通过命令手动安装Python依赖：pip install -r extensions/extension_name/requirements.txt",

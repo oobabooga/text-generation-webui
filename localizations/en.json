@@ -400,7 +400,7 @@
     "新列": "新列",
     "Save comments": "Save comments",
     "Refresh the table": "Refresh the table",
-    "Apply flags/extensions and restart": "Apply flags/extensions and restart",
+    "Apply flags/extensions/localization and restart": "Apply flags/extensions/localization and restart",
     "Save UI defaults to settings.yaml": "Save UI defaults to settings.yaml",
     "Available extensions": "Available extensions",
     "Note that some of these extensions may require manually installing Python requirements through the command: pip install -r extensions/extension_name/requirements.txt": "Note that some of these extensions may require manually installing Python requirements through the command: pip install -r extensions/extension_name/requirements.txt",

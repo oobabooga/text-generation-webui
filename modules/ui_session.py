@@ -10,7 +10,7 @@ def create_ui():
     with gr.Tab("Session", elem_id="session-tab"):
         with gr.Row():
             with gr.Column():
-                shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions and restart", interactive=not mu)
+                shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions/localization and restart", interactive=not mu)
                 with gr.Row():
                     shared.gradio['toggle_dark_mode'] = gr.Button('Toggle 💡')
                     shared.gradio['save_settings'] = gr.Button('Save UI defaults to settings.yaml', interactive=not mu)
@@ -35,7 +35,7 @@ def create_ui():
 
         # Reset interface event
         shared.gradio['reset_interface'].click(
-            set_interface_arguments, gradio('extensions_menu', 'bool_menu'), None).then(
+            set_interface_arguments, gradio('extensions_menu', 'bool_menu', 'localization_menu'), None).then(
             None, None, None, js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;padding-top:20%;margin:0;height:100vh;color:lightgray;text-align:center;background:var(--body-background-fill)">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
 
         shared.gradio['toggle_dark_mode'].click(
@@ -64,10 +64,12 @@ def handle_save_settings(state, preset, extensions, localization, show_controls,
     ]
 
 
-def set_interface_arguments(extensions, bool_active):
+def set_interface_arguments(extensions, bool_active, localization):
     shared.args.extensions = extensions
 
     bool_list = get_boolean_arguments()
+    
+    shared.settings['localization'] = localization
 
     for k in bool_list:
         setattr(shared.args, k, False)
