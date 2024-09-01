@@ -200,6 +200,7 @@ group.add_argument('--api-port', type=int, default=5000, help='The listening por
 group.add_argument('--api-key', type=str, default='', help='API authentication key.')
 group.add_argument('--admin-key', type=str, default='', help='API authentication key for admin tasks like loading and unloading models. If not set, will be the same as --api-key.')
 group.add_argument('--nowebui', action='store_true', help='Do not launch the Gradio UI. Useful for launching the API in standalone mode.')
+group.add_argument('--model-selection-mode', type=int, default=0, help='Model selection mode: bitwise flag. 1=Include dummy models, 2=Include local models, 4=Return only the currently loaded model if local models are included.')
 
 # Multimodal
 group = parser.add_argument_group('Multimodal')

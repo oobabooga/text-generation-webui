@@ -15,7 +15,30 @@ def get_current_model_info():
 
 
 def list_models():
-    return {'model_names': get_available_models()[1:]}
+    mode = shared.args.model_selection_mode
+    
+    result = {
+        "object": "list",
+        "data": []
+    }
+
+    # Inclure les dummy models si le bit 0 est activé
+    if mode & 1:
+        dummy_models = ['gpt-3.5-turbo', 'text-embedding-ada-002']
+        for model in dummy_models:
+            result["data"].append(model_info_dict(model))
+    
+    # Inclure les modèles locaux si le bit 1 est activé
+    if mode & 2:
+        if mode & 4:
+            # Ne renvoyer que le modèle actuellement chargé
+            result["data"].append(model_info_dict(shared.model_name))
+        else:
+            # Renvoyer tous les modèles disponibles
+            for model in get_available_models():
+                result["data"].append(model_info_dict(model))
+    
+    return result
 
 
 def list_dummy_models():
