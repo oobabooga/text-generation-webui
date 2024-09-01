@@ -39,14 +39,6 @@
     margin-bottom: 0 !important;
 }
 
-.dark .message-body p em {
-    color: rgb(198 202 214) !important;
-}
-
-.message-body p em {
-    color: rgb(110 110 110) !important;
-}
-
 .gradio-container .chat .assistant-message {
     padding: 20px;
     background: #f4f4f4;

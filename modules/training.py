@@ -165,7 +165,7 @@ def create_ui():
                             stride_length = gr.Slider(label='Stride', minimum=0, maximum=32768, value=512, step=256, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
 
                         with gr.Column():
-                            max_length = gr.Slider(label='max_length', minimum=0, maximum=shared.settings['truncation_length_max'], value=0, step=256, info='The context for each evaluation. If set to 0, the maximum context length for the model will be used.')
+                            max_length = gr.Number(label='max_length', precision=0, step=256, value=0, info='The context for each evaluation. If set to 0, the maximum context length for the model will be used.')
 
                     with gr.Row():
                         start_current_evaluation = gr.Button("Evaluate loaded model", interactive=not mu)

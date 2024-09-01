@@ -1,7 +1,7 @@
 dark_theme: true
 show_controls: true
 start_with: ''
-mode: chat
+mode: chat-instruct
 chat_style: cai-chat
 prompt-default: QA
 prompt-notebook: QA
@@ -12,8 +12,6 @@ max_new_tokens_max: 4096
 negative_prompt: ''
 seed: -1
 truncation_length: 2048
-truncation_length_min: 0
-truncation_length_max: 200000
 max_tokens_second: 0
 max_updates_second: 0
 prompt_lookup_num_tokens: 0

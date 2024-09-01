@@ -13,7 +13,6 @@ from modules.logging_colors import logger
 model = None
 tokenizer = None
 model_name = 'None'
-previous_model_name = 'None'
 is_seq2seq = False
 model_dirty_from_training = False
 lora_names = []
@@ -33,7 +32,7 @@ settings = {
     'dark_theme': True,
     'show_controls': True,
     'start_with': '',
-    'mode': 'chat',
+    'mode': 'chat-instruct',
     'chat_style': 'cai-chat',
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
@@ -44,8 +43,6 @@ settings = {
     'negative_prompt': '',
     'seed': -1,
     'truncation_length': 2048,
-    'truncation_length_min': 0,
-    'truncation_length_max': 200000,
     'max_tokens_second': 0,
     'max_updates_second': 0,
     'prompt_lookup_num_tokens': 0,
@@ -89,7 +86,7 @@ group.add_argument('--idle-timeout', type=int, default=0, help='Unload model aft
 
 # Model loader
 group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, AutoGPTQ, AutoAWQ.')
+group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, AutoGPTQ.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
@@ -118,7 +115,7 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
 group.add_argument('--flash-attn', action='store_true', help='Use flash-attention.')
-group.add_argument('--tensorcores', action='store_true', help='Use llama-cpp-python compiled with tensor cores support. This increases performance on RTX cards. NVIDIA only.')
+group.add_argument('--tensorcores', action='store_true', help='NVIDIA only: use llama-cpp-python compiled with tensor cores support. This may increase performance on newer cards.')
 group.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
@@ -127,7 +124,7 @@ group.add_argument('--n_batch', type=int, default=512, help='Maximum number of p
 group.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 group.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
 group.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
-group.add_argument('--tensor_split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 18,17.')
+group.add_argument('--tensor_split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.')
 group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
 group.add_argument('--logits_all', action='store_true', help='Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower.')
 group.add_argument('--no_offload_kqv', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
@@ -135,6 +132,7 @@ group.add_argument('--cache-capacity', type=str, help='Maximum cache capacity (l
 group.add_argument('--row_split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
 group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
 group.add_argument('--attention-sink-size', type=int, default=5, help='StreamingLLM: number of sink tokens. Only used if the trimmed prompt does not share a prefix with the old prompt.')
+group.add_argument('--tokenizer-dir', type=str, help='Load the tokenizer from this folder. Meant to be used with llamacpp_HF through the command-line.')
 
 # ExLlamaV2
 group = parser.add_argument_group('ExLlamaV2')
@@ -159,10 +157,6 @@ group.add_argument('--disable_exllama', action='store_true', help='Disable ExLla
 group.add_argument('--disable_exllamav2', action='store_true', help='Disable ExLlamav2 kernel.')
 group.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
 group.add_argument('--groupsize', type=int, default=-1, help='Group size.')
-
-# AutoAWQ
-group = parser.add_argument_group('AutoAWQ')
-group.add_argument('--no_inject_fused_attention', action='store_true', help='Disable the use of fused attention, which will use less VRAM at the cost of slower inference.')
 
 # HQQ
 group = parser.add_argument_group('HQQ')
@@ -195,6 +189,7 @@ group.add_argument('--gradio-auth', type=str, help='Set Gradio authentication pa
 group.add_argument('--gradio-auth-path', type=str, help='Set the Gradio authentication file path. The file should contain one or more user:password pairs in the same format as above.', default=None)
 group.add_argument('--ssl-keyfile', type=str, help='The path to the SSL certificate key file.', default=None)
 group.add_argument('--ssl-certfile', type=str, help='The path to the SSL certificate cert file.', default=None)
+group.add_argument('--subpath', type=str, help='Customize the subpath for gradio, use with reverse proxy')
 
 # API
 group = parser.add_argument_group('API')
@@ -216,6 +211,7 @@ group.add_argument('--model_type', type=str, help='DEPRECATED')
 group.add_argument('--pre_layer', type=int, nargs='+', help='DEPRECATED')
 group.add_argument('--checkpoint', type=str, help='DEPRECATED')
 group.add_argument('--monkey-patch', action='store_true', help='DEPRECATED')
+group.add_argument('--no_inject_fused_attention', action='store_true', help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -266,8 +262,6 @@ def fix_loader_name(name):
         return 'ExLlamav2'
     elif name in ['exllamav2-hf', 'exllamav2_hf', 'exllama-v2-hf', 'exllama_v2_hf', 'exllama-v2_hf', 'exllama2-hf', 'exllama2_hf', 'exllama-2-hf', 'exllama_2_hf', 'exllama-2_hf']:
         return 'ExLlamav2_HF'
-    elif name in ['autoawq', 'awq', 'auto-awq']:
-        return 'AutoAWQ'
     elif name in ['hqq']:
         return 'HQQ'
     elif name in ['tensorrt', 'tensorrtllm', 'tensorrt_llm', 'tensorrt-llm', 'tensort', 'tensortllm']:

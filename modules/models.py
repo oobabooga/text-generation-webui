@@ -75,7 +75,6 @@ def load_model(model_name, loader=None):
         'llamacpp_HF': llamacpp_HF_loader,
         'ExLlamav2': ExLlamav2_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
-        'AutoAWQ': AutoAWQ_loader,
         'HQQ': HQQ_loader,
         'TensorRT-LLM': TensorRT_LLM_loader,
     }
@@ -99,7 +98,7 @@ def load_model(model_name, loader=None):
         if model is None:
             return None, None
         else:
-            tokenizer = load_tokenizer(model_name, model)
+            tokenizer = load_tokenizer(model_name)
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
     if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt'):
@@ -114,9 +113,13 @@ def load_model(model_name, loader=None):
     return model, tokenizer
 
 
-def load_tokenizer(model_name, model):
+def load_tokenizer(model_name, tokenizer_dir=None):
+    if tokenizer_dir:
+        path_to_model = Path(tokenizer_dir)
+    else:
+        path_to_model = Path(f"{shared.args.model_dir}/{model_name}/")
+
     tokenizer = None
-    path_to_model = Path(f"{shared.args.model_dir}/{model_name}/")
     if path_to_model.exists():
         if shared.args.no_use_fast:
             logger.info('Loading the tokenizer with use_fast=False.')
@@ -279,35 +282,24 @@ def llamacpp_loader(model_name):
 def llamacpp_HF_loader(model_name):
     from modules.llamacpp_hf import LlamacppHF
 
-    path = Path(f'{shared.args.model_dir}/{model_name}')
-
-    # Check if a HF tokenizer is available for the model
-    if all((path / file).exists() for file in ['tokenizer_config.json']):
-        logger.info(f'Using tokenizer from: \"{path}\"')
+    if shared.args.tokenizer_dir:
+        logger.info(f'Using tokenizer from: \"{shared.args.tokenizer_dir}\"')
     else:
-        logger.error("Could not load the model because a tokenizer in Transformers format was not found.")
-        return None, None
+        path = Path(f'{shared.args.model_dir}/{model_name}')
+        # Check if a HF tokenizer is available for the model
+        if all((path / file).exists() for file in ['tokenizer_config.json']):
+            logger.info(f'Using tokenizer from: \"{path}\"')
+        else:
+            logger.error("Could not load the model because a tokenizer in Transformers format was not found.")
+            return None, None
 
     model = LlamacppHF.from_pretrained(model_name)
-    return model
 
-
-def AutoAWQ_loader(model_name):
-    from awq import AutoAWQForCausalLM
-
-    model_dir = Path(f'{shared.args.model_dir}/{model_name}')
-
-    model = AutoAWQForCausalLM.from_quantized(
-        quant_path=model_dir,
-        max_new_tokens=shared.args.max_seq_len,
-        trust_remote_code=shared.args.trust_remote_code,
-        fuse_layers=not shared.args.no_inject_fused_attention,
-        max_memory=get_max_memory_dict(),
-        batch_size=1,
-        safetensors=any(model_dir.glob('*.safetensors')),
-    )
-
-    return model
+    if shared.args.tokenizer_dir:
+        tokenizer = load_tokenizer(model_name, tokenizer_dir=shared.args.tokenizer_dir)
+        return model, tokenizer
+    else:
+        return model
 
 
 def AutoGPTQ_loader(model_name):
@@ -387,13 +379,14 @@ def clear_torch_cache():
             torch.cuda.empty_cache()
 
 
-def unload_model():
+def unload_model(keep_model_name=False):
     shared.model = shared.tokenizer = None
-    shared.previous_model_name = shared.model_name
-    shared.model_name = 'None'
     shared.lora_names = []
     shared.model_dirty_from_training = False
     clear_torch_cache()
+
+    if not keep_model_name:
+        shared.model_name = 'None'
 
 
 def reload_model():
@@ -412,7 +405,7 @@ def unload_model_if_idle():
             if time.time() - last_generation_time > shared.args.idle_timeout * 60:
                 if shared.model is not None:
                     logger.info("Unloading the model for inactivity.")
-                    unload_model()
+                    unload_model(keep_model_name=True)
         finally:
             shared.generation_lock.release()
 

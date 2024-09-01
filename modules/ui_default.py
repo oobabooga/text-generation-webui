@@ -64,38 +64,46 @@ def create_event_handlers():
     shared.gradio['Generate-default'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
-        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda state, left, right: state.update({'textbox-default': left, 'output_textbox': right}), gradio('interface_state', 'textbox-default', 'output_textbox'), None).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['textbox-default'].submit(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
-        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda state, left, right: state.update({'textbox-default': left, 'output_textbox': right}), gradio('interface_state', 'textbox-default', 'output_textbox'), None).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
-    shared.gradio['markdown_render-default'].click(lambda x: x, gradio('output_textbox'), gradio('markdown-default'), queue=False)
     shared.gradio['Continue-default'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, [shared.gradio['output_textbox']] + gradio(inputs)[1:], gradio(outputs), show_progress=False).then(
-        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda state, left, right: state.update({'textbox-default': left, 'output_textbox': right}), gradio('interface_state', 'textbox-default', 'output_textbox'), None).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['Stop-default'].click(stop_everything_event, None, None, queue=False)
+    shared.gradio['markdown_render-default'].click(lambda x: x, gradio('output_textbox'), gradio('markdown-default'), queue=False)
     shared.gradio['prompt_menu-default'].change(load_prompt, gradio('prompt_menu-default'), gradio('textbox-default'), show_progress=False)
-    shared.gradio['save_prompt-default'].click(
-        lambda x: x, gradio('textbox-default'), gradio('save_contents')).then(
-        lambda: 'prompts/', None, gradio('save_root')).then(
-        lambda: utils.current_time() + '.txt', None, gradio('save_filename')).then(
-        lambda: gr.update(visible=True), None, gradio('file_saver'))
-
-    shared.gradio['delete_prompt-default'].click(
-        lambda: 'prompts/', None, gradio('delete_root')).then(
-        lambda x: x + '.txt', gradio('prompt_menu-default'), gradio('delete_filename')).then(
-        lambda: gr.update(visible=True), None, gradio('file_deleter'))
-
+    shared.gradio['save_prompt-default'].click(handle_save_prompt, gradio('textbox-default'), gradio('save_contents', 'save_filename', 'save_root', 'file_saver'), show_progress=False)
+    shared.gradio['delete_prompt-default'].click(handle_delete_prompt, gradio('prompt_menu-default'), gradio('delete_filename', 'delete_root', 'file_deleter'), show_progress=False)
     shared.gradio['textbox-default'].change(lambda x: f"<span>{count_tokens(x)}</span>", gradio('textbox-default'), gradio('token-counter-default'), show_progress=False)
     shared.gradio['get_logits-default'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         logits.get_next_logits, gradio('textbox-default', 'interface_state', 'use_samplers-default', 'logits-default'), gradio('logits-default', 'logits-default-previous'), show_progress=False)
 
     shared.gradio['get_tokens-default'].click(get_token_ids, gradio('textbox-default'), gradio('tokens-default'), show_progress=False)
+
+
+def handle_save_prompt(text):
+    return [
+        text,
+        utils.current_time() + ".txt",
+        "prompts/",
+        gr.update(visible=True)
+    ]
+
+
+def handle_delete_prompt(prompt):
+    return [
+        prompt + ".txt",
+        "prompts/",
+        gr.update(visible=True)
+    ]

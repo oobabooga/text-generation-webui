@@ -10,27 +10,31 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Features
 
-* 3 interface modes: default (two columns), notebook, and chat.
-* Multiple model backends: [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp) (through [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM).
-* Dropdown menu for quickly switching between different models.
-* Large number of extensions (built-in and user-contributed), including Coqui TTS for realistic voice outputs, Whisper STT for voice inputs, translation, [multimodal pipelines](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal), vector databases, Stable Diffusion integration, and a lot more. See [the wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [the extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
-* [Chat with custom characters](https://github.com/oobabooga/text-generation-webui/wiki/03-%E2%80%90-Parameters-Tab#character).
-* Precise chat templates for instruction-following models, including Llama-2-chat, Alpaca, Vicuna, Mistral.
-* LoRA: train new LoRAs with your own data, load/unload LoRAs on the fly for generation.
-* Transformers library integration: load models in 4-bit or 8-bit precision through bitsandbytes, use llama.cpp with transformers samplers (`llamacpp_HF` loader), CPU inference in 32-bit precision using PyTorch.
-* OpenAI-compatible API server with Chat and Completions endpoints -- see the [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
+* Multiple backends for text generation in a single UI and API, including [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp) (through [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM). [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [HQQ](https://github.com/mobiusml/hqq), and [AQLM](https://github.com/Vahe1994/AQLM) are also supported through the Transformers loader.
+* OpenAI-compatible API server with Chat and Completions endpoints – see the [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
+* Automatic prompt formatting for each model using the Jinja2 template in its metadata.
+* Three chat modes: `instruct`, `chat-instruct`, and `chat`, allowing for both instruction-following and casual conversations with characters. `chat-instruct` mode automatically applies the model's template to the chat prompt, ensuring high-quality outputs without manual setup.
+* "Past chats" menu to quickly switch between conversations and start new ones.
+* Free-form generation in the Default/Notebook tabs without being limited to chat turns. Send formatted chat conversations from the Chat tab to these tabs.
+* Multiple sampling parameters and generation options for sophisticated text generation control.
+* Easy switching between different models through the UI without restarting, using the "Model" tab.
+* Simple LoRA fine-tuning tool to customize models with your data.
+* All in one folder. The requirements are installed in a self-contained `installer_files` folder that doesn't interfere with the system's environment.
+* Extensions support, including numerous built-in and user-contributed extensions. See [the wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [the extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
 
 ## How to install
 
 1) Clone or [download](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) the repository.
 2) Run the `start_linux.sh`, `start_windows.bat`, `start_macos.sh`, or `start_wsl.bat` script depending on your OS.
 3) Select your GPU vendor when asked.
-4) Once the installation ends, browse to `http://localhost:7860/?__theme=dark`.
+4) Once the installation ends, browse to `http://localhost:7860`.
 5) Have fun!
 
-To restart the web UI in the future, just run the `start_` script again. This script creates an `installer_files` folder where it sets up the project's requirements. In case you need to reinstall the requirements, you can simply delete that folder and start the web UI again.
+To restart the web UI in the future, run the `start_` script again.
 
-The script accepts command-line flags. Alternatively, you can edit the `CMD_FLAGS.txt` file with a text editor and add your flags there.
+This script creates an `installer_files` folder where it sets up the project's requirements. If you need to reinstall the requirements, just delete that folder and start the web UI again.
+
+The script accepts command-line flags, such as `./start_linux.sh --help`. Alternatively, you can edit the `CMD_FLAGS.txt` file with a text editor and add your flags there, such as `--api` in case you need to use the API.
 
 To get updates in the future, run `update_wizard_linux.sh`, `update_wizard_windows.bat`, `update_wizard_macos.sh`, or `update_wizard_wsl.bat`.
 
@@ -204,16 +208,16 @@ List of command-line flags
 usage: server.py [-h] [--multi-user] [--character CHARACTER] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--model-menu] [--settings SETTINGS]
                  [--extensions EXTENSIONS [EXTENSIONS ...]] [--verbose] [--chat-buttons] [--idle-timeout IDLE_TIMEOUT] [--loader LOADER] [--cpu] [--auto-devices]
                  [--gpu-memory GPU_MEMORY [GPU_MEMORY ...]] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code]
-                 [--force-safetensors] [--no_use_fast] [--use_flash_attention_2] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE] [--flash-attn]
-                 [--tensorcores] [--n_ctx N_CTX] [--threads THREADS] [--threads-batch THREADS_BATCH] [--no_mul_mat_q] [--n_batch N_BATCH] [--no-mmap] [--mlock] [--n-gpu-layers N_GPU_LAYERS]
-                 [--tensor_split TENSOR_SPLIT] [--numa] [--logits_all] [--no_offload_kqv] [--cache-capacity CACHE_CAPACITY] [--row_split] [--streaming-llm] [--attention-sink-size ATTENTION_SINK_SIZE]
-                 [--gpu-split GPU_SPLIT] [--autosplit] [--max_seq_len MAX_SEQ_LEN] [--cfg-cache] [--no_flash_attn] [--cache_8bit] [--cache_4bit] [--num_experts_per_token NUM_EXPERTS_PER_TOKEN]
-                 [--triton] [--no_inject_fused_mlp] [--no_use_cuda_fp16] [--desc_act] [--disable_exllama] [--disable_exllamav2] [--wbits WBITS] [--groupsize GROUPSIZE] [--no_inject_fused_attention]
-                 [--hqq-backend HQQ_BACKEND] [--deepspeed] [--nvme-offload-dir NVME_OFFLOAD_DIR] [--local_rank LOCAL_RANK] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE]
-                 [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH]
-                 [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT]
-                 [--api-key API_KEY] [--admin-key ADMIN_KEY] [--nowebui] [--multimodal-pipeline MULTIMODAL_PIPELINE] [--model_type MODEL_TYPE] [--pre_layer PRE_LAYER [PRE_LAYER ...]]
-                 [--checkpoint CHECKPOINT] [--monkey-patch]
+                 [--force-safetensors] [--no_use_fast] [--use_flash_attention_2] [--use_eager_attention] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE]
+                 [--flash-attn] [--tensorcores] [--n_ctx N_CTX] [--threads THREADS] [--threads-batch THREADS_BATCH] [--no_mul_mat_q] [--n_batch N_BATCH] [--no-mmap] [--mlock]
+                 [--n-gpu-layers N_GPU_LAYERS] [--tensor_split TENSOR_SPLIT] [--numa] [--logits_all] [--no_offload_kqv] [--cache-capacity CACHE_CAPACITY] [--row_split] [--streaming-llm]
+                 [--attention-sink-size ATTENTION_SINK_SIZE] [--tokenizer-dir TOKENIZER_DIR] [--gpu-split GPU_SPLIT] [--autosplit] [--max_seq_len MAX_SEQ_LEN] [--cfg-cache] [--no_flash_attn]
+                 [--no_xformers] [--no_sdpa] [--cache_8bit] [--cache_4bit] [--num_experts_per_token NUM_EXPERTS_PER_TOKEN] [--triton] [--no_inject_fused_mlp] [--no_use_cuda_fp16] [--desc_act]
+                 [--disable_exllama] [--disable_exllamav2] [--wbits WBITS] [--groupsize GROUPSIZE] [--hqq-backend HQQ_BACKEND] [--cpp-runner] [--deepspeed] [--nvme-offload-dir NVME_OFFLOAD_DIR]
+                 [--local_rank LOCAL_RANK] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE] [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT]
+                 [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE]
+                 [--subpath SUBPATH] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--nowebui]
+                 [--multimodal-pipeline MULTIMODAL_PIPELINE] [--model_type MODEL_TYPE] [--pre_layer PRE_LAYER [PRE_LAYER ...]] [--checkpoint CHECKPOINT] [--monkey-patch] [--no_inject_fused_attention]
 
 Text generation web UI
 
@@ -237,7 +241,7 @@ Basic settings:
 
 Model loader:
   --loader LOADER                                Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2,
-                                                 AutoGPTQ, AutoAWQ.
+                                                 AutoGPTQ.
 
 Transformers/Accelerate:
   --cpu                                          Use the CPU to generate text. Warning: Training on CPU is extremely slow.
@@ -254,6 +258,7 @@ Transformers/Accelerate:
   --force-safetensors                            Set use_safetensors=True while loading the model. This prevents arbitrary code execution.
   --no_use_fast                                  Set use_fast=False while loading the tokenizer (it's True by default). Use this if you have any problems related to use_fast.
   --use_flash_attention_2                        Set use_flash_attention_2=True while loading the model.
+  --use_eager_attention                          Set attn_implementation= eager while loading the model.
 
 bitsandbytes 4-bit:
   --load-in-4bit                                 Load the model with 4-bit precision (using bitsandbytes).
@@ -263,7 +268,7 @@ bitsandbytes 4-bit:
 
 llama.cpp:
   --flash-attn                                   Use flash-attention.
-  --tensorcores                                  Use llama-cpp-python compiled with tensor cores support. This increases performance on RTX cards. NVIDIA only.
+  --tensorcores                                  NVIDIA only: use llama-cpp-python compiled with tensor cores support. This may increase performance on newer cards.
   --n_ctx N_CTX                                  Size of the prompt context.
   --threads THREADS                              Number of threads to use.
   --threads-batch THREADS_BATCH                  Number of threads to use for batches/prompt processing.
@@ -272,7 +277,7 @@ llama.cpp:
   --no-mmap                                      Prevent mmap from being used.
   --mlock                                        Force the system to keep the model in RAM.
   --n-gpu-layers N_GPU_LAYERS                    Number of layers to offload to the GPU.
-  --tensor_split TENSOR_SPLIT                    Split the model across multiple GPUs. Comma-separated list of proportions. Example: 18,17.
+  --tensor_split TENSOR_SPLIT                    Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.
   --numa                                         Activate NUMA task allocation for llama.cpp.
   --logits_all                                   Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower.
   --no_offload_kqv                               Do not offload the K, Q, V to the GPU. This saves VRAM but reduces the performance.
@@ -280,6 +285,7 @@ llama.cpp:
   --row_split                                    Split the model by rows across GPUs. This may improve multi-gpu performance.
   --streaming-llm                                Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.
   --attention-sink-size ATTENTION_SINK_SIZE      StreamingLLM: number of sink tokens. Only used if the trimmed prompt does not share a prefix with the old prompt.
+  --tokenizer-dir TOKENIZER_DIR                  Load the tokenizer from this folder. Meant to be used with llamacpp_HF through the command-line.
 
 ExLlamaV2:
   --gpu-split GPU_SPLIT                          Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.
@@ -287,6 +293,8 @@ ExLlamaV2:
   --max_seq_len MAX_SEQ_LEN                      Maximum sequence length.
   --cfg-cache                                    ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.
   --no_flash_attn                                Force flash-attention to not be used.
+  --no_xformers                                  Force xformers to not be used.
+  --no_sdpa                                      Force Torch SDPA to not be used.
   --cache_8bit                                   Use 8-bit cache to save VRAM.
   --cache_4bit                                   Use Q4 cache to save VRAM.
   --num_experts_per_token NUM_EXPERTS_PER_TOKEN  Number of experts to use for generation. Applies to MoE models like Mixtral.
@@ -301,11 +309,11 @@ AutoGPTQ:
   --wbits WBITS                                  Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.
   --groupsize GROUPSIZE                          Group size.
 
-AutoAWQ:
-  --no_inject_fused_attention                    Disable the use of fused attention, which will use less VRAM at the cost of slower inference.
-
 HQQ:
   --hqq-backend HQQ_BACKEND                      Backend for the HQQ loader. Valid options: PYTORCH, PYTORCH_COMPILE, ATEN.
+
+TensorRT-LLM:
+  --cpp-runner                                   Use the ModelRunnerCpp runner, which is faster than the default ModelRunner but doesn't support streaming yet.
 
 DeepSpeed:
   --deepspeed                                    Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.
@@ -327,6 +335,7 @@ Gradio:
   --gradio-auth-path GRADIO_AUTH_PATH            Set the Gradio authentication file path. The file should contain one or more user:password pairs in the same format as above.
   --ssl-keyfile SSL_KEYFILE                      The path to the SSL certificate key file.
   --ssl-certfile SSL_CERTFILE                    The path to the SSL certificate cert file.
+  --subpath SUBPATH                              Customize the subpath for gradio, use with reverse proxy
 
 API:
   --api                                          Enable the API extension.
@@ -392,18 +401,11 @@ Run `python download-model.py --help` to see all the options.
 
 https://colab.research.google.com/github/oobabooga/text-generation-webui/blob/main/Colab-TextGen-GPU.ipynb
 
+## Community
+
+* Subreddit: https://www.reddit.com/r/Oobabooga/
+* Discord: https://discord.gg/jwZCF2dPQN
+
 ## Acknowledgment
 
 In August 2023, [Andreessen Horowitz](https://a16z.com/) (a16z) provided a generous grant to encourage and support my independent work on this project. I am **extremely** grateful for their trust and recognition.
-
-## Links
-
-#### Community
-
-* Subreddit: https://www.reddit.com/r/oobabooga/
-* Discord: https://discord.gg/jwZCF2dPQN
-
-#### Support
-
-* ko-fi: https://ko-fi.com/oobabooga
-* GitHub Sponsors: https://github.com/sponsors/oobabooga

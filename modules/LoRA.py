@@ -72,8 +72,6 @@ def add_lora_autogptq(lora_names):
     else:
         if len(lora_names) > 1:
             logger.warning('AutoGPTQ can only work with 1 LoRA at the moment. Only the first one in the list will be loaded.')
-        if not shared.args.no_inject_fused_attention:
-            logger.warning('Fused Attention + AutoGPTQ may break Lora loading. Disable it.')
 
         peft_config = GPTQLoraConfig(
             inference_mode=True,

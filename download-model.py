@@ -29,6 +29,7 @@ base = os.environ.get("HF_ENDPOINT") or "https://huggingface.co"
 class ModelDownloader:
     def __init__(self, max_retries=5):
         self.max_retries = max_retries
+        self.session = self.get_session()
 
     def get_session(self):
         session = requests.Session()
@@ -72,7 +73,7 @@ class ModelDownloader:
         return model, branch
 
     def get_download_links_from_huggingface(self, model, branch, text_only=False, specific_file=None):
-        session = self.get_session()
+        session = self.session
         page = f"/api/models/{model}/tree/{branch}"
         cursor = b""
 
@@ -192,7 +193,7 @@ class ModelDownloader:
         attempt = 0
         while attempt < max_retries:
             attempt += 1
-            session = self.get_session()
+            session = self.session
             headers = {}
             mode = 'wb'
 
@@ -212,11 +213,15 @@ class ModelDownloader:
                     total_size = int(r.headers.get('content-length', 0))
                     block_size = 1024 * 1024  # 1MB
 
+                    filename_str = str(filename)  # Convert PosixPath to string if necessary
+
                     tqdm_kwargs = {
                         'total': total_size,
-                        'unit': 'iB',
+                        'unit': 'B',
                         'unit_scale': True,
-                        'bar_format': '{l_bar}{bar}| {n_fmt}/{total_fmt} {rate_fmt}'
+                        'unit_divisor': 1024,
+                        'bar_format': '{desc}{percentage:3.0f}%|{bar:50}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]',
+                        'desc': f"{filename_str}: "
                     }
 
                     if 'COLAB_GPU' in os.environ:
@@ -233,7 +238,7 @@ class ModelDownloader:
                                 t.update(len(data))
                                 if total_size != 0 and self.progress_bar is not None:
                                     count += len(data)
-                                    self.progress_bar(float(count) / float(total_size), f"{filename}")
+                                    self.progress_bar(float(count) / float(total_size), f"{filename_str}")
 
                     break  # Exit loop if successful
             except (RequestException, ConnectionError, Timeout) as e:
