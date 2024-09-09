@@ -18,7 +18,7 @@ pandas
 peft==0.12.*
 Pillow>=9.5.0
 psutil
-pydantic==2.8.2
+pydantic==2.9.1
 pyyaml
 requests
 rich
