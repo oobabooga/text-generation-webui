@@ -13,12 +13,12 @@ instruction_template: |-
       {%- endif %}
       {%- if message['role'] == 'user' %}
           {%- if loop.first and system_message is defined %}
-              {{- ' [INST] ' + system_message + '\\n\\n' + message['content'] + ' [/INST]' }}
+              {{- ' [INST] ' + system_message + '\\n\\n' + message['content'].rstrip() + ' [/INST]' }}
           {%- else %}
-              {{- ' [INST] ' + message['content'] + ' [/INST]' }}
+              {{- ' [INST] ' + message['content'].rstrip() + ' [/INST]' }}
           {%- endif %}
       {%- elif message['role'] == 'assistant' %}
-          {{- ' ' + message['content'] + '</s>'}}
+          {{- ' ' + message['content'].rstrip() + '</s>'}}
       {%- else %}
           {{- raise_exception('Only user and assistant roles are supported, with the exception of an initial optional system message!') }}
       {%- endif %}
