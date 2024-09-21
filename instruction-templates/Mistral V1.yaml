@@ -18,7 +18,7 @@ instruction_template: |-
               {{- ' [INST] ' + message['content'].rstrip() + ' [/INST]' }}
           {%- endif %}
       {%- elif message['role'] == 'assistant' %}
-          {{- ' ' + message['content'].rstrip() + '</s>'}}
+          {{- '' + message['content'] + '</s>'}}
       {%- else %}
           {{- raise_exception('Only user and assistant roles are supported, with the exception of an initial optional system message!') }}
       {%- endif %}
