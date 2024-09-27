@@ -546,10 +546,8 @@ def get_logits_processor_patch(self, **kwargs):
 
         # Return a large value if class name is not mapped or if the mapped nickname is not in priority
         if class_name not in class_name_to_nickname or class_name_to_nickname[class_name] not in sampler_priority:
-            print("======>", class_name, "inf")
             return float('inf')
 
-        print("======>", class_name, sampler_priority.index(class_name_to_nickname[class_name]))
         # Return the index of the nickname in the priority list for sorting
         return sampler_priority.index(class_name_to_nickname[class_name])
 
