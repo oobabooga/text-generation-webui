@@ -231,7 +231,7 @@ class XTCLogitsWarper(LogitsWarper):
         indices_to_remove = sorted_indices_to_remove.scatter(1, sorted_indices, sorted_indices_to_remove)
 
         # If newline or EOS tokens would be removed, return the original scores
-        if indices_to_remove[:, self.special_token_ids].any()
+        if indices_to_remove[:, self.special_token_ids].any():
             return scores
 
         # Otherwise, remove tokens with the mask
