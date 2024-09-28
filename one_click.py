@@ -16,9 +16,9 @@ import sys
 
 
 # Define the required PyTorch version
-TORCH_VERSION = "2.2.2"
-TORCHVISION_VERSION = "0.17.2"
-TORCHAUDIO_VERSION = "2.2.2"
+TORCH_VERSION = "2.4.1"
+TORCHVISION_VERSION = "0.19.1"
+TORCHAUDIO_VERSION = "2.4.1"
 
 # Environment
 script_dir = os.getcwd()
