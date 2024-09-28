@@ -55,18 +55,14 @@ class Exllamav2Model:
 
         model = ExLlamaV2(config)
 
-        # Check if TP is enabled and load model with TP
+        split = None
+        if shared.args.gpu_split:
+            split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
+
         if shared.args.enable_tp:
-            split = None
-            if shared.args.gpu_split:
-                split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
-            model.load_tp(split)  # Ensure TP loading is used
-        else:
-            if not shared.args.autosplit:
-                split = None
-                if shared.args.gpu_split:
-                    split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
-                model.load(split)
+            model.load_tp(split)
+        elif not shared.args.autosplit:
+            model.load(split)
 
         # Determine the correct cache type
         if shared.args.cache_8bit:
