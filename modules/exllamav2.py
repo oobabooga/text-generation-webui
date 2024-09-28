@@ -1,26 +1,15 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Aug 29 18:06:29 2024
-
-@author: myself
-"""
-
 import traceback
 from pathlib import Path
 
 import torch
 from exllamav2 import (
-      ExLlamaV2,
-    ExLlamaV2Config,
+    ExLlamaV2,
     ExLlamaV2Cache,
     ExLlamaV2Cache_8bit,
     ExLlamaV2Cache_Q4,
-    ExLlamaV2Cache_Q6,
-    ExLlamaV2Cache_Q8,
     ExLlamaV2Cache_TP,
-    ExLlamaV2Tokenizer,
-    model_init,
+    ExLlamaV2Config,
+    ExLlamaV2Tokenizer
 )
 from exllamav2.generator import ExLlamaV2Sampler, ExLlamaV2StreamingGenerator
 

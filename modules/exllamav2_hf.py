@@ -9,8 +9,8 @@ from exllamav2 import (
     ExLlamaV2Cache,
     ExLlamaV2Cache_8bit,
     ExLlamaV2Cache_Q4,
-    ExLlamaV2Config,
     ExLlamaV2Cache_TP,
+    ExLlamaV2Config
 )
 from torch.nn import CrossEntropyLoss
 from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
@@ -32,6 +32,7 @@ except ModuleNotFoundError:
 except Exception:
     logger.warning('Failed to load flash-attention due to the following error:\\n')
     traceback.print_exc()
+
 
 class Exllamav2HF(PreTrainedModel):
     def __init__(self, config: ExLlamaV2Config):
@@ -194,4 +195,3 @@ class Exllamav2HF(PreTrainedModel):
         config.num_experts_per_token = int(shared.args.num_experts_per_token)
 
         return Exllamav2HF(config)
-
