@@ -9,6 +9,7 @@ from exllamav2 import (
     ExLlamaV2Cache,
     ExLlamaV2Cache_8bit,
     ExLlamaV2Cache_Q4,
+    ExLlamaV2Cache_TP,
     ExLlamaV2Config
 )
 from torch.nn import CrossEntropyLoss
@@ -42,21 +43,30 @@ class Exllamav2HF(PreTrainedModel):
 
         self.ex_model = ExLlamaV2(config)
 
-        if not shared.args.autosplit:
-            split = None
-            if shared.args.gpu_split:
-                split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
+        split = None
+        if shared.args.gpu_split:
+            split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
 
-            self.ex_model.load(split)
+        if shared.args.enable_tp:
+            model.load_tp(split)
+        elif not shared.args.autosplit:
+            model.load(split)
 
+        # Determine the correct cache type
         if shared.args.cache_8bit:
-            self.ex_cache = ExLlamaV2Cache_8bit(self.ex_model, lazy=shared.args.autosplit)
+            cache_type = ExLlamaV2Cache_8bit
         elif shared.args.cache_4bit:
-            self.ex_cache = ExLlamaV2Cache_Q4(self.ex_model, lazy=shared.args.autosplit)
+            cache_type = ExLlamaV2Cache_Q4
         else:
-            self.ex_cache = ExLlamaV2Cache(self.ex_model, lazy=shared.args.autosplit)
+            cache_type = ExLlamaV2Cache
 
-        if shared.args.autosplit:
+        # Use TP if specified
+        if shared.args.enable_tp:
+            self.ex_cache = ExLlamaV2Cache_TP(self.ex_model, base=cache_type)
+        else:
+            self.ex_cache = cache_type(self.ex_model, lazy=shared.args.autosplit)
+
+        if shared.args.autosplit and not shared.args.enable_tp:
             self.ex_model.load_autosplit(self.ex_cache)
 
         self.past_seq = None
