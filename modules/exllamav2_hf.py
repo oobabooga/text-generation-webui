@@ -48,9 +48,9 @@ class Exllamav2HF(PreTrainedModel):
             split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
 
         if shared.args.enable_tp:
-            model.load_tp(split)
+            self.ex_model.load_tp(split)
         elif not shared.args.autosplit:
-            model.load(split)
+            self.ex_model.load(split)
 
         # Determine the correct cache type
         if shared.args.cache_8bit:
