@@ -117,7 +117,7 @@ def update_pytorch():
     elif is_cuda:
         install_pytorch += "--index-url https://download.pytorch.org/whl/cu121"
     elif is_rocm:
-        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm5.6"
+        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm6.1"
     elif is_cpu:
         install_pytorch += "--index-url https://download.pytorch.org/whl/cpu"
     elif is_intel:
@@ -239,7 +239,7 @@ def install_webui():
             "What is your GPU?",
             {
                 'A': 'NVIDIA',
-                'B': 'AMD (Linux/MacOS only. Requires ROCm SDK 5.6 on Linux)',
+                'B': 'AMD (Linux/MacOS only. Requires ROCm SDK 6.1 on Linux)',
                 'C': 'Apple M Series',
                 'D': 'Intel Arc (IPEX)',
                 'N': 'None (I want to run models in CPU mode)'
@@ -294,7 +294,7 @@ def install_webui():
         else:
             install_pytorch += "--index-url https://download.pytorch.org/whl/cu121"
     elif selected_gpu == "AMD":
-        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm5.6"
+        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm6.1"
     elif selected_gpu in ["APPLE", "NONE"]:
         install_pytorch += "--index-url https://download.pytorch.org/whl/cpu"
     elif selected_gpu == "INTEL":
