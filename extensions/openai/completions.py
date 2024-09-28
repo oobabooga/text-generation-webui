@@ -154,8 +154,9 @@ def convert_history(history):
                     elif item['type'] == 'text' and isinstance(item['text'], str):
                         content = item['text']
 
-                if image_url and content:
+                if image_url:
                     new_history.append({"image_url": image_url, "role": "user"})
+                if content:
                     new_history.append({"content": content, "role": "user"})
             else:
                 new_history.append(entry)
@@ -234,7 +235,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             raise InvalidRequestError(message="messages: missing content", param='messages')
 
     # Chat Completions
-    object_type = 'chat.completions' if not stream else 'chat.completions.chunk'
+    object_type = 'chat.completion' if not stream else 'chat.completion.chunk'
     created_time = int(time.time())
     cmpl_id = "chatcmpl-%d" % (int(time.time() * 1000000000))
     resp_list = 'data' if is_legacy else 'choices'

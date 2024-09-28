@@ -12,9 +12,9 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 * Multiple backends for text generation in a single UI and API, including [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp) (through [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM). [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [HQQ](https://github.com/mobiusml/hqq), and [AQLM](https://github.com/Vahe1994/AQLM) are also supported through the Transformers loader.
 * OpenAI-compatible API server with Chat and Completions endpoints – see the [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
-* Automatic prompt formatting for each model using the Jinja2 template in its metadata, ensuring high-quality outputs without manual setup.
-* Three chat modes: `instruct`, `chat-instruct`, and `chat`, allowing for both instruction-following and casual conversations with characters. `chat-instruct` mode automatically applies the model's template to the chat prompt, leading to higher quality outputs.
-* "Past chats" menu to quickly switch between conversations and start new ones in the Chat tab.
+* Automatic prompt formatting for each model using the Jinja2 template in its metadata.
+* Three chat modes: `instruct`, `chat-instruct`, and `chat`, allowing for both instruction-following and casual conversations with characters. `chat-instruct` mode automatically applies the model's template to the chat prompt, ensuring high-quality outputs without manual setup.
+* "Past chats" menu to quickly switch between conversations and start new ones.
 * Free-form generation in the Default/Notebook tabs without being limited to chat turns. Send formatted chat conversations from the Chat tab to these tabs.
 * Multiple sampling parameters and generation options for sophisticated text generation control.
 * Easy switching between different models through the UI without restarting, using the "Model" tab.
@@ -30,9 +30,11 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 4) Once the installation ends, browse to `http://localhost:7860`.
 5) Have fun!
 
-To restart the web UI in the future, just run the `start_` script again. This script creates an `installer_files` folder where it sets up the project's requirements. If you need to reinstall the requirements, you can simply delete that folder and start the web UI again.
+To restart the web UI in the future, run the `start_` script again.
 
-The script accepts command-line flags. Alternatively, you can edit the `CMD_FLAGS.txt` file with a text editor and add your flags there, such as `--api` in case you need to use the API.
+This script creates an `installer_files` folder where it sets up the project's requirements. If you need to reinstall the requirements, just delete that folder and start the web UI again.
+
+The script accepts command-line flags, such as `./start_linux.sh --help`. Alternatively, you can edit the `CMD_FLAGS.txt` file with a text editor and add your flags there, such as `--api` in case you need to use the API.
 
 To get updates in the future, run `update_wizard_linux.sh`, `update_wizard_windows.bat`, `update_wizard_macos.sh`, or `update_wizard_wsl.bat`.
 
