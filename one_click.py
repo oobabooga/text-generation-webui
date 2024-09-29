@@ -189,8 +189,11 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
             conda_sh_path = os.path.join(script_dir, "installer_files", "conda", "etc", "profile.d", "conda.sh")
             cmd = f'. "{conda_sh_path}" && conda activate "{conda_env_path}" && {cmd}'
 
+    # Set executable to None for Windows, /bin/bash for everything else
+    executable = None if is_windows() else '/bin/bash'
+
     # Run shell commands
-    result = subprocess.run(cmd, shell=True, executable='/bin/bash', capture_output=capture_output, env=env)
+    result = subprocess.run(cmd, shell=True, capture_output=capture_output, env=env, executable=executable)
 
     # Assert the command ran successfully
     if assert_success and result.returncode != 0:
