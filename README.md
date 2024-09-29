@@ -14,7 +14,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 - OpenAI-compatible API with Chat and Completions endpoints – see [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
 - Automatic prompt formatting using Jinja2 templates.
 - Three chat modes: `instruct`, `chat-instruct`, and `chat`, with automatic prompt templates in `chat-instruct`.
-- "Past chats" menu to easily switch between conversations.
+- "Past chats" menu to quickly switch between conversations.
 - Free-form text generation in the Default/Notebook tabs without being limited to chat turns. You can send formatted conversations from the Chat tab to these.
 - Multiple sampling parameters and generation options for sophisticated text generation control.
 - Switch between different models easily in the UI without restarting.
