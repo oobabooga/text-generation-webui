@@ -1,6 +1,5 @@
 accelerate==0.33.*
 aqlm[gpu,cpu]==1.1.6; platform_system == "Linux"
-auto-gptq==0.7.1
 bitsandbytes==0.44.*
 colorama
 datasets
@@ -64,11 +63,3 @@ https://github.com/oobabooga/flash-attention/releases/download/v2.6.3/flash_attn
 https://github.com/oobabooga/flash-attention/releases/download/v2.6.3/flash_attn-2.6.3+cu122torch2.4.1cxx11abiFALSE-cp310-cp310-win_amd64.whl; platform_system == "Windows" and python_version == "3.10"
 https://github.com/Dao-AILab/flash-attention/releases/download/v2.6.3/flash_attn-2.6.3+cu123torch2.4cxx11abiFALSE-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
 https://github.com/Dao-AILab/flash-attention/releases/download/v2.6.3/flash_attn-2.6.3+cu123torch2.4cxx11abiFALSE-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
-https://github.com/oobabooga/AutoAWQ/releases/download/0.2.6/autoawq-0.2.6-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
-https://github.com/oobabooga/AutoAWQ/releases/download/0.2.6/autoawq-0.2.6-cp310-cp310-win_amd64.whl; platform_system == "Windows" and python_version == "3.10"
-https://github.com/oobabooga/AutoAWQ/releases/download/0.2.6/autoawq-0.2.6-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
-https://github.com/oobabooga/AutoAWQ/releases/download/0.2.6/autoawq-0.2.6-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
-https://github.com/oobabooga/AutoAWQ_kernels/releases/download/0.0.7/autoawq_kernels-0.0.7-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
-https://github.com/oobabooga/AutoAWQ_kernels/releases/download/0.0.7/autoawq_kernels-0.0.7-cp310-cp310-win_amd64.whl; platform_system == "Windows" and python_version == "3.10"
-https://github.com/oobabooga/AutoAWQ_kernels/releases/download/0.0.7/autoawq_kernels-0.0.7-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
-https://github.com/oobabooga/AutoAWQ_kernels/releases/download/0.0.7/autoawq_kernels-0.0.7-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
