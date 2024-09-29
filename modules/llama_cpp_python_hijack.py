@@ -61,7 +61,7 @@ def eval_with_progress(self, tokens: Sequence[int]):
     assert self._batch.batch is not None
     self._ctx.kv_cache_seq_rm(-1, self.n_tokens, -1)
 
-    if len(tokens) > 1:
+    if len(tokens) > self.n_batch:
         progress_bar = tqdm(range(0, len(tokens), self.n_batch), desc="Prompt evaluation", leave=False)
     else:
         progress_bar = range(0, len(tokens), self.n_batch)

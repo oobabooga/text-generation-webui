@@ -132,6 +132,7 @@ group.add_argument('--cache-capacity', type=str, help='Maximum cache capacity (l
 group.add_argument('--row_split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
 group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
 group.add_argument('--attention-sink-size', type=int, default=5, help='StreamingLLM: number of sink tokens. Only used if the trimmed prompt does not share a prefix with the old prompt.')
+group.add_argument('--tokenizer-dir', type=str, help='Load the tokenizer from this folder. Meant to be used with llamacpp_HF through the command-line.')
 
 # ExLlamaV2
 group = parser.add_argument_group('ExLlamaV2')
@@ -145,6 +146,7 @@ group.add_argument('--no_sdpa', action='store_true', help='Force Torch SDPA to n
 group.add_argument('--cache_8bit', action='store_true', help='Use 8-bit cache to save VRAM.')
 group.add_argument('--cache_4bit', action='store_true', help='Use Q4 cache to save VRAM.')
 group.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
+group.add_argument('--enable_tp', action='store_true', help='Enable Tensor Parallelism (TP) in ExLlamaV2.')
 
 # AutoGPTQ
 group = parser.add_argument_group('AutoGPTQ')

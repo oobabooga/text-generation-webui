@@ -70,11 +70,11 @@ def load_model(model_name, loader=None):
     shared.model_name = model_name
     load_func_map = {
         'Transformers': huggingface_loader,
-        'AutoGPTQ': AutoGPTQ_loader,
         'llama.cpp': llamacpp_loader,
         'llamacpp_HF': llamacpp_HF_loader,
         'ExLlamav2': ExLlamav2_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
+        'AutoGPTQ': AutoGPTQ_loader,
         'HQQ': HQQ_loader,
         'TensorRT-LLM': TensorRT_LLM_loader,
     }
@@ -98,7 +98,7 @@ def load_model(model_name, loader=None):
         if model is None:
             return None, None
         else:
-            tokenizer = load_tokenizer(model_name, model)
+            tokenizer = load_tokenizer(model_name)
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
     if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt'):
@@ -113,9 +113,13 @@ def load_model(model_name, loader=None):
     return model, tokenizer
 
 
-def load_tokenizer(model_name, model):
+def load_tokenizer(model_name, tokenizer_dir=None):
+    if tokenizer_dir:
+        path_to_model = Path(tokenizer_dir)
+    else:
+        path_to_model = Path(f"{shared.args.model_dir}/{model_name}/")
+
     tokenizer = None
-    path_to_model = Path(f"{shared.args.model_dir}/{model_name}/")
     if path_to_model.exists():
         if shared.args.no_use_fast:
             logger.info('Loading the tokenizer with use_fast=False.')
@@ -278,23 +282,24 @@ def llamacpp_loader(model_name):
 def llamacpp_HF_loader(model_name):
     from modules.llamacpp_hf import LlamacppHF
 
-    path = Path(f'{shared.args.model_dir}/{model_name}')
-
-    # Check if a HF tokenizer is available for the model
-    if all((path / file).exists() for file in ['tokenizer_config.json']):
-        logger.info(f'Using tokenizer from: \"{path}\"')
+    if shared.args.tokenizer_dir:
+        logger.info(f'Using tokenizer from: \"{shared.args.tokenizer_dir}\"')
     else:
-        logger.error("Could not load the model because a tokenizer in Transformers format was not found.")
-        return None, None
+        path = Path(f'{shared.args.model_dir}/{model_name}')
+        # Check if a HF tokenizer is available for the model
+        if all((path / file).exists() for file in ['tokenizer_config.json']):
+            logger.info(f'Using tokenizer from: \"{path}\"')
+        else:
+            logger.error("Could not load the model because a tokenizer in Transformers format was not found.")
+            return None, None
 
     model = LlamacppHF.from_pretrained(model_name)
-    return model
 
-
-def AutoGPTQ_loader(model_name):
-    import modules.AutoGPTQ_loader
-
-    return modules.AutoGPTQ_loader.load_quantized(model_name)
+    if shared.args.tokenizer_dir:
+        tokenizer = load_tokenizer(model_name, tokenizer_dir=shared.args.tokenizer_dir)
+        return model, tokenizer
+    else:
+        return model
 
 
 def ExLlamav2_loader(model_name):
@@ -310,9 +315,21 @@ def ExLlamav2_HF_loader(model_name):
     return Exllamav2HF.from_pretrained(model_name)
 
 
+def AutoGPTQ_loader(model_name):
+    try:
+        import modules.AutoGPTQ_loader
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("Failed to import 'autogptq'. Please install it manually following the instructions in the AutoGPTQ GitHub repository.")
+
+    return modules.AutoGPTQ_loader.load_quantized(model_name)
+
+
 def HQQ_loader(model_name):
-    from hqq.core.quantize import HQQBackend, HQQLinear
-    from hqq.models.hf.base import AutoHQQHFModel
+    try:
+        from hqq.core.quantize import HQQBackend, HQQLinear
+        from hqq.models.hf.base import AutoHQQHFModel
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("Failed to import 'hqq'. Please install it manually following the instructions in the HQQ GitHub repository.")
 
     logger.info(f"Loading HQQ model with backend: \"{shared.args.hqq_backend}\"")
 
@@ -323,7 +340,10 @@ def HQQ_loader(model_name):
 
 
 def TensorRT_LLM_loader(model_name):
-    from modules.tensorrt_llm import TensorRTLLMModel
+    try:
+        from modules.tensorrt_llm import TensorRTLLMModel
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("Failed to import 'tensorrt_llm'. Please install it manually following the instructions in the TensorRT-LLM GitHub repository.")
 
     model = TensorRTLLMModel.from_pretrained(model_name)
     return model
