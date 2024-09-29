@@ -1060,11 +1060,11 @@ def handle_start_new_chat_click(state):
     convert_to_markdown.cache_clear()
 
     if len(histories) > 0:
-        return_histories = gr.update(choices=histories, value=histories[0][1])
+        past_chats_update = gr.update(choices=histories, value=histories[0][1])
     else:
-        return_histories = gr.update(choices=histories)
+        past_chats_update = gr.update(choices=histories)
 
-    return [history, html, return_histories]
+    return [history, html, past_chats_update]
 
 
 def handle_delete_chat_confirm_click(state):
@@ -1116,14 +1116,14 @@ def handle_upload_chat_history(load_chat_history, state):
     convert_to_markdown.cache_clear()
 
     if len(histories) > 0:
-        return_histories = gr.update(choices=histories, value=histories[0][1])
+        past_chats_update = gr.update(choices=histories, value=histories[0][1])
     else:
-        return_histories = gr.update(choices=histories)
+        past_chats_update = gr.update(choices=histories)
 
     return [
         history,
         html,
-        return_histories
+        past_chats_update
     ]
 
 
@@ -1143,9 +1143,9 @@ def handle_character_menu_change(state):
     convert_to_markdown.cache_clear()
 
     if len(histories) > 0:
-        return_histories = gr.update(choices=histories, value=histories[0][1])
+        past_chats_update = gr.update(choices=histories, value=histories[0][1])
     else:
-        return_histories = gr.update(choices=histories)
+        past_chats_update = gr.update(choices=histories)
 
     return [
         history,
@@ -1155,7 +1155,7 @@ def handle_character_menu_change(state):
         picture,
         greeting,
         context,
-        return_histories,
+        past_chats_update,
     ]
 
 
@@ -1167,16 +1167,16 @@ def handle_mode_change(state):
     convert_to_markdown.cache_clear()
 
     if len(histories) > 0:
-        return_histories = gr.update(choices=histories, value=histories[0][1])
+        past_chats_update = gr.update(choices=histories, value=histories[0][1])
     else:
-        return_histories = gr.update(choices=histories)
+        past_chats_update = gr.update(choices=histories)
 
     return [
         history,
         html,
         gr.update(visible=state['mode'] != 'instruct'),
         gr.update(visible=state['mode'] == 'chat-instruct'),
-        return_histories
+        past_chats_update
     ]
 
 
