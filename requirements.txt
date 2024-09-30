@@ -1,4 +1,4 @@
-accelerate==0.33.*
+accelerate==0.34.*
 bitsandbytes==0.44.*
 colorama
 datasets
