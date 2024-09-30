@@ -12,7 +12,7 @@ numba==0.59.*
 numpy==1.26.*
 optimum==1.17.*
 pandas
-peft==0.12.*
+peft==0.13.*
 Pillow>=9.5.0
 psutil
 pydantic==2.8.2
