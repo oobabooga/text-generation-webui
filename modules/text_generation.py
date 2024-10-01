@@ -274,10 +274,10 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
     if (hasattr(shared.tokenizer, 'convert_ids_to_tokens') and len(output_ids) > starting_from) and not reply.startswith(' '):
         first_token = shared.tokenizer.convert_ids_to_tokens(int(output_ids[starting_from]))
         if isinstance(first_token, (bytes,)):
-            #try to decode the bytes to a string
+            # try to decode the bytes to a string
+            # if it fails, which means it's not a string in this turn, just ignore it
             try:
                 first_token = first_token.decode('utf8')
-            #if it fails, which means it's not a string in this turn, just ignore it
             except UnicodeDecodeError:
                 first_token = ''
 
