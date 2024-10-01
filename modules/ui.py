@@ -90,6 +90,7 @@ def list_model_elements():
         'cache_8bit',
         'cache_4bit',
         'autosplit',
+        'enable_tp',
         'threads',
         'threads_batch',
         'n_batch',
