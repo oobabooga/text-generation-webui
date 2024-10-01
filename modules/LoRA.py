@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import torch
-from peft import PeftModel
 from transformers import is_torch_xpu_available
 
 import modules.shared as shared
@@ -85,6 +84,9 @@ def add_lora_autogptq(lora_names):
 
 
 def add_lora_transformers(lora_names):
+
+    from peft import PeftModel
+
     prior_set = set(shared.lora_names)
     added_set = set(lora_names) - prior_set
     removed_set = prior_set - set(lora_names)

@@ -274,7 +274,12 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
     if (hasattr(shared.tokenizer, 'convert_ids_to_tokens') and len(output_ids) > starting_from) and not reply.startswith(' '):
         first_token = shared.tokenizer.convert_ids_to_tokens(int(output_ids[starting_from]))
         if isinstance(first_token, (bytes,)):
-            first_token = first_token.decode('utf8')
+            # try to decode the bytes to a string
+            # if it fails, which means it's not a string in this turn, just ignore it
+            try:
+                first_token = first_token.decode('utf8')
+            except UnicodeDecodeError:
+                first_token = ''
 
         if first_token.startswith('▁'):
             reply = ' ' + reply
@@ -284,7 +289,7 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
 
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
     generate_params = {}
-    for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynatemp_low', 'dynatemp_high', 'dynatemp_exponent', 'smoothing_factor', 'smoothing_curve', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'dry_multiplier', 'dry_base', 'dry_allowed_length', 'dry_sequence_breakers']:
+    for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynatemp_low', 'dynatemp_high', 'dynatemp_exponent', 'smoothing_factor', 'smoothing_curve', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'dry_multiplier', 'dry_base', 'dry_allowed_length', 'dry_sequence_breakers', 'xtc_threshold', 'xtc_probability']:
         if k in state:
             generate_params[k] = state[k]
 

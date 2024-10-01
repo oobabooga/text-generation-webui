@@ -158,6 +158,8 @@ def list_interface_input_elements():
         'dry_base',
         'dry_allowed_length',
         'dry_sequence_breakers',
+        'xtc_threshold',
+        'xtc_probability',
         'do_sample',
         'penalty_alpha',
         'mirostat_mode',
