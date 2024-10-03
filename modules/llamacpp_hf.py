@@ -127,7 +127,7 @@ class LlamacppHF(PreTrainedModel):
                 self.model.reset()
                 self.model.eval(seq)
 
-            logits = torch.tensor(self.model.scores[self.model.last_updated_index, :]).view(1, 1, -1).to(input_ids.device)
+            logits = torch.tensor(self.model.scores[self.model.n_tokens - 1, :]).view(1, 1, -1).to(input_ids.device)
         else:
             self.model.reset()
             self.model.eval(seq)
@@ -205,6 +205,5 @@ class LlamacppHF(PreTrainedModel):
 
         Llama = llama_cpp_lib().Llama
         model = Llama(**params)
-        model.last_updated_index = -1
 
         return LlamacppHF(model, model_file)

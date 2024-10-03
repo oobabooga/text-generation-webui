@@ -146,7 +146,6 @@ group.add_argument('--no_sdpa', action='store_true', help='Force Torch SDPA to n
 group.add_argument('--cache_8bit', action='store_true', help='Use 8-bit cache to save VRAM.')
 group.add_argument('--cache_4bit', action='store_true', help='Use Q4 cache to save VRAM.')
 group.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
-group.add_argument('--enable_tp', action='store_true', help='Enable Tensor Parallelism (TP) in ExLlamaV2.')
 
 # AutoGPTQ
 group = parser.add_argument_group('AutoGPTQ')

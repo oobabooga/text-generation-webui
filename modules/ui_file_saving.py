@@ -74,7 +74,7 @@ def handle_save_preset_confirm_click(filename, contents):
     try:
         utils.save_file(f"presets/{filename}.yaml", contents)
         available_presets = utils.get_available_presets()
-        output = gr.update(choices=available_presets, value=filename)
+        output = gr.update(choices=available_presets, value=filename),
     except Exception:
         output = gr.update()
         traceback.print_exc()
