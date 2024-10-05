@@ -313,7 +313,7 @@ def install_webui():
     if selected_gpu == "INTEL":
         # Install oneAPI dependencies via conda
         print_big_message("Installing Intel oneAPI runtime libraries.")
-        run_cmd("conda install -y -c intel dpcpp-cpp-rt=2024.0 mkl-dpcpp=2024.0")
+        run_cmd("conda install -y -c https://software.repos.intel.com/python/conda/ -c conda-forge dpcpp-cpp-rt=2024.0 mkl-dpcpp=2024.0")
         # Install libuv required by Intel-patched torch
         run_cmd("conda install -y libuv")
 
