@@ -329,7 +329,7 @@ def install_extensions_requirements():
     print_big_message("Installing extensions requirements.\nSome of these may fail on Windows.\nDon\'t worry if you see error messages, as they will not affect the main program.")
     extensions = get_extensions_names()
     for i, extension in enumerate(extensions):
-        print(f"\n\n--- [{i+1}/{len(extensions)}]: {extension}\n\n")
+        print(f"\n\n--- [{i + 1}/{len(extensions)}]: {extension}\n\n")
         extension_req_path = os.path.join("extensions", extension, "requirements.txt")
         run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
 
