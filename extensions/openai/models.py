@@ -15,7 +15,15 @@ def get_current_model_info():
 
 
 def list_models():
-    return {'model_names': get_available_models()[1:]}
+    result = {
+        "object": "list",
+        "data": []
+    }
+    # get models and add them to the result
+    for model in get_available_models():
+        result["data"].append(model_info_dict(model))
+
+    return result
 
 
 def list_dummy_models():
