@@ -1,6 +1,6 @@
 import gradio as gr
 
-from modules import shared, ui, utils
+from modules import shared, ui, utils, localization
 from modules.github import clone_or_pull_repository
 from modules.utils import gradio
 
@@ -10,7 +10,7 @@ def create_ui():
     with gr.Tab("Session", elem_id="session-tab"):
         with gr.Row():
             with gr.Column():
-                shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions and restart", interactive=not mu)
+                shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions/localization and restart", interactive=not mu)
                 with gr.Row():
                     shared.gradio['toggle_dark_mode'] = gr.Button('Toggle 💡')
                     shared.gradio['save_settings'] = gr.Button('Save UI defaults to settings.yaml', interactive=not mu)
@@ -24,6 +24,10 @@ def create_ui():
 
             with gr.Column():
                 extension_name = gr.Textbox(lines=1, label='Install or update an extension', info='Enter the GitHub URL below and press Enter. For a list of extensions, see: https://github.com/oobabooga/text-generation-webui-extensions ⚠️  WARNING ⚠️ : extensions can execute arbitrary code. Make sure to inspect their source code before activating them.', interactive=not mu)
+                with gr.Row():
+                    shared.gradio['localization_menu'] = gr.Dropdown(choices=utils.get_available_localizations(), value=shared.settings['localization'], label='Localization', elem_classes='slim-dropdown')
+                    ui.create_refresh_button(shared.gradio['localization_menu'], lambda: None, lambda: {'choices': utils.get_available_localizations()}, 'refresh-button', interactive=not mu)
+                shared.gradio['download_localization'] = gr.Button(value='Download localization template', elem_id='download_localization')
                 extension_status = gr.Markdown()
 
         shared.gradio['theme_state'] = gr.Textbox(visible=False, value='dark' if shared.settings['dark_theme'] else 'light')
@@ -31,7 +35,7 @@ def create_ui():
 
         # Reset interface event
         shared.gradio['reset_interface'].click(
-            set_interface_arguments, gradio('extensions_menu', 'bool_menu'), None).then(
+            set_interface_arguments, gradio('extensions_menu', 'bool_menu', 'localization_menu'), None).then(
             None, None, None, js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;padding-top:20%;margin:0;height:100vh;color:lightgray;text-align:center;background:var(--body-background-fill)">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
 
         shared.gradio['toggle_dark_mode'].click(
@@ -40,11 +44,18 @@ def create_ui():
 
         shared.gradio['save_settings'].click(
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            handle_save_settings, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls', 'theme_state'), gradio('save_contents', 'save_filename', 'save_root', 'file_saver'), show_progress=False)
+            handle_save_settings, gradio('interface_state', 'preset_menu', 'extensions_menu', 'localization_menu', 'show_controls', 'theme_state'), gradio('save_contents', 'save_filename', 'save_root', 'file_saver'), show_progress=False)
+
+        shared.gradio['download_localization'].click(
+            None, None, None, js=f'() => {{{ui.localization_js}; download_localization()}}')
+        
+        shared.gradio['localization_menu'].change(
+            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state'))
 
 
-def handle_save_settings(state, preset, extensions, show_controls, theme):
-    contents = ui.save_settings(state, preset, extensions, show_controls, theme)
+
+def handle_save_settings(state, preset, extensions, localization, show_controls, theme):
+    contents = ui.save_settings(state, preset, extensions, localization, show_controls, theme)
     return [
         contents,
         "settings.yaml",
@@ -53,10 +64,12 @@ def handle_save_settings(state, preset, extensions, show_controls, theme):
     ]
 
 
-def set_interface_arguments(extensions, bool_active):
+def set_interface_arguments(extensions, bool_active, localization):
     shared.args.extensions = extensions
 
     bool_list = get_boolean_arguments()
+    
+    shared.settings['localization'] = localization
 
     for k in bool_list:
         setattr(shared.args, k, False)
