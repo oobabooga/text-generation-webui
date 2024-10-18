@@ -7,6 +7,7 @@ from exllamav2 import (
     ExLlamaV2Cache,
     ExLlamaV2Cache_8bit,
     ExLlamaV2Cache_Q4,
+    ExLlamaV2Cache_TP,
     ExLlamaV2Config,
     ExLlamaV2Tokenizer
 )
@@ -18,14 +19,6 @@ from modules.text_generation import get_max_prompt_length
 
 try:
     import flash_attn
-except ModuleNotFoundError:
-    logger.warning(
-        'You are running ExLlamaV2 without flash-attention. This will cause the VRAM usage '
-        'to be a lot higher than it could be.\n'
-        'Try installing flash-attention following the instructions here: '
-        'https://github.com/Dao-AILab/flash-attention#installation-and-features'
-    )
-    pass
 except Exception:
     logger.warning('Failed to load flash-attention due to the following error:\n')
     traceback.print_exc()
@@ -54,21 +47,30 @@ class Exllamav2Model:
 
         model = ExLlamaV2(config)
 
-        if not shared.args.autosplit:
-            split = None
-            if shared.args.gpu_split:
-                split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
+        split = None
+        if shared.args.gpu_split:
+            split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
 
+        if shared.args.enable_tp:
+            model.load_tp(split)
+        elif not shared.args.autosplit:
             model.load(split)
 
+        # Determine the correct cache type
         if shared.args.cache_8bit:
-            cache = ExLlamaV2Cache_8bit(model, lazy=shared.args.autosplit)
+            cache_type = ExLlamaV2Cache_8bit
         elif shared.args.cache_4bit:
-            cache = ExLlamaV2Cache_Q4(model, lazy=shared.args.autosplit)
+            cache_type = ExLlamaV2Cache_Q4
         else:
-            cache = ExLlamaV2Cache(model, lazy=shared.args.autosplit)
+            cache_type = ExLlamaV2Cache
 
-        if shared.args.autosplit:
+        # Use TP if specified
+        if shared.args.enable_tp:
+            cache = ExLlamaV2Cache_TP(model, base=cache_type)
+        else:
+            cache = cache_type(model, lazy=shared.args.autosplit)
+
+        if shared.args.autosplit and not shared.args.enable_tp:
             model.load_autosplit(cache)
 
         tokenizer = ExLlamaV2Tokenizer(config)
