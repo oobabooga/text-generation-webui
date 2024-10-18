@@ -34,7 +34,10 @@ The extensions framework is based on special functions and variables that you ca
 | Function        | Description |
 |-------------|-------------|
 | `def setup()` | Is executed when the extension gets imported. |
-| `def ui()` | Creates custom gradio elements when the UI is launched. | 
+| `def ui()` | Obsolete, but still supported. Creates custom gradio elements when the UI is launched. | 
+| `def ui_block()` | Creates custom Gradio elements at the bottom of the Chat, Default and Notebook tabs. | 
+| `def ui_tab()` | Creates a tab for a large interface of extension. Similar to the deprecated is_tab=true in params. | 
+| `def ui_params()` | Creates a tab for extension settings in Parameters. | 
 | `def custom_css()` | Returns custom CSS as a string. It is applied whenever the web UI is loaded. |
 | `def custom_js()` | Same as above but for javascript. |
 | `def input_modifier(string, state, is_chat=False)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
@@ -48,7 +51,7 @@ The extensions framework is based on special functions and variables that you ca
 | `def tokenizer_modifier(state, prompt, input_ids, input_embeds)` | Modifies the `input_ids`/`input_embeds` fed to the model. Should return `prompt`, `input_ids`, `input_embeds`. See the `multimodal` extension for an example. |
 | `def custom_tokenized_length(prompt)` | Used in conjunction with `tokenizer_modifier`, returns the length in tokens of `prompt`. See the `multimodal` extension for an example. |
 
-Additionally, you can define a special `params` dictionary. In it, the `display_name` key is used to define the displayed name of the extension in the UI, and the `is_tab` key is used to define whether the extension should appear in a new tab. By default, extensions appear at the bottom of the "Text generation" tab.
+Additionally, you can define a special `params` dictionary. In it, the `display_name` key is used to define the displayed name of the extension in the UI. The `is_tab` key is deprecated and it is better to write UIs in `def ui_tab():` instead, but is still supported if the UI is created in the deprecated `def ui():`
 
 Example:
 
@@ -230,10 +233,31 @@ def setup():
     """
     pass
 
-def ui():
+def ui_block():
     """
-    Gets executed when the UI is drawn. Custom gradio elements and
-    their corresponding event handlers should be defined here.
+    Gets executed when the UI is drawn. The custom gradio elements
+    that are used most often and their corresponding event handlers
+    should be defined here.
+
+    To learn about gradio components, check out the docs:
+    https://gradio.app/docs/
+    """
+    pass
+
+def ui_tab():
+    """
+    Gets executed when the UI is drawn and creates a tab for the big UI.
+    Its gradio elements and corresponding event handlers should be defined here.
+
+    To learn about gradio components, check out the docs:
+    https://gradio.app/docs/
+    """
+    pass
+
+def ui_params():
+    """
+    Executed when the user interface is rendered. Elements of the extension
+    settings and event handlers corresponding to them should be defined here.
 
     To learn about gradio components, check out the docs:
     https://gradio.app/docs/
