@@ -1,11 +1,10 @@
-import time
-
 import gradio
 import numpy as np
 import torch
 from transformers import LogitsProcessor
+import colorsys
 
-from modules import html_generator, shared
+from modules import shared
 
 params = {
     'active': True,
@@ -81,6 +80,7 @@ class PerplexityLogits(LogitsProcessor):
 
 
 # Stores the perplexity and top probabilities
+# global ppl_logits_processor
 ppl_logits_processor = None
 
 
@@ -109,64 +109,74 @@ def output_modifier(text):
     gen_tokens = [shared.tokenizer.decode(token_id) for token_id in gen_token_ids]
     sel_probs = ppl_logits_processor.selected_probs[1:]
 
-    end_part = '</div></div>' if params['probability_dropdown'] else '</span>'  # Helps with finding the index after replacing part of the text.
+    formatted_text = ""
 
-    i = 0
     for token, prob, ppl, top_tokens, top_probs in zip(gen_tokens, sel_probs, perplexities, top_tokens_list, top_probs_list):
         color = 'ffffff'
-        if params['color_by_probability'] and params['color_by_perplexity']:
-            color = probability_perplexity_color_scale(prob, ppl)
-        elif params['color_by_perplexity']:
+        # if params['color_by_probability'] and params['color_by_perplexity']:
+        #     color = probability_perplexity_color_scale(prob, ppl)
+        if params['color_by_perplexity']:
             color = perplexity_color_scale(ppl)
         elif params['color_by_probability']:
             color = probability_color_scale(prob)
-        if token in text[i:]:
-            if params['probability_dropdown']:
-                text = text[:i] + text[i:].replace(token, add_dropdown_html(token, color, top_tokens, top_probs[0], ppl), 1)
-            else:
-                text = text[:i] + text[i:].replace(token, add_color_html(token, color), 1)
-            i += text[i:].find(end_part) + len(end_part)
+
+        if params['probability_dropdown']:
+            formatted_token = add_dropdown_html(token, color, top_tokens, top_probs[0], ppl)
+        else:
+            formatted_token = add_color_html(token, color)
+
+        formatted_text += formatted_token
+
+    # wonky fix to prevent the later html processing from making the first token into a separate paragraph and disabling its dropdown.
+    # this adds a dummy entry which gets made into an empty <p></p> paragraph instead of the first token
+    if params['probability_dropdown']:
+        formatted_text = '<span class="hoverable"><span style="color: #ffffff;"><div class="dropdown" style="z-index: 999;"><table class="dropdown-content"><tbody><tr class="selected"><td style="color: #ffffff"></td><td style="color: #ffffff">0.0000</td></tr></tbody></table></div></span></span>' + formatted_text
 
     # Use full perplexity list for calculating the average here.
     print('Average perplexity:', round(np.mean(ppl_logits_processor.perplexities_list[:-1]), 4))
     # t1 = time.time()
     # print(f"Modifier: {(t1-t0):.3f} s")
     # About 50 ms
-    return text
+    return formatted_text
 
 
 def probability_color_scale(prob):
     '''
     Green-yellow-red color scale
     '''
+    # hue (0.0 = red, 0.33 = green)
+    # saturation (0.0 = gray / white, 1.0 = normal, just leave at 1.0)
+    # brightness (0.0 = black, 1.0 = brightest, use 0.5 instead of 1.0 for better readability)
 
-    rv = 0
-    gv = 0
-    if prob <= 0.5:
-        rv = 'ff'
-        gv = hex(int(255 * prob * 2))[2:]
-        if len(gv) < 2:
-            gv = '0' * (2 - len(gv)) + gv
-    else:
-        rv = hex(int(255 - 255 * (prob - 0.5) * 2))[2:]
-        gv = 'ff'
-        if len(rv) < 2:
-            rv = '0' * (2 - len(rv)) + rv
+    hue = prob * 0.33
+    rv, gv, bv = colorsys.hsv_to_rgb(hue, 1.0, 0.7)
 
-    return rv + gv + '00'
+    # to hex
+    hex_col = f"{int(rv*255):02x}{int(gv*255):02x}{int(bv*255):02x}"
+
+    return hex_col
 
 
 def perplexity_color_scale(ppl):
     '''
     Red component only, white for 0 perplexity (sorry if you're not in dark mode)
     '''
-    value = hex(max(int(255.0 - params['ppl_scale'] * (float(ppl) - 1.0)), 0))[2:]
-    if len(value) < 2:
-        value = '0' * (2 - len(value)) + value
+    # hue (0.0 = red)
+    # saturation (1.0 = red)
+    # brightness (0.0 = black, 1.0 = red)
+    # scale saturation from white to red the higher the perplexity
 
-    return 'ff' + value + value
+    ppl = min(ppl, params['ppl_scale'])  # clip ppl to 0-params['ppl_scale'] for color scaling. 15 should be fine for clipping and scaling
+    sat = ppl / params['ppl_scale']
+    rv, gv, bv = colorsys.hsv_to_rgb(0.0, sat, 1.0)
+
+    # to hex
+    hex_col = f"{int(rv*255):02x}{int(gv*255):02x}{int(bv*255):02x}"
+
+    return hex_col
 
 
+# are you sure this is needed? Since perplexity is proportional to probability, it would make more sense to just pick one of the two
 def probability_perplexity_color_scale(prob, ppl):
     '''
     Green-yellow-red for probability and blue component for perplexity
@@ -193,7 +203,7 @@ def probability_perplexity_color_scale(prob, ppl):
 
 
 def add_color_html(token, color):
-    return f'<span style="color: #{color}">{token}</span>'
+    return f'<span style="color: #{color};">{token}</span>'
 
 
 # TODO: Major issue: Applying this to too many tokens will cause a permanent slowdown in generation speed until the messages are removed from the history.
@@ -201,7 +211,15 @@ def add_color_html(token, color):
 # Potential solution is maybe to modify the main generation code to send just the internal text and not the visible history, to avoid moving too much around.
 # I wonder if we can also avoid using deepcopy here.
 def add_dropdown_html(token, color, top_tokens, top_probs, perplexity=0):
-    html = f'<div class="hoverable"><span style="color: #{color}">{token}</span><div class="dropdown"><table class="dropdown-content"><tbody>'
+
+    # for now replace all "\n" with "&#10;" (ascii code for newline) since the postprocessing later messes up the formatting.
+    # Doesn't get displayed properly but at least doesn't mess up the formatting.
+    # If there are any newlines "\n", for some reason everything after the first newline will be made into a separate paragraph.
+    token = token.replace("\n", "&#10;")
+
+    # replace spaces in token with non-linebreaking space character for html
+    token = token.replace(" ", "&nbsp;")
+    html = f'<span class="hoverable"><span style="color: #{color};">{token}<div class="dropdown" style="z-index: 999;"><table class="dropdown-content"><tbody>'
     for token_option, prob in zip(top_tokens, top_probs):
         # TODO: Bold for selected token?
         # Using divs prevented the problem of divs inside spans causing issues.
@@ -213,7 +231,7 @@ def add_dropdown_html(token, color, top_tokens, top_probs, perplexity=0):
     if perplexity != 0:
         ppl_color = perplexity_color_scale(perplexity)
         html += f'<tr><td>Perplexity:</td><td style="color: #{ppl_color}">{perplexity:.4f}</td></tr>'
-    html += '</tbody></table></div></div>'
+    html += '</tbody></table></div></span></span>'
     return html  # About 750 characters per token...
 
 
@@ -263,13 +281,6 @@ def custom_css():
         pre {
             white-space: pre-wrap;
         }
-
-        # TODO: This makes the hover menus extend outside the bounds of the chat area, which is good.
-        # However, it also makes the scrollbar disappear, which is bad.
-        # The scroll bar needs to still be present. So for now, we can't see dropdowns that extend past the edge of the chat area.
-        #.chat {
-        #    overflow-y: auto;
-        #}
     """
 
 
@@ -282,7 +293,7 @@ def convert_to_markdown(string):
     return '<pre>' + string + '</pre>'
 
 
-html_generator.convert_to_markdown = convert_to_markdown
+# html_generator.convert_to_markdown = convert_to_markdown
 
 
 def ui():
