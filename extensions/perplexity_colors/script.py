@@ -95,7 +95,7 @@ def output_modifier(text):
     global ppl_logits_processor
     # t0 = time.time()
 
-    if not params['active']:
+    if not params['active'] or ppl_logits_processor == None:
         return text
 
     # TODO: It's probably more efficient to do this above rather than modifying all these lists
