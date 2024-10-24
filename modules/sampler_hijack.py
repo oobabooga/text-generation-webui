@@ -454,7 +454,7 @@ def get_logits_processor_patch(self, **kwargs):
             )
 
         # Stuff we don't need
-        elif warpers[i].__class__.__name__ in ['SuppressTokensLogitsProcessor', 'RepetitionPenaltyLogitsProcessor']:
+        elif warpers[i].__class__.__name__ in ['RepetitionPenaltyLogitsProcessor']:
             del warpers[i]
 
     # Add custom warpers
