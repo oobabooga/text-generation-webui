@@ -1,4 +1,4 @@
-accelerate==0.33.*
+accelerate==1.0.*
 bitsandbytes==0.44.*
 colorama
 datasets
@@ -6,11 +6,9 @@ einops
 fastapi==0.112.4
 gradio==4.26.*
 jinja2==3.1.4
-lm_eval==0.3.0
 markdown
 numba==0.59.*
 numpy==1.26.*
-optimum==1.17.*
 pandas
 peft==0.12.*
 Pillow>=9.5.0
@@ -23,7 +21,7 @@ safetensors==0.4.*
 scipy
 sentencepiece
 tensorboard
-transformers==4.45.*
+transformers==4.46.*
 tqdm
 wandb
 

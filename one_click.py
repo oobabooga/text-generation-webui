@@ -189,8 +189,8 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
             conda_sh_path = os.path.join(script_dir, "installer_files", "conda", "etc", "profile.d", "conda.sh")
             cmd = f'. "{conda_sh_path}" && conda activate "{conda_env_path}" && {cmd}'
 
-    # Set executable to None for Windows, /bin/bash for everything else
-    executable = None if is_windows() else '/bin/bash'
+    # Set executable to None for Windows, bash for everything else
+    executable = None if is_windows() else 'bash'
 
     # Run shell commands
     result = subprocess.run(cmd, shell=True, capture_output=capture_output, env=env, executable=executable)
@@ -313,7 +313,7 @@ def install_webui():
     if selected_gpu == "INTEL":
         # Install oneAPI dependencies via conda
         print_big_message("Installing Intel oneAPI runtime libraries.")
-        run_cmd("conda install -y -c intel dpcpp-cpp-rt=2024.0 mkl-dpcpp=2024.0")
+        run_cmd("conda install -y -c https://software.repos.intel.com/python/conda/ -c conda-forge dpcpp-cpp-rt=2024.0 mkl-dpcpp=2024.0")
         # Install libuv required by Intel-patched torch
         run_cmd("conda install -y libuv")
 
@@ -329,7 +329,7 @@ def install_extensions_requirements():
     print_big_message("Installing extensions requirements.\nSome of these may fail on Windows.\nDon\'t worry if you see error messages, as they will not affect the main program.")
     extensions = get_extensions_names()
     for i, extension in enumerate(extensions):
-        print(f"\n\n--- [{i+1}/{len(extensions)}]: {extension}\n\n")
+        print(f"\n\n--- [{i + 1}/{len(extensions)}]: {extension}\n\n")
         extension_req_path = os.path.join("extensions", extension, "requirements.txt")
         run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
 

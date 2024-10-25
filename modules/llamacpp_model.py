@@ -136,7 +136,7 @@ class LlamaCppModel:
             prompt=prompt,
             max_tokens=state['max_new_tokens'],
             temperature=state['temperature'],
-            top_p=state['top_p'],
+            top_p=state['top_p'] if state['top_p'] < 1 else 0.999,
             min_p=state['min_p'],
             typical_p=state['typical_p'],
             frequency_penalty=state['frequency_penalty'],
