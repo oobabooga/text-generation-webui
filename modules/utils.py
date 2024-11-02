@@ -78,7 +78,7 @@ def get_available_models():
         for file in files:
             file_path = os.path.join(dirpath, file)
             relative_path = os.path.relpath(file_path, shared.args.model_dir)
-            if not file.endswith(('.txt', '-np', '.pt', '.json', '.yaml', '.py')) and 'llama-tokenizer' not in file:
+            if not file.endswith(('.txt', '-np', '.pt', '.json', '.yaml', '.py')) and 'llama-tokenizer' not in relative_path:
                 model_list.append(relative_path)
     return ['None'] + sorted(model_list, key=natural_keys)
 
