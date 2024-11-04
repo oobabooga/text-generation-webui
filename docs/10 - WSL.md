@@ -146,7 +146,30 @@ If you face any issues or need to troubleshoot, you can always refer to the offi
 
 ### WSL2 performance using /mnt: 
 
-When you git clone a repository, put it inside WSL and not outside. To understand more, take a look at this [issue](https://github.com/microsoft/WSL/issues/4197#issuecomment-604592340)
+When you git clone a repository, put it inside WSL and not outside. To understand more, take a look at this [issue](https://github.com/microsoft/WSL/issues/4197#issuecomment-604592340).
+
+This means, to clone the repo, do the following:
+````
+wsl (to enter - you guessed it - WSL)
+cd ~ (to change to your home directory and enter the "WSL file system". Your WSL might start somewhere in the Windows file system at a location like "/mnt/c/Users/foo")
+(maybe create a subfolder if you wish and cd to it)
+git clone https://github.com/oobabooga/text-generation-webui.git 
+cd text-generation-webui
+./start_linux.sh
+````
+In this case, you'd want to put your models under 
+````
+/home/foo/text-generation-webui/models
+````
+If you want to access your WSL file system from windows, you can do so using the path 
+````
+\\wsl.localhost\Ubuntu-22.04\home\foo\text-generation-webui
+````
+You might even have a little pengui in your Wíndows File Explorer labelled "Linux" under which you can access your 
+windows files.
+
+**NEVER EVER put your models in the Windows file system (i.e. under /mnt/...) and access them from within WSL. Loading a
+simple 10GB model could easily take 30+ minutes!!!**
 
 ### Bonus: Port Forwarding
 
