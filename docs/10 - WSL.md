@@ -30,6 +30,21 @@ wsl -l
 wsl -s <DistroName>
 ```
 
+#### To move an existing WSL distro
+
+If you already have installed WSL on your computer and want to move it to a path of your likinng, open cmd and enter
+````
+wsl --manage <distro-name> --move <path>
+````
+e.g.
+````
+wsl --manage ubuntu-22.04 --move D:\WSL\ubuntu-22.04
+````
+
+This command might not be available in your version of WSL. I cannot find information about the version it was added. 
+Its availability might also vary depending on whether you installed your WSL (distro) via the command line or via the 
+Microsoft store.
+
 ### Web UI Installation
 
 Run the "start" script. By default it will install the web UI in WSL:
