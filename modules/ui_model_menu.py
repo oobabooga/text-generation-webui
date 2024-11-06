@@ -260,6 +260,8 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
             yield ("Please enter a model path")
             return
 
+        repo_id = repo_id.strip()
+        specific_file = specific_file.strip()
         downloader = importlib.import_module("download-model").ModelDownloader()
 
         progress(0.0)
