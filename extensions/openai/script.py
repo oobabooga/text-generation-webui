@@ -130,7 +130,6 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
             traceback.print_exc()
             return HTTPException(status_code=400, detail="Failed to load the model.")
 
-
     path = request.url.path
     is_legacy = "/generate" in path
 
