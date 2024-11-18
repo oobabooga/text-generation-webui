@@ -24,8 +24,11 @@ def list_dummy_models():
         "data": []
     }
 
+    models = get_available_models()[1:]
     # these are expected by so much, so include some here as a dummy
     for model in ['gpt-3.5-turbo', 'text-embedding-ada-002']:
+        result["data"].append(model_info_dict(model))
+    for model in models:
         result["data"].append(model_info_dict(model))
 
     return result
@@ -42,8 +45,8 @@ def model_info_dict(model_name: str) -> dict:
 
 def _load_model(data):
     model_name = data["model_name"]
-    args = data["args"]
-    settings = data["settings"]
+    args = data.get("args", None)
+    settings = data.get("settings", None)
 
     unload_model()
     model_settings = get_model_metadata(model_name)
