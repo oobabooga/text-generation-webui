@@ -1108,8 +1108,8 @@ def handle_rename_chat_confirm(rename_to, state):
 def handle_upload_chat_history(load_chat_history, state):
     history = start_new_chat(state)
     history = load_history_json(load_chat_history, history)
-    histories = find_all_histories_with_first_prompts(state)
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
+    histories = find_all_histories_with_first_prompts(state)
 
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
