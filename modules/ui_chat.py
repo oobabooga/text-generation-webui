@@ -176,6 +176,7 @@ def create_chat_settings_ui():
             with gr.Column():
                 shared.gradio['chat_template_str'] = gr.Textbox(value=shared.settings['chat_template_str'], label='Chat template', lines=22, elem_classes=['add_scrollbar', 'monospace'])
 
+
 def create_event_handlers():
 
     # Obsolete variables, kept for compatibility with old extensions

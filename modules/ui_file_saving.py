@@ -134,6 +134,7 @@ def handle_save_character_confirm_click(name2, greeting, context, character_pict
         gr.update(visible=False)
     ]
 
+
 def handle_save_user_confirm_click(name1, user_bio, your_picture, filename):
     try:
         chat.save_user(name1, user_bio, your_picture, filename)
@@ -147,6 +148,7 @@ def handle_save_user_confirm_click(name1, user_bio, your_picture, filename):
         output,
         gr.update(visible=False)
     ]
+
 
 def handle_delete_character_confirm_click(character):
     try:
@@ -162,6 +164,7 @@ def handle_delete_character_confirm_click(character):
         gr.update(visible=False)
     ]
 
+
 def handle_delete_user_confirm_click(user):
     try:
         index = str(utils.get_available_users().index(user))
@@ -175,6 +178,7 @@ def handle_delete_user_confirm_click(user):
         output,
         gr.update(visible=False)
     ]
+
 
 def handle_save_preset_click(state):
     contents = presets.generate_preset_yaml(state)

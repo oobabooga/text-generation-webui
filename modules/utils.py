@@ -106,9 +106,11 @@ def get_available_characters():
     paths = (x for x in Path('characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
     return sorted(set((k.stem for k in paths)), key=natural_keys)
 
+
 def get_available_users():
     paths = (x for x in Path('users').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
     return sorted(set((k.stem for k in paths)), key=natural_keys)
+
 
 def get_available_instruction_templates():
     path = "instruction-templates"

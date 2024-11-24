@@ -662,11 +662,13 @@ def update_character_menu_after_deletion(idx):
     idx = max(0, idx)
     return gr.update(choices=characters, value=characters[idx])
 
+
 def update_user_menu_after_deletion(idx):
     users = utils.get_available_users()
     idx = min(int(idx), len(users) - 1)
     idx = max(0, idx)
     return gr.update(choices=users, value=users[idx])
+
 
 def load_history(unique_id, character, mode):
     p = get_history_file_path(unique_id, character, mode)
@@ -891,6 +893,7 @@ def generate_character_yaml(name, greeting, context):
     data = {k: v for k, v in data.items() if v}  # Strip falsy
     return yaml.dump(data, sort_keys=False, width=float("inf"))
 
+
 def generate_user_yaml(name1, user_bio):
     data = {
         'name': name1,
@@ -922,6 +925,7 @@ def save_character(name, greeting, context, picture, filename):
         picture.save(path_to_img)
         logger.info(f'Saved {path_to_img}.')
 
+
 def save_user(name1, user_bio, your_picture, filename):
     if filename == "":
         logger.error("The filename is empty, so the user will not be saved.")
@@ -935,11 +939,13 @@ def save_user(name1, user_bio, your_picture, filename):
         your_picture.save(path_to_img)
         logger.info(f'Saved {path_to_img}.')
 
+
 def delete_character(name, instruct=False):
     for extension in ["yml", "yaml", "json"]:
         delete_file(Path(f'characters/{name}.{extension}'))
 
     delete_file(Path(f'characters/{name}.png'))
+
 
 def delete_user(name, instruct=False):
     for extension in ["yml", "yaml", "json"]:
@@ -1190,6 +1196,7 @@ def handle_character_menu_change(state):
         past_chats_update,
     ]
 
+
 def load_user_profile(profile_name):
     user_folder = Path('users')
     base_file = user_folder / profile_name
@@ -1219,6 +1226,7 @@ def update_user_fields(profile_name):
         return user_data['name1'], user_data['user_bio'], user_data['your_picture']
     return '', '', None
 
+
 def handle_mode_change(state):
     history = load_latest_history(state)
     histories = find_all_histories_with_first_prompts(state)
@@ -1246,11 +1254,13 @@ def handle_save_character_click(name2):
         gr.update(visible=True)
     ]
 
+
 def handle_save_user_click(name1):
     return [
         name1,
         gr.update(visible=True)
     ]
+
 
 def handle_load_template_click(instruction_template):
     output = load_instruction_template(instruction_template)
