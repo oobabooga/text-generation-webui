@@ -2,7 +2,7 @@
 Downloads models from Hugging Face to models/username_modelname.
 
 Example:
-python download-model.py facebook/opt-1.3b
+python download-model.py facebook/opt-1.3b --exclude-pattern consolidated-.*\.safetensors
 
 '''
 
@@ -72,7 +72,7 @@ class ModelDownloader:
 
         return model, branch
 
-    def get_download_links_from_huggingface(self, model, branch, text_only=False, specific_file=None):
+    def get_download_links_from_huggingface(self, model, branch, text_only=False, specific_file=None, exclude_pattern=None):
         session = self.session
         page = f"/api/models/{model}/tree/{branch}"
         cursor = b""
@@ -98,6 +98,10 @@ class ModelDownloader:
             for i in range(len(dict)):
                 fname = dict[i]['path']
                 if specific_file not in [None, ''] and fname != specific_file:
+                    continue
+
+                # Excluir archivos que coinciden con el patrón de exclusión
+                if exclude_pattern is not None and re.match(exclude_pattern, fname):
                     continue
 
                 if not is_lora and fname.endswith(('adapter_config.json', 'adapter_model.bin')):
@@ -138,18 +142,14 @@ class ModelDownloader:
             cursor = base64.b64encode(cursor)
             cursor = cursor.replace(b'=', b'%3D')
 
-        # If both pytorch and safetensors are available, download safetensors only
-        # Also if GGUF and safetensors are available, download only safetensors
-        # (why do people do this?)
+        # Si hay archivos PyTorch o GGUF y también safetensors, solo descargamos safetensors
         if (has_pytorch or has_pt or has_gguf) and has_safetensors:
             has_gguf = False
             for i in range(len(classifications) - 1, -1, -1):
                 if classifications[i] in ['pytorch', 'pt', 'gguf']:
                     links.pop(i)
 
-        # For GGUF, try to download only the Q4_K_M if no specific file is specified.
-        # If not present, exclude all GGUFs, as that's likely a repository with both
-        # GGUF and fp16 files.
+        # Lógica para GGUF
         if has_gguf and specific_file is None:
             has_q4km = False
             for i in range(len(classifications) - 1, -1, -1):
@@ -174,7 +174,7 @@ class ModelDownloader:
         else:
             base_folder = 'models' if not is_lora else 'loras'
 
-        # If the model is of type GGUF, save directly in the base_folder
+        # Si el modelo es de tipo GGUF, guardamos directamente en la carpeta base
         if is_llamacpp:
             return Path(base_folder)
 
@@ -312,6 +312,7 @@ if __name__ == '__main__':
     parser.add_argument('--threads', type=int, default=4, help='Number of files to download simultaneously.')
     parser.add_argument('--text-only', action='store_true', help='Only download text files (txt/json).')
     parser.add_argument('--specific-file', type=str, default=None, help='Name of the specific file to download (if not provided, downloads all).')
+    parser.add_argument('--exclude-pattern', type=str, default=None, help='Regex pattern to exclude files from download.')
     parser.add_argument('--output', type=str, default=None, help='Save the model files to this folder.')
     parser.add_argument('--model-dir', type=str, default=None, help='Save the model files to a subfolder of this folder instead of the default one (text-generation-webui/models).')
     parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
@@ -322,6 +323,7 @@ if __name__ == '__main__':
     branch = args.branch
     model = args.MODEL
     specific_file = args.specific_file
+    exclude_pattern = args.exclude_pattern
 
     if model is None:
         print("Error: Please specify the model you'd like to download (e.g. 'python download-model.py facebook/opt-1.3b').")
@@ -336,7 +338,9 @@ if __name__ == '__main__':
         sys.exit()
 
     # Get the download links from Hugging Face
-    links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=args.text_only, specific_file=specific_file)
+    links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(
+        model, branch, text_only=args.text_only, specific_file=specific_file, exclude_pattern=exclude_pattern
+    )
 
     # Get the output folder
     if args.output:
@@ -349,4 +353,8 @@ if __name__ == '__main__':
         downloader.check_model_files(model, branch, links, sha256, output_folder)
     else:
         # Download files
-        downloader.download_model_files(model, branch, links, sha256, output_folder, specific_file=specific_file, threads=args.threads, is_llamacpp=is_llamacpp)
+        downloader.download_model_files(
+            model, branch, links, sha256, output_folder,
+            specific_file=specific_file, threads=args.threads, is_llamacpp=is_llamacpp
+        )
+
