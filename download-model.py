@@ -2,7 +2,7 @@
 Downloads models from Hugging Face to models/username_modelname.
 
 Example:
-python download-model.py facebook/opt-1.3b --exclude-pattern consolidated-.*\.safetensors
+python download-model.py facebook/opt-1.3b
 
 '''
 
@@ -100,7 +100,7 @@ class ModelDownloader:
                 if specific_file not in [None, ''] and fname != specific_file:
                     continue
 
-                # Excluir archivos que coinciden con el patrón de exclusión
+                # Exclude files matching the exclude pattern
                 if exclude_pattern is not None and re.match(exclude_pattern, fname):
                     continue
 
@@ -110,7 +110,7 @@ class ModelDownloader:
                 is_pytorch = re.match(r"(pytorch|adapter|gptq)_model.*\.bin", fname)
                 is_safetensors = re.match(r".*\.safetensors", fname)
                 is_pt = re.match(r".*\.pt", fname)
-                is_gguf = re.match(r'.*\.gguf', fname)
+                is_gguf = re.match(r".*\.gguf", fname)
                 is_tiktoken = re.match(r".*\.tiktoken", fname)
                 is_tokenizer = re.match(r"(tokenizer|ice|spiece).*\.model", fname) or is_tiktoken
                 is_text = re.match(r".*\.(txt|json|py|md)", fname) or is_tokenizer
@@ -142,14 +142,15 @@ class ModelDownloader:
             cursor = base64.b64encode(cursor)
             cursor = cursor.replace(b'=', b'%3D')
 
-        # Si hay archivos PyTorch o GGUF y también safetensors, solo descargamos safetensors
+        # If both pytorch and safetensors are available, download safetensors only
+        # Also if GGUF and safetensors are available, download only safetensors
         if (has_pytorch or has_pt or has_gguf) and has_safetensors:
             has_gguf = False
             for i in range(len(classifications) - 1, -1, -1):
                 if classifications[i] in ['pytorch', 'pt', 'gguf']:
                     links.pop(i)
 
-        # Lógica para GGUF
+        # For GGUF, try to download only the Q4_K_M if no specific file is specified.
         if has_gguf and specific_file is None:
             has_q4km = False
             for i in range(len(classifications) - 1, -1, -1):
@@ -174,7 +175,7 @@ class ModelDownloader:
         else:
             base_folder = 'models' if not is_lora else 'loras'
 
-        # Si el modelo es de tipo GGUF, guardamos directamente en la carpeta base
+        # If the model is of type GGUF, save directly in the base_folder
         if is_llamacpp:
             return Path(base_folder)
 
@@ -357,4 +358,3 @@ if __name__ == '__main__':
             model, branch, links, sha256, output_folder,
             specific_file=specific_file, threads=args.threads, is_llamacpp=is_llamacpp
         )
-
