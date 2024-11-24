@@ -662,6 +662,11 @@ def update_character_menu_after_deletion(idx):
     idx = max(0, idx)
     return gr.update(choices=characters, value=characters[idx])
 
+def update_user_menu_after_deletion(idx):
+    users = utils.get_available_users()
+    idx = min(int(idx), len(users) - 1)
+    idx = max(0, idx)
+    return gr.update(choices=users, value=users[idx])
 
 def load_history(unique_id, character, mode):
     p = get_history_file_path(unique_id, character, mode)
@@ -886,6 +891,15 @@ def generate_character_yaml(name, greeting, context):
     data = {k: v for k, v in data.items() if v}  # Strip falsy
     return yaml.dump(data, sort_keys=False, width=float("inf"))
 
+def generate_user_yaml(name1, user_bio):
+    data = {
+        'name': name1,
+        'user_bio': user_bio,
+    }
+
+    data = {k: v for k, v in data.items() if v}  # Strip falsy
+    return yaml.dump(data, sort_keys=False, width=float("inf"))
+
 
 def generate_instruction_template_yaml(instruction_template):
     data = {
@@ -908,12 +922,30 @@ def save_character(name, greeting, context, picture, filename):
         picture.save(path_to_img)
         logger.info(f'Saved {path_to_img}.')
 
+def save_user(name1, user_bio, your_picture, filename):
+    if filename == "":
+        logger.error("The filename is empty, so the user will not be saved.")
+        return
+
+    data = generate_user_yaml(name1, user_bio)
+    filepath = Path(f'users/{filename}.yaml')
+    save_file(filepath, data)
+    path_to_img = Path(f'users/{filename}.png')
+    if your_picture is not None:
+        your_picture.save(path_to_img)
+        logger.info(f'Saved {path_to_img}.')
 
 def delete_character(name, instruct=False):
     for extension in ["yml", "yaml", "json"]:
         delete_file(Path(f'characters/{name}.{extension}'))
 
     delete_file(Path(f'characters/{name}.png'))
+
+def delete_user(name, instruct=False):
+    for extension in ["yml", "yaml", "json"]:
+        delete_file(Path(f'users/{name}.{extension}'))
+
+    delete_file(Path(f'users/{name}.png'))
 
 
 def jinja_template_from_old_format(params, verbose=False):
@@ -1158,6 +1190,34 @@ def handle_character_menu_change(state):
         past_chats_update,
     ]
 
+def load_user_profile(profile_name):
+    user_folder = Path('users')
+    base_file = user_folder / profile_name
+    yaml_file = next((base_file.with_suffix(ext) for ext in ['.yaml', '.yml'] if base_file.with_suffix(ext).exists()), None)
+    img_file = base_file.with_suffix('.png')
+
+    data = {}
+    if yaml_file:
+        with open(yaml_file, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+
+    picture = None
+    if img_file.exists():
+        from PIL import Image
+        picture = Image.open(img_file)
+
+    return {
+        'name1': data.get('name', ''),
+        'user_bio': data.get('user_bio', ''),
+        'your_picture': picture
+    }
+
+
+def update_user_fields(profile_name):
+    if profile_name:
+        user_data = load_user_profile(profile_name)
+        return user_data['name1'], user_data['user_bio'], user_data['your_picture']
+    return '', '', None
 
 def handle_mode_change(state):
     history = load_latest_history(state)
@@ -1186,6 +1246,11 @@ def handle_save_character_click(name2):
         gr.update(visible=True)
     ]
 
+def handle_save_user_click(name1):
+    return [
+        name1,
+        gr.update(visible=True)
+    ]
 
 def handle_load_template_click(instruction_template):
     output = load_instruction_template(instruction_template)

@@ -11,7 +11,7 @@ from modules.text_generation import stop_everything_event
 from modules.utils import gradio
 
 inputs = ('Chat input', 'interface_state')
-reload_arr = ('history', 'name1', 'name2', 'mode', 'chat_style', 'character_menu')
+reload_arr = ('history', 'name1', 'name2', 'mode', 'chat_style', 'character_menu', 'user_menu')
 clear_arr = ('delete_chat-confirm', 'delete_chat', 'delete_chat-cancel')
 
 
@@ -111,9 +111,14 @@ def create_chat_settings_ui():
                     shared.gradio['greeting'] = gr.Textbox(value='', lines=5, label='Greeting', elem_classes=['add_scrollbar'])
 
                 with gr.Tab("User"):
-                    shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Name')
-                    shared.gradio['user_bio'] = gr.Textbox(value=shared.settings['user_bio'], lines=10, label='Description', info='Here you can optionally write a description of yourself.', placeholder='{{user}}\'s personality: ...', elem_classes=['add_scrollbar'])
+                    with gr.Row():
+                        shared.gradio['user_menu'] = gr.Dropdown(value=None, choices=utils.get_available_users(), label='User', elem_id='user-menu', elem_classes='slim-dropdown')
+                        ui.create_refresh_button(shared.gradio['user_menu'], lambda: None, lambda: {'choices': utils.get_available_users()}, 'refresh-button', interactive=not mu)
+                        shared.gradio['save_user'] = gr.Button('💾', elem_classes='refresh-button', elem_id="save-user", interactive=not mu)
+                        shared.gradio['delete_user'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
 
+                    shared.gradio['name1'] = gr.Textbox(value='', lines=1, label='Name')
+                    shared.gradio['user_bio'] = gr.Textbox(value='', lines=10, label='Description', info='Here you can optionally write a description of yourself.', placeholder='{{user}}\'s personality: ...', elem_classes=['add_scrollbar'])
                 with gr.Tab('Chat history'):
                     with gr.Row():
                         with gr.Column():
@@ -144,6 +149,7 @@ def create_chat_settings_ui():
             with gr.Column(scale=1):
                 shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil', interactive=not mu)
                 shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None, interactive=not mu)
+                shared.gradio['user_menu'].change(chat.update_user_fields, inputs=shared.gradio['user_menu'], outputs=[shared.gradio['name1'], shared.gradio['user_bio'], shared.gradio['your_picture']])
 
     with gr.Tab('Instruction template'):
         with gr.Row():
@@ -169,7 +175,6 @@ def create_chat_settings_ui():
 
             with gr.Column():
                 shared.gradio['chat_template_str'] = gr.Textbox(value=shared.settings['chat_template_str'], label='Chat template', lines=22, elem_classes=['add_scrollbar', 'monospace'])
-
 
 def create_event_handlers():
 
@@ -271,6 +276,8 @@ def create_event_handlers():
     # Save/delete a character
     shared.gradio['save_character'].click(chat.handle_save_character_click, gradio('name2'), gradio('save_character_filename', 'character_saver'), show_progress=False)
     shared.gradio['delete_character'].click(lambda: gr.update(visible=True), None, gradio('character_deleter'), show_progress=False)
+    shared.gradio['save_user'].click(chat.handle_save_user_click, gradio('name1'), gradio('save_user_filename', 'user_saver'), show_progress=False)
+    shared.gradio['delete_user'].click(lambda: gr.update(visible=True), None, gradio('user_deleter'), show_progress=False)
     shared.gradio['load_template'].click(chat.handle_load_template_click, gradio('instruction_template'), gradio('instruction_template_str', 'instruction_template'), show_progress=False)
     shared.gradio['save_template'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
