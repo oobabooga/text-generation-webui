@@ -404,7 +404,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .message-body h3,
 .message-body h4 {
     color: var(--body-text-color);
-    margin: 20px 0 10px 0;
+    margin: 20px 0 10px;
 }
 
 .dark .message q {
@@ -454,6 +454,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #default-tab .prose pre, #notebook-tab .prose pre {
     overflow: scroll;
+}
+
+.prose ul ul {
+    margin: 0;
 }
 
 .message-body code {
