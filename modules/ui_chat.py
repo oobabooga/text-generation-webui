@@ -112,13 +112,14 @@ def create_chat_settings_ui():
 
                 with gr.Tab("User"):
                     with gr.Row():
-                        shared.gradio['user_menu'] = gr.Dropdown(value=None, choices=utils.get_available_users(), label='User', elem_id='user-menu', elem_classes='slim-dropdown')
+                        shared.gradio['user_menu'] = gr.Dropdown(value=shared.settings['name1'], choices=utils.get_available_users(), label='User', elem_id='user-menu', elem_classes='slim-dropdown')
                         ui.create_refresh_button(shared.gradio['user_menu'], lambda: None, lambda: {'choices': utils.get_available_users()}, 'refresh-button', interactive=not mu)
                         shared.gradio['save_user'] = gr.Button('💾', elem_classes='refresh-button', elem_id="save-user", interactive=not mu)
                         shared.gradio['delete_user'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
 
-                    shared.gradio['name1'] = gr.Textbox(value='', lines=1, label='Name')
-                    shared.gradio['user_bio'] = gr.Textbox(value='', lines=10, label='Description', info='Here you can optionally write a description of yourself.', placeholder='{{user}}\'s personality: ...', elem_classes=['add_scrollbar'])
+                    shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='User\'s name')
+                    shared.gradio['user_bio'] = gr.Textbox(value=shared.settings['user_bio'], lines=10, label='Description', info='Here you can optionally write a description of yourself.', placeholder='{{user}}\'s personality: ...', elem_classes=['add_scrollbar'])
+
                 with gr.Tab('Chat history'):
                     with gr.Row():
                         with gr.Column():
@@ -265,6 +266,11 @@ def create_event_handlers():
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.handle_character_menu_change, gradio('interface_state'), gradio('history', 'display', 'name1', 'name2', 'character_picture', 'greeting', 'context', 'unique_id'), show_progress=False).then(
         None, None, None, js=f'() => {{{ui.update_big_picture_js}; updateBigPicture()}}')
+
+    shared.gradio['user_menu'].change(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.update_user_fields, inputs=shared.gradio['user_menu'], outputs=[shared.gradio['name1'], shared.gradio['user_bio'], shared.gradio['your_picture']]
+        )
 
     shared.gradio['mode'].change(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
