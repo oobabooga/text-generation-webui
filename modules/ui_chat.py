@@ -150,7 +150,6 @@ def create_chat_settings_ui():
             with gr.Column(scale=1):
                 shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil', interactive=not mu)
                 shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None, interactive=not mu)
-                shared.gradio['user_menu'].change(chat.update_user_fields, inputs=shared.gradio['user_menu'], outputs=[shared.gradio['name1'], shared.gradio['user_bio'], shared.gradio['your_picture']])
 
     with gr.Tab('Instruction template'):
         with gr.Row():
