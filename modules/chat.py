@@ -734,6 +734,8 @@ def load_character(character, name1, name2):
     context = greeting = ""
     greeting_field = 'greeting'
     picture = None
+    your_picture = None
+    profile_name = name1
 
     filepath = None
     for extension in ["yml", "yaml", "json"]:
@@ -754,6 +756,7 @@ def load_character(character, name1, name2):
             path.unlink()
 
     picture = generate_pfp_cache(character)
+    your_picture = upload_your_profile_picture(picture, profile_name)
 
     # Finding the bot's name
     for k in ['name', 'bot', '<|bot|>', 'char_name']:
@@ -869,18 +872,28 @@ def check_tavern_character(img):
     return _json['name'], _json['description'], _json, gr.update(interactive=True)
 
 
-def upload_your_profile_picture(img):
+def upload_your_profile_picture(img, profile_name):
     cache_folder = Path(shared.args.disk_cache_dir)
     if not cache_folder.exists():
         cache_folder.mkdir()
 
-    if img is None:
-        if Path(f"{cache_folder}/pfp_me.png").exists():
-            Path(f"{cache_folder}/pfp_me.png").unlink()
+    if profile_name is None:
+        if img is None:
+            if Path(f"{cache_folder}/pfp_me.png").exists():
+                Path(f"{cache_folder}/pfp_me.png").unlink()
+        else:
+            img = make_thumbnail(img)
+            img.save(Path(f'{cache_folder}/pfp_me.png'))
+            logger.info(f'Profile picture saved to "{cache_folder}/pfp_me.png"')
+
     else:
-        img = make_thumbnail(img)
-        img.save(Path(f'{cache_folder}/pfp_me.png'))
-        logger.info(f'Profile picture saved to "{cache_folder}/pfp_me.png"')
+        for img_path in [Path(f"users/{profile_name}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
+            if img_path.exists():
+                with Image.open(img_path) as img:
+                    img = make_thumbnail(img)
+                    img.save(Path(f'{cache_folder}/pfp_me.png'), format='PNG')
+
+        return None
 
 
 def generate_character_yaml(name, greeting, context):
@@ -1212,6 +1225,7 @@ def load_user_profile(profile_name):
     if img_file.exists():
         from PIL import Image
         picture = Image.open(img_file)
+        upload_your_profile_picture(picture, profile_name)
 
     return {
         'name1': data.get('name', ''),
@@ -1289,7 +1303,7 @@ def handle_delete_template_click(template):
 
 
 def handle_your_picture_change(picture, state):
-    upload_your_profile_picture(picture)
+    upload_your_profile_picture(picture, profile_name=None)
     html = redraw_html(state['history'], state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'], reset_cache=True)
 
     return html
