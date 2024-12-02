@@ -3,7 +3,7 @@ colorama
 datasets
 einops
 fastapi==0.112.4
-gradio==4.26.*
+gradio==5.7.*
 jinja2==3.1.4
 markdown
 numba==0.59.*
