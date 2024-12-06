@@ -387,10 +387,13 @@ def run_server():
 
         _start_cloudflared(port, shared.args.public_api_id, max_attempts=3, on_start=on_start)
     else:
-        logger.info(f'OpenAI-compatible API URL{url_s}:\n\n')
-        for addr in server_addr:
-            logger.info(f'{url_proto}{addr}:{port}')
-        logger.info('\n')
+        logger.info(f'\n\nOpenAI-compatible API URL{url_s}:')
+        for i, addr in enumerate(server_addr):
+            nl = ''
+            if i == len(server_addr) - 1:
+                nl = '\n\n'
+
+            logger.info(f'{url_proto}{addr}:{port}{nl}')
 
     if shared.args.api_key:
         if not shared.args.admin_key:
