@@ -352,12 +352,34 @@ async def handle_unload_loras():
     return JSONResponse(content="OK")
 
 
+
+
 def run_server():
-    server_addr = '0.0.0.0' if shared.args.listen else '127.0.0.1'
+    server_addrV6 = '[::]' if shared.args.listen else '[::1]'
+    server_addrV4 = '0.0.0.0' if shared.args.listen else '127.0.0.1'
     port = int(os.environ.get('OPENEDAI_PORT', shared.args.api_port))
+    server_addr = []
+
+    disable_ipv6 = os.environ.get('OPENEDAI_DISABLE_IPV6', shared.args.api_disable_ipv6)
+    if not disable_ipv6:
+        server_addr.append(server_addrV6)
+
+    disable_ipv4 = os.environ.get('OPENEDAI_DISABLE_IPV4', shared.args.api_disable_ipv4)
+    if not disable_ipv4:
+        server_addr.append(server_addrV4)
 
     ssl_certfile = os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
     ssl_keyfile = os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
+
+
+    url_proto = 'http://'
+    if ssl_keyfile and ssl_certfile:
+        url_proto = 'https://'
+
+    url_s = ""
+    if len(server_addr) > 1:
+        url_s = "s"
+
 
     if shared.args.public_api:
         def on_start(public_url: str):
@@ -365,10 +387,10 @@ def run_server():
 
         _start_cloudflared(port, shared.args.public_api_id, max_attempts=3, on_start=on_start)
     else:
-        if ssl_keyfile and ssl_certfile:
-            logger.info(f'OpenAI-compatible API URL:\n\nhttps://{server_addr}:{port}\n')
-        else:
-            logger.info(f'OpenAI-compatible API URL:\n\nhttp://{server_addr}:{port}\n')
+        logger.info(f'OpenAI-compatible API URL{url_s}:\n\n')
+        for addr in server_addr:
+            logger.info(f'{url_proto}{addr}:{port}')
+        logger.info('\n')
 
     if shared.args.api_key:
         if not shared.args.admin_key:
