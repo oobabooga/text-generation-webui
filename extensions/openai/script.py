@@ -352,8 +352,6 @@ async def handle_unload_loras():
     return JSONResponse(content="OK")
 
 
-
-
 def run_server():
     server_addrV6 = '[::]' if shared.args.listen else '[::1]'
     server_addrV4 = '0.0.0.0' if shared.args.listen else '127.0.0.1'
@@ -365,21 +363,16 @@ def run_server():
     if not disable_ipv6:
         server_addrs.append(server_addrV6)
 
-
     disable_ipv4 = os.environ.get('OPENEDAI_DISABLE_IPV4', shared.args.api_disable_ipv4)
     if not disable_ipv4:
         server_addrs.append(server_addrV4)
 
-
     ssl_certfile = os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
     ssl_keyfile = os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
-
 
     url_proto = 'http://'
     if ssl_keyfile and ssl_certfile:
         url_proto = 'https://'
-
-
 
     if shared.args.public_api:
         def on_start(public_url: str):
@@ -387,7 +380,7 @@ def run_server():
 
         _start_cloudflared(port, shared.args.public_api_id, max_attempts=3, on_start=on_start)
     else:
-        logger.info(f'\n\nRunning OpenAI-compatible API on:')
+        logger.info('\n\nRunning OpenAI-compatible API on:')
         for i, addr in enumerate(server_addrs):
             nl = ''
             if i == len(server_addrs) - 1:
