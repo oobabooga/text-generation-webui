@@ -9,9 +9,6 @@ import yaml
 
 from modules.logging_colors import logger
 
-class BrokenArgs(Exception):
-    pass
-
 # Model variables
 model = None
 tokenizer = None
