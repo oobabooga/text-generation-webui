@@ -357,16 +357,19 @@ async def handle_unload_loras():
 def run_server():
     server_addrV6 = '[::]' if shared.args.listen else '[::1]'
     server_addrV4 = '0.0.0.0' if shared.args.listen else '127.0.0.1'
+
     port = int(os.environ.get('OPENEDAI_PORT', shared.args.api_port))
-    server_addr = []
+    server_addrs = []
 
     disable_ipv6 = os.environ.get('OPENEDAI_DISABLE_IPV6', shared.args.api_disable_ipv6)
     if not disable_ipv6:
-        server_addr.append(server_addrV6)
+        server_addrs.append(server_addrV6)
+
 
     disable_ipv4 = os.environ.get('OPENEDAI_DISABLE_IPV4', shared.args.api_disable_ipv4)
     if not disable_ipv4:
-        server_addr.append(server_addrV4)
+        server_addrs.append(server_addrV4)
+
 
     ssl_certfile = os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
     ssl_keyfile = os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
@@ -376,9 +379,6 @@ def run_server():
     if ssl_keyfile and ssl_certfile:
         url_proto = 'https://'
 
-    url_s = ""
-    if len(server_addr) > 1:
-        url_s = "s"
 
 
     if shared.args.public_api:
@@ -387,10 +387,10 @@ def run_server():
 
         _start_cloudflared(port, shared.args.public_api_id, max_attempts=3, on_start=on_start)
     else:
-        logger.info(f'\n\nOpenAI-compatible API URL{url_s}:')
-        for i, addr in enumerate(server_addr):
+        logger.info(f'\n\nRunning OpenAI-compatible API on:')
+        for i, addr in enumerate(server_addrs):
             nl = ''
-            if i == len(server_addr) - 1:
+            if i == len(server_addrs) - 1:
                 nl = '\n\n'
 
             logger.info(f'{url_proto}{addr}:{port}{nl}')
@@ -405,7 +405,7 @@ def run_server():
         logger.info(f'OpenAI API admin key (for loading/unloading models):\n\n{shared.args.admin_key}\n')
 
     logging.getLogger("uvicorn.error").propagate = False
-    uvicorn.run(app, host=server_addr, port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
+    uvicorn.run(app, host=server_addrs, port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 
 
 def setup():
