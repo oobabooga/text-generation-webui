@@ -367,6 +367,10 @@ def run_server():
     if not disable_ipv4:
         server_addrs.append(server_addrV4)
 
+    if len(server_addrs) < 1:
+        logger.error('you MUST enable IPv6 or IPv4 for the API to work')
+        raise Exception('you MUST enable IPv6 or IPv4 for the API to work')
+
     ssl_certfile = os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
     ssl_keyfile = os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
 
