@@ -6,6 +6,8 @@ from exllamav2 import (
     ExLlamaV2,
     ExLlamaV2Cache,
     ExLlamaV2Cache_8bit,
+    ExLlamaV2Cache_Q8,
+    ExLlamaV2Cache_Q6,
     ExLlamaV2Cache_Q4,
     ExLlamaV2Cache_TP,
     ExLlamaV2Config,
@@ -62,7 +64,21 @@ class Exllamav2Model:
         elif shared.args.cache_4bit:
             cache_type = ExLlamaV2Cache_Q4
         else:
-            cache_type = ExLlamaV2Cache
+            if not shared.args.cache_kv_type:
+                shared.args.cache_kv_type = 'fp16'
+            kv_cache_type = shared.args.cache_kv_type.lower()
+            if kv_cache_type == 'fp16':
+                cache_type = ExLlamaV2Cache
+            elif kv_cache_type == 'fp8':
+                cache_type = ExLlamaV2Cache_8bit
+            elif kv_cache_type == 'q8':
+                cache_type = ExLlamaV2Cache_Q8
+            elif kv_cache_type == 'q6':
+                cache_type = ExLlamaV2Cache_Q6
+            elif kv_cache_type == 'q4':
+                cache_type = ExLlamaV2Cache_Q4
+            else:
+                raise ValueError(f"Unknown cache kv type: {kv_cache_type}")
 
         # Use TP if specified
         if shared.args.enable_tp:

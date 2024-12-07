@@ -11,6 +11,33 @@ from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
 
 
+llamacpp_quant_mapping = {
+    'fp16': 1,
+    'q4_0': 2,
+    'q4_1': 3,
+    'q5_0': 6,
+    'q5_1': 7,
+    'q8_0': 8,
+    'q8_1': 9,
+    'q2_k': 10,
+    'q3_k': 11,
+    'q4_k': 12,
+    'q5_k': 13,
+    'q6_k': 14,
+    'q8_k': 15,
+    'f64' : 28,
+    'bf16': 30,
+}
+
+
+def get_llamacpp_quant_type_for_string(quant_type: str): 
+    quant_type = quant_type.lower()
+    if quant_type in llamacpp_quant_mapping:
+        return llamacpp_quant_mapping[quant_type]
+    else:
+        raise ValueError(f"Unknown quant type: {quant_type}")
+
+
 def ban_eos_logits_processor(eos_token, input_ids, logits):
     logits[eos_token] = -float('inf')
     return logits
@@ -81,6 +108,11 @@ class LlamaCppModel:
         elif shared.args.cache_8bit:
             params["type_k"] = 8
             params["type_v"] = 8
+        else:
+            if shared.args.cache_k_type:
+                params["type_k"] = get_llamacpp_quant_type_for_string(shared.args.cache_k_type)
+            if shared.args.cache_v_type:
+                params["type_v"] = get_llamacpp_quant_type_for_string(shared.args.cache_v_type)
 
         result.model = Llama(**params)
         if cache_capacity > 0:

@@ -8,6 +8,7 @@ from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import shared
+from modules.llamacpp_model import get_llamacpp_quant_type_for_string
 from modules.llama_cpp_python_hijack import llama_cpp_lib
 from modules.logging_colors import logger
 
@@ -202,6 +203,12 @@ class LlamacppHF(PreTrainedModel):
         elif shared.args.cache_8bit:
             params["type_k"] = 8
             params["type_v"] = 8
+        else:
+            if shared.args.cache_k_type:
+                params["type_k"] = get_llamacpp_quant_type_for_string(shared.args.cache_k_type)
+            if shared.args.cache_v_type:
+                params["type_v"] = get_llamacpp_quant_type_for_string(shared.args.cache_v_type)
+
 
         Llama = llama_cpp_lib().Llama
         model = Llama(**params)
