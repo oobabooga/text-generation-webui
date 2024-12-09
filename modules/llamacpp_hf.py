@@ -197,18 +197,10 @@ class LlamacppHF(PreTrainedModel):
             'flash_attn': shared.args.flash_attn
         }
 
-        if shared.args.cache_4bit:
-            params["type_k"] = 2
-            params["type_v"] = 2
-        elif shared.args.cache_8bit:
-            params["type_k"] = 8
-            params["type_v"] = 8
-        else:
-            if shared.args.cache_k_type:
-                params["type_k"] = get_llamacpp_quant_type_for_string(shared.args.cache_k_type)
-            if shared.args.cache_v_type:
-                params["type_v"] = get_llamacpp_quant_type_for_string(shared.args.cache_v_type)
-
+        if shared.args.cache_k_type:
+            params["type_k"] = get_llamacpp_quant_type_for_string(shared.args.cache_k_type)
+        if shared.args.cache_v_type:
+            params["type_v"] = get_llamacpp_quant_type_for_string(shared.args.cache_v_type)
 
         Llama = llama_cpp_lib().Llama
         model = Llama(**params)

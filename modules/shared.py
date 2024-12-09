@@ -275,6 +275,61 @@ def fix_loader_name(name):
         return 'TensorRT-LLM'
 
 
+def transform_legacy_kv_cache_options(opts):
+    # Handle both argparse.Namespace and dict here to migrate both command line arguments and user config
+    def get(key):
+        if type(opts) is dict:
+            return opts.get(key)
+        return getattr(opts, key)
+    
+    def set(key, value):
+        if type(opts) is dict:
+            opts[key] = value
+        else:
+            setattr(opts, key, value)
+
+    def del_key(key):
+        # only remove from user dict, can't modify argparse.Namespace
+        if type(opts) is dict:
+            del opts[key]
+
+    loader = get('loader')
+    cache_8bit = get('cache_8bit')
+    cache_4bit = get('cache_4bit')
+
+    # XXX: formerly, both 'cache_4bit' and 'cache_8bit' could be sent, but the loaders 
+    #      handled these cases a little differently. Llama.cpp variants would prefer
+    #      4-bit, and exllama would prefer 8. We retain this legacy behaviour in the case
+    #      of misconfiguration to prevent breakage in older setups. We're stuck in the mud
+    #      if no loader was provided on boot, so just do our best, preferring 8 over 4 to
+    #      prevent as much breakage as possible.
+    if not loader:
+        if cache_8bit:
+            set('cache_k_type', 'q8_0')
+            set('cache_v_type', 'q8_0')
+            set('cache_kv_type', 'fp8')
+        elif cache_4bit:
+            set('cache_k_type', 'q4_0')
+            set('cache_v_type', 'q4_0')
+            set('cache_kv_type', 'q4')
+    elif loader.lower() in ['exllamav2', 'exllamav2_hf']:
+        if cache_8bit:
+            set('cache_kv_type', 'fp8')
+        elif cache_4bit:
+            set('cache_kv_type', 'q4')
+    elif loader.lower() in ['llama.cpp', 'llamacpp_hf']:
+        if cache_4bit:
+            set('cache_k_type', 'q4_0')
+            set('cache_v_type', 'q4_0')
+        elif cache_8bit:
+            set('cache_k_type', 'q8_0')
+            set('cache_v_type', 'q8_0')
+    
+    del_key('cache_4bit')
+    del_key('cache_8bit')
+    return opts
+    
+
 def add_extension(name, last=False):
     if args.extensions is None:
         args.extensions = [name]
@@ -303,10 +358,13 @@ def load_user_config():
     else:
         user_config = {}
 
+    for model_name in user_config:
+        user_config[model_name] = transform_legacy_kv_cache_options(user_config[model_name])
     return user_config
 
 
 args.loader = fix_loader_name(args.loader)
+args = transform_legacy_kv_cache_options(args)
 
 # Activate the multimodal extension
 if args.multimodal_pipeline is not None:

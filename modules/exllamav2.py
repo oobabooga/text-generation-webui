@@ -59,26 +59,22 @@ class Exllamav2Model:
             model.load(split)
 
         # Determine the correct cache type
-        if shared.args.cache_8bit:
+        kv_cache_type = 'fp16'
+        if shared.args.cache_kv_type:
+            kv_cache_type = shared.args.cache_kv_type.lower()
+        
+        if kv_cache_type == 'fp16':
+            cache_type = ExLlamaV2Cache
+        elif kv_cache_type == 'fp8':
             cache_type = ExLlamaV2Cache_8bit
-        elif shared.args.cache_4bit:
+        elif kv_cache_type == 'q8':
+            cache_type = ExLlamaV2Cache_Q8
+        elif kv_cache_type == 'q6':
+            cache_type = ExLlamaV2Cache_Q6
+        elif kv_cache_type == 'q4':
             cache_type = ExLlamaV2Cache_Q4
         else:
-            if not shared.args.cache_kv_type:
-                shared.args.cache_kv_type = 'fp16'
-            kv_cache_type = shared.args.cache_kv_type.lower()
-            if kv_cache_type == 'fp16':
-                cache_type = ExLlamaV2Cache
-            elif kv_cache_type == 'fp8':
-                cache_type = ExLlamaV2Cache_8bit
-            elif kv_cache_type == 'q8':
-                cache_type = ExLlamaV2Cache_Q8
-            elif kv_cache_type == 'q6':
-                cache_type = ExLlamaV2Cache_Q6
-            elif kv_cache_type == 'q4':
-                cache_type = ExLlamaV2Cache_Q4
-            else:
-                raise ValueError(f"Unknown cache kv type: {kv_cache_type}")
+            raise ValueError(f"Unknown cache kv type: {kv_cache_type}")
 
         # Use TP if specified
         if shared.args.enable_tp:
