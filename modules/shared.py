@@ -290,7 +290,7 @@ def transform_legacy_kv_cache_options(opts):
 
     def del_key(key):
         # only remove from user dict, can't modify argparse.Namespace
-        if type(opts) is dict:
+        if type(opts) is dict and key in opts:
             del opts[key]
 
     loader = get('loader')
