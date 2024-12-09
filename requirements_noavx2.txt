@@ -10,7 +10,7 @@ markdown
 numba==0.59.*
 numpy==1.26.*
 pandas
-peft==0.12.*
+peft==0.14.*
 Pillow>=9.5.0
 psutil
 pydantic==2.8.2
