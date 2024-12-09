@@ -118,8 +118,6 @@ def create_ui():
                             shared.gradio['flash_attn'] = gr.Checkbox(label="flash_attn", value=shared.args.flash_attn, info='Use flash-attention.')
                             shared.gradio['auto_devices'] = gr.Checkbox(label="auto-devices", value=shared.args.auto_devices)
                             shared.gradio['tensorcores'] = gr.Checkbox(label="tensorcores", value=shared.args.tensorcores, info='NVIDIA only: use llama-cpp-python compiled with tensor cores support. This may increase performance on newer cards.')
-                            # shared.gradio['cache_8bit'] = gr.Checkbox(label="cache_8bit", value=shared.args.cache_8bit, info='Use 8-bit cache to save VRAM.')
-                            # shared.gradio['cache_4bit'] = gr.Checkbox(label="cache_4bit", value=shared.args.cache_4bit, info='Use Q4 cache to save VRAM.')
                             shared.gradio['cache_k_type'] = gr.Dropdown(label="cache_k_type", value=shared.args.cache_k_type, info='KV cache K type', choices=['fp16', 'q4_0', 'q4_1', 'q5_0', 'q5_1', 'q8_0', 'q8_1', 'q2_k', 'q3_k', 'q4_k', 'q5_k', 'q6_k', 'q8_k', 'bf16' ] )
                             shared.gradio['cache_v_type'] = gr.Dropdown(label="cache_v_type", value=shared.args.cache_v_type, info='KV cache V type', choices=['fp16', 'q4_0', 'q4_1', 'q5_0', 'q5_1', 'q8_0', 'q8_1', 'q2_k', 'q3_k', 'q4_k', 'q5_k', 'q6_k', 'q8_k', 'bf16' ] )
                             shared.gradio['cache_kv_type'] = gr.Dropdown(label="cache_kv_type", value=shared.args.cache_kv_type, info='KV cache type', choices=['fp16', 'fp8', 'q8', 'q6', 'q4'])
