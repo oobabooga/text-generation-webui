@@ -25,7 +25,6 @@ llamacpp_quant_mapping = {
     'q5_k': 13,
     'q6_k': 14,
     'q8_k': 15,
-    'f64' : 28,
     'bf16': 30,
 }
 
