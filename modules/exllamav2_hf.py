@@ -48,8 +48,8 @@ class Exllamav2HF(PreTrainedModel):
 
         # Determine the correct cache type
         kv_cache_type = 'fp16'
-        if shared.args.cache_kv_type:
-            kv_cache_type = shared.args.cache_kv_type.lower()
+        if shared.args.exl_cache_type:
+            kv_cache_type = shared.args.exl_cache_type.lower()
         
         if kv_cache_type == 'fp16':
             cache_type = ExLlamaV2Cache

@@ -12,6 +12,7 @@ from modules.text_generation import get_max_prompt_length
 
 
 llamacpp_quant_mapping = {
+    'f32': 0,
     'fp16': 1,
     'q4_0': 2,
     'q4_1': 3,
@@ -25,6 +26,7 @@ llamacpp_quant_mapping = {
     'q5_k': 13,
     'q6_k': 14,
     'q8_k': 15,
+    'iq4_nl': 20,
     'bf16': 30,
 }
 
@@ -101,10 +103,9 @@ class LlamaCppModel:
             'flash_attn': shared.args.flash_attn
         }
 
-        if shared.args.cache_k_type:
-            params["type_k"] = get_llamacpp_quant_type_for_string(shared.args.cache_k_type)
-        if shared.args.cache_v_type:
-            params["type_v"] = get_llamacpp_quant_type_for_string(shared.args.cache_v_type)
+        if shared.args.lcpp_cache_type:
+            params["type_k"] = get_llamacpp_quant_type_for_string(shared.args.lcpp_cache_type)
+            params["type_v"] = get_llamacpp_quant_type_for_string(shared.args.lcpp_cache_type)
 
         result.model = Llama(**params)
         if cache_capacity > 0:

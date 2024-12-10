@@ -47,9 +47,8 @@ settings = {
     'max_updates_second': 0,
     'prompt_lookup_num_tokens': 0,
     'custom_stopping_strings': '',
-    'cache_k_type': 'FP16',
-    'cache_v_type': 'FP16',
-    'cache_kv_type': 'FP16',
+    'lcpp_cache_type': 'fp16',
+    'exl_cache_type': 'fp16',
     'custom_token_bans': '',
     'auto_max_new_tokens': False,
     'ban_eos_token': False,
@@ -128,8 +127,7 @@ group.add_argument('--no-mmap', action='store_true', help='Prevent mmap from bei
 group.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
 group.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
 group.add_argument('--tensor_split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.')
-group.add_argument('--cache_k_type', type=str, default='fp16', help='KV cache K-quant type.')
-group.add_argument('--cache_v_type', type=str, default='fp16', help='KV cache V-quant type.')
+group.add_argument('--lcpp_cache_type', type=str, default='fp16', help='KV cache K-quant type. May be one of fp16, q8_0, q4_0.')
 group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
 group.add_argument('--logits_all', action='store_true', help='Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower.')
 group.add_argument('--no_offload_kqv', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
@@ -148,7 +146,7 @@ group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF: Creat
 group.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
 group.add_argument('--no_xformers', action='store_true', help='Force xformers to not be used.')
 group.add_argument('--no_sdpa', action='store_true', help='Force Torch SDPA to not be used.')
-group.add_argument('--cache_kv_type', type=str, default='fp16', help='KV cache type; may be one of FP16, FP8, Q8, Q6 or Q4.')
+group.add_argument('--exl_cache_type', type=str, default='fp16', help='KV cache type; may be one of FP16, FP8, Q8, Q6 or Q4.')
 group.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
 group.add_argument('--enable_tp', action='store_true', help='Enable Tensor Parallelism (TP) in ExLlamaV2.')
 
@@ -288,10 +286,13 @@ def transform_legacy_kv_cache_options(opts):
         else:
             setattr(opts, key, value)
 
-    def del_key(key):
-        # only remove from user dict, can't modify argparse.Namespace
-        if type(opts) is dict and key in opts:
-            del opts[key]
+    def del_key(key, fallback_set):
+        # only remove from user dict, can't delete from argparse.Namespace
+        if type(opts) is dict:
+            if key in opts:
+                del opts[key]
+        else:
+            setattr(opts, key, fallback_set)
 
     loader = get('loader')
     cache_8bit = get('cache_8bit')
@@ -305,28 +306,24 @@ def transform_legacy_kv_cache_options(opts):
     #      prevent as much breakage as possible.
     if not loader:
         if cache_8bit:
-            set('cache_k_type', 'q8_0')
-            set('cache_v_type', 'q8_0')
-            set('cache_kv_type', 'fp8')
+            set('lcpp_cache_type', 'q8_0')
+            set('exl_cache_type', 'fp8')
         elif cache_4bit:
-            set('cache_k_type', 'q4_0')
-            set('cache_v_type', 'q4_0')
-            set('cache_kv_type', 'q4')
+            set('lcpp_cache_type', 'q4_0')
+            set('exl_cache_type', 'q4')
     elif loader.lower() in ['exllamav2', 'exllamav2_hf']:
         if cache_8bit:
-            set('cache_kv_type', 'fp8')
+            set('exl_cache_type', 'fp8')
         elif cache_4bit:
-            set('cache_kv_type', 'q4')
+            set('exl_cache_type', 'q4')
     elif loader.lower() in ['llama.cpp', 'llamacpp_hf']:
         if cache_4bit:
-            set('cache_k_type', 'q4_0')
-            set('cache_v_type', 'q4_0')
+            set('lcpp_cache_type', 'q4_0')
         elif cache_8bit:
-            set('cache_k_type', 'q8_0')
-            set('cache_v_type', 'q8_0')
+            set('lcpp_cache_type', 'q8_0')
     
-    del_key('cache_4bit')
-    del_key('cache_8bit')
+    del_key('cache_4bit', False)
+    del_key('cache_8bit', False)
     return opts
     
 
