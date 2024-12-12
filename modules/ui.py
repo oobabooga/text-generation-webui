@@ -50,6 +50,7 @@ theme = gr.themes.Default(
     button_secondary_border_color="var(--border-color-primary)",
 
     input_background_fill_dark='var(--darker-gray)',
+    checkbox_background_color_dark='var(--darker-gray)',
 
     # block_background_fill_dark='var(--darker-gray)',
     # block_border_color_dark='var(--border-color-dark)',
@@ -57,11 +58,14 @@ theme = gr.themes.Default(
     block_border_color_dark='transparent',
 
     input_border_color_dark='var(--border-color-dark)',
+    checkbox_border_color_dark='var(--border-color-dark)',
     border_color_primary_dark='var(--border-color-dark)',
     button_secondary_border_color_dark='var(--border-color-dark)',
     body_background_fill_dark='var(--dark-gray)',
 
-    button_secondary_background_fill_dark='transparent'
+    button_secondary_background_fill_dark='transparent',
+
+    block_shadow_dark='none',
 )
 
 if Path("notification.mp3").exists():
