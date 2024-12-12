@@ -4,10 +4,6 @@
     padding-top: 0;
 }
 
-.chat > .messages {
-    padding-top: 18px !important;
-}
-
 .message {
     display: grid;
     grid-template-columns: 60px 1fr;
