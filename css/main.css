@@ -579,7 +579,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #show-controls {
     position: absolute;
-    height: 100%;
     background-color: transparent;
     border: 0 !important;
     border-radius: 0;
@@ -773,6 +772,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         width: 260px;
         background-color: var(--darker-gray);
         padding: 0.5rem;
+        height: 100vh;
     }
 }
 
@@ -809,7 +809,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #past-chats {
-    max-height: calc(100vh - 195px);
+    max-height: calc(100vh - 90px);
     overflow-y: scroll !important;
     border-radius: 0;
     scrollbar-width: none; /* Hide scrollbar in Firefox by default */
