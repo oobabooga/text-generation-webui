@@ -153,7 +153,7 @@ gradio-app > :first-child {
 }
 
 .textbox_default textarea {
-    height: calc(100vh - 117px);
+    height: calc(100vh - 201px);
 }
 
 .textbox_default_output textarea {
@@ -161,7 +161,7 @@ gradio-app > :first-child {
 }
 
 .textbox textarea {
-    height: calc(100vh - 170px);
+    height: calc(100vh - 172px);
 }
 
 .textbox_logits textarea {
@@ -305,11 +305,11 @@ audio {
 }
 
 #default-token-counter {
-    top: calc(100vh - 116px) !important;
+    top: calc(100vh - 200px) !important;
 }
 
 #notebook-token-counter {
-    top: calc(100vh - 169px) !important;
+    top: calc(100vh - 171px) !important;
 }
 
 #default-token-counter span, #notebook-token-counter span {
