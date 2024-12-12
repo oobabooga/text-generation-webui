@@ -773,6 +773,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         background-color: var(--darker-gray);
         padding: 0.5rem;
         height: 100vh;
+        flex-shrink: 0;
+        box-sizing: content-box;
+    }
+
+    #past-chats-row + * {
+        width: unset;
+        flex-grow: 1;
+        flex-shrink: 1;
     }
 }
 
