@@ -842,7 +842,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #past-chats > :nth-child(3) {
-    gap: 0;
+    gap: 0.25rem;
 }
 
 #past-chats::-webkit-scrollbar {
@@ -861,4 +861,24 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     #past-chats {
         max-height: 300px;
     }
+}
+
+#past-chats input {
+    display: none;
+}
+
+#past-chats label {
+    padding: 0.75rem;
+    font-size: 12.5px;
+    font-weight: 400;
+}
+
+#past-chats .selected,
+#past-chats label:hover {
+    background-color: var(--selected-item-color-dark) !important;
+    border-radius: 0.5rem;
+}
+
+#past-chats label:hover {
+    cursor: pointer;
 }
