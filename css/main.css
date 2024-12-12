@@ -344,6 +344,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-top: 0;
 }
 
+#chat-tab > :nth-child(1) {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+}
+
 #chat-tab button#Generate, #chat-tab button#stop {
     width: 89.3438px !important;
 }
@@ -353,7 +359,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-tab > :first-child, #extensions {
-    max-width: 880px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -760,21 +765,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 ---------------------------------------------- */
 @media screen and (width >= 1327px) {
     #past-chats-row {
-        position: absolute;
-        top: 36px;
-        left: 0;
-        width: calc(0.5*(var(--document-width) - 880px - 120px - 16px*2));
-        max-width: 300px;
-        margin-left: calc(-0.5*(var(--document-width) - 880px - 14px - 16px * 2));
+        width: 260px;
     }
 
     #chat-controls {
-        position: absolute;
-        top: 16px;
-        right: 0;
-        width: calc(0.5*(var(--document-width) - 880px - 120px - 16px*2));
-        max-width: 400px;
-        margin-right: calc(-0.5*(var(--document-width) - 880px - 14px - 16px * 2));
+        width: 260px;
     }
 }
 
