@@ -1,7 +1,6 @@
 .chat {
     background: transparent;
-    padding: 24px 19px;
-    padding-right: 19px !important;
+    padding: 0px;
     padding-top: 0;
 }
 
@@ -44,12 +43,12 @@
     background: #f4f4f4;
     margin-top: 9px !important;
     margin-bottom: 12px !important;
-    border-radius: 7px;
-    border: 1px solid var(--border-color-primary);
+    border-radius: 0px;
+    border: 0;
 }
 
 .dark .chat .assistant-message {
-    background: var(--color-grey-800);
+    background: var(--light-gray);
 }
 
 .gradio-container .chat .user-message {

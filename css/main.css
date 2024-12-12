@@ -1,6 +1,7 @@
 :root {
     --darker-gray: #202123;
     --dark-gray: #343541;
+    --light-gray: #444654;
     --border-color-dark: #525252;
     --header-width: 112px;
     --selected-item-color-dark: #32333e;
@@ -397,7 +398,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     max-width: 880px;
     min-height: var(--chat-height);
     overflow-y: auto;
-    padding-right: 15px;
     display: flex;
     flex-direction: column;
     word-break: break-word;
