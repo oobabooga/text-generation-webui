@@ -23,7 +23,7 @@ def create_ui():
                 with gr.Tab('Raw'):
                     with gr.Row():
                         shared.gradio['textbox-notebook'] = gr.Textbox(value='', lines=27, elem_id='textbox-notebook', elem_classes=['textbox', 'add_scrollbar'])
-                        shared.gradio['token-counter-notebook'] = gr.HTML(value="<span>0</span>", elem_classes=["token-counter"])
+                        shared.gradio['token-counter-notebook'] = gr.HTML(value="<span>0</span>", elem_id="notebook-token-counter")
 
                 with gr.Tab('Markdown'):
                     shared.gradio['markdown_render-notebook'] = gr.Button('Render')

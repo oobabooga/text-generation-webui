@@ -193,7 +193,7 @@ gradio-app > :first-child {
         height: calc(100dvh - 259px);
     }
 
-    div .default-token-counter {
+    div #default-token-counter {
         top: calc( 0.5 * (100dvh - 236px) ) !important;
     }
 
@@ -270,7 +270,8 @@ button {
 
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb,
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--neutral-700);
+    background: #ccc;
+    border-radius: 10px;
 }
 
 .pretty_scrollbar::-webkit-resizer {
@@ -278,7 +279,8 @@ button {
 }
 
 .dark .pretty_scrollbar::-webkit-resizer {
-    background: #374151;
+    background: #ccc;
+    border-radius: 10px;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-corner {
@@ -290,20 +292,26 @@ audio {
 }
 
 /* Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui */
-.token-counter {
+#default-token-counter, #notebook-token-counter {
     position: absolute !important;
-    top: calc( 0.5 * (100dvh - 218px) ) !important;
-    right: 2.5px;
     z-index: 100;
     background: var(--input-background-fill) !important;
     min-height: 0 !important;
+    width: 0;
+    text-align: left;
+    direction: rtl;
+    right: 5px;
 }
 
-.default-token-counter {
-    top: calc(-56.75px + 0.5 * 100dvh) !important;
+#default-token-counter {
+    top: calc(100vh - 116px) !important;
 }
 
-.token-counter span {
+#notebook-token-counter {
+    top: calc(100vh - 169px) !important;
+}
+
+#default-token-counter span, #notebook-token-counter span {
     padding: 1px;
     box-shadow: 0 0 0 0.3em rgb(192 192 192 / 15%), inset 0 0 0.6em rgb(192 192 192 / 7.5%);
     border: 2px solid rgb(192 192 192 / 40%) !important;
