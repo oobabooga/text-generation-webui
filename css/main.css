@@ -120,7 +120,7 @@ gradio-app > :first-child {
     display: block !important;
     text-wrap: nowrap;
     z-index: 90;
-    position: absolute;
+    position: fixed;
     display: flex !important;
     flex-direction: column;
     height: 100vh;
