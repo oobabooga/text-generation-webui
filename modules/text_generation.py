@@ -381,8 +381,14 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         if not state['stream']:
             with torch.no_grad():
                 output = shared.model.generate(**generate_params)[0]
-                if cuda:
+                print(f"Available devices - MPS: {torch.backends.mps.is_available()}, CUDA: {torch.cuda.is_available()}")
+                print(f"Current device for output tensor: {output.device}")
+                if torch.backends.mps.is_available():
+                    output = output.to('mps')
+                elif torch.cuda.is_available():
                     output = output.cuda()
+                else:
+                    output = output.cpu()
 
             starting_from = 0 if shared.is_seq2seq else len(input_ids[0])
             yield get_reply_from_output_ids(output, state, starting_from=starting_from)
