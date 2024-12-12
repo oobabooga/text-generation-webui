@@ -62,6 +62,7 @@ theme = gr.themes.Default(
     button_secondary_border_color_dark='var(--border-color-dark)',
     body_background_fill_dark='var(--dark-gray)',
 
+    button_primary_background_fill_dark='transparent',
     button_secondary_background_fill_dark='transparent',
     checkbox_label_background_fill_dark='transparent',
 
