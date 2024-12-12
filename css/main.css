@@ -768,12 +768,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   Past chat histories in a side bar on desktop
 ---------------------------------------------- */
 @media screen and (width >= 1327px) {
+    #chat-controls,
     #past-chats-row {
         width: 260px;
-    }
-
-    #chat-controls {
-        width: 260px;
+        background-color: var(--darker-gray);
+        padding: 0.5rem;
     }
 }
 
