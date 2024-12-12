@@ -408,22 +408,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat-parent {
-    height: calc(100dvh - 98px - var(--header-height) - var(--input-delta));
+    height: calc(100dvh - 98px - var(--input-delta));
     overflow: auto !important;
     border-radius: 0 !important;
     margin-bottom: var(--input-delta) !important;
-}
-
-/* On desktop, automatically hide the chat scroll bar
- * when not hovered. */
-@media (hover: hover) and (pointer: fine) {
-    .chat-parent {
-        visibility: hidden;
-    }
-
-    .chat-parent:focus, .chat-parent:hover {
-        visibility: visible;
-    }
 }
 
 .chat-parent .prose {
@@ -431,12 +419,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .old-ui .chat-parent {
-    height: calc(100dvh - 192px - var(--header-height) - var(--input-delta));
+    height: calc(100dvh - 192px - var(--input-delta));
     margin-bottom: var(--input-delta) !important;
 }
 
 .chat-parent.bigchat {
-    height: calc(100dvh - 98px - var(--header-height) - var(--input-delta)) !important;
+    height: calc(100dvh - 98px - var(--input-delta)) !important;
     margin-bottom: var(--input-delta) !important;
 }
 
