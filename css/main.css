@@ -1,5 +1,19 @@
+:root {
+    --darker-gray: #202123;
+    --dark-gray: #343541;
+    --border-color-dark: #525252;
+    --header-width: 112px;
+    --selected-item-color-dark: #32333e;
+}
+
 .tabs.svelte-710i53 {
     margin-top: 0
+}
+
+div.svelte-sfqy0y,
+div.svelte-iyf88w {
+    background: transparent;
+    border: 0;
 }
 
 .py-6 {
@@ -86,8 +100,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 }
 
 gradio-app > :first-child {
-    padding-left: var(--size-4) !important;
-    padding-right: var(--size-4) !important;
+    padding: 0 !important;
 }
 
 .header_bar {
@@ -95,11 +108,29 @@ gradio-app > :first-child {
     box-shadow: 0 0 3px rgba(22 22 22 / 35%);
     margin-bottom: 0;
     overflow-x: scroll;
-    margin-left: calc(-1 * var(--size-4));
-    margin-right: calc(-1 * var(--size-4));
     display: block !important;
     text-wrap: nowrap;
     z-index: 90;
+    position: absolute;
+    display: flex !important;
+    flex-direction: column;
+    height: 100vh;
+    width: var(--header-width);
+    background-color: var(--darker-gray) !important;
+}
+
+.header_bar button {
+    margin: 0;
+    padding: 0.75rem;
+}
+
+.header_bar button.selected {
+    border: 0;
+    background: var(--selected-item-color-dark);
+}
+
+.header_bar ~ * {
+    margin-left: var(--header-width);
 }
 
 .dark .header_bar {
@@ -272,7 +303,7 @@ audio {
 }
 
 .no-background {
-    background: var(--background-fill-primary) !important;
+    background: transparent;
     padding: 0 !important;
 }
 
