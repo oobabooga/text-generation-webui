@@ -39,7 +39,6 @@ theme = gr.themes.Default(
     font_mono=['IBM Plex Mono', 'ui-monospace', 'Consolas', 'monospace'],
 ).set(
     border_color_primary='#c5c5d2',
-    button_large_padding='6px 12px',
     body_text_color_subdued='#484848',
     background_fill_secondary='#eaeaea',
     background_fill_primary='var(--neutral-50)',
@@ -64,8 +63,11 @@ theme = gr.themes.Default(
     body_background_fill_dark='var(--dark-gray)',
 
     button_secondary_background_fill_dark='transparent',
+    checkbox_label_background_fill_dark='transparent',
 
     block_shadow_dark='none',
+    button_large_radius='0.375rem',
+    button_large_padding='6px 12px',
 )
 
 if Path("notification.mp3").exists():
