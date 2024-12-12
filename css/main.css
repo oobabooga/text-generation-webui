@@ -80,6 +80,10 @@ ol li p, ul li p {
     border: 0;
 }
 
+#default-tab, #notebook-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab {
+    padding: 1rem;
+}
+
 .gradio-container {
     max-width: 100% !important;
     padding-top: 0 !important;
@@ -148,23 +152,23 @@ gradio-app > :first-child {
 }
 
 .textbox_default textarea {
-    height: calc(100dvh - 271px);
+    height: calc(100vh - 117px);
 }
 
 .textbox_default_output textarea {
-    height: calc(100dvh - 185px);
+    height: calc(100vh - 117px);
 }
 
 .textbox textarea {
-    height: calc(100dvh - 241px);
+    height: calc(100vh - 170px);
 }
 
 .textbox_logits textarea {
-    height: calc(100dvh - 236px);
+    height: calc(100vh - 205px);
 }
 
 .textbox_logits_notebook textarea {
-    height: calc(100dvh - 292px);
+    height: calc(100vh - 221px);
 }
 
 .monospace textarea {
@@ -289,14 +293,14 @@ audio {
 .token-counter {
     position: absolute !important;
     top: calc( 0.5 * (100dvh - 218px) ) !important;
-    right: 2px;
+    right: 2.5px;
     z-index: 100;
     background: var(--input-background-fill) !important;
     min-height: 0 !important;
 }
 
 .default-token-counter {
-    top: calc( 0.5 * (100dvh - 248px) ) !important;
+    top: calc(-56.75px + 0.5 * 100dvh) !important;
 }
 
 .token-counter span {
