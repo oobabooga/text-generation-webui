@@ -775,7 +775,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     #past-chats-row {
         width: 260px;
         background-color: var(--darker-gray);
-        padding: 1rem;
+        padding: 0.5rem;
         height: 100vh;
         flex-shrink: 0;
         box-sizing: content-box;
