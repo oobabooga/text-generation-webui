@@ -5,7 +5,7 @@
 }
 
 .chat > .messages:first-child {
-    padding-top: 0px;
+    padding-top: 0px !important;
 }
 
 .message {
@@ -45,7 +45,7 @@
 
 .chat .user-message .text,
 .chat .assistant-message .text {
-    max-width: 48rem;
+    max-width: 40.25rem;
     margin-left: auto;
     margin-right: auto;
 }

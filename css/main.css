@@ -7,6 +7,20 @@
     --selected-item-color-dark: #32333e;
 }
 
+@font-face {
+  font-family: 'Inter';
+  src: url('file/css/Inter/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+  font-weight: 100 900; /* Supports weights from Thin (100) to Black (900) */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('file/css/Inter/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+}
+
 .tabs.svelte-710i53 {
     margin-top: 0
 }
@@ -442,22 +456,23 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-top: 20px;
 }
 
-.chat .message:last-child {
-    margin-bottom: 0 !important;
-    padding-bottom: 15px !important;
-}
-
 .message-body p, .message-body li {
     font-size: 1rem !important;
-    line-height: 1.5rem !important;
+    line-height: 28px !important;
+    color: #d1d5db;
 }
 
 .message-body p, .chat .message-body ul, .chat .message-body ol {
-    margin-bottom: 16px !important;
+    margin-top: 1.25em !important;
 }
 
-.message-body p:last-child, .chat .message-body ul:last-child, .chat .message-body ol:last-child {
-    margin-bottom: 0 !important;
+.message-body p:first-child, .chat .message-body ul:first-child, .chat .message-body ol:first-child {
+    margin-top: 0 !important;
+}
+
+.message-body li {
+    margin-top: 1.25em;
+    margin-bottom: 1.25em;
 }
 
 .message-body h1,
@@ -484,21 +499,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-inline-start: 2em;
 }
 
-.message-body li:not(:last-child) {
-    margin-top: 0 !important;
-    margin-bottom: 2px !important;
-}
-
-.message-body li:last-child {
-    margin-bottom: 0 !important;
-}
-
 .message-body li > p {
     display: inline !important;
 }
 
 .message-body ul, .message-body ol {
-    font-size: 15px !important;
+    font-size: 16px !important;
 }
 
 .message-body ul {
