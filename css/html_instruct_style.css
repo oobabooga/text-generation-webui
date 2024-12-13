@@ -25,24 +25,9 @@
     display: none;
 }
 
-.message-body p, .message-body li {
-    font-size: 15px !important;
-    line-height: 24px !important;
-}
-
-.message-body p, .chat .message-body ul, .chat .message-body ol {
-    margin-bottom: 16px !important;
-}
-
-.message-body p:last-child, .chat .message-body ul:last-child, .chat .message-body ol:last-child {
-    margin-bottom: 0 !important;
-}
-
 .chat .assistant-message {
-    padding: 20px;
+    padding: 1.5rem 1rem;
     background: #f4f4f4;
-    margin-top: 9px !important;
-    margin-bottom: 12px !important;
     border-radius: 0;
     border: 0;
 }
@@ -52,7 +37,7 @@
 }
 
 .chat .user-message {
-    padding: 20px;
+    padding: 1.5rem 1rem;
     background-color: transparent;
     border-radius: 0px;
     border-bottom-right-radius: 0;
@@ -63,10 +48,6 @@
     max-width: 48rem;
     margin-left: auto;
     margin-right: auto;
-}
-
-.chat .assistant-message:last-child, .chat .user-message:last-child {
-    margin-bottom: 0 !important;
 }
 
 code {

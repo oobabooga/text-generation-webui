@@ -447,6 +447,19 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-bottom: 15px !important;
 }
 
+.message-body p, .message-body li {
+    font-size: 1rem !important;
+    line-height: 1.5rem !important;
+}
+
+.message-body p, .chat .message-body ul, .chat .message-body ol {
+    margin-bottom: 16px !important;
+}
+
+.message-body p:last-child, .chat .message-body ul:last-child, .chat .message-body ol:last-child {
+    margin-bottom: 0 !important;
+}
+
 .message-body h1,
 .message-body h2,
 .message-body h3,
