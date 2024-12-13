@@ -14,13 +14,23 @@
     color: #d1d5db !important;
 }
 
-.chat .message-body p, .chat .message-body ul, .chat .message-body ol {
+.chat .message-body p,
+.chat .message-body ul,
+.chat .message-body ol {
     margin-top: 1.25em;
     margin-bottom: 1.25em !important;
 }
 
-.chat .message-body p:first-child, .chat .message-body ul:first-child, .chat .message-body ol:first-child {
+.chat .message-body p:first-child,
+.chat .message-body ul:first-child,
+.chat .message-body ol:first-child {
     margin-top: 0 !important;
+}
+
+.chat .message-body p:last-child,
+.chat .message-body ul:last-child,
+.chat .message-body ol:last-child {
+    margin-bottom: 0 !important;
 }
 
 .chat .message-body li {
