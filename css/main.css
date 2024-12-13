@@ -900,12 +900,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     gap: 0.25rem;
 }
 
-@media screen and (width < 1327px) {
-    #past-chats {
-        max-height: 300px;
-    }
-}
-
 #past-chats input {
     display: none;
 }
