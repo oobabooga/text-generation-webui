@@ -361,10 +361,9 @@ for (var i = 0; i < 2; i++) {
 parent.insertBefore(elementToMove, parent.firstChild);
 
 //------------------------------------------------
-// Make the chat input grow upwards instead of downwards
+// Position the chat input
 //------------------------------------------------
-document.getElementById("show-controls").parentNode.style.position = "absolute";
-document.getElementById("show-controls").parentNode.style.bottom = "0px";
+document.getElementById("show-controls").parentNode.classList.add('chat-input-positioned');
 
 //------------------------------------------------
 // Focus on the chat input

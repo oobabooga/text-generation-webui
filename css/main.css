@@ -536,6 +536,20 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     border: none;
 }
 
+#chat-input textarea {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+    background: var(--light-gray);
+    color: white !important;
+    border-color: #292c3b;
+}
+
+#chat-input textarea::placeholder {
+    color: #9ca3af;
+}
+
 #chat-input textarea:focus {
     box-shadow: none !important;
 }
@@ -546,6 +560,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #chat-input .progress-text {
     display: none;
+}
+
+.chat-input-positioned {
+    position: absolute;
+    bottom: 0;
+    max-width: 54rem;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 @media print {
@@ -591,7 +613,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #show-controls label {
     z-index: 1000;
     position: absolute;
-    right: 0;
+    right: 30px;
+    top: 10px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

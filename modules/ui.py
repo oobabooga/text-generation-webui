@@ -73,6 +73,8 @@ theme = gr.themes.Default(
     block_shadow_dark='none',
     button_large_radius='0.375rem',
     button_large_padding='6px 12px',
+
+    input_radius='0.375rem',
 )
 
 if Path("notification.mp3").exists():
