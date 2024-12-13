@@ -737,7 +737,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-input-row {
-    padding-bottom: 3rem;
+    padding-bottom: 2rem;
     padding-left: 1rem;
     padding-right: 1rem;
 }
@@ -785,6 +785,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
     #chat-controls {
         padding: 1rem;
+        padding-bottom: 0;
     }
 
     #past-chats-row + * {
