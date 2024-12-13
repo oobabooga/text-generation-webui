@@ -453,11 +453,6 @@ function updateCssProperties() {
     document.documentElement.style.setProperty("--chat-height", newChatHeight);
     document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
 
-    // Get and set header height
-    const header = document.querySelector(".header_bar");
-    const headerHeight = `${header.clientHeight}px`;
-    document.documentElement.style.setProperty("--header-height", headerHeight);
-
     // Adjust scrollTop based on input height change
     if (chatInputHeight !== currentChatInputHeight) {
       if (!isScrolled && chatInputHeight < currentChatInputHeight) {
