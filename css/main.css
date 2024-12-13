@@ -737,7 +737,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-input-row {
-    padding-bottom: 20px;
+    padding-bottom: 2rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
 }
 
 .old-ui #chat-input-row, #chat-input-row.bigchat {
