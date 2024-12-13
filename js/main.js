@@ -444,12 +444,7 @@ function updateCssProperties() {
 
   // Check if the chat container is visible
   if (chatContainer.clientHeight > 0) {
-    var numericHeight = chatContainer.parentNode.clientHeight - chatInputHeight + 40 - 100;
-    if (document.getElementById("chat-tab").style.paddingBottom != "") {
-      numericHeight += 20;
-    }
-
-    const newChatHeight = `${numericHeight}px`;
+    const newChatHeight = `${chatContainer.parentNode.clientHeight - chatInputHeight + 40 - 100 - 20}px`;
     document.documentElement.style.setProperty("--chat-height", newChatHeight);
     document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
 
