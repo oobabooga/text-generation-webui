@@ -49,10 +49,8 @@
 
 .chat .user-message {
     padding: 20px;
-    padding-left: 0;
-    padding-right: 0;
     background-color: transparent;
-    border-radius: 8px;
+    border-radius: 0px;
     border-bottom-right-radius: 0;
 }
 
