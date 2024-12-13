@@ -416,10 +416,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     visibility: visible;
 }
 
-.chat .text {
-    max-width: 48rem;
+.chat .message {
+    width: min(100%, 48rem);
     margin-left: auto;
     margin-right: auto;
+    text-align: start;
 }
 
 .old-ui .chat-parent {
