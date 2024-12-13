@@ -113,11 +113,9 @@ gradio-app > :first-child {
 }
 
 .header_bar {
-    background-color: #f4f4f4;
     box-shadow: 0 0 3px rgba(22 22 22 / 35%);
     margin-bottom: 0;
     overflow-x: scroll;
-    display: block !important;
     text-wrap: nowrap;
     z-index: 90;
     position: fixed;

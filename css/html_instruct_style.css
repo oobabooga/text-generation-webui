@@ -1,6 +1,6 @@
 .chat {
     background: transparent;
-    padding: 0px;
+    padding: 0;
     padding-top: 0;
 }
 
@@ -39,7 +39,7 @@
     background: #f4f4f4;
     margin-top: 9px !important;
     margin-bottom: 12px !important;
-    border-radius: 0px;
+    border-radius: 0;
     border: 0;
 }
 
