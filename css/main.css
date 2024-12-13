@@ -793,29 +793,27 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 /* ----------------------------------------------
-  Past chat histories in a side bar on desktop
+  Create the sidebars
 ---------------------------------------------- */
-@media screen and (width >= 1327px) {
-    #chat-controls,
-    #past-chats-row {
-        width: 260px;
-        background-color: var(--darker-gray);
-        padding: 0.5rem;
-        height: 100vh;
-        flex-shrink: 0;
-        box-sizing: content-box;
-    }
+#chat-controls,
+#past-chats-row {
+    width: 260px;
+    background-color: var(--darker-gray);
+    padding: 0.5rem;
+    height: 100vh;
+    flex-shrink: 0;
+    box-sizing: content-box;
+}
 
-    #chat-controls {
-        padding: 1rem;
-        padding-bottom: 0;
-    }
+#chat-controls {
+    padding: 1rem;
+    padding-bottom: 0;
+}
 
-    #past-chats-row + * {
-        width: unset;
-        flex-grow: 1;
-        flex-shrink: 1;
-    }
+#past-chats-row + * {
+    width: unset;
+    flex-grow: 1;
+    flex-shrink: 1;
 }
 
 /* ----------------------------------------------
