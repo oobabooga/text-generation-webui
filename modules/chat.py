@@ -1087,9 +1087,8 @@ def handle_delete_chat_confirm_click(state):
 
 def handle_rename_chat_click():
     return [
-        gr.update(visible=True, value="My New Chat"),
+        gr.update(value="My New Chat"),
         gr.update(visible=True),
-        gr.update(visible=True)
     ]
 
 
@@ -1100,8 +1099,6 @@ def handle_rename_chat_confirm(rename_to, state):
     return [
         gr.update(choices=histories, value=rename_to),
         gr.update(visible=False),
-        gr.update(visible=False),
-        gr.update(visible=False)
     ]
 
 
@@ -1209,7 +1206,7 @@ def handle_delete_template_click(template):
     return [
         f"{template}.yaml",
         "instruction-templates/",
-        gr.update(visible=True)
+        gr.update(visible=False)
     ]
 
 
