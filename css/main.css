@@ -456,25 +456,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-top: 20px;
 }
 
-.message-body p, .message-body li {
-    font-size: 1rem !important;
-    line-height: 28px !important;
-    color: #d1d5db;
-}
-
-.message-body p, .chat .message-body ul, .chat .message-body ol {
-    margin-top: 1.25em !important;
-}
-
-.message-body p:first-child, .chat .message-body ul:first-child, .chat .message-body ol:first-child {
-    margin-top: 0 !important;
-}
-
-.message-body li {
-    margin-top: 1.25em;
-    margin-bottom: 1.25em;
-}
-
 .message-body h1,
 .message-body h2,
 .message-body h3,
@@ -499,12 +480,21 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-inline-start: 2em;
 }
 
+.chat .message-body li:not(:last-child) {
+    margin-top: 0;
+    margin-bottom: 2px;
+}
+
+.chat .message-body li:last-child {
+    margin-bottom: 0;
+}
+
 .message-body li > p {
     display: inline !important;
 }
 
 .message-body ul, .message-body ol {
-    font-size: 16px !important;
+    font-size: 15px !important;
 }
 
 .message-body ul {

@@ -8,6 +8,26 @@
     padding-top: 0px !important;
 }
 
+.chat .message-body p, .chat .message-body li {
+    font-size: 1rem !important;
+    line-height: 28px !important;
+    color: #d1d5db !important;
+}
+
+.chat .message-body p, .chat .message-body ul, .chat .message-body ol {
+    margin-top: 1.25em;
+    margin-bottom: 1.25em !important;
+}
+
+.chat .message-body p:first-child, .chat .message-body ul:first-child, .chat .message-body ol:first-child {
+    margin-top: 0 !important;
+}
+
+.chat .message-body li {
+    margin-top: 1.25em;
+    margin-bottom: 1.25em !important;
+}
+
 .user-message, .assistant-message {
     font-family: 'Inter', Helvetica, Arial, sans-serif;
 }
