@@ -438,6 +438,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     flex-direction: column;
 }
 
+.chat > .messages:first-child {
+    padding-top: 20px;
+}
+
 .chat .message:last-child {
     margin-bottom: 0 !important;
     padding-bottom: 15px !important;

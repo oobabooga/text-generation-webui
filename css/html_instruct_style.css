@@ -4,6 +4,10 @@
     padding-top: 0;
 }
 
+.chat > .messages:first-child {
+    padding-top: 0px;
+}
+
 .message {
     display: grid;
     grid-template-columns: 60px 1fr;
