@@ -8,17 +8,17 @@
 }
 
 @font-face {
-  font-family: 'Inter';
-  src: url('file/css/Inter/Inter-VariableFont_opsz,wght.ttf') format('truetype');
-  font-weight: 100 900; /* Supports weights from Thin (100) to Black (900) */
-  font-style: normal;
+    font-family: Inter;
+    src: url('file/css/Inter/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+    font-weight: 100 900; /* Supports weights from Thin (100) to Black (900) */
+    font-style: normal;
 }
 
 @font-face {
-  font-family: 'Inter';
-  src: url('file/css/Inter/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
-  font-weight: 100 900;
-  font-style: italic;
+    font-family: Inter;
+    src: url('file/css/Inter/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: italic;
 }
 
 .tabs.svelte-710i53 {
@@ -550,10 +550,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-input textarea {
-    padding-left: 2.5rem;
-    padding-right: 2.5rem;
-    padding-top: 0.65rem;
-    padding-bottom: 0.65rem;
+    padding: 0.65rem 2.5rem;
     background: var(--light-gray);
     color: white !important;
     border-color: #292c3b;
