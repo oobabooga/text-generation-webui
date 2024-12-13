@@ -673,7 +673,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: absolute;
     bottom: 80%;
     left: 0;
-    background-color: var(--background-fill-primary);
+    background-color: var(--darker-gray);
     box-shadow: 0 0 5px rgb(0 0 0 / 25%);
     z-index: 10000;
     min-width: 330px;
