@@ -8,13 +8,8 @@
     padding-top: 0px !important;
 }
 
-.message {
-    display: grid;
-    grid-template-columns: 60px 1fr;
-    padding-bottom: 25px;
-    font-size: 15px;
-    font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
-    line-height: 24px;
+.user-message, .assistant-message {
+    font-family: 'Inter', Helvetica, Arial, sans-serif;
 }
 
 .message:first-child {
