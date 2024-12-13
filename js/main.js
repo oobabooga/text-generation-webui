@@ -24,10 +24,13 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
     this.style.marginBottom = chatVisible ? "0px" : "19px";
 
     if (chatVisible && !showControlsChecked) {
-      document.querySelectorAll("#chat-tab > div > :nth-child(n+2), #extensions").forEach(element => {
+      document.querySelectorAll(
+        "#chat-tab > div > :nth-child(1), #chat-tab > div > :nth-child(3), #chat-tab > div > :nth-child(4), #extensions"
+      ).forEach(element => {
         element.style.display = "none";
       });
     }
+
   } else {
     this.style.marginBottom = "19px";
     if (extensions) extensions.style.display = "none";
@@ -363,7 +366,7 @@ parent.insertBefore(elementToMove, parent.firstChild);
 //------------------------------------------------
 // Position the chat input
 //------------------------------------------------
-document.getElementById("show-controls").parentNode.classList.add('chat-input-positioned');
+document.getElementById("show-controls").parentNode.classList.add("chat-input-positioned");
 
 //------------------------------------------------
 // Focus on the chat input
