@@ -9,7 +9,7 @@
 }
 
 .chat > .messages > :last-child {
-    margin-bottom: 0.85rem;
+    margin-bottom: 0.85rem !important;
 }
 
 .chat .message-body p, .chat .message-body li {
@@ -21,7 +21,7 @@
 .chat .message-body p,
 .chat .message-body ul,
 .chat .message-body ol {
-    margin-top: 1.25em;
+    margin-top: 1.25em !important;
     margin-bottom: 1.25em !important;
 }
 
@@ -38,7 +38,7 @@
 }
 
 .chat .message-body li {
-    margin-top: 1.25em;
+    margin-top: 1.25em !important;
     margin-bottom: 1.25em !important;
 }
 
