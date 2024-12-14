@@ -667,10 +667,10 @@ function toggleSidebar(sidebar, toggle, isPastChats) {
 
   // Adjust toggle button position dynamically
   if (isPastChats) {
-    toggle.style.left = isHidden ? "135px" : "395px";
+    toggle.style.left = isHidden ? "112px" : "388px";
     toggle.innerHTML = isHidden ? rightArrowSVG : leftArrowSVG;
   } else {
-    toggle.style.right = isHidden ? "23px" : "283px";
+    toggle.style.right = isHidden ? "7px" : "283px";
     toggle.innerHTML = isHidden ? leftArrowSVG : rightArrowSVG;
   }
 }
@@ -691,20 +691,20 @@ function initializeSidebars() {
     chatControlsRow.classList.add("sidebar-hidden");
     chatControlsRow.classList.remove("sidebar-shown");
 
-    pastChatsToggle.style.left = "120px";
+    pastChatsToggle.style.left = "112px";
     pastChatsToggle.innerHTML = rightArrowSVG;
 
-    chatControlsToggle.style.right = "8px";
+    chatControlsToggle.style.right = "7px";
     chatControlsToggle.innerHTML = leftArrowSVG;
   } else {
     // Desktop state
     pastChatsRow.classList.remove("sidebar-hidden", "sidebar-shown");
     chatControlsRow.classList.remove("sidebar-hidden", "sidebar-shown");
 
-    pastChatsToggle.style.left = "380px";
+    pastChatsToggle.style.left = "388px";
     pastChatsToggle.innerHTML = leftArrowSVG;
 
-    chatControlsToggle.style.right = "268px";
+    chatControlsToggle.style.right = "283px";
     chatControlsToggle.innerHTML = rightArrowSVG;
   }
 }

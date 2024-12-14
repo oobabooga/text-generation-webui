@@ -978,13 +978,13 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #past-chats-toggle {
-    top: 5px;
-    left: 380px;
+    top: 0px;
+    left: 388px;
 }
 
 #chat-controls-toggle {
-    top: 5px;
-    right: 268px;
+    top: 0px;
+    right: 283px;
 }
 
 #past-chats-toggle.toggled,
