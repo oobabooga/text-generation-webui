@@ -75,6 +75,11 @@
     margin-right: auto;
 }
 
+/* Create space between two assistant messages in a row */
+.assistant-message + .assistant-message {
+  margin-top: 1.5rem;
+}
+
 code {
     background-color: #f3f4f6 !important;
 }
