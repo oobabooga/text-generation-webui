@@ -631,7 +631,6 @@ const chatTab = document.getElementById("chat-tab");
 const pastChatsRow = document.getElementById("past-chats-row");
 const chatControlsRow = document.getElementById("chat-controls");
 
-// Create and append toggle buttons if they don't exist
 if (chatTab) {
   // Create past-chats-toggle div
   const pastChatsToggle = document.createElement("div");
@@ -649,6 +648,13 @@ if (chatTab) {
   chatTab.appendChild(pastChatsToggle);
   chatTab.appendChild(chatControlsToggle);
 }
+
+// Create navigation toggle div
+const navigationToggle = document.createElement("div");
+navigationToggle.id = "navigation-toggle";
+navigationToggle.innerHTML = leftArrowSVG; // Set initial icon to right arrow
+navigationToggle.classList.add("navigation-left"); // Set initial position
+headerBar.appendChild(navigationToggle);
 
 // Retrieve the dynamically created toggle buttons
 const pastChatsToggle = document.getElementById("past-chats-toggle");
@@ -692,6 +698,8 @@ function initializeSidebars() {
     pastChatsRow.classList.remove("sidebar-shown");
     chatControlsRow.classList.add("sidebar-hidden");
     chatControlsRow.classList.remove("sidebar-shown");
+    headerBar.classList.add("sidebar-hidden");
+    headerBar.classList.remove("sidebar-shown");
 
     pastChatsToggle.classList.add("past-chats-right");
     pastChatsToggle.classList.remove("past-chats-left");
@@ -700,6 +708,10 @@ function initializeSidebars() {
     chatControlsToggle.classList.add("chat-controls-right");
     chatControlsToggle.classList.remove("chat-controls-left");
     chatControlsToggle.innerHTML = leftArrowSVG;
+
+    navigationToggle.classList.add("chat-controls-right");
+    navigationToggle.classList.remove("chat-controls-left");
+    navigationToggle.innerHTML = rightArrowSVG;
   } else {
     // Desktop state
     pastChatsRow.classList.remove("sidebar-hidden", "sidebar-shown");
@@ -712,6 +724,10 @@ function initializeSidebars() {
     chatControlsToggle.classList.add("chat-controls-left");
     chatControlsToggle.classList.remove("chat-controls-right");
     chatControlsToggle.innerHTML = rightArrowSVG;
+
+    navigationToggle.classList.add("chat-controls-left");
+    navigationToggle.classList.remove("chat-controls-right");
+    navigationToggle.innerHTML = leftArrowSVG;
   }
 }
 
@@ -728,4 +744,8 @@ pastChatsToggle.addEventListener("click", () => {
 
 chatControlsToggle.addEventListener("click", () => {
   toggleSidebar(chatControlsRow, chatControlsToggle, false);
+});
+
+navigationToggle.addEventListener("click", () => {
+  toggleSidebar(headerBar, navigationToggle, true);
 });

@@ -957,7 +957,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 /* Toggle button styles */
 #past-chats-toggle,
-#chat-controls-toggle {
+#chat-controls-toggle,
+#navigation-toggle {
     display: flex;
     align-items: center;
     justify-content: center;
