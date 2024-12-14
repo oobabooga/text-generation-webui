@@ -604,3 +604,121 @@ window.addEventListener("beforeunload", function (event) {
 });
 
 moveToChatTab();
+
+
+
+
+// SVG icons as constants
+const leftArrowSVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-arrow-bar-left">
+  <path d="M4 12l10 0"></path>
+  <path d="M4 12l4 4"></path>
+  <path d="M4 12l4 -4"></path>
+  <path d="M20 4l0 16"></path>
+</svg>`;
+
+const rightArrowSVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-arrow-bar-right">
+  <path d="M20 12l-10 0"></path>
+  <path d="M20 12l-4 4"></path>
+  <path d="M20 12l-4 -4"></path>
+  <path d="M4 4l0 16"></path>
+</svg>`;
+
+// Cache DOM elements
+const chatTab = document.getElementById("chat-tab");
+const pastChatsRow = document.getElementById("past-chats-row");
+const chatControlsRow = document.getElementById("chat-controls");
+
+// Create and append toggle buttons if they don't exist
+if (chatTab) {
+  // Create past-chats-toggle div
+  const pastChatsToggle = document.createElement("div");
+  pastChatsToggle.id = "past-chats-toggle";
+  pastChatsToggle.innerHTML = leftArrowSVG; // Set initial icon to left arrow
+
+  // Create chat-controls-toggle div
+  const chatControlsToggle = document.createElement("div");
+  chatControlsToggle.id = "chat-controls-toggle";
+  chatControlsToggle.innerHTML = rightArrowSVG; // Set initial icon to right arrow
+
+  // Append both elements to the chat-tab
+  chatTab.appendChild(pastChatsToggle);
+  chatTab.appendChild(chatControlsToggle);
+}
+
+// Retrieve the dynamically created toggle buttons
+const pastChatsToggle = document.getElementById("past-chats-toggle");
+const chatControlsToggle = document.getElementById("chat-controls-toggle");
+
+// Function to toggle sidebar visibility, update button position, and switch arrows
+function toggleSidebar(sidebar, toggle, isPastChats) {
+  const isHidden = sidebar.classList.toggle("sidebar-hidden");
+  toggle.classList.toggle("toggled");
+    
+  // For mobile: explicitly handle both classes
+  if (isMobile()) {
+    if (isHidden) {
+      sidebar.classList.remove("sidebar-shown");
+    } else {
+      sidebar.classList.add("sidebar-shown");
+    }
+  }
+
+  // Adjust toggle button position dynamically
+  if (isPastChats) {
+    toggle.style.left = isHidden ? "135px" : "395px";
+    toggle.innerHTML = isHidden ? rightArrowSVG : leftArrowSVG;
+  } else {
+    toggle.style.right = isHidden ? "23px" : "283px";
+    toggle.innerHTML = isHidden ? leftArrowSVG : rightArrowSVG;
+  }
+}
+
+// Function to check if the device is mobile
+function isMobile() {
+  return window.innerWidth <= 768; // Mobile breakpoint
+}
+
+// Function to initialize sidebars
+function initializeSidebars() {
+  const isOnMobile = isMobile();
+
+  if (isOnMobile) {
+    // Ensure both sidebars start in a consistent state
+    pastChatsRow.classList.add("sidebar-hidden");
+    pastChatsRow.classList.remove("sidebar-shown");
+    chatControlsRow.classList.add("sidebar-hidden");
+    chatControlsRow.classList.remove("sidebar-shown");
+
+    pastChatsToggle.style.left = "120px";
+    pastChatsToggle.innerHTML = rightArrowSVG;
+
+    chatControlsToggle.style.right = "8px";
+    chatControlsToggle.innerHTML = leftArrowSVG;
+  } else {
+    // Desktop state
+    pastChatsRow.classList.remove("sidebar-hidden", "sidebar-shown");
+    chatControlsRow.classList.remove("sidebar-hidden", "sidebar-shown");
+
+    pastChatsToggle.style.left = "380px";
+    pastChatsToggle.innerHTML = leftArrowSVG;
+
+    chatControlsToggle.style.right = "268px";
+    chatControlsToggle.innerHTML = rightArrowSVG;
+  }
+}
+// Run the initializer when the page loads
+initializeSidebars();
+
+// Add an event listener to handle screen resizing
+window.addEventListener("resize", initializeSidebars);
+
+// Add click event listeners to toggle buttons
+pastChatsToggle.addEventListener("click", () => {
+  toggleSidebar(pastChatsRow, pastChatsToggle, true);
+});
+
+chatControlsToggle.addEventListener("click", () => {
+  toggleSidebar(chatControlsRow, chatControlsToggle, false);
+});

@@ -936,3 +936,68 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: 100%;
     justify-content: center;
 }
+
+
+
+
+/* Sidebar styles */
+#past-chats-row,
+#chat-controls {
+    width: 260px;
+    background-color: var(--darker-gray);
+    padding: 0.5rem;
+    height: 100vh;
+    flex-shrink: 0;
+    box-sizing: content-box;
+    transition: all 0.3s ease;
+}
+
+.sidebar-hidden {
+    width: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+/* Toggle button styles */
+#past-chats-toggle,
+#chat-controls-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 3px;
+    color: white;
+    z-index: 1000;
+    position: fixed;
+    transition: all 0.3s ease;
+    width: 2rem;
+    height: 2rem;
+    background-color: var(--darker-gray);
+    box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
+}
+
+#past-chats-toggle {
+    top: 5px;
+    left: 380px;
+}
+
+#chat-controls-toggle {
+    top: 5px;
+    right: 268px;
+}
+
+#past-chats-toggle.toggled,
+#chat-controls-toggle.toggled {
+    background-color: rgb(255 255 255 / 30%);
+}
+
+/* Mobile-specific: Start sidebars closed */
+@media (width <= 768px) {
+    #past-chats-row:not(.sidebar-shown),
+    #chat-controls:not(.sidebar-shown) {
+        width: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+}
