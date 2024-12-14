@@ -661,7 +661,11 @@ function toggleSidebar(sidebar, toggle, isPastChats) {
   toggle.classList.toggle("past-chats-left", isPastChats && !isHidden);
   toggle.classList.toggle("chat-controls-right", !isPastChats && isHidden);
   toggle.classList.toggle("chat-controls-left", !isPastChats && !isHidden);
-  toggle.innerHTML = isHidden ? rightArrowSVG : leftArrowSVG;
+  if (isHidden) {
+    toggle.innerHTML = isPastChats ? rightArrowSVG : leftArrowSVG;
+  } else {
+    toggle.innerHTML = isPastChats ? leftArrowSVG : rightArrowSVG;
+  }
 
   // For mobile: explicitly handle both classes
   if (isMobile()) {
