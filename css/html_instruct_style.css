@@ -80,10 +80,10 @@
   margin-top: 1.5rem;
 }
 
-code {
+pre > code {
     background-color: #f3f4f6 !important;
 }
 
-.dark code {
+.dark pre > code {
     background-color: #1f2937 !important;
 }
