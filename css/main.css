@@ -949,7 +949,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     height: 100vh;
     flex-shrink: 0;
     box-sizing: content-box;
-    transition: all 0.3s ease;
 }
 
 .sidebar-hidden {
@@ -970,11 +969,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     color: white;
     z-index: 1000;
     position: fixed;
-    transition: all 0.3s ease;
     width: 2rem;
     height: 2rem;
-    background-color: var(--darker-gray);
-    box-shadow: 0 2px 4px rgb(0 0 0 / 20%);
 }
 
 #past-chats-toggle {
@@ -985,11 +981,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-controls-toggle {
     top: 0px;
     right: 283px;
-}
-
-#past-chats-toggle.toggled,
-#chat-controls-toggle.toggled {
-    background-color: rgb(255 255 255 / 30%);
 }
 
 /* Mobile-specific: Start sidebars closed */
