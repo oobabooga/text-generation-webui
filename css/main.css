@@ -938,8 +938,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 
-
-
 /* Sidebar styles */
 #past-chats-row,
 #chat-controls {
@@ -971,24 +969,24 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: fixed;
     width: 2rem;
     height: 2rem;
+    top: 0;
 }
 
-#past-chats-toggle {
-    top: 0px;
+/* Positions for past-chats-toggle */
+#past-chats-toggle.past-chats-left {
     left: 388px;
 }
 
-#chat-controls-toggle {
-    top: 0px;
+#past-chats-toggle.past-chats-right {
+    left: 112px;
+}
+
+/* Positions for chat-controls-toggle */
+#chat-controls-toggle.chat-controls-left {
     right: 283px;
 }
 
-/* Mobile-specific: Start sidebars closed */
-@media (width <= 768px) {
-    #past-chats-row:not(.sidebar-shown),
-    #chat-controls:not(.sidebar-shown) {
-        width: 0;
-        padding: 0;
-        overflow: hidden;
-    }
+#chat-controls-toggle.chat-controls-right {
+    right: 7px;
 }
+

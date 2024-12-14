@@ -605,8 +605,9 @@ window.addEventListener("beforeunload", function (event) {
 
 moveToChatTab();
 
-
-
+//------------------------------------------------
+// Buttons to toggle the sidebars
+//------------------------------------------------
 
 // SVG icons as constants
 const leftArrowSVG = `
@@ -636,11 +637,13 @@ if (chatTab) {
   const pastChatsToggle = document.createElement("div");
   pastChatsToggle.id = "past-chats-toggle";
   pastChatsToggle.innerHTML = leftArrowSVG; // Set initial icon to left arrow
+  pastChatsToggle.classList.add("past-chats-left"); // Set initial position
 
   // Create chat-controls-toggle div
   const chatControlsToggle = document.createElement("div");
   chatControlsToggle.id = "chat-controls-toggle";
   chatControlsToggle.innerHTML = rightArrowSVG; // Set initial icon to right arrow
+  chatControlsToggle.classList.add("chat-controls-left"); // Set initial position
 
   // Append both elements to the chat-tab
   chatTab.appendChild(pastChatsToggle);
@@ -654,8 +657,12 @@ const chatControlsToggle = document.getElementById("chat-controls-toggle");
 // Function to toggle sidebar visibility, update button position, and switch arrows
 function toggleSidebar(sidebar, toggle, isPastChats) {
   const isHidden = sidebar.classList.toggle("sidebar-hidden");
-  toggle.classList.toggle("toggled");
-    
+  toggle.classList.toggle("past-chats-right", isPastChats && isHidden);
+  toggle.classList.toggle("past-chats-left", isPastChats && !isHidden);
+  toggle.classList.toggle("chat-controls-right", !isPastChats && isHidden);
+  toggle.classList.toggle("chat-controls-left", !isPastChats && !isHidden);
+  toggle.innerHTML = isHidden ? rightArrowSVG : leftArrowSVG;
+
   // For mobile: explicitly handle both classes
   if (isMobile()) {
     if (isHidden) {
@@ -663,15 +670,6 @@ function toggleSidebar(sidebar, toggle, isPastChats) {
     } else {
       sidebar.classList.add("sidebar-shown");
     }
-  }
-
-  // Adjust toggle button position dynamically
-  if (isPastChats) {
-    toggle.style.left = isHidden ? "112px" : "388px";
-    toggle.innerHTML = isHidden ? rightArrowSVG : leftArrowSVG;
-  } else {
-    toggle.style.right = isHidden ? "7px" : "283px";
-    toggle.innerHTML = isHidden ? leftArrowSVG : rightArrowSVG;
   }
 }
 
@@ -691,23 +689,28 @@ function initializeSidebars() {
     chatControlsRow.classList.add("sidebar-hidden");
     chatControlsRow.classList.remove("sidebar-shown");
 
-    pastChatsToggle.style.left = "112px";
+    pastChatsToggle.classList.add("past-chats-right");
+    pastChatsToggle.classList.remove("past-chats-left");
     pastChatsToggle.innerHTML = rightArrowSVG;
 
-    chatControlsToggle.style.right = "7px";
+    chatControlsToggle.classList.add("chat-controls-right");
+    chatControlsToggle.classList.remove("chat-controls-left");
     chatControlsToggle.innerHTML = leftArrowSVG;
   } else {
     // Desktop state
     pastChatsRow.classList.remove("sidebar-hidden", "sidebar-shown");
     chatControlsRow.classList.remove("sidebar-hidden", "sidebar-shown");
 
-    pastChatsToggle.style.left = "388px";
+    pastChatsToggle.classList.add("past-chats-left");
+    pastChatsToggle.classList.remove("past-chats-right");
     pastChatsToggle.innerHTML = leftArrowSVG;
 
-    chatControlsToggle.style.right = "283px";
+    chatControlsToggle.classList.add("chat-controls-left");
+    chatControlsToggle.classList.remove("chat-controls-right");
     chatControlsToggle.innerHTML = rightArrowSVG;
   }
 }
+
 // Run the initializer when the page loads
 initializeSidebars();
 
