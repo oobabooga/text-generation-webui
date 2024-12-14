@@ -8,6 +8,10 @@
     padding-top: 0 !important;
 }
 
+.chat > .messages > :last-child {
+    margin-bottom: 0.85rem;
+}
+
 .chat .message-body p, .chat .message-body li {
     font-size: 1rem !important;
     line-height: 28px !important;
