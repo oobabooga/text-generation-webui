@@ -57,7 +57,14 @@
     display: none;
 }
 
+.chat .user-message {
+    padding: 1.5rem 1rem;
+    border-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
 .chat .assistant-message {
+    background: #f4f4f4;
     padding: 1.5rem 1rem;
     border-radius: 0;
     border: 0;
@@ -69,13 +76,6 @@
 
 .dark .chat .assistant-message {
     background: var(--light-gray);
-}
-
-.chat .user-message {
-    padding: 1.5rem 1rem;
-    background: #f4f4f4;
-    border-radius: 0;
-    border-bottom-right-radius: 0;
 }
 
 .chat .user-message .text,

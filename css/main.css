@@ -2,6 +2,7 @@
     --darker-gray: #202123;
     --dark-gray: #343541;
     --light-gray: #444654;
+    --light-theme-gray: #f4f4f4;
     --border-color-dark: #525252;
     --header-width: 112px;
     --selected-item-color-dark: #32333e;
@@ -137,7 +138,6 @@ gradio-app > :first-child {
     flex-direction: column;
     height: 100vh;
     width: var(--header-width);
-    background-color: var(--darker-gray) !important;
 }
 
 .header_bar button {
@@ -147,7 +147,6 @@ gradio-app > :first-child {
 
 .header_bar button.selected {
     border: 0;
-    background: var(--selected-item-color-dark);
 }
 
 .dark .header_bar {
@@ -543,16 +542,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     overflow: hidden;
 }
 
-.dark #chat-input textarea {
-    background: var(--light-gray);
-    color: white !important;
-    border-color: #292c3b;
-}
-
-.dark #chat-input textarea::placeholder {
-    color: #9ca3af;
-}
-
 #chat-input textarea:focus {
     box-shadow: none !important;
 }
@@ -699,7 +688,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: absolute;
     bottom: 80%;
     left: 0;
-    background-color: var(--darker-gray);
     box-shadow: 0 0 5px rgb(0 0 0 / 25%);
     z-index: 10000;
     min-width: 330px;
@@ -710,7 +698,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: 100%;
     background: transparent !important;
     border-radius: 0 !important;
-    border-color: var(--border-color-primary);
     justify-content: space-between;
     margin: 0 !important;
     height: 36px;
@@ -790,7 +777,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         left: 0;
         width: 100%;
         height: 32px; /* Same as margin-top */
-        background-color: var(--darker-gray);
         z-index: 2; /* Ensures the pseudo-element appears behind #chat-col */
     }
 
@@ -825,7 +811,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #past-chats-row {
     width: 260px;
     max-width: 80vw;
-    background-color: var(--darker-gray);
     padding: 0.5rem;
     height: 100vh;
     flex-shrink: 0;
@@ -934,7 +919,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #past-chats .selected,
 #past-chats label:hover {
-    background-color: var(--selected-item-color-dark) !important;
     border-radius: 0.5rem;
 }
 
@@ -954,7 +938,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #past-chats-row,
 #chat-controls {
     width: 260px;
-    background-color: var(--darker-gray);
     padding: 0.5rem;
     height: calc(100vh - 16px);
     flex-shrink: 0;
@@ -1043,4 +1026,78 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #past-chats-row.sidebar-shown {
     position: fixed;
+}
+
+/* ----------------------------------------------
+  Dark theme
+---------------------------------------------- */
+.dark .header_bar {
+    background-color: var(--darker-gray) !important;
+}
+
+.dark .header_bar button.selected {
+    background: var(--selected-item-color-dark);
+}
+
+.dark #chat-input textarea {
+    background: var(--light-gray);
+    color: white !important;
+    border-color: #292c3b;
+}
+
+.dark #chat-input textarea::placeholder {
+    color: #9ca3af;
+}
+
+.dark .hover-menu {
+    background-color: var(--darker-gray);
+}
+
+.dark .hover-menu button {
+    border-color: var(--border-color-primary);
+}
+
+@media screen and (width <= 924px) {
+    .dark #chat-col::before {
+        background-color: var(--darker-gray);
+    }
+}
+
+.dark #chat-controls,
+.dark #past-chats-row {
+    background-color: var(--darker-gray);
+}
+
+.dark #past-chats .selected,
+.dark #past-chats label:hover {
+    background-color: var(--selected-item-color-dark) !important;
+}
+
+.dark #past-chats-row,
+.dark #chat-controls {
+    background-color: var(--darker-gray);
+}
+
+/* ----------------------------------------------
+  Light theme
+---------------------------------------------- */
+.header_bar {
+    background-color: var(--light-theme-gray) !important;
+}
+
+.header_bar button.selected {
+    background: white;
+}
+
+#chat-controls,
+#past-chats-row {
+    background-color: var(--light-theme-gray);
+}
+
+#chat-controls {
+    border-left: 1px solid #d9d9d0;
+}
+
+#past-chats-row {
+    border-right: 1px solid #d9d9d0;
 }
