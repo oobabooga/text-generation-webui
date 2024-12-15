@@ -814,13 +814,17 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-controls,
 #past-chats-row {
     width: 260px;
-    max-width: 90vw;
+    max-width: 80vw;
     background-color: var(--darker-gray);
     padding: 0.5rem;
     height: 100vh;
     flex-shrink: 0;
     box-sizing: content-box;
     z-index: 10;
+}
+
+#past-chats-row:not(.negative-header) {
+    max-width: calc(85vw - var(--header-width));
 }
 
 #chat-controls {
@@ -975,18 +979,26 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     margin-left: 112px;
 }
 
-/* When .negative-header is NOT present, use the original positions */
+@media screen and (width <= 408px) {
+    #past-chats-toggle.past-chats-open {
+        top: 28px;
+    }
+
+    #chat-controls-toggle.chat-controls-open {
+        top: 56px;
+    }
+}
+
+#past-chats-toggle.past-chats-open.negative-header {
+    left: calc(min(260px, 85vw) + 16px);
+}
+
 #past-chats-toggle.past-chats-open:not(.negative-header) {
-    left: 388px;
+    left: calc(112px + min(260px, calc(85vw - var(--header-width))) + 16px);
 }
 
 #past-chats-toggle.past-chats-closed:not(.negative-header) {
     left: 112px;
-}
-
-/* When .negative-header is present, subtract 112px from the positions */
-#past-chats-toggle.past-chats-open.negative-header {
-    left: calc(388px - 112px); /* 276px */
 }
 
 #past-chats-toggle.past-chats-closed.negative-header {
@@ -999,7 +1011,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 /* Positions for chat-controls-toggle */
 #chat-controls-toggle.chat-controls-open {
-    right: 283px;
+    right: calc(min(260px, 80vw) + 23px);
 }
 
 #chat-controls-toggle.chat-controls-closed {
