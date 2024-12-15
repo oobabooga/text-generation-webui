@@ -431,6 +431,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     margin-left: auto;
     margin-right: auto;
     text-align: start;
+    padding-left: 1rem;
+    padding-right: 1rem;
 }
 
 .chat-parent.bigchat {
