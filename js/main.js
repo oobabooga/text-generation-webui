@@ -718,8 +718,8 @@ function initializeSidebars() {
       el.classList.remove("sidebar-shown");
     });
 
+    document.documentElement.style.setProperty("--header-width", "0px");
     pastChatsRow.classList.add("negative-header");
-    
     pastChatsToggle.classList.add("negative-header", "past-chats-closed");
     pastChatsToggle.classList.remove("past-chats-open");
 
