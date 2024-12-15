@@ -994,3 +994,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .negative-header {
     margin-left: -112px;
 }
+
+#past-chats-toggle.past-chats-closed.negative-header {
+    top: 28px;
+}
