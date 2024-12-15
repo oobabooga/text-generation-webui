@@ -789,6 +789,25 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-bottom: 100px;
 }
 
+@media screen and (width <= 924px) {
+    #chat-col {
+        padding-bottom: 68px;
+        margin-top: 32px;
+        position: relative; /* Ensure positioning for the pseudo-element */
+    }
+
+    #chat-col::before {
+        content: "";
+        position: absolute;
+        top: -32px; /* Matches the margin-top */
+        left: 0;
+        width: 100%;
+        height: 32px; /* Same as margin-top */
+        background-color: var(--darker-gray);
+        z-index: 2; /* Ensures the pseudo-element appears behind #chat-col */
+    }
+}
+
 .old-ui #chat-col, #chat-col.bigchat {
     padding-bottom: 80px !important;
 }
@@ -985,7 +1004,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 
     #chat-controls-toggle.chat-controls-open {
-        top: 56px;
+        top: 28px;
     }
 }
 
@@ -1002,7 +1021,15 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #past-chats-toggle.past-chats-closed.negative-header {
-    left: calc(112px - 112px); /* 0px */
+    left: 0px;
+    top: 28px;
+}
+
+@media screen and (width <= 924px) {
+    #past-chats-toggle.past-chats-closed.negative-header {
+        left: 28px;
+        top: 0px;
+    }
 }
 
 .header_bar ~ *:not(#chat-tab) {
@@ -1016,10 +1043,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #chat-controls-toggle.chat-controls-closed {
     right: 7px;
-}
-
-#past-chats-toggle.past-chats-closed.negative-header {
-    top: 28px;
 }
 
 #chat-controls.sidebar-shown {

@@ -775,7 +775,7 @@ navigationToggle.addEventListener("click", () => {
 // for devices with width <= 924px
 //------------------------------------------------
 
-if (window.innerWidth <= 924) {
+if (isMobile()) {
   // Target the textarea
   const textarea = document.querySelector("#chat-input textarea");
 
