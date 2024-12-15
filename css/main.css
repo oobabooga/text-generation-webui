@@ -150,10 +150,6 @@ gradio-app > :first-child {
     background: var(--selected-item-color-dark);
 }
 
-.header_bar ~ * {
-    margin-left: var(--header-width);
-}
-
 .dark .header_bar {
     border: none !important;
     box-shadow: 0 3px 4px rgba(20 20 20 / 60%);
@@ -823,6 +819,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     height: 100vh;
     flex-shrink: 0;
     box-sizing: content-box;
+    z-index: 10;
 }
 
 #chat-controls {
@@ -973,14 +970,29 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     top: 0;
 }
 
-/* Positions for past-chats-toggle */
-#past-chats-toggle.past-chats-open {
+
+/* When .negative-header is NOT present, use the original positions */
+#past-chats-toggle.past-chats-open:not(.negative-header) {
     left: 388px;
 }
 
-#past-chats-toggle.past-chats-closed {
+#past-chats-toggle.past-chats-closed:not(.negative-header) {
     left: 112px;
 }
+
+/* When .negative-header is present, subtract 112px from the positions */
+#past-chats-toggle.past-chats-open.negative-header {
+    left: calc(388px - 112px); /* 276px */
+}
+
+#past-chats-toggle.past-chats-closed.negative-header {
+    left: calc(112px - 112px); /* 0px */
+}
+
+.header_bar ~ *:not(#chat-tab) {
+    margin-left: var(--header-width);
+}
+
 
 /* Positions for chat-controls-toggle */
 #chat-controls-toggle.chat-controls-open {
@@ -991,10 +1003,15 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     right: 7px;
 }
 
-.negative-header {
-    margin-left: -112px;
-}
-
 #past-chats-toggle.past-chats-closed.negative-header {
     top: 28px;
+}
+
+#chat-controls.sidebar-shown {
+    position: fixed;
+    right: 0;
+}
+
+#past-chats-row.sidebar-shown {
+    position: fixed;
 }
