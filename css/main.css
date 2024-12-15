@@ -197,24 +197,6 @@ gradio-app > :first-child {
     color: #efefef !important;
 }
 
-@media screen and (width <= 711px) {
-    .textbox_default textarea {
-        height: calc(100dvh - 259px);
-    }
-
-    div #default-token-counter {
-        top: calc( 0.5 * (100dvh - 236px) ) !important;
-    }
-
-    .transparent-substring {
-        display: none;
-    }
-
-    .hover-menu {
-        min-width: 250px !important;
-    }
-}
-
 /* Hide the gradio footer */
 footer {
     display: none !important;
