@@ -769,3 +769,21 @@ chatControlsToggle.addEventListener("click", () => {
 navigationToggle.addEventListener("click", () => {
   toggleSidebar(headerBar, navigationToggle);
 });
+
+//------------------------------------------------
+// Fixes #chat-input textarea height issue
+// for devices with width <= 924px
+//------------------------------------------------
+
+if (window.innerWidth <= 924) {
+  // Target the textarea
+  const textarea = document.querySelector("#chat-input textarea");
+
+  if (textarea) {
+    // Simulate adding and removing a newline
+    textarea.value += "\n";
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    textarea.value = textarea.value.slice(0, -1);
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+}
