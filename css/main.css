@@ -536,15 +536,21 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #chat-input textarea {
     padding: 0.65rem 2.5rem;
+}
+
+#chat-input textarea::placeholder {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.dark #chat-input textarea {
     background: var(--light-gray);
     color: white !important;
     border-color: #292c3b;
 }
 
-#chat-input textarea::placeholder {
+.dark #chat-input textarea::placeholder {
     color: #9ca3af;
-    white-space: nowrap;
-    overflow: hidden;
 }
 
 #chat-input textarea:focus {

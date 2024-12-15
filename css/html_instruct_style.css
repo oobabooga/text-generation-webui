@@ -15,6 +15,9 @@
 .chat .message-body p, .chat .message-body li {
     font-size: 1rem !important;
     line-height: 28px !important;
+}
+
+.dark .chat .message-body p, .dark .chat .message-body li {
     color: #d1d5db !important;
 }
 
@@ -56,9 +59,12 @@
 
 .chat .assistant-message {
     padding: 1.5rem 1rem;
-    background: #f4f4f4;
     border-radius: 0;
     border: 0;
+}
+
+.dark .chat .user-message {
+    background: transparent;
 }
 
 .dark .chat .assistant-message {
@@ -67,7 +73,7 @@
 
 .chat .user-message {
     padding: 1.5rem 1rem;
-    background-color: transparent;
+    background: #f4f4f4;
     border-radius: 0;
     border-bottom-right-radius: 0;
 }
