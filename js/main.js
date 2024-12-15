@@ -663,17 +663,25 @@ const chatControlsToggle = document.getElementById("chat-controls-toggle");
 // Function to toggle sidebar visibility, update button position, and switch arrows
 function toggleSidebar(sidebar, toggle, isPastChats) {
   const isHidden = sidebar.classList.toggle("sidebar-hidden");
+  
+  // New logic for header bar
+  if (sidebar === headerBar) {
+    pastChatsRow.classList.toggle("negative-header", isHidden);
+    pastChatsToggle.classList.toggle("negative-header", isHidden);
+  }
+
   toggle.classList.toggle("past-chats-right", isPastChats && isHidden);
   toggle.classList.toggle("past-chats-left", isPastChats && !isHidden);
   toggle.classList.toggle("chat-controls-right", !isPastChats && isHidden);
   toggle.classList.toggle("chat-controls-left", !isPastChats && !isHidden);
+  
   if (isHidden) {
     toggle.innerHTML = isPastChats ? rightArrowSVG : leftArrowSVG;
   } else {
     toggle.innerHTML = isPastChats ? leftArrowSVG : rightArrowSVG;
   }
 
-  // For mobile: explicitly handle both classes
+  // Mobile handling remains the same
   if (isMobile()) {
     if (isHidden) {
       sidebar.classList.remove("sidebar-shown");
@@ -694,6 +702,7 @@ function initializeSidebars() {
 
   if (isOnMobile) {
     // Ensure both sidebars start in a consistent state
+    pastChatsRow.classList.add("negative-header");
     pastChatsRow.classList.add("sidebar-hidden");
     pastChatsRow.classList.remove("sidebar-shown");
     chatControlsRow.classList.add("sidebar-hidden");
@@ -701,6 +710,7 @@ function initializeSidebars() {
     headerBar.classList.add("sidebar-hidden");
     headerBar.classList.remove("sidebar-shown");
 
+    pastChatsToggle.classList.add("negative-header");
     pastChatsToggle.classList.add("past-chats-right");
     pastChatsToggle.classList.remove("past-chats-left");
     pastChatsToggle.innerHTML = rightArrowSVG;

@@ -991,3 +991,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     right: 7px;
 }
 
+.negative-header {
+    margin-left: -112px;
+}
