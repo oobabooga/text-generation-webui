@@ -48,10 +48,10 @@ def create_ui():
                     shared.gradio['tokens-notebook'] = gr.Textbox(lines=23, label='Tokens', elem_classes=['textbox_logits_notebook', 'add_scrollbar', 'monospace'])
 
                 with gr.Row():
-                    shared.gradio['Generate-notebook'] = gr.Button('Generate', variant='primary', elem_classes='small-button')
-                    shared.gradio['Stop-notebook'] = gr.Button('Stop', elem_classes='small-button', elem_id='stop')
                     shared.gradio['Undo'] = gr.Button('Undo', elem_classes='small-button')
                     shared.gradio['Regenerate-notebook'] = gr.Button('Regenerate', elem_classes='small-button')
+                    shared.gradio['Stop-notebook'] = gr.Button('Stop', visible=False, elem_classes='small-button', elem_id='stop')
+                    shared.gradio['Generate-notebook'] = gr.Button('Generate', variant='primary', elem_classes='small-button')
 
             with gr.Column(scale=1):
                 gr.HTML('<div style="padding-bottom: 13px"></div>')
@@ -66,22 +66,28 @@ def create_event_handlers():
     shared.gradio['Generate-notebook'].click(
         lambda x: x, gradio('textbox-notebook'), gradio('last_input-notebook')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda : [gr.update(visible=True), gr.update(visible=False)], None, gradio('Stop-notebook', 'Generate-notebook')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
         lambda state, text: state.update({'textbox-notebook': text}), gradio('interface_state', 'textbox-notebook'), None).then(
+        lambda : [gr.update(visible=False), gr.update(visible=True)], None, gradio('Stop-notebook', 'Generate-notebook')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['textbox-notebook'].submit(
         lambda x: x, gradio('textbox-notebook'), gradio('last_input-notebook')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda : [gr.update(visible=True), gr.update(visible=False)], None, gradio('Stop-notebook', 'Generate-notebook')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
         lambda state, text: state.update({'textbox-notebook': text}), gradio('interface_state', 'textbox-notebook'), None).then(
+        lambda : [gr.update(visible=False), gr.update(visible=True)], None, gradio('Stop-notebook', 'Generate-notebook')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['Regenerate-notebook'].click(
         lambda x: x, gradio('last_input-notebook'), gradio('textbox-notebook'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda : [gr.update(visible=True), gr.update(visible=False)], None, gradio('Stop-notebook', 'Generate-notebook')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
         lambda state, text: state.update({'textbox-notebook': text}), gradio('interface_state', 'textbox-notebook'), None).then(
+        lambda : [gr.update(visible=False), gr.update(visible=True)], None, gradio('Stop-notebook', 'Generate-notebook')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['Undo'].click(
