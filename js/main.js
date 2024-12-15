@@ -650,13 +650,13 @@ if (chatTab) {
   const pastChatsToggle = document.createElement("div");
   pastChatsToggle.id = "past-chats-toggle";
   pastChatsToggle.innerHTML = leftArrowSVG; // Set initial icon to left arrow
-  pastChatsToggle.classList.add("past-chats-left"); // Set initial position
+  pastChatsToggle.classList.add("past-chats-open"); // Set initial position
 
   // Create chat-controls-toggle div
   const chatControlsToggle = document.createElement("div");
   chatControlsToggle.id = "chat-controls-toggle";
   chatControlsToggle.innerHTML = rightArrowSVG; // Set initial icon to right arrow
-  chatControlsToggle.classList.add("chat-controls-left"); // Set initial position
+  chatControlsToggle.classList.add("chat-controls-open"); // Set initial position
 
   // Append both elements to the chat-tab
   chatTab.appendChild(pastChatsToggle);
@@ -687,10 +687,10 @@ function toggleSidebar(sidebar, toggle, isPastChats) {
     toggle.innerHTML = isHidden ? hamburgerMenuSVG : closeMenuSVG;
   } else {
     // Logic for past chats or other sidebars
-    toggle.classList.toggle("past-chats-right", isPastChats && isHidden);
-    toggle.classList.toggle("past-chats-left", isPastChats && !isHidden);
-    toggle.classList.toggle("chat-controls-right", !isPastChats && isHidden);
-    toggle.classList.toggle("chat-controls-left", !isPastChats && !isHidden);
+    toggle.classList.toggle("past-chats-closed", isPastChats && isHidden);
+    toggle.classList.toggle("past-chats-open", isPastChats && !isHidden);
+    toggle.classList.toggle("chat-controls-closed", !isPastChats && isHidden);
+    toggle.classList.toggle("chat-controls-open", !isPastChats && !isHidden);
 
     // Update the toggle icon for other sidebars
     toggle.innerHTML = isHidden 
@@ -728,32 +728,32 @@ function initializeSidebars() {
     headerBar.classList.remove("sidebar-shown");
 
     pastChatsToggle.classList.add("negative-header");
-    pastChatsToggle.classList.add("past-chats-right");
-    pastChatsToggle.classList.remove("past-chats-left");
+    pastChatsToggle.classList.add("past-chats-closed");
+    pastChatsToggle.classList.remove("past-chats-open");
     pastChatsToggle.innerHTML = rightArrowSVG;
 
-    chatControlsToggle.classList.add("chat-controls-right");
-    chatControlsToggle.classList.remove("chat-controls-left");
+    chatControlsToggle.classList.add("chat-controls-closed");
+    chatControlsToggle.classList.remove("chat-controls-open");
     chatControlsToggle.innerHTML = leftArrowSVG;
 
-    navigationToggle.classList.add("chat-controls-right");
-    navigationToggle.classList.remove("chat-controls-left");
+    navigationToggle.classList.add("chat-controls-closed");
+    navigationToggle.classList.remove("chat-controls-open");
     navigationToggle.innerHTML = hamburgerMenuSVG;
   } else {
     // Desktop state
     pastChatsRow.classList.remove("sidebar-hidden", "sidebar-shown");
     chatControlsRow.classList.remove("sidebar-hidden", "sidebar-shown");
 
-    pastChatsToggle.classList.add("past-chats-left");
-    pastChatsToggle.classList.remove("past-chats-right");
+    pastChatsToggle.classList.add("past-chats-open");
+    pastChatsToggle.classList.remove("past-chats-closed");
     pastChatsToggle.innerHTML = leftArrowSVG;
 
-    chatControlsToggle.classList.add("chat-controls-left");
-    chatControlsToggle.classList.remove("chat-controls-right");
+    chatControlsToggle.classList.add("chat-controls-open");
+    chatControlsToggle.classList.remove("chat-controls-closed");
     chatControlsToggle.innerHTML = rightArrowSVG;
 
-    navigationToggle.classList.add("chat-controls-left");
-    navigationToggle.classList.remove("chat-controls-right");
+    navigationToggle.classList.add("chat-controls-open");
+    navigationToggle.classList.remove("chat-controls-closed");
     navigationToggle.innerHTML = closeMenuSVG;
   }
 }

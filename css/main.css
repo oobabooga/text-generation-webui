@@ -974,20 +974,20 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 /* Positions for past-chats-toggle */
-#past-chats-toggle.past-chats-left {
+#past-chats-toggle.past-chats-open {
     left: 388px;
 }
 
-#past-chats-toggle.past-chats-right {
+#past-chats-toggle.past-chats-closed {
     left: 112px;
 }
 
 /* Positions for chat-controls-toggle */
-#chat-controls-toggle.chat-controls-left {
+#chat-controls-toggle.chat-controls-open {
     right: 283px;
 }
 
-#chat-controls-toggle.chat-controls-right {
+#chat-controls-toggle.chat-controls-closed {
     right: 7px;
 }
 
