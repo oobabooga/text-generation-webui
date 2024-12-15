@@ -190,6 +190,7 @@ group.add_argument('--gradio-auth-path', type=str, help='Set the Gradio authenti
 group.add_argument('--ssl-keyfile', type=str, help='The path to the SSL certificate key file.', default=None)
 group.add_argument('--ssl-certfile', type=str, help='The path to the SSL certificate cert file.', default=None)
 group.add_argument('--subpath', type=str, help='Customize the subpath for gradio, use with reverse proxy')
+group.add_argument('--old-colors', action='store_true', help='Use the legacy Gradio colors, before the December/2024 update.')
 
 # API
 group = parser.add_argument_group('API')

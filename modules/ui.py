@@ -39,6 +39,7 @@ theme = gr.themes.Default(
     font_mono=['IBM Plex Mono', 'ui-monospace', 'Consolas', 'monospace'],
 ).set(
     border_color_primary='#c5c5d2',
+    button_large_padding='6px 12px',
     body_text_color_subdued='#484848',
     background_fill_secondary='#eaeaea',
     background_fill_primary='var(--neutral-50)',
@@ -46,36 +47,46 @@ theme = gr.themes.Default(
     block_background_fill="#f4f4f4",
     body_text_color="#333",
     button_secondary_background_fill="#f4f4f4",
-    button_secondary_border_color="var(--border-color-primary)",
-
-    input_background_fill_dark='var(--darker-gray)',
-    checkbox_background_color_dark='var(--darker-gray)',
-
-    # block_background_fill_dark='var(--darker-gray)',
-    # block_border_color_dark='var(--border-color-dark)',
-    block_background_fill_dark='transparent',
-    block_border_color_dark='transparent',
-
-    input_border_color_dark='var(--border-color-dark)',
-    checkbox_border_color_dark='var(--border-color-dark)',
-    border_color_primary_dark='var(--border-color-dark)',
-    button_secondary_border_color_dark='var(--border-color-dark)',
-    body_background_fill_dark='var(--dark-gray)',
-
-    button_primary_background_fill_dark='transparent',
-    button_secondary_background_fill_dark='transparent',
-    checkbox_label_background_fill_dark='transparent',
-    button_cancel_background_fill_dark='transparent',
-    button_secondary_background_fill_hover_dark='var(--selected-item-color-dark)',
-    checkbox_label_background_fill_hover_dark='var(--selected-item-color-dark)',
-
-    checkbox_label_shadow='none',
-    block_shadow_dark='none',
-    button_large_radius='0.375rem',
-    button_large_padding='6px 12px',
-
-    input_radius='0.375rem',
+    button_secondary_border_color="var(--border-color-primary)"
 )
+
+if not shared.args.old_colors:
+    theme = theme.set(
+        # General Colors
+        border_color_primary='#c5c5d2',
+        body_text_color_subdued='#484848',
+        background_fill_secondary='#eaeaea',
+        background_fill_primary='var(--neutral-50)',
+        body_background_fill="white",
+        block_background_fill="#f4f4f4",
+        body_text_color="#333",
+        button_secondary_background_fill="#f4f4f4",
+        button_secondary_border_color="var(--border-color-primary)",
+
+        # Dark Mode Colors
+        input_background_fill_dark='var(--darker-gray)',
+        checkbox_background_color_dark='var(--darker-gray)',
+        block_background_fill_dark='transparent',
+        block_border_color_dark='transparent',
+        input_border_color_dark='var(--border-color-dark)',
+        checkbox_border_color_dark='var(--border-color-dark)',
+        border_color_primary_dark='var(--border-color-dark)',
+        button_secondary_border_color_dark='var(--border-color-dark)',
+        body_background_fill_dark='var(--dark-gray)',
+        button_primary_background_fill_dark='transparent',
+        button_secondary_background_fill_dark='transparent',
+        checkbox_label_background_fill_dark='transparent',
+        button_cancel_background_fill_dark='transparent',
+        button_secondary_background_fill_hover_dark='var(--selected-item-color-dark)',
+        checkbox_label_background_fill_hover_dark='var(--selected-item-color-dark)',
+
+        # Shadows and Radius
+        checkbox_label_shadow='none',
+        block_shadow_dark='none',
+        button_large_radius='0.375rem',
+        button_large_padding='6px 12px',
+        input_radius='0.375rem',
+    )
 
 if Path("notification.mp3").exists():
     audio_notification_js = "document.querySelector('#audio_notification audio')?.play();"
