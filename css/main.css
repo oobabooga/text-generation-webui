@@ -778,13 +778,13 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-input-row {
-    padding-bottom: 2rem;
+    padding-bottom: 1.5em;
     padding-left: 1rem;
     padding-right: 1rem;
 }
 
 .old-ui #chat-input-row, #chat-input-row.bigchat {
-    padding-bottom: 0 !important;
+    padding-bottom: 1px !important;
 }
 
 #chat-col {
@@ -793,7 +793,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 @media screen and (width <= 924px) {
     #chat-col {
-        padding-bottom: 68px;
+        padding-bottom: 100px;
         margin-top: 32px;
         position: relative; /* Ensure positioning for the pseudo-element */
     }
@@ -807,6 +807,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         height: 32px; /* Same as margin-top */
         background-color: var(--darker-gray);
         z-index: 2; /* Ensures the pseudo-element appears behind #chat-col */
+    }
+
+    .chat-parent {
+        height: calc(100dvh - 98px - var(--input-delta) - 32px);
+    }
+
+    .chat-parent.bigchat {
+        height: calc(100dvh - 98px - var(--input-delta) - 32px) !important;
     }
 }
 
@@ -967,7 +975,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: 260px;
     background-color: var(--darker-gray);
     padding: 0.5rem;
-    height: 100vh;
+    height: calc(100vh - 16px);
     flex-shrink: 0;
     box-sizing: content-box;
 }
