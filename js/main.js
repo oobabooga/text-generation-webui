@@ -703,7 +703,7 @@ function toggleSidebar(sidebar, toggle) {
 
 // Function to check if the device is mobile
 function isMobile() {
-  return window.innerWidth <= 768; // Mobile breakpoint
+  return window.innerWidth <= 924; // Mobile breakpoint
 }
 
 // Function to initialize sidebars
