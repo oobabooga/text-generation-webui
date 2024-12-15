@@ -433,11 +433,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     text-align: start;
 }
 
-.old-ui .chat-parent {
-    height: calc(100dvh - 192px - var(--input-delta));
-    margin-bottom: var(--input-delta) !important;
-}
-
 .chat-parent.bigchat {
     height: calc(100dvh - 98px - var(--input-delta)) !important;
     margin-bottom: var(--input-delta) !important;
@@ -747,7 +742,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     opacity: 0.333;
 }
 
-#chat-tab:not(.old-ui) #chat-buttons {
+#chat-tab #chat-buttons {
     display: none !important;
 }
 
@@ -783,7 +778,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-right: 1rem;
 }
 
-.old-ui #chat-input-row, #chat-input-row.bigchat {
+#chat-input-row.bigchat {
     padding-bottom: 1px !important;
 }
 
@@ -818,12 +813,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 }
 
-.old-ui #chat-col, #chat-col.bigchat {
+#chat-col.bigchat {
     padding-bottom: 80px !important;
-}
-
-.old-ui #chat-buttons #clear-history-confirm {
-    order: -1;
 }
 
 .chat ol, .chat ul {
