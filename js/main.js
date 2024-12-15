@@ -680,6 +680,7 @@ function toggleSidebar(sidebar, toggle) {
 
   if (sidebar === headerBar) {
     // Special handling for header bar
+    document.documentElement.style.setProperty("--header-width", isHidden ? "0px" : "112px");
     pastChatsRow.classList.toggle("negative-header", isHidden);
     pastChatsToggle.classList.toggle("negative-header", isHidden);
     toggle.innerHTML = isHidden ? hamburgerMenuSVG : closeMenuSVG;
