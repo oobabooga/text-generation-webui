@@ -997,7 +997,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     top: 0;
 }
 
-#past-chats-row:not(.negative-header):not(.sidebar-hidden) {
+#past-chats-row:not(.negative-header, .sidebar-hidden) {
     margin-left: 112px;
 }
 
@@ -1024,14 +1024,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #past-chats-toggle.past-chats-closed.negative-header {
-    left: 0px;
+    left: 0;
     top: 28px;
 }
 
 @media screen and (width <= 924px) {
     #past-chats-toggle.past-chats-closed.negative-header {
         left: 28px;
-        top: 0px;
+        top: 0;
     }
 }
 
