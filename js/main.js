@@ -626,6 +626,20 @@ const rightArrowSVG = `
   <path d="M4 4l0 16"></path>
 </svg>`;
 
+// Smaller SVG icons as constants
+const hamburgerMenuSVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-hamburger-menu">
+  <line x1="3" y1="12" x2="21" y2="12"></line>
+  <line x1="3" y1="6" x2="21" y2="6"></line>
+  <line x1="3" y1="18" x2="21" y2="18"></line>
+</svg>`;
+
+const closeMenuSVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-close-menu">
+  <line x1="18" y1="6" x2="6" y2="18"></line>
+  <line x1="6" y1="6" x2="18" y2="18"></line>
+</svg>`;
+
 // Cache DOM elements
 const chatTab = document.getElementById("chat-tab");
 const pastChatsRow = document.getElementById("past-chats-row");
@@ -663,22 +677,25 @@ const chatControlsToggle = document.getElementById("chat-controls-toggle");
 // Function to toggle sidebar visibility, update button position, and switch arrows
 function toggleSidebar(sidebar, toggle, isPastChats) {
   const isHidden = sidebar.classList.toggle("sidebar-hidden");
-  
+
   // New logic for header bar
   if (sidebar === headerBar) {
     pastChatsRow.classList.toggle("negative-header", isHidden);
     pastChatsToggle.classList.toggle("negative-header", isHidden);
-  }
 
-  toggle.classList.toggle("past-chats-right", isPastChats && isHidden);
-  toggle.classList.toggle("past-chats-left", isPastChats && !isHidden);
-  toggle.classList.toggle("chat-controls-right", !isPastChats && isHidden);
-  toggle.classList.toggle("chat-controls-left", !isPastChats && !isHidden);
-  
-  if (isHidden) {
-    toggle.innerHTML = isPastChats ? rightArrowSVG : leftArrowSVG;
+    // Update the toggle icon for headerBar
+    toggle.innerHTML = isHidden ? hamburgerMenuSVG : closeMenuSVG;
   } else {
-    toggle.innerHTML = isPastChats ? leftArrowSVG : rightArrowSVG;
+    // Logic for past chats or other sidebars
+    toggle.classList.toggle("past-chats-right", isPastChats && isHidden);
+    toggle.classList.toggle("past-chats-left", isPastChats && !isHidden);
+    toggle.classList.toggle("chat-controls-right", !isPastChats && isHidden);
+    toggle.classList.toggle("chat-controls-left", !isPastChats && !isHidden);
+
+    // Update the toggle icon for other sidebars
+    toggle.innerHTML = isHidden 
+      ? (isPastChats ? rightArrowSVG : leftArrowSVG) 
+      : (isPastChats ? leftArrowSVG : rightArrowSVG);
   }
 
   // Mobile handling remains the same
@@ -721,7 +738,7 @@ function initializeSidebars() {
 
     navigationToggle.classList.add("chat-controls-right");
     navigationToggle.classList.remove("chat-controls-left");
-    navigationToggle.innerHTML = rightArrowSVG;
+    navigationToggle.innerHTML = hamburgerMenuSVG;
   } else {
     // Desktop state
     pastChatsRow.classList.remove("sidebar-hidden", "sidebar-shown");
@@ -737,7 +754,7 @@ function initializeSidebars() {
 
     navigationToggle.classList.add("chat-controls-left");
     navigationToggle.classList.remove("chat-controls-right");
-    navigationToggle.innerHTML = leftArrowSVG;
+    navigationToggle.innerHTML = closeMenuSVG;
   }
 }
 
