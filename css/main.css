@@ -970,6 +970,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     top: 0;
 }
 
+#past-chats-row:not(.negative-header) {
+    margin-left: 112px;
+}
 
 /* When .negative-header is NOT present, use the original positions */
 #past-chats-toggle.past-chats-open:not(.negative-header) {
