@@ -970,7 +970,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     top: 0;
 }
 
-#past-chats-row:not(.negative-header) {
+#past-chats-row:not(.negative-header):not(.sidebar-hidden) {
     margin-left: 112px;
 }
 
