@@ -839,7 +839,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: fixed;
     bottom: 0;
     left: 0;
-    width: calc((100vw - 880px - 120px) /2);
+    width: calc(100vw / 2 - 600px);
+    z-index: 10000;
 }
 
 .pfp_character {
