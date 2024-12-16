@@ -271,10 +271,10 @@ def gather_interface_values(*args):
 def apply_interface_values(state, use_persistent=False):
     if use_persistent:
         state = shared.persistent_interface_state
-        if 'textbox-default' in state:
+        if 'textbox-default' in state and 'prompt_menu-default' in state:
             state.pop('prompt_menu-default')
 
-        if 'textbox-notebook' in state:
+        if 'textbox-notebook' and 'prompt_menu-notebook' in state:
             state.pop('prompt_menu-notebook')
 
     elements = list_interface_input_elements()
