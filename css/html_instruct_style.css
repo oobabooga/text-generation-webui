@@ -9,7 +9,7 @@
 }
 
 .chat > .messages > :last-child {
-    margin-bottom: 0.85rem !important;
+    margin-bottom: 1.7rem !important;
 }
 
 .chat .message-body p, .chat .message-body li {
