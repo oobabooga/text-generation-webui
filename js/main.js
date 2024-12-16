@@ -784,7 +784,10 @@ if (isMobile()) {
   }
 }
 
-// JavaScript to create and append the top bar
+//------------------------------------------------
+// Create a top navigation bar on mobile
+//------------------------------------------------
+
 function createMobileTopBar() {
   // Find the chat tab container
   const chatTab = document.getElementById("chat-tab");
