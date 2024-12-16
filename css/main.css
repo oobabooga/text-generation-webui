@@ -823,6 +823,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-bottom: 0;
 }
 
+#chat-controls > :nth-child(1) {
+    padding: 0.5rem;
+}
+
 #past-chats-row + * {
     width: unset;
     flex-grow: 1;
