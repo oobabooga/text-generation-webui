@@ -979,6 +979,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
     #chat-controls-toggle.chat-controls-open {
         top: 28px;
+        right: calc(16px + min(260px, 80vw)) !important;
     }
 }
 
