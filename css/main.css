@@ -845,7 +845,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 .pfp_character {
     position: relative;
-    z-index: 100;
 }
 
 .pfp_character:hover {
