@@ -104,6 +104,11 @@ ol li p, ul li p {
 #extensions {
     margin-top: 5px;
     margin-bottom: 35px;
+    max-width: 880px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 1em;
+    padding-left: calc(var(--header-width) + 1em);
 }
 
 .extension-tab {

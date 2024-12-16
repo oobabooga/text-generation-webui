@@ -18,8 +18,7 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
   if (extensionsVisible) {
     if (extensions) {
       extensions.style.display = "flex";
-      extensions.style.maxWidth = chatVisible ? "880px" : "none";
-      extensions.style.padding = chatVisible ? "0px" : "15px";
+      // extensions.style.maxWidth = chatVisible ? "880px" : "none";
     }
     this.style.marginBottom = chatVisible ? "0px" : "19px";
 
