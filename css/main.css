@@ -890,6 +890,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-top: 8px;
     padding-bottom: 8px;
     position: relative;
+    min-height: 42px !important;
 }
 
 #past-chats label::before {
