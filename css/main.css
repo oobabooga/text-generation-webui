@@ -771,16 +771,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         position: relative; /* Ensure positioning for the pseudo-element */
     }
 
-    #chat-col::before {
-        content: "";
-        position: absolute;
-        top: -32px; /* Matches the margin-top */
-        left: 0;
-        width: 100%;
-        height: 32px; /* Same as margin-top */
-        z-index: 2; /* Ensures the pseudo-element appears behind #chat-col */
-    }
-
     .chat-parent {
         height: calc(100dvh - 98px - var(--input-delta) - 32px);
     }
@@ -1066,12 +1056,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     border-color: var(--border-color-primary);
 }
 
-@media screen and (width <= 924px) {
-    .dark #chat-col::before {
-        background-color: var(--darker-gray);
-    }
-}
-
 .dark #chat-controls,
 .dark #past-chats-row {
     background-color: var(--darker-gray);
@@ -1127,4 +1111,30 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-controls-toggle,
 #navigation-toggle {
     color: gray !important;
+}
+
+.mobile-top-bar {
+    position: fixed;
+    top: 0px;
+    left: 0;
+    width: 100%;
+    height: 32px;
+    z-index: 2;
+    opacity: 0;
+    pointer-events: none;
+}
+
+@media screen and (max-width: 924px) {
+    .mobile-top-bar {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .dark .mobile-top-bar {
+        background-color: var(--darker-gray);
+    }
+
+    .light .mobile-top-bar {
+        background-color: var(--lighter-gray); /* Adjust this to match your light theme */
+    }
 }

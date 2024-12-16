@@ -783,3 +783,20 @@ if (isMobile()) {
     textarea.dispatchEvent(new Event("input", { bubbles: true }));
   }
 }
+
+// JavaScript to create and append the top bar
+function createMobileTopBar() {
+    // Find the chat tab container
+    const chatTab = document.getElementById('chat-tab');
+
+    // Only create the top bar if it doesn't already exist
+    if (chatTab && !chatTab.querySelector('.mobile-top-bar')) {
+        const topBar = document.createElement('div');
+        topBar.classList.add('mobile-top-bar');
+
+        // Insert the top bar as the first child of chat-tab
+        chatTab.appendChild(topBar);
+    }
+}
+
+createMobileTopBar();
