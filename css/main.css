@@ -1081,6 +1081,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     color: white;
 }
 
+@media screen and (width <= 408px) {
+    .dark #past-chats-toggle.past-chats-open {
+        background: var(--darker-gray);
+    }
+
+    .dark #chat-controls-toggle.chat-controls-open {
+        background: var(--darker-gray);
+    }
+}
+
 /* ----------------------------------------------
   Light theme
 ---------------------------------------------- */
@@ -1132,7 +1142,17 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         background-color: var(--darker-gray);
     }
 
-    .light .mobile-top-bar {
-        background-color: var(--lighter-gray); /* Adjust this to match your light theme */
+    .mobile-top-bar {
+        background-color: var(--light-theme-gray);
+    }
+}
+
+@media screen and (width <= 408px) {
+    #past-chats-toggle.past-chats-open {
+        background: var(--light-theme-gray);
+    }
+
+    #chat-controls-toggle.chat-controls-open {
+        background: var(--light-theme-gray);
     }
 }
