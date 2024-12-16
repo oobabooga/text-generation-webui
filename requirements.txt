@@ -1,5 +1,5 @@
 accelerate==1.2.*
-bitsandbytes==0.44.*
+bitsandbytes==0.45.*
 colorama
 datasets
 einops
