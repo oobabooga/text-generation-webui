@@ -102,11 +102,8 @@ ol li p, ul li p {
 }
 
 #extensions {
-    margin-top: 5px;
-    margin-bottom: 35px;
+    margin: 5px auto 35px;
     max-width: 880px;
-    margin-left: auto;
-    margin-right: auto;
     padding: 1em;
     padding-left: calc(var(--header-width) + 1em);
 }
@@ -1115,7 +1112,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 .mobile-top-bar {
     position: fixed;
-    top: 0px;
+    top: 0;
     left: 0;
     width: 100%;
     height: 32px;
@@ -1124,7 +1121,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     pointer-events: none;
 }
 
-@media screen and (max-width: 924px) {
+@media screen and (width <= 924px) {
     .mobile-top-bar {
         opacity: 1;
         pointer-events: auto;
