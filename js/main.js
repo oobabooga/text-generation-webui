@@ -18,8 +18,8 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
   if (extensionsVisible) {
     if (extensions) {
       extensions.style.display = "flex";
-      // extensions.style.maxWidth = chatVisible ? "880px" : "none";
     }
+
     this.style.marginBottom = chatVisible ? "0px" : "19px";
 
     if (chatVisible && !showControlsChecked) {
@@ -623,7 +623,6 @@ moveToChatTab();
 // Buttons to toggle the sidebars
 //------------------------------------------------
 
-// SVG icons as constants
 const leftArrowSVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-arrow-bar-left">
   <path d="M4 12l10 0"></path>
@@ -640,7 +639,6 @@ const rightArrowSVG = `
   <path d="M4 4l0 16"></path>
 </svg>`;
 
-// Smaller SVG icons as constants
 const hamburgerMenuSVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-hamburger-menu">
   <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -654,7 +652,6 @@ const closeMenuSVG = `
   <line x1="6" y1="6" x2="18" y2="18"></line>
 </svg>`;
 
-// Cache DOM elements
 const chatTab = document.getElementById("chat-tab");
 const pastChatsRow = document.getElementById("past-chats-row");
 const chatControlsRow = document.getElementById("chat-controls");
@@ -741,7 +738,7 @@ function toggleSidebar(sidebar, toggle, forceClose = false) {
 
 // Function to check if the device is mobile
 function isMobile() {
-  return window.innerWidth <= 924; // Mobile breakpoint
+  return window.innerWidth <= 924;
 }
 
 // Function to initialize sidebars
@@ -830,7 +827,6 @@ if (isMobile()) {
 //------------------------------------------------
 
 function createMobileTopBar() {
-  // Find the chat tab container
   const chatTab = document.getElementById("chat-tab");
 
   // Only create the top bar if it doesn't already exist

@@ -11,7 +11,7 @@
 @font-face {
     font-family: Inter;
     src: url('file/css/Inter/Inter-VariableFont_opsz,wght.ttf') format('truetype');
-    font-weight: 100 900; /* Supports weights from Thin (100) to Black (900) */
+    font-weight: 100 900;
     font-style: normal;
 }
 
@@ -931,7 +931,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 
-/* Sidebar styles */
 #past-chats-row,
 #chat-controls {
     width: 260px;
@@ -947,7 +946,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     overflow: hidden;
 }
 
-/* Toggle button styles */
 #past-chats-toggle,
 #chat-controls-toggle,
 #navigation-toggle {
