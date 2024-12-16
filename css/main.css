@@ -965,6 +965,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     top: 0;
 }
 
+#past-chats-toggle svg,
+#chat-controls-toggle svg,
+#navigation-toggle svg {
+    pointer-events: none;
+}
+
 #past-chats-row:not(.negative-header, .sidebar-hidden) {
     margin-left: 112px;
 }
@@ -1016,13 +1022,15 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     right: 7px;
 }
 
-#chat-controls.sidebar-shown {
-    position: fixed;
-    right: 0;
-}
+@media screen and (width <= 924px) {
+    #chat-controls.sidebar-shown {
+        position: fixed;
+        right: 0;
+    }
 
-#past-chats-row.sidebar-shown {
-    position: fixed;
+    #past-chats-row.sidebar-shown {
+        position: fixed;
+    }
 }
 
 /* ----------------------------------------------
