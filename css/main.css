@@ -132,7 +132,7 @@ gradio-app > :first-child {
     position: fixed;
     display: flex !important;
     flex-direction: column;
-    height: 100vh;
+    height: 100dvh;
     width: var(--header-width);
 }
 
@@ -156,23 +156,23 @@ gradio-app > :first-child {
 }
 
 .textbox_default textarea {
-    height: calc(100vh - 201px);
+    height: calc(100dvh - 201px);
 }
 
 .textbox_default_output textarea {
-    height: calc(100vh - 117px);
+    height: calc(100dvh - 117px);
 }
 
 .textbox textarea {
-    height: calc(100vh - 172px);
+    height: calc(100dvh - 172px);
 }
 
 .textbox_logits textarea {
-    height: calc(100vh - 205px);
+    height: calc(100dvh - 205px);
 }
 
 .textbox_logits_notebook textarea {
-    height: calc(100vh - 221px);
+    height: calc(100dvh - 221px);
 }
 
 .monospace textarea {
@@ -291,11 +291,11 @@ audio {
 }
 
 #default-token-counter {
-    top: calc(100vh - 200px) !important;
+    top: calc(100dvh - 200px) !important;
 }
 
 #notebook-token-counter {
-    top: calc(100vh - 171px) !important;
+    top: calc(100dvh - 171px) !important;
 }
 
 #default-token-counter span, #notebook-token-counter span {
@@ -313,8 +313,8 @@ audio {
 /* ----------------------------------------------
   Chat tab
 ---------------------------------------------- */
-.h-\[40vh\], .wrap.svelte-byatnx.svelte-byatnx.svelte-byatnx {
-    height: 66.67vh
+.h-\[40dvh\], .wrap.svelte-byatnx.svelte-byatnx.svelte-byatnx {
+    height: 66.67dvh
 }
 
 .gradio-container {
@@ -808,7 +808,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: 260px;
     max-width: 80vw;
     padding: 0.5rem;
-    height: 100vh;
+    height: 100dvh;
     flex-shrink: 0;
     box-sizing: content-box;
     z-index: 10;
@@ -866,7 +866,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #past-chats {
-    max-height: calc(100vh - 90px);
+    max-height: calc(100dvh - 90px);
     overflow-y: scroll !important;
     border-radius: 0;
     scrollbar-width: auto;
@@ -943,7 +943,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-controls {
     width: 260px;
     padding: 0.5rem;
-    height: calc(100vh - 16px);
+    height: calc(100dvh - 16px);
     flex-shrink: 0;
     box-sizing: content-box;
 }
