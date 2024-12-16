@@ -134,8 +134,7 @@ targetElement.addEventListener("scroll", function() {
 const observer = new MutationObserver(function(mutations) {
   updateCssProperties();
 
-  const firstChild = targetElement.children[0];
-  if (firstChild.classList.contains("generating")) {
+  if (targetElement.classList.contains("_generating")) {
     typing.parentNode.classList.add("visible-dots");
     document.getElementById("stop").style.display = "flex";
     document.getElementById("Generate").style.display = "none";
