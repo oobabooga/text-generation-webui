@@ -1066,6 +1066,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .dark #chat-controls,
 .dark #past-chats-row {
     background-color: var(--darker-gray);
+    border: 0 !important;
 }
 
 .dark #past-chats .selected,
