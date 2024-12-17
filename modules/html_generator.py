@@ -104,6 +104,8 @@ def convert_to_markdown(string):
     result = ''
     is_code = False
     is_latex = False
+    previous_line_empty = True
+
     for line in string.split('\n'):
         stripped_line = line.strip()
 
@@ -120,13 +122,20 @@ def convert_to_markdown(string):
         elif stripped_line.endswith('\\\\]'):
             is_latex = False
 
-        result += line
-
-        # Don't add an extra \n for tables, code, or LaTeX
-        if is_code or is_latex or line.startswith('|'):
-            result += '\n'
+        # Preserve indentation for lists and code blocks
+        if stripped_line.startswith('-') or stripped_line.startswith('*') or stripped_line.startswith('+') or stripped_line.startswith('>') or re.match(r'\d+\.', stripped_line):
+            result += line + '\n'
+            previous_line_empty = False
+        elif is_code or is_latex or line.startswith('|'):
+            result += line + '\n'
+            previous_line_empty = False
         else:
-            result += '\n\n'
+            if previous_line_empty:
+                result += line.strip() + '\n'
+            else:
+                result += line.strip() + '\n\n'
+
+            previous_line_empty = stripped_line == ''
 
     result = result.strip()
     if is_code:
@@ -145,14 +154,15 @@ def convert_to_markdown(string):
         result = re.sub(list_item_pattern, r'\g<1> ' + delete_str, result)
 
         # Convert to HTML using markdown
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'], tab_length=2)
 
         # Remove the delete string from the HTML output
         pos = html_output.rfind(delete_str)
         if pos > -1:
             html_output = html_output[:pos] + html_output[pos + len(delete_str):]
     else:
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        # Convert to HTML using markdown
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'], tab_length=2)
 
     # Unescape code blocks
     pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)

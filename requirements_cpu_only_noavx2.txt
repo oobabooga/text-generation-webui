@@ -1,9 +1,9 @@
-accelerate==1.0.*
+accelerate==1.2.*
 colorama
 datasets
 einops
 fastapi==0.112.4
-gradio==4.26.*
+gradio==4.37.*
 jinja2==3.1.4
 markdown
 numba==0.59.*
@@ -20,7 +20,7 @@ safetensors==0.4.*
 scipy
 sentencepiece
 tensorboard
-transformers==4.46.*
+transformers==4.47.*
 tqdm
 wandb
 
@@ -31,7 +31,7 @@ sse-starlette==1.6.5
 tiktoken
 
 # llama-cpp-python (CPU only, no AVX2)
-https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.3.1+cpuavx-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
-https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.3.1+cpuavx-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
-https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.3.1+cpuavx-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
-https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.3.1+cpuavx-cp310-cp310-win_amd64.whl; platform_system == "Windows" and python_version == "3.10"
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.3.5+cpuavx-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.3.5+cpuavx-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.3.5+cpuavx-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-python-cuBLAS-wheels/releases/download/cpu/llama_cpp_python-0.3.5+cpuavx-cp310-cp310-win_amd64.whl; platform_system == "Windows" and python_version == "3.10"
