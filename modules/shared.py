@@ -285,9 +285,13 @@ def transform_legacy_kv_cache_options(opts):
         else:
             setattr(opts, key, value)
 
-    def del_key(key):
-        if isinstance(opts, dict) and key in opts:
-            del opts[key]
+    def del_key(key, fallback_set):
+        # only remove from user dict, can't delete from argparse.Namespace
+        if type(opts) is dict:
+            if key in opts:
+                del opts[key]
+        else:
+            setattr(opts, key, fallback_set)
 
     # Retrieve values
     loader = get('loader')
@@ -317,8 +321,8 @@ def transform_legacy_kv_cache_options(opts):
                 set('cache_type', 'q8_0')
 
     # Clean up legacy keys
-    del_key('cache_4bit')
-    del_key('cache_8bit')
+    del_key('cache_4bit', False)
+    del_key('cache_8bit', False)
 
     return opts
 
