@@ -344,23 +344,6 @@ document.addEventListener("click", function (event) {
   if (event.target.classList.contains("pfp_character")) {
     toggleBigPicture();
   }
-
-  // Check if the click originated from a toggle button or its child elements
-  if (
-    target.closest("#navigation-toggle") === navigationToggle ||
-    target.closest("#past-chats-toggle") === pastChatsToggle ||
-    target.closest("#chat-controls-toggle") === chatControlsToggle ||
-    target.closest(".header_bar") === headerBar ||
-    target.closest("#past-chats-row") === pastChatsRow ||
-    target.closest("#chat-controls") === chatControlsRow
-  ) {
-    return; // Prevent further handling for toggle buttons
-  }
-
-  // Handle sidebar clicks on mobile
-  if (isMobile()) {
-    handleIndividualSidebarClose(event);
-  }
 });
 
 //------------------------------------------------
@@ -685,28 +668,9 @@ headerBar.appendChild(navigationToggle);
 const pastChatsToggle = document.getElementById("past-chats-toggle");
 const chatControlsToggle = document.getElementById("chat-controls-toggle");
 
-function handleIndividualSidebarClose(event) {
-  const target = event.target;
-
-  // Close navigation bar if click is outside and it is open
-  if (!headerBar.contains(target) && !headerBar.classList.contains("sidebar-hidden")) {
-    toggleSidebar(headerBar, navigationToggle, true);
-  }
-
-  // Close past chats row if click is outside and it is open
-  if (!pastChatsRow.contains(target) && !pastChatsRow.classList.contains("sidebar-hidden")) {
-    toggleSidebar(pastChatsRow, pastChatsToggle, true);
-  }
-
-  // Close chat controls row if click is outside and it is open
-  if (!chatControlsRow.contains(target) && !chatControlsRow.classList.contains("sidebar-hidden")) {
-    toggleSidebar(chatControlsRow, chatControlsToggle, true);
-  }
-}
-
-function toggleSidebar(sidebar, toggle, forceClose = false) {
+function toggleSidebar(sidebar, toggle) {
   const isCurrentlyHidden = sidebar.classList.contains("sidebar-hidden");
-  const shouldClose = forceClose || !isCurrentlyHidden;
+  const shouldClose = !isCurrentlyHidden;
 
   // Apply visibility classes
   sidebar.classList.toggle("sidebar-hidden", shouldClose);
