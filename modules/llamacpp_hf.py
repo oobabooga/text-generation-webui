@@ -8,8 +8,8 @@ from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import shared
-from modules.llamacpp_model import get_llamacpp_quant_type_for_string
 from modules.llama_cpp_python_hijack import llama_cpp_lib
+from modules.llamacpp_model import get_llamacpp_cache_type_for_string
 from modules.logging_colors import logger
 
 
@@ -197,9 +197,9 @@ class LlamacppHF(PreTrainedModel):
             'flash_attn': shared.args.flash_attn
         }
 
-        if shared.args.lcpp_cache_type:
-            params["type_k"] = get_llamacpp_quant_type_for_string(shared.args.lcpp_cache_type)
-            params["type_v"] = get_llamacpp_quant_type_for_string(shared.args.lcpp_cache_type)
+        if shared.args.cache_type:
+            params["type_k"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
+            params["type_v"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
 
         Llama = llama_cpp_lib().Llama
         model = Llama(**params)

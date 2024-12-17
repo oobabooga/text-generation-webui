@@ -4,20 +4,20 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import torch
-from exllamav2 import (
-    ExLlamaV2,
-    ExLlamaV2Cache,
-    ExLlamaV2Cache_8bit,
-    ExLlamaV2Cache_Q8,
-    ExLlamaV2Cache_Q6,
-    ExLlamaV2Cache_Q4,
-    ExLlamaV2Cache_TP,
-    ExLlamaV2Config
-)
 from torch.nn import CrossEntropyLoss
 from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
+from exllamav2 import (
+    ExLlamaV2,
+    ExLlamaV2Cache,
+    ExLlamaV2Cache_8bit,
+    ExLlamaV2Cache_Q4,
+    ExLlamaV2Cache_Q6,
+    ExLlamaV2Cache_Q8,
+    ExLlamaV2Cache_TP,
+    ExLlamaV2Config
+)
 from modules import shared
 from modules.logging_colors import logger
 
@@ -48,9 +48,9 @@ class Exllamav2HF(PreTrainedModel):
 
         # Determine the correct cache type
         kv_cache_type = 'fp16'
-        if shared.args.exl_cache_type:
-            kv_cache_type = shared.args.exl_cache_type.lower()
-        
+        if shared.args.cache_type:
+            kv_cache_type = shared.args.cache_type.lower()
+
         if kv_cache_type == 'fp16':
             cache_type = ExLlamaV2Cache
         elif kv_cache_type == 'fp8':
@@ -62,9 +62,8 @@ class Exllamav2HF(PreTrainedModel):
         elif kv_cache_type == 'q4':
             cache_type = ExLlamaV2Cache_Q4
         else:
-            raise ValueError(f"Unknown cache kv type: {kv_cache_type}")
+            raise ValueError(f"Invalid cache type for ExLlamaV2: {cache_type}. Valid options are: fp16, fp8, q8, q6, q4.")
 
-            
         # Use TP if specified
         if shared.args.enable_tp:
             self.ex_cache = ExLlamaV2Cache_TP(self.ex_model, base=cache_type)

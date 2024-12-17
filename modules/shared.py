@@ -47,8 +47,6 @@ settings = {
     'max_updates_second': 0,
     'prompt_lookup_num_tokens': 0,
     'custom_stopping_strings': '',
-    'lcpp_cache_type': 'fp16',
-    'exl_cache_type': 'fp16',
     'custom_token_bans': '',
     'auto_max_new_tokens': False,
     'ban_eos_token': False,
@@ -127,7 +125,6 @@ group.add_argument('--no-mmap', action='store_true', help='Prevent mmap from bei
 group.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
 group.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
 group.add_argument('--tensor_split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.')
-group.add_argument('--lcpp_cache_type', type=str, default='fp16', help='KV cache K-quant type. May be one of fp16, q8_0, q4_0.')
 group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
 group.add_argument('--logits_all', action='store_true', help='Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower.')
 group.add_argument('--no_offload_kqv', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
@@ -146,7 +143,6 @@ group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF: Creat
 group.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
 group.add_argument('--no_xformers', action='store_true', help='Force xformers to not be used.')
 group.add_argument('--no_sdpa', action='store_true', help='Force Torch SDPA to not be used.')
-group.add_argument('--exl_cache_type', type=str, default='fp16', help='KV cache type; may be one of FP16, FP8, Q8, Q6 or Q4.')
 group.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
 group.add_argument('--enable_tp', action='store_true', help='Enable Tensor Parallelism (TP) in ExLlamaV2.')
 
@@ -168,6 +164,10 @@ group.add_argument('--hqq-backend', type=str, default='PYTORCH_COMPILE', help='B
 # TensorRT-LLM
 group = parser.add_argument_group('TensorRT-LLM')
 group.add_argument('--cpp-runner', action='store_true', help='Use the ModelRunnerCpp runner, which is faster than the default ModelRunner but doesn\'t support streaming yet.')
+
+# Cache
+group = parser.add_argument_group('Cache')
+group.add_argument('--cache_type', type=str, default=None, help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4.')
 
 # DeepSpeed
 group = parser.add_argument_group('DeepSpeed')
@@ -274,58 +274,53 @@ def fix_loader_name(name):
 
 
 def transform_legacy_kv_cache_options(opts):
-    # Handle both argparse.Namespace and dict here to migrate both command line arguments and user config
+    # Handle both argparse.Namespace and dict here
     def get(key):
-        if type(opts) is dict:
-            return opts.get(key)
-        return getattr(opts, key)
-    
+        return opts.get(key) if isinstance(opts, dict) else getattr(opts, key, None)
+
     def set(key, value):
-        if type(opts) is dict:
+        if isinstance(opts, dict):
             opts[key] = value
         else:
             setattr(opts, key, value)
 
-    def del_key(key, fallback_set):
-        # only remove from user dict, can't delete from argparse.Namespace
-        if type(opts) is dict:
-            if key in opts:
-                del opts[key]
-        else:
-            setattr(opts, key, fallback_set)
+    def del_key(key):
+        if isinstance(opts, dict) and key in opts:
+            del opts[key]
 
+    # Retrieve values
     loader = get('loader')
+    cache_type = get('cache_type')
     cache_8bit = get('cache_8bit')
     cache_4bit = get('cache_4bit')
 
-    # XXX: formerly, both 'cache_4bit' and 'cache_8bit' could be sent, but the loaders 
-    #      handled these cases a little differently. Llama.cpp variants would prefer
-    #      4-bit, and exllama would prefer 8. We retain this legacy behaviour in the case
-    #      of misconfiguration to prevent breakage in older setups. We're stuck in the mud
-    #      if no loader was provided on boot, so just do our best, preferring 8 over 4 to
-    #      prevent as much breakage as possible.
-    if not loader:
-        if cache_8bit:
-            set('lcpp_cache_type', 'q8_0')
-            set('exl_cache_type', 'fp8')
-        elif cache_4bit:
-            set('lcpp_cache_type', 'q4_0')
-            set('exl_cache_type', 'q4')
-    elif loader.lower() in ['exllamav2', 'exllamav2_hf']:
-        if cache_8bit:
-            set('exl_cache_type', 'fp8')
-        elif cache_4bit:
-            set('exl_cache_type', 'q4')
-    elif loader.lower() in ['llama.cpp', 'llamacpp_hf']:
-        if cache_4bit:
-            set('lcpp_cache_type', 'q4_0')
-        elif cache_8bit:
-            set('lcpp_cache_type', 'q8_0')
-    
-    del_key('cache_4bit', False)
-    del_key('cache_8bit', False)
+    # Determine cache type based on loader or legacy flags
+    if not cache_type:
+        if not loader:
+            # Legacy behavior: prefer 8-bit over 4-bit to minimize breakage
+            if cache_8bit:
+                set('cache_type', 'fp8')
+            elif cache_4bit:
+                set('cache_type', 'q4')
+        elif loader.lower() in ['exllamav2', 'exllamav2_hf']:
+            # ExLlamaV2 loader-specific cache type
+            if cache_8bit:
+                set('cache_type', 'fp8')
+            elif cache_4bit:
+                set('cache_type', 'q4')
+        elif loader.lower() in ['llama.cpp', 'llamacpp_hf']:
+            # Llama.cpp loader-specific cache type
+            if cache_4bit:
+                set('cache_type', 'q4_0')
+            elif cache_8bit:
+                set('cache_type', 'q8_0')
+
+    # Clean up legacy keys
+    del_key('cache_4bit')
+    del_key('cache_8bit')
+
     return opts
-    
+
 
 def add_extension(name, last=False):
     if args.extensions is None:

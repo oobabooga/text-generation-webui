@@ -10,7 +10,6 @@ from modules.llama_cpp_python_hijack import llama_cpp_lib
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
 
-
 llamacpp_quant_mapping = {
     'f32': 0,
     'fp16': 1,
@@ -30,13 +29,15 @@ llamacpp_quant_mapping = {
     'bf16': 30,
 }
 
+llamacpp_valid_cache_types = {'fp16', 'q8_0', 'q4_0'}
 
-def get_llamacpp_quant_type_for_string(quant_type: str): 
+
+def get_llamacpp_cache_type_for_string(quant_type: str):
     quant_type = quant_type.lower()
-    if quant_type in llamacpp_quant_mapping:
+    if quant_type in llamacpp_valid_cache_types:
         return llamacpp_quant_mapping[quant_type]
     else:
-        raise ValueError(f"Unknown quant type: {quant_type}")
+        raise ValueError(f"Invalid cache type for llama.cpp: {quant_type}. Valid options are: fp16, q8_0, q4_0.")
 
 
 def ban_eos_logits_processor(eos_token, input_ids, logits):
@@ -103,9 +104,9 @@ class LlamaCppModel:
             'flash_attn': shared.args.flash_attn
         }
 
-        if shared.args.lcpp_cache_type:
-            params["type_k"] = get_llamacpp_quant_type_for_string(shared.args.lcpp_cache_type)
-            params["type_v"] = get_llamacpp_quant_type_for_string(shared.args.lcpp_cache_type)
+        if shared.args.cache_type:
+            params["type_k"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
+            params["type_v"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
 
         result.model = Llama(**params)
         if cache_capacity > 0:
