@@ -357,6 +357,7 @@ def load_user_config():
 
     for model_name in user_config:
         user_config[model_name] = transform_legacy_kv_cache_options(user_config[model_name])
+
     return user_config
 
 
