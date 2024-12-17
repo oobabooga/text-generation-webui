@@ -81,7 +81,6 @@ group.add_argument('--model-menu', action='store_true', help='Show a model menu 
 group.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 group.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
-group.add_argument('--chat-buttons', action='store_true', help='Show buttons on the chat tab instead of a hover menu.')
 group.add_argument('--idle-timeout', type=int, default=0, help='Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.')
 
 # Model loader
@@ -191,6 +190,7 @@ group.add_argument('--gradio-auth-path', type=str, help='Set the Gradio authenti
 group.add_argument('--ssl-keyfile', type=str, help='The path to the SSL certificate key file.', default=None)
 group.add_argument('--ssl-certfile', type=str, help='The path to the SSL certificate cert file.', default=None)
 group.add_argument('--subpath', type=str, help='Customize the subpath for gradio, use with reverse proxy')
+group.add_argument('--old-colors', action='store_true', help='Use the legacy Gradio colors, before the December/2024 update.')
 
 # API
 group = parser.add_argument_group('API')
@@ -213,6 +213,7 @@ group.add_argument('--pre_layer', type=int, nargs='+', help='DEPRECATED')
 group.add_argument('--checkpoint', type=str, help='DEPRECATED')
 group.add_argument('--monkey-patch', action='store_true', help='DEPRECATED')
 group.add_argument('--no_inject_fused_attention', action='store_true', help='DEPRECATED')
+group.add_argument('--chat-buttons', action='store_true', help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
