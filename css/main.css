@@ -968,10 +968,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     pointer-events: none;
 }
 
-#past-chats-row:not(.negative-header, .sidebar-hidden) {
-    margin-left: 112px;
-}
-
 @media screen and (width <= 408px) {
     #past-chats-toggle.past-chats-open {
         top: 28px;
@@ -1007,7 +1003,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 }
 
-.header_bar ~ *:not(#chat-tab) {
+.header_bar ~ * {
     margin-left: var(--header-width);
 }
 
