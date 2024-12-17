@@ -56,7 +56,9 @@ if not shared.args.old_colors:
         border_color_primary='#c5c5d2',
         body_text_color_subdued='#484848',
         background_fill_secondary='#eaeaea',
+        background_fill_secondary_dark='var(--dark-gray)',
         background_fill_primary='var(--neutral-50)',
+        background_fill_primary_dark='var(--darker-gray)',
         body_background_fill="white",
         block_background_fill="transparent",
         body_text_color="#333",
@@ -79,6 +81,8 @@ if not shared.args.old_colors:
         button_cancel_background_fill_dark='transparent',
         button_secondary_background_fill_hover_dark='var(--selected-item-color-dark)',
         checkbox_label_background_fill_hover_dark='var(--selected-item-color-dark)',
+        table_even_background_fill_dark='var(--darker-gray)',
+        table_odd_background_fill_dark='var(--dark-gray)',
 
         # Shadows and Radius
         checkbox_label_shadow='none',
