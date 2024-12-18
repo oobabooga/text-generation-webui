@@ -298,7 +298,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
             downloader.check_model_files(model, branch, links, sha256, output_folder)
             progress(1.0)
         else:
-            yield (f"Downloading file{'s' if len(links) > 1 else ''} to `{output_folder}`")
+            yield (f"Downloading file{'s' if len(links) > 1 else ''} to `{output_folder}/`")
             downloader.download_model_files(model, branch, links, sha256, output_folder, progress_bar=progress, threads=4, is_llamacpp=is_llamacpp)
 
             yield (f"Model successfully saved to `{output_folder}/`.")
@@ -318,7 +318,7 @@ def create_llamacpp_hf(gguf_name, unquantized_url, progress=gr.Progress()):
         links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=True)
         output_folder = Path(shared.args.model_dir) / (re.sub(r'(?i)\.gguf$', '', gguf_name) + "-HF")
 
-        yield (f"Downloading tokenizer to `{output_folder}`")
+        yield (f"Downloading tokenizer to `{output_folder}/`")
         downloader.download_model_files(model, branch, links, sha256, output_folder, progress_bar=progress, threads=4, is_llamacpp=False)
 
         # Move the GGUF
