@@ -464,18 +464,6 @@ new ResizeObserver(updateCssProperties).observe(document.querySelector("#chat-in
 window.addEventListener("resize", updateCssProperties);
 
 //------------------------------------------------
-// Keep track of the display width to position the past
-// chats dropdown on desktop
-//------------------------------------------------
-function updateDocumentWidth() {
-  var updatedWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-  document.documentElement.style.setProperty("--document-width", updatedWidth + "px");
-}
-
-updateDocumentWidth();
-window.addEventListener("resize", updateDocumentWidth);
-
-//------------------------------------------------
 // Focus on the rename text area when it becomes visible
 //------------------------------------------------
 const renameTextArea = document.getElementById("rename-row").querySelector("textarea");
