@@ -835,6 +835,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 ---------------------------------------------- */
 .options {
     z-index: 100 !important;
+    border: 1px solid var(--input-border-color);
+    border-radius: 0px;
 }
 
 /* ----------------------------------------------
