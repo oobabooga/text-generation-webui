@@ -740,9 +740,6 @@ function initializeSidebars() {
 // Run the initializer when the page loads
 initializeSidebars();
 
-// Add an event listener to handle screen resizing
-window.addEventListener("resize", initializeSidebars);
-
 // Add click event listeners to toggle buttons
 pastChatsToggle.addEventListener("click", () => {
   toggleSidebar(pastChatsRow, pastChatsToggle);
