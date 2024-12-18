@@ -17,7 +17,9 @@
     line-height: 28px !important;
 }
 
-.dark .chat .message-body p, .dark .chat .message-body li {
+.dark .chat .message-body p,
+.dark .chat .message-body li,
+.dark .chat .message-body q {
     color: #d1d5db !important;
 }
 
