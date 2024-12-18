@@ -166,7 +166,7 @@ group.add_argument('--cpp-runner', action='store_true', help='Use the ModelRunne
 
 # Cache
 group = parser.add_argument_group('Cache')
-group.add_argument('--cache_type', type=str, default=None, help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4.')
+group.add_argument('--cache_type', type=str, default='fp16', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4.')
 
 # DeepSpeed
 group = parser.add_argument_group('DeepSpeed')
@@ -295,12 +295,11 @@ def transform_legacy_kv_cache_options(opts):
 
     # Retrieve values
     loader = get('loader')
-    cache_type = get('cache_type')
     cache_8bit = get('cache_8bit')
     cache_4bit = get('cache_4bit')
 
     # Determine cache type based on loader or legacy flags
-    if not cache_type:
+    if cache_8bit or cache_4bit:
         if not loader:
             # Legacy behavior: prefer 8-bit over 4-bit to minimize breakage
             if cache_8bit:

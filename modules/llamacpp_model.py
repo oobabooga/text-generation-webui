@@ -104,7 +104,7 @@ class LlamaCppModel:
             'flash_attn': shared.args.flash_attn
         }
 
-        if shared.args.cache_type:
+        if shared.args.cache_type != 'fp16':
             params["type_k"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
             params["type_v"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
 

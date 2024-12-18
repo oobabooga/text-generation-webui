@@ -59,9 +59,7 @@ class Exllamav2Model:
             model.load(split)
 
         # Determine the correct cache type
-        kv_cache_type = 'fp16'
-        if shared.args.cache_type:
-            kv_cache_type = shared.args.cache_type.lower()
+        kv_cache_type = shared.args.cache_type.lower()
 
         if kv_cache_type == 'fp16':
             cache_type = ExLlamaV2Cache
