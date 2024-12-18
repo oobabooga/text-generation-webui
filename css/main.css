@@ -36,6 +36,11 @@ div.svelte-iyf88w {
     border: 0;
 }
 
+/* "info" messages without a title above */
+.block > .svelte-e8n7p6:not(:only-of-type) {
+    margin-bottom: 2px;
+}
+
 .py-6 {
     padding-top: 2.5rem
 }

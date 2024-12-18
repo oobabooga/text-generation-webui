@@ -83,6 +83,7 @@ if not shared.args.old_colors:
         checkbox_label_background_fill_hover_dark='var(--selected-item-color-dark)',
         table_even_background_fill_dark='var(--darker-gray)',
         table_odd_background_fill_dark='var(--selected-item-color-dark)',
+        code_background_fill_dark='var(--darker-gray)',
 
         # Shadows and Radius
         checkbox_label_shadow='none',
