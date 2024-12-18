@@ -818,6 +818,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-controls {
     padding: 1rem;
     padding-bottom: 0;
+    overflow-y: scroll;
 }
 
 #chat-controls > :nth-child(1) {
