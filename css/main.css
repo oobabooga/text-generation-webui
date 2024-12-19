@@ -433,12 +433,60 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-top: 20px;
 }
 
-.message-body h1,
-.message-body h2,
-.message-body h3,
+.message-body {
+    font-size: 16px;
+}
+
+.message-body :is(h1, h2, h3, h4, h5, h6) {
+    color: black !important;
+}
+
+.dark .message-body :is(h1, h2, h3, h4, h5, h6) {
+    color: white !important;
+}
+
+.message-body h1 {
+    font-weight: 800;
+    font-size: 2.25em;
+    margin-top: 0;
+    margin-bottom: 0.8888889em;
+    line-height: 1.1111111;
+}
+
+.message-body h2 {
+    font-weight: 700;
+    font-size: 1.5em;
+    margin-top: 2em;
+    margin-bottom: 1em;
+    line-height: 1.3333333;
+}
+
+.message-body h3 {
+    font-weight: 600;
+    font-size: 1.25em;
+    margin-top: 0;
+    margin-bottom: 0.6em;
+    line-height: 1.6;
+}
+
 .message-body h4 {
-    color: var(--body-text-color);
-    margin: 20px 0 10px;
+    font-weight: 600;
+    font-size: 1em;
+    margin-top: 0;
+    margin-bottom: 0.5em;
+    line-height: 1.5;
+}
+
+.message-body h5 {
+    font-weight: normal;
+    font-size: 1em;
+    margin: 0;
+}
+
+.message-body h6 {
+    font-weight: normal;
+    font-size: 1em;
+    margin: 0;
 }
 
 .dark .message q {
