@@ -128,10 +128,31 @@ def setup():
     """
     pass
 
-def ui():
+def ui_block():
     """
-    Gets executed when the UI is drawn. Custom gradio elements and
-    their corresponding event handlers should be defined here.
+    Gets executed when the UI is drawn. The custom gradio elements
+    that are used most often and their corresponding event handlers
+    should be defined here.
+
+    To learn about gradio components, check out the docs:
+    https://gradio.app/docs/
+    """
+    pass
+
+def ui_tab():
+    """
+    Gets executed when the UI is drawn and creates a tab for the big UI.
+    Its gradio elements and corresponding event handlers should be defined here.
+
+    To learn about gradio components, check out the docs:
+    https://gradio.app/docs/
+    """
+    pass
+
+def ui_params():
+    """
+    Executed when the user interface is rendered. Elements of the extension
+    settings and event handlers corresponding to them should be defined here.
 
     To learn about gradio components, check out the docs:
     https://gradio.app/docs/
