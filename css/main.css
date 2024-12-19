@@ -501,6 +501,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     list-style-position: outside;
 }
 
+.message-body a {
+    font-weight: 500;
+}
+
 .chat .message-body ul, .chat .message-body ol {
     padding-inline-start: 2em;
 }
