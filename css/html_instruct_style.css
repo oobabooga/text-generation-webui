@@ -51,13 +51,13 @@
 }
 
 .chat .user-message {
+    background: #f4f4f4;
     padding: 1.5rem 1rem;
     border-radius: 0;
     border-bottom-right-radius: 0;
 }
 
 .chat .assistant-message {
-    background: #f4f4f4;
     padding: 1.5rem 1rem;
     border-radius: 0;
     border: 0;

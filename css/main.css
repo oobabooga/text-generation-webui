@@ -437,10 +437,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     font-size: 16px;
 }
 
-.message-body :is(h1, h2, h3, h4, h5, h6) {
-    color: black !important;
-}
-
 .dark .message-body :is(h1, h2, h3, h4, h5, h6) {
     color: white !important;
 }
