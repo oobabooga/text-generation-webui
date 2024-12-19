@@ -454,7 +454,7 @@ def get_logits_processor_patch(self, **kwargs):
             )
 
         # Stuff we don't need
-        elif warpers[i].__class__.__name__ in ['SuppressTokensLogitsProcessor', 'RepetitionPenaltyLogitsProcessor']:
+        elif warpers[i].__class__.__name__ in ['RepetitionPenaltyLogitsProcessor']:
             del warpers[i]
 
     # Add custom warpers
@@ -571,11 +571,10 @@ def get_logits_processor_patch(self, **kwargs):
     if generation_config.temperature_last:
         for param_name in ['temperature', 'dynamic_temperature', 'quadratic_sampling']:
             if param_name in sampler_priority:
-                if param_name in sampler_priority:
-                    index = sampler_priority.index(param_name)
-                    sampler_priority.append(sampler_priority.pop(index))
-                else:
-                    sampler_priority.append(param_name)
+                index = sampler_priority.index(param_name)
+                sampler_priority.append(sampler_priority.pop(index))
+            else:
+                sampler_priority.append(param_name)
 
     class_name_to_nickname = {
         'DynamicTemperatureLogitsWarper': 'dynamic_temperature',

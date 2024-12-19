@@ -47,7 +47,7 @@ def my_open(*args, **kwargs):
         if len(args) > 1 and args[1] == 'rb':
             file_contents = file_contents.decode('utf-8')
 
-        file_contents = file_contents.replace('\t\t<script\n\t\t\tsrc="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.9/iframeResizer.contentWindow.min.js"\n\t\t\tasync\n\t\t></script>', '')
+        file_contents = file_contents.replace('\t\t<script\n\t\t\tsrc="https://cdnjs.cloudflare.com/ajax/libs/iframe-resizer/4.3.1/iframeResizer.contentWindow.min.js"\n\t\t\tasync\n\t\t></script>', '')
         file_contents = file_contents.replace('cdnjs.cloudflare.com', '127.0.0.1')
         file_contents = file_contents.replace(
             '</head>',
