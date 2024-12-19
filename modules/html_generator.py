@@ -99,7 +99,7 @@ def add_long_list_class(html):
 
         # Find all list items within this list
         li_matches = li_pattern.finditer(list_content)
-        has_long_item = any(len(li_match.group(1).strip()) > 128 for li_match in li_matches)
+        has_long_item = any(len(li_match.group(1).strip()) > 160 for li_match in li_matches)
 
         if has_long_item:
             # Add class="long-list" to the opening tag if it doesn't already have a class
