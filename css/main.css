@@ -460,7 +460,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .message-body h3 {
     font-weight: 600;
     font-size: 1.25em;
-    margin-top: 0;
+    margin-top: 1.6em;
     margin-bottom: 0.6em;
     line-height: 1.6;
 }
@@ -468,7 +468,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .message-body h4 {
     font-weight: 600;
     font-size: 1em;
-    margin-top: 0;
+    margin-top: 1.5em;
     margin-bottom: 0.5em;
     line-height: 1.5;
 }
@@ -495,6 +495,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 .message-body li {
     list-style-position: outside;
+    margin-top: 0.5em !important;
+    margin-bottom: 0.5em !important;
+}
+
+.message-body ul.long-list li,
+.message-body ol.long-list li {
+    margin-top: 1.25em !important;
+    margin-bottom: 1.25em !important;
 }
 
 .message-body a {
@@ -505,21 +513,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-inline-start: 2em;
 }
 
-.chat .message-body li:not(:last-child) {
-    margin-top: 0;
-    margin-bottom: 2px;
-}
-
-.chat .message-body li:last-child {
-    margin-bottom: 0 !important;
-}
-
 .message-body li > p {
     display: inline !important;
-}
-
-.message-body ul, .message-body ol {
-    font-size: 15px !important;
 }
 
 .message-body ul {
@@ -834,8 +829,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-bottom: 80px !important;
 }
 
-.chat ol, .chat ul {
-    margin-top: 6px !important;
+.message-body ol, .message-body ul {
+    margin-top: 0 !important;
+    margin-bottom: 1.25em !important;
 }
 
 /* ----------------------------------------------

@@ -33,11 +33,6 @@
     margin-bottom: 0 !important;
 }
 
-.chat .message-body li {
-    margin-top: 1.25em !important;
-    margin-bottom: 1.25em !important;
-}
-
 .user-message, .assistant-message {
     font-family: Inter, Helvetica, Arial, sans-serif;
 }
