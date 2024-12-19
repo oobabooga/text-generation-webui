@@ -353,14 +353,14 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
         # Extract the reply
         if state['mode'] in ['chat', 'chat-instruct']:
-            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply + '❚')
+            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply + '▍')
         else:
-            visible_reply = reply + '❚'
+            visible_reply = reply + '▍'
 
         visible_reply = html.escape(visible_reply)
 
         if shared.stop_everything:
-            if output['visible'][-1][1].endswith('❚'):
+            if output['visible'][-1][1].endswith('▍'):
                 output['visible'][-1][1] = output['visible'][-1][1][:-1]
 
             output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
@@ -378,7 +378,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             if is_stream:
                 yield output
 
-    if output['visible'][-1][1].endswith('❚'):
+    if output['visible'][-1][1].endswith('▍'):
         output['visible'][-1][1] = output['visible'][-1][1][:-1]
 
     output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
