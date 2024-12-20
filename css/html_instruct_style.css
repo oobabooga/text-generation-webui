@@ -68,7 +68,7 @@
 
 .chat .user-message .text,
 .chat .assistant-message .text {
-    max-width: 40.25rem;
+    max-width: 645px;
     margin-left: auto;
     margin-right: auto;
 }
