@@ -73,11 +73,14 @@ def natural_keys(text):
 
 
 def get_available_models():
+    exclude_extensions = ('.txt', '-np', '.pt', '.json', '.yaml', '.py', '.modelfile')
     model_list = []
-    for item in list(Path(f'{shared.args.model_dir}/').glob('*')):
-        if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml', '.py')) and 'llama-tokenizer' not in item.name:
-            model_list.append(item.name)
-
+    for dirpath, dirnames, files in os.walk(shared.args.model_dir, followlinks=True):
+        for file in files:
+            file_path = os.path.join(dirpath, file)
+            relative_path = os.path.relpath(file_path, shared.args.model_dir)
+            if not file.endswith(exclude_extensions) and 'llama-tokenizer' not in relative_path:
+                model_list.append(relative_path)
     return ['None'] + sorted(model_list, key=natural_keys)
 
 
@@ -86,7 +89,6 @@ def get_available_ggufs():
     for item in Path(f'{shared.args.model_dir}/').glob('*'):
         if item.is_file() and item.name.lower().endswith(".gguf"):
             model_list.append(item.name)
-
     return ['None'] + sorted(model_list, key=natural_keys)
 
 
