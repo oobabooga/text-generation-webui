@@ -8,8 +8,8 @@ if [[ "$(pwd)" =~ " " ]]; then echo This script relies on Miniconda which can no
 { conda deactivate && conda deactivate && conda deactivate; } 2> /dev/null
 
 # config
-CONDA_ROOT_PREFIX="$(pwd)/installer_files/conda"
-INSTALL_ENV_DIR="$(pwd)/installer_files/env"
+CONDA_ROOT_PREFIX="$(pwd)/installer_files/conda_linux"
+INSTALL_ENV_DIR="$(pwd)/installer_files/env_linux"
 
 # environment isolation
 export PYTHONNOUSERSITE=1
