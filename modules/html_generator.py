@@ -104,7 +104,6 @@ def convert_to_markdown(string):
     result = ''
     is_code = False
     is_latex = False
-    previous_line_empty = True
 
     for line in string.split('\n'):
         stripped_line = line.strip()
@@ -125,17 +124,10 @@ def convert_to_markdown(string):
         # Preserve indentation for lists and code blocks
         if stripped_line.startswith('-') or stripped_line.startswith('*') or stripped_line.startswith('+') or stripped_line.startswith('>') or re.match(r'\d+\.', stripped_line):
             result += line + '\n'
-            previous_line_empty = False
         elif is_code or is_latex or line.startswith('|'):
             result += line + '\n'
-            previous_line_empty = False
         else:
-            if previous_line_empty:
-                result += line.strip() + '\n'
-            else:
-                result += line.strip() + '\n\n'
-
-            previous_line_empty = stripped_line == ''
+            result += stripped_line + '  \n'
 
     result = result.strip()
     if is_code:
