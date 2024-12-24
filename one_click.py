@@ -19,10 +19,35 @@ import sys
 TORCH_VERSION = "2.4.1"
 TORCHVISION_VERSION = "0.19.1"
 TORCHAUDIO_VERSION = "2.4.1"
+# Platform handling
+
+
+def is_linux():
+    return sys.platform.startswith("linux")
+
+
+def is_windows():
+    return sys.platform.startswith("win")
+
+
+def is_macos():
+    return sys.platform.startswith("darwin")
+
+
+def platform_name():
+    if is_linux():
+        return "linux"
+    elif is_windows():
+        return "windows"
+    elif is_macos():
+        return "osx"
+    else:
+        return ""
+
 
 # Environment
 script_dir = os.getcwd()
-conda_env_path = os.path.join(script_dir, "installer_files", "env")
+conda_env_path = os.path.join(script_dir, "installer_files", "env_" + platform_name())
 
 # Command-line flags
 cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
@@ -40,18 +65,6 @@ def signal_handler(sig, frame):
 
 
 signal.signal(signal.SIGINT, signal_handler)
-
-
-def is_linux():
-    return sys.platform.startswith("linux")
-
-
-def is_windows():
-    return sys.platform.startswith("win")
-
-
-def is_macos():
-    return sys.platform.startswith("darwin")
 
 
 def is_x86_64():
@@ -183,10 +196,10 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
     # Use the conda environment
     if environment:
         if is_windows():
-            conda_bat_path = os.path.join(script_dir, "installer_files", "conda", "condabin", "conda.bat")
+            conda_bat_path = os.path.join(script_dir, "installer_files", "conda_" + platform_name(), "condabin", "conda.bat")
             cmd = f'"{conda_bat_path}" activate "{conda_env_path}" >nul && {cmd}'
         else:
-            conda_sh_path = os.path.join(script_dir, "installer_files", "conda", "etc", "profile.d", "conda.sh")
+            conda_sh_path = os.path.join(script_dir, "installer_files", "conda_" + platform_name(), "etc", "profile.d", "conda.sh")
             cmd = f'. "{conda_sh_path}" && conda activate "{conda_env_path}" && {cmd}'
 
     # Set executable to None for Windows, bash for everything else
