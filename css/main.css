@@ -38,7 +38,7 @@ div.svelte-iyf88w {
 
 /* "info" messages without a title above */
 .block > .svelte-e8n7p6:not(:only-of-type, #chat-mode *) {
-    margin-bottom: 2px;
+    margin-bottom: 0;
 }
 
 .py-6 {
