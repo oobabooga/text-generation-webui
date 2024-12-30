@@ -81,6 +81,10 @@ def get_available_models():
     return ['None'] + sorted(model_list, key=natural_keys)
 
 
+def get_available_localizations():
+    return ['None'] + sorted(shared.localizations.keys(), key=natural_keys)
+
+
 def get_available_ggufs():
     model_list = []
     for item in Path(f'{shared.args.model_dir}/').glob('*'):

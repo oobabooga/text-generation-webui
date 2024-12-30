@@ -3,7 +3,7 @@ Here you can restart the UI with new settings.
 * **Available extensions**: shows a list of extensions available under `text-generation-webui/extensions`.
 * **Boolean command-line flags**: shows command-line flags of bool (true/false) type.
 
-After selecting your desired flags and extensions, you can restart the UI by clicking on **Apply flags/extensions and restart**.
+After selecting your desired flags and extensions, you can restart the UI by clicking on **Apply flags/extensions/localization and restart**.
 
 ## Install or update an extension
 
@@ -30,3 +30,9 @@ If you used the one-click installer, this command should be executed in the term
 The **Save UI defaults to settings.yaml** button gathers the visible values in the UI and saves them to settings.yaml so that your settings will persist across multiple restarts of the UI.
 
 Note that preset parameters like temperature are not individually saved, so you need to first save your preset and select it in the preset menu before saving the defaults.
+
+## Localization
+
+You can get a localization file from community, put the json file under localization folder, and then click on **Apply flags/extensions/localization and restart** button to apply the localization you have selected.  
+
+If there's no localization in your language, you can make your own! Just press the **Download localization template** button, change the values, and save the file in the localization folder. Then you can select your localization from the dropdown menu. Remember to rename localization.json to your language code (e.g. en.json, de.json, etc.) so others can know which language it is.
