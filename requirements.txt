@@ -5,7 +5,7 @@ datasets
 einops
 fastapi==0.112.4
 gradio==4.37.*
-jinja2==3.1.4
+jinja2==3.1.5
 markdown
 numba==0.59.*
 numpy==1.26.*
