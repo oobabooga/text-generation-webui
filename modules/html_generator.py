@@ -69,6 +69,52 @@ def replace_blockquote(m):
     return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
 
+def add_long_list_class(html):
+    '''
+    Adds a long-list class to <ul> or <ol> containing long <li> items.
+    These will receive a smaller margin/padding in the CSS.
+    '''
+
+    # Helper function to check if a tag is within <pre> or <code>
+    def is_within_block(start_idx, end_idx, block_matches):
+        return any(start < start_idx < end or start < end_idx < end for start, end in block_matches)
+
+    # Find all <pre>...</pre> and <code>...</code> blocks
+    pre_blocks = [(m.start(), m.end()) for m in re.finditer(r'<pre.*?>.*?</pre>', html, re.DOTALL)]
+    code_blocks = [(m.start(), m.end()) for m in re.finditer(r'<code.*?>.*?</code>', html, re.DOTALL)]
+    all_blocks = pre_blocks + code_blocks
+
+    # Pattern to find <ul>...</ul> and <ol>...</ol> blocks and their contents
+    list_pattern = re.compile(r'(<[uo]l.*?>)(.*?)(</[uo]l>)', re.DOTALL)
+    li_pattern = re.compile(r'<li.*?>(.*?)</li>', re.DOTALL)
+
+    def process_list(match):
+        start_idx, end_idx = match.span()
+        if is_within_block(start_idx, end_idx, all_blocks):
+            return match.group(0)  # Leave the block unchanged if within <pre> or <code>
+
+        opening_tag = match.group(1)
+        list_content = match.group(2)
+        closing_tag = match.group(3)
+
+        # Find all list items within this list
+        li_matches = li_pattern.finditer(list_content)
+        has_long_item = any(len(li_match.group(1).strip()) > 224 for li_match in li_matches)
+
+        if has_long_item:
+            # Add class="long-list" to the opening tag if it doesn't already have a class
+            if 'class=' not in opening_tag:
+                opening_tag = opening_tag[:-1] + ' class="long-list">'
+            else:
+                # If there's already a class, append long-list to it
+                opening_tag = re.sub(r'class="([^"]*)"', r'class="\1 long-list"', opening_tag)
+
+        return opening_tag + list_content + closing_tag
+
+    # Process HTML and replace list blocks
+    return list_pattern.sub(process_list, html)
+
+
 @functools.lru_cache(maxsize=None)
 def convert_to_markdown(string):
 
@@ -104,7 +150,6 @@ def convert_to_markdown(string):
     result = ''
     is_code = False
     is_latex = False
-    previous_line_empty = True
 
     for line in string.split('\n'):
         stripped_line = line.strip()
@@ -122,20 +167,16 @@ def convert_to_markdown(string):
         elif stripped_line.endswith('\\\\]'):
             is_latex = False
 
-        # Preserve indentation for lists and code blocks
-        if stripped_line.startswith('-') or stripped_line.startswith('*') or stripped_line.startswith('+') or stripped_line.startswith('>') or re.match(r'\d+\.', stripped_line):
-            result += line + '\n'
-            previous_line_empty = False
-        elif is_code or is_latex or line.startswith('|'):
-            result += line + '\n'
-            previous_line_empty = False
-        else:
-            if previous_line_empty:
-                result += line.strip() + '\n'
-            else:
-                result += line.strip() + '\n\n'
+        result += line
 
-            previous_line_empty = stripped_line == ''
+        # Don't add an extra \n for code, LaTeX, or tables
+        if is_code or is_latex or line.startswith('|'):
+            result += '\n'
+        # Also don't add an extra \n for lists
+        elif stripped_line.startswith('-') or stripped_line.startswith('*') or stripped_line.startswith('+') or stripped_line.startswith('>') or re.match(r'\d+\.', stripped_line):
+            result += '\n'
+        else:
+            result += '  \n'
 
     result = result.strip()
     if is_code:
@@ -154,7 +195,7 @@ def convert_to_markdown(string):
         result = re.sub(list_item_pattern, r'\g<1> ' + delete_str, result)
 
         # Convert to HTML using markdown
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'], tab_length=2)
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
 
         # Remove the delete string from the HTML output
         pos = html_output.rfind(delete_str)
@@ -162,11 +203,14 @@ def convert_to_markdown(string):
             html_output = html_output[:pos] + html_output[pos + len(delete_str):]
     else:
         # Convert to HTML using markdown
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'], tab_length=2)
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
 
     # Unescape code blocks
     pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)
     html_output = pattern.sub(lambda x: html.unescape(x.group()), html_output)
+
+    # Add "long-list" class to <ul> or <ol> containing a long <li> item
+    html_output = add_long_list_class(html_output)
 
     return html_output
 
