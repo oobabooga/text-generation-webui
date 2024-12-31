@@ -195,7 +195,7 @@ def convert_to_markdown(string):
         result = re.sub(list_item_pattern, r'\g<1> ' + delete_str, result)
 
         # Convert to HTML using markdown
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'], tab_length=2)
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
 
         # Remove the delete string from the HTML output
         pos = html_output.rfind(delete_str)
@@ -203,7 +203,7 @@ def convert_to_markdown(string):
             html_output = html_output[:pos] + html_output[pos + len(delete_str):]
     else:
         # Convert to HTML using markdown
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'], tab_length=2)
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
 
     # Unescape code blocks
     pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)
