@@ -176,7 +176,7 @@ def convert_to_markdown(string):
         elif stripped_line.startswith('-') or stripped_line.startswith('*') or stripped_line.startswith('+') or stripped_line.startswith('>') or re.match(r'\d+\.', stripped_line):
             result += '\n'
         else:
-            result += '\n\n'
+            result += '  \n'
 
     result = result.strip()
     if is_code:
