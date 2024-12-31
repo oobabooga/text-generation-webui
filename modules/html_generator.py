@@ -167,13 +167,16 @@ def convert_to_markdown(string):
         elif stripped_line.endswith('\\\\]'):
             is_latex = False
 
-        # Preserve indentation for lists and code blocks
-        if stripped_line.startswith('-') or stripped_line.startswith('*') or stripped_line.startswith('+') or stripped_line.startswith('>') or re.match(r'\d+\.', stripped_line):
-            result += line + '\n'
-        elif is_code or is_latex or line.startswith('|'):
-            result += line + '\n'
+        result += line
+
+        # Don't add an extra \n for code, LaTeX, or tables
+        if is_code or is_latex or line.startswith('|'):
+            result += '\n'
+        # Also don't add an extra \n for lists
+        elif stripped_line.startswith('-') or stripped_line.startswith('*') or stripped_line.startswith('+') or stripped_line.startswith('>') or re.match(r'\d+\.', stripped_line):
+            result += '\n'
         else:
-            result += stripped_line + '  \n'
+            result += '\n\n'
 
     result = result.strip()
     if is_code:
