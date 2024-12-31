@@ -150,7 +150,6 @@ def convert_to_markdown(string):
     result = ''
     is_code = False
     is_latex = False
-    previous_line_empty = True
 
     for line in string.split('\n'):
         stripped_line = line.strip()
@@ -168,20 +167,16 @@ def convert_to_markdown(string):
         elif stripped_line.endswith('\\\\]'):
             is_latex = False
 
-        # Preserve indentation for lists and code blocks
-        if stripped_line.startswith('-') or stripped_line.startswith('*') or stripped_line.startswith('+') or stripped_line.startswith('>') or re.match(r'\d+\.', stripped_line):
-            result += line + '\n'
-            previous_line_empty = False
-        elif is_code or is_latex or line.startswith('|'):
-            result += line + '\n'
-            previous_line_empty = False
-        else:
-            if previous_line_empty:
-                result += line.strip() + '\n'
-            else:
-                result += line.strip() + '\n\n'
+        result += line
 
-            previous_line_empty = stripped_line == ''
+        # Don't add an extra \n for code, LaTeX, or tables
+        if is_code or is_latex or line.startswith('|'):
+            result += '\n'
+        # Also don't add an extra \n for lists
+        elif stripped_line.startswith('-') or stripped_line.startswith('*') or stripped_line.startswith('+') or stripped_line.startswith('>') or re.match(r'\d+\.', stripped_line):
+            result += '\n'
+        else:
+            result += '\n\n'
 
     result = result.strip()
     if is_code:
@@ -200,7 +195,7 @@ def convert_to_markdown(string):
         result = re.sub(list_item_pattern, r'\g<1> ' + delete_str, result)
 
         # Convert to HTML using markdown
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'], tab_length=2)
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
 
         # Remove the delete string from the HTML output
         pos = html_output.rfind(delete_str)
@@ -208,7 +203,7 @@ def convert_to_markdown(string):
             html_output = html_output[:pos] + html_output[pos + len(delete_str):]
     else:
         # Convert to HTML using markdown
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'], tab_length=2)
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
 
     # Unescape code blocks
     pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)
