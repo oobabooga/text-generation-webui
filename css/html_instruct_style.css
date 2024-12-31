@@ -17,34 +17,20 @@
     line-height: 28px !important;
 }
 
-.dark .chat .message-body p,
-.dark .chat .message-body li,
-.dark .chat .message-body q {
+.dark .chat .message-body :is(p, li, q, h1, h2, h3, h4, h5, h6) {
     color: #d1d5db !important;
 }
 
-.chat .message-body p,
-.chat .message-body ul,
-.chat .message-body ol {
-    margin-top: 1.25em !important;
-    margin-bottom: 1.25em !important;
+.chat .message-body :is(p, ul, ol) {
+    margin: 1.25em 0 !important;
 }
 
-.chat .message-body p:first-child,
-.chat .message-body ul:first-child,
-.chat .message-body ol:first-child {
+.chat .message-body :is(p, ul, ol):first-child {
     margin-top: 0 !important;
 }
 
-.chat .message-body p:last-child,
-.chat .message-body ul:last-child,
-.chat .message-body ol:last-child {
+.chat .message-body :is(p, ul, ol):last-child {
     margin-bottom: 0 !important;
-}
-
-.chat .message-body li {
-    margin-top: 1.25em !important;
-    margin-bottom: 1.25em !important;
 }
 
 .user-message, .assistant-message {
@@ -60,13 +46,13 @@
 }
 
 .chat .user-message {
+    background: #f4f4f4;
     padding: 1.5rem 1rem;
     border-radius: 0;
     border-bottom-right-radius: 0;
 }
 
 .chat .assistant-message {
-    background: #f4f4f4;
     padding: 1.5rem 1rem;
     border-radius: 0;
     border: 0;
@@ -82,7 +68,7 @@
 
 .chat .user-message .text,
 .chat .assistant-message .text {
-    max-width: 40.25rem;
+    max-width: 645px;
     margin-left: auto;
     margin-right: auto;
 }
