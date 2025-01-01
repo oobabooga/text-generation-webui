@@ -90,6 +90,7 @@ def load_model(model_name, loader=None):
                 raise ValueError
 
     shared.args.loader = loader
+    clear_torch_cache()
     output = load_func_map[loader](model_name)
     if type(output) is tuple:
         model, tokenizer = output
