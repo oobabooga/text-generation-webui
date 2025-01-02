@@ -74,41 +74,6 @@ class SaneListIndentProcessor(ListIndentProcessor):
                 (len(parent) and parent[-1] is not None and
                     (parent[-1].tag in self.LIST_TYPES)))
 
-    def run(self, parent: etree.Element, blocks: list[str]) -> None:
-        block = blocks.pop(0)
-        level, sibling = self.get_level(parent, block)
-        block = self.looseDetab(block, level)
-
-        self.parser.state.set('detabbed')
-        if parent.tag in self.ITEM_TYPES:
-            # It's possible that this parent has a `ul` or `ol` child list
-            # with a member.  If that is the case, then that should be the
-            # parent.  This is intended to catch the edge case of an indented
-            # list whose first member was parsed previous to this point
-            # see `OListProcessor`
-            if len(parent) and parent[-1].tag in self.LIST_TYPES:
-                self.parser.parseBlocks(parent[-1], [block])
-            else:
-                # The parent is already a `li`. Just parse the child block.
-                self.parser.parseBlocks(parent, [block])
-        elif sibling.tag in self.ITEM_TYPES:
-            # The sibling is a `li`. Use it as parent.
-            self.parser.parseBlocks(sibling, [block])
-        elif len(sibling) and sibling[-1].tag in self.ITEM_TYPES:
-            # The parent is a list (`ol` or `ul`) which has children.
-            # Assume the last child `li` is the parent of this block.
-            if sibling[-1].text:
-                # If the parent `li` has text, that text needs to be moved to a `p`
-                # The `p` must be 'inserted' at beginning of list in the event
-                # that other children already exist i.e.; a nested sub-list.
-                p = etree.Element('p')
-                p.text = sibling[-1].text
-                sibling[-1].text = ''
-                sibling[-1].insert(0, p)
-            self.parser.parseChunk(sibling[-1], block)
-        else:
-            self.create_item(sibling, block)
-        self.parser.state.reset()
 
     def get_level(self, parent: etree.Element, block: Item) -> tuple[int, etree.Element]:
         """ Get level of indentation based on list level. """
