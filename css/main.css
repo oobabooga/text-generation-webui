@@ -538,8 +538,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .message-body pre > code {
-    white-space: pre-wrap !important;
-    word-wrap: break-word !important;
+    white-space: pre !important;
+    overflow-x: auto !important;
     border: 1px solid #666;
     border-radius: 5px;
     font-size: 82%;
