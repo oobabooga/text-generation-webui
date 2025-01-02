@@ -2,7 +2,7 @@ from pathlib import Path
 
 import gradio as gr
 
-from modules import loaders, presets, shared, ui, ui_chat, utils
+from modules import loaders, presets, shared, ui, ui_chat, utils, extensions
 from modules.utils import gradio
 
 
@@ -102,6 +102,7 @@ def create_ui(default_preset):
                             shared.gradio['grammar_string'] = gr.Textbox(value='', label='Grammar', lines=16, elem_classes=['add_scrollbar', 'monospace'])
 
         ui_chat.create_chat_settings_ui()
+        extensions.create_extensions_params()
 
 
 def create_event_handlers():
