@@ -28,7 +28,7 @@ from modules.grammar.grammar_utils import initialize_grammar
 from modules.grammar.logits_process import GrammarConstrainedLogitsProcessor
 from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
-from modules.models import clear_torch_cache, load_model
+from modules.models import clear_torch_cache, get_device, load_model
 
 
 def generate_reply(*args, **kwargs):
@@ -229,22 +229,6 @@ def set_manual_seed(seed):
         torch.npu.manual_seed_all(seed)
 
     return seed
-
-
-def get_device():
-    if torch.cuda.is_available():
-        return torch.device('cuda')
-    elif shared.args.deepspeed:
-        import deepspeed
-        return deepspeed.get_accelerator().current_device_name()
-    elif torch.backends.mps.is_available():
-        return torch.device('mps')
-    elif is_torch_xpu_available():
-        return torch.device('xpu:0')
-    elif is_torch_npu_available():
-        return torch.device('npu:0')
-    else:
-        return None
 
 
 def stop_everything_event():
