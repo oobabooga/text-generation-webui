@@ -160,18 +160,9 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
 
     if shared.model.__class__.__name__ in ['LlamaCppModel', 'Exllamav2Model', 'TensorRTLLMModel'] or shared.args.cpu:
         return input_ids
-    elif shared.args.deepspeed:
-        import deepspeed
-        return input_ids.to(deepspeed.get_accelerator().current_device_name())
-    elif torch.backends.mps.is_available():
-        device = torch.device('mps')
-        return input_ids.to(device)
-    elif is_torch_xpu_available():
-        return input_ids.to("xpu:0")
-    elif is_torch_npu_available():
-        return input_ids.to("npu:0")
     else:
-        return input_ids.cuda()
+        device = get_device()
+        return input_ids.to(device)
 
 
 def decode(output_ids, skip_special_tokens=True):
@@ -236,6 +227,22 @@ def set_manual_seed(seed):
         torch.npu.manual_seed_all(seed)
 
     return seed
+
+
+def get_device():
+    if torch.cuda.is_available():
+        return torch.device('cuda')
+    elif shared.args.deepspeed:
+        import deepspeed
+        return deepspeed.get_accelerator().current_device_name()
+    elif torch.backends.mps.is_available():
+        return torch.device('mps')
+    elif is_torch_xpu_available():
+        return torch.device('xpu:0')
+    elif is_torch_npu_available():
+        return torch.device('npu:0')
+    else:
+        return torch.device('cpu')
 
 
 def stop_everything_event():
@@ -326,7 +333,6 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     # Encode the input
     input_ids = encode(question, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
     output = input_ids[0]
-    cuda = not any((shared.args.cpu, shared.args.deepspeed))
     if state['auto_max_new_tokens']:
         generate_params['max_new_tokens'] = state['truncation_length'] - input_ids.shape[-1]
 
@@ -381,14 +387,8 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         if not state['stream']:
             with torch.no_grad():
                 output = shared.model.generate(**generate_params)[0]
-                print(f"Available devices - MPS: {torch.backends.mps.is_available()}, CUDA: {torch.cuda.is_available()}")
-                print(f"Current device for output tensor: {output.device}")
-                if torch.backends.mps.is_available():
-                    output = output.to('mps')
-                elif torch.cuda.is_available():
-                    output = output.cuda()
-                else:
-                    output = output.cpu()
+                device = get_device()
+                output = output.to(device)
 
             starting_from = 0 if shared.is_seq2seq else len(input_ids[0])
             yield get_reply_from_output_ids(output, state, starting_from=starting_from)
