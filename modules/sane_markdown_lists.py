@@ -65,7 +65,7 @@ class SaneListIndentProcessor(ListIndentProcessor):
         super().__init__(*args)
         self.INDENT_RE = re.compile(r'^(([ ]{%s})+)' % 2)
 
-    def test(self, parent: etree.Element, block: Item) -> bool:
+    def test(self, parent: etree.Element, block: Item or str) -> bool:
         if not hasattr(block, "indent_length"):
             return False
         return block.indent_length > 1 and \
@@ -137,10 +137,10 @@ class SaneOListProcessor(OListProcessor):
 
     def __init__(self, parser: blockparser.BlockParser):
         super().__init__(parser)
-        self.RE = re.compile(r'^[ ]{0,%d}\d+\.[ ]+(.*)' % 1)
-        self.CHILD_RE = re.compile(r'^[ ]{0,%d}((\d+\.))[ ]+(.*)' % 1)
+        self.RE = re.compile(r'^[ ]{0,%d}[\*_]{0,2}\d+\.[ ]+(.*)' % 1)
+        self.CHILD_RE = re.compile(r'^[ ]{0,%d}([\*_]{0,2})((\d+\.))[ ]+(.*)' % 1)
         # Detect indented (nested) items of either type
-        self.INDENT_RE = re.compile(r'^[ ]{%d,%d}((\d+\.)|[*+-])[ ]+.*' %
+        self.INDENT_RE = re.compile(r'^[ ]{%d,%d}[\*_]{0,2}((\d+\.)|[*+-])[ ]+.*' %
                                     (2, self.tab_length * 2 - 1))
 
     def run(self, parent: etree.Element, blocks: list[str]) -> None:
@@ -215,17 +215,13 @@ class SaneOListProcessor(OListProcessor):
                 if not items and self.TAG == 'ol':
                     # Detect the integer value of first list item
                     INTEGER_RE = re.compile(r'(\d+)')
-                    self.STARTSWITH = INTEGER_RE.match(m.group(1)).group()
+                    self.STARTSWITH = INTEGER_RE.match(m.group(2)).group()
                 # Append to the list
-                items.append(Item(m.group(3)))
+                items.append(Item(m.group(1) + m.group(4)))
             elif self.INDENT_RE.match(line):
                 if first_indent:
                     indent_length = len(line) - len(line.lstrip())
                 first_indent = False
-                if not items:
-                    # The first item in the list is indented,
-                    # so we remove that indentation
-                    pass
                 # This is an indented (possibly nested) item.
                 if items[-1].startswith(' ' * indent_length):
                     # Previous item was indented. Append to that item.
@@ -250,6 +246,38 @@ class SaneUListProcessor(SaneOListProcessor):
         # Detect an item (`1. item`). `group(1)` contains contents of item.
         self.RE = re.compile(r'^[ ]{0,%d}[*+-][ ]+(.*)' % 1)
         self.CHILD_RE = re.compile(r'^[ ]{0,%d}(([*+-]))[ ]+(.*)' % 1)
+
+
+    def get_items(self, block: str) -> list[Item]:
+        """ Break a block into list items. """
+        items = []
+        first_indent = True
+        indent_length = 0
+        for line in block.split('\n'):
+            m = self.CHILD_RE.match(line)
+            if m:
+                # This is a new list item
+                # Check first item for the start index
+                if not items and self.TAG == 'ol':
+                    # Detect the integer value of first list item
+                    INTEGER_RE = re.compile(r'(\d+)')
+                    self.STARTSWITH = INTEGER_RE.match(m.group(1)).group()
+                # Append to the list
+                items.append(Item(m.group(3)))
+            elif self.INDENT_RE.match(line):
+                if first_indent:
+                    indent_length = len(line) - len(line.lstrip())
+                first_indent = False
+                # This is an indented (possibly nested) item.
+                if items[-1].startswith(' ' * indent_length):
+                    # Previous item was indented. Append to that item.
+                    items[-1] = Item('{}\n{}'.format(items[-1], line), indent_length)
+                else:
+                    items.append(Item(line, indent_length))
+            else:
+                # This is another line of previous item. Append to that item.
+                items[-1] = Item('{}\n{}'.format(items[-1], line), items[-1].indent_length)
+        return items
 
 
 class SaneListExtension(Extension):
