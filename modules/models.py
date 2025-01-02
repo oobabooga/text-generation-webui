@@ -27,7 +27,6 @@ from transformers import (
 )
 
 import modules.shared as shared
-from modules import sampler_hijack
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
 
@@ -57,8 +56,6 @@ if shared.args.deepspeed:
         deepspeed.init_distributed()
     ds_config = generate_ds_config(shared.args.bf16, 1 * world_size, shared.args.nvme_offload_dir)
     dschf = HfDeepSpeedConfig(ds_config)  # Keep this object alive for the Transformers integration
-
-sampler_hijack.hijack_samplers()
 
 
 last_generation_time = time.time()

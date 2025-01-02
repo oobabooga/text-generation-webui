@@ -16,7 +16,7 @@ from transformers import (
 )
 
 import modules.shared as shared
-from modules import models
+from modules import models, sampler_hijack
 from modules.cache_utils import process_llamacpp_cache
 from modules.callbacks import (
     Iteratorize,
@@ -29,6 +29,8 @@ from modules.grammar.logits_process import GrammarConstrainedLogitsProcessor
 from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
 from modules.models import clear_torch_cache, get_device, load_model
+
+sampler_hijack.hijack_samplers()
 
 
 def generate_reply(*args, **kwargs):
