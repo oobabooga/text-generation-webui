@@ -19,7 +19,7 @@ Modify the behavior of Lists in Python-Markdown to act in a sane manner.
 from __future__ import annotations
 
 from markdown import Extension
-from markdown.blockprocessors import OListProcessor, UListProcessor
+from markdown.blockprocessors import OListProcessor
 import re
 from typing import TYPE_CHECKING
 
@@ -37,20 +37,25 @@ class SaneOListProcessor(OListProcessor):
 
     def __init__(self, parser: blockparser.BlockParser):
         super().__init__(parser)
-        self.CHILD_RE = re.compile(r'^[ ]{0,%d}((\d+\.))[ ]+(.*)' %
-                                   (self.tab_length - 1))
+        self.RE = re.compile(r'^[ ]{0,%d}\d+\.[ ]+(.*)' % 1)
+        self.CHILD_RE = re.compile(r'^[ ]{0,%d}((\d+\.))[ ]+(.*)' % 1)
+        # Detect indented (nested) items of either type
+        self.INDENT_RE = re.compile(r'^[ ]{%d,%d}((\d+\.)|[*+-])[ ]+.*' %
+                                    (2, self.tab_length * 2 - 1))
 
 
-class SaneUListProcessor(UListProcessor):
-    """ Override `SIBLING_TAGS` to not include `ol`. """
+class SaneUListProcessor(SaneOListProcessor):
+    """" Override `SIBLING_TAGS` to not include `ol`. """
 
+    TAG: str = 'ul'
     SIBLING_TAGS = ['ul']
     """ Exclude `ol` from list of siblings. """
 
     def __init__(self, parser: blockparser.BlockParser):
         super().__init__(parser)
-        self.CHILD_RE = re.compile(r'^[ ]{0,%d}(([*+-]))[ ]+(.*)' %
-                                   (self.tab_length - 1))
+        # Detect an item (`1. item`). `group(1)` contains contents of item.
+        self.RE = re.compile(r'^[ ]{0,%d}[*+-][ ]+(.*)' % 1)
+        self.CHILD_RE = re.compile(r'^[ ]{0,%d}(([*+-]))[ ]+(.*)' % 1)
 
 
 class SaneListExtension(Extension):
