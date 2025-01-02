@@ -447,12 +447,12 @@ function toggleBigPicture() {
 // Handle the chat input box growth
 //------------------------------------------------
 
-// Variables to store current dimensions
-let currentChatInputHeight = chatInput.clientHeight;
-
 // Cache DOM elements
 const chatContainer = document.getElementById("chat").parentNode.parentNode.parentNode;
 const chatInput = document.querySelector("#chat-input textarea");
+
+// Variables to store current dimensions
+let currentChatInputHeight = chatInput.clientHeight;
 
 // Update chat layout based on chat and input dimensions
 function updateCssProperties() {
