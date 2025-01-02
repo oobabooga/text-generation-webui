@@ -446,25 +446,33 @@ function toggleBigPicture() {
 //------------------------------------------------
 // Handle the chat input box growth
 //------------------------------------------------
-let currentChatInputHeight = 0;
+
+// Variables to store current dimensions
+let currentChatInputHeight = chatInput.clientHeight;
+
+// Cache DOM elements
+const chatContainer = document.getElementById("chat").parentNode.parentNode.parentNode;
+const chatInput = document.querySelector("#chat-input textarea");
 
 // Update chat layout based on chat and input dimensions
 function updateCssProperties() {
-  const chatContainer = document.getElementById("chat").parentNode.parentNode.parentNode;
-  const chatInputHeight = document.querySelector("#chat-input textarea").clientHeight;
+  const chatInputHeight = chatInput.clientHeight;
 
   // Check if the chat container is visible
   if (chatContainer.clientHeight > 0) {
-    const newChatHeight = `${chatContainer.parentNode.clientHeight - chatInputHeight + 40 - 100 - 20}px`;
+    const chatContainerParentHeight = chatContainer.parentNode.clientHeight;
+    const newChatHeight = `${chatContainerParentHeight - chatInputHeight - 80}px`;
+
     document.documentElement.style.setProperty("--chat-height", newChatHeight);
     document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
 
     // Adjust scrollTop based on input height change
     if (chatInputHeight !== currentChatInputHeight) {
-      if (!isScrolled && chatInputHeight < currentChatInputHeight) {
+      const deltaHeight = chatInputHeight - currentChatInputHeight;
+      if (!isScrolled && deltaHeight < 0) {
         chatContainer.scrollTop = chatContainer.scrollHeight;
       } else {
-        chatContainer.scrollTop += chatInputHeight - currentChatInputHeight;
+        chatContainer.scrollTop += deltaHeight;
       }
 
       currentChatInputHeight = chatInputHeight;
