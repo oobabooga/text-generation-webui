@@ -50,6 +50,50 @@ theme = gr.themes.Default(
     button_secondary_border_color="var(--border-color-primary)"
 )
 
+if not shared.args.old_colors:
+    theme = theme.set(
+        # General Colors
+        border_color_primary='#c5c5d2',
+        body_text_color_subdued='#484848',
+        background_fill_secondary='#eaeaea',
+        background_fill_secondary_dark='var(--selected-item-color-dark)',
+        background_fill_primary='var(--neutral-50)',
+        background_fill_primary_dark='var(--darker-gray)',
+        body_background_fill="white",
+        block_background_fill="transparent",
+        body_text_color="#333",
+        button_secondary_background_fill="#f4f4f4",
+        button_secondary_border_color="var(--border-color-primary)",
+
+        # Dark Mode Colors
+        input_background_fill_dark='var(--darker-gray)',
+        checkbox_background_color_dark='var(--darker-gray)',
+        block_background_fill_dark='transparent',
+        block_border_color_dark='transparent',
+        input_border_color_dark='var(--border-color-dark)',
+        checkbox_border_color_dark='var(--border-color-dark)',
+        border_color_primary_dark='var(--border-color-dark)',
+        button_secondary_border_color_dark='var(--border-color-dark)',
+        body_background_fill_dark='var(--dark-gray)',
+        button_primary_background_fill_dark='transparent',
+        button_secondary_background_fill_dark='transparent',
+        checkbox_label_background_fill_dark='transparent',
+        button_cancel_background_fill_dark='transparent',
+        button_secondary_background_fill_hover_dark='var(--selected-item-color-dark)',
+        checkbox_label_background_fill_hover_dark='var(--selected-item-color-dark)',
+        table_even_background_fill_dark='var(--darker-gray)',
+        table_odd_background_fill_dark='var(--selected-item-color-dark)',
+        code_background_fill_dark='var(--darker-gray)',
+
+        # Shadows and Radius
+        checkbox_label_shadow='none',
+        block_shadow='none',
+        block_shadow_dark='none',
+        button_large_radius='0.375rem',
+        button_large_padding='6px 12px',
+        input_radius='0.375rem',
+    )
+
 if Path("notification.mp3").exists():
     audio_notification_js = "document.querySelector('#audio_notification audio')?.play();"
 else:
@@ -87,8 +131,7 @@ def list_model_elements():
         'no_xformers',
         'no_sdpa',
         'num_experts_per_token',
-        'cache_8bit',
-        'cache_4bit',
+        'cache_type',
         'autosplit',
         'enable_tp',
         'threads',
@@ -232,10 +275,10 @@ def gather_interface_values(*args):
 def apply_interface_values(state, use_persistent=False):
     if use_persistent:
         state = shared.persistent_interface_state
-        if 'textbox-default' in state:
+        if 'textbox-default' in state and 'prompt_menu-default' in state:
             state.pop('prompt_menu-default')
 
-        if 'textbox-notebook' in state:
+        if 'textbox-notebook' and 'prompt_menu-notebook' in state:
             state.pop('prompt_menu-notebook')
 
     elements = list_interface_input_elements()
