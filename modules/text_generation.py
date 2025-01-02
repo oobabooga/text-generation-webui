@@ -161,7 +161,10 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
         return input_ids
     else:
         device = get_device()
-        return input_ids.to(device)
+        if device:
+            return input_ids.to(device)
+
+        return input_ids
 
 
 def decode(output_ids, skip_special_tokens=True):
@@ -241,7 +244,7 @@ def get_device():
     elif is_torch_npu_available():
         return torch.device('npu:0')
     else:
-        return torch.device('cpu')
+        return None
 
 
 def stop_everything_event():
@@ -390,7 +393,8 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
             with torch.no_grad():
                 output = shared.model.generate(**generate_params)[0]
                 device = get_device()
-                output = output.to(device)
+                if device:
+                    output = output.to(device)
 
             starting_from = 0 if shared.is_seq2seq else len(input_ids[0])
             yield get_reply_from_output_ids(output, state, starting_from=starting_from)
