@@ -175,7 +175,7 @@ def convert_to_markdown(string):
             result += '\n'
         # Also don't add an extra \n for lists
         elif stripped_line.startswith('-') or stripped_line.startswith('*') or stripped_line.startswith('+') or stripped_line.startswith('>') or re.match(r'\d+\.', stripped_line):
-            result += '\n'
+            result += '  \n'
         else:
             result += '  \n'
 

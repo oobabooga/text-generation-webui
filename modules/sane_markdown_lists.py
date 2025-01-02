@@ -23,7 +23,8 @@ from typing import TYPE_CHECKING
 import xml.etree.ElementTree as etree
 
 from markdown import Extension
-from markdown.blockprocessors import OListProcessor, ListIndentProcessor
+from markdown.blockprocessors import OListProcessor, ListIndentProcessor, ParagraphProcessor
+from markdown.blockparser import BlockParser
 
 if TYPE_CHECKING:  # pragma: no cover
     from markdown import blockparser
@@ -247,7 +248,6 @@ class SaneUListProcessor(SaneOListProcessor):
         self.RE = re.compile(r'^[ ]{0,%d}[*+-][ ]+(.*)' % 1)
         self.CHILD_RE = re.compile(r'^[ ]{0,%d}(([*+-]))[ ]+(.*)' % 1)
 
-
     def get_items(self, block: str) -> list[Item]:
         """ Break a block into list items. """
         items = []
@@ -280,6 +280,58 @@ class SaneUListProcessor(SaneOListProcessor):
         return items
 
 
+class SaneParagraphProcessor(ParagraphProcessor):
+    """ Process Paragraph blocks. """
+
+    def __init__(self, parser: BlockParser):
+        self.parser = parser
+        self.tab_length = parser.md.tab_length
+        self.LIST_RE = re.compile(r"\s{2}\n[\d+*-]")
+
+    def run(self, parent: etree.Element, blocks: list[str]) -> None:
+        block = blocks.pop(0)
+        if block.strip():
+            # Not a blank block. Add to parent, otherwise throw it away.
+            if self.parser.state.isstate('list'):
+                # The parent is a tight-list.
+                #
+                # Check for any children. This will likely only happen in a
+                # tight-list when a header isn't followed by a blank line.
+                # For example:
+                #
+                #     * # Header
+                #     Line 2 of list item - not part of header.
+                sibling = self.lastChild(parent)
+                if sibling is not None:
+                    # Insert after sibling.
+                    if sibling.tail:
+                        sibling.tail = '{}\n{}'.format(sibling.tail, block)
+                    else:
+                        sibling.tail = '\n%s' % block
+                else:
+                    # Append to parent.text
+                    if parent.text:
+                        parent.text = '{}\n{}'.format(parent.text, block)
+                    else:
+                        parent.text = block.lstrip()
+            else:
+                # Check if paragraph contains a list
+                next_list_block = None
+                if list_match := self.LIST_RE.search(block):
+                    list_start = list_match.end() - 1
+                    next_list_block = block[list_start:]
+                    block = block[:list_start]
+
+                # Create a regular paragraph
+                p = etree.SubElement(parent, 'p')
+                p.text = block.lstrip()
+
+                # If a list was found, parse its block separately with the paragraph as the parent
+                if next_list_block:
+                    self.parser.parseBlocks(p, [next_list_block])
+
+
+
 class SaneListExtension(Extension):
     """ Add sane lists to Markdown. """
 
@@ -288,6 +340,7 @@ class SaneListExtension(Extension):
         md.parser.blockprocessors.register(SaneListIndentProcessor(md.parser), 'indent', 90)
         md.parser.blockprocessors.register(SaneOListProcessor(md.parser), 'olist', 40)
         md.parser.blockprocessors.register(SaneUListProcessor(md.parser), 'ulist', 30)
+        md.parser.blockprocessors.register(SaneParagraphProcessor(md.parser), 'paragraph', 10)
 
 
 def makeExtension(**kwargs):  # pragma: no cover
