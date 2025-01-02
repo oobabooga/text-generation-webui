@@ -60,6 +60,7 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
             tokens = shared.tokenizer.encode(prompt)
             if device:
                 tokens = tokens.to(device)
+
             scores = shared.model.get_logits(tokens)[-1][-1]
         elif is_non_hf_llamacpp:
             tokens = shared.tokenizer.encode(prompt)
@@ -69,6 +70,7 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
             tokens = shared.tokenizer.encode(prompt, return_tensors='pt')
             if device:
                 tokens = tokens.to(device)
+
             output = shared.model(input_ids=tokens)
             scores = output['logits'][-1][-1]
 

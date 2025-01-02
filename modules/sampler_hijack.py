@@ -342,7 +342,6 @@ class MirostatLogitsWarper(LogitsWarper):
         # Normalize the probabilities of the remaining words
         prob_topk = torch.softmax(sorted_logits, dim=0)
         prev_i = torch.multinomial(prob_topk, num_samples=1, replacement=True)
-
         device = get_device()
         if device:
             prob_topk = prob_topk.to(device)
