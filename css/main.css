@@ -980,6 +980,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #rename-row {
     width: 100%;
     justify-content: center;
+    gap: 10px;
 }
 
 

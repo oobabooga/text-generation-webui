@@ -24,6 +24,7 @@ def create_ui():
         with gr.Row(elem_id='past-chats-row', elem_classes=['pretty_scrollbar']):
             with gr.Column():
                 with gr.Row(elem_id='past-chats-buttons'):
+                    shared.gradio['branch_chat'] = gr.Button('Branch', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['rename_chat'] = gr.Button('Rename', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['delete_chat'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['Start new chat'] = gr.Button('New chat', elem_classes=['refresh-button', 'focus-on-chat-input'])
@@ -249,6 +250,10 @@ def create_event_handlers():
     shared.gradio['delete_chat-confirm'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.handle_delete_chat_confirm_click, gradio('interface_state'), gradio('history', 'display', 'unique_id', 'delete-chat-row'), show_progress=False)
+
+    shared.gradio['branch_chat'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.handle_branch_chat_click, gradio('interface_state'), gradio('history', 'display', 'unique_id'), show_progress=False)
 
     shared.gradio['rename_chat'].click(chat.handle_rename_chat_click, None, gradio('rename_to', 'rename-row'), show_progress=False)
     shared.gradio['rename_to-cancel'].click(lambda: gr.update(visible=False), None, gradio('rename-row'), show_progress=False)

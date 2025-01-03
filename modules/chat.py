@@ -1092,6 +1092,21 @@ def handle_delete_chat_confirm_click(state):
     ]
 
 
+def handle_branch_chat_click(state):
+    history = state['history']
+    new_unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
+    save_history(history, new_unique_id, state['character_menu'], state['mode'])
+
+    histories = find_all_histories_with_first_prompts(state)
+    html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+
+    convert_to_markdown.cache_clear()
+
+    past_chats_update = gr.update(choices=histories, value=new_unique_id)
+
+    return [history, html, past_chats_update]
+
+
 def handle_rename_chat_click():
     return [
         gr.update(value="My New Chat"),
