@@ -14,8 +14,8 @@ set TEMP=%cd%\installer_files
 (call conda deactivate && call conda deactivate && call conda deactivate) 2>nul
 
 @rem config
-set CONDA_ROOT_PREFIX=%cd%\installer_files\conda
-set INSTALL_ENV_DIR=%cd%\installer_files\env
+set CONDA_ROOT_PREFIX=%cd%\installer_files\conda_windows
+set INSTALL_ENV_DIR=%cd%\installer_files\env_windows
 
 @rem environment isolation
 set PYTHONNOUSERSITE=1

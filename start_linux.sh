@@ -17,8 +17,8 @@ esac
 
 # config
 INSTALL_DIR="$(pwd)/installer_files"
-CONDA_ROOT_PREFIX="$(pwd)/installer_files/conda"
-INSTALL_ENV_DIR="$(pwd)/installer_files/env"
+CONDA_ROOT_PREFIX="$(pwd)/installer_files/conda_linux"
+INSTALL_ENV_DIR="$(pwd)/installer_files/env_linux"
 MINICONDA_DOWNLOAD_URL="https://repo.anaconda.com/miniconda/Miniconda3-py310_23.3.1-0-Linux-${OS_ARCH}.sh"
 conda_exists="F"
 
