@@ -32,8 +32,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 # The min. number of added leading spaces needed to start a nested list
 MIN_NESTED_LIST_INDENT = 2
-# The max. number of leading spaces allowed when starting an un-nested list
-MAX_LIST_START_INDENT = 3
+assert MIN_NESTED_LIST_INDENT > 1, "'MIN_NESTED_LIST_INDENT' must be > 1"
 
 
 class ListItem(str):
@@ -70,7 +69,7 @@ class SaneListIndentProcessor(ListIndentProcessor):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.INDENT_RE = re.compile(r'^(([ ]{%s})+)' % 2)
+        self.INDENT_RE = re.compile(r'^(([ ])+)')
 
     def test(self, parent: etree.Element, block: ListItem or str) -> bool:
         if not isinstance(block, ListItem):
@@ -126,7 +125,7 @@ class SaneListIndentProcessor(ListIndentProcessor):
         return '\n'.join(newtext), '\n'.join(lines[len(newtext):])
 
     def looseDetab(self, text: ListItem, level: int = 1) -> str:
-        """ Remove a tab from front of lines but allowing dedented lines. """
+        """ Remove indentation from front of lines but allowing dedented lines. """
         lines = text.split('\n')
         for i in range(len(lines)):
             if lines[i].startswith(' ' * text.indent_length * level):
@@ -144,8 +143,11 @@ class SaneOListProcessor(OListProcessor):
 
     def __init__(self, parser: blockparser.BlockParser):
         super().__init__(parser)
-        self.RE = re.compile(r'^[ ]{0,%d}[\*_]{0,2}\d+\.[ ]+(.*)' % MAX_LIST_START_INDENT)
-        self.CHILD_RE = re.compile(r'^[ ]{0,%d}([\*_]{0,2})((\d+\.))[ ]+(.*)' % MAX_LIST_START_INDENT)
+        # This restriction stems from the 'CodeBlockProcessor' class,
+        # which automatically matches blocks with an indent == self.tab_length
+        max_list_start_indent = self.tab_length - 1
+        self.RE = re.compile(r'^[ ]{0,%d}[\*_]{0,2}\d+\.[ ]+(.*)' % max_list_start_indent)
+        self.CHILD_RE = re.compile(r'^[ ]{0,%d}([\*_]{0,2})((\d+\.))[ ]+(.*)' % (MIN_NESTED_LIST_INDENT - 1))
         # Detect indented (nested) items of either type
         self.INDENT_RE = re.compile(r'^[ ]{%d,%d}[\*_]{0,2}((\d+\.)|[*+-])[ ]+.*' %
                                     (MIN_NESTED_LIST_INDENT, self.tab_length * 2 - 1))
@@ -209,8 +211,19 @@ class SaneOListProcessor(OListProcessor):
                 self.parser.parseBlocks(li, [item])
         self.parser.state.reset()
 
+    def looseDetab(self, text: str, indent_length: int, level: int = 1) -> str:
+        """ Remove indentation from front of lines but allowing dedented lines. """
+        lines = text.split('\n')
+        for i in range(len(lines)):
+            if lines[i].startswith(' ' * indent_length * level):
+                lines[i] = lines[i][indent_length * level:]
+        return '\n'.join(lines)
+
     def get_items(self, block: str) -> list[ListItem]:
         """ Break a block into list items. """
+        # If first level of list is indented, remove that indentation
+        if (indent_len := len(block) - len(block.lstrip())) > 0:
+            block = self.looseDetab(block, indent_len)
         items = []
         first_indent = True
         indent_length = 0
@@ -251,11 +264,15 @@ class SaneUListProcessor(SaneOListProcessor):
     def __init__(self, parser: blockparser.BlockParser):
         super().__init__(parser)
         # Detect an item (`1. item`). `group(1)` contains contents of item.
-        self.RE = re.compile(r'^[ ]{0,%d}[*+-][ ]+(.*)' % MAX_LIST_START_INDENT)
-        self.CHILD_RE = re.compile(r'^[ ]{0,%d}(([*+-]))[ ]+(.*)' % MAX_LIST_START_INDENT)
+        max_list_start_indent = self.tab_length - 1
+        self.RE = re.compile(r'^[ ]{0,%d}[*+-][ ]+(.*)' % max_list_start_indent)
+        self.CHILD_RE = re.compile(r'^[ ]{0,%d}(([*+-]))[ ]+(.*)' % 0)
 
     def get_items(self, block: str) -> list[ListItem]:
         """ Break a block into list items. """
+        # If first level of list is indented, remove that indentation
+        if (indent_len := len(block) - len(block.lstrip())) > 0:
+            block = self.looseDetab(block, indent_len)
         items = []
         first_indent = True
         indent_length = 0
@@ -292,7 +309,8 @@ class SaneParagraphProcessor(ParagraphProcessor):
     def __init__(self, parser: BlockParser):
         self.parser = parser
         self.tab_length = parser.md.tab_length
-        self.LIST_RE = re.compile(r"\s{2}\n[\d+*-]")
+        max_list_start_indent = self.tab_length - 1
+        self.LIST_RE = re.compile(r"\s{2}\n(\s{0,%d}[\d+*-])" % max_list_start_indent)
 
     def run(self, parent: etree.Element, blocks: list[str]) -> None:
         block = blocks.pop(0)
@@ -324,7 +342,7 @@ class SaneParagraphProcessor(ParagraphProcessor):
                 # Check if paragraph contains a list
                 next_list_block = None
                 if list_match := self.LIST_RE.search(block):
-                    list_start = list_match.end() - 1
+                    list_start = list_match.end() - len(list_match.group(1))
                     next_list_block = block[list_start:]
                     block = block[:list_start]
 
