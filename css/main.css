@@ -876,6 +876,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     flex-shrink: 1;
 }
 
+#search_chat > :nth-child(2) > :first-child {
+    display: none;
+}
+
 /* ----------------------------------------------
   Keep dropdown menus above errored components
 ---------------------------------------------- */
@@ -911,7 +915,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #past-chats {
-    max-height: calc(100dvh - 90px);
+    max-height: calc(100dvh - 135px);
     overflow-y: scroll !important;
     border-radius: 0;
     scrollbar-width: auto;
