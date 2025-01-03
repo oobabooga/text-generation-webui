@@ -30,14 +30,14 @@ if TYPE_CHECKING:  # pragma: no cover
     from markdown import blockparser
 
 
-class Item(str):
+class ListItem(str):
     """ A data class representing a list item.
     Holds the string associated with the item, as well as the number of
     leading spaces in front of the first nested item of the main list.
     """
     def __new__(cls, value, *args, **kwargs):
         # explicitly only pass value to the str constructor
-        return super(Item, cls).__new__(cls, value)
+        return super(ListItem, cls).__new__(cls, value)
 
     def __init__(self, string: str, indent_length: int = 0):
         self.string = string
@@ -66,8 +66,8 @@ class SaneListIndentProcessor(ListIndentProcessor):
         super().__init__(*args)
         self.INDENT_RE = re.compile(r'^(([ ]{%s})+)' % 2)
 
-    def test(self, parent: etree.Element, block: Item or str) -> bool:
-        if not hasattr(block, "indent_length"):
+    def test(self, parent: etree.Element, block: ListItem or str) -> bool:
+        if not isinstance(block, ListItem):
             return False
         return block.indent_length > 1 and \
             not self.parser.state.isstate('detabbed') and \
@@ -76,7 +76,7 @@ class SaneListIndentProcessor(ListIndentProcessor):
                     (parent[-1].tag in self.LIST_TYPES)))
 
 
-    def get_level(self, parent: etree.Element, block: Item) -> tuple[int, etree.Element]:
+    def get_level(self, parent: etree.Element, block: ListItem) -> tuple[int, etree.Element]:
         """ Get level of indentation based on list level. """
         # Get indent level
         m = self.INDENT_RE.match(block)
@@ -104,7 +104,7 @@ class SaneListIndentProcessor(ListIndentProcessor):
                 break
         return level, parent
 
-    def detab(self, text: Item, length: int | None = None) -> tuple[str, str]:
+    def detab(self, text: ListItem, length: int | None = None) -> tuple[str, str]:
         """ Remove a tab from the front of each line of the given text. """
         if length is None:
             length = text.indent_length
@@ -119,7 +119,7 @@ class SaneListIndentProcessor(ListIndentProcessor):
                 break
         return '\n'.join(newtext), '\n'.join(lines[len(newtext):])
 
-    def looseDetab(self, text: Item, level: int = 1) -> str:
+    def looseDetab(self, text: ListItem, level: int = 1) -> str:
         """ Remove a tab from front of lines but allowing dedented lines. """
         lines = text.split('\n')
         for i in range(len(lines)):
@@ -203,7 +203,7 @@ class SaneOListProcessor(OListProcessor):
                 self.parser.parseBlocks(li, [item])
         self.parser.state.reset()
 
-    def get_items(self, block: str) -> list[Item]:
+    def get_items(self, block: str) -> list[ListItem]:
         """ Break a block into list items. """
         items = []
         first_indent = True
@@ -218,7 +218,7 @@ class SaneOListProcessor(OListProcessor):
                     INTEGER_RE = re.compile(r'(\d+)')
                     self.STARTSWITH = INTEGER_RE.match(m.group(2)).group()
                 # Append to the list
-                items.append(Item(m.group(1) + m.group(4)))
+                items.append(ListItem(m.group(1) + m.group(4)))
             elif self.INDENT_RE.match(line):
                 if first_indent:
                     indent_length = len(line) - len(line.lstrip())
@@ -226,12 +226,12 @@ class SaneOListProcessor(OListProcessor):
                 # This is an indented (possibly nested) item.
                 if items[-1].startswith(' ' * indent_length):
                     # Previous item was indented. Append to that item.
-                    items[-1] = Item('{}\n{}'.format(items[-1], line), indent_length)
+                    items[-1] = ListItem('{}\n{}'.format(items[-1], line), indent_length)
                 else:
-                    items.append(Item(line, indent_length))
+                    items.append(ListItem(line, indent_length))
             else:
                 # This is another line of previous item. Append to that item.
-                items[-1] = Item('{}\n{}'.format(items[-1], line), items[-1].indent_length)
+                items[-1] = ListItem('{}\n{}'.format(items[-1], line), items[-1].indent_length)
         return items
 
 
@@ -248,7 +248,7 @@ class SaneUListProcessor(SaneOListProcessor):
         self.RE = re.compile(r'^[ ]{0,%d}[*+-][ ]+(.*)' % 1)
         self.CHILD_RE = re.compile(r'^[ ]{0,%d}(([*+-]))[ ]+(.*)' % 1)
 
-    def get_items(self, block: str) -> list[Item]:
+    def get_items(self, block: str) -> list[ListItem]:
         """ Break a block into list items. """
         items = []
         first_indent = True
@@ -263,7 +263,7 @@ class SaneUListProcessor(SaneOListProcessor):
                     INTEGER_RE = re.compile(r'(\d+)')
                     self.STARTSWITH = INTEGER_RE.match(m.group(1)).group()
                 # Append to the list
-                items.append(Item(m.group(3)))
+                items.append(ListItem(m.group(3)))
             elif self.INDENT_RE.match(line):
                 if first_indent:
                     indent_length = len(line) - len(line.lstrip())
@@ -271,12 +271,12 @@ class SaneUListProcessor(SaneOListProcessor):
                 # This is an indented (possibly nested) item.
                 if items[-1].startswith(' ' * indent_length):
                     # Previous item was indented. Append to that item.
-                    items[-1] = Item('{}\n{}'.format(items[-1], line), indent_length)
+                    items[-1] = ListItem('{}\n{}'.format(items[-1], line), indent_length)
                 else:
-                    items.append(Item(line, indent_length))
+                    items.append(ListItem(line, indent_length))
             else:
                 # This is another line of previous item. Append to that item.
-                items[-1] = Item('{}\n{}'.format(items[-1], line), items[-1].indent_length)
+                items[-1] = ListItem('{}\n{}'.format(items[-1], line), items[-1].indent_length)
         return items
 
 
