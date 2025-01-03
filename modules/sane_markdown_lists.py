@@ -127,9 +127,16 @@ class SaneListIndentProcessor(ListIndentProcessor):
     def looseDetab(self, text: ListItem, level: int = 1) -> str:
         """ Remove indentation from front of lines but allowing dedented lines. """
         lines = text.split('\n')
-        for i in range(len(lines)):
-            if lines[i].startswith(' ' * text.indent_length * level):
-                lines[i] = lines[i][text.indent_length * level:]
+        if level <= 1:
+            for i in range(len(lines)):
+                line = lines[i]
+                if line.startswith(' '):
+                    line_indent = len(line) - len(line.lstrip())
+                    lines[i] = line[min(text.indent_length, line_indent) * level:]
+        else:
+            for i in range(len(lines)):
+                if lines[i].startswith(' ' * text.indent_length * level):
+                    lines[i] = lines[i][text.indent_length * level:]
         return '\n'.join(lines)
 
 
@@ -144,7 +151,7 @@ class SaneOListProcessor(OListProcessor):
     def __init__(self, parser: blockparser.BlockParser):
         super().__init__(parser)
         # This restriction stems from the 'CodeBlockProcessor' class,
-        # which automatically matches blocks with an indent == self.tab_length
+        # which automatically matches blocks with an indent = self.tab_length
         max_list_start_indent = self.tab_length - 1
         self.RE = re.compile(r'^[ ]{0,%d}[\*_]{0,2}\d+\.[ ]+(.*)' % max_list_start_indent)
         self.CHILD_RE = re.compile(r'^[ ]{0,%d}([\*_]{0,2})((\d+\.))[ ]+(.*)' % (MIN_NESTED_LIST_INDENT - 1))
@@ -202,7 +209,7 @@ class SaneOListProcessor(OListProcessor):
         # Loop through items in block, recursively parsing each with the
         # appropriate parent.
         for item in items:
-            if item.indent_length > 1:
+            if item.indent_length >= MIN_NESTED_LIST_INDENT:
                 # Item is indented. Parse with last item as parent
                 self.parser.parseBlocks(lst[-1], [item])
             else:
