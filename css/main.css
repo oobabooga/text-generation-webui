@@ -839,7 +839,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   Past chats menus
 ---------------------------------------------- */
 #rename-row label {
-    margin-top: var(--layout-gap);
+    margin-top: 0;
+}
+
+#rename-row > :nth-child(2) {
+    justify-content: center;
 }
 
 /* ----------------------------------------------
