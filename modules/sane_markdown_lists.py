@@ -30,6 +30,12 @@ if TYPE_CHECKING:  # pragma: no cover
     from markdown import blockparser
 
 
+# The min. number of added leading spaces needed to start a nested list
+MIN_NESTED_LIST_INDENT = 2
+# The max. number of leading spaces allowed when starting an un-nested list
+MAX_LIST_START_INDENT = 3
+
+
 class ListItem(str):
     """ A data class representing a list item.
     Holds the string associated with the item, as well as the number of
@@ -69,7 +75,7 @@ class SaneListIndentProcessor(ListIndentProcessor):
     def test(self, parent: etree.Element, block: ListItem or str) -> bool:
         if not isinstance(block, ListItem):
             return False
-        return block.indent_length > 1 and \
+        return block.indent_length >= MIN_NESTED_LIST_INDENT and \
             not self.parser.state.isstate('detabbed') and \
             (parent.tag in self.ITEM_TYPES or
                 (len(parent) and parent[-1] is not None and
@@ -138,11 +144,11 @@ class SaneOListProcessor(OListProcessor):
 
     def __init__(self, parser: blockparser.BlockParser):
         super().__init__(parser)
-        self.RE = re.compile(r'^[ ]{0,%d}[\*_]{0,2}\d+\.[ ]+(.*)' % 1)
-        self.CHILD_RE = re.compile(r'^[ ]{0,%d}([\*_]{0,2})((\d+\.))[ ]+(.*)' % 1)
+        self.RE = re.compile(r'^[ ]{0,%d}[\*_]{0,2}\d+\.[ ]+(.*)' % MAX_LIST_START_INDENT)
+        self.CHILD_RE = re.compile(r'^[ ]{0,%d}([\*_]{0,2})((\d+\.))[ ]+(.*)' % MAX_LIST_START_INDENT)
         # Detect indented (nested) items of either type
         self.INDENT_RE = re.compile(r'^[ ]{%d,%d}[\*_]{0,2}((\d+\.)|[*+-])[ ]+.*' %
-                                    (2, self.tab_length * 2 - 1))
+                                    (MIN_NESTED_LIST_INDENT, self.tab_length * 2 - 1))
 
     def run(self, parent: etree.Element, blocks: list[str]) -> None:
         # Check for multiple items in one block.
@@ -245,8 +251,8 @@ class SaneUListProcessor(SaneOListProcessor):
     def __init__(self, parser: blockparser.BlockParser):
         super().__init__(parser)
         # Detect an item (`1. item`). `group(1)` contains contents of item.
-        self.RE = re.compile(r'^[ ]{0,%d}[*+-][ ]+(.*)' % 1)
-        self.CHILD_RE = re.compile(r'^[ ]{0,%d}(([*+-]))[ ]+(.*)' % 1)
+        self.RE = re.compile(r'^[ ]{0,%d}[*+-][ ]+(.*)' % MAX_LIST_START_INDENT)
+        self.CHILD_RE = re.compile(r'^[ ]{0,%d}(([*+-]))[ ]+(.*)' % MAX_LIST_START_INDENT)
 
     def get_items(self, block: str) -> list[ListItem]:
         """ Break a block into list items. """
