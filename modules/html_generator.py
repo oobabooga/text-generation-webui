@@ -9,6 +9,7 @@ import markdown
 from PIL import Image, ImageOps
 
 from modules import shared
+from modules.sane_markdown_lists import SaneListExtension
 from modules.utils import get_available_chat_styles
 
 # This is to store the paths to the thumbnails of the profile pictures
@@ -174,7 +175,7 @@ def convert_to_markdown(string):
             result += '\n'
         # Also don't add an extra \n for lists
         elif stripped_line.startswith('-') or stripped_line.startswith('*') or stripped_line.startswith('+') or stripped_line.startswith('>') or re.match(r'\d+\.', stripped_line):
-            result += '\n'
+            result += '  \n'
         else:
             result += '  \n'
 
@@ -195,7 +196,7 @@ def convert_to_markdown(string):
         result = re.sub(list_item_pattern, r'\g<1> ' + delete_str, result)
 
         # Convert to HTML using markdown
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'], tab_length=2)
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables', SaneListExtension()])
 
         # Remove the delete string from the HTML output
         pos = html_output.rfind(delete_str)
@@ -203,7 +204,7 @@ def convert_to_markdown(string):
             html_output = html_output[:pos] + html_output[pos + len(delete_str):]
     else:
         # Convert to HTML using markdown
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'], tab_length=2)
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables', SaneListExtension()])
 
     # Unescape code blocks
     pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)
