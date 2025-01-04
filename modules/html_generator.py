@@ -268,29 +268,24 @@ def generate_instruct_html(history):
     for i, _row in enumerate(history):
         row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
 
-        if row[0]:  # don't display empty user messages
-            output += f"""
-                  <div class="user-message">
-                    <div class="text">
-                      <div class="message-body">
-                        {row[0]}
-                      </div>
-                    </div>
-                  </div>
-                """
+        if row[0]:  # Don't display empty user messages
+            output += (
+                f'<div class="user-message">'
+                f'<div class="text">'
+                f'<div class="message-body">{row[0]}</div>'
+                f'</div>'
+                f'</div>'
+            )
 
-        output += f"""
-              <div class="assistant-message">
-                <div class="text">
-                  <div class="message-body">
-                    {row[1]}
-                  </div>
-                </div>
-              </div>
-            """
+        output += (
+            f'<div class="assistant-message">'
+            f'<div class="text">'
+            f'<div class="message-body">{row[1]}</div>'
+            f'</div>'
+            f'</div>'
+        )
 
     output += "</div></div>"
-
     return output
 
 
@@ -298,44 +293,39 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
     output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat"><div class="messages">'
 
     # We use ?character and ?time.time() to force the browser to reset caches
-    img_bot = f'<img src="file/cache/pfp_character_thumb.png?{character}" class="pfp_character">' if Path("cache/pfp_character_thumb.png").exists() else ''
-    img_me = f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">' if Path("cache/pfp_me.png").exists() else ''
+    img_bot = (
+        f'<img src="file/cache/pfp_character_thumb.png?{character}" class="pfp_character">'
+        if Path("cache/pfp_character_thumb.png").exists() else ''
+    )
+
+    img_me = (
+        f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
+        if Path("cache/pfp_me.png").exists() else ''
+    )
 
     for i, _row in enumerate(history):
         row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
 
-        if row[0]:  # don't display empty user messages
-            output += f"""
-                  <div class="message">
-                    <div class="circle-you">
-                      {img_me}
-                    </div>
-                    <div class="text">
-                      <div class="username">
-                        {name1}
-                      </div>
-                      <div class="message-body">
-                        {row[0]}
-                      </div>
-                    </div>
-                  </div>
-                """
+        if row[0]:  # Don't display empty user messages
+            output += (
+                f'<div class="message">'
+                f'<div class="circle-you">{img_me}</div>'
+                f'<div class="text">'
+                f'<div class="username">{name1}</div>'
+                f'<div class="message-body">{row[0]}</div>'
+                f'</div>'
+                f'</div>'
+            )
 
-        output += f"""
-              <div class="message">
-                <div class="circle-bot">
-                  {img_bot}
-                </div>
-                <div class="text">
-                  <div class="username">
-                    {name2}
-                  </div>
-                  <div class="message-body">
-                    {row[1]}
-                  </div>
-                </div>
-              </div>
-            """
+        output += (
+            f'<div class="message">'
+            f'<div class="circle-bot">{img_bot}</div>'
+            f'<div class="text">'
+            f'<div class="username">{name2}</div>'
+            f'<div class="message-body">{row[1]}</div>'
+            f'</div>'
+            f'</div>'
+        )
 
     output += "</div></div>"
     return output
@@ -347,26 +337,22 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
     for i, _row in enumerate(history):
         row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
 
-        if row[0]:  # don't display empty user messages
-            output += f"""
-              <div class="message">
-                <div class="text-you">
-                  <div class="message-body">
-                    {row[0]}
-                  </div>
-                </div>
-              </div>
-            """
+        if row[0]:  # Don't display empty user messages
+            output += (
+                f'<div class="message">'
+                f'<div class="text-you">'
+                f'<div class="message-body">{row[0]}</div>'
+                f'</div>'
+                f'</div>'
+            )
 
-        output += f"""
-          <div class="message">
-            <div class="text-bot">
-              <div class="message-body">
-                {row[1]}
-              </div>
-            </div>
-          </div>
-        """
+        output += (
+            f'<div class="message">'
+            f'<div class="text-bot">'
+            f'<div class="message-body">{row[1]}</div>'
+            f'</div>'
+            f'</div>'
+        )
 
     output += "</div></div>"
     return output
