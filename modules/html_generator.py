@@ -15,6 +15,29 @@ from modules.utils import get_available_chat_styles
 # This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}
 
+
+def minify_css(css: str) -> str:
+    # Step 1: Remove comments
+    css = re.sub(r'/\*.*?\*/', '', css, flags=re.DOTALL)
+
+    # Step 2: Remove leading and trailing whitespace
+    css = re.sub(r'^[ \t]*|[ \t]*$', '', css, flags=re.MULTILINE)
+
+    # Step 3: Remove spaces after specific characters ({ : ; ,})
+    css = re.sub(r'([:{;,])\s+', r'\1', css)
+
+    # Step 4: Remove spaces before `{`
+    css = re.sub(r'\s+{', '{', css)
+
+    # Step 5: Remove empty lines
+    css = re.sub(r'^\s*$', '', css, flags=re.MULTILINE)
+
+    # Step 6: Collapse all lines into one
+    css = re.sub(r'\n', '', css)
+
+    return css
+
+
 with open(Path(__file__).resolve().parent / '../css/html_readable_style.css', 'r') as f:
     readable_css = f.read()
 with open(Path(__file__).resolve().parent / '../css/html_instruct_style.css', 'r') as f:
@@ -34,6 +57,12 @@ for k in chat_styles:
     if match:
         style = match.group(1)
         chat_styles[k] = chat_styles.get(style, '') + '\n\n' + '\n'.join(lines[1:])
+
+# Reduce the size of the CSS sources above
+readable_css = minify_css(readable_css)
+instruct_css = minify_css(instruct_css)
+for k in chat_styles:
+    chat_styles[k] = minify_css(chat_styles[k])
 
 
 def fix_newlines(string):
