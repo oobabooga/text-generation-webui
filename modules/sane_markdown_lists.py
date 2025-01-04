@@ -124,7 +124,9 @@ class SaneOListProcessor(OListProcessor):
         # This restriction stems from the 'CodeBlockProcessor' class,
         # which automatically matches blocks with an indent = self.tab_length
         max_list_start_indent = self.tab_length - 1
+        # Detect an item (e.g., `1. item`)
         self.RE = re.compile(r'^[ ]{0,%d}[\*_]{0,2}\d+\.[ ]+(.*)' % max_list_start_indent)
+        # Detect items on secondary lines. they can be of either list type.
         self.CHILD_RE = re.compile(r'^[ ]{0,%d}([\*_]{0,2})((\d+\.))[ ]+(.*)' % (MIN_NESTED_LIST_INDENT - 1))
         # Detect indented (nested) items of either type
         self.INDENT_RE = re.compile(r'^[ ]{%d,%d}[\*_]{0,2}((\d+\.)|[*+-])[ ]+.*' %
@@ -208,7 +210,7 @@ class SaneOListProcessor(OListProcessor):
             if m:
                 # This is a new list item
                 # Check first item for the start index
-                if not items and self.TAG == 'ol':
+                if not items:
                     # Detect the integer value of first list item
                     INTEGER_RE = re.compile(r'(\d+)')
                     self.STARTSWITH = INTEGER_RE.match(m.group(2)).group()
@@ -236,10 +238,10 @@ class SaneUListProcessor(SaneOListProcessor):
 
     def __init__(self, parser: blockparser.BlockParser):
         super().__init__(parser)
-        # Detect an item (`1. item`). `group(1)` contains contents of item.
+        # Detect an item (e.g., `- item` or `+ item` or `* item`).
         max_list_start_indent = self.tab_length - 1
         self.RE = re.compile(r'^[ ]{0,%d}[*+-][ ]+(.*)' % max_list_start_indent)
-        self.CHILD_RE = re.compile(r'^[ ]{0,%d}(([*+-]))[ ]+(.*)' % 0)
+        self.CHILD_RE = re.compile(r'^[ ]{0,%d}(([*+-]))[ ]+(.*)' % (MIN_NESTED_LIST_INDENT - 1))
 
     def get_items(self, block: str) -> list[str]:
         """ Break a block into list items. """
@@ -250,12 +252,6 @@ class SaneUListProcessor(SaneOListProcessor):
         for line in block.split('\n'):
             m = self.CHILD_RE.match(line)
             if m:
-                # This is a new list item
-                # Check first item for the start index
-                if not items and self.TAG == 'ol':
-                    # Detect the integer value of first list item
-                    INTEGER_RE = re.compile(r'(\d+)')
-                    self.STARTSWITH = INTEGER_RE.match(m.group(1)).group()
                 # Append to the list
                 items.append(m.group(3))
             elif self.INDENT_RE.match(line):
@@ -275,8 +271,7 @@ class SaneParagraphProcessor(ParagraphProcessor):
     """ Process Paragraph blocks. """
 
     def __init__(self, parser: BlockParser):
-        self.parser = parser
-        self.tab_length = parser.md.tab_length
+        super().__init__(parser)
         max_list_start_indent = self.tab_length - 1
         self.LIST_RE = re.compile(r"\s{2}\n(\s{0,%d}[\d+*-])" % max_list_start_indent)
 
