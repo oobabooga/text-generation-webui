@@ -9,8 +9,8 @@ import markdown
 from PIL import Image, ImageOps
 
 from modules import shared
-from modules.utils import get_available_chat_styles
 from modules.sane_markdown_lists import SaneListExtension
+from modules.utils import get_available_chat_styles
 
 # This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}

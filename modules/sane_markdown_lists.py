@@ -19,12 +19,16 @@ Modify the behavior of Lists in Python-Markdown to act in a sane manner.
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
 import xml.etree.ElementTree as etree
+from typing import TYPE_CHECKING
 
 from markdown import Extension
-from markdown.blockprocessors import OListProcessor, ListIndentProcessor, ParagraphProcessor
 from markdown.blockparser import BlockParser
+from markdown.blockprocessors import (
+    ListIndentProcessor,
+    OListProcessor,
+    ParagraphProcessor
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     from markdown import blockparser
@@ -57,7 +61,6 @@ class SaneListIndentProcessor(ListIndentProcessor):
             (parent.tag in self.ITEM_TYPES or
                 (len(parent) and parent[-1] is not None and
                     (parent[-1].tag in self.LIST_TYPES)))
-
 
     def get_level(self, parent: etree.Element, block: str) -> tuple[int, etree.Element]:
         """ Get level of indentation based on list level. """
@@ -316,7 +319,6 @@ class SaneParagraphProcessor(ParagraphProcessor):
                 # If a list was found, parse its block separately with the paragraph as the parent
                 if next_list_block:
                     self.parser.parseBlocks(p, [next_list_block])
-
 
 
 class SaneListExtension(Extension):
