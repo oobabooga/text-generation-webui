@@ -1,11 +1,8 @@
 from pathlib import Path
 
-import torch
-from transformers import is_torch_xpu_available
-
 import modules.shared as shared
 from modules.logging_colors import logger
-from modules.models import reload_model
+from modules.models import get_device, reload_model
 
 
 def add_lora_to_model(lora_names):
@@ -132,14 +129,9 @@ def add_lora_transformers(lora_names):
         if not shared.args.load_in_8bit and not shared.args.cpu:
             shared.model.half()
             if not hasattr(shared.model, "hf_device_map"):
-                if torch.backends.mps.is_available():
-                    device = torch.device('mps')
+                device = get_device()
+                if device:
                     shared.model = shared.model.to(device)
-                elif is_torch_xpu_available():
-                    device = torch.device("xpu:0")
-                    shared.model = shared.model.to(device)
-                else:
-                    shared.model = shared.model.cuda()
 
     shared.lora_names = lora_names
 

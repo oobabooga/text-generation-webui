@@ -538,8 +538,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .message-body pre > code {
-    white-space: pre-wrap !important;
-    word-wrap: break-word !important;
+    white-space: pre !important;
+    overflow-x: auto !important;
+    max-width: calc(100dvw - 39px);
     border: 1px solid #666;
     border-radius: 5px;
     font-size: 82%;
@@ -838,7 +839,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   Past chats menus
 ---------------------------------------------- */
 #rename-row label {
-    margin-top: var(--layout-gap);
+    margin-top: 0;
+}
+
+#rename-row > :nth-child(2) {
+    justify-content: center;
 }
 
 /* ----------------------------------------------
@@ -873,6 +878,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: unset;
     flex-grow: 1;
     flex-shrink: 1;
+}
+
+#search_chat > :nth-child(2) > :first-child {
+    display: none;
 }
 
 /* ----------------------------------------------
@@ -910,7 +919,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #past-chats {
-    max-height: calc(100dvh - 90px);
+    max-height: calc(100dvh - 135px);
     overflow-y: scroll !important;
     border-radius: 0;
     scrollbar-width: auto;
@@ -980,6 +989,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #rename-row {
     width: 100%;
     justify-content: center;
+    gap: 10px;
 }
 
 

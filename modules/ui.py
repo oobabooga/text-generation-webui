@@ -230,6 +230,7 @@ def list_interface_input_elements():
         'start_with',
         'character_menu',
         'history',
+        'search_chat',
         'unique_id',
         'name1',
         'user_bio',
