@@ -302,6 +302,9 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     if state['prompt_lookup_num_tokens'] > 0:
         generate_params['prompt_lookup_num_tokens'] = state['prompt_lookup_num_tokens']
 
+    if state['static_cache']:
+        generate_params['cache_implementation'] = 'static'
+
     for k in ['epsilon_cutoff', 'eta_cutoff']:
         if state[k] > 0:
             generate_params[k] = state[k] * 1e-4

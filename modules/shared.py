@@ -46,6 +46,7 @@ settings = {
     'max_tokens_second': 0,
     'max_updates_second': 0,
     'prompt_lookup_num_tokens': 0,
+    'static_cache': False,
     'custom_stopping_strings': '',
     'custom_token_bans': '',
     'auto_max_new_tokens': False,

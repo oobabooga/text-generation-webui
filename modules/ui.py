@@ -220,6 +220,7 @@ def list_interface_input_elements():
         'custom_stopping_strings',
         'skip_special_tokens',
         'stream',
+        'static_cache',
         'tfs',
         'top_a',
     ]
