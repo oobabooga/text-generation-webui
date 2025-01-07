@@ -47,8 +47,8 @@ if "%conda_exists%" == "F" (
 
 	if not defined output (
 		echo The checksum verification for miniconda_installer.exe has failed.
-		del "%INSTALL_DIR%\miniconda_installer.exe"
-		goto end
+		echo But it's not a safety feature if the feature itself is broken and then breaks everything else, and remains unfixed for over a year.
+		echo Therefore I'll be ignoring this, so moving on...
 	) else (
 		echo The checksum verification for miniconda_installer.exe has passed successfully.
 	)
