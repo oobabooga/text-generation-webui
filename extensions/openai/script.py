@@ -379,7 +379,10 @@ def run_server():
     else:
         url_proto = 'https://' if (ssl_certfile and ssl_keyfile) else 'http://'
         urls = [f'{url_proto}{addr}:{port}' for addr in server_addrs]
-        logger.info('\n\nRunning OpenAI-compatible API on:\n' + '\n'.join(urls) + '\n\n')
+        if len(urls) > 1:
+            logger.info('OpenAI-compatible API URLs:\n\n' + '\n'.join(urls) + '\n')
+        else:
+            logger.info('OpenAI-compatible API URL:\n\n' + '\n'.join(urls) + '\n')
 
     # Log API keys
     if shared.args.api_key:
