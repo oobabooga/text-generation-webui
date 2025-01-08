@@ -3,7 +3,6 @@ import os
 import pprint
 import re
 import time
-import traceback
 from pathlib import Path
 
 import torch
@@ -21,7 +20,6 @@ from transformers import (
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
     BitsAndBytesConfig,
-    GPTQConfig,
     is_torch_npu_available,
     is_torch_xpu_available
 )
@@ -73,7 +71,6 @@ def load_model(model_name, loader=None):
         'llamacpp_HF': llamacpp_HF_loader,
         'ExLlamav2': ExLlamav2_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
-        'AutoGPTQ': AutoGPTQ_loader,
         'HQQ': HQQ_loader,
         'TensorRT-LLM': TensorRT_LLM_loader,
     }
@@ -164,7 +161,7 @@ def huggingface_loader(model_name):
             LoaderClass = AutoModelForCausalLM
 
     # Load the model without any special settings
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1, shared.args.disable_exllama, shared.args.disable_exllamav2]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1]):
         logger.info("TRANSFORMERS_PARAMS=")
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(params)
         print()
@@ -228,21 +225,6 @@ def huggingface_loader(model_name):
 
             if shared.args.disk:
                 params['offload_folder'] = shared.args.disk_cache_dir
-
-        if shared.args.disable_exllama or shared.args.disable_exllamav2:
-            try:
-                gptq_config = GPTQConfig(
-                    bits=config.quantization_config.get('bits', 4),
-                    disable_exllama=shared.args.disable_exllama,
-                    disable_exllamav2=shared.args.disable_exllamav2,
-                )
-
-                params['quantization_config'] = gptq_config
-                logger.info(f'Loading with disable_exllama={shared.args.disable_exllama} and disable_exllamav2={shared.args.disable_exllamav2}.')
-            except:
-                exc = traceback.format_exc()
-                logger.error('Failed to disable exllama. Does the config.json for this model contain the necessary quantization info?')
-                print(exc)
 
         if shared.args.compress_pos_emb > 1:
             params['rope_scaling'] = {'type': 'linear', 'factor': shared.args.compress_pos_emb}
@@ -308,15 +290,6 @@ def ExLlamav2_HF_loader(model_name):
     from modules.exllamav2_hf import Exllamav2HF
 
     return Exllamav2HF.from_pretrained(model_name)
-
-
-def AutoGPTQ_loader(model_name):
-    try:
-        import modules.AutoGPTQ_loader
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError("Failed to import 'autogptq'. Please install it manually following the instructions in the AutoGPTQ GitHub repository.")
-
-    return modules.AutoGPTQ_loader.load_quantized(model_name)
 
 
 def HQQ_loader(model_name):
