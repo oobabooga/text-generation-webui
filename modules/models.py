@@ -163,7 +163,7 @@ def huggingface_loader(model_name):
             LoaderClass = AutoModelForCausalLM
 
     # Load the model without any special settings
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1, shared.args.disable_exllama, shared.args.disable_exllamav2]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1]):
         logger.info("TRANSFORMERS_PARAMS=")
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(params)
         print()
@@ -227,21 +227,6 @@ def huggingface_loader(model_name):
 
             if shared.args.disk:
                 params['offload_folder'] = shared.args.disk_cache_dir
-
-        if shared.args.disable_exllama or shared.args.disable_exllamav2:
-            try:
-                gptq_config = GPTQConfig(
-                    bits=config.quantization_config.get('bits', 4),
-                    disable_exllama=shared.args.disable_exllama,
-                    disable_exllamav2=shared.args.disable_exllamav2,
-                )
-
-                params['quantization_config'] = gptq_config
-                logger.info(f'Loading with disable_exllama={shared.args.disable_exllama} and disable_exllamav2={shared.args.disable_exllamav2}.')
-            except:
-                exc = traceback.format_exc()
-                logger.error('Failed to disable exllama. Does the config.json for this model contain the necessary quantization info?')
-                print(exc)
 
         if shared.args.compress_pos_emb > 1:
             params['rope_scaling'] = {'type': 'linear', 'factor': shared.args.compress_pos_emb}
