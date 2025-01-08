@@ -3,7 +3,6 @@ import os
 import pprint
 import re
 import time
-import traceback
 from pathlib import Path
 
 import torch

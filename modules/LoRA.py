@@ -2,7 +2,7 @@ from pathlib import Path
 
 import modules.shared as shared
 from modules.logging_colors import logger
-from modules.models import get_device, reload_model
+from modules.models import get_device
 
 
 def add_lora_to_model(lora_names):
