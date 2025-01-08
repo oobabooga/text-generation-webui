@@ -25,8 +25,6 @@ loaders_and_params = OrderedDict({
         'use_eager_attention',
         'alpha_value',
         'compress_pos_emb',
-        'disable_exllama',
-        'disable_exllamav2',
     ],
     'llama.cpp': [
         'n_ctx',
