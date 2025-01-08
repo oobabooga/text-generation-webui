@@ -353,45 +353,35 @@ async def handle_unload_loras():
 
 
 def run_server():
-    server_addrV6 = '[::]' if shared.args.listen else '[::1]'
-    server_addrV4 = '0.0.0.0' if shared.args.listen else '127.0.0.1'
-
+    # Parse configuration
     port = int(os.environ.get('OPENEDAI_PORT', shared.args.api_port))
-    server_addrs = []
-
-    disable_ipv6 = os.environ.get('OPENEDAI_DISABLE_IPV6', shared.args.api_disable_ipv6)
-    if not disable_ipv6:
-        server_addrs.append(server_addrV6)
-
-    disable_ipv4 = os.environ.get('OPENEDAI_DISABLE_IPV4', shared.args.api_disable_ipv4)
-    if not disable_ipv4:
-        server_addrs.append(server_addrV4)
-
-    if len(server_addrs) < 1:
-        logger.error('you MUST enable IPv6 or IPv4 for the API to work')
-        raise Exception('you MUST enable IPv6 or IPv4 for the API to work')
-
     ssl_certfile = os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
     ssl_keyfile = os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
 
-    url_proto = 'http://'
-    if ssl_keyfile and ssl_certfile:
-        url_proto = 'https://'
+    # Configure server addresses
+    server_addrs = []
+    if not os.environ.get('OPENEDAI_DISABLE_IPV6', shared.args.api_disable_ipv6):
+        server_addrs.append('[::]' if shared.args.listen else '[::1]')
+    if not os.environ.get('OPENEDAI_DISABLE_IPV4', shared.args.api_disable_ipv4):
+        server_addrs.append('0.0.0.0' if shared.args.listen else '127.0.0.1')
 
+    if not server_addrs:
+        raise Exception('you MUST enable IPv6 or IPv4 for the API to work')
+
+    # Log server information
     if shared.args.public_api:
-        def on_start(public_url: str):
-            logger.info(f'OpenAI-compatible API URL:\n\n{public_url}\n')
-
-        _start_cloudflared(port, shared.args.public_api_id, max_attempts=3, on_start=on_start)
+        _start_cloudflared(
+            port,
+            shared.args.public_api_id,
+            max_attempts=3,
+            on_start=lambda url: logger.info(f'OpenAI-compatible API URL:\n\n{url}\n')
+        )
     else:
-        logger.info('\n\nRunning OpenAI-compatible API on:')
-        for i, addr in enumerate(server_addrs):
-            nl = ''
-            if i == len(server_addrs) - 1:
-                nl = '\n\n'
+        url_proto = 'https://' if (ssl_certfile and ssl_keyfile) else 'http://'
+        urls = [f'{url_proto}{addr}:{port}' for addr in server_addrs]
+        logger.info('\n\nRunning OpenAI-compatible API on:\n' + '\n'.join(urls) + '\n\n')
 
-            logger.info(f'{url_proto}{addr}:{port}{nl}')
-
+    # Log API keys
     if shared.args.api_key:
         if not shared.args.admin_key:
             shared.args.admin_key = shared.args.api_key
@@ -401,6 +391,7 @@ def run_server():
     if shared.args.admin_key and shared.args.admin_key != shared.args.api_key:
         logger.info(f'OpenAI API admin key (for loading/unloading models):\n\n{shared.args.admin_key}\n')
 
+    # Start server
     logging.getLogger("uvicorn.error").propagate = False
     uvicorn.run(app, host=server_addrs, port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 
