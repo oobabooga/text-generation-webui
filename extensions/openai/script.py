@@ -358,9 +358,9 @@ def run_server():
     ssl_certfile = os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
     ssl_keyfile = os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
 
-    # Configure server addresses
+    # In the server configuration:
     server_addrs = []
-    if not os.environ.get('OPENEDAI_DISABLE_IPV6', shared.args.api_disable_ipv6):
+    if os.environ.get('OPENEDAI_ENABLE_IPV6', shared.args.api_enable_ipv6):
         server_addrs.append('[::]' if shared.args.listen else '[::1]')
     if not os.environ.get('OPENEDAI_DISABLE_IPV4', shared.args.api_disable_ipv4):
         server_addrs.append('0.0.0.0' if shared.args.listen else '127.0.0.1')

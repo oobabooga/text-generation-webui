@@ -195,7 +195,7 @@ group.add_argument('--subpath', type=str, help='Customize the subpath for gradio
 # API
 group = parser.add_argument_group('API')
 group.add_argument('--api', action='store_true', help='Enable the API extension.')
-group.add_argument('--api-disable-ipv6', action='store_true', help='Disable IPv6 for the API')
+group.add_argument('--api-enable-ipv6', action='store_true', help='Enable IPv6 for the API')
 group.add_argument('--api-disable-ipv4', action='store_true', help='Disable IPv4 for the API')
 group.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
 group.add_argument('--public-api-id', type=str, help='Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.', default=None)
