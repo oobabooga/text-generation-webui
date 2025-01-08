@@ -10,9 +10,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Features
 
-- Supports multiple text generation backends in a single UI/API, including [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp), and [ExLlamaV2](https://github.com/turboderp-org/exllamav2).
-  - [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) is supported via an [included Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile).
-  - The Transformers loader is compatible with libraries like [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [HQQ](https://github.com/mobiusml/hqq), and [AQLM](https://github.com/Vahe1994/AQLM), but they must be installed manually.
+- Supports multiple text generation backends in a single UI/API, including [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp), and [ExLlamaV2](https://github.com/turboderp-org/exllamav2). [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) is supported via an [included Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile), and the Transformers loader is compatible with libraries like [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [HQQ](https://github.com/mobiusml/hqq), and [AQLM](https://github.com/Vahe1994/AQLM), but they must be installed manually.
 - OpenAI-compatible API with Chat and Completions endpoints – see [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
 - Automatic prompt formatting using Jinja2 templates.
 - Three chat modes: `instruct`, `chat-instruct`, and `chat`, with automatic prompt templates in `chat-instruct`.
