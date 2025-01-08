@@ -789,7 +789,11 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
         logger.info("Getting model ready...")
         # here we can disable gradient checkpoint, by default = true,  use_gradient_checkpointing=True
-        prepare_model_for_kbit_training(shared.model)
+        if 'quantization_config' in shared.model.config.to_dict():
+            print(f"Method: {RED}QLORA{RESET}")
+            prepare_model_for_kbit_training(shared.model)
+        else:
+            print(f"Method: {RED}LoRA{RESET}")    
 
     # base model is now frozen and should not be reused for any other LoRA training than this one
     shared.model_dirty_from_training = True
