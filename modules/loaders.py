@@ -107,24 +107,6 @@ loaders_and_params = OrderedDict({
         'compress_pos_emb',
         'exllamav2_info',
     ],
-    'AutoGPTQ': [
-        'triton',
-        'no_inject_fused_mlp',
-        'no_use_cuda_fp16',
-        'wbits',
-        'groupsize',
-        'desc_act',
-        'disable_exllama',
-        'disable_exllamav2',
-        'gpu_memory',
-        'cpu_memory',
-        'cpu',
-        'disk',
-        'auto_devices',
-        'trust_remote_code',
-        'no_use_fast',
-        'autogptq_info',
-    ],
     'HQQ': [
         'hqq_backend',
         'trust_remote_code',
@@ -191,7 +173,6 @@ def transformers_samplers():
 
 loaders_samplers = {
     'Transformers': transformers_samplers(),
-    'AutoGPTQ': transformers_samplers(),
     'HQQ': transformers_samplers(),
     'ExLlamav2': {
         'temperature',

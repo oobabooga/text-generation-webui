@@ -73,7 +73,6 @@ def load_model(model_name, loader=None):
         'llamacpp_HF': llamacpp_HF_loader,
         'ExLlamav2': ExLlamav2_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
-        'AutoGPTQ': AutoGPTQ_loader,
         'HQQ': HQQ_loader,
         'TensorRT-LLM': TensorRT_LLM_loader,
     }
@@ -308,15 +307,6 @@ def ExLlamav2_HF_loader(model_name):
     from modules.exllamav2_hf import Exllamav2HF
 
     return Exllamav2HF.from_pretrained(model_name)
-
-
-def AutoGPTQ_loader(model_name):
-    try:
-        import modules.AutoGPTQ_loader
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError("Failed to import 'autogptq'. Please install it manually following the instructions in the AutoGPTQ GitHub repository.")
-
-    return modules.AutoGPTQ_loader.load_quantized(model_name)
 
 
 def HQQ_loader(model_name):

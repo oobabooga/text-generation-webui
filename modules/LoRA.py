@@ -6,9 +6,7 @@ from modules.models import get_device, reload_model
 
 
 def add_lora_to_model(lora_names):
-    if 'GPTQForCausalLM' in shared.model.__class__.__name__ or shared.args.loader == 'AutoGPTQ':
-        add_lora_autogptq(lora_names)
-    elif shared.model.__class__.__name__ in ['Exllamav2Model', 'Exllamav2HF'] or shared.args.loader in ['ExLlamav2', 'ExLlamav2_HF']:
+    if shared.model.__class__.__name__ in ['Exllamav2Model', 'Exllamav2HF'] or shared.args.loader in ['ExLlamav2', 'ExLlamav2_HF']:
         add_lora_exllamav2(lora_names)
     else:
         add_lora_transformers(lora_names)
@@ -46,38 +44,6 @@ def add_lora_exllamav2(lora_names):
     else:
         shared.lora_names = []
         shared.model.loras = None
-
-
-def add_lora_autogptq(lora_names):
-    '''
-    Adapted from https://github.com/Ph0rk0z/text-generation-webui-testing
-    '''
-
-    try:
-        from auto_gptq import get_gptq_peft_model
-        from auto_gptq.utils.peft_utils import GPTQLoraConfig
-    except:
-        logger.error("This version of AutoGPTQ does not support LoRA. You need to install from source or wait for a new release.")
-        return
-
-    if len(lora_names) == 0:
-        reload_model()
-
-        shared.lora_names = []
-        return
-    else:
-        if len(lora_names) > 1:
-            logger.warning('AutoGPTQ can only work with 1 LoRA at the moment. Only the first one in the list will be loaded.')
-
-        peft_config = GPTQLoraConfig(
-            inference_mode=True,
-        )
-
-        lora_path = get_lora_path(lora_names[0])
-        logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join([lora_names[0]])))
-        shared.model = get_gptq_peft_model(shared.model, peft_config, lora_path)
-        shared.lora_names = [lora_names[0]]
-        return
 
 
 def add_lora_transformers(lora_names):

@@ -120,17 +120,6 @@ def get_model_metadata(model):
                 if 'desc_act' in metadata['quantization_config']:
                     model_settings['desc_act'] = metadata['quantization_config']['desc_act']
 
-        # Read AutoGPTQ metadata
-        path = Path(f'{shared.args.model_dir}/{model}/quantize_config.json')
-        if path.exists():
-            metadata = json.loads(open(path, 'r', encoding='utf-8').read())
-            if 'bits' in metadata:
-                model_settings['wbits'] = metadata['bits']
-            if 'group_size' in metadata:
-                model_settings['groupsize'] = metadata['group_size']
-            if 'desc_act' in metadata:
-                model_settings['desc_act'] = metadata['desc_act']
-
     # Try to find the Jinja instruct template
     path = Path(f'{shared.args.model_dir}/{model}') / 'tokenizer_config.json'
     if path.exists():
@@ -251,7 +240,7 @@ def apply_model_settings_to_state(model, state):
         loader = model_settings.pop('loader')
 
         # If the user is using an alternative loader for the same model type, let them keep using it
-        if not (loader == 'ExLlamav2_HF' and state['loader'] in ['ExLlamav2', 'AutoGPTQ']):
+        if not (loader == 'ExLlamav2_HF' and state['loader'] in ['ExLlamav2']):
             state['loader'] = loader
 
     for k in model_settings:

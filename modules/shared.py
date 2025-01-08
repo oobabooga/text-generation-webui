@@ -86,7 +86,7 @@ group.add_argument('--idle-timeout', type=int, default=0, help='Unload model aft
 
 # Model loader
 group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, AutoGPTQ.')
+group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
@@ -146,17 +146,6 @@ group.add_argument('--no_xformers', action='store_true', help='Force xformers to
 group.add_argument('--no_sdpa', action='store_true', help='Force Torch SDPA to not be used.')
 group.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
 group.add_argument('--enable_tp', action='store_true', help='Enable Tensor Parallelism (TP) in ExLlamaV2.')
-
-# AutoGPTQ
-group = parser.add_argument_group('AutoGPTQ')
-group.add_argument('--triton', action='store_true', help='Use triton.')
-group.add_argument('--no_inject_fused_mlp', action='store_true', help='Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference.')
-group.add_argument('--no_use_cuda_fp16', action='store_true', help='This can make models faster on some systems.')
-group.add_argument('--desc_act', action='store_true', help='For models that do not have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.')
-group.add_argument('--disable_exllama', action='store_true', help='Disable ExLlama kernel, which can improve inference speed on some systems.')
-group.add_argument('--disable_exllamav2', action='store_true', help='Disable ExLlamav2 kernel.')
-group.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
-group.add_argument('--groupsize', type=int, default=-1, help='Group size.')
 
 # HQQ
 group = parser.add_argument_group('HQQ')
@@ -220,6 +209,14 @@ group.add_argument('--no_inject_fused_attention', action='store_true', help='DEP
 group.add_argument('--cache_4bit', action='store_true', help='DEPRECATED')
 group.add_argument('--cache_8bit', action='store_true', help='DEPRECATED')
 group.add_argument('--chat-buttons', action='store_true', help='DEPRECATED')
+group.add_argument('--triton', action='store_true', help='DEPRECATED')
+group.add_argument('--no_inject_fused_mlp', action='store_true', help='DEPRECATED')
+group.add_argument('--no_use_cuda_fp16', action='store_true', help='DEPRECATED')
+group.add_argument('--desc_act', action='store_true', help='DEPRECATED')
+group.add_argument('--disable_exllama', action='store_true', help='DEPRECATED')
+group.add_argument('--disable_exllamav2', action='store_true', help='DEPRECATED')
+group.add_argument('--wbits', type=int, default=0, help='DEPRECATED')
+group.add_argument('--groupsize', type=int, default=-1, help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
