@@ -22,6 +22,7 @@ ban_eos_token: false
 add_bos_token: true
 skip_special_tokens: true
 stream: true
+static_cache: false
 character: Assistant
 name1: You
 custom_system_message: ''

@@ -352,13 +352,17 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True, for_ui=for_ui)):
 
         # Extract the reply
-        visible_reply = reply
         if state['mode'] in ['chat', 'chat-instruct']:
-            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
+            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply + '▍')
+        else:
+            visible_reply = reply + '▍'
 
         visible_reply = html.escape(visible_reply)
 
         if shared.stop_everything:
+            if output['visible'][-1][1].endswith('▍'):
+                output['visible'][-1][1] = output['visible'][-1][1][:-1]
+
             output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
             yield output
             return
@@ -373,6 +377,9 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
             if is_stream:
                 yield output
+
+    if output['visible'][-1][1].endswith('▍'):
+        output['visible'][-1][1] = output['visible'][-1][1][:-1]
 
     output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
     yield output
@@ -586,29 +593,34 @@ def find_all_histories_with_first_prompts(state):
     result = []
     for i, path in enumerate(histories):
         filename = path.stem
-        if re.match(r'^[0-9]{8}-[0-9]{2}-[0-9]{2}-[0-9]{2}$', filename):
-            with open(path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+        file_content = ""
+        with open(path, 'r', encoding='utf-8') as f:
+            file_content = f.read()
 
-                first_prompt = ""
-                if data and 'visible' in data and len(data['visible']) > 0:
-                    if data['internal'][0][0] == '<|BEGIN-VISIBLE-CHAT|>':
-                        if len(data['visible']) > 1:
-                            first_prompt = html.unescape(data['visible'][1][0])
-                        elif i == 0:
-                            first_prompt = "New chat"
-                    else:
-                        first_prompt = html.unescape(data['visible'][0][0])
-                elif i == 0:
-                    first_prompt = "New chat"
+        if state['search_chat'] and state['search_chat'] not in file_content:
+            continue
+
+        data = json.loads(file_content)
+        if re.match(r'^[0-9]{8}-[0-9]{2}-[0-9]{2}-[0-9]{2}$', filename):
+            first_prompt = ""
+            if data and 'visible' in data and len(data['visible']) > 0:
+                if data['internal'][0][0] == '<|BEGIN-VISIBLE-CHAT|>':
+                    if len(data['visible']) > 1:
+                        first_prompt = html.unescape(data['visible'][1][0])
+                    elif i == 0:
+                        first_prompt = "New chat"
+                else:
+                    first_prompt = html.unescape(data['visible'][0][0])
+            elif i == 0:
+                first_prompt = "New chat"
         else:
             first_prompt = filename
 
         first_prompt = first_prompt.strip()
 
-        # Truncate the first prompt if it's longer than 32 characters
-        if len(first_prompt) > 32:
-            first_prompt = first_prompt[:29] + '...'
+        # Truncate the first prompt if it's longer than 30 characters
+        if len(first_prompt) > 30:
+            first_prompt = first_prompt[:30 - 3] + '...'
 
         result.append((first_prompt, filename))
 
@@ -1085,11 +1097,25 @@ def handle_delete_chat_confirm_click(state):
     ]
 
 
+def handle_branch_chat_click(state):
+    history = state['history']
+    new_unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
+    save_history(history, new_unique_id, state['character_menu'], state['mode'])
+
+    histories = find_all_histories_with_first_prompts(state)
+    html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+
+    convert_to_markdown.cache_clear()
+
+    past_chats_update = gr.update(choices=histories, value=new_unique_id)
+
+    return [history, html, past_chats_update]
+
+
 def handle_rename_chat_click():
     return [
-        gr.update(visible=True, value="My New Chat"),
+        gr.update(value="My New Chat"),
         gr.update(visible=True),
-        gr.update(visible=True)
     ]
 
 
@@ -1100,9 +1126,12 @@ def handle_rename_chat_confirm(rename_to, state):
     return [
         gr.update(choices=histories, value=rename_to),
         gr.update(visible=False),
-        gr.update(visible=False),
-        gr.update(visible=False)
     ]
+
+
+def handle_search_chat_change(state):
+    histories = find_all_histories_with_first_prompts(state)
+    return gr.update(choices=histories)
 
 
 def handle_upload_chat_history(load_chat_history, state):
@@ -1209,7 +1238,7 @@ def handle_delete_template_click(template):
     return [
         f"{template}.yaml",
         "instruction-templates/",
-        gr.update(visible=True)
+        gr.update(visible=False)
     ]
 
 

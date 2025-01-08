@@ -42,6 +42,7 @@ class GenerationOptions(BaseModel):
     truncation_length: int = 0
     max_tokens_second: int = 0
     prompt_lookup_num_tokens: int = 0
+    static_cache: bool = False
     custom_token_bans: str = ""
     sampler_priority: List[str] | str | None = Field(default=None, description="List of samplers where the first items will appear first in the stack. Example: [\"top_k\", \"temperature\", \"top_p\"].")
     auto_max_new_tokens: bool = False
