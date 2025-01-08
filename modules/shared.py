@@ -199,13 +199,13 @@ group.add_argument('--old-colors', action='store_true', help='Use the legacy Gra
 # API
 group = parser.add_argument_group('API')
 group.add_argument('--api', action='store_true', help='Enable the API extension.')
-group.add_argument('--api-enable-ipv6', action='store_true', help='Enable IPv6 for the API')
-group.add_argument('--api-disable-ipv4', action='store_true', help='Disable IPv4 for the API')
 group.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
 group.add_argument('--public-api-id', type=str, help='Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.', default=None)
 group.add_argument('--api-port', type=int, default=5000, help='The listening port for the API.')
 group.add_argument('--api-key', type=str, default='', help='API authentication key.')
 group.add_argument('--admin-key', type=str, default='', help='API authentication key for admin tasks like loading and unloading models. If not set, will be the same as --api-key.')
+group.add_argument('--api-enable-ipv6', action='store_true', help='Enable IPv6 for the API')
+group.add_argument('--api-disable-ipv4', action='store_true', help='Disable IPv4 for the API')
 group.add_argument('--nowebui', action='store_true', help='Do not launch the Gradio UI. Useful for launching the API in standalone mode.')
 
 # Multimodal
