@@ -394,7 +394,7 @@ def update_requirements(initial_installation=False, pull=True):
         textgen_requirements = [
             req.replace('+cu121', '+cu118').replace('+cu122', '+cu118')
             for req in textgen_requirements
-            if "auto-gptq" not in req.lower() and "autoawq" not in req.lower()
+            if "autoawq" not in req.lower()
         ]
 
     if is_windows() and is_cuda118:  # No flash-attention on Windows for CUDA 11

@@ -21,7 +21,6 @@ from transformers import (
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
     BitsAndBytesConfig,
-    GPTQConfig,
     is_torch_npu_available,
     is_torch_xpu_available
 )
