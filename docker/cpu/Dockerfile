@@ -17,7 +17,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw \
 WORKDIR /home/app/
 RUN git clone https://github.com/oobabooga/text-generation-webui.git 
 WORKDIR /home/app/text-generation-webui
-RUN GPU_CHOICE=N USE_CUDA118=FALSE LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh --verbose
+RUN GPU_CHOICE=N LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh --verbose
 COPY CMD_FLAGS.txt /home/app/text-generation-webui/
 EXPOSE ${CONTAINER_PORT:-7860} ${CONTAINER_API_PORT:-5000} ${CONTAINER_API_STREAM_PORT:-5005}
 # set umask to ensure group read / write at runtime
