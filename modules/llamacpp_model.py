@@ -123,17 +123,13 @@ class LlamaCppModel:
 
     def decode(self, ids, **kwargs):
         detokenized = self.model.detokenize(ids)
-        s = ""
         try:
-            s = detokenized.decode('utf-8', 'strict')
-        except UnicodeDecodeError as e1:
-            try:
-                logger.warning(f"Detokenized result can't be decoded in utf-8 charset. Fallback to latin.\n {e1}")
-                s = detokenized.decode('latin', 'strict')
-            except UnicodeDecodeError as e2:
-                logger.warning(f"Detokenized result can't be decoded in latin charset. Will attempt to decode as utf-8 with invalid characters replaced with '?' (U+FFFD).\n{e2}")
-                s = detokenized.decode('utf-8', 'replace')
-        return s
+            # Attempt strict UTF-8 decoding first
+            return detokenized.decode('utf-8', 'strict')
+        except UnicodeDecodeError as e:
+            # Log the error and fall back to UTF-8 with replacement
+            logger.warning(f"Invalid UTF-8 in detokenized output. Using replacement characters.\n{e}")
+            return detokenized.decode('utf-8', 'replace')
 
     def get_logits(self, tokens):
         self.model.reset()
