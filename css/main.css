@@ -500,8 +500,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     margin-bottom: 0.5em !important;
 }
 
-.message-body ul.long-list li,
-.message-body ol.long-list li {
+.message-body ul.long-list > li,
+.message-body ol.long-list > li {
     margin-top: 1.25em !important;
     margin-bottom: 1.25em !important;
 }
