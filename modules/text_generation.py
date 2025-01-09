@@ -16,7 +16,7 @@ from transformers import (
 )
 
 import modules.shared as shared
-from modules import models
+from modules import models, sampler_hijack
 from modules.cache_utils import process_llamacpp_cache
 from modules.callbacks import (
     Iteratorize,
@@ -28,7 +28,9 @@ from modules.grammar.grammar_utils import initialize_grammar
 from modules.grammar.logits_process import GrammarConstrainedLogitsProcessor
 from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
-from modules.models import clear_torch_cache, load_model
+from modules.models import clear_torch_cache, get_device, load_model
+
+sampler_hijack.hijack_samplers()
 
 
 def generate_reply(*args, **kwargs):
@@ -79,7 +81,6 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             all_stop_strings += st
 
     shared.stop_everything = False
-    clear_torch_cache()
     seed = set_manual_seed(state['seed'])
     last_update = -1
     reply = ''
@@ -160,18 +161,12 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
 
     if shared.model.__class__.__name__ in ['LlamaCppModel', 'Exllamav2Model', 'TensorRTLLMModel'] or shared.args.cpu:
         return input_ids
-    elif shared.args.deepspeed:
-        import deepspeed
-        return input_ids.to(deepspeed.get_accelerator().current_device_name())
-    elif torch.backends.mps.is_available():
-        device = torch.device('mps')
-        return input_ids.to(device)
-    elif is_torch_xpu_available():
-        return input_ids.to("xpu:0")
-    elif is_torch_npu_available():
-        return input_ids.to("npu:0")
     else:
-        return input_ids.cuda()
+        device = get_device()
+        if device:
+            return input_ids.to(device)
+
+        return input_ids
 
 
 def decode(output_ids, skip_special_tokens=True):
@@ -288,6 +283,9 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
 
 
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
+    if shared.args.loader == 'Transformers':
+        clear_torch_cache()
+
     generate_params = {}
     for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynatemp_low', 'dynatemp_high', 'dynatemp_exponent', 'smoothing_factor', 'smoothing_curve', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'dry_multiplier', 'dry_base', 'dry_allowed_length', 'dry_sequence_breakers', 'xtc_threshold', 'xtc_probability']:
         if k in state:
@@ -303,6 +301,9 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
     if state['prompt_lookup_num_tokens'] > 0:
         generate_params['prompt_lookup_num_tokens'] = state['prompt_lookup_num_tokens']
+
+    if state['static_cache']:
+        generate_params['cache_implementation'] = 'static'
 
     for k in ['epsilon_cutoff', 'eta_cutoff']:
         if state[k] > 0:
@@ -326,7 +327,6 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     # Encode the input
     input_ids = encode(question, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
     output = input_ids[0]
-    cuda = not any((shared.args.cpu, shared.args.deepspeed))
     if state['auto_max_new_tokens']:
         generate_params['max_new_tokens'] = state['truncation_length'] - input_ids.shape[-1]
 
@@ -381,8 +381,9 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         if not state['stream']:
             with torch.no_grad():
                 output = shared.model.generate(**generate_params)[0]
-                if cuda:
-                    output = output.cuda()
+                device = get_device()
+                if device:
+                    output = output.to(device)
 
             starting_from = 0 if shared.is_seq2seq else len(input_ids[0])
             yield get_reply_from_output_ids(output, state, starting_from=starting_from)
@@ -393,7 +394,6 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
             def generate_with_callback(callback=None, *args, **kwargs):
                 kwargs['stopping_criteria'].append(Stream(callback_func=callback))
-                clear_torch_cache()
                 with torch.no_grad():
                     shared.model.generate(**kwargs)
 

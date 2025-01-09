@@ -46,6 +46,7 @@ settings = {
     'max_tokens_second': 0,
     'max_updates_second': 0,
     'prompt_lookup_num_tokens': 0,
+    'static_cache': False,
     'custom_stopping_strings': '',
     'custom_token_bans': '',
     'auto_max_new_tokens': False,
@@ -85,7 +86,7 @@ group.add_argument('--idle-timeout', type=int, default=0, help='Unload model aft
 
 # Model loader
 group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, AutoGPTQ.')
+group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
@@ -103,6 +104,7 @@ group.add_argument('--force-safetensors', action='store_true', help='Set use_saf
 group.add_argument('--no_use_fast', action='store_true', help='Set use_fast=False while loading the tokenizer (it\'s True by default). Use this if you have any problems related to use_fast.')
 group.add_argument('--use_flash_attention_2', action='store_true', help='Set use_flash_attention_2=True while loading the model.')
 group.add_argument('--use_eager_attention', action='store_true', help='Set attn_implementation= eager while loading the model.')
+group.add_argument('--torch-compile', action='store_true', help='Compile the model with torch.compile for improved performance.')
 
 # bitsandbytes 4-bit
 group = parser.add_argument_group('bitsandbytes 4-bit')
@@ -144,17 +146,6 @@ group.add_argument('--no_xformers', action='store_true', help='Force xformers to
 group.add_argument('--no_sdpa', action='store_true', help='Force Torch SDPA to not be used.')
 group.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
 group.add_argument('--enable_tp', action='store_true', help='Enable Tensor Parallelism (TP) in ExLlamaV2.')
-
-# AutoGPTQ
-group = parser.add_argument_group('AutoGPTQ')
-group.add_argument('--triton', action='store_true', help='Use triton.')
-group.add_argument('--no_inject_fused_mlp', action='store_true', help='Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference.')
-group.add_argument('--no_use_cuda_fp16', action='store_true', help='This can make models faster on some systems.')
-group.add_argument('--desc_act', action='store_true', help='For models that do not have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.')
-group.add_argument('--disable_exllama', action='store_true', help='Disable ExLlama kernel, which can improve inference speed on some systems.')
-group.add_argument('--disable_exllamav2', action='store_true', help='Disable ExLlamav2 kernel.')
-group.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
-group.add_argument('--groupsize', type=int, default=-1, help='Group size.')
 
 # HQQ
 group = parser.add_argument_group('HQQ')
@@ -202,6 +193,8 @@ group.add_argument('--public-api-id', type=str, help='Tunnel ID for named Cloudf
 group.add_argument('--api-port', type=int, default=5000, help='The listening port for the API.')
 group.add_argument('--api-key', type=str, default='', help='API authentication key.')
 group.add_argument('--admin-key', type=str, default='', help='API authentication key for admin tasks like loading and unloading models. If not set, will be the same as --api-key.')
+group.add_argument('--api-enable-ipv6', action='store_true', help='Enable IPv6 for the API')
+group.add_argument('--api-disable-ipv4', action='store_true', help='Disable IPv4 for the API')
 group.add_argument('--nowebui', action='store_true', help='Do not launch the Gradio UI. Useful for launching the API in standalone mode.')
 
 # Multimodal
@@ -218,6 +211,14 @@ group.add_argument('--no_inject_fused_attention', action='store_true', help='DEP
 group.add_argument('--cache_4bit', action='store_true', help='DEPRECATED')
 group.add_argument('--cache_8bit', action='store_true', help='DEPRECATED')
 group.add_argument('--chat-buttons', action='store_true', help='DEPRECATED')
+group.add_argument('--triton', action='store_true', help='DEPRECATED')
+group.add_argument('--no_inject_fused_mlp', action='store_true', help='DEPRECATED')
+group.add_argument('--no_use_cuda_fp16', action='store_true', help='DEPRECATED')
+group.add_argument('--desc_act', action='store_true', help='DEPRECATED')
+group.add_argument('--disable_exllama', action='store_true', help='DEPRECATED')
+group.add_argument('--disable_exllamav2', action='store_true', help='DEPRECATED')
+group.add_argument('--wbits', type=int, default=0, help='DEPRECATED')
+group.add_argument('--groupsize', type=int, default=-1, help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -260,10 +261,6 @@ def fix_loader_name(name):
         return 'llamacpp_HF'
     elif name in ['transformers', 'huggingface', 'hf', 'hugging_face', 'hugging face']:
         return 'Transformers'
-    elif name in ['autogptq', 'auto-gptq', 'auto_gptq', 'auto gptq']:
-        return 'AutoGPTQ'
-    elif name in ['exllama', 'ex-llama', 'ex_llama', 'exlama']:
-        return 'ExLlama'
     elif name in ['exllamav2', 'exllama-v2', 'ex_llama-v2', 'exlamav2', 'exlama-v2', 'exllama2', 'exllama-2']:
         return 'ExLlamav2'
     elif name in ['exllamav2-hf', 'exllamav2_hf', 'exllama-v2-hf', 'exllama_v2_hf', 'exllama-v2_hf', 'exllama2-hf', 'exllama2_hf', 'exllama-2-hf', 'exllama_2_hf', 'exllama-2_hf']:

@@ -9,10 +9,34 @@ import markdown
 from PIL import Image, ImageOps
 
 from modules import shared
+from modules.sane_markdown_lists import SaneListExtension
 from modules.utils import get_available_chat_styles
 
 # This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}
+
+
+def minify_css(css: str) -> str:
+    # Step 1: Remove comments
+    css = re.sub(r'/\*.*?\*/', '', css, flags=re.DOTALL)
+
+    # Step 2: Remove leading and trailing whitespace
+    css = re.sub(r'^[ \t]*|[ \t]*$', '', css, flags=re.MULTILINE)
+
+    # Step 3: Remove spaces after specific characters ({ : ; ,})
+    css = re.sub(r'([:{;,])\s+', r'\1', css)
+
+    # Step 4: Remove spaces before `{`
+    css = re.sub(r'\s+{', '{', css)
+
+    # Step 5: Remove empty lines
+    css = re.sub(r'^\s*$', '', css, flags=re.MULTILINE)
+
+    # Step 6: Collapse all lines into one
+    css = re.sub(r'\n', '', css)
+
+    return css
+
 
 with open(Path(__file__).resolve().parent / '../css/html_readable_style.css', 'r') as f:
     readable_css = f.read()
@@ -33,6 +57,12 @@ for k in chat_styles:
     if match:
         style = match.group(1)
         chat_styles[k] = chat_styles.get(style, '') + '\n\n' + '\n'.join(lines[1:])
+
+# Reduce the size of the CSS sources above
+readable_css = minify_css(readable_css)
+instruct_css = minify_css(instruct_css)
+for k in chat_styles:
+    chat_styles[k] = minify_css(chat_styles[k])
 
 
 def fix_newlines(string):
@@ -174,7 +204,7 @@ def convert_to_markdown(string):
             result += '\n'
         # Also don't add an extra \n for lists
         elif stripped_line.startswith('-') or stripped_line.startswith('*') or stripped_line.startswith('+') or stripped_line.startswith('>') or re.match(r'\d+\.', stripped_line):
-            result += '\n'
+            result += '  \n'
         else:
             result += '  \n'
 
@@ -195,7 +225,7 @@ def convert_to_markdown(string):
         result = re.sub(list_item_pattern, r'\g<1> ' + delete_str, result)
 
         # Convert to HTML using markdown
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables', SaneListExtension()])
 
         # Remove the delete string from the HTML output
         pos = html_output.rfind(delete_str)
@@ -203,7 +233,7 @@ def convert_to_markdown(string):
             html_output = html_output[:pos] + html_output[pos + len(delete_str):]
     else:
         # Convert to HTML using markdown
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables', SaneListExtension()])
 
     # Unescape code blocks
     pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)
@@ -267,29 +297,24 @@ def generate_instruct_html(history):
     for i, _row in enumerate(history):
         row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
 
-        if row[0]:  # don't display empty user messages
-            output += f"""
-                  <div class="user-message">
-                    <div class="text">
-                      <div class="message-body">
-                        {row[0]}
-                      </div>
-                    </div>
-                  </div>
-                """
+        if row[0]:  # Don't display empty user messages
+            output += (
+                f'<div class="user-message">'
+                f'<div class="text">'
+                f'<div class="message-body">{row[0]}</div>'
+                f'</div>'
+                f'</div>'
+            )
 
-        output += f"""
-              <div class="assistant-message">
-                <div class="text">
-                  <div class="message-body">
-                    {row[1]}
-                  </div>
-                </div>
-              </div>
-            """
+        output += (
+            f'<div class="assistant-message">'
+            f'<div class="text">'
+            f'<div class="message-body">{row[1]}</div>'
+            f'</div>'
+            f'</div>'
+        )
 
     output += "</div></div>"
-
     return output
 
 
@@ -297,44 +322,39 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
     output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat"><div class="messages">'
 
     # We use ?character and ?time.time() to force the browser to reset caches
-    img_bot = f'<img src="file/cache/pfp_character_thumb.png?{character}" class="pfp_character">' if Path("cache/pfp_character_thumb.png").exists() else ''
-    img_me = f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">' if Path("cache/pfp_me.png").exists() else ''
+    img_bot = (
+        f'<img src="file/cache/pfp_character_thumb.png?{character}" class="pfp_character">'
+        if Path("cache/pfp_character_thumb.png").exists() else ''
+    )
+
+    img_me = (
+        f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
+        if Path("cache/pfp_me.png").exists() else ''
+    )
 
     for i, _row in enumerate(history):
         row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
 
-        if row[0]:  # don't display empty user messages
-            output += f"""
-                  <div class="message">
-                    <div class="circle-you">
-                      {img_me}
-                    </div>
-                    <div class="text">
-                      <div class="username">
-                        {name1}
-                      </div>
-                      <div class="message-body">
-                        {row[0]}
-                      </div>
-                    </div>
-                  </div>
-                """
+        if row[0]:  # Don't display empty user messages
+            output += (
+                f'<div class="message">'
+                f'<div class="circle-you">{img_me}</div>'
+                f'<div class="text">'
+                f'<div class="username">{name1}</div>'
+                f'<div class="message-body">{row[0]}</div>'
+                f'</div>'
+                f'</div>'
+            )
 
-        output += f"""
-              <div class="message">
-                <div class="circle-bot">
-                  {img_bot}
-                </div>
-                <div class="text">
-                  <div class="username">
-                    {name2}
-                  </div>
-                  <div class="message-body">
-                    {row[1]}
-                  </div>
-                </div>
-              </div>
-            """
+        output += (
+            f'<div class="message">'
+            f'<div class="circle-bot">{img_bot}</div>'
+            f'<div class="text">'
+            f'<div class="username">{name2}</div>'
+            f'<div class="message-body">{row[1]}</div>'
+            f'</div>'
+            f'</div>'
+        )
 
     output += "</div></div>"
     return output
@@ -346,26 +366,22 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
     for i, _row in enumerate(history):
         row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
 
-        if row[0]:  # don't display empty user messages
-            output += f"""
-              <div class="message">
-                <div class="text-you">
-                  <div class="message-body">
-                    {row[0]}
-                  </div>
-                </div>
-              </div>
-            """
+        if row[0]:  # Don't display empty user messages
+            output += (
+                f'<div class="message">'
+                f'<div class="text-you">'
+                f'<div class="message-body">{row[0]}</div>'
+                f'</div>'
+                f'</div>'
+            )
 
-        output += f"""
-          <div class="message">
-            <div class="text-bot">
-              <div class="message-body">
-                {row[1]}
-              </div>
-            </div>
-          </div>
-        """
+        output += (
+            f'<div class="message">'
+            f'<div class="text-bot">'
+            f'<div class="message-body">{row[1]}</div>'
+            f'</div>'
+            f'</div>'
+        )
 
     output += "</div></div>"
     return output

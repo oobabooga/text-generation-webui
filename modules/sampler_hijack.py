@@ -5,7 +5,7 @@ import random
 
 import torch
 import transformers
-from transformers import LogitsWarper, is_torch_xpu_available
+from transformers import LogitsWarper
 from transformers.generation.logits_process import (
     LogitNormalization,
     LogitsProcessor,
@@ -14,6 +14,7 @@ from transformers.generation.logits_process import (
 
 from modules import shared
 from modules.logging_colors import logger
+from modules.models import get_device
 
 global_scores = None
 
@@ -339,12 +340,12 @@ class MirostatLogitsWarper(LogitsWarper):
                 break
 
         # Normalize the probabilities of the remaining words
-        if is_torch_xpu_available():
-            prob_topk = torch.softmax(sorted_logits, dim=0).to("xpu")
-            prev_i = torch.multinomial(prob_topk, num_samples=1, replacement=True).to("xpu")
-        else:
-            prob_topk = torch.softmax(sorted_logits, dim=0).to('cuda')
-            prev_i = torch.multinomial(prob_topk, num_samples=1, replacement=True).to('cuda')
+        prob_topk = torch.softmax(sorted_logits, dim=0)
+        prev_i = torch.multinomial(prob_topk, num_samples=1, replacement=True)
+        device = get_device()
+        if device:
+            prob_topk = prob_topk.to(device)
+            prev_i = prev_i.to(device)
 
         observed_surprise = -math.log2(prob_topk[prev_i])
         self.e = observed_surprise - self.mirostat_tau
@@ -494,7 +495,9 @@ def get_logits_processor_patch(self, **kwargs):
 
         sequence_breaker_strings = json.loads(dry_sequence_breakers)
         # Prefix with 'a' to get the correct encoding of the token at the end of a text.
-        sequence_breakers = {shared.tokenizer.encode(f'a{s}')[-1] for s in sequence_breaker_strings}
+        sequence_breakers = {
+            shared.tokenizer.encode(f'a{s}')[-1] for s in sequence_breaker_strings
+        }
 
         warpers.append(
             DRYLogitsProcessor(
