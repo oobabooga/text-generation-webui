@@ -4,36 +4,40 @@ from functools import partial
 import numpy as np
 import torch
 
-from modules import RoPE, llama_cpp_python_hijack, shared
+from modules import shared
 from modules.callbacks import Iteratorize
+from modules.llama_cpp_python_hijack import llama_cpp_lib
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
 
-try:
-    import llama_cpp
-except:
-    llama_cpp = None
+llamacpp_quant_mapping = {
+    'f32': 0,
+    'fp16': 1,
+    'q4_0': 2,
+    'q4_1': 3,
+    'q5_0': 6,
+    'q5_1': 7,
+    'q8_0': 8,
+    'q8_1': 9,
+    'q2_k': 10,
+    'q3_k': 11,
+    'q4_k': 12,
+    'q5_k': 13,
+    'q6_k': 14,
+    'q8_k': 15,
+    'iq4_nl': 20,
+    'bf16': 30,
+}
 
-try:
-    import llama_cpp_cuda
-except:
-    llama_cpp_cuda = None
-
-try:
-    import llama_cpp_cuda_tensorcores
-except:
-    llama_cpp_cuda_tensorcores = None
+llamacpp_valid_cache_types = {'fp16', 'q8_0', 'q4_0'}
 
 
-def llama_cpp_lib():
-    if shared.args.cpu and llama_cpp is not None:
-        return llama_cpp
-    elif shared.args.tensorcores and llama_cpp_cuda_tensorcores is not None:
-        return llama_cpp_cuda_tensorcores
-    elif llama_cpp_cuda is not None:
-        return llama_cpp_cuda
+def get_llamacpp_cache_type_for_string(quant_type: str):
+    quant_type = quant_type.lower()
+    if quant_type in llamacpp_valid_cache_types:
+        return llamacpp_quant_mapping[quant_type]
     else:
-        return llama_cpp
+        raise ValueError(f"Invalid cache type for llama.cpp: {quant_type}. Valid options are: fp16, q8_0, q4_0.")
 
 
 def ban_eos_logits_processor(eos_token, input_ids, logits):
@@ -92,13 +96,17 @@ class LlamaCppModel:
             'mul_mat_q': not shared.args.no_mul_mat_q,
             'numa': shared.args.numa,
             'n_gpu_layers': shared.args.n_gpu_layers,
-            'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
+            'rope_freq_base': shared.args.rope_freq_base,
             'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
             'offload_kqv': not shared.args.no_offload_kqv,
             'split_mode': 1 if not shared.args.row_split else 2,
             'flash_attn': shared.args.flash_attn
         }
+
+        if shared.args.cache_type != 'fp16':
+            params["type_k"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
+            params["type_v"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
 
         result.model = Llama(**params)
         if cache_capacity > 0:
@@ -165,7 +173,7 @@ class LlamaCppModel:
             prompt=prompt,
             max_tokens=state['max_new_tokens'],
             temperature=state['temperature'],
-            top_p=state['top_p'],
+            top_p=state['top_p'] if state['top_p'] < 1 else 0.999,
             min_p=state['min_p'],
             typical_p=state['typical_p'],
             frequency_penalty=state['frequency_penalty'],

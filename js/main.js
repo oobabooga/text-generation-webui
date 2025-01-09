@@ -7,30 +7,32 @@ main_parent.parentNode.style = "gap: 0";
 main_parent.parentNode.parentNode.style = "padding: 0";
 
 document.querySelector(".header_bar").addEventListener("click", function(event) {
-  if (event.target.tagName === "BUTTON") {
-    const buttonText = event.target.textContent.trim();
+  if (event.target.tagName !== "BUTTON") return;
 
-    let chat_visible = (buttonText == "Chat");
-    let default_visible = (buttonText == "Default");
-    let notebook_visible = (buttonText == "Notebook");
+  const buttonText = event.target.textContent.trim();
+  const extensionsVisible = ["Chat", "Default", "Notebook"].includes(buttonText);
+  const chatVisible = buttonText === "Chat";
+  const showControlsChecked = document.querySelector("#show-controls input").checked;
+  const extensions = document.querySelector("#extensions");
 
-    // Check if one of the generation tabs is visible
-    if (chat_visible || notebook_visible || default_visible) {
-      extensions && (extensions.style.display = "flex");
-
-      if (chat_visible) {
-        this.style.marginBottom = "0px";
-        extensions && (extensions.style.maxWidth = "880px");
-        extensions && (extensions.style.padding = "0px");
-      } else {
-        this.style.marginBottom = "19px";
-        extensions && (extensions.style.maxWidth = "none");
-        extensions && (extensions.style.padding = "15px");
-      }
-    } else {
-      this.style.marginBottom = "19px";
-      extensions && (extensions.style.display = "none");
+  if (extensionsVisible) {
+    if (extensions) {
+      extensions.style.display = "flex";
     }
+
+    this.style.marginBottom = chatVisible ? "0px" : "19px";
+
+    if (chatVisible && !showControlsChecked) {
+      document.querySelectorAll(
+        "#chat-tab > div > :nth-child(1), #chat-tab > div > :nth-child(3), #chat-tab > div > :nth-child(4), #extensions"
+      ).forEach(element => {
+        element.style.display = "none";
+      });
+    }
+
+  } else {
+    this.style.marginBottom = "19px";
+    if (extensions) extensions.style.display = "none";
   }
 });
 
@@ -98,20 +100,6 @@ document.addEventListener("keydown", function(event) {
     document.getElementById("Impersonate").click();
   }
 
-  // Switch between tabs on Tab
-  else if (!event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey && event.key === "Tab") {
-    event.preventDefault();
-    var parametersButton = document.getElementById("parameters-button");
-    var parentContainer = parametersButton.parentNode;
-    var selectedChild = parentContainer.querySelector(".selected");
-
-    if (selectedChild.id == "parameters-button") {
-      document.getElementById(previousTabId).click();
-    } else {
-      previousTabId = selectedChild.id;
-      parametersButton.click();
-    }
-  }
 });
 
 //------------------------------------------------
@@ -146,8 +134,7 @@ targetElement.addEventListener("scroll", function() {
 const observer = new MutationObserver(function(mutations) {
   updateCssProperties();
 
-  const firstChild = targetElement.children[0];
-  if (firstChild.classList.contains("generating")) {
+  if (targetElement.classList.contains("_generating")) {
     typing.parentNode.classList.add("visible-dots");
     document.getElementById("stop").style.display = "flex";
     document.getElementById("Generate").style.display = "none";
@@ -232,7 +219,6 @@ function doSyntaxHighlighting() {
           { left: "\\[", right: "\\]", display: true },
         ],
       });
-
     });
 
     observer.observe(targetElement, config);
@@ -270,7 +256,7 @@ for (i = 0; i < slimDropdownElements.length; i++) {
 // The show/hide events were adapted from:
 // https://github.com/SillyTavern/SillyTavern/blob/6c8bd06308c69d51e2eb174541792a870a83d2d6/public/script.js
 //------------------------------------------------
-var buttonsInChat = document.querySelectorAll("#chat-tab:not(.old-ui) #chat-buttons button");
+var buttonsInChat = document.querySelectorAll("#chat-tab #chat-buttons button");
 var button = document.getElementById("hover-element-button");
 var menu = document.getElementById("hover-menu");
 var istouchscreen = (navigator.maxTouchPoints > 0) || "ontouchstart" in document.documentElement;
@@ -305,12 +291,6 @@ if (buttonsInChat.length > 0) {
       thisButton.innerHTML = newText;
     }
   }
-} else {
-  buttonsInChat = document.querySelectorAll("#chat-tab.old-ui #chat-buttons button");
-  for (let i = 0; i < buttonsInChat.length; i++) {
-    buttonsInChat[i].textContent = buttonsInChat[i].textContent.replace(/ \(.*?\)/, "");
-  }
-  document.getElementById("gr-hover-container").style.display = "none";
 }
 
 function isMouseOverButtonOrMenu() {
@@ -354,6 +334,8 @@ menu.addEventListener("mouseleave", function () {
 
 // Add event listener for click anywhere in the document
 document.addEventListener("click", function (event) {
+  const target = event.target;
+
   // Check if the click is outside the button/menu and the menu is visible
   if (!isMouseOverButtonOrMenu() && menu.style.display === "flex") {
     hideMenu();
@@ -361,6 +343,21 @@ document.addEventListener("click", function (event) {
 
   if (event.target.classList.contains("pfp_character")) {
     toggleBigPicture();
+  }
+
+  // Handle sidebar clicks on mobile
+  if (isMobile()) {
+  // Check if the click did NOT originate from any of the specified toggle buttons or elements
+    if (
+      target.closest("#navigation-toggle") !== navigationToggle &&
+    target.closest("#past-chats-toggle") !== pastChatsToggle &&
+    target.closest("#chat-controls-toggle") !== chatControlsToggle &&
+    target.closest(".header_bar") !== headerBar &&
+    target.closest("#past-chats-row") !== pastChatsRow &&
+    target.closest("#chat-controls") !== chatControlsRow
+    ) {
+      handleIndividualSidebarClose(event);
+    }
   }
 });
 
@@ -376,10 +373,9 @@ for (var i = 0; i < 2; i++) {
 parent.insertBefore(elementToMove, parent.firstChild);
 
 //------------------------------------------------
-// Make the chat input grow upwards instead of downwards
+// Position the chat input
 //------------------------------------------------
-document.getElementById("show-controls").parentNode.style.position = "absolute";
-document.getElementById("show-controls").parentNode.style.bottom = "0px";
+document.getElementById("show-controls").parentNode.classList.add("chat-input-positioned");
 
 //------------------------------------------------
 // Focus on the chat input
@@ -450,57 +446,45 @@ function toggleBigPicture() {
 //------------------------------------------------
 // Handle the chat input box growth
 //------------------------------------------------
-let currentChatInputHeight = 0;
+
+// Cache DOM elements
+const chatContainer = document.getElementById("chat").parentNode.parentNode.parentNode;
+const chatInput = document.querySelector("#chat-input textarea");
+
+// Variables to store current dimensions
+let currentChatInputHeight = chatInput.clientHeight;
 
 // Update chat layout based on chat and input dimensions
 function updateCssProperties() {
-  const chatContainer = document.getElementById("chat").parentNode.parentNode.parentNode;
-  const chatInputHeight = document.querySelector("#chat-input textarea").clientHeight;
+  const chatInputHeight = chatInput.clientHeight;
 
   // Check if the chat container is visible
   if (chatContainer.clientHeight > 0) {
-
-    // Calculate new chat height and adjust CSS properties
-    var numericHeight = chatContainer.parentNode.clientHeight - chatInputHeight + 40 - 100;
-    if (document.getElementById("chat-tab").style.paddingBottom != "") {
-      numericHeight += 20;
-    }
-    const newChatHeight = `${numericHeight}px`;
+    const chatContainerParentHeight = chatContainer.parentNode.clientHeight;
+    const newChatHeight = `${chatContainerParentHeight - chatInputHeight - 80}px`;
 
     document.documentElement.style.setProperty("--chat-height", newChatHeight);
     document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
 
-    // Get and set header height
-    const header = document.querySelector(".header_bar");
-    const headerHeight = `${header.clientHeight}px`;
-    document.documentElement.style.setProperty("--header-height", headerHeight);
-
     // Adjust scrollTop based on input height change
     if (chatInputHeight !== currentChatInputHeight) {
-      chatContainer.scrollTop += chatInputHeight > currentChatInputHeight ? chatInputHeight : -chatInputHeight + 40;
+      const deltaHeight = chatInputHeight - currentChatInputHeight;
+      if (!isScrolled && deltaHeight < 0) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      } else {
+        chatContainer.scrollTop += deltaHeight;
+      }
+
       currentChatInputHeight = chatInputHeight;
     }
   }
 }
 
 // Observe textarea size changes and call update function
-new ResizeObserver(updateCssProperties)
-  .observe(document.querySelector("#chat-input textarea"));
+new ResizeObserver(updateCssProperties).observe(document.querySelector("#chat-input textarea"));
 
 // Handle changes in window size
 window.addEventListener("resize", updateCssProperties);
-
-//------------------------------------------------
-// Keep track of the display width to position the past
-// chats dropdown on desktop
-//------------------------------------------------
-function updateDocumentWidth() {
-  var updatedWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-  document.documentElement.style.setProperty("--document-width", updatedWidth + "px");
-}
-
-updateDocumentWidth();
-window.addEventListener("resize", updateDocumentWidth);
 
 //------------------------------------------------
 // Focus on the rename text area when it becomes visible
@@ -548,3 +532,302 @@ document.querySelectorAll(".focus-on-chat-input").forEach(element => {
     document.querySelector("#chat-input textarea").focus();
   });
 });
+
+//------------------------------------------------
+// Fix a border around the "past chats" menu
+//------------------------------------------------
+document.getElementById("past-chats").parentNode.style.borderRadius = "0px";
+
+//------------------------------------------------
+// Allow the character dropdown to coexist at the
+// Chat tab and the Parameters > Character tab
+//------------------------------------------------
+
+const headerBar = document.querySelector(".header_bar");
+let originalParent;
+let originalIndex; // To keep track of the original position
+let movedElement;
+
+function moveToChatTab() {
+  const characterMenu = document.getElementById("character-menu");
+  const grandParent = characterMenu.parentElement.parentElement;
+
+  // Save the initial location for the character dropdown
+  if (!originalParent) {
+    originalParent = grandParent.parentElement;
+    originalIndex = Array.from(originalParent.children).indexOf(grandParent);
+    movedElement = grandParent;
+  }
+
+  // Do not show the Character dropdown in the Chat tab when "instruct" mode is selected
+  const instructRadio = document.querySelector("#chat-mode input[value=\"instruct\"]");
+  if (instructRadio && instructRadio.checked) {
+    grandParent.style.display = "none";
+  }
+
+  grandParent.children[0].style.minWidth = "100%";
+
+  const chatControlsFirstChild = document.querySelector("#chat-controls").firstElementChild;
+  const newParent = chatControlsFirstChild;
+  let newPosition = newParent.children.length - 2;
+
+  newParent.insertBefore(grandParent, newParent.children[newPosition]);
+  document.getElementById("save-character").style.display = "none";
+}
+
+function restoreOriginalPosition() {
+  if (originalParent && movedElement) {
+    if (originalIndex >= originalParent.children.length) {
+      originalParent.appendChild(movedElement);
+    } else {
+      originalParent.insertBefore(movedElement, originalParent.children[originalIndex]);
+    }
+
+    document.getElementById("save-character").style.display = "";
+    movedElement.style.display = "";
+    movedElement.children[0].style.minWidth = "";
+  }
+}
+
+headerBar.addEventListener("click", (e) => {
+  if (e.target.tagName === "BUTTON") {
+    const tabName = e.target.textContent.trim();
+    if (tabName === "Chat") {
+      moveToChatTab();
+    } else {
+      restoreOriginalPosition();
+    }
+  }
+});
+
+//------------------------------------------------
+// Add a confirmation dialog when leaving the page
+// Useful to avoid data loss
+//------------------------------------------------
+window.addEventListener("beforeunload", function (event) {
+  // Cancel the event
+  event.preventDefault();
+  // Chrome requires returnValue to be set
+  event.returnValue = "";
+});
+
+moveToChatTab();
+
+//------------------------------------------------
+// Buttons to toggle the sidebars
+//------------------------------------------------
+
+const leftArrowSVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-arrow-bar-left">
+  <path d="M4 12l10 0"></path>
+  <path d="M4 12l4 4"></path>
+  <path d="M4 12l4 -4"></path>
+  <path d="M20 4l0 16"></path>
+</svg>`;
+
+const rightArrowSVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-arrow-bar-right">
+  <path d="M20 12l-10 0"></path>
+  <path d="M20 12l-4 4"></path>
+  <path d="M20 12l-4 -4"></path>
+  <path d="M4 4l0 16"></path>
+</svg>`;
+
+const hamburgerMenuSVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-hamburger-menu">
+  <line x1="3" y1="12" x2="21" y2="12"></line>
+  <line x1="3" y1="6" x2="21" y2="6"></line>
+  <line x1="3" y1="18" x2="21" y2="18"></line>
+</svg>`;
+
+const closeMenuSVG = `
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-close-menu">
+  <line x1="18" y1="6" x2="6" y2="18"></line>
+  <line x1="6" y1="6" x2="18" y2="18"></line>
+</svg>`;
+
+const chatTab = document.getElementById("chat-tab");
+const pastChatsRow = document.getElementById("past-chats-row");
+const chatControlsRow = document.getElementById("chat-controls");
+
+if (chatTab) {
+  // Create past-chats-toggle div
+  const pastChatsToggle = document.createElement("div");
+  pastChatsToggle.id = "past-chats-toggle";
+  pastChatsToggle.innerHTML = leftArrowSVG; // Set initial icon to left arrow
+  pastChatsToggle.classList.add("past-chats-open"); // Set initial position
+
+  // Create chat-controls-toggle div
+  const chatControlsToggle = document.createElement("div");
+  chatControlsToggle.id = "chat-controls-toggle";
+  chatControlsToggle.innerHTML = rightArrowSVG; // Set initial icon to right arrow
+  chatControlsToggle.classList.add("chat-controls-open"); // Set initial position
+
+  // Append both elements to the chat-tab
+  chatTab.appendChild(pastChatsToggle);
+  chatTab.appendChild(chatControlsToggle);
+}
+
+// Create navigation toggle div
+const navigationToggle = document.createElement("div");
+navigationToggle.id = "navigation-toggle";
+navigationToggle.innerHTML = leftArrowSVG; // Set initial icon to right arrow
+navigationToggle.classList.add("navigation-left"); // Set initial position
+headerBar.appendChild(navigationToggle);
+
+// Retrieve the dynamically created toggle buttons
+const pastChatsToggle = document.getElementById("past-chats-toggle");
+const chatControlsToggle = document.getElementById("chat-controls-toggle");
+
+function handleIndividualSidebarClose(event) {
+  const target = event.target;
+
+  // Close navigation bar if click is outside and it is open
+  if (!headerBar.contains(target) && !headerBar.classList.contains("sidebar-hidden")) {
+    toggleSidebar(headerBar, navigationToggle, true);
+  }
+
+  // Close past chats row if click is outside and it is open
+  if (!pastChatsRow.contains(target) && !pastChatsRow.classList.contains("sidebar-hidden")) {
+    toggleSidebar(pastChatsRow, pastChatsToggle, true);
+  }
+
+  // Close chat controls row if click is outside and it is open
+  if (!chatControlsRow.contains(target) && !chatControlsRow.classList.contains("sidebar-hidden")) {
+    toggleSidebar(chatControlsRow, chatControlsToggle, true);
+  }
+}
+
+function toggleSidebar(sidebar, toggle, forceClose = false) {
+  const isCurrentlyHidden = sidebar.classList.contains("sidebar-hidden");
+  const shouldClose = !isCurrentlyHidden;
+
+  // Apply visibility classes
+  sidebar.classList.toggle("sidebar-hidden", shouldClose);
+  sidebar.classList.toggle("sidebar-shown", !shouldClose);
+
+  if (sidebar === headerBar) {
+    // Special handling for header bar
+    document.documentElement.style.setProperty("--header-width", shouldClose ? "0px" : "112px");
+    pastChatsRow.classList.toggle("negative-header", shouldClose);
+    pastChatsToggle.classList.toggle("negative-header", shouldClose);
+    toggle.innerHTML = shouldClose ? hamburgerMenuSVG : closeMenuSVG;
+  } else if (sidebar === pastChatsRow) {
+    // Past chats sidebar
+    toggle.classList.toggle("past-chats-closed", shouldClose);
+    toggle.classList.toggle("past-chats-open", !shouldClose);
+    toggle.innerHTML = shouldClose ? rightArrowSVG : leftArrowSVG;
+  } else if (sidebar === chatControlsRow) {
+    // Chat controls sidebar
+    toggle.classList.toggle("chat-controls-closed", shouldClose);
+    toggle.classList.toggle("chat-controls-open", !shouldClose);
+    toggle.innerHTML = shouldClose ? leftArrowSVG : rightArrowSVG;
+  }
+
+  // Mobile handling
+  if (isMobile()) {
+    sidebar.classList.toggle("sidebar-shown", !shouldClose);
+  }
+}
+
+// Function to check if the device is mobile
+function isMobile() {
+  return window.innerWidth <= 924;
+}
+
+// Function to initialize sidebars
+function initializeSidebars() {
+  const isOnMobile = isMobile();
+  
+  if (isOnMobile) {
+    // Mobile state: Hide sidebars and set closed states
+    [pastChatsRow, chatControlsRow, headerBar].forEach(el => {
+      el.classList.add("sidebar-hidden");
+      el.classList.remove("sidebar-shown");
+    });
+
+    document.documentElement.style.setProperty("--header-width", "0px");
+    pastChatsRow.classList.add("negative-header");
+    pastChatsToggle.classList.add("negative-header", "past-chats-closed");
+    pastChatsToggle.classList.remove("past-chats-open");
+
+    [chatControlsToggle, navigationToggle].forEach(el => {
+      el.classList.add("chat-controls-closed");
+      el.classList.remove("chat-controls-open");
+    });
+
+    pastChatsToggle.innerHTML = rightArrowSVG;
+    chatControlsToggle.innerHTML = leftArrowSVG;
+    navigationToggle.innerHTML = hamburgerMenuSVG;
+  } else {
+    // Desktop state: Show sidebars and set open states
+    [pastChatsRow, chatControlsRow].forEach(el => {
+      el.classList.remove("sidebar-hidden", "sidebar-shown");
+    });
+
+    pastChatsToggle.classList.add("past-chats-open");
+    pastChatsToggle.classList.remove("past-chats-closed");
+
+    [chatControlsToggle, navigationToggle].forEach(el => {
+      el.classList.add("chat-controls-open");
+      el.classList.remove("chat-controls-closed");
+    });
+
+    pastChatsToggle.innerHTML = leftArrowSVG;
+    chatControlsToggle.innerHTML = rightArrowSVG;
+    navigationToggle.innerHTML = closeMenuSVG;
+  }
+}
+
+// Run the initializer when the page loads
+initializeSidebars();
+
+// Add click event listeners to toggle buttons
+pastChatsToggle.addEventListener("click", () => {
+  toggleSidebar(pastChatsRow, pastChatsToggle);
+});
+
+chatControlsToggle.addEventListener("click", () => {
+  toggleSidebar(chatControlsRow, chatControlsToggle);
+});
+
+navigationToggle.addEventListener("click", () => {
+  toggleSidebar(headerBar, navigationToggle);
+});
+
+//------------------------------------------------
+// Fixes #chat-input textarea height issue
+// for devices with width <= 924px
+//------------------------------------------------
+
+if (isMobile()) {
+  // Target the textarea
+  const textarea = document.querySelector("#chat-input textarea");
+
+  if (textarea) {
+    // Simulate adding and removing a newline
+    textarea.value += "\n";
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    textarea.value = textarea.value.slice(0, -1);
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+}
+
+//------------------------------------------------
+// Create a top navigation bar on mobile
+//------------------------------------------------
+
+function createMobileTopBar() {
+  const chatTab = document.getElementById("chat-tab");
+
+  // Only create the top bar if it doesn't already exist
+  if (chatTab && !chatTab.querySelector(".mobile-top-bar")) {
+    const topBar = document.createElement("div");
+    topBar.classList.add("mobile-top-bar");
+
+    // Insert the top bar as the first child of chat-tab
+    chatTab.appendChild(topBar);
+  }
+}
+
+createMobileTopBar();

@@ -1,10 +1,8 @@
 import gc
-import logging
 import os
 import pprint
 import re
 import time
-import traceback
 from pathlib import Path
 
 import torch
@@ -22,14 +20,13 @@ from transformers import (
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
     BitsAndBytesConfig,
-    GPTQConfig
+    is_torch_npu_available,
+    is_torch_xpu_available
 )
 
 import modules.shared as shared
-from modules import RoPE, sampler_hijack
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
-from modules.relative_imports import RelativeImport
 
 transformers.logging.set_verbosity_error()
 
@@ -58,8 +55,6 @@ if shared.args.deepspeed:
     ds_config = generate_ds_config(shared.args.bf16, 1 * world_size, shared.args.nvme_offload_dir)
     dschf = HfDeepSpeedConfig(ds_config)  # Keep this object alive for the Transformers integration
 
-sampler_hijack.hijack_samplers()
-
 
 last_generation_time = time.time()
 
@@ -72,13 +67,12 @@ def load_model(model_name, loader=None):
     shared.model_name = model_name
     load_func_map = {
         'Transformers': huggingface_loader,
-        'AutoGPTQ': AutoGPTQ_loader,
         'llama.cpp': llamacpp_loader,
         'llamacpp_HF': llamacpp_HF_loader,
         'ExLlamav2': ExLlamav2_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
-        'AutoAWQ': AutoAWQ_loader,
         'HQQ': HQQ_loader,
+        'TensorRT-LLM': TensorRT_LLM_loader,
     }
 
     metadata = get_model_metadata(model_name)
@@ -92,6 +86,7 @@ def load_model(model_name, loader=None):
                 raise ValueError
 
     shared.args.loader = loader
+    clear_torch_cache()
     output = load_func_map[loader](model_name)
     if type(output) is tuple:
         model, tokenizer = output
@@ -100,10 +95,10 @@ def load_model(model_name, loader=None):
         if model is None:
             return None, None
         else:
-            tokenizer = load_tokenizer(model_name, model)
+            tokenizer = load_tokenizer(model_name)
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
-    if loader.lower().startswith('exllama'):
+    if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt'):
         shared.settings['truncation_length'] = shared.args.max_seq_len
     elif loader in ['llama.cpp', 'llamacpp_HF']:
         shared.settings['truncation_length'] = shared.args.n_ctx
@@ -115,9 +110,13 @@ def load_model(model_name, loader=None):
     return model, tokenizer
 
 
-def load_tokenizer(model_name, model):
+def load_tokenizer(model_name, tokenizer_dir=None):
+    if tokenizer_dir:
+        path_to_model = Path(tokenizer_dir)
+    else:
+        path_to_model = Path(f"{shared.args.model_dir}/{model_name}/")
+
     tokenizer = None
-    path_to_model = Path(f"{shared.args.model_dir}/{model_name}/")
     if path_to_model.exists():
         if shared.args.no_use_fast:
             logger.info('Loading the tokenizer with use_fast=False.')
@@ -147,6 +146,9 @@ def huggingface_loader(model_name):
     if shared.args.force_safetensors:
         params['force_safetensors'] = True
 
+    if shared.args.use_eager_attention:
+        params['attn_implementation'] = 'eager'
+
     config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
 
     if 'chatglm' in model_name.lower():
@@ -159,24 +161,16 @@ def huggingface_loader(model_name):
             LoaderClass = AutoModelForCausalLM
 
     # Load the model without any special settings
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1, shared.args.disable_exllama, shared.args.disable_exllamav2]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1]):
         logger.info("TRANSFORMERS_PARAMS=")
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(params)
         print()
 
         model = LoaderClass.from_pretrained(path_to_model, **params)
         if not (hasattr(model, 'is_loaded_in_4bit') and model.is_loaded_in_4bit):
-            if torch.backends.mps.is_available():
-                device = torch.device('mps')
+            device = get_device()
+            if device:
                 model = model.to(device)
-            elif is_xpu_available():
-                device = torch.device("xpu")
-                model = model.to(device)
-            elif is_npu_available():
-                device = torch.device("npu")
-                model = model.to(device)
-            else:
-                model = model.cuda()
 
     # DeepSpeed ZeRO-3
     elif shared.args.deepspeed:
@@ -232,30 +226,18 @@ def huggingface_loader(model_name):
             if shared.args.disk:
                 params['offload_folder'] = shared.args.disk_cache_dir
 
-        if shared.args.disable_exllama or shared.args.disable_exllamav2:
-            try:
-                gptq_config = GPTQConfig(
-                    bits=config.quantization_config.get('bits', 4),
-                    disable_exllama=shared.args.disable_exllama,
-                    disable_exllamav2=shared.args.disable_exllamav2,
-                )
-
-                params['quantization_config'] = gptq_config
-                logger.info(f'Loading with disable_exllama={shared.args.disable_exllama} and disable_exllamav2={shared.args.disable_exllamav2}.')
-            except:
-                exc = traceback.format_exc()
-                logger.error('Failed to disable exllama. Does the config.json for this model contain the necessary quantization info?')
-                print(exc)
-
         if shared.args.compress_pos_emb > 1:
             params['rope_scaling'] = {'type': 'linear', 'factor': shared.args.compress_pos_emb}
         elif shared.args.alpha_value > 1:
-            params['rope_scaling'] = {'type': 'dynamic', 'factor': RoPE.get_alpha_value(shared.args.alpha_value, shared.args.rope_freq_base)}
+            params['rope_scaling'] = {'type': 'dynamic', 'factor': shared.args.alpha_value}
 
         logger.info("TRANSFORMERS_PARAMS=")
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(params)
         print()
         model = LoaderClass.from_pretrained(path_to_model, **params)
+
+    if shared.args.torch_compile:
+        model = torch.compile(model)
 
     return model
 
@@ -267,7 +249,7 @@ def llamacpp_loader(model_name):
     if path.is_file():
         model_file = path
     else:
-        model_file = sorted(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0] 
+        model_file = sorted(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0]
 
     logger.info(f"llama.cpp weights detected: \"{model_file}\"")
     model, tokenizer = LlamaCppModel.from_pretrained(model_file)
@@ -277,41 +259,24 @@ def llamacpp_loader(model_name):
 def llamacpp_HF_loader(model_name):
     from modules.llamacpp_hf import LlamacppHF
 
-    path = Path(f'{shared.args.model_dir}/{model_name}')
-
-    # Check if a HF tokenizer is available for the model
-    if all((path / file).exists() for file in ['tokenizer_config.json']):
-        logger.info(f'Using tokenizer from: \"{path}\"')
+    if shared.args.tokenizer_dir:
+        logger.info(f'Using tokenizer from: \"{shared.args.tokenizer_dir}\"')
     else:
-        logger.error("Could not load the model because a tokenizer in Transformers format was not found.")
-        return None, None
+        path = Path(f'{shared.args.model_dir}/{model_name}')
+        # Check if a HF tokenizer is available for the model
+        if all((path / file).exists() for file in ['tokenizer_config.json']):
+            logger.info(f'Using tokenizer from: \"{path}\"')
+        else:
+            logger.error("Could not load the model because a tokenizer in Transformers format was not found.")
+            return None, None
 
     model = LlamacppHF.from_pretrained(model_name)
-    return model
 
-
-def AutoAWQ_loader(model_name):
-    from awq import AutoAWQForCausalLM
-
-    model_dir = Path(f'{shared.args.model_dir}/{model_name}')
-
-    model = AutoAWQForCausalLM.from_quantized(
-        quant_path=model_dir,
-        max_new_tokens=shared.args.max_seq_len,
-        trust_remote_code=shared.args.trust_remote_code,
-        fuse_layers=not shared.args.no_inject_fused_attention,
-        max_memory=get_max_memory_dict(),
-        batch_size=1,
-        safetensors=any(model_dir.glob('*.safetensors')),
-    )
-
-    return model
-
-
-def AutoGPTQ_loader(model_name):
-    import modules.AutoGPTQ_loader
-
-    return modules.AutoGPTQ_loader.load_quantized(model_name)
+    if shared.args.tokenizer_dir:
+        tokenizer = load_tokenizer(model_name, tokenizer_dir=shared.args.tokenizer_dir)
+        return model, tokenizer
+    else:
+        return model
 
 
 def ExLlamav2_loader(model_name):
@@ -328,14 +293,27 @@ def ExLlamav2_HF_loader(model_name):
 
 
 def HQQ_loader(model_name):
-    from hqq.core.quantize import HQQBackend, HQQLinear
-    from hqq.models.hf.base import AutoHQQHFModel
+    try:
+        from hqq.core.quantize import HQQBackend, HQQLinear
+        from hqq.models.hf.base import AutoHQQHFModel
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("Failed to import 'hqq'. Please install it manually following the instructions in the HQQ GitHub repository.")
 
     logger.info(f"Loading HQQ model with backend: \"{shared.args.hqq_backend}\"")
 
     model_dir = Path(f'{shared.args.model_dir}/{model_name}')
     model = AutoHQQHFModel.from_quantized(str(model_dir))
     HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
+    return model
+
+
+def TensorRT_LLM_loader(model_name):
+    try:
+        from modules.tensorrt_llm import TensorRTLLMModel
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("Failed to import 'tensorrt_llm'. Please install it manually following the instructions in the TensorRT-LLM GitHub repository.")
+
+    model = TensorRTLLMModel.from_pretrained(model_name)
     return model
 
 
@@ -369,22 +347,44 @@ def get_max_memory_dict():
     return max_memory if len(max_memory) > 0 else None
 
 
+def get_device():
+    if torch.cuda.is_available():
+        return torch.device('cuda')
+    elif shared.args.deepspeed:
+        import deepspeed
+        return deepspeed.get_accelerator().current_device_name()
+    elif torch.backends.mps.is_available():
+        return torch.device('mps')
+    elif is_torch_xpu_available():
+        return torch.device('xpu:0')
+    elif is_torch_npu_available():
+        return torch.device('npu:0')
+    else:
+        return None
+
+
 def clear_torch_cache():
     gc.collect()
     if not shared.args.cpu:
-        if is_xpu_available():
-            torch.xpu.empty_cache()
-        else:
+        if torch.cuda.is_available():
             torch.cuda.empty_cache()
+        elif is_xpu_available():
+            torch.xpu.empty_cache()
+        elif is_npu_available():
+            torch.npu.empty_cache()
+        elif torch.backends.mps.is_available():
+            if hasattr(torch.backends.mps, 'empty_cache'):
+                torch.backends.mps.empty_cache()
 
 
-def unload_model():
+def unload_model(keep_model_name=False):
     shared.model = shared.tokenizer = None
-    shared.previous_model_name = shared.model_name
-    shared.model_name = 'None'
     shared.lora_names = []
     shared.model_dirty_from_training = False
     clear_torch_cache()
+
+    if not keep_model_name:
+        shared.model_name = 'None'
 
 
 def reload_model():
@@ -403,7 +403,7 @@ def unload_model_if_idle():
             if time.time() - last_generation_time > shared.args.idle_timeout * 60:
                 if shared.model is not None:
                     logger.info("Unloading the model for inactivity.")
-                    unload_model()
+                    unload_model(keep_model_name=True)
         finally:
             shared.generation_lock.release()
 

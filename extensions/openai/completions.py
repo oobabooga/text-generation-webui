@@ -143,20 +143,20 @@ def convert_history(history):
         new_history = []
         for entry in history:
             if isinstance(entry['content'], list):
-                image_url = None
-                content = None
                 for item in entry['content']:
                     if not isinstance(item, dict):
                         continue
-
+                    
+                    image_url = None
+                    content = None
                     if item['type'] == 'image_url' and isinstance(item['image_url'], dict):
                         image_url = item['image_url']['url']
                     elif item['type'] == 'text' and isinstance(item['text'], str):
                         content = item['text']
-
-                if image_url and content:
-                    new_history.append({"image_url": image_url, "role": "user"})
-                    new_history.append({"content": content, "role": "user"})
+                    if image_url:
+                        new_history.append({"image_url": image_url, "role": "user"})
+                    if content:
+                        new_history.append({"content": content, "role": "user"})
             else:
                 new_history.append(entry)
 
@@ -234,7 +234,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             raise InvalidRequestError(message="messages: missing content", param='messages')
 
     # Chat Completions
-    object_type = 'chat.completions' if not stream else 'chat.completions.chunk'
+    object_type = 'chat.completion' if not stream else 'chat.completion.chunk'
     created_time = int(time.time())
     cmpl_id = "chatcmpl-%d" % (int(time.time() * 1000000000))
     resp_list = 'data' if is_legacy else 'choices'
@@ -319,7 +319,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         yield {'prompt': prompt}
         return
 
-    token_count = len(encode(prompt)[0])
     debug_msg({'prompt': prompt, 'generate_params': generate_params})
 
     if stream:
@@ -330,7 +329,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
 
     answer = ''
     seen_content = ''
-    completion_token_count = 0
 
     for a in generator:
         answer = a['internal'][-1][1]
@@ -345,6 +343,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             chunk = chat_streaming_chunk(new_content)
             yield chunk
 
+    token_count = len(encode(prompt)[0])
     completion_token_count = len(encode(answer)[0])
     stop_reason = "stop"
     if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= generate_params['max_new_tokens']:
@@ -429,8 +428,6 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
                         prompt = decode(prompt)[0]
 
             prefix = prompt if echo else ''
-            token_count = len(encode(prompt)[0])
-            total_prompt_token_count += token_count
 
             # generate reply #######################################
             debug_msg({'prompt': prompt, 'generate_params': generate_params})
@@ -440,6 +437,8 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
             for a in generator:
                 answer = a
 
+            token_count = len(encode(prompt)[0])
+            total_prompt_token_count += token_count
             completion_token_count = len(encode(answer)[0])
             total_completion_token_count += completion_token_count
             stop_reason = "stop"

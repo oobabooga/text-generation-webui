@@ -95,11 +95,10 @@ def get_available_presets():
 
 
 def get_available_prompts():
-    prompts = []
-    files = set((k.stem for k in Path('prompts').glob('*.txt')))
-    prompts += sorted([k for k in files if re.match('^[0-9]', k)], key=natural_keys, reverse=True)
-    prompts += sorted([k for k in files if re.match('^[^0-9]', k)], key=natural_keys)
-    prompts += ['None']
+    prompt_files = list(Path('prompts').glob('*.txt'))
+    sorted_files = sorted(prompt_files, key=lambda x: x.stat().st_mtime, reverse=True)
+    prompts = [file.stem for file in sorted_files]
+    prompts.append('None')
     return prompts
 
 

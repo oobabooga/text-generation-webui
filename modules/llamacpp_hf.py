@@ -7,34 +7,10 @@ from torch.nn import CrossEntropyLoss
 from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
-from modules import RoPE, llama_cpp_python_hijack, shared
+from modules import shared
+from modules.llama_cpp_python_hijack import llama_cpp_lib
+from modules.llamacpp_model import get_llamacpp_cache_type_for_string
 from modules.logging_colors import logger
-
-try:
-    import llama_cpp
-except:
-    llama_cpp = None
-
-try:
-    import llama_cpp_cuda
-except:
-    llama_cpp_cuda = None
-
-try:
-    import llama_cpp_cuda_tensorcores
-except:
-    llama_cpp_cuda_tensorcores = None
-
-
-def llama_cpp_lib():
-    if shared.args.cpu and llama_cpp is not None:
-        return llama_cpp
-    elif shared.args.tensorcores and llama_cpp_cuda_tensorcores is not None:
-        return llama_cpp_cuda_tensorcores
-    elif llama_cpp_cuda is not None:
-        return llama_cpp_cuda
-    else:
-        return llama_cpp
 
 
 class LlamacppHF(PreTrainedModel):
@@ -152,7 +128,7 @@ class LlamacppHF(PreTrainedModel):
                 self.model.reset()
                 self.model.eval(seq)
 
-            logits = torch.tensor(self.model.scores[self.model.n_tokens - 1, :]).view(1, 1, -1).to(input_ids.device)
+            logits = torch.tensor(self.model.scores[self.model.last_updated_index, :]).view(1, 1, -1).to(input_ids.device)
         else:
             self.model.reset()
             self.model.eval(seq)
@@ -212,7 +188,7 @@ class LlamacppHF(PreTrainedModel):
             'mul_mat_q': not shared.args.no_mul_mat_q,
             'numa': shared.args.numa,
             'n_gpu_layers': shared.args.n_gpu_layers,
-            'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
+            'rope_freq_base': shared.args.rope_freq_base,
             'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
             'logits_all': shared.args.logits_all,
@@ -221,7 +197,12 @@ class LlamacppHF(PreTrainedModel):
             'flash_attn': shared.args.flash_attn
         }
 
+        if shared.args.cache_type != 'fp16':
+            params["type_k"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
+            params["type_v"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
+
         Llama = llama_cpp_lib().Llama
         model = Llama(**params)
+        model.last_updated_index = -1
 
         return LlamacppHF(model, model_file)

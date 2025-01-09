@@ -29,6 +29,7 @@ base = os.environ.get("HF_ENDPOINT") or "https://huggingface.co"
 class ModelDownloader:
     def __init__(self, max_retries=5):
         self.max_retries = max_retries
+        self.session = self.get_session()
 
     def get_session(self):
         session = requests.Session()
@@ -71,8 +72,8 @@ class ModelDownloader:
 
         return model, branch
 
-    def get_download_links_from_huggingface(self, model, branch, text_only=False, specific_file=None):
-        session = self.get_session()
+    def get_download_links_from_huggingface(self, model, branch, text_only=False, specific_file=None, exclude_pattern=None):
+        session = self.session
         page = f"/api/models/{model}/tree/{branch}"
         cursor = b""
 
@@ -99,13 +100,17 @@ class ModelDownloader:
                 if specific_file not in [None, ''] and fname != specific_file:
                     continue
 
+                # Exclude files matching the exclude pattern
+                if exclude_pattern is not None and re.match(exclude_pattern, fname):
+                    continue
+
                 if not is_lora and fname.endswith(('adapter_config.json', 'adapter_model.bin')):
                     is_lora = True
 
                 is_pytorch = re.match(r"(pytorch|adapter|gptq)_model.*\.bin", fname)
                 is_safetensors = re.match(r".*\.safetensors", fname)
                 is_pt = re.match(r".*\.pt", fname)
-                is_gguf = re.match(r'.*\.gguf', fname)
+                is_gguf = re.match(r".*\.gguf", fname)
                 is_tiktoken = re.match(r".*\.tiktoken", fname)
                 is_tokenizer = re.match(r"(tokenizer|ice|spiece).*\.model", fname) or is_tiktoken
                 is_text = re.match(r".*\.(txt|json|py|md)", fname) or is_tokenizer
@@ -139,7 +144,6 @@ class ModelDownloader:
 
         # If both pytorch and safetensors are available, download safetensors only
         # Also if GGUF and safetensors are available, download only safetensors
-        # (why do people do this?)
         if (has_pytorch or has_pt or has_gguf) and has_safetensors:
             has_gguf = False
             for i in range(len(classifications) - 1, -1, -1):
@@ -147,8 +151,6 @@ class ModelDownloader:
                     links.pop(i)
 
         # For GGUF, try to download only the Q4_K_M if no specific file is specified.
-        # If not present, exclude all GGUFs, as that's likely a repository with both
-        # GGUF and fp16 files.
         if has_gguf and specific_file is None:
             has_q4km = False
             for i in range(len(classifications) - 1, -1, -1):
@@ -167,8 +169,11 @@ class ModelDownloader:
         is_llamacpp = has_gguf and specific_file is not None
         return links, sha256, is_lora, is_llamacpp
 
-    def get_output_folder(self, model, branch, is_lora, is_llamacpp=False):
-        base_folder = 'models' if not is_lora else 'loras'
+    def get_output_folder(self, model, branch, is_lora, is_llamacpp=False, model_dir=None):
+        if model_dir:
+            base_folder = model_dir
+        else:
+            base_folder = 'models' if not is_lora else 'loras'
 
         # If the model is of type GGUF, save directly in the base_folder
         if is_llamacpp:
@@ -189,7 +194,7 @@ class ModelDownloader:
         attempt = 0
         while attempt < max_retries:
             attempt += 1
-            session = self.get_session()
+            session = self.session
             headers = {}
             mode = 'wb'
 
@@ -209,11 +214,15 @@ class ModelDownloader:
                     total_size = int(r.headers.get('content-length', 0))
                     block_size = 1024 * 1024  # 1MB
 
+                    filename_str = str(filename)  # Convert PosixPath to string if necessary
+
                     tqdm_kwargs = {
                         'total': total_size,
-                        'unit': 'iB',
+                        'unit': 'B',
                         'unit_scale': True,
-                        'bar_format': '{l_bar}{bar}| {n_fmt}/{total_fmt} {rate_fmt}'
+                        'unit_divisor': 1024,
+                        'bar_format': '{desc}{percentage:3.0f}%|{bar:50}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]',
+                        'desc': f"{filename_str}: "
                     }
 
                     if 'COLAB_GPU' in os.environ:
@@ -230,7 +239,7 @@ class ModelDownloader:
                                 t.update(len(data))
                                 if total_size != 0 and self.progress_bar is not None:
                                     count += len(data)
-                                    self.progress_bar(float(count) / float(total_size), f"{filename}")
+                                    self.progress_bar(float(count) / float(total_size), f"{filename_str}")
 
                     break  # Exit loop if successful
             except (RequestException, ConnectionError, Timeout) as e:
@@ -304,7 +313,9 @@ if __name__ == '__main__':
     parser.add_argument('--threads', type=int, default=4, help='Number of files to download simultaneously.')
     parser.add_argument('--text-only', action='store_true', help='Only download text files (txt/json).')
     parser.add_argument('--specific-file', type=str, default=None, help='Name of the specific file to download (if not provided, downloads all).')
-    parser.add_argument('--output', type=str, default=None, help='The folder where the model should be saved.')
+    parser.add_argument('--exclude-pattern', type=str, default=None, help='Regex pattern to exclude files from download.')
+    parser.add_argument('--output', type=str, default=None, help='Save the model files to this folder.')
+    parser.add_argument('--model-dir', type=str, default=None, help='Save the model files to a subfolder of this folder instead of the default one (text-generation-webui/models).')
     parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
     parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
     parser.add_argument('--max-retries', type=int, default=5, help='Max retries count when get error in download time.')
@@ -313,6 +324,7 @@ if __name__ == '__main__':
     branch = args.branch
     model = args.MODEL
     specific_file = args.specific_file
+    exclude_pattern = args.exclude_pattern
 
     if model is None:
         print("Error: Please specify the model you'd like to download (e.g. 'python download-model.py facebook/opt-1.3b').")
@@ -327,17 +339,22 @@ if __name__ == '__main__':
         sys.exit()
 
     # Get the download links from Hugging Face
-    links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=args.text_only, specific_file=specific_file)
+    links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(
+        model, branch, text_only=args.text_only, specific_file=specific_file, exclude_pattern=exclude_pattern
+    )
 
     # Get the output folder
     if args.output:
         output_folder = Path(args.output)
     else:
-        output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp)
+        output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp, model_dir=args.model_dir)
 
     if args.check:
         # Check previously downloaded files
         downloader.check_model_files(model, branch, links, sha256, output_folder)
     else:
         # Download files
-        downloader.download_model_files(model, branch, links, sha256, output_folder, specific_file=specific_file, threads=args.threads, is_llamacpp=is_llamacpp)
+        downloader.download_model_files(
+            model, branch, links, sha256, output_folder,
+            specific_file=specific_file, threads=args.threads, is_llamacpp=is_llamacpp
+        )

@@ -241,7 +241,7 @@ def ui():
                         stride_length = gr.Slider(label='Stride', minimum=1, maximum=2048, value=512, step=1, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
 
                     with gr.Column():
-                        max_length = gr.Slider(label='max_length', minimum=0, maximum=shared.settings['truncation_length_max'], value=0, step=1, info='The context for each evaluation. If set to 0, the maximum context length for the model will be used.')
+                        max_length = gr.Number(label='max_length', precision=0, step=256, value=0, info='The context for each evaluation. If set to 0, the maximum context length for the model will be used.')
 
                 with gr.Row():
                     start_current_evaluation = gr.Button("Evaluate loaded model")
@@ -789,7 +789,11 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
         logger.info("Getting model ready...")
         # here we can disable gradient checkpoint, by default = true,  use_gradient_checkpointing=True
-        prepare_model_for_kbit_training(shared.model)
+        if 'quantization_config' in shared.model.config.to_dict():
+            print(f"Method: {RED}QLORA{RESET}")
+            prepare_model_for_kbit_training(shared.model)
+        else:
+            print(f"Method: {RED}LoRA{RESET}")    
 
     # base model is now frozen and should not be reused for any other LoRA training than this one
     shared.model_dirty_from_training = True
