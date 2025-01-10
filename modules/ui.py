@@ -220,32 +220,32 @@ def list_interface_input_elements():
 
     # Chat elements
     elements += [
-        'textbox',
-        'start_with',
-        'character_menu',
         'history',
         'search_chat',
         'unique_id',
+        'textbox',
+        'start_with',
+        'mode',
+        'chat_style',
+        'chat-instruct_command',
+        'character_menu',
+        'name2',
+        'context',
+        'greeting',
         'name1',
         'user_bio',
-        'name2',
-        'greeting',
-        'context',
-        'mode',
         'custom_system_message',
         'instruction_template_str',
         'chat_template_str',
-        'chat_style',
-        'chat-instruct_command',
     ]
 
     # Notebook/default elements
     elements += [
-        'textbox-notebook',
         'textbox-default',
-        'output_textbox',
+        'textbox-notebook',
         'prompt_menu-default',
         'prompt_menu-notebook',
+        'output_textbox',
     ]
 
     # Model elements
