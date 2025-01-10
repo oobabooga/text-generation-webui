@@ -203,11 +203,6 @@ group.add_argument('--multimodal-pipeline', type=str, default=None, help='The mu
 
 # Deprecated parameters
 group = parser.add_argument_group('Deprecated')
-group.add_argument('--model_type', type=str, help='DEPRECATED')
-group.add_argument('--pre_layer', type=int, nargs='+', help='DEPRECATED')
-group.add_argument('--checkpoint', type=str, help='DEPRECATED')
-group.add_argument('--monkey-patch', action='store_true', help='DEPRECATED')
-group.add_argument('--no_inject_fused_attention', action='store_true', help='DEPRECATED')
 group.add_argument('--cache_4bit', action='store_true', help='DEPRECATED')
 group.add_argument('--cache_8bit', action='store_true', help='DEPRECATED')
 group.add_argument('--chat-buttons', action='store_true', help='DEPRECATED')
@@ -228,14 +223,26 @@ for arg in sys.argv[1:]:
     if hasattr(args, arg):
         provided_arguments.append(arg)
 
-deprecated_args = []
+deprecated_args = [
+    'cache_4bit',
+    'cache_8bit',
+    'chat_buttons',
+    'triton',
+    'no_inject_fused_mlp',
+    'no_use_cuda_fp16',
+    'desc_act',
+    'disable_exllama',
+    'disable_exllamav2',
+    'wbits',
+    'groupsize'
+]
 
 
 def do_cmd_flags_warnings():
 
     # Deprecation warnings
     for k in deprecated_args:
-        if getattr(args, k):
+        if k in provided_arguments:
             logger.warning(f'The --{k} flag has been deprecated and will be removed soon. Please remove that flag.')
 
     # Security warnings
