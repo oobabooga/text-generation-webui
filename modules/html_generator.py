@@ -239,6 +239,9 @@ def convert_to_markdown(string):
     pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)
     html_output = pattern.sub(lambda x: html.unescape(x.group()), html_output)
 
+    # Unescape backslashes
+    html_output = html_output.replace('\\\\', '\\')
+
     # Add "long-list" class to <ul> or <ol> containing a long <li> item
     html_output = add_long_list_class(html_output)
 
