@@ -86,7 +86,7 @@ group.add_argument('--idle-timeout', type=int, default=0, help='Unload model aft
 
 # Model loader
 group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2.')
+group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, HQQ, TensorRT-LLM.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
