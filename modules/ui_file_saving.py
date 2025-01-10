@@ -39,6 +39,19 @@ def create_ui():
             shared.gradio['delete_character_cancel'] = gr.Button('Cancel', elem_classes="small-button")
             shared.gradio['delete_character_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop', interactive=not mu)
 
+    # User saver/deleter
+    with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['user_saver']:
+        shared.gradio['save_user_filename'] = gr.Textbox(lines=1, label='File name', info='The user will be saved to your users/ folder with this base filename.')
+        with gr.Row():
+            shared.gradio['save_user_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+            shared.gradio['save_user_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
+
+    with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['user_deleter']:
+        gr.Markdown('Confirm the user deletion?')
+        with gr.Row():
+            shared.gradio['delete_user_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+            shared.gradio['delete_user_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop', interactive=not mu)
+
     # Preset saver
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['preset_saver']:
         shared.gradio['save_preset_filename'] = gr.Textbox(lines=1, label='File name', info='The preset will be saved to your presets/ folder with this base filename.')
@@ -62,12 +75,16 @@ def create_event_handlers():
     shared.gradio['delete_confirm'].click(handle_delete_confirm_click, gradio('delete_root', 'delete_filename'), gradio('file_deleter'), show_progress=False)
     shared.gradio['save_character_confirm'].click(handle_save_character_confirm_click, gradio('name2', 'greeting', 'context', 'character_picture', 'save_character_filename'), gradio('character_menu', 'character_saver'), show_progress=False)
     shared.gradio['delete_character_confirm'].click(handle_delete_character_confirm_click, gradio('character_menu'), gradio('character_menu', 'character_deleter'), show_progress=False)
+    shared.gradio['save_user_confirm'].click(handle_save_user_confirm_click, gradio('name1', 'user_bio', 'your_picture', 'save_user_filename'), gradio('user_menu', 'user_saver'), show_progress=False)
+    shared.gradio['delete_user_confirm'].click(handle_delete_user_confirm_click, gradio('user_menu'), gradio('user_menu', 'user_deleter'), show_progress=False)
 
     shared.gradio['save_preset_cancel'].click(lambda: gr.update(visible=False), None, gradio('preset_saver'), show_progress=False)
     shared.gradio['save_cancel'].click(lambda: gr.update(visible=False), None, gradio('file_saver'))
     shared.gradio['delete_cancel'].click(lambda: gr.update(visible=False), None, gradio('file_deleter'))
     shared.gradio['save_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_saver'), show_progress=False)
     shared.gradio['delete_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_deleter'), show_progress=False)
+    shared.gradio['save_user_cancel'].click(lambda: gr.update(visible=False), None, gradio('user_saver'), show_progress=False)
+    shared.gradio['delete_user_cancel'].click(lambda: gr.update(visible=False), None, gradio('user_deleter'), show_progress=False)
 
 
 def handle_save_preset_confirm_click(filename, contents):
@@ -118,11 +135,41 @@ def handle_save_character_confirm_click(name2, greeting, context, character_pict
     ]
 
 
+def handle_save_user_confirm_click(name1, user_bio, your_picture, filename):
+    try:
+        chat.save_user(name1, user_bio, your_picture, filename)
+        available_users = utils.get_available_users()
+        output = gr.update(choices=available_users, value=filename)
+    except Exception:
+        output = gr.update()
+        traceback.print_exc()
+
+    return [
+        output,
+        gr.update(visible=False)
+    ]
+
+
 def handle_delete_character_confirm_click(character):
     try:
         index = str(utils.get_available_characters().index(character))
         chat.delete_character(character)
         output = chat.update_character_menu_after_deletion(index)
+    except Exception:
+        output = gr.update()
+        traceback.print_exc()
+
+    return [
+        output,
+        gr.update(visible=False)
+    ]
+
+
+def handle_delete_user_confirm_click(user):
+    try:
+        index = str(utils.get_available_users().index(user))
+        chat.delete_user(user)
+        output = chat.update_user_menu_after_deletion(index)
     except Exception:
         output = gr.update()
         traceback.print_exc()

@@ -28,7 +28,7 @@ from modules.text_generation import (
     get_encoded_length,
     get_max_prompt_length
 )
-from modules.utils import delete_file, get_available_characters, save_file
+from modules.utils import delete_file, get_available_characters, get_available_users, save_file
 
 # Copied from the Transformers library
 jinja_env = ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
@@ -675,6 +675,13 @@ def update_character_menu_after_deletion(idx):
     return gr.update(choices=characters, value=characters[idx])
 
 
+def update_user_menu_after_deletion(idx):
+    users = utils.get_available_users()
+    idx = min(int(idx), len(users) - 1)
+    idx = max(0, idx)
+    return gr.update(choices=users, value=users[idx])
+
+
 def load_history(unique_id, character, mode):
     p = get_history_file_path(unique_id, character, mode)
 
@@ -739,6 +746,8 @@ def load_character(character, name1, name2):
     context = greeting = ""
     greeting_field = 'greeting'
     picture = None
+    your_picture = None
+    profile_name = name1
 
     filepath = None
     for extension in ["yml", "yaml", "json"]:
@@ -759,6 +768,7 @@ def load_character(character, name1, name2):
             path.unlink()
 
     picture = generate_pfp_cache(character)
+    your_picture = upload_your_profile_picture(picture, profile_name)
 
     # Finding the bot's name
     for k in ['name', 'bot', '<|bot|>', 'char_name']:
@@ -874,18 +884,27 @@ def check_tavern_character(img):
     return _json['name'], _json['description'], _json, gr.update(interactive=True)
 
 
-def upload_your_profile_picture(img):
+def upload_your_profile_picture(img, profile_name):
     cache_folder = Path(shared.args.disk_cache_dir)
     if not cache_folder.exists():
         cache_folder.mkdir()
 
-    if img is None:
-        if Path(f"{cache_folder}/pfp_me.png").exists():
-            Path(f"{cache_folder}/pfp_me.png").unlink()
+    if profile_name is None:
+        if img is None:
+            if Path(f"{cache_folder}/pfp_me.png").exists():
+                Path(f"{cache_folder}/pfp_me.png").unlink()
+        else:
+            img = make_thumbnail(img)
+            img.save(Path(f'{cache_folder}/pfp_me.png'))
+            logger.info(f'Profile picture saved to "{cache_folder}/pfp_me.png"')
     else:
-        img = make_thumbnail(img)
-        img.save(Path(f'{cache_folder}/pfp_me.png'))
-        logger.info(f'Profile picture saved to "{cache_folder}/pfp_me.png"')
+        for img_path in [Path(f"users/{profile_name}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
+            if img_path.exists():
+                with Image.open(img_path) as img:
+                    img = make_thumbnail(img)
+                    img.save(Path(f'{cache_folder}/pfp_me.png'), format='PNG')
+
+        return None
 
 
 def generate_character_yaml(name, greeting, context):
@@ -893,6 +912,16 @@ def generate_character_yaml(name, greeting, context):
         'name': name,
         'greeting': greeting,
         'context': context,
+    }
+
+    data = {k: v for k, v in data.items() if v}  # Strip falsy
+    return yaml.dump(data, sort_keys=False, width=float("inf"))
+
+
+def generate_user_yaml(name1, user_bio):
+    data = {
+        'name': name1,
+        'user_bio': user_bio,
     }
 
     data = {k: v for k, v in data.items() if v}  # Strip falsy
@@ -921,11 +950,32 @@ def save_character(name, greeting, context, picture, filename):
         logger.info(f'Saved {path_to_img}.')
 
 
+def save_user(name1, user_bio, your_picture, filename):
+    if filename == "":
+        logger.error("The filename is empty, so the user will not be saved.")
+        return
+
+    data = generate_user_yaml(name1, user_bio)
+    filepath = Path(f'users/{filename}.yaml')
+    save_file(filepath, data)
+    path_to_img = Path(f'users/{filename}.png')
+    if your_picture is not None:
+        your_picture.save(path_to_img)
+        logger.info(f'Saved {path_to_img}.')
+
+
 def delete_character(name, instruct=False):
     for extension in ["yml", "yaml", "json"]:
         delete_file(Path(f'characters/{name}.{extension}'))
 
     delete_file(Path(f'characters/{name}.png'))
+
+
+def delete_user(name, instruct=False):
+    for extension in ["yml", "yaml", "json"]:
+        delete_file(Path(f'users/{name}.{extension}'))
+
+    delete_file(Path(f'users/{name}.png'))
 
 
 def jinja_template_from_old_format(params, verbose=False):
@@ -1188,6 +1238,37 @@ def handle_character_menu_change(state):
     ]
 
 
+def load_user_profile(profile_name):
+    user_folder = Path('users')
+    base_file = user_folder / profile_name
+    yaml_file = next((base_file.with_suffix(ext) for ext in ['.yaml', '.yml'] if base_file.with_suffix(ext).exists()), None)
+    img_file = base_file.with_suffix('.png')
+
+    data = {}
+    if yaml_file:
+        with open(yaml_file, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+
+    picture = None
+    if img_file.exists():
+        from PIL import Image
+        picture = Image.open(img_file)
+        upload_your_profile_picture(picture, profile_name)
+
+    return {
+        'name1': data.get('name', ''),
+        'user_bio': data.get('user_bio', ''),
+        'your_picture': picture
+    }
+
+
+def update_user_fields(profile_name):
+    if profile_name:
+        user_data = load_user_profile(profile_name)
+        return user_data['name1'], user_data['user_bio'], user_data['your_picture']
+    return '', '', None
+
+
 def handle_mode_change(state):
     history = load_latest_history(state)
     histories = find_all_histories_with_first_prompts(state)
@@ -1212,6 +1293,13 @@ def handle_mode_change(state):
 def handle_save_character_click(name2):
     return [
         name2,
+        gr.update(visible=True)
+    ]
+
+
+def handle_save_user_click(name1):
+    return [
+        name1,
         gr.update(visible=True)
     ]
 
@@ -1243,7 +1331,7 @@ def handle_delete_template_click(template):
 
 
 def handle_your_picture_change(picture, state):
-    upload_your_profile_picture(picture)
+    upload_your_profile_picture(picture, profile_name=None)
     html = redraw_html(state['history'], state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'], reset_cache=True)
 
     return html

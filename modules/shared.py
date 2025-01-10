@@ -55,6 +55,7 @@ settings = {
     'skip_special_tokens': True,
     'stream': True,
     'character': 'Assistant',
+    'user': 'You',
     'name1': 'You',
     'user_bio': '',
     'custom_system_message': '',
