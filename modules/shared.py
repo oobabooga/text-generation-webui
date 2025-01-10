@@ -37,6 +37,7 @@ settings = {
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
     'character': 'Assistant',
+    'user': 'You',
     'name1': 'You',
     'user_bio': '',
     'custom_system_message': '',
