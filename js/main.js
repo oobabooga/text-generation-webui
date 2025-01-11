@@ -147,10 +147,9 @@ const observer = new MutationObserver(function(mutations) {
 
   doSyntaxHighlighting();
 
-  if(!isScrolled) {
+  if (!isScrolled && targetElement.scrollTop !== targetElement.scrollHeight) {
     targetElement.scrollTop = targetElement.scrollHeight;
   }
-
 });
 
 // Configure the observer to watch for changes in the subtree and attributes
