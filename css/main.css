@@ -1239,7 +1239,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .copy-button {
     position: absolute;
     bottom: -23px;
-    left: 0px;
+    left: 0;
     padding: 0;
     border: none;
     border-radius: 3px;
