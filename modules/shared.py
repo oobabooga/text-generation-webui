@@ -196,6 +196,7 @@ group.add_argument('--admin-key', type=str, default='', help='API authentication
 group.add_argument('--api-enable-ipv6', action='store_true', help='Enable IPv6 for the API')
 group.add_argument('--api-disable-ipv4', action='store_true', help='Disable IPv4 for the API')
 group.add_argument('--nowebui', action='store_true', help='Do not launch the Gradio UI. Useful for launching the API in standalone mode.')
+group.add_argument('--model-selection-mode', type=int, default=0, help='Model selection mode: bitwise flag. 1=Include dummy models, 2=Include local models, 4=Return only the currently loaded model if local models are included.')
 
 # Multimodal
 group = parser.add_argument_group('Multimodal')
