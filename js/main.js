@@ -116,16 +116,8 @@ typingSibling.insertBefore(typing, typingSibling.childNodes[2]);
 const targetElement = document.getElementById("chat").parentNode.parentNode.parentNode;
 targetElement.classList.add("pretty_scrollbar");
 targetElement.classList.add("chat-parent");
-let isScrolled = false;
 
 targetElement.addEventListener("scroll", function() {
-  let diff = targetElement.scrollHeight - targetElement.clientHeight;
-  if(Math.abs(targetElement.scrollTop - diff) <= 10 || diff == 0) {
-    isScrolled = false;
-  } else {
-    isScrolled = true;
-  }
-
   doSyntaxHighlighting();
 
 });
@@ -146,11 +138,6 @@ const observer = new MutationObserver(function(mutations) {
 
 
   doSyntaxHighlighting();
-
-  if(!isScrolled) {
-    targetElement.scrollTop = targetElement.scrollHeight;
-  }
-
 });
 
 // Configure the observer to watch for changes in the subtree and attributes
@@ -451,9 +438,6 @@ function toggleBigPicture() {
 const chatContainer = document.getElementById("chat").parentNode.parentNode.parentNode;
 const chatInput = document.querySelector("#chat-input textarea");
 
-// Variables to store current dimensions
-let currentChatInputHeight = chatInput.clientHeight;
-
 // Update chat layout based on chat and input dimensions
 function updateCssProperties() {
   const chatInputHeight = chatInput.clientHeight;
@@ -465,18 +449,6 @@ function updateCssProperties() {
 
     document.documentElement.style.setProperty("--chat-height", newChatHeight);
     document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
-
-    // Adjust scrollTop based on input height change
-    if (chatInputHeight !== currentChatInputHeight) {
-      const deltaHeight = chatInputHeight - currentChatInputHeight;
-      if (!isScrolled && deltaHeight < 0) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-      } else {
-        chatContainer.scrollTop += deltaHeight;
-      }
-
-      currentChatInputHeight = chatInputHeight;
-    }
   }
 }
 
