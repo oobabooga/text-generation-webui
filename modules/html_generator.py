@@ -308,8 +308,8 @@ def generate_instruct_html(history):
                 f'<div class="user-message" '
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text">'
-                f'{copy_button}'
                 f'<div class="message-body">{converted_visible[0]}</div>'
+                f'{copy_button}'
                 f'</div>'
                 f'</div>'
             )
@@ -318,8 +318,8 @@ def generate_instruct_html(history):
             f'<div class="assistant-message" '
             f'data-raw="{html.escape(row_internal[1], quote=True)}">'
             f'<div class="text">'
-            f'{copy_button}'
             f'<div class="message-body">{converted_visible[1]}</div>'
+            f'{copy_button}'
             f'</div>'
             f'</div>'
         )
@@ -353,9 +353,9 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="circle-you">{img_me}</div>'
                 f'<div class="text">'
-                f'{copy_button}'
                 f'<div class="username">{name1}</div>'
                 f'<div class="message-body">{converted_visible[0]}</div>'
+                f'{copy_button}'
                 f'</div>'
                 f'</div>'
             )
@@ -365,9 +365,9 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
             f'data-raw="{html.escape(row_internal[1], quote=True)}">'
             f'<div class="circle-bot">{img_bot}</div>'
             f'<div class="text">'
-            f'{copy_button}'
             f'<div class="username">{name2}</div>'
             f'<div class="message-body">{converted_visible[1]}</div>'
+            f'{copy_button}'
             f'</div>'
             f'</div>'
         )
@@ -389,8 +389,8 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
                 f'<div class="message" '
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text-you">'
-                f'{copy_button}'
                 f'<div class="message-body">{converted_visible[0]}</div>'
+                f'{copy_button}'
                 f'</div>'
                 f'</div>'
             )
@@ -399,8 +399,8 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
             f'<div class="message" '
             f'data-raw="{html.escape(row_internal[1], quote=True)}">'
             f'<div class="text-bot">'
-            f'{copy_button}'
             f'<div class="message-body">{converted_visible[1]}</div>'
+            f'{copy_button}'
             f'</div>'
             f'</div>'
         )

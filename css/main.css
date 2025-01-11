@@ -1238,10 +1238,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 .copy-button {
     position: absolute;
-    right: -40px;
-    top: 0;
-    margin-left: 8px;
-    padding: 5px 8px;
+    bottom: -23px;
+    left: 0px;
+    padding: 0;
     border: none;
     border-radius: 3px;
     cursor: pointer;
@@ -1258,12 +1257,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .copy-button svg {
-    stroke: rgb(107 114 128);
+    stroke: rgb(156 163 175);
     transition: stroke 0.2s;
 }
 
 .copy-button:hover svg {
-    stroke: rgb(55 65 81);
+    stroke: rgb(107 114 128);
 }
 
 .dark .copy-button svg {
