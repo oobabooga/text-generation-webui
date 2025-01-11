@@ -46,7 +46,9 @@ def create_ui():
 
         with gr.Row():
             with gr.Column(elem_id='chat-col'):
-                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, '', '', 'chat', 'cai-chat', ''))
+                shared.gradio['html_display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, '', '', 'chat', 'cai-chat', ''), visible=True, elem_id="html_display")
+                shared.gradio['display'] = gr.Textbox(value=chat_html_wrapper({'internal': [], 'visible': []}, '', '', 'chat', 'cai-chat', ''), visible=False)
+                shared.gradio['display'].change(None, gradio('display'), None, js="(text) => { morphdom(document.getElementById('chat').parentNode, '<div class=\"prose svelte-1ybaih5\">' + text + '</div>'); }")
 
                 with gr.Row(elem_id="chat-input-row"):
                     with gr.Column(scale=1, elem_id='gr-hover-container'):
