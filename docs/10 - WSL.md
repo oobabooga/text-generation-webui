@@ -135,9 +135,12 @@ When you git clone a repository, put it inside WSL and not outside. To understan
 
 ### Bonus: Port Forwarding
 
-By default, you won't be able to access the webui from another device on your local network. You will need to setup the appropriate port forwarding using the following command (using PowerShell or Terminal with administrator privileges). 
+By default, you won't be able to access the webui from another device on your local network. You will need to setup the appropriate port forwarding using the following steps:
+
+1. First, get the IP address of the WSL by typing `wsl hostname -I`. This will output the IP address, for example `172.20.134.111`.
+2. Then, use the following command (using PowerShell or Terminal with administrator privileges) to set up port forwarding, replacing `172.20.134.111` with the IP address you obtained in step 1:
 
 ```
-netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=7860 connectaddress=localhost connectport=7860
+netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=7860 connectaddress=172.20.134.111 connectport=7860
 ```
 
