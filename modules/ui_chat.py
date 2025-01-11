@@ -47,9 +47,7 @@ def create_ui():
         with gr.Row():
             with gr.Column(elem_id='chat-col'):
                 shared.gradio['html_display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, '', '', 'chat', 'cai-chat', ''), visible=True, elem_id="html_display")
-                shared.gradio['display'] = gr.Textbox(value=chat_html_wrapper({'internal': [], 'visible': []}, '', '', 'chat', 'cai-chat', ''), visible=False)
-                shared.gradio['display'].change(None, gradio('display'), None, js="(text) => { morphdom(document.getElementById('chat').parentNode, '<div class=\"prose svelte-1ybaih5\">' + text + '</div>'); }")
-
+                shared.gradio['display'] = gr.Textbox(value=chat_html_wrapper({'internal': [], 'visible': []}, '', '', 'chat', 'cai-chat', ''), visible=False)  # Hidden buffer
                 with gr.Row(elem_id="chat-input-row"):
                     with gr.Column(scale=1, elem_id='gr-hover-container'):
                         gr.HTML(value='<div class="hover-element" onclick="void(0)"><span style="width: 100px; display: block" id="hover-element-button">&#9776;</span><div class="hover-menu" id="hover-menu"></div>', elem_id='gr-hover')
@@ -181,6 +179,26 @@ def create_event_handlers():
     # Obsolete variables, kept for compatibility with old extensions
     shared.input_params = gradio(inputs)
     shared.reload_inputs = gradio(reload_arr)
+
+    # Morph HTML updates instead of updating everything
+    shared.gradio['display'].change(None, gradio('display'), None,
+        js="""
+            (text) => {
+                morphdom(
+                    document.getElementById('chat').parentNode,
+                    '<div class="prose svelte-1ybaih5">' + text + '</div>',
+                    {
+                        onBeforeElUpdated: function(fromEl, toEl) {
+                            if (fromEl.isEqualNode(toEl)) {
+                                return false; // Skip identical nodes
+                            }
+                            return true; // Update only if nodes differ
+                        }
+                    }
+                );
+            }
+        """
+    )
 
     shared.gradio['Generate'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
