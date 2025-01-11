@@ -1236,11 +1236,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: relative;
 }
 
-.copy-button {
+.footer-button {
     position: absolute;
-    bottom: -23px;
-    left: 0;
     padding: 0;
+    margin: 0;
     border: none;
     border-radius: 3px;
     cursor: pointer;
@@ -1250,25 +1249,35 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     transition: opacity 0.2s;
 }
 
-.message:hover .copy-button,
-.user-message:hover .copy-button,
-.assistant-message:hover .copy-button {
+.footer-button#copy-button {
+    bottom: -23px;
+    left: 0;
+}
+
+.footer-button#refresh-button {
+    bottom: -23px;
+    left: 25px;
+}
+
+.message:hover .footer-button,
+.user-message:hover .footer-button,
+.assistant-message:hover .footer-button {
     opacity: 1;
 }
 
-.copy-button svg {
+.footer-button svg {
     stroke: rgb(156 163 175);
     transition: stroke 0.2s;
 }
 
-.copy-button:hover svg {
+.footer-button:hover svg {
     stroke: rgb(107 114 128);
 }
 
-.dark .copy-button svg {
+.dark .footer-button svg {
     stroke: rgb(156 163 175);
 }
 
-.dark .copy-button:hover svg {
+.dark .footer-button:hover svg {
     stroke: rgb(209 213 219);
 }

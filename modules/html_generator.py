@@ -293,7 +293,9 @@ def get_image_cache(path):
 
 
 copy_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-copy"><path d="M8 8m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z"></path><path d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2"></path></svg>'''
-copy_button = f'<button class="copy-button" onclick="copyToClipboard(this)">{copy_svg}</button>'
+refresh_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-repeat"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg>'''
+copy_button = f'<button class="footer-button" id="copy-button" onclick="copyToClipboard(this)">{copy_svg}</button>'
+refresh_button = f'<button class="footer-button" id="refresh-button" onclick="regenerateClick()">{refresh_svg}</button>'
 
 def generate_instruct_html(history):
     output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
@@ -320,6 +322,7 @@ def generate_instruct_html(history):
             f'<div class="text">'
             f'<div class="message-body">{converted_visible[1]}</div>'
             f'{copy_button}'
+            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
             f'</div>'
             f'</div>'
         )
@@ -368,6 +371,7 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
             f'<div class="username">{name2}</div>'
             f'<div class="message-body">{converted_visible[1]}</div>'
             f'{copy_button}'
+            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
             f'</div>'
             f'</div>'
         )
@@ -401,6 +405,7 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
             f'<div class="text-bot">'
             f'<div class="message-body">{converted_visible[1]}</div>'
             f'{copy_button}'
+            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
             f'</div>'
             f'</div>'
         )
