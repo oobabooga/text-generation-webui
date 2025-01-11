@@ -1142,7 +1142,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .dark svg {
-    fill: white;
     color: white;
 }
 
@@ -1220,4 +1219,56 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     #chat-controls-toggle.chat-controls-open {
         background: var(--light-theme-gray);
     }
+}
+
+/* ----------------------------------------------
+  Copy button for chat messages
+---------------------------------------------- */
+.message .text,
+.message .text-you,
+.message .text-bot,
+.user-message .text,
+.assistant-message .text {
+    position: relative;
+}
+
+.message, .user-message, .assistant-message {
+    position: relative;
+}
+
+.copy-button {
+    position: absolute;
+    bottom: -23px;
+    left: 0;
+    padding: 0;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    transition: opacity 0.2s;
+}
+
+.message:hover .copy-button,
+.user-message:hover .copy-button,
+.assistant-message:hover .copy-button {
+    opacity: 1;
+}
+
+.copy-button svg {
+    stroke: rgb(156 163 175);
+    transition: stroke 0.2s;
+}
+
+.copy-button:hover svg {
+    stroke: rgb(107 114 128);
+}
+
+.dark .copy-button svg {
+    stroke: rgb(156 163 175);
+}
+
+.dark .copy-button:hover svg {
+    stroke: rgb(209 213 219);
 }

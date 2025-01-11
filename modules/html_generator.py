@@ -292,24 +292,34 @@ def get_image_cache(path):
     return image_cache[path][1]
 
 
+copy_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-copy"><path d="M8 8m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z"></path><path d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2"></path></svg>'''
+copy_button = f'<button class="copy-button" onclick="copyToClipboard(this)">{copy_svg}</button>'
+
 def generate_instruct_html(history):
     output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
-    for i, _row in enumerate(history):
-        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
 
-        if row[0]:  # Don't display empty user messages
+    for i in range(len(history['visible'])):
+        row_visible = history['visible'][i]
+        row_internal = history['internal'][i]
+        converted_visible = [convert_to_markdown_wrapped(entry, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+
+        if converted_visible[0]:  # Don't display empty user messages
             output += (
-                f'<div class="user-message">'
+                f'<div class="user-message" '
+                f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text">'
-                f'<div class="message-body">{row[0]}</div>'
+                f'<div class="message-body">{converted_visible[0]}</div>'
+                f'{copy_button}'
                 f'</div>'
                 f'</div>'
             )
 
         output += (
-            f'<div class="assistant-message">'
+            f'<div class="assistant-message" '
+            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
             f'<div class="text">'
-            f'<div class="message-body">{row[1]}</div>'
+            f'<div class="message-body">{converted_visible[1]}</div>'
+            f'{copy_button}'
             f'</div>'
             f'</div>'
         )
@@ -332,26 +342,32 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
         if Path("cache/pfp_me.png").exists() else ''
     )
 
-    for i, _row in enumerate(history):
-        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
+    for i in range(len(history['visible'])):
+        row_visible = history['visible'][i]
+        row_internal = history['internal'][i]
+        converted_visible = [convert_to_markdown_wrapped(entry, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
-        if row[0]:  # Don't display empty user messages
+        if converted_visible[0]:  # Don't display empty user messages
             output += (
-                f'<div class="message">'
+                f'<div class="message" '
+                f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="circle-you">{img_me}</div>'
                 f'<div class="text">'
                 f'<div class="username">{name1}</div>'
-                f'<div class="message-body">{row[0]}</div>'
+                f'<div class="message-body">{converted_visible[0]}</div>'
+                f'{copy_button}'
                 f'</div>'
                 f'</div>'
             )
 
         output += (
-            f'<div class="message">'
+            f'<div class="message" '
+            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
             f'<div class="circle-bot">{img_bot}</div>'
             f'<div class="text">'
             f'<div class="username">{name2}</div>'
-            f'<div class="message-body">{row[1]}</div>'
+            f'<div class="message-body">{converted_visible[1]}</div>'
+            f'{copy_button}'
             f'</div>'
             f'</div>'
         )
@@ -363,22 +379,28 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
 def generate_chat_html(history, name1, name2, reset_cache=False):
     output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat"><div class="messages">'
 
-    for i, _row in enumerate(history):
-        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
+    for i in range(len(history['visible'])):
+        row_visible = history['visible'][i]
+        row_internal = history['internal'][i]
+        converted_visible = [convert_to_markdown_wrapped(entry, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
-        if row[0]:  # Don't display empty user messages
+        if converted_visible[0]:  # Don't display empty user messages
             output += (
-                f'<div class="message">'
+                f'<div class="message" '
+                f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text-you">'
-                f'<div class="message-body">{row[0]}</div>'
+                f'<div class="message-body">{converted_visible[0]}</div>'
+                f'{copy_button}'
                 f'</div>'
                 f'</div>'
             )
 
         output += (
-            f'<div class="message">'
+            f'<div class="message" '
+            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
             f'<div class="text-bot">'
-            f'<div class="message-body">{row[1]}</div>'
+            f'<div class="message-body">{converted_visible[1]}</div>'
+            f'{copy_button}'
             f'</div>'
             f'</div>'
         )
@@ -389,8 +411,8 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
 
 def chat_html_wrapper(history, name1, name2, mode, style, character, reset_cache=False):
     if mode == 'instruct':
-        return generate_instruct_html(history['visible'])
+        return generate_instruct_html(history)
     elif style == 'wpp':
-        return generate_chat_html(history['visible'], name1, name2)
+        return generate_chat_html(history, name1, name2)
     else:
-        return generate_cai_chat_html(history['visible'], name1, name2, style, character, reset_cache)
+        return generate_cai_chat_html(history, name1, name2, style, character, reset_cache)
