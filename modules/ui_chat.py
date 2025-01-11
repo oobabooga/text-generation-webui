@@ -183,20 +183,23 @@ def create_event_handlers():
     # Morph HTML updates instead of updating everything
     shared.gradio['display'].change(None, gradio('display'), None,
         js="""
-            (text) => {
-                morphdom(
-                    document.getElementById('chat').parentNode,
-                    '<div class="prose svelte-1ybaih5">' + text + '</div>',
-                    {
-                        onBeforeElUpdated: function(fromEl, toEl) {
-                            if (fromEl.isEqualNode(toEl)) {
-                                return false; // Skip identical nodes
-                            }
-                            return true; // Update only if nodes differ
+        (text) => {
+            morphdom(
+                document.getElementById('chat').parentNode,
+                '<div class="prose svelte-1ybaih5">' + text + '</div>',
+                {
+                    onBeforeElUpdated: function(fromEl, toEl) {
+                        if (fromEl.tagName === 'CODE' && fromEl.hasAttribute('data-highlighted') && fromEl.textContent === toEl.textContent) {
+                            toEl.className = fromEl.className;
+                            toEl.innerHTML = fromEl.innerHTML;
+                            toEl.setAttribute('data-highlighted', 'true');
+                            return false;
                         }
+                        return !fromEl.isEqualNode(toEl);
                     }
-                );
-            }
+                }
+            );
+        }
         """
     )
 
