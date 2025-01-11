@@ -1221,8 +1221,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 }
 
-
-
+/* ----------------------------------------------
+  Copy button for chat messages
+---------------------------------------------- */
 .message .text,
 .message .text-you,
 .message .text-bot,
@@ -1231,10 +1232,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: relative;
 }
 
+.message, .user-message, .assistant-message {
+    position: relative;
+}
 
-.message .copy-button,
-.user-message .copy-button,
-.assistant-message .copy-button {
+.copy-button {
     position: absolute;
     right: -40px;
     top: 0;
@@ -1246,27 +1248,28 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     opacity: 0;
     display: flex;
     align-items: center;
-    transition: opacity 0.2s; /* Smooth opacity transition */
+    transition: opacity 0.2s;
 }
 
-/* Show the button when the parent is hovered */
 .message:hover .copy-button,
 .user-message:hover .copy-button,
 .assistant-message:hover .copy-button {
     opacity: 1;
 }
 
-/* Default SVG color inside the button */
-.message .copy-button svg,
-.user-message .copy-button svg,
-.assistant-message .copy-button svg {
-    stroke: rgb(156 163 175); /* Default color for SVG */
-    transition: stroke 0.2s; /* Smooth color transition */
+.copy-button svg {
+    stroke: rgb(107 114 128);
+    transition: stroke 0.2s;
 }
 
-/* Change SVG color when the button itself is hovered */
-.message .copy-button:hover svg,
-.user-message .copy-button:hover svg,
-.assistant-message .copy-button:hover svg {
-    stroke: rgb(209 213 219); /* Hover color for SVG */
+.copy-button:hover svg {
+    stroke: rgb(55 65 81);
+}
+
+.dark .copy-button svg {
+    stroke: rgb(156 163 175);
+}
+
+.dark .copy-button:hover svg {
+    stroke: rgb(209 213 219);
 }
