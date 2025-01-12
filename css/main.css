@@ -1249,12 +1249,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     transition: opacity 0.2s;
 }
 
-.footer-button#copy-button {
+.footer-button.footer-copy-button {
     bottom: -23px;
     left: 0;
 }
 
-.footer-button#refresh-button {
+.footer-button.footer-refresh-button {
     bottom: -23px;
     left: 25px;
 }
