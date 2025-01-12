@@ -19,5 +19,5 @@ function copyToClipboard(element) {
 }
 
 function regenerateClick() {
-    document.getElementById("Regenerate").click();
+  document.getElementById("Regenerate").click();
 }
