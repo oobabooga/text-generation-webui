@@ -73,7 +73,6 @@ def fix_newlines(string):
 
 
 def replace_quotes(text):
-
     # Define a list of quote pairs (opening and closing), using HTML entities
     quote_pairs = [
         ('&quot;', '&quot;'),  # Double quotes
@@ -84,14 +83,22 @@ def replace_quotes(text):
         ('&lsquo;', '&rsquo;'),  # Alternative single quotes
         ('&#8220;', '&#8221;'),  # Unicode quotes (numeric entities)
         ('&#x201C;', '&#x201D;'),  # Unicode quotes (hex entities)
+        ('\u201C', '\u201D'),  # Unicode quotes (literal chars)
     ]
 
     # Create a regex pattern that matches any of the quote pairs, including newlines
     pattern = '|'.join(f'({re.escape(open_q)})(.*?)({re.escape(close_q)})' for open_q, close_q in quote_pairs)
 
     # Replace matched patterns with <q> tags, keeping original quotes
-    replaced_text = re.sub(pattern, lambda m: f'<q>{m.group(1)}{m.group(2)}{m.group(3)}</q>', text, flags=re.DOTALL)
+    def replacer(m):
+        # Find the first non-None group set
+        for i in range(1, len(m.groups()), 3):  # Step through each sub-pattern's groups
+            if m.group(i):  # If this sub-pattern matched
+                return f'<q>{m.group(i)}{m.group(i + 1)}{m.group(i + 2)}</q>'
 
+        return m.group(0)  # Fallback (shouldn't happen)
+
+    replaced_text = re.sub(pattern, replacer, text, flags=re.DOTALL)
     return replaced_text
 
 
