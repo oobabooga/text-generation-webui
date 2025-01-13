@@ -21,3 +21,27 @@ function copyToClipboard(element) {
 function regenerateClick() {
   document.getElementById("Regenerate").click();
 }
+
+function handleMorphdomUpdate(text) {
+  console.log("Morphing!");
+  morphdom(
+    document.getElementById("chat").parentNode,
+    "<div class=\"prose svelte-1ybaih5\">" + text + "</div>",
+    {
+      onBeforeElUpdated: function(fromEl, toEl) {
+        if (fromEl.tagName === "PRE" && fromEl.querySelector("code[data-highlighted]")) {
+          const fromCode = fromEl.querySelector("code");
+          const toCode = toEl.querySelector("code");
+
+          if (fromCode && toCode && fromCode.textContent === toCode.textContent) {
+            // If the <code> content is the same, preserve the entire <pre> element
+            toEl.className = fromEl.className;
+            toEl.innerHTML = fromEl.innerHTML;
+            return false; // Skip updating the <pre> element
+          }
+        }
+        return !fromEl.isEqualNode(toEl); // Update only if nodes differ
+      }
+    }
+  );
+}
