@@ -23,7 +23,6 @@ function regenerateClick() {
 }
 
 function handleMorphdomUpdate(text) {
-  console.log("Morphing!");
   morphdom(
     document.getElementById("chat").parentNode,
     "<div class=\"prose svelte-1ybaih5\">" + text + "</div>",
