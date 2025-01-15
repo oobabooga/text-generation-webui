@@ -147,10 +147,9 @@ const observer = new MutationObserver(function(mutations) {
 
   doSyntaxHighlighting();
 
-  if(!isScrolled) {
+  if (!isScrolled && targetElement.scrollTop !== targetElement.scrollHeight) {
     targetElement.scrollTop = targetElement.scrollHeight;
   }
-
 });
 
 // Configure the observer to watch for changes in the subtree and attributes
@@ -178,47 +177,30 @@ function isElementVisibleOnScreen(element) {
   );
 }
 
-function getVisibleMessagesIndexes() {
-  const elements = document.querySelectorAll(".message-body");
-  const visibleIndexes = [];
-
-  elements.forEach((element, index) => {
-    if (isElementVisibleOnScreen(element) && !element.hasAttribute("data-highlighted")) {
-      visibleIndexes.push(index);
-    }
-  });
-
-  return visibleIndexes;
-}
-
 function doSyntaxHighlighting() {
-  const indexes = getVisibleMessagesIndexes();
-  const elements = document.querySelectorAll(".message-body");
+  const messageBodies = document.querySelectorAll(".message-body");
 
-  if (indexes.length > 0) {
+  if (messageBodies.length > 0) {
     observer.disconnect();
 
-    indexes.forEach((index) => {
-      const element = elements[index];
+    messageBodies.forEach((messageBody) => {
+      if (isElementVisibleOnScreen(messageBody)) {
+        // Handle both code and math in a single pass through each message
+        const codeBlocks = messageBody.querySelectorAll("pre code:not([data-highlighted])");
+        codeBlocks.forEach((codeBlock) => {
+          hljs.highlightElement(codeBlock);
+          codeBlock.setAttribute("data-highlighted", "true");
+        });
 
-      // Tag this element to prevent it from being highlighted twice
-      element.setAttribute("data-highlighted", "true");
-
-      // Perform syntax highlighting
-      const codeBlocks = element.querySelectorAll("pre code");
-
-      codeBlocks.forEach((codeBlock) => {
-        hljs.highlightElement(codeBlock);
-      });
-
-      renderMathInElement(element, {
-        delimiters: [
-          { left: "$$", right: "$$", display: true },
-          { left: "$", right: "$", display: false },
-          { left: "\\(", right: "\\)", display: false },
-          { left: "\\[", right: "\\]", display: true },
-        ],
-      });
+        renderMathInElement(messageBody, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+            { left: "\\(", right: "\\)", display: false },
+            { left: "\\[", right: "\\]", display: true },
+          ],
+        });
+      }
     });
 
     observer.observe(targetElement, config);

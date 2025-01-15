@@ -3,7 +3,7 @@ import io
 
 import requests
 
-from modules import shared
+from modules import shared, ui
 from modules.logging_colors import logger
 
 original_open = open
@@ -55,8 +55,10 @@ def my_open(*args, **kwargs):
             '\n    <script src="file/js/katex/auto-render.min.js"></script>'
             '\n    <script src="file/js/highlightjs/highlight.min.js"></script>'
             '\n    <script src="file/js/highlightjs/highlightjs-copy.min.js"></script>'
+            '\n    <script src="file/js/morphdom/morphdom-umd.min.js"></script>'
             f'\n    <link id="highlight-css" rel="stylesheet" href="file/css/highlightjs/{"github-dark" if shared.settings["dark_theme"] else "github"}.min.css">'
             '\n    <script>hljs.addPlugin(new CopyButtonPlugin());</script>'
+            f'\n    <script>{ui.global_scope_js}</script>'
             '\n  </head>'
         )
 

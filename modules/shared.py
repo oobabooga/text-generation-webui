@@ -29,40 +29,40 @@ need_restart = False
 
 # UI defaults
 settings = {
-    'dark_theme': True,
     'show_controls': True,
     'start_with': '',
     'mode': 'chat-instruct',
     'chat_style': 'cai-chat',
+    'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
-    'preset': 'min_p',
-    'max_new_tokens': 512,
-    'max_new_tokens_min': 1,
-    'max_new_tokens_max': 4096,
-    'negative_prompt': '',
-    'seed': -1,
-    'truncation_length': 2048,
-    'max_tokens_second': 0,
-    'max_updates_second': 0,
-    'prompt_lookup_num_tokens': 0,
-    'static_cache': False,
-    'custom_stopping_strings': '',
-    'custom_token_bans': '',
-    'auto_max_new_tokens': False,
-    'ban_eos_token': False,
-    'add_bos_token': True,
-    'skip_special_tokens': True,
-    'stream': True,
     'character': 'Assistant',
     'name1': 'You',
     'user_bio': '',
     'custom_system_message': '',
+    'preset': 'min_p',
+    'max_new_tokens': 512,
+    'max_new_tokens_min': 1,
+    'max_new_tokens_max': 4096,
+    'prompt_lookup_num_tokens': 0,
+    'max_tokens_second': 0,
+    'max_updates_second': 0,
+    'auto_max_new_tokens': True,
+    'ban_eos_token': False,
+    'add_bos_token': True,
+    'skip_special_tokens': True,
+    'stream': True,
+    'static_cache': False,
+    'truncation_length': 2048,
+    'seed': -1,
+    'custom_stopping_strings': '',
+    'custom_token_bans': '',
+    'negative_prompt': '',
+    'autoload_model': False,
+    'dark_theme': True,
+    'default_extensions': [],
     'instruction_template_str': "{%- set ns = namespace(found=false) -%}\n{%- for message in messages -%}\n    {%- if message['role'] == 'system' -%}\n        {%- set ns.found = true -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if not ns.found -%}\n    {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\\n\\n' -}}\n{%- endif %}\n{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- '' + message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{-'### Instruction:\\n' + message['content'] + '\\n\\n'-}}\n        {%- else -%}\n            {{-'### Response:\\n' + message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{-'### Response:\\n'-}}\n{%- endif -%}",
     'chat_template_str': "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {%- if message['content'] -%}\n            {{- message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n        {%- if user_bio -%}\n            {{- user_bio + '\\n\\n' -}}\n        {%- endif -%}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}",
-    'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
-    'autoload_model': False,
-    'default_extensions': [],
 }
 
 default_settings = copy.deepcopy(settings)
@@ -86,7 +86,7 @@ group.add_argument('--idle-timeout', type=int, default=0, help='Unload model aft
 
 # Model loader
 group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2.')
+group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, HQQ, TensorRT-LLM.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
@@ -116,7 +116,7 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
 group.add_argument('--flash-attn', action='store_true', help='Use flash-attention.')
-group.add_argument('--tensorcores', action='store_true', help='NVIDIA only: use llama-cpp-python compiled with tensor cores support. This may increase performance on newer cards.')
+group.add_argument('--tensorcores', action='store_true', help='NVIDIA only: use llama-cpp-python compiled without GGML_CUDA_FORCE_MMQ. This may improve performance on newer cards.')
 group.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
@@ -203,11 +203,6 @@ group.add_argument('--multimodal-pipeline', type=str, default=None, help='The mu
 
 # Deprecated parameters
 group = parser.add_argument_group('Deprecated')
-group.add_argument('--model_type', type=str, help='DEPRECATED')
-group.add_argument('--pre_layer', type=int, nargs='+', help='DEPRECATED')
-group.add_argument('--checkpoint', type=str, help='DEPRECATED')
-group.add_argument('--monkey-patch', action='store_true', help='DEPRECATED')
-group.add_argument('--no_inject_fused_attention', action='store_true', help='DEPRECATED')
 group.add_argument('--cache_4bit', action='store_true', help='DEPRECATED')
 group.add_argument('--cache_8bit', action='store_true', help='DEPRECATED')
 group.add_argument('--chat-buttons', action='store_true', help='DEPRECATED')
@@ -228,14 +223,26 @@ for arg in sys.argv[1:]:
     if hasattr(args, arg):
         provided_arguments.append(arg)
 
-deprecated_args = []
+deprecated_args = [
+    'cache_4bit',
+    'cache_8bit',
+    'chat_buttons',
+    'triton',
+    'no_inject_fused_mlp',
+    'no_use_cuda_fp16',
+    'desc_act',
+    'disable_exllama',
+    'disable_exllamav2',
+    'wbits',
+    'groupsize'
+]
 
 
 def do_cmd_flags_warnings():
 
     # Deprecation warnings
     for k in deprecated_args:
-        if getattr(args, k):
+        if k in provided_arguments:
             logger.warning(f'The --{k} flag has been deprecated and will be removed soon. Please remove that flag.')
 
     # Security warnings
