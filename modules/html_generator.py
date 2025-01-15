@@ -352,7 +352,7 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
     )
 
     img_me = (
-        f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
+        f'<img src="file/cache/pfp_me.png?{name1}">'
         if Path("cache/pfp_me.png").exists() else ''
     )
 
