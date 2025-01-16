@@ -100,6 +100,8 @@ def create_ui():
                             shared.gradio['compute_dtype'] = gr.Dropdown(label="compute_dtype", choices=["bfloat16", "float16", "float32"], value=shared.args.compute_dtype, info='Used by load-in-4bit.')
                             shared.gradio['quant_type'] = gr.Dropdown(label="quant_type", choices=["nf4", "fp4"], value=shared.args.quant_type, info='Used by load-in-4bit.')
                             shared.gradio['attention_sink_size'] = gr.Number(label="attention_sink_size", value=shared.args.attention_sink_size, precision=0, info='StreamingLLM: number of sink tokens. Only used if the trimmed prompt doesn\'t share a prefix with the old prompt.')
+                            shared.gradio['draft_model'] = gr.Dropdown(choices=utils.get_available_models(), value=shared.args.draft_model, label="Draft Model", info='Draft Model for speculative decoding')
+                            shared.gradio['num_pred_tokens'] = gr.Number(label="num_pred_tokens", value=shared.args.num_pred_tokens, precision=0, info='Number of tokens to predict using prompt lookup decoding or speculative decoding. Set to 0 to disable')
                             shared.gradio['num_experts_per_token'] = gr.Number(label="Number of experts per token", value=shared.args.num_experts_per_token, info='Only applies to MoE models like Mixtral.')
 
                         with gr.Column():
