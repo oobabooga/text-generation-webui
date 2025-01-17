@@ -359,7 +359,7 @@ text-generation-webui
     └── llama-2-13b-chat.Q4_K_M.gguf
 ```
 
-* The remaining model types (like 16-bit transformers models and GPTQ models) are made of several files and must be placed in a subfolder. Example:
+* The remaining model types (like 16-bit Transformers models and EXL2 models) are made of several files and must be placed in a subfolder. Example:
 
 ```
 text-generation-webui
@@ -400,3 +400,7 @@ https://colab.research.google.com/github/oobabooga/text-generation-webui/blob/ma
 ## Acknowledgment
 
 In August 2023, [Andreessen Horowitz](https://a16z.com/) (a16z) provided a generous grant to encourage and support my independent work on this project. I am **extremely** grateful for their trust and recognition.
+
+## ⭐ Featured Patreon Supporters
+
+* [Become the first one!](https://www.patreon.com/oobabooga)
