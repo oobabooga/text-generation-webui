@@ -202,7 +202,19 @@ class LlamacppHF(PreTrainedModel):
             params["type_v"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
 
         Llama = llama_cpp_lib().Llama
-        model = Llama(**params)
+        try:
+            model = Llama(**params)
+        except Exception as e:
+            error_message = (
+                f"Failed loading the model. **This usually happens due to lack of memory**. Try these steps:\n"
+                f"1. Reduce the context length `n_ctx` (currently {shared.args.n_ctx})."
+                f"{' Try a lower value like 4096.' if shared.args.n_ctx > 4096 else '.'}"
+                "\n"
+                f"2. Lower the `n-gpu-layers` value (currently {shared.args.n_gpu_layers})."
+            )
+
+            raise type(e)(error_message) from e
+
         model.last_updated_index = -1
 
         return LlamacppHF(model, model_file)
