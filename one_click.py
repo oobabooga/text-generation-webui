@@ -388,6 +388,7 @@ def update_requirements(initial_installation=False, pull=True):
                 print_big_message(f"File '{file}' was updated during 'git pull'. Please run the script again.")
                 if before_pull_whl_lines != after_pull_whl_lines:
                     open('.wheels_changed_flag', 'w').close()
+
                 exit(1)
 
         wheels_changed = wheels_changed or (before_pull_whl_lines != after_pull_whl_lines)
