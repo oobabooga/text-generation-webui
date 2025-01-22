@@ -205,7 +205,7 @@ def convert_history(history):
             else:
                 chat_dialogue.append(['', current_reply])
         elif role == "system":
-            system_message = content
+            system_message += f"\n{content}" if system_message else content
 
     if not user_input_last:
         user_input = ""
