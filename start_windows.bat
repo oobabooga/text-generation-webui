@@ -41,12 +41,12 @@ if "%conda_exists%" == "F" (
 	mkdir "%INSTALL_DIR%"
 	call curl -Lk "%MINICONDA_DOWNLOAD_URL%" > "%INSTALL_DIR%\miniconda_installer.exe" || ( echo. && echo Miniconda failed to download. && goto end )
 
-	:: Try CertUtil first
+	@rem Try CertUtil first
 	for /f %%a in ('CertUtil -hashfile "%INSTALL_DIR%\miniconda_installer.exe" SHA256 ^| find /i /v " " ^| find /i "%MINICONDA_CHECKSUM%"') do (
 		set "output=%%a"
 	)
 
-	:: If CertUtil fails, try PowerShell
+	@rem If CertUtil fails, try PowerShell
 	if not defined output (
 		for /f %%a in ('powershell -Command "if((Get-FileHash \"%INSTALL_DIR%\miniconda_installer.exe\" -Algorithm SHA256).Hash -eq ''%MINICONDA_CHECKSUM%''){echo true}"') do (
 			set "output=%%a"
