@@ -28,7 +28,7 @@ def get_model_metadata(model):
     # Get settings from models/config.yaml and models/config-user.yaml
     settings = shared.model_config
     for pat in settings:
-        if re.match(pat.lower(), model.lower()):
+        if re.match(pat.lower(), Path(model).name.lower()):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
@@ -140,7 +140,7 @@ def get_model_metadata(model):
     # Apply user settings from models/config-user.yaml
     settings = shared.user_config
     for pat in settings:
-        if re.match(pat.lower(), model.lower()):
+        if re.match(pat.lower(), Path(model).name.lower()):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
@@ -242,7 +242,7 @@ def save_model_settings(model, state):
         return
 
     user_config = shared.load_user_config()
-    model_regex = model + '$'  # For exact matches
+    model_regex = Path(model).name + '$'  # For exact matches
     if model_regex not in user_config:
         user_config[model_regex] = {}
 
@@ -269,7 +269,7 @@ def save_instruction_template(model, template):
         return
 
     user_config = shared.load_user_config()
-    model_regex = model + '$'  # For exact matches
+    model_regex = Path(model).name + '$'  # For exact matches
     if model_regex not in user_config:
         user_config[model_regex] = {}
 
