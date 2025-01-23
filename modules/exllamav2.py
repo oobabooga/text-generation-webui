@@ -1,3 +1,4 @@
+import json
 import traceback
 from pathlib import Path
 
@@ -7,6 +8,9 @@ from exllamav2 import (
     ExLlamaV2Cache,
     ExLlamaV2Cache_8bit,
     ExLlamaV2Cache_Q4,
+    ExLlamaV2Cache_Q6,
+    ExLlamaV2Cache_Q8,
+    ExLlamaV2Cache_TP,
     ExLlamaV2Config,
     ExLlamaV2Tokenizer
 )
@@ -18,14 +22,6 @@ from modules.text_generation import get_max_prompt_length
 
 try:
     import flash_attn
-except ModuleNotFoundError:
-    logger.warning(
-        'You are running ExLlamaV2 without flash-attention. This will cause the VRAM usage '
-        'to be a lot higher than it could be.\n'
-        'Try installing flash-attention following the instructions here: '
-        'https://github.com/Dao-AILab/flash-attention#installation-and-features'
-    )
-    pass
 except Exception:
     logger.warning('Failed to load flash-attention due to the following error:\n')
     traceback.print_exc()
@@ -54,21 +50,38 @@ class Exllamav2Model:
 
         model = ExLlamaV2(config)
 
-        if not shared.args.autosplit:
-            split = None
-            if shared.args.gpu_split:
-                split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
+        split = None
+        if shared.args.gpu_split:
+            split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
 
+        if shared.args.enable_tp:
+            model.load_tp(split)
+        elif not shared.args.autosplit:
             model.load(split)
 
-        if shared.args.cache_8bit:
-            cache = ExLlamaV2Cache_8bit(model, lazy=shared.args.autosplit)
-        elif shared.args.cache_4bit:
-            cache = ExLlamaV2Cache_Q4(model, lazy=shared.args.autosplit)
-        else:
-            cache = ExLlamaV2Cache(model, lazy=shared.args.autosplit)
+        # Determine the correct cache type
+        kv_cache_type = shared.args.cache_type.lower()
 
-        if shared.args.autosplit:
+        if kv_cache_type == 'fp16':
+            cache_type = ExLlamaV2Cache
+        elif kv_cache_type == 'fp8':
+            cache_type = ExLlamaV2Cache_8bit
+        elif kv_cache_type == 'q8':
+            cache_type = ExLlamaV2Cache_Q8
+        elif kv_cache_type == 'q6':
+            cache_type = ExLlamaV2Cache_Q6
+        elif kv_cache_type == 'q4':
+            cache_type = ExLlamaV2Cache_Q4
+        else:
+            raise ValueError(f"Invalid cache type for ExLlamaV2: {cache_type}. Valid options are: fp16, fp8, q8, q6, q4.")
+
+        # Use TP if specified
+        if shared.args.enable_tp:
+            cache = ExLlamaV2Cache_TP(model, base=cache_type)
+        else:
+            cache = cache_type(model, lazy=shared.args.autosplit)
+
+        if shared.args.autosplit and not shared.args.enable_tp:
             model.load_autosplit(cache)
 
         tokenizer = ExLlamaV2Tokenizer(config)
@@ -110,6 +123,10 @@ class Exllamav2Model:
         settings.token_presence_penalty = state['presence_penalty']
 
         settings.temperature = state['temperature']
+        settings.smoothing_factor = state['smoothing_factor']
+        settings.min_temp = state['dynatemp_low'] if state['dynamic_temperature'] else 0
+        settings.max_temp = state['dynatemp_high'] if state['dynamic_temperature'] else 0
+        settings.temp_exponent = state['dynatemp_exponent']
         settings.top_k = state['top_k']
         settings.top_p = state['top_p']
         settings.top_a = state['top_a']
@@ -130,6 +147,29 @@ class Exllamav2Model:
             to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
             if len(to_ban) > 0:
                 settings.disallow_tokens(self.tokenizer, to_ban)
+
+        settings.dry_allowed_length = state['dry_allowed_length']
+        settings.dry_base = state['dry_base']
+        settings.dry_multiplier = state['dry_multiplier']
+
+        # Dry sequence breakers processing
+        if state['dry_multiplier'] > 0 and state['dry_sequence_breakers']:
+            dry_sequence_breakers = state['dry_sequence_breakers']
+
+            # Support both JSON array notation and comma-separated strings.
+            if not dry_sequence_breakers.startswith("["):
+                dry_sequence_breakers = "[" + dry_sequence_breakers + "]"
+
+            sequence_breaker_strings = json.loads(dry_sequence_breakers)
+            # Prefix with 'a' to get the correct encoding of the token at the end of a text.
+            sequence_breakers = {
+                self.encode(f"a{s}")[0, -1].item() for s in sequence_breaker_strings
+            }
+
+            settings.dry_sequence_breakers = sequence_breakers
+
+        settings.xtc_probability = state['xtc_probability']
+        settings.xtc_threshold = state['xtc_threshold']
 
         ids = self.tokenizer.encode(prompt, add_bos=state['add_bos_token'], encode_special_tokens=True)
         ids = ids[:, -get_max_prompt_length(state):]

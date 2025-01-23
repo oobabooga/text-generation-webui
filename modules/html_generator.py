@@ -9,10 +9,34 @@ import markdown
 from PIL import Image, ImageOps
 
 from modules import shared
+from modules.sane_markdown_lists import SaneListExtension
 from modules.utils import get_available_chat_styles
 
 # This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}
+
+
+def minify_css(css: str) -> str:
+    # Step 1: Remove comments
+    css = re.sub(r'/\*.*?\*/', '', css, flags=re.DOTALL)
+
+    # Step 2: Remove leading and trailing whitespace
+    css = re.sub(r'^[ \t]*|[ \t]*$', '', css, flags=re.MULTILINE)
+
+    # Step 3: Remove spaces after specific characters ({ : ; ,})
+    css = re.sub(r'([:{;,])\s+', r'\1', css)
+
+    # Step 4: Remove spaces before `{`
+    css = re.sub(r'\s+{', '{', css)
+
+    # Step 5: Remove empty lines
+    css = re.sub(r'^\s*$', '', css, flags=re.MULTILINE)
+
+    # Step 6: Collapse all lines into one
+    css = re.sub(r'\n', '', css)
+
+    return css
+
 
 with open(Path(__file__).resolve().parent / '../css/html_readable_style.css', 'r') as f:
     readable_css = f.read()
@@ -34,6 +58,12 @@ for k in chat_styles:
         style = match.group(1)
         chat_styles[k] = chat_styles.get(style, '') + '\n\n' + '\n'.join(lines[1:])
 
+# Reduce the size of the CSS sources above
+readable_css = minify_css(readable_css)
+instruct_css = minify_css(instruct_css)
+for k in chat_styles:
+    chat_styles[k] = minify_css(chat_styles[k])
+
 
 def fix_newlines(string):
     string = string.replace('\n', '\n\n')
@@ -43,7 +73,6 @@ def fix_newlines(string):
 
 
 def replace_quotes(text):
-
     # Define a list of quote pairs (opening and closing), using HTML entities
     quote_pairs = [
         ('&quot;', '&quot;'),  # Double quotes
@@ -54,19 +83,73 @@ def replace_quotes(text):
         ('&lsquo;', '&rsquo;'),  # Alternative single quotes
         ('&#8220;', '&#8221;'),  # Unicode quotes (numeric entities)
         ('&#x201C;', '&#x201D;'),  # Unicode quotes (hex entities)
+        ('\u201C', '\u201D'),  # Unicode quotes (literal chars)
     ]
 
     # Create a regex pattern that matches any of the quote pairs, including newlines
     pattern = '|'.join(f'({re.escape(open_q)})(.*?)({re.escape(close_q)})' for open_q, close_q in quote_pairs)
 
     # Replace matched patterns with <q> tags, keeping original quotes
-    replaced_text = re.sub(pattern, lambda m: f'<q>{m.group(1)}{m.group(2)}{m.group(3)}</q>', text, flags=re.DOTALL)
+    def replacer(m):
+        # Find the first non-None group set
+        for i in range(1, len(m.groups()), 3):  # Step through each sub-pattern's groups
+            if m.group(i):  # If this sub-pattern matched
+                return f'<q>{m.group(i)}{m.group(i + 1)}{m.group(i + 2)}</q>'
 
+        return m.group(0)  # Fallback (shouldn't happen)
+
+    replaced_text = re.sub(pattern, replacer, text, flags=re.DOTALL)
     return replaced_text
 
 
 def replace_blockquote(m):
     return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
+
+
+def add_long_list_class(html):
+    '''
+    Adds a long-list class to <ul> or <ol> containing long <li> items.
+    These will receive a smaller margin/padding in the CSS.
+    '''
+
+    # Helper function to check if a tag is within <pre> or <code>
+    def is_within_block(start_idx, end_idx, block_matches):
+        return any(start < start_idx < end or start < end_idx < end for start, end in block_matches)
+
+    # Find all <pre>...</pre> and <code>...</code> blocks
+    pre_blocks = [(m.start(), m.end()) for m in re.finditer(r'<pre.*?>.*?</pre>', html, re.DOTALL)]
+    code_blocks = [(m.start(), m.end()) for m in re.finditer(r'<code.*?>.*?</code>', html, re.DOTALL)]
+    all_blocks = pre_blocks + code_blocks
+
+    # Pattern to find <ul>...</ul> and <ol>...</ol> blocks and their contents
+    list_pattern = re.compile(r'(<[uo]l.*?>)(.*?)(</[uo]l>)', re.DOTALL)
+    li_pattern = re.compile(r'<li.*?>(.*?)</li>', re.DOTALL)
+
+    def process_list(match):
+        start_idx, end_idx = match.span()
+        if is_within_block(start_idx, end_idx, all_blocks):
+            return match.group(0)  # Leave the block unchanged if within <pre> or <code>
+
+        opening_tag = match.group(1)
+        list_content = match.group(2)
+        closing_tag = match.group(3)
+
+        # Find all list items within this list
+        li_matches = li_pattern.finditer(list_content)
+        has_long_item = any(len(li_match.group(1).strip()) > 224 for li_match in li_matches)
+
+        if has_long_item:
+            # Add class="long-list" to the opening tag if it doesn't already have a class
+            if 'class=' not in opening_tag:
+                opening_tag = opening_tag[:-1] + ' class="long-list">'
+            else:
+                # If there's already a class, append long-list to it
+                opening_tag = re.sub(r'class="([^"]*)"', r'class="\1 long-list"', opening_tag)
+
+        return opening_tag + list_content + closing_tag
+
+    # Process HTML and replace list blocks
+    return list_pattern.sub(process_list, html)
 
 
 @functools.lru_cache(maxsize=None)
@@ -104,6 +187,7 @@ def convert_to_markdown(string):
     result = ''
     is_code = False
     is_latex = False
+
     for line in string.split('\n'):
         stripped_line = line.strip()
 
@@ -122,11 +206,14 @@ def convert_to_markdown(string):
 
         result += line
 
-        # Don't add an extra \n for tables, code, or LaTeX
+        # Don't add an extra \n for code, LaTeX, or tables
         if is_code or is_latex or line.startswith('|'):
             result += '\n'
+        # Also don't add an extra \n for lists
+        elif stripped_line.startswith('-') or stripped_line.startswith('*') or stripped_line.startswith('+') or stripped_line.startswith('>') or re.match(r'\d+\.', stripped_line):
+            result += '  \n'
         else:
-            result += '\n\n'
+            result += '  \n'
 
     result = result.strip()
     if is_code:
@@ -145,18 +232,25 @@ def convert_to_markdown(string):
         result = re.sub(list_item_pattern, r'\g<1> ' + delete_str, result)
 
         # Convert to HTML using markdown
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables', SaneListExtension()])
 
         # Remove the delete string from the HTML output
         pos = html_output.rfind(delete_str)
         if pos > -1:
             html_output = html_output[:pos] + html_output[pos + len(delete_str):]
     else:
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        # Convert to HTML using markdown
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables', SaneListExtension()])
 
     # Unescape code blocks
     pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)
     html_output = pattern.sub(lambda x: html.unescape(x.group()), html_output)
+
+    # Unescape backslashes
+    html_output = html_output.replace('\\\\', '\\')
+
+    # Add "long-list" class to <ul> or <ol> containing a long <li> item
+    html_output = add_long_list_class(html_output)
 
     return html_output
 
@@ -208,34 +302,43 @@ def get_image_cache(path):
     return image_cache[path][1]
 
 
+copy_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-copy"><path d="M8 8m0 2a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2z"></path><path d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2"></path></svg>'''
+refresh_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-repeat"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg>'''
+copy_button = f'<button class="footer-button footer-copy-button" onclick="copyToClipboard(this)">{copy_svg}</button>'
+refresh_button = f'<button class="footer-button footer-refresh-button" onclick="regenerateClick()">{refresh_svg}</button>'
+
+
 def generate_instruct_html(history):
     output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
-    for i, _row in enumerate(history):
-        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
 
-        if row[0]:  # don't display empty user messages
-            output += f"""
-                  <div class="user-message">
-                    <div class="text">
-                      <div class="message-body">
-                        {row[0]}
-                      </div>
-                    </div>
-                  </div>
-                """
+    for i in range(len(history['visible'])):
+        row_visible = history['visible'][i]
+        row_internal = history['internal'][i]
+        converted_visible = [convert_to_markdown_wrapped(entry, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
-        output += f"""
-              <div class="assistant-message">
-                <div class="text">
-                  <div class="message-body">
-                    {row[1]}
-                  </div>
-                </div>
-              </div>
-            """
+        if converted_visible[0]:  # Don't display empty user messages
+            output += (
+                f'<div class="user-message" '
+                f'data-raw="{html.escape(row_internal[0], quote=True)}">'
+                f'<div class="text">'
+                f'<div class="message-body">{converted_visible[0]}</div>'
+                f'{copy_button}'
+                f'</div>'
+                f'</div>'
+            )
+
+        output += (
+            f'<div class="assistant-message" '
+            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
+            f'<div class="text">'
+            f'<div class="message-body">{converted_visible[1]}</div>'
+            f'{copy_button}'
+            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
+            f'</div>'
+            f'</div>'
+        )
 
     output += "</div></div>"
-
     return output
 
 
@@ -243,44 +346,46 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
     output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat"><div class="messages">'
 
     # We use ?character and ?time.time() to force the browser to reset caches
-    img_bot = f'<img src="file/cache/pfp_character_thumb.png?{character}" class="pfp_character">' if Path("cache/pfp_character_thumb.png").exists() else ''
-    img_me = f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">' if Path("cache/pfp_me.png").exists() else ''
+    img_bot = (
+        f'<img src="file/cache/pfp_character_thumb.png?{character}" class="pfp_character">'
+        if Path("cache/pfp_character_thumb.png").exists() else ''
+    )
 
-    for i, _row in enumerate(history):
-        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
+    img_me = (
+        f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
+        if Path("cache/pfp_me.png").exists() else ''
+    )
 
-        if row[0]:  # don't display empty user messages
-            output += f"""
-                  <div class="message">
-                    <div class="circle-you">
-                      {img_me}
-                    </div>
-                    <div class="text">
-                      <div class="username">
-                        {name1}
-                      </div>
-                      <div class="message-body">
-                        {row[0]}
-                      </div>
-                    </div>
-                  </div>
-                """
+    for i in range(len(history['visible'])):
+        row_visible = history['visible'][i]
+        row_internal = history['internal'][i]
+        converted_visible = [convert_to_markdown_wrapped(entry, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
-        output += f"""
-              <div class="message">
-                <div class="circle-bot">
-                  {img_bot}
-                </div>
-                <div class="text">
-                  <div class="username">
-                    {name2}
-                  </div>
-                  <div class="message-body">
-                    {row[1]}
-                  </div>
-                </div>
-              </div>
-            """
+        if converted_visible[0]:  # Don't display empty user messages
+            output += (
+                f'<div class="message" '
+                f'data-raw="{html.escape(row_internal[0], quote=True)}">'
+                f'<div class="circle-you">{img_me}</div>'
+                f'<div class="text">'
+                f'<div class="username">{name1}</div>'
+                f'<div class="message-body">{converted_visible[0]}</div>'
+                f'{copy_button}'
+                f'</div>'
+                f'</div>'
+            )
+
+        output += (
+            f'<div class="message" '
+            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
+            f'<div class="circle-bot">{img_bot}</div>'
+            f'<div class="text">'
+            f'<div class="username">{name2}</div>'
+            f'<div class="message-body">{converted_visible[1]}</div>'
+            f'{copy_button}'
+            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
+            f'</div>'
+            f'</div>'
+        )
 
     output += "</div></div>"
     return output
@@ -289,29 +394,32 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
 def generate_chat_html(history, name1, name2, reset_cache=False):
     output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat"><div class="messages">'
 
-    for i, _row in enumerate(history):
-        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
+    for i in range(len(history['visible'])):
+        row_visible = history['visible'][i]
+        row_internal = history['internal'][i]
+        converted_visible = [convert_to_markdown_wrapped(entry, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
-        if row[0]:  # don't display empty user messages
-            output += f"""
-              <div class="message">
-                <div class="text-you">
-                  <div class="message-body">
-                    {row[0]}
-                  </div>
-                </div>
-              </div>
-            """
+        if converted_visible[0]:  # Don't display empty user messages
+            output += (
+                f'<div class="message" '
+                f'data-raw="{html.escape(row_internal[0], quote=True)}">'
+                f'<div class="text-you">'
+                f'<div class="message-body">{converted_visible[0]}</div>'
+                f'{copy_button}'
+                f'</div>'
+                f'</div>'
+            )
 
-        output += f"""
-          <div class="message">
-            <div class="text-bot">
-              <div class="message-body">
-                {row[1]}
-              </div>
-            </div>
-          </div>
-        """
+        output += (
+            f'<div class="message" '
+            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
+            f'<div class="text-bot">'
+            f'<div class="message-body">{converted_visible[1]}</div>'
+            f'{copy_button}'
+            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
+            f'</div>'
+            f'</div>'
+        )
 
     output += "</div></div>"
     return output
@@ -319,8 +427,8 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
 
 def chat_html_wrapper(history, name1, name2, mode, style, character, reset_cache=False):
     if mode == 'instruct':
-        return generate_instruct_html(history['visible'])
+        return generate_instruct_html(history)
     elif style == 'wpp':
-        return generate_chat_html(history['visible'], name1, name2)
+        return generate_chat_html(history, name1, name2)
     else:
-        return generate_cai_chat_html(history['visible'], name1, name2, style, character, reset_cache)
+        return generate_cai_chat_html(history, name1, name2, style, character, reset_cache)

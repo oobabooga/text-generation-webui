@@ -5,7 +5,6 @@ import gradio as gr
 from modules.html_generator import get_image_cache
 from modules.shared import gradio
 
-
 params = {
     'items_per_page': 50,
     'open': False,
@@ -93,10 +92,11 @@ def generate_html():
 
 def filter_cards(filter_str=''):
     if filter_str == '':
-        return cards
+        return gr.Dataset(samples=cards)
 
     filter_upper = filter_str.upper()
-    return [k for k in cards if filter_upper in k[1].upper()]
+    filtered = [k for k in cards if filter_upper in k[1].upper()]
+    return gr.Dataset(samples=filtered)
 
 
 def select_character(evt: gr.SelectData):

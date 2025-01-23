@@ -4,30 +4,25 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import torch
+from torch.nn import CrossEntropyLoss
+from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
+from transformers.modeling_outputs import CausalLMOutputWithPast
+
 from exllamav2 import (
     ExLlamaV2,
     ExLlamaV2Cache,
     ExLlamaV2Cache_8bit,
     ExLlamaV2Cache_Q4,
+    ExLlamaV2Cache_Q6,
+    ExLlamaV2Cache_Q8,
+    ExLlamaV2Cache_TP,
     ExLlamaV2Config
 )
-from torch.nn import CrossEntropyLoss
-from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
-from transformers.modeling_outputs import CausalLMOutputWithPast
-
 from modules import shared
 from modules.logging_colors import logger
 
 try:
     import flash_attn
-except ModuleNotFoundError:
-    logger.warning(
-        'You are running ExLlamaV2 without flash-attention. This will cause the VRAM usage '
-        'to be a lot higher than it could be.\n'
-        'Try installing flash-attention following the instructions here: '
-        'https://github.com/Dao-AILab/flash-attention#installation-and-features'
-    )
-    pass
 except Exception:
     logger.warning('Failed to load flash-attention due to the following error:\n')
     traceback.print_exc()
@@ -42,21 +37,38 @@ class Exllamav2HF(PreTrainedModel):
 
         self.ex_model = ExLlamaV2(config)
 
-        if not shared.args.autosplit:
-            split = None
-            if shared.args.gpu_split:
-                split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
+        split = None
+        if shared.args.gpu_split:
+            split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
 
+        if shared.args.enable_tp:
+            self.ex_model.load_tp(split)
+        elif not shared.args.autosplit:
             self.ex_model.load(split)
 
-        if shared.args.cache_8bit:
-            self.ex_cache = ExLlamaV2Cache_8bit(self.ex_model, lazy=shared.args.autosplit)
-        elif shared.args.cache_4bit:
-            self.ex_cache = ExLlamaV2Cache_Q4(self.ex_model, lazy=shared.args.autosplit)
-        else:
-            self.ex_cache = ExLlamaV2Cache(self.ex_model, lazy=shared.args.autosplit)
+        # Determine the correct cache type
+        kv_cache_type = shared.args.cache_type.lower()
 
-        if shared.args.autosplit:
+        if kv_cache_type == 'fp16':
+            cache_type = ExLlamaV2Cache
+        elif kv_cache_type == 'fp8':
+            cache_type = ExLlamaV2Cache_8bit
+        elif kv_cache_type == 'q8':
+            cache_type = ExLlamaV2Cache_Q8
+        elif kv_cache_type == 'q6':
+            cache_type = ExLlamaV2Cache_Q6
+        elif kv_cache_type == 'q4':
+            cache_type = ExLlamaV2Cache_Q4
+        else:
+            raise ValueError(f"Invalid cache type for ExLlamaV2: {cache_type}. Valid options are: fp16, fp8, q8, q6, q4.")
+
+        # Use TP if specified
+        if shared.args.enable_tp:
+            self.ex_cache = ExLlamaV2Cache_TP(self.ex_model, base=cache_type)
+        else:
+            self.ex_cache = cache_type(self.ex_model, lazy=shared.args.autosplit)
+
+        if shared.args.autosplit and not shared.args.enable_tp:
             self.ex_model.load_autosplit(self.ex_cache)
 
         self.past_seq = None

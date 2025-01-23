@@ -7,45 +7,48 @@ from pydantic import BaseModel, Field
 
 class GenerationOptions(BaseModel):
     preset: str | None = Field(default=None, description="The name of a file under text-generation-webui/presets (without the .yaml extension). The sampling parameters that get overwritten by this option are the keys in the default_preset() function in modules/presets.py.")
-    min_p: float = 0
-    dynamic_temperature: bool = False
     dynatemp_low: float = 1
     dynatemp_high: float = 1
     dynatemp_exponent: float = 1
     smoothing_factor: float = 0
     smoothing_curve: float = 1
+    min_p: float = 0
     top_k: int = 0
-    repetition_penalty: float = 1
-    repetition_penalty_range: int = 1024
     typical_p: float = 1
-    tfs: float = 1
-    top_a: float = 0
+    xtc_threshold: float = 0.1
+    xtc_probability: float = 0
     epsilon_cutoff: float = 0
     eta_cutoff: float = 0
-    guidance_scale: float = 1
-    negative_prompt: str = ''
+    tfs: float = 1
+    top_a: float = 0
+    dry_multiplier: float = 0
+    dry_allowed_length: int = 2
+    dry_base: float = 1.75
+    repetition_penalty: float = 1
+    encoder_repetition_penalty: float = 1
+    no_repeat_ngram_size: int = 0
+    repetition_penalty_range: int = 1024
     penalty_alpha: float = 0
+    guidance_scale: float = 1
     mirostat_mode: int = 0
     mirostat_tau: float = 5
     mirostat_eta: float = 0.1
-    temperature_last: bool = False
-    do_sample: bool = True
-    seed: int = -1
-    encoder_repetition_penalty: float = 1
-    no_repeat_ngram_size: int = 0
-    dry_multiplier: float = 0
-    dry_base: float = 1.75
-    dry_allowed_length: int = 2
-    dry_sequence_breakers: str = '"\\n", ":", "\\"", "*"'
-    truncation_length: int = 0
-    max_tokens_second: int = 0
     prompt_lookup_num_tokens: int = 0
-    custom_token_bans: str = ""
-    sampler_priority: List[str] | str | None = Field(default=None, description="List of samplers where the first items will appear first in the stack. Example: [\"top_k\", \"temperature\", \"top_p\"].")
+    max_tokens_second: int = 0
+    do_sample: bool = True
+    dynamic_temperature: bool = False
+    temperature_last: bool = False
     auto_max_new_tokens: bool = False
     ban_eos_token: bool = False
     add_bos_token: bool = True
     skip_special_tokens: bool = True
+    static_cache: bool = False
+    truncation_length: int = 0
+    seed: int = -1
+    sampler_priority: List[str] | str | None = Field(default=None, description="List of samplers where the first items will appear first in the stack. Example: [\"top_k\", \"temperature\", \"top_p\"].")
+    custom_token_bans: str = ""
+    negative_prompt: str = ''
+    dry_sequence_breakers: str = '"\\n", ":", "\\"", "*"'
     grammar_string: str = ""
 
 

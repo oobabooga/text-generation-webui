@@ -154,6 +154,9 @@ def create_interface():
                 if ({str(shared.settings['dark_theme']).lower()}) {{
                     document.getElementsByTagName('body')[0].classList.add('dark');
                 }}
+                else {{
+                    document.getElementsByTagName('body')[0].classList.remove('dark');
+                }}
                 {js}
                 {ui.show_controls_js}
                 toggle_controls(x);

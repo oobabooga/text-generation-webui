@@ -1,30 +1,38 @@
-dark_theme: true
 show_controls: true
 start_with: ''
 mode: chat-instruct
 chat_style: cai-chat
+chat-instruct_command: |-
+  Continue the chat dialogue below. Write a single reply for the character "<|character|>".
+
+  <|prompt|>
 prompt-default: QA
 prompt-notebook: QA
+character: Assistant
+name1: You
+user_bio: ''
+custom_system_message: ''
 preset: min_p
 max_new_tokens: 512
 max_new_tokens_min: 1
 max_new_tokens_max: 4096
-negative_prompt: ''
-seed: -1
-truncation_length: 2048
+prompt_lookup_num_tokens: 0
 max_tokens_second: 0
 max_updates_second: 0
-prompt_lookup_num_tokens: 0
-custom_stopping_strings: ''
-custom_token_bans: ''
-auto_max_new_tokens: false
+auto_max_new_tokens: true
 ban_eos_token: false
 add_bos_token: true
 skip_special_tokens: true
 stream: true
-character: Assistant
-name1: You
-custom_system_message: ''
+static_cache: false
+truncation_length: 2048
+seed: -1
+custom_stopping_strings: ''
+custom_token_bans: ''
+negative_prompt: ''
+autoload_model: false
+dark_theme: true
+default_extensions: []
 instruction_template_str: |-
   {%- set ns = namespace(found=false) -%}
   {%- for message in messages -%}
@@ -66,11 +74,4 @@ chat_template_str: |-
           {%- endif -%}
       {%- endif -%}
   {%- endfor -%}
-chat-instruct_command: |-
-  Continue the chat dialogue below. Write a single reply for the character "<|character|>".
 
-  <|prompt|>
-autoload_model: false
-gallery-items_per_page: 50
-gallery-open: false
-default_extensions: []

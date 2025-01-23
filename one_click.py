@@ -16,9 +16,9 @@ import sys
 
 
 # Define the required PyTorch version
-TORCH_VERSION = "2.2.2"
-TORCHVISION_VERSION = "0.17.2"
-TORCHAUDIO_VERSION = "2.2.2"
+TORCH_VERSION = "2.4.1"
+TORCHVISION_VERSION = "0.19.1"
+TORCHAUDIO_VERSION = "2.4.1"
 
 # Environment
 script_dir = os.getcwd()
@@ -117,7 +117,7 @@ def update_pytorch():
     elif is_cuda:
         install_pytorch += "--index-url https://download.pytorch.org/whl/cu121"
     elif is_rocm:
-        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm5.6"
+        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm6.1"
     elif is_cpu:
         install_pytorch += "--index-url https://download.pytorch.org/whl/cpu"
     elif is_intel:
@@ -189,8 +189,11 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
             conda_sh_path = os.path.join(script_dir, "installer_files", "conda", "etc", "profile.d", "conda.sh")
             cmd = f'. "{conda_sh_path}" && conda activate "{conda_env_path}" && {cmd}'
 
+    # Set executable to None for Windows, bash for everything else
+    executable = None if is_windows() else 'bash'
+
     # Run shell commands
-    result = subprocess.run(cmd, shell=True, capture_output=capture_output, env=env)
+    result = subprocess.run(cmd, shell=True, capture_output=capture_output, env=env, executable=executable)
 
     # Assert the command ran successfully
     if assert_success and result.returncode != 0:
@@ -229,33 +232,45 @@ def get_user_choice(question, options_dict):
 
 
 def install_webui():
-
     # Ask the user for the GPU vendor
     if "GPU_CHOICE" in os.environ:
         choice = os.environ["GPU_CHOICE"].upper()
         print_big_message(f"Selected GPU choice \"{choice}\" based on the GPU_CHOICE environment variable.")
+
+        # Warn about changed meanings and handle old NVIDIA choice
+        if choice == "B":
+            print_big_message("Warning: GPU_CHOICE='B' now means 'NVIDIA (CUDA 11.8)' in the new version.")
+        elif choice == "C":
+            print_big_message("Warning: GPU_CHOICE='C' now means 'AMD' in the new version.")
+        elif choice == "D":
+            print_big_message("Warning: GPU_CHOICE='D' now means 'Apple M Series' in the new version.")
+        elif choice == "A" and "USE_CUDA118" in os.environ:
+            choice = "B" if os.environ.get("USE_CUDA118", "").lower() in ("yes", "y", "true", "1", "t", "on") else "A"
     else:
         choice = get_user_choice(
             "What is your GPU?",
             {
-                'A': 'NVIDIA',
-                'B': 'AMD (Linux/MacOS only. Requires ROCm SDK 5.6 on Linux)',
-                'C': 'Apple M Series',
-                'D': 'Intel Arc (IPEX)',
-                'N': 'None (I want to run models in CPU mode)'
+                'A': 'NVIDIA - CUDA 12.1 (recommended)',
+                'B': 'NVIDIA - CUDA 11.8 (legacy GPUs)',
+                'C': 'AMD - Linux/macOS only, requires ROCm 6.1',
+                'D': 'Apple M Series',
+                'E': 'Intel Arc (beta)',
+                'N': 'CPU mode'
             },
         )
 
+    # Convert choices to GPU names for compatibility
     gpu_choice_to_name = {
         "A": "NVIDIA",
-        "B": "AMD",
-        "C": "APPLE",
-        "D": "INTEL",
+        "B": "NVIDIA",
+        "C": "AMD",
+        "D": "APPLE",
+        "E": "INTEL",
         "N": "NONE"
     }
 
     selected_gpu = gpu_choice_to_name[choice]
-    use_cuda118 = "N"
+    use_cuda118 = (choice == "B")  # CUDA version is now determined by menu choice
 
     # Write a flag to CMD_FLAGS.txt for CPU mode
     if selected_gpu == "NONE":
@@ -264,18 +279,9 @@ def install_webui():
                 print_big_message("Adding the --cpu flag to CMD_FLAGS.txt.")
                 cmd_flags_file.write("\n--cpu\n")
 
-    # Check if the user wants CUDA 11.8
+    # Handle CUDA version display
     elif any((is_windows(), is_linux())) and selected_gpu == "NVIDIA":
-        if "USE_CUDA118" in os.environ:
-            use_cuda118 = "Y" if os.environ.get("USE_CUDA118", "").lower() in ("yes", "y", "true", "1", "t", "on") else "N"
-        else:
-            print("\nDo you want to use CUDA 11.8 instead of 12.1?\nOnly choose this option if your GPU is very old (Kepler or older).\n\nFor RTX and GTX series GPUs, say \"N\".\nIf unsure, say \"N\".\n")
-            use_cuda118 = input("Input (Y/N)> ").upper().strip('"\'').strip()
-            while use_cuda118 not in 'YN':
-                print("Invalid choice. Please try again.")
-                use_cuda118 = input("Input> ").upper().strip('"\'').strip()
-
-        if use_cuda118 == 'Y':
+        if use_cuda118:
             print("CUDA: 11.8")
         else:
             print("CUDA: 12.1")
@@ -294,7 +300,7 @@ def install_webui():
         else:
             install_pytorch += "--index-url https://download.pytorch.org/whl/cu121"
     elif selected_gpu == "AMD":
-        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm5.6"
+        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm6.1"
     elif selected_gpu in ["APPLE", "NONE"]:
         install_pytorch += "--index-url https://download.pytorch.org/whl/cpu"
     elif selected_gpu == "INTEL":
@@ -310,7 +316,7 @@ def install_webui():
     if selected_gpu == "INTEL":
         # Install oneAPI dependencies via conda
         print_big_message("Installing Intel oneAPI runtime libraries.")
-        run_cmd("conda install -y -c intel dpcpp-cpp-rt=2024.0 mkl-dpcpp=2024.0")
+        run_cmd("conda install -y -c https://software.repos.intel.com/python/conda/ -c conda-forge dpcpp-cpp-rt=2024.0 mkl-dpcpp=2024.0")
         # Install libuv required by Intel-patched torch
         run_cmd("conda install -y libuv")
 
@@ -326,7 +332,7 @@ def install_extensions_requirements():
     print_big_message("Installing extensions requirements.\nSome of these may fail on Windows.\nDon\'t worry if you see error messages, as they will not affect the main program.")
     extensions = get_extensions_names()
     for i, extension in enumerate(extensions):
-        print(f"\n\n--- [{i+1}/{len(extensions)}]: {extension}\n\n")
+        print(f"\n\n--- [{i + 1}/{len(extensions)}]: {extension}\n\n")
         extension_req_path = os.path.join("extensions", extension, "requirements.txt")
         run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
 
@@ -391,7 +397,7 @@ def update_requirements(initial_installation=False, pull=True):
         textgen_requirements = [
             req.replace('+cu121', '+cu118').replace('+cu122', '+cu118')
             for req in textgen_requirements
-            if "auto-gptq" not in req.lower() and "autoawq" not in req.lower()
+            if "autoawq" not in req.lower()
         ]
 
     if is_windows() and is_cuda118:  # No flash-attention on Windows for CUDA 11

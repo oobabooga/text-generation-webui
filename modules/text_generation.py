@@ -16,7 +16,7 @@ from transformers import (
 )
 
 import modules.shared as shared
-from modules import models
+from modules import models, sampler_hijack
 from modules.cache_utils import process_llamacpp_cache
 from modules.callbacks import (
     Iteratorize,
@@ -28,7 +28,9 @@ from modules.grammar.grammar_utils import initialize_grammar
 from modules.grammar.logits_process import GrammarConstrainedLogitsProcessor
 from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
-from modules.models import clear_torch_cache, load_model
+from modules.models import clear_torch_cache, get_device, load_model
+
+sampler_hijack.hijack_samplers()
 
 
 def generate_reply(*args, **kwargs):
@@ -79,7 +81,6 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             all_stop_strings += st
 
     shared.stop_everything = False
-    clear_torch_cache()
     seed = set_manual_seed(state['seed'])
     last_update = -1
     reply = ''
@@ -160,18 +161,12 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
 
     if shared.model.__class__.__name__ in ['LlamaCppModel', 'Exllamav2Model', 'TensorRTLLMModel'] or shared.args.cpu:
         return input_ids
-    elif shared.args.deepspeed:
-        import deepspeed
-        return input_ids.to(deepspeed.get_accelerator().current_device_name())
-    elif torch.backends.mps.is_available():
-        device = torch.device('mps')
-        return input_ids.to(device)
-    elif is_torch_xpu_available():
-        return input_ids.to("xpu:0")
-    elif is_torch_npu_available():
-        return input_ids.to("npu:0")
     else:
-        return input_ids.cuda()
+        device = get_device()
+        if device:
+            return input_ids.to(device)
+
+        return input_ids
 
 
 def decode(output_ids, skip_special_tokens=True):
@@ -274,7 +269,12 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
     if (hasattr(shared.tokenizer, 'convert_ids_to_tokens') and len(output_ids) > starting_from) and not reply.startswith(' '):
         first_token = shared.tokenizer.convert_ids_to_tokens(int(output_ids[starting_from]))
         if isinstance(first_token, (bytes,)):
-            first_token = first_token.decode('utf8')
+            # try to decode the bytes to a string
+            # if it fails, which means it's not a string in this turn, just ignore it
+            try:
+                first_token = first_token.decode('utf8')
+            except UnicodeDecodeError:
+                first_token = ''
 
         if first_token.startswith('▁'):
             reply = ' ' + reply
@@ -283,28 +283,65 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
 
 
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
+    if shared.args.loader == 'Transformers':
+        clear_torch_cache()
+
     generate_params = {}
-    for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynatemp_low', 'dynatemp_high', 'dynatemp_exponent', 'smoothing_factor', 'smoothing_curve', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'dry_multiplier', 'dry_base', 'dry_allowed_length', 'dry_sequence_breakers']:
+    for k in [
+        'temperature',
+        'dynatemp_low',
+        'dynatemp_high',
+        'dynatemp_exponent',
+        'smoothing_factor',
+        'smoothing_curve',
+        'min_p',
+        'top_p',
+        'top_k',
+        'typical_p',
+        'xtc_threshold',
+        'xtc_probability',
+        'tfs',
+        'top_a',
+        'dry_multiplier',
+        'dry_allowed_length',
+        'dry_base',
+        'repetition_penalty',
+        'frequency_penalty',
+        'presence_penalty',
+        'encoder_repetition_penalty',
+        'no_repeat_ngram_size',
+        'repetition_penalty_range',
+        'penalty_alpha',
+        'guidance_scale',
+        'mirostat_mode',
+        'mirostat_tau',
+        'mirostat_eta',
+        'max_new_tokens',
+        'do_sample',
+        'dynamic_temperature',
+        'temperature_last',
+        'dry_sequence_breakers',
+    ]:
         if k in state:
             generate_params[k] = state[k]
-
-    if isinstance(state['sampler_priority'], list) and len(state['sampler_priority']) > 0:
-        generate_params['sampler_priority'] = state['sampler_priority']
-    elif isinstance(state['sampler_priority'], str) and state['sampler_priority'].strip() != '':
-        generate_params['sampler_priority'] = [x.strip() for x in state['sampler_priority'].replace('\n', ',').split(',') if x.strip()]
-
-    if state['negative_prompt'] != '':
-        generate_params['negative_prompt_ids'] = encode(state['negative_prompt'])
-
-    if state['prompt_lookup_num_tokens'] > 0:
-        generate_params['prompt_lookup_num_tokens'] = state['prompt_lookup_num_tokens']
 
     for k in ['epsilon_cutoff', 'eta_cutoff']:
         if state[k] > 0:
             generate_params[k] = state[k] * 1e-4
 
+    if state['prompt_lookup_num_tokens'] > 0:
+        generate_params['prompt_lookup_num_tokens'] = state['prompt_lookup_num_tokens']
+
     if state['ban_eos_token']:
         generate_params['suppress_tokens'] = [shared.tokenizer.eos_token_id]
+
+    if state['static_cache']:
+        generate_params['cache_implementation'] = 'static'
+
+    if isinstance(state['sampler_priority'], list) and len(state['sampler_priority']) > 0:
+        generate_params['sampler_priority'] = state['sampler_priority']
+    elif isinstance(state['sampler_priority'], str) and state['sampler_priority'].strip() != '':
+        generate_params['sampler_priority'] = [x.strip() for x in state['sampler_priority'].replace('\n', ',').split(',') if x.strip()]
 
     if state['custom_token_bans']:
         to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
@@ -314,6 +351,9 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
             else:
                 generate_params['suppress_tokens'] = to_ban
 
+    if state['negative_prompt'] != '':
+        generate_params['negative_prompt_ids'] = encode(state['negative_prompt'])
+
     generate_params.update({'use_cache': not shared.args.no_cache})
     if shared.args.deepspeed:
         generate_params.update({'synced_gpus': True})
@@ -321,7 +361,6 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     # Encode the input
     input_ids = encode(question, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
     output = input_ids[0]
-    cuda = not any((shared.args.cpu, shared.args.deepspeed))
     if state['auto_max_new_tokens']:
         generate_params['max_new_tokens'] = state['truncation_length'] - input_ids.shape[-1]
 
@@ -376,8 +415,9 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         if not state['stream']:
             with torch.no_grad():
                 output = shared.model.generate(**generate_params)[0]
-                if cuda:
-                    output = output.cuda()
+                device = get_device()
+                if device:
+                    output = output.to(device)
 
             starting_from = 0 if shared.is_seq2seq else len(input_ids[0])
             yield get_reply_from_output_ids(output, state, starting_from=starting_from)
@@ -388,7 +428,6 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
             def generate_with_callback(callback=None, *args, **kwargs):
                 kwargs['stopping_criteria'].append(Stream(callback_func=callback))
-                clear_torch_cache()
                 with torch.no_grad():
                     shared.model.generate(**kwargs)
 
