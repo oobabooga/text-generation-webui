@@ -557,12 +557,6 @@ def calc_trainable_parameters(model):
 
 def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str, precize_slicing_overlap: bool, add_eos_token_type: str, save_steps_under_loss: float, add_bos_token: bool, training_projection: str,sliding_window:bool,warmup_ratio:float, grad_accumulation: int,neft_noise_alpha:float):
 
-    if shared.args.monkey_patch:
-        from alpaca_lora_4bit.monkeypatch.peft_tuners_lora_monkey_patch import (
-            replace_peft_model_with_int4_lora_model
-        )
-        replace_peft_model_with_int4_lora_model()
-    
     global train_log_graph
     global WANT_INTERRUPT
     WANT_INTERRUPT = False
@@ -599,10 +593,6 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             logger.warning(f"LoRA training has only currently been validated for LLaMA, OPT, GPT-J, and GPT-NeoX models. (Found model type: {model_type})")
 
         time.sleep(5)
-
-    if shared.args.loader == 'GPTQ-for-LLaMa' and not shared.args.monkey_patch:
-        yield "LoRA training with GPTQ-for-LLaMa requires loading with `--monkey-patch`", zero_pd
-        return
 
     if cutoff_len <= 0 or micro_batch_size <= 0 or actual_lr <= 0 or lora_rank <= 0 or lora_alpha <= 0:
         yield "Cannot input zeroes.", zero_pd
@@ -864,15 +854,6 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     except:
         yield traceback.format_exc().replace('\n', '\n\n'), zero_pd
         return
-
-    if shared.args.monkey_patch:
-        from alpaca_lora_4bit.autograd_4bit import Autograd4bitQuantLinear
-        from alpaca_lora_4bit.models import Linear4bitLt
-        for _, m in lora_model.named_modules():
-            if isinstance(m, Autograd4bitQuantLinear) or isinstance(m, Linear4bitLt):
-                if m.is_v1_model:
-                    m.zeros = m.zeros.half()
-                m.scales = m.scales.half()
 
     class Tracked():
         def __init__(self):
