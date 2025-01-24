@@ -30,8 +30,12 @@ from modules.text_generation import (
 )
 from modules.utils import delete_file, get_available_characters, save_file
 
-# Copied from the Transformers library
+def strftime_now(format):
+    return datetime.now().strftime(format)
+
 jinja_env = ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
+
+jinja_env.globals["strftime_now"] = strftime_now
 
 
 def str_presenter(dumper, data):
