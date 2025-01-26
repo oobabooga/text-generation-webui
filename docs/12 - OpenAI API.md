@@ -193,7 +193,7 @@ while True:
     assistant_message = ''
     for event in client.events():
         payload = json.loads(event.data)
-        chunk = payload['choices'][0]['message']['content']
+        chunk = payload['choices'][0]['delta']['content']
         assistant_message += chunk
         print(chunk, end='')
 
