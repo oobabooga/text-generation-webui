@@ -359,19 +359,16 @@ def update_requirements(initial_installation=False, pull=True):
 
     # Load state from JSON file
     state_file = '.installer_state.json'
+    current_commit = get_current_commit()
     wheels_changed = False
     if os.path.exists(state_file):
         with open(state_file, 'r') as f:
             last_state = json.load(f)
 
-        wheels_changed = last_state.get('wheels_changed', False)
+        if 'wheels_changed' in last_state or last_state.get('last_commit') != current_commit:
+            wheels_changed = True
     else:
         last_state = {}
-
-    # Check wheels changed from state file and commit differences
-    current_commit = get_current_commit()
-    if last_state.get('last_commit') != current_commit:
-        wheels_changed = True
 
     if pull:
         # Read .whl lines before pulling
@@ -407,10 +404,9 @@ def update_requirements(initial_installation=False, pull=True):
                     wheels_changed = True
 
                 # Save state before exiting
-                current_state = {
-                    'last_commit': current_commit,
-                    'wheels_changed': wheels_changed
-                }
+                current_state = {'last_commit': current_commit}
+                if wheels_changed:
+                    current_state['wheels_changed'] = True
 
                 with open(state_file, 'w') as f:
                     json.dump(current_state, f)
@@ -420,10 +416,9 @@ def update_requirements(initial_installation=False, pull=True):
         wheels_changed = wheels_changed or (before_pull_whl_lines != after_pull_whl_lines)
 
     # Save current state
-    current_state = {
-        'last_commit': current_commit,
-        'wheels_changed': wheels_changed
-    }
+    current_state = {'last_commit': current_commit}
+    if wheels_changed:
+        current_state['wheels_changed'] = True
 
     with open(state_file, 'w') as f:
         json.dump(current_state, f)
