@@ -365,7 +365,7 @@ def update_requirements(initial_installation=False, pull=True):
         with open(state_file, 'r') as f:
             last_state = json.load(f)
 
-        if 'wheels_changed' in last_state or last_state.get('last_commit') != current_commit:
+        if 'wheels_changed' in last_state or last_state.get('last_installed_commit') != current_commit:
             wheels_changed = True
     else:
         last_state = {}
@@ -396,15 +396,15 @@ def update_requirements(initial_installation=False, pull=True):
             with open(requirements_file, 'r') as f:
                 after_pull_whl_lines = [line for line in f if '.whl' in line]
 
-        # Check for changes
+        wheels_changed = wheels_changed or (before_pull_whl_lines != after_pull_whl_lines)
+
+        # Check for changes to installer files
         for file in files_to_check:
             if before_hashes[file] != after_hashes[file]:
                 print_big_message(f"File '{file}' was updated during 'git pull'. Please run the script again.")
-                if before_pull_whl_lines != after_pull_whl_lines:
-                    wheels_changed = True
 
                 # Save state before exiting
-                current_state = {'last_commit': current_commit}
+                current_state = {}
                 if wheels_changed:
                     current_state['wheels_changed'] = True
 
@@ -413,13 +413,8 @@ def update_requirements(initial_installation=False, pull=True):
 
                 exit(1)
 
-        wheels_changed = wheels_changed or (before_pull_whl_lines != after_pull_whl_lines)
-
     # Save current state
-    current_state = {'last_commit': current_commit}
-    if wheels_changed:
-        current_state['wheels_changed'] = True
-
+    current_state = {'last_installed_commit': current_commit}
     with open(state_file, 'w') as f:
         json.dump(current_state, f)
 
