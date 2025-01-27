@@ -400,7 +400,7 @@ def update_requirements(initial_installation=False, pull=True):
     if not initial_installation:
         update_pytorch()
 
-    print_big_message(f"Using requirements file: {requirements_file}")
+    print_big_message(f"Installing webui requirements from file: {requirements_file}")
     print(f"TORCH: {torver}\n")
 
     # Prepare the requirements file
