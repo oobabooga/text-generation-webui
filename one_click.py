@@ -367,8 +367,6 @@ def update_requirements(initial_installation=False, pull=True):
 
         if 'wheels_changed' in last_state or last_state.get('last_installed_commit') != current_commit:
             wheels_changed = True
-    else:
-        last_state = {}
 
     if pull:
         # Read .whl lines before pulling
