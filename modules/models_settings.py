@@ -11,9 +11,6 @@ def get_fallback_settings():
     return {
         'bf16': False,
         'use_eager_attention': False,
-        'wbits': 'None',
-        'groupsize': 'None',
-        'desc_act': False,
         'max_seq_len': 2048,
         'n_ctx': 2048,
         'rope_freq_base': 0,
@@ -111,26 +108,6 @@ def get_model_metadata(model):
             if 'architectures' in metadata and isinstance(metadata['architectures'], list) and 'Gemma2ForCausalLM' in metadata['architectures']:
                 model_settings['use_eager_attention'] = True
 
-            # Read GPTQ metadata for old GPTQ loaders
-            if 'quantization_config' in metadata and metadata['quantization_config'].get('quant_method', '') != 'exl2':
-                if 'bits' in metadata['quantization_config']:
-                    model_settings['wbits'] = metadata['quantization_config']['bits']
-                if 'group_size' in metadata['quantization_config']:
-                    model_settings['groupsize'] = metadata['quantization_config']['group_size']
-                if 'desc_act' in metadata['quantization_config']:
-                    model_settings['desc_act'] = metadata['quantization_config']['desc_act']
-
-        # Read AutoGPTQ metadata
-        path = Path(f'{shared.args.model_dir}/{model}/quantize_config.json')
-        if path.exists():
-            metadata = json.loads(open(path, 'r', encoding='utf-8').read())
-            if 'bits' in metadata:
-                model_settings['wbits'] = metadata['bits']
-            if 'group_size' in metadata:
-                model_settings['groupsize'] = metadata['group_size']
-            if 'desc_act' in metadata:
-                model_settings['desc_act'] = metadata['desc_act']
-
     # Try to find the Jinja instruct template
     path = Path(f'{shared.args.model_dir}/{model}') / 'tokenizer_config.json'
     if path.exists():
@@ -178,7 +155,7 @@ def infer_loader(model_name, model_settings):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     if not path_to_model.exists():
         loader = None
-    elif (path_to_model / 'quantize_config.json').exists() or ('wbits' in model_settings and isinstance(model_settings['wbits'], int) and model_settings['wbits'] > 0):
+    elif (path_to_model / 'quantize_config.json').exists():  # Old GPTQ metadata file
         loader = 'ExLlamav2_HF'
     elif len(list(path_to_model.glob('*.gguf'))) > 0 and path_to_model.is_dir() and (path_to_model / 'tokenizer_config.json').exists():
         loader = 'llamacpp_HF'
@@ -215,16 +192,11 @@ def update_model_parameters(state, initial=False):
         if initial and element in shared.provided_arguments:
             continue
 
-        # Setting null defaults
-        if element in ['wbits', 'groupsize'] and value == 'None':
-            value = vars(shared.args_defaults)[element]
-        elif element in ['cpu_memory'] and value == 0:
+        if element in ['cpu_memory'] and value == 0:
             value = vars(shared.args_defaults)[element]
 
         # Making some simple conversions
-        if element in ['wbits', 'groupsize']:
-            value = int(value)
-        elif element == 'cpu_memory' and value is not None:
+        if element == 'cpu_memory' and value is not None:
             value = f"{value}MiB"
 
         setattr(shared.args, element, value)
@@ -251,15 +223,12 @@ def apply_model_settings_to_state(model, state):
         loader = model_settings.pop('loader')
 
         # If the user is using an alternative loader for the same model type, let them keep using it
-        if not (loader == 'ExLlamav2_HF' and state['loader'] in ['ExLlamav2', 'AutoGPTQ']):
+        if not (loader == 'ExLlamav2_HF' and state['loader'] in ['ExLlamav2']):
             state['loader'] = loader
 
     for k in model_settings:
         if k in state:
-            if k in ['wbits', 'groupsize']:
-                state[k] = str(model_settings[k])
-            else:
-                state[k] = model_settings[k]
+            state[k] = model_settings[k]
 
     return state
 

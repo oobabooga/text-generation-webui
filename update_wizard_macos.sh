@@ -23,4 +23,4 @@ source "$CONDA_ROOT_PREFIX/etc/profile.d/conda.sh" # otherwise conda complains a
 conda activate "$INSTALL_ENV_DIR"
 
 # update installer env
-python one_click.py --update-wizard && echo -e "\nDone!"
+python one_click.py --update-wizard && echo -e "\nHave a great day!"

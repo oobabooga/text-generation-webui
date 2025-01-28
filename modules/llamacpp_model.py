@@ -10,6 +10,35 @@ from modules.llama_cpp_python_hijack import llama_cpp_lib
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
 
+llamacpp_quant_mapping = {
+    'f32': 0,
+    'fp16': 1,
+    'q4_0': 2,
+    'q4_1': 3,
+    'q5_0': 6,
+    'q5_1': 7,
+    'q8_0': 8,
+    'q8_1': 9,
+    'q2_k': 10,
+    'q3_k': 11,
+    'q4_k': 12,
+    'q5_k': 13,
+    'q6_k': 14,
+    'q8_k': 15,
+    'iq4_nl': 20,
+    'bf16': 30,
+}
+
+llamacpp_valid_cache_types = {'fp16', 'q8_0', 'q4_0'}
+
+
+def get_llamacpp_cache_type_for_string(quant_type: str):
+    quant_type = quant_type.lower()
+    if quant_type in llamacpp_valid_cache_types:
+        return llamacpp_quant_mapping[quant_type]
+    else:
+        raise ValueError(f"Invalid cache type for llama.cpp: {quant_type}. Valid options are: fp16, q8_0, q4_0.")
+
 
 def ban_eos_logits_processor(eos_token, input_ids, logits):
     logits[eos_token] = -float('inf')
@@ -75,14 +104,23 @@ class LlamaCppModel:
             'flash_attn': shared.args.flash_attn
         }
 
-        if shared.args.cache_4bit:
-            params["type_k"] = 2
-            params["type_v"] = 2
-        elif shared.args.cache_8bit:
-            params["type_k"] = 8
-            params["type_v"] = 8
+        if shared.args.cache_type != 'fp16':
+            params["type_k"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
+            params["type_v"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
 
-        result.model = Llama(**params)
+        try:
+            result.model = Llama(**params)
+        except Exception as e:
+            error_message = (
+                f"Failed loading the model. **This usually happens due to lack of memory**. Try these steps:\n"
+                f"1. Reduce the context length `n_ctx` (currently {shared.args.n_ctx})."
+                f"{' Try a lower value like 4096.' if shared.args.n_ctx > 4096 else '.'}"
+                "\n"
+                f"2. Lower the `n-gpu-layers` value (currently {shared.args.n_gpu_layers})."
+            )
+
+            raise type(e)(error_message) from e
+
         if cache_capacity > 0:
             result.model.set_cache(LlamaCache(capacity_bytes=cache_capacity))
 
@@ -96,7 +134,14 @@ class LlamaCppModel:
         return self.model.tokenize(string)
 
     def decode(self, ids, **kwargs):
-        return self.model.detokenize(ids).decode('utf-8')
+        detokenized = self.model.detokenize(ids)
+        try:
+            # Attempt strict UTF-8 decoding first
+            return detokenized.decode('utf-8', 'strict')
+        except UnicodeDecodeError as e:
+            # Log the error and fall back to UTF-8 with replacement
+            logger.warning(f"Invalid UTF-8 in detokenized output. Using replacement characters.\n{e}")
+            return detokenized.decode('utf-8', 'replace')
 
     def get_logits(self, tokens):
         self.model.reset()
@@ -136,7 +181,7 @@ class LlamaCppModel:
             prompt=prompt,
             max_tokens=state['max_new_tokens'],
             temperature=state['temperature'],
-            top_p=state['top_p'],
+            top_p=state['top_p'] if state['top_p'] < 1 else 0.999,
             min_p=state['min_p'],
             typical_p=state['typical_p'],
             frequency_penalty=state['frequency_penalty'],

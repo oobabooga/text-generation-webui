@@ -4,13 +4,13 @@ A Gradio web UI for Large Language Models.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
-|![Image1](https://github.com/oobabooga/screenshots/raw/main/print_instruct.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/print_chat.png) |
+|![Image1](https://github.com/oobabooga/screenshots/raw/main/AFTER-INSTRUCT.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/AFTER-CHAT.png) |
 |:---:|:---:|
-|![Image1](https://github.com/oobabooga/screenshots/raw/main/print_default.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/print_parameters.png) |
+|![Image1](https://github.com/oobabooga/screenshots/raw/main/AFTER-DEFAULT.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/AFTER-PARAMETERS.png) |
 
 ## Features
 
-- Supports multiple text generation backends in one UI/API, including [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp), and [ExLlamaV2](https://github.com/turboderp/exllamav2). [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [HQQ](https://github.com/mobiusml/hqq), and [AQLM](https://github.com/Vahe1994/AQLM) are also supported but you need to install them manually.
+- Supports multiple text generation backends in one UI/API, including [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp), and [ExLlamaV2](https://github.com/turboderp-org/exllamav2). [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) is supported via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile), and the Transformers loader is compatible with libraries like [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [HQQ](https://github.com/mobiusml/hqq), and [AQLM](https://github.com/Vahe1994/AQLM), but they must be installed manually.
 - OpenAI-compatible API with Chat and Completions endpoints – see [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
 - Automatic prompt formatting using Jinja2 templates.
 - Three chat modes: `instruct`, `chat-instruct`, and `chat`, with automatic prompt templates in `chat-instruct`.
@@ -202,18 +202,18 @@ List of command-line flags
 
 ```txt
 usage: server.py [-h] [--multi-user] [--character CHARACTER] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--model-menu] [--settings SETTINGS]
-                 [--extensions EXTENSIONS [EXTENSIONS ...]] [--verbose] [--chat-buttons] [--idle-timeout IDLE_TIMEOUT] [--loader LOADER] [--cpu] [--auto-devices]
-                 [--gpu-memory GPU_MEMORY [GPU_MEMORY ...]] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code]
-                 [--force-safetensors] [--no_use_fast] [--use_flash_attention_2] [--use_eager_attention] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE]
-                 [--flash-attn] [--tensorcores] [--n_ctx N_CTX] [--threads THREADS] [--threads-batch THREADS_BATCH] [--no_mul_mat_q] [--n_batch N_BATCH] [--no-mmap] [--mlock]
-                 [--n-gpu-layers N_GPU_LAYERS] [--tensor_split TENSOR_SPLIT] [--numa] [--logits_all] [--no_offload_kqv] [--cache-capacity CACHE_CAPACITY] [--row_split] [--streaming-llm]
-                 [--attention-sink-size ATTENTION_SINK_SIZE] [--tokenizer-dir TOKENIZER_DIR] [--gpu-split GPU_SPLIT] [--autosplit] [--max_seq_len MAX_SEQ_LEN] [--cfg-cache] [--no_flash_attn]
-                 [--no_xformers] [--no_sdpa] [--cache_8bit] [--cache_4bit] [--num_experts_per_token NUM_EXPERTS_PER_TOKEN] [--triton] [--no_inject_fused_mlp] [--no_use_cuda_fp16] [--desc_act]
-                 [--disable_exllama] [--disable_exllamav2] [--wbits WBITS] [--groupsize GROUPSIZE] [--hqq-backend HQQ_BACKEND] [--cpp-runner] [--deepspeed] [--nvme-offload-dir NVME_OFFLOAD_DIR]
+                 [--extensions EXTENSIONS [EXTENSIONS ...]] [--verbose] [--idle-timeout IDLE_TIMEOUT] [--loader LOADER] [--cpu] [--auto-devices] [--gpu-memory GPU_MEMORY [GPU_MEMORY ...]]
+                 [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast]
+                 [--use_flash_attention_2] [--use_eager_attention] [--torch-compile] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE] [--flash-attn]
+                 [--tensorcores] [--n_ctx N_CTX] [--threads THREADS] [--threads-batch THREADS_BATCH] [--no_mul_mat_q] [--n_batch N_BATCH] [--no-mmap] [--mlock] [--n-gpu-layers N_GPU_LAYERS]
+                 [--tensor_split TENSOR_SPLIT] [--numa] [--logits_all] [--no_offload_kqv] [--cache-capacity CACHE_CAPACITY] [--row_split] [--streaming-llm] [--attention-sink-size ATTENTION_SINK_SIZE]
+                 [--tokenizer-dir TOKENIZER_DIR] [--gpu-split GPU_SPLIT] [--autosplit] [--max_seq_len MAX_SEQ_LEN] [--cfg-cache] [--no_flash_attn] [--no_xformers] [--no_sdpa]
+                 [--num_experts_per_token NUM_EXPERTS_PER_TOKEN] [--enable_tp] [--hqq-backend HQQ_BACKEND] [--cpp-runner] [--cache_type CACHE_TYPE] [--deepspeed] [--nvme-offload-dir NVME_OFFLOAD_DIR]
                  [--local_rank LOCAL_RANK] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE] [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT]
                  [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE]
-                 [--subpath SUBPATH] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--nowebui]
-                 [--multimodal-pipeline MULTIMODAL_PIPELINE] [--model_type MODEL_TYPE] [--pre_layer PRE_LAYER [PRE_LAYER ...]] [--checkpoint CHECKPOINT] [--monkey-patch] [--no_inject_fused_attention]
+                 [--subpath SUBPATH] [--old-colors] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6]
+                 [--api-disable-ipv4] [--nowebui] [--multimodal-pipeline MULTIMODAL_PIPELINE] [--cache_4bit] [--cache_8bit] [--chat-buttons] [--triton] [--no_inject_fused_mlp] [--no_use_cuda_fp16]
+                 [--desc_act] [--disable_exllama] [--disable_exllamav2] [--wbits WBITS] [--groupsize GROUPSIZE]
 
 Text generation web UI
 
@@ -232,12 +232,11 @@ Basic settings:
                                                  file will be loaded by default without the need to use the --settings flag.
   --extensions EXTENSIONS [EXTENSIONS ...]       The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.
   --verbose                                      Print the prompts to the terminal.
-  --chat-buttons                                 Show buttons on the chat tab instead of a hover menu.
   --idle-timeout IDLE_TIMEOUT                    Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.
 
 Model loader:
   --loader LOADER                                Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2,
-                                                 AutoGPTQ.
+                                                 HQQ, TensorRT-LLM.
 
 Transformers/Accelerate:
   --cpu                                          Use the CPU to generate text. Warning: Training on CPU is extremely slow.
@@ -255,6 +254,7 @@ Transformers/Accelerate:
   --no_use_fast                                  Set use_fast=False while loading the tokenizer (it's True by default). Use this if you have any problems related to use_fast.
   --use_flash_attention_2                        Set use_flash_attention_2=True while loading the model.
   --use_eager_attention                          Set attn_implementation= eager while loading the model.
+  --torch-compile                                Compile the model with torch.compile for improved performance.
 
 bitsandbytes 4-bit:
   --load-in-4bit                                 Load the model with 4-bit precision (using bitsandbytes).
@@ -264,7 +264,7 @@ bitsandbytes 4-bit:
 
 llama.cpp:
   --flash-attn                                   Use flash-attention.
-  --tensorcores                                  NVIDIA only: use llama-cpp-python compiled with tensor cores support. This may increase performance on newer cards.
+  --tensorcores                                  NVIDIA only: use llama-cpp-python compiled without GGML_CUDA_FORCE_MMQ. This may improve performance on newer cards.
   --n_ctx N_CTX                                  Size of the prompt context.
   --threads THREADS                              Number of threads to use.
   --threads-batch THREADS_BATCH                  Number of threads to use for batches/prompt processing.
@@ -291,25 +291,17 @@ ExLlamaV2:
   --no_flash_attn                                Force flash-attention to not be used.
   --no_xformers                                  Force xformers to not be used.
   --no_sdpa                                      Force Torch SDPA to not be used.
-  --cache_8bit                                   Use 8-bit cache to save VRAM.
-  --cache_4bit                                   Use Q4 cache to save VRAM.
   --num_experts_per_token NUM_EXPERTS_PER_TOKEN  Number of experts to use for generation. Applies to MoE models like Mixtral.
-
-AutoGPTQ:
-  --triton                                       Use triton.
-  --no_inject_fused_mlp                          Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference.
-  --no_use_cuda_fp16                             This can make models faster on some systems.
-  --desc_act                                     For models that do not have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.
-  --disable_exllama                              Disable ExLlama kernel, which can improve inference speed on some systems.
-  --disable_exllamav2                            Disable ExLlamav2 kernel.
-  --wbits WBITS                                  Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.
-  --groupsize GROUPSIZE                          Group size.
+  --enable_tp                                    Enable Tensor Parallelism (TP) in ExLlamaV2.
 
 HQQ:
   --hqq-backend HQQ_BACKEND                      Backend for the HQQ loader. Valid options: PYTORCH, PYTORCH_COMPILE, ATEN.
 
 TensorRT-LLM:
   --cpp-runner                                   Use the ModelRunnerCpp runner, which is faster than the default ModelRunner but doesn't support streaming yet.
+
+Cache:
+  --cache_type CACHE_TYPE                        KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4.
 
 DeepSpeed:
   --deepspeed                                    Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.
@@ -332,6 +324,7 @@ Gradio:
   --ssl-keyfile SSL_KEYFILE                      The path to the SSL certificate key file.
   --ssl-certfile SSL_CERTFILE                    The path to the SSL certificate cert file.
   --subpath SUBPATH                              Customize the subpath for gradio, use with reverse proxy
+  --old-colors                                   Use the legacy Gradio colors, before the December/2024 update.
 
 API:
   --api                                          Enable the API extension.
@@ -340,6 +333,8 @@ API:
   --api-port API_PORT                            The listening port for the API.
   --api-key API_KEY                              API authentication key.
   --admin-key ADMIN_KEY                          API authentication key for admin tasks like loading and unloading models. If not set, will be the same as --api-key.
+  --api-enable-ipv6                              Enable IPv6 for the API
+  --api-disable-ipv4                             Disable IPv4 for the API
   --nowebui                                      Do not launch the Gradio UI. Useful for launching the API in standalone mode.
 
 Multimodal:
@@ -364,7 +359,7 @@ text-generation-webui
     └── llama-2-13b-chat.Q4_K_M.gguf
 ```
 
-* The remaining model types (like 16-bit transformers models and GPTQ models) are made of several files and must be placed in a subfolder. Example:
+* The remaining model types (like 16-bit Transformers models and EXL2 models) are made of several files and must be placed in a subfolder. Example:
 
 ```
 text-generation-webui
@@ -385,7 +380,7 @@ text-generation-webui
 │   │   └── tokenizer.model
 ```
 
-In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download it via the command-line with 
+In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download it via the command-line with:
 
 ```
 python download-model.py organization/model
@@ -405,3 +400,7 @@ https://colab.research.google.com/github/oobabooga/text-generation-webui/blob/ma
 ## Acknowledgment
 
 In August 2023, [Andreessen Horowitz](https://a16z.com/) (a16z) provided a generous grant to encourage and support my independent work on this project. I am **extremely** grateful for their trust and recognition.
+
+## ⭐ Featured Patreon Supporters
+
+* [Become the first one!](https://www.patreon.com/oobabooga)

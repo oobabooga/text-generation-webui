@@ -1,3 +1,4 @@
+import json
 import traceback
 from pathlib import Path
 
@@ -7,6 +8,8 @@ from exllamav2 import (
     ExLlamaV2Cache,
     ExLlamaV2Cache_8bit,
     ExLlamaV2Cache_Q4,
+    ExLlamaV2Cache_Q6,
+    ExLlamaV2Cache_Q8,
     ExLlamaV2Cache_TP,
     ExLlamaV2Config,
     ExLlamaV2Tokenizer
@@ -57,12 +60,20 @@ class Exllamav2Model:
             model.load(split)
 
         # Determine the correct cache type
-        if shared.args.cache_8bit:
+        kv_cache_type = shared.args.cache_type.lower()
+
+        if kv_cache_type == 'fp16':
+            cache_type = ExLlamaV2Cache
+        elif kv_cache_type == 'fp8':
             cache_type = ExLlamaV2Cache_8bit
-        elif shared.args.cache_4bit:
+        elif kv_cache_type == 'q8':
+            cache_type = ExLlamaV2Cache_Q8
+        elif kv_cache_type == 'q6':
+            cache_type = ExLlamaV2Cache_Q6
+        elif kv_cache_type == 'q4':
             cache_type = ExLlamaV2Cache_Q4
         else:
-            cache_type = ExLlamaV2Cache
+            raise ValueError(f"Invalid cache type for ExLlamaV2: {cache_type}. Valid options are: fp16, fp8, q8, q6, q4.")
 
         # Use TP if specified
         if shared.args.enable_tp:
@@ -112,6 +123,10 @@ class Exllamav2Model:
         settings.token_presence_penalty = state['presence_penalty']
 
         settings.temperature = state['temperature']
+        settings.smoothing_factor = state['smoothing_factor']
+        settings.min_temp = state['dynatemp_low'] if state['dynamic_temperature'] else 0
+        settings.max_temp = state['dynatemp_high'] if state['dynamic_temperature'] else 0
+        settings.temp_exponent = state['dynatemp_exponent']
         settings.top_k = state['top_k']
         settings.top_p = state['top_p']
         settings.top_a = state['top_a']
@@ -132,6 +147,29 @@ class Exllamav2Model:
             to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
             if len(to_ban) > 0:
                 settings.disallow_tokens(self.tokenizer, to_ban)
+
+        settings.dry_allowed_length = state['dry_allowed_length']
+        settings.dry_base = state['dry_base']
+        settings.dry_multiplier = state['dry_multiplier']
+
+        # Dry sequence breakers processing
+        if state['dry_multiplier'] > 0 and state['dry_sequence_breakers']:
+            dry_sequence_breakers = state['dry_sequence_breakers']
+
+            # Support both JSON array notation and comma-separated strings.
+            if not dry_sequence_breakers.startswith("["):
+                dry_sequence_breakers = "[" + dry_sequence_breakers + "]"
+
+            sequence_breaker_strings = json.loads(dry_sequence_breakers)
+            # Prefix with 'a' to get the correct encoding of the token at the end of a text.
+            sequence_breakers = {
+                self.encode(f"a{s}")[0, -1].item() for s in sequence_breaker_strings
+            }
+
+            settings.dry_sequence_breakers = sequence_breakers
+
+        settings.xtc_probability = state['xtc_probability']
+        settings.xtc_threshold = state['xtc_threshold']
 
         ids = self.tokenizer.encode(prompt, add_bos=state['add_bos_token'], encode_special_tokens=True)
         ids = ids[:, -get_max_prompt_length(state):]

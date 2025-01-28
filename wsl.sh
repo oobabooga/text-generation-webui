@@ -26,7 +26,7 @@ fi
 INSTALL_DIR="$INSTALL_DIR_PREFIX/text-generation-webui"
 CONDA_ROOT_PREFIX="$INSTALL_DIR/installer_files/conda"
 INSTALL_ENV_DIR="$INSTALL_DIR/installer_files/env"
-MINICONDA_DOWNLOAD_URL="https://repo.anaconda.com/miniconda/Miniconda3-py310_23.3.1-0-Linux-x86_64.sh"
+MINICONDA_DOWNLOAD_URL="https://repo.anaconda.com/miniconda/Miniconda3-py311_24.11.1-0-Linux-x86_64.sh"
 conda_exists="F"
 
 # environment isolation

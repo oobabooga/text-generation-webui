@@ -9,6 +9,7 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import shared
 from modules.llama_cpp_python_hijack import llama_cpp_lib
+from modules.llamacpp_model import get_llamacpp_cache_type_for_string
 from modules.logging_colors import logger
 
 
@@ -196,15 +197,24 @@ class LlamacppHF(PreTrainedModel):
             'flash_attn': shared.args.flash_attn
         }
 
-        if shared.args.cache_4bit:
-            params["type_k"] = 2
-            params["type_v"] = 2
-        elif shared.args.cache_8bit:
-            params["type_k"] = 8
-            params["type_v"] = 8
+        if shared.args.cache_type != 'fp16':
+            params["type_k"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
+            params["type_v"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
 
         Llama = llama_cpp_lib().Llama
-        model = Llama(**params)
+        try:
+            model = Llama(**params)
+        except Exception as e:
+            error_message = (
+                f"Failed loading the model. **This usually happens due to lack of memory**. Try these steps:\n"
+                f"1. Reduce the context length `n_ctx` (currently {shared.args.n_ctx})."
+                f"{' Try a lower value like 4096.' if shared.args.n_ctx > 4096 else '.'}"
+                "\n"
+                f"2. Lower the `n-gpu-layers` value (currently {shared.args.n_gpu_layers})."
+            )
+
+            raise type(e)(error_message) from e
+
         model.last_updated_index = -1
 
         return LlamacppHF(model, model_file)

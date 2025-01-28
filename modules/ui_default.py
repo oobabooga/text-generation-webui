@@ -20,12 +20,12 @@ def create_ui():
             with gr.Column():
                 with gr.Row():
                     shared.gradio['textbox-default'] = gr.Textbox(value='', lines=27, label='Input', elem_classes=['textbox_default', 'add_scrollbar'])
-                    shared.gradio['token-counter-default'] = gr.HTML(value="<span>0</span>", elem_classes=["token-counter", "default-token-counter"])
+                    shared.gradio['token-counter-default'] = gr.HTML(value="<span>0</span>", elem_id="default-token-counter")
 
                 with gr.Row():
-                    shared.gradio['Generate-default'] = gr.Button('Generate', variant='primary')
-                    shared.gradio['Stop-default'] = gr.Button('Stop', elem_id='stop')
                     shared.gradio['Continue-default'] = gr.Button('Continue')
+                    shared.gradio['Stop-default'] = gr.Button('Stop', elem_id='stop', visible=False)
+                    shared.gradio['Generate-default'] = gr.Button('Generate', variant='primary')
 
                 with gr.Row():
                     shared.gradio['prompt_menu-default'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt', elem_classes='slim-dropdown')
@@ -63,20 +63,26 @@ def create_ui():
 def create_event_handlers():
     shared.gradio['Generate-default'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda: [gr.update(visible=True), gr.update(visible=False)], None, gradio('Stop-default', 'Generate-default')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
         lambda state, left, right: state.update({'textbox-default': left, 'output_textbox': right}), gradio('interface_state', 'textbox-default', 'output_textbox'), None).then(
+        lambda: [gr.update(visible=False), gr.update(visible=True)], None, gradio('Stop-default', 'Generate-default')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['textbox-default'].submit(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda: [gr.update(visible=True), gr.update(visible=False)], None, gradio('Stop-default', 'Generate-default')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
         lambda state, left, right: state.update({'textbox-default': left, 'output_textbox': right}), gradio('interface_state', 'textbox-default', 'output_textbox'), None).then(
+        lambda: [gr.update(visible=False), gr.update(visible=True)], None, gradio('Stop-default', 'Generate-default')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['Continue-default'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda: [gr.update(visible=True), gr.update(visible=False)], None, gradio('Stop-default', 'Generate-default')).then(
         generate_reply_wrapper, [shared.gradio['output_textbox']] + gradio(inputs)[1:], gradio(outputs), show_progress=False).then(
         lambda state, left, right: state.update({'textbox-default': left, 'output_textbox': right}), gradio('interface_state', 'textbox-default', 'output_textbox'), None).then(
+        lambda: [gr.update(visible=False), gr.update(visible=True)], None, gradio('Stop-default', 'Generate-default')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['Stop-default'].click(stop_everything_event, None, None, queue=False)

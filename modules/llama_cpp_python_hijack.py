@@ -9,10 +9,11 @@ from modules import shared
 from modules.cache_utils import process_llamacpp_cache
 
 imported_module = None
+not_available_modules = set()
 
 
 def llama_cpp_lib():
-    global imported_module
+    global imported_module, not_available_modules
 
     # Determine the platform
     is_macos = platform.system() == 'Darwin'
@@ -31,6 +32,9 @@ def llama_cpp_lib():
         ]
 
     for arg, lib_name in lib_names:
+        if lib_name in not_available_modules:
+            continue
+
         should_import = (arg is None or getattr(shared.args, arg))
 
         if should_import:
@@ -44,6 +48,7 @@ def llama_cpp_lib():
                 monkey_patch_llama_cpp_python(return_lib)
                 return return_lib
             except ImportError:
+                not_available_modules.add(lib_name)
                 continue
 
     return None
