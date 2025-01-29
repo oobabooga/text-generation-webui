@@ -146,7 +146,7 @@ def convert_history(history):
                 for item in entry['content']:
                     if not isinstance(item, dict):
                         continue
-                    
+
                     image_url = None
                     content = None
                     if item['type'] == 'image_url' and isinstance(item['image_url'], dict):
