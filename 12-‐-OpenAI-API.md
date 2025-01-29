@@ -14,12 +14,12 @@ Add `--api` to your command-line flags.
 * To create a public Cloudflare URL, add the `--public-api` flag.
 * To listen on your local network, add the `--listen` flag.
 * To change the port, which is 5000 by default, use `--api-port 1234` (change 1234 to your desired port number).
-* To use SSL, add `--ssl-keyfile key.pem --ssl-certfile cert.pem`. Note that it doesn't work with `--public-api`.
+* To use SSL, add `--ssl-keyfile key.pem --ssl-certfile cert.pem`. ⚠️ **Note**: this doesn't work with `--public-api` since Cloudflare already uses HTTPS by default.
 * To use an API key for authentication, add `--api-key yourkey`.
 
 ### Examples
 
-For the documentation with all the parameters and their types, consult `http://127.0.0.1:5000/docs` or the [typing.py](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/openai/typing.py) file.
+For the documentation with all the endpoints, parameters and their types, consult `http://127.0.0.1:5000/docs` or the [typing.py](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/openai/typing.py) file.
 
 The official examples in the [OpenAI documentation](https://platform.openai.com/docs/api-reference) should also work, and the same parameters apply (although the API here has more optional parameters).
 
@@ -51,8 +51,7 @@ curl http://127.0.0.1:5000/v1/chat/completions \
         "content": "Hello!"
       }
     ],
-    "mode": "instruct",
-    "instruction_template": "Alpaca"
+    "mode": "instruct"
   }'
 ```
 
@@ -86,7 +85,6 @@ curl http://127.0.0.1:5000/v1/chat/completions \
       }
     ],
     "mode": "instruct",
-    "instruction_template": "Alpaca",
     "stream": true
   }'
 ```
@@ -111,6 +109,27 @@ curl -k http://127.0.0.1:5000/v1/internal/logits \
     "prompt": "Who is best, Asuka or Rei? Answer:",
     "use_samplers": true,
     "top_k": 3
+  }'
+```
+
+#### List models
+
+```shell
+curl -k http://127.0.0.1:5000/v1/internal/model/list \
+  -H "Content-Type: application/json"
+```
+
+#### Load model
+
+```shell
+curl -k http://127.0.0.1:5000/v1/internal/model/load \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_name": "model_name",
+    "args": {
+      "load_in_4bit": true,
+      "n_gpu_layers": 12
+    }
   }'
 ```
 
@@ -174,7 +193,7 @@ while True:
     assistant_message = ''
     for event in client.events():
         payload = json.loads(event.data)
-        chunk = payload['choices'][0]['message']['content']
+        chunk = payload['choices'][0]['delta']['content']
         assistant_message += chunk
         print(chunk, end='')
 
@@ -216,6 +235,27 @@ for event in client.events():
 
 print()
 ```
+
+#### Python example with API key
+
+Replace
+
+```python
+headers = {
+    "Content-Type": "application/json"
+}
+```
+
+with
+
+```python
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer yourPassword123"
+}
+```
+
+in any of the examples above.
 
 ### Environment variables
 
