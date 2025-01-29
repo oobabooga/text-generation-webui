@@ -40,7 +40,7 @@ def my_get(url, **kwargs):
 # Kindly provided by our friend WizardLM-30B
 def my_open(*args, **kwargs):
     filename = str(args[0])
-    if filename.endswith('index.html'):
+    if filename.endswith(('index.html', 'share.html')):
         with original_open(*args, **kwargs) as f:
             file_contents = f.read()
 

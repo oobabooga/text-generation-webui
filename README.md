@@ -359,7 +359,7 @@ text-generation-webui
     └── llama-2-13b-chat.Q4_K_M.gguf
 ```
 
-* The remaining model types (like 16-bit transformers models and GPTQ models) are made of several files and must be placed in a subfolder. Example:
+* The remaining model types (like 16-bit Transformers models and EXL2 models) are made of several files and must be placed in a subfolder. Example:
 
 ```
 text-generation-webui
