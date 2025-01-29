@@ -108,7 +108,19 @@ class LlamaCppModel:
             params["type_k"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
             params["type_v"] = get_llamacpp_cache_type_for_string(shared.args.cache_type)
 
-        result.model = Llama(**params)
+        try:
+            result.model = Llama(**params)
+        except Exception as e:
+            error_message = (
+                f"Failed loading the model. **This usually happens due to lack of memory**. Try these steps:\n"
+                f"1. Reduce the context length `n_ctx` (currently {shared.args.n_ctx})."
+                f"{' Try a lower value like 4096.' if shared.args.n_ctx > 4096 else '.'}"
+                "\n"
+                f"2. Lower the `n-gpu-layers` value (currently {shared.args.n_gpu_layers})."
+            )
+
+            raise type(e)(error_message) from e
+
         if cache_capacity > 0:
             result.model.set_cache(LlamaCache(capacity_bytes=cache_capacity))
 

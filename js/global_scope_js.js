@@ -22,6 +22,14 @@ function regenerateClick() {
   document.getElementById("Regenerate").click();
 }
 
+function continueClick() {
+  document.getElementById("Continue").click();
+}
+
+function removeLastClick() {
+  document.getElementById("Remove-last").click();
+}
+
 function handleMorphdomUpdate(text) {
   morphdom(
     document.getElementById("chat").parentNode,

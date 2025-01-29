@@ -1259,6 +1259,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     left: 25px;
 }
 
+.footer-button.footer-continue-button {
+    bottom: -23px;
+    left: 50px;
+}
+
+.footer-button.footer-remove-button {
+    bottom: -23px;
+    left: 75px;
+}
+
 .message:hover .footer-button,
 .user-message:hover .footer-button,
 .assistant-message:hover .footer-button {

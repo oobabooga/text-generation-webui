@@ -26,6 +26,7 @@
 .DS_Store
 .eslintrc.js
 .idea
+.installer_state.json
 .venv
 venv
 .envrc
