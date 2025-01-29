@@ -367,6 +367,8 @@ def update_requirements(initial_installation=False, pull=True):
 
         if 'wheels_changed' in last_state or last_state.get('last_installed_commit') != current_commit:
             wheels_changed = True
+    else:
+        wheels_changed = True
 
     if pull:
         # Read .whl lines before pulling
@@ -409,7 +411,7 @@ def update_requirements(initial_installation=False, pull=True):
                 with open(state_file, 'w') as f:
                     json.dump(current_state, f)
 
-                exit(1)
+                sys.exit(1)
 
     # Save current state
     current_state = {'last_installed_commit': current_commit}
