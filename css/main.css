@@ -561,17 +561,24 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .message-body :not(pre) > code::before {
-    content: "`";
+    content: "";
 }
 
 .message-body :not(pre) > code::after {
-    content: "`";
+    content: "";
 }
 
 .message-body :not(pre) > code {
-    white-space: normal !important;
-    font-weight: bold;
-    font-family: unset;
+    display: inline-block;
+    white-space: nowrap;
+    font-family: monospace;
+    font-size: 0.9em;
+    background-color: rgba(0, 0, 51, 0.6);
+    color: rgba(211, 211, 211, 0.9);
+    padding: 1px 6px 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin: 0 3px;
 }
 
 #chat-input {
@@ -1257,16 +1264,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .footer-button.footer-refresh-button {
     bottom: -23px;
     left: 25px;
-}
-
-.footer-button.footer-continue-button {
-    bottom: -23px;
-    left: 50px;
-}
-
-.footer-button.footer-remove-button {
-    bottom: -23px;
-    left: 75px;
 }
 
 .message:hover .footer-button,
