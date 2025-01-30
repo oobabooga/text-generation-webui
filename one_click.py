@@ -1,6 +1,7 @@
 import argparse
 import glob
 import hashlib
+import json
 import os
 import platform
 import re
@@ -146,6 +147,11 @@ def check_env():
     if os.environ["CONDA_DEFAULT_ENV"] == "base":
         print("Create an environment for this project and activate it. Exiting...")
         sys.exit(1)
+
+
+def get_current_commit():
+    result = run_cmd("git rev-parse HEAD", capture_output=True, environment=True)
+    return result.stdout.decode('utf-8').strip()
 
 
 def clear_cache():
@@ -351,10 +357,18 @@ def update_requirements(initial_installation=False, pull=True):
     else:
         requirements_file = "requirements" + ("_noavx2" if not cpu_has_avx2() else "") + ".txt"
 
-    # Check and clear the wheels changed flag
-    wheels_changed = os.path.exists('.wheels_changed_flag')
-    if wheels_changed:
-        os.remove('.wheels_changed_flag')
+    # Load state from JSON file
+    state_file = '.installer_state.json'
+    current_commit = get_current_commit()
+    wheels_changed = False
+    if os.path.exists(state_file):
+        with open(state_file, 'r') as f:
+            last_state = json.load(f)
+
+        if 'wheels_changed' in last_state or last_state.get('last_installed_commit') != current_commit:
+            wheels_changed = True
+    else:
+        wheels_changed = True
 
     if pull:
         # Read .whl lines before pulling
@@ -382,16 +396,27 @@ def update_requirements(initial_installation=False, pull=True):
             with open(requirements_file, 'r') as f:
                 after_pull_whl_lines = [line for line in f if '.whl' in line]
 
-        # Check for changes
+        wheels_changed = wheels_changed or (before_pull_whl_lines != after_pull_whl_lines)
+
+        # Check for changes to installer files
         for file in files_to_check:
             if before_hashes[file] != after_hashes[file]:
                 print_big_message(f"File '{file}' was updated during 'git pull'. Please run the script again.")
-                if before_pull_whl_lines != after_pull_whl_lines:
-                    open('.wheels_changed_flag', 'w').close()
 
-                exit(1)
+                # Save state before exiting
+                current_state = {}
+                if wheels_changed:
+                    current_state['wheels_changed'] = True
 
-        wheels_changed = wheels_changed or (before_pull_whl_lines != after_pull_whl_lines)
+                with open(state_file, 'w') as f:
+                    json.dump(current_state, f)
+
+                sys.exit(1)
+
+    # Save current state
+    current_state = {'last_installed_commit': current_commit}
+    with open(state_file, 'w') as f:
+        json.dump(current_state, f)
 
     if os.environ.get("INSTALL_EXTENSIONS", "").lower() in ("yes", "y", "true", "1", "t", "on"):
         install_extensions_requirements()

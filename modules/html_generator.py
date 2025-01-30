@@ -154,6 +154,8 @@ def add_long_list_class(html):
 
 @functools.lru_cache(maxsize=None)
 def convert_to_markdown(string):
+    if not string:
+        return ""
 
     # Make \[ \]  LaTeX equations inline
     pattern = r'^\s*\\\[\s*\n([\s\S]*?)\n\s*\\\]\s*$'

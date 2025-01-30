@@ -26,13 +26,13 @@
 .DS_Store
 .eslintrc.js
 .idea
+.installer_state.json
 .venv
 venv
 .envrc
 .direnv
 .vs
 .vscode
-.wheels_changed_flag
 *.bak
 *.ipynb
 *.log

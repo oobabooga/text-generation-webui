@@ -14,7 +14,7 @@ Add `--api` to your command-line flags.
 * To create a public Cloudflare URL, add the `--public-api` flag.
 * To listen on your local network, add the `--listen` flag.
 * To change the port, which is 5000 by default, use `--api-port 1234` (change 1234 to your desired port number).
-* To use SSL, add `--ssl-keyfile key.pem --ssl-certfile cert.pem`. Note that it doesn't work with `--public-api`.
+* To use SSL, add `--ssl-keyfile key.pem --ssl-certfile cert.pem`. ⚠️ **Note**: this doesn't work with `--public-api` since Cloudflare already uses HTTPS by default.
 * To use an API key for authentication, add `--api-key yourkey`.
 
 ### Examples
@@ -51,8 +51,7 @@ curl http://127.0.0.1:5000/v1/chat/completions \
         "content": "Hello!"
       }
     ],
-    "mode": "instruct",
-    "instruction_template": "Alpaca"
+    "mode": "instruct"
   }'
 ```
 
@@ -86,7 +85,6 @@ curl http://127.0.0.1:5000/v1/chat/completions \
       }
     ],
     "mode": "instruct",
-    "instruction_template": "Alpaca",
     "stream": true
   }'
 ```
@@ -131,9 +129,6 @@ curl -k http://127.0.0.1:5000/v1/internal/model/load \
     "args": {
       "load_in_4bit": true,
       "n_gpu_layers": 12
-    },
-    "settings": {
-      "instruction_template": "Alpaca"
     }
   }'
 ```
@@ -198,7 +193,7 @@ while True:
     assistant_message = ''
     for event in client.events():
         payload = json.loads(event.data)
-        chunk = payload['choices'][0]['message']['content']
+        chunk = payload['choices'][0]['delta']['content']
         assistant_message += chunk
         print(chunk, end='')
 
@@ -240,6 +235,27 @@ for event in client.events():
 
 print()
 ```
+
+#### Python example with API key
+
+Replace
+
+```python
+headers = {
+    "Content-Type": "application/json"
+}
+```
+
+with
+
+```python
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer yourPassword123"
+}
+```
+
+in any of the examples above.
 
 ### Environment variables
 
