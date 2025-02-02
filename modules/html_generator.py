@@ -106,52 +106,6 @@ def replace_blockquote(m):
     return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
 
-def add_long_list_class(html):
-    '''
-    Adds a long-list class to <ul> or <ol> containing long <li> items.
-    These will receive a smaller margin/padding in the CSS.
-    '''
-
-    # Helper function to check if a tag is within <pre> or <code>
-    def is_within_block(start_idx, end_idx, block_matches):
-        return any(start < start_idx < end or start < end_idx < end for start, end in block_matches)
-
-    # Find all <pre>...</pre> and <code>...</code> blocks
-    pre_blocks = [(m.start(), m.end()) for m in re.finditer(r'<pre.*?>.*?</pre>', html, re.DOTALL)]
-    code_blocks = [(m.start(), m.end()) for m in re.finditer(r'<code.*?>.*?</code>', html, re.DOTALL)]
-    all_blocks = pre_blocks + code_blocks
-
-    # Pattern to find <ul>...</ul> and <ol>...</ol> blocks and their contents
-    list_pattern = re.compile(r'(<[uo]l.*?>)(.*?)(</[uo]l>)', re.DOTALL)
-    li_pattern = re.compile(r'<li.*?>(.*?)</li>', re.DOTALL)
-
-    def process_list(match):
-        start_idx, end_idx = match.span()
-        if is_within_block(start_idx, end_idx, all_blocks):
-            return match.group(0)  # Leave the block unchanged if within <pre> or <code>
-
-        opening_tag = match.group(1)
-        list_content = match.group(2)
-        closing_tag = match.group(3)
-
-        # Find all list items within this list
-        li_matches = li_pattern.finditer(list_content)
-        has_long_item = any(len(li_match.group(1).strip()) > 224 for li_match in li_matches)
-
-        if has_long_item:
-            # Add class="long-list" to the opening tag if it doesn't already have a class
-            if 'class=' not in opening_tag:
-                opening_tag = opening_tag[:-1] + ' class="long-list">'
-            else:
-                # If there's already a class, append long-list to it
-                opening_tag = re.sub(r'class="([^"]*)"', r'class="\1 long-list"', opening_tag)
-
-        return opening_tag + list_content + closing_tag
-
-    # Process HTML and replace list blocks
-    return list_pattern.sub(process_list, html)
-
-
 @functools.lru_cache(maxsize=None)
 def convert_to_markdown(string):
     if not string:
@@ -250,9 +204,6 @@ def convert_to_markdown(string):
 
     # Unescape backslashes
     html_output = html_output.replace('\\\\', '\\')
-
-    # Add "long-list" class to <ul> or <ol> containing a long <li> item
-    html_output = add_long_list_class(html_output)
 
     return html_output
 
