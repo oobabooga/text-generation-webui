@@ -47,6 +47,7 @@ class GenerationOptions(BaseModel):
     seed: int = -1
     sampler_priority: List[str] | str | None = Field(default=None, description="List of samplers where the first items will appear first in the stack. Example: [\"top_k\", \"temperature\", \"top_p\"].")
     custom_token_bans: str = ""
+    show_after: str = ""
     negative_prompt: str = ''
     dry_sequence_breakers: str = '"\\n", ":", "\\"", "*"'
     grammar_string: str = ""
