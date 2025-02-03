@@ -33,7 +33,7 @@ transformers.logging.set_verbosity_error()
 local_rank = None
 if shared.args.deepspeed:
     import deepspeed
-    from transformers.deepspeed import (
+    from transformers.integrations.deepspeed import (
         HfDeepSpeedConfig,
         is_deepspeed_zero3_enabled
     )
