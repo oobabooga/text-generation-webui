@@ -215,6 +215,7 @@ def list_interface_input_elements():
         'sampler_priority',
         'custom_stopping_strings',
         'custom_token_bans',
+        'show_after',
         'negative_prompt',
         'dry_sequence_breakers',
         'grammar_string',

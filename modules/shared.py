@@ -57,6 +57,7 @@ settings = {
     'seed': -1,
     'custom_stopping_strings': '',
     'custom_token_bans': '',
+    'show_after': '',
     'negative_prompt': '',
     'autoload_model': False,
     'dark_theme': True,
