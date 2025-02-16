@@ -110,7 +110,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     instruct_renderer = partial(
         instruction_template.render,
         #builtin_tools=None, # Somehow this is still being used? I'm getting an error of NoneType is not iterable on Llama 3 8B (but not Llama 3 1B)
-        tools=get_visible_tools(state),
+        tools=get_visible_tools(state), # Visible tools don't include the source code for the tool function
         tools_in_user_message=state['tools_in_user_message'],
         add_generation_prompt=False
     )
@@ -124,6 +124,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
         tools=get_visible_tools(state),
         tools_in_user_message=state['tools_in_user_message'],
     )
+    # Adding tools to the chat renderer did not work. Currently tools only work in instruct mode.
+    # Might need the system prompt, but adding it to the chat renderer would cause compatibility issues with existing chats...
 
     messages = []
 
@@ -143,6 +145,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
         assistant_msg = assistant_msg.strip()
 
         if assistant_msg:
+            # The assistant message may contain tool calls and responses, so split it into multiple messages
             assistant_msgs = reversed(split_message_by_tool_calls(assistant_msg))
             for msg in assistant_msgs:
                 messages.insert(insert_pos, msg)
@@ -155,18 +158,21 @@ def generate_chat_prompt(user_input, state, **kwargs):
     if user_input and not impersonate and not _continue:
         messages.append({"role": "user", "content": user_input})
 
-    # Add tools from the last response
+    # Add tools from the last response. This 'last_assistant_response' param is used to store the part of the message before the tool call, if any
+    # It could probably use a better name though
     last_assistant_response = kwargs.get('last_assistant_response', None)
     print("Last assistant response:", last_assistant_response)
     if last_assistant_response is not None:
         if last_assistant_response != "":
             messages.append({"role": "assistant", "content": last_assistant_response})
+        # Add the messages for tool calls and tool responses
         # The content field is ignored (at least in Llama 3, which is why it needs to be added to a previous message)
         if 'tool_calls' in kwargs and len(kwargs.get('tool_calls', [])) > 0:
             messages.append({"role": "assistant", "content": "", "tool_calls": kwargs.get('tool_calls', [])})
         for tool_result in kwargs.get('tool_results', []):
             messages.append(tool_result) # {"role": "tool", "tool_call_id": ..., "content": ...}
 
+    # Debug: Display messages before rendering the template
     print("Messages:")
     for msg in messages:
         print(msg)
@@ -383,13 +389,14 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     if prompt is None:
         prompt = generate_chat_prompt(text, state, **kwargs)
 
+    # This loop is added to allow the model to continue after a tool call, so that it can interpret the result.
     tool_used = False
     continue_generation = True
     consecutive_tool_uses = 0
     while continue_generation:
         continue_generation = False
 
-        # Check for tool calls in previous message which haven't been executed
+        # When in the mode which requires clicking "continue", check for tool calls in previous message which haven't been executed
         if _continue and state['confirm_tool_use']:
             print("Executing tool call (pre-generate)")
             tool_calls = extract_tool_calls_to_be_executed(last_reply[0], state['tools'])
@@ -458,20 +465,15 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         if output['visible'][-1][1].endswith('▍'):
             output['visible'][-1][1] = output['visible'][-1][1][:-1]
 
-        # Tools: Evaluate response for tool usage
-        print("Response:")
-        print(output['internal'][-1][1])
+        # Displaying the reply for debugging
         print("Reply:")
         print(reply)
-        # Only use the last part of the reponse
+        # Detect whether any tool calls were made by the model. Only use the last part of the reponse
         modified_message, tool_calls = process_tool_calls(reply.lstrip(' '), state['tools'])
 
-        print("Tool calls after processing:")
-        print(tool_calls)
-        # TODO: Respond again if a tool call was made?
-        # TODO: How do you add the tool results in the correct way?
         if len(tool_calls) > 0:
-            print("Adding tool call")
+            print("Tool calls detected:")
+            print(tool_calls)
             # Use chat/instruct template to modify the message to include the tool call(s) and response(s)
             # Delete the raw tool call
             output['internal'][-1][1] = last_reply[0] + modified_message
@@ -484,19 +486,12 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
                 output['internal'][-1][1] += json.dumps(tool_call)
                 output['visible'][-1][1] += f"\n\nTOOL CALL: ```\n{json.dumps(tool_call, indent=4)}\n```"
             yield output
-
+            
+            # If this setting is enabled, wait for confirmation (by pressing "continue") before executing the tool call
             if state['confirm_tool_use']:
-                # Pause execution and give a dialogue box to confirm tool use
-                # If the user confirms, continue generation
-                # If the user cancels, stop generation
-                print("Trying to pause")
-                # Add a checkbox or something??
-                #output['visible'][-1][1] += f"\nConfirm Tool Use? <input type='checkbox' id='tool_use_confirm_{tool_call['id']}'>"
-                output['visible'][-1][1] += "\n(Waiting for confirmation...)"
+                output['visible'][-1][1] += "\n(Waiting for confirmation, press continue to run...)"
                 yield output
-                return # Stop everything? Click "continue" to continue maybe?
-                # Continue seems broken now... For all conversations. Oops.
-                # Wait for user to check box?
+                return # Stop generation until clicking "continue"
 
             else:
                 print("Executing tool call (post-generate)")
@@ -506,16 +501,18 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
                     kwargs['tool_results'].append(tool_result)
                     output['internal'][-1][1] += json.dumps(tool_result)
                     output['visible'][-1][1] += f"\n\nTOOL RESULT: ```\n{tool_result['content']}\n```\n\n"
+                    consecutive_tool_uses += 1
+                    if consecutive_tool_uses >= state['max_consecutive_tool_uses']:
+                        print("Max consecutive tool uses reached.")
+                        break
                 yield output
 
                 # Without this, the message keeps getting deleted over and over
                 last_reply = [output['internal'][-1][1], output['visible'][-1][1]]
 
-                # TODO: Need to move this around
-                consecutive_tool_uses += 1
-
                 # After all tool calls (or max tool uses)
                 if consecutive_tool_uses < state['max_consecutive_tool_uses']:
+                    # Displaying the prompt for debugging, as it can be different depending on how the model uses special tokens to format tool calls
                     print("Previous prompt:")
                     print(prompt)
                     new_prompt = generate_chat_prompt(text, state, **kwargs)
@@ -526,9 +523,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
                     tool_used = True
                     prompt = new_prompt
                 else:
-                    print("Max consecutive tool uses reached. Stopping generation.")
                     break
-                    #yield output
 
     output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
     yield output

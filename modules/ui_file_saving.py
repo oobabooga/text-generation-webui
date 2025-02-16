@@ -249,7 +249,7 @@ def handle_delete_tool_confirm_click(selected_tools, tool_name, tools):
     try:
         index = str(utils.get_available_tools().index(tool_name))
         chat.delete_tool(tool_name)
-        chat.update_tools_after_deletion(tool_name, tools) # TODO
+        chat.update_tools_after_deletion(tool_name, tools)
     except Exception:
         traceback.print_exc()
 
