@@ -1,0 +1,22 @@
+{
+    "action": "# Assumed input is {\"latitude\": 90.0, \"longitude\": 30.0\"}\ndef get_weather(parameters):\n  print(parameters['latitude'], \n  parameters['longitude'])\n  return 0.0",
+    "description": "Get current temperature for provided coordinates in celsius.",
+    "name": "get_weather",
+    "parameters": {
+        "additionalProperties": false,
+        "properties": {
+            "latitude": {
+                "type": "number"
+            },
+            "longitude": {
+                "type": "number"
+            }
+        },
+        "required": [
+            "latitude",
+            "longitude"
+        ],
+        "type": "object"
+    },
+    "type": "function"
+}

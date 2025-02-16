@@ -240,6 +240,10 @@ def list_interface_input_elements():
         'custom_system_message',
         'instruction_template_str',
         'chat_template_str',
+        'tools',
+        'confirm_tool_use',
+        'tools_in_user_message',
+        'max_consecutive_tool_uses',
     ]
 
     # Notebook/default elements

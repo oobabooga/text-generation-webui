@@ -1090,6 +1090,41 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 }
 
+#tool-menu {
+    max-height: calc(100dvh - 135px);
+    overflow-y: scroll !important;
+    border-radius: 0;
+    scrollbar-width: auto;
+}
+
+#tool-menu::-webkit-scrollbar {
+    display: block;
+}
+
+#tool-menu label {
+    width: 100%;
+    background-color: transparent !important;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    position: relative;
+    min-height: 42px !important;
+}
+
+    #tool-menu label span {
+        margin-left: 29px;
+    }
+
+#tool-menu > :nth-child(2) {
+    display: none;
+}
+
+#tool-menu > :nth-child(3) {
+    gap: 0.25rem;
+}
+
 /* ----------------------------------------------
   Dark theme
 ---------------------------------------------- */

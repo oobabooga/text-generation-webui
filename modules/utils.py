@@ -116,6 +116,24 @@ def get_available_instruction_templates():
     return ['None'] + sorted(set((k.stem for k in paths)), key=natural_keys)
 
 
+def get_available_tools():
+    path = "tools"
+    paths = []
+    if os.path.exists(path):
+        paths = (x for x in Path(path).iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
+
+    return sorted(set((k.stem for k in paths)), key=natural_keys)
+
+
+def get_available_tool_presets():
+    path = os.path.join("tools", "presets")
+    paths = []
+    if os.path.exists(path):
+        paths = (x for x in Path(path).iterdir() if x.suffix == '.txt')
+
+    return ['None'] + sorted(set((k.stem for k in paths)), key=natural_keys)
+
+
 def get_available_extensions():
     extensions = sorted(set(map(lambda x: x.parts[1], Path('extensions').glob('*/script.py'))), key=natural_keys)
     extensions = [v for v in extensions if v not in github.new_extensions]

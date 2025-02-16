@@ -1,0 +1,7 @@
+{
+    "action": "import random\ndef flip_coin():\n    return random.choice(['heads', 'tails'])",
+    "description": "Flip a coin.",
+    "name": "flip_coin",
+    "parameters": {},
+    "type": "function"
+}

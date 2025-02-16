@@ -47,6 +47,32 @@ def create_ui():
             shared.gradio['save_preset_cancel'] = gr.Button('Cancel', elem_classes="small-button")
             shared.gradio['save_preset_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
 
+    # Tool preset saver/deleter
+    with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['tool_preset_saver']:
+        shared.gradio['save_tool_preset_filename'] = gr.Textbox(lines=1, label='File name', info='The tool preset will be saved to your tools/presets/ folder with this base filename.')
+        with gr.Row():
+            shared.gradio['save_tool_preset_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+            shared.gradio['save_tool_preset_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
+
+    with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['tool_preset_deleter']:
+        gr.Markdown('Confirm the tool preset deletion?')
+        with gr.Row():
+            shared.gradio['delete_tool_preset_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+            shared.gradio['delete_tool_preset_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop', interactive=not mu)
+
+    # Tool saver/deleter
+    with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['tool_saver']:
+        shared.gradio['save_tool_filename'] = gr.Textbox(lines=1, label='File name', info='The tool will be saved to your tools/ folder with this base filename.')
+        with gr.Row():
+            shared.gradio['save_tool_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+            shared.gradio['save_tool_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
+
+    with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['tool_deleter']:
+        gr.Markdown('Confirm the tool deletion?')
+        with gr.Row():
+            shared.gradio['delete_tool_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+            shared.gradio['delete_tool_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop', interactive=not mu)
+
 
 def create_event_handlers():
     shared.gradio['save_preset'].click(
@@ -62,12 +88,20 @@ def create_event_handlers():
     shared.gradio['delete_confirm'].click(handle_delete_confirm_click, gradio('delete_root', 'delete_filename'), gradio('file_deleter'), show_progress=False)
     shared.gradio['save_character_confirm'].click(handle_save_character_confirm_click, gradio('name2', 'greeting', 'context', 'character_picture', 'save_character_filename'), gradio('character_menu', 'character_saver'), show_progress=False)
     shared.gradio['delete_character_confirm'].click(handle_delete_character_confirm_click, gradio('character_menu'), gradio('character_menu', 'character_deleter'), show_progress=False)
+    shared.gradio['save_tool_preset_confirm'].click(handle_save_tool_preset_confirm_click, gradio('save_tool_preset_filename', 'tool_menu'), gradio('tool_preset_menu', 'tool_preset_saver'), show_progress=False)
+    shared.gradio['delete_tool_preset_confirm'].click(handle_delete_tool_preset_confirm_click, gradio('tool_preset_menu'), gradio('tool_preset_menu', 'tool_preset_deleter'), show_progress=False)
+    shared.gradio['save_tool_confirm'].click(handle_save_tool_confirm_click, gradio('save_tool_filename', 'tool_type', 'tool_description', 'tool_parameters', 'tool_action', 'tools'), gradio('tool_menu', 'tool_saver', 'tools'), show_progress=False)
+    shared.gradio['delete_tool_confirm'].click(handle_delete_tool_confirm_click, gradio('tool_menu', 'tool_name', 'tools'), gradio('tool_menu', 'tool_deleter'), show_progress=False)
 
     shared.gradio['save_preset_cancel'].click(lambda: gr.update(visible=False), None, gradio('preset_saver'), show_progress=False)
     shared.gradio['save_cancel'].click(lambda: gr.update(visible=False), None, gradio('file_saver'))
     shared.gradio['delete_cancel'].click(lambda: gr.update(visible=False), None, gradio('file_deleter'))
     shared.gradio['save_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_saver'), show_progress=False)
     shared.gradio['delete_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_deleter'), show_progress=False)
+    shared.gradio['save_tool_preset_cancel'].click(lambda: gr.update(visible=False), None, gradio('tool_preset_saver'), show_progress=False)
+    shared.gradio['delete_tool_preset_cancel'].click(lambda: gr.update(visible=False), None, gradio('tool_preset_deleter'), show_progress=False)
+    shared.gradio['save_tool_cancel'].click(lambda: gr.update(visible=False), None, gradio('tool_saver'), show_progress=False)
+    shared.gradio['delete_tool_cancel'].click(lambda: gr.update(visible=False), None, gradio('tool_deleter'), show_progress=False)
 
 
 def handle_save_preset_confirm_click(filename, contents):
@@ -164,4 +198,62 @@ def handle_delete_grammar_click(grammar_file):
         grammar_file,
         "grammars/",
         gr.update(visible=True)
+    ]
+
+def handle_save_tool_preset_confirm_click(filename, tool_menu):
+    try:
+        chat.save_tool_preset(filename, tool_menu)
+        available_tool_presets = utils.get_available_tool_presets()
+        output = gr.update(choices=available_tool_presets, value=filename)
+    except Exception:
+        output = gr.update()
+        traceback.print_exc()
+
+    return [
+        output,
+        gr.update(visible=False)
+    ]
+
+def handle_delete_tool_preset_confirm_click(tool_preset):
+    try:
+        index = str(utils.get_available_tool_presets().index(tool_preset))
+        chat.delete_tool_preset(tool_preset)
+        output = chat.update_tool_preset_menu_after_deletion(index)
+    except Exception:
+        output = gr.update()
+        traceback.print_exc()
+
+    return [
+        output,
+        gr.update(visible=False)
+    ]
+
+def handle_save_tool_confirm_click(filename, type, description, parameters, action, tools):
+    tool_valid = True
+    try:
+        tool_valid = chat.save_tool(filename, type, description, parameters, action)
+    except Exception:
+        output = gr.update()
+        traceback.print_exc()
+        tool_valid = False
+    
+    if not tool_valid:
+        return [
+            gr.update(),
+            gr.update(visible=False)
+        ]
+
+    return chat.handle_save_tool(filename, type, description, parameters, action, tools)
+
+def handle_delete_tool_confirm_click(selected_tools, tool_name, tools):
+    try:
+        index = str(utils.get_available_tools().index(tool_name))
+        chat.delete_tool(tool_name)
+        chat.update_tools_after_deletion(tool_name, tools) # TODO
+    except Exception:
+        traceback.print_exc()
+
+    return [
+        gr.update(choices=utils.get_available_tools(), value=list(set(selected_tools)-{tool_name})),
+        gr.update(visible=False)
     ]

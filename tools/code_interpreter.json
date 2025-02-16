@@ -1,0 +1,18 @@
+{
+    "action": "def code_interpreter(parameters):\n  code = parameters['code']\n  return exec(code)",
+    "description": "Executes arbitrary code.",
+    "name": "code_interpreter",
+    "parameters": {
+        "additionalProperties": false,
+        "properties": {
+            "code": {
+                "type": "string"
+            }
+        },
+        "required": [
+            "code"
+        ],
+        "type": "object"
+    },
+    "type": "function"
+}

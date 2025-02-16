@@ -19,6 +19,7 @@ def create_ui():
 
     shared.gradio['Chat input'] = gr.State()
     shared.gradio['history'] = gr.JSON(visible=False)
+    shared.gradio['tools'] = gr.JSON(visible=False)
 
     with gr.Tab('Chat', id='Chat', elem_id='chat-tab'):
         with gr.Row(elem_id='past-chats-row', elem_classes=['pretty_scrollbar']):
@@ -97,6 +98,24 @@ def create_ui():
                     shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=12, label='Command for chat-instruct mode', info='<|character|> and <|prompt|> get replaced with the bot name and the regular chat prompt respectively.', visible=shared.settings['mode'] == 'chat-instruct', elem_classes=['add_scrollbar'])
 
 
+def load_selected_tool_data():
+    tool_name_list = utils.get_available_tools()
+    if len(tool_name_list) > 0:
+        tool_name, tool_type, tool_description, tool_parameters, tool_action = chat.load_tool(tool_name_list[0])
+        shared.gradio['tool_type'].value = tool_type
+        shared.gradio['tool_name'].value = tool_name
+        shared.gradio['tool_description'].value = tool_description
+        shared.gradio['tool_parameters'].value = json.dumps(tool_parameters, indent=4, sort_keys=True)
+        shared.gradio['tool_action'].value = tool_action
+
+def format_tool_parameters(tool_parameters):
+    try:
+        return json.dumps(json.loads(tool_parameters), indent=4, sort_keys=True)
+    except json.decoder.JSONDecodeError:
+        pass # Don't want to constantly notify while the user is editing
+    return tool_parameters
+
+
 def create_chat_settings_ui():
     mu = shared.args.multi_user
     with gr.Tab('Chat'):
@@ -173,6 +192,57 @@ def create_chat_settings_ui():
             with gr.Column():
                 shared.gradio['chat_template_str'] = gr.Textbox(value=shared.settings['chat_template_str'], label='Chat template', lines=22, elem_classes=['add_scrollbar', 'monospace'])
 
+    with gr.Tab('Tools'):
+        with gr.Row():
+            # Tool selection
+            with gr.Column():
+                shared.gradio['confirm_tool_use'] = gr.Checkbox(value=True, label='Confirm tool use', elem_id='confirm-tool-use', info='When a tool is about to be called, pause execution until confirmed by user')
+                shared.gradio['tools_in_user_message'] = gr.Checkbox(value=False, label='Tools in user message', elem_id='tools-in-user-message', info='Whether to include the tools in the user message as opposed to the system prompt')
+                shared.gradio['max_consecutive_tool_uses'] = gr.Number(value=3, label='Max consecutive tool uses', elem_id='max-consecutive-tool-uses')
+                # Tool Selection Presets
+                with gr.Row():
+                    # Save / Load tool presets
+                    # Dropdown of tool presets
+                    shared.gradio['tool_preset_menu'] = gr.Dropdown(value='None', choices=utils.get_available_tool_presets(), label='Tool Selection Preset', elem_id='tool-preset-menu', info='Save or load a selection of tools', elem_classes='slim-dropdown')
+                    ui.create_refresh_button(shared.gradio['tool_preset_menu'], lambda: None, lambda: {'choices': utils.get_available_tool_presets()}, 'refresh-button', interactive=not mu)
+                    shared.gradio['save_tool_preset'] = gr.Button('💾', elem_classes='refresh-button', elem_id="save-tool-preset", interactive=not mu)
+                    shared.gradio['delete_tool_preset'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
+                # Tool menu (list of available tools, should look similar to past chats interface)
+                # Needs to be refreshed when a tool is saved/deleted
+                with gr.Row():
+                    # I want something in between a Radio and CheckboxGroup... Not sure how possible that is.
+                    shared.gradio['tool_menu'] = gr.CheckboxGroup(utils.get_available_tools(), elem_classes=['slim-dropdown', 'pretty_scrollbar'], elem_id='tool-menu', multiselect=True)
+                    #shared.gradio['tool_menu_selection'] = gr.CheckboxGroup(choices=utils.get_available_tools(), label='')
+                #render_tool_menu()
+                #shared.gradio['tool_menu'] = gr.Dropdown(value=None, choices=utils.get_available_tools(), multiselect=True, label='Tools', elem_id='tool-menu', info='Select the tools you want to be active for this chat.', elem_classes='slim_dropdown')
+
+            # Tool Details / Add New Tool
+            with gr.Column():
+                # Input fields to add a new tool
+                with gr.Row():
+                    shared.gradio['tool_name'] = gr.Textbox(value='', lines=1, label='Tool Name')
+                    shared.gradio['save_tool'] = gr.Button('💾', elem_classes='refresh-button', elem_id="save-tool", interactive=not mu)
+                    shared.gradio['delete_tool'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
+                shared.gradio['tool_type'] = gr.Dropdown(value='function', choices=['function'], label='Tool Type', elem_id='tool-type-menu', info='Only function type available for now', elem_classes='slim-dropdown')
+                shared.gradio['tool_description'] = gr.Textbox(value='', lines=3, label='Tool Description')
+                shared.gradio['tool_parameters'] = gr.Textbox(label='Tool Parameters', lines=10, info='Specify the parameters for the tool in JSON.')
+                shared.gradio['tool_action'] = gr.Textbox(label='Tool Action', lines=10, info='Specify the action of the tool as a Python code snippet. Define a function with a name matching the tool name above and either no parameters or one parameter called parameters. Important: When this tool is enabled (or the tool is saved while already enabled), this code will be evaluated in order to define the function. Be very careful about the code you are executing!')
+                
+                # Fill the previous fields
+                load_selected_tool_data()
+
+                # Tool type (dropdown: function)
+                # Tool name
+                # Tool description
+                # Tool parameters (list)
+                    # For each parameter:
+                    # Type (object, string, number, etc)
+                    # Required properties
+                    # Properties (if object?)
+                        # For each property:
+                        # Type
+                        # Description
+                        # Enum (optional)
 
 def create_event_handlers():
 
@@ -347,3 +417,14 @@ def create_event_handlers():
         None, None, None, js=f'() => {{{ui.switch_tabs_js}; switch_to_notebook()}}')
 
     shared.gradio['show_controls'].change(None, gradio('show_controls'), None, js=f'(x) => {{{ui.show_controls_js}; toggle_controls(x)}}')
+
+    shared.gradio['tool_preset_menu'].change(chat.handle_tool_preset_change, gradio('tool_preset_menu'), gradio('tool_menu'), show_progress=False)
+    shared.gradio['save_tool_preset'].click(chat.handle_save_tool_preset_click, gradio('tool_preset_menu'), gradio('save_tool_preset_filename', 'tool_preset_saver'), show_progress=False)
+    shared.gradio['delete_tool_preset'].click(lambda: gr.update(visible=True), None, gradio('tool_preset_deleter'), show_progress=False)
+
+    shared.gradio['tool_menu'].change(chat.handle_tool_change, gradio('tool_menu', 'tools'), gradio('tool_name', 'tool_type', 'tool_description', 'tool_parameters', 'tool_action', 'tools'), show_progress=False)
+
+    shared.gradio['save_tool'].click(chat.handle_save_tool_click, gradio('tool_name'), gradio('save_tool_filename', 'tool_saver'), show_progress=False)
+    shared.gradio['delete_tool'].click(lambda: gr.update(visible=True), None, gradio('tool_deleter'), show_progress=False)
+
+    shared.gradio['tool_parameters'].blur(format_tool_parameters, gradio('tool_parameters'), gradio('tool_parameters'), show_progress=False)

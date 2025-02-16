@@ -1,0 +1,21 @@
+{
+    "action": "import random\ndef roll_dice(parameters):\n    count = 1\n    if 'count'  in parameters:\n        count = int(parameters['count'])\n    if count <= 0:\n        return []\n    sides = int(parameters['sides'])\n    if sides <= 1:\n        return []\n    results = []\n    for _ in range(count):\n        results.append(1+int(sides*random.random()))\n    return results",
+    "description": "Roll a set of \"count\" dice with \"sides\" sides. For example, to roll a D20, set \"count\" to 1 and \"sides\" to 20.",
+    "name": "roll_dice",
+    "parameters": {
+        "additionalProperties": false,
+        "properties": {
+            "count": {
+                "type": "number"
+            },
+            "sides": {
+                "type": "number"
+            }
+        },
+        "required": [
+            "sides"
+        ],
+        "type": "object"
+    },
+    "type": "function"
+}
