@@ -138,14 +138,21 @@ def define_tool_action(tool):
 
 def validate_tool_input_parameters(json_object, tool):
     valid = True
-    if 'parameters' in json_object and json_object['parameters'] is not None:
-        if type(json_object['parameters']) == str:
+    # Determine if 'arguments' or 'parameters' is used
+    tool_params = None
+    if 'parameters' in json_object:
+        tool_params = json_object['parameters']
+    elif 'arguments' in json_object:
+        tool_params = json_object['arguments']
+
+    if tool_params is not None:
+        if type(tool_params) == str:
             try:
-                json_object['parameters'] = json.loads(json_object['parameters'])
+                tool_params = json.loads(tool_params)
             except Exception:
                 print("Invalid parameters format")
                 return False
-        input_params = set(json_object['parameters'].keys())
+        input_params = set(tool_params.keys())
         if 'required' in tool['parameters']:
             req_params = set(tool['parameters']['required'])
             if not req_params.issubset(input_params):
@@ -155,40 +162,40 @@ def validate_tool_input_parameters(json_object, tool):
             for property, metadata in tool['parameters']['properties'].items():
                 if property in input_params:
                     # Check type
-                    input_value = json_object['parameters'][property]
+                    input_value = tool_params[property]
                     #print(input_value, type(input_value))
                     if 'type' in metadata:
                         if metadata['type'] == 'number':
                             try:
-                                json_object['parameters'][property] = float(input_value)
+                                tool_params[property] = float(input_value)
                             except Exception:
                                 print(f"Invalid value: {input_value} not of type number")
                                 valid = False
                                 break
                         if metadata['type'] == 'string':
                             try:
-                                json_object['parameters'][property] = str(input_value)
+                                tool_params[property] = str(input_value)
                             except Exception:
                                 print(f"Invalid value: {input_value} not of type string")
                                 valid = False
                                 break
                         if metadata['type'] == 'bool':
                             try:
-                                json_object['parameters'][property] = bool(input_value)
+                                tool_params[property] = bool(input_value)
                             except Exception:
                                 print(f"Invalid value: {input_value} not of type bool")
                                 valid = False
                                 break
                         if metadata['type'] == 'list':
                             try:
-                                json_object['parameters'][property] = list(input_value)
+                                tool_params[property] = list(input_value)
                             except Exception:
                                 print(f"Invalid value: {input_value} not of type list")
                                 valid = False
                                 break
                         if metadata['type'] == 'object':
                             try:
-                                json_object['parameters'][property] = dict(input_value)
+                                tool_params[property] = dict(input_value)
                             except Exception:
                                 print(f"Invalid value: {input_value} not of type object")
                                 valid = False
@@ -197,10 +204,10 @@ def validate_tool_input_parameters(json_object, tool):
                         # TODO: Check the "additionalProperties" field?
         # Function call with no arguments
         if len(input_params) == 0:
-            json_object['parameters'] = None
+            tool_params = None
     else:
         # Function takes no parameters
-        json_object['parameters'] = None
+        tool_params = None # Redundant
     return valid
 
 
@@ -247,12 +254,18 @@ def process_tool_calls(response, tools):
                     if tool_action_defined:
                         tool_call_id = f"call_{tool['name']}_{generate_tool_call_id()}"
                         valid_tool_found = True
+                        tool_params = None
+                        if 'parameters' in json_object:
+                            tool_params = json_object['parameters']
+                        elif 'arguments' in json_object:
+                            tool_params = json_object['arguments']
+
                         tool_calls.append({
                             "id": tool_call_id,
                             "type": tool['type'],
                             tool['type']: {
                                 "name": tool['name'],
-                                "arguments": json_object['parameters'] if json_object['parameters'] is not None else None
+                                "arguments": tool_params,
                             }
                         })
             if not valid_tool_found:
