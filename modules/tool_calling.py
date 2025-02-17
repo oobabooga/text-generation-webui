@@ -2,6 +2,7 @@ import gradio as gr
 import json
 import re
 import uuid
+import traceback
 
 # Keep track of the functions and variables defined by tool actions as part of security check preventing overwriting of globals
 tool_defined_params = set()
@@ -130,7 +131,7 @@ def define_tool_action(tool):
                     return True
         except Exception as e:
             print(f"Exception while defining tool {tool['name']}")
-            print(e)
+            print(traceback.print_exc())
     else:
         print("Tool {tool['name'] has no action defined.")
     return False

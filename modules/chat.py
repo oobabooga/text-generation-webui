@@ -485,6 +485,16 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             for tool_call in tool_calls:
                 output['internal'][-1][1] += json.dumps(tool_call)
                 output['visible'][-1][1] += f"\n\nTOOL CALL: ```\n{json.dumps(tool_call, indent=4)}\n```"
+                tool_call_type = tool_call['type']
+                if tool_call_type in tool_call.keys():
+                    tool_call_details = tool_call[tool_call_type]
+                    tool_call_params = None
+                    if 'parameters' in tool_call_details:
+                        tool_call_params = tool_call_details['parameters']
+                    elif 'arguments' in tool_call_details:
+                        tool_call_params = tool_call_details['arguments']
+                    if tool_call_params is not None and 'code' in tool_call_params.keys():
+                        output['visible'][-1][1] += f"\n\nTOOL CODE:\n<pre><code>{tool_call_params['code']}</code></pre>"
             yield output
             
             # If this setting is enabled, wait for confirmation (by pressing "continue") before executing the tool call

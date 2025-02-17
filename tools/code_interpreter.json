@@ -1,5 +1,5 @@
 {
-    "action": "import io\nimport sys\ndef code_interpreter(parameters):\n    code = parameters['code']\n    captured_output = io.StringIO()\n    sys.stdout = captured_output\n    try:\n        exec(code)\n    except Exception as e:\n        print(\"Exception while running code:\")\n        print(e)\n    finally:\n        sys.stdout = sys.__stdout__\n    output_str = captured_output.getvalue()\n    captured_output.close()\n    return output_str",
+    "action": "import io\nimport sys\nimport traceback\ndef code_interpreter(parameters):\n    code = parameters['code']\n    captured_output = io.StringIO()\n    sys.stdout = captured_output\n    try:\n        exec(code, globals())\n    except Exception as e:\n        print(\"Exception while running code:\")\n        print(traceback.print_exc())\n    finally:\n        sys.stdout = sys.__stdout__\n    output_str = captured_output.getvalue()\n    captured_output.close()\n    return output_str",
     "description": "Executes the given code. The console output will be returned as a string.",
     "name": "code_interpreter",
     "parameters": {
