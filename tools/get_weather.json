@@ -1,5 +1,5 @@
 {
-    "action": "# Assumed input is {\"latitude\": 90.0, \"longitude\": 30.0\"}\ndef get_weather(parameters):\n  print(parameters['latitude'], \n  parameters['longitude'])\n  return 0.0",
+    "action": "# Assumed input is {\"latitude\": 90.0, \"longitude\": 30.0\"}\n# This is just for testing and doesn't actually work, but you could call an API to actually get the weather somewhere...\ndef get_weather(parameters):\n    print(parameters['latitude'], \n    parameters['longitude'])\n    return 0.0",
     "description": "Get current temperature for provided coordinates in celsius.",
     "name": "get_weather",
     "parameters": {

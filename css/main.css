@@ -1125,6 +1125,36 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     gap: 0.25rem;
 }
 
+.tool-menu-label {
+    display: inline-block;
+    position: relative;
+    z-index: var(--layer-4);
+    border: solid var(--block-title-border-width) var(--block-title-border-color);
+    border-radius: var(--block-title-radius);
+    background: var(--block-title-background-fill);
+    padding: var(--block-title-padding);
+    color: var(--block-title-text-color);
+    font-weight: var(--block-title-text-weight);
+    font-size: var(--block-title-text-size);
+    line-height: var(--line-sm);
+}
+
+.tool-menu-info {
+    margin-bottom: var(--spacing-lg);
+    color: var(--block-info-text-color);
+    font-weight: var(--block-info-text-weight);
+    font-size: var(--block-info-text-size);
+    line-height: var(--line-sm);
+}
+
+#tool-parameters-menu {
+    background-color: var(--darker-gray) !important;
+}
+
+#tool-action-menu {
+    background-color: var(--darker-gray) !important;
+}
+
 /* ----------------------------------------------
   Dark theme
 ---------------------------------------------- */
