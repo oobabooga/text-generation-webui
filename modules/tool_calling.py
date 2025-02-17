@@ -275,6 +275,7 @@ def extract_tool_calls_to_be_executed(message, tools):
     tool_call_ids = set()
     tool_response_ids = set()
     json_objects, indices = extract_json_from_response(message)
+    tool_calls_to_execute = []
     if len(json_objects) > 0:
         for i, json_object in enumerate(json_objects):
             if 'id' in json_object:
@@ -284,7 +285,6 @@ def extract_tool_calls_to_be_executed(message, tools):
                 # Tool Response
                 tool_response_ids.add(json_object['tool_call_id'])
         tool_call_ids_to_execute = tool_call_ids - tool_response_ids
-        tool_calls_to_execute = []
         for i, json_object in enumerate(json_objects):
             if 'id' in json_object and json_object['id'] in tool_call_ids_to_execute:
                 tool_calls_to_execute.append(json_object)
