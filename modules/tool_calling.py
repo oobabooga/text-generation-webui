@@ -316,7 +316,7 @@ def execute_tool_call(tool_call):
             # TODO: Sandbox this somehow, as this can be extremely dangerous, especially if the user is executing LLM-generated code without reviewing it.
             # But for now, it depends on the user to ensure the code is safe. And some tools can be used completely safely, it's mostly things like code interpreter that can be problematic.
             # TODO: Code interpreter outputs to the console right now, needs to have the input and output displayed in the UI somehow.
-            if tool['arguments'] is not None:
+            if tool['arguments'] is not None and len(tool['arguments'].keys()) > 0:
                 result = action_function(tool['arguments'])
             else:
                 result = action_function()
