@@ -1,7 +1,7 @@
 import math
 import random
 import threading
-
+import torch
 import chromadb
 import numpy as np
 import posthog
@@ -14,9 +14,6 @@ from modules.text_generation import decode, encode
 
 # Intercept calls to posthog
 posthog.capture = lambda *args, **kwargs: None
-
-
-embedder = embedding_functions.SentenceTransformerEmbeddingFunction("sentence-transformers/all-mpnet-base-v2")
 
 
 class Info:
@@ -77,11 +74,23 @@ class Info:
 
 class ChromaCollector():
     def __init__(self):
-        name = ''.join(random.choice('ab') for _ in range(10))
+        name = "".join(random.choice("ab") for _ in range(10))
 
         self.name = name
-        self.chroma_client = chromadb.Client(Settings(anonymized_telemetry=False))
-        self.collection = self.chroma_client.create_collection(name=name, embedding_function=embedder)
+        self.embedder = embedding_functions.SentenceTransformerEmbeddingFunction(
+            "sentence-transformers/all-mpnet-base-v2",
+            device=("cuda" if torch.cuda.is_available() else "cpu"),
+        )
+        chroma_client = chromadb.Client(Settings(anonymized_telemetry=False))
+        self.collection = chroma_client.create_collection(
+            name=self.name,
+            embedding_function=self.embedder,
+            metadata={
+                "hnsw:search_ef": 200,
+                "hnsw:construction_ef": 200,
+                "hnsw:M": 64,
+            },
+        )
 
         self.ids = []
         self.id_to_info = {}
@@ -110,7 +119,7 @@ class ChromaCollector():
 
             # If there are any non-existing texts, compute their embeddings all at once. Each call to embed has significant overhead.
             if non_existing_texts:
-                non_existing_embeddings = embedder(non_existing_texts)
+                non_existing_embeddings = self.embedder(non_existing_texts)
                 for text, embedding in zip(non_existing_texts, non_existing_embeddings):
                     self.embeddings_cache[text] = embedding
 
@@ -139,7 +148,7 @@ class ChromaCollector():
             id_ = new_ids[i]
             metadata = metadatas[i] if metadatas is not None else None
             embedding = self.embeddings_cache.get(text)
-            if embedding:
+            if embedding is not None and embedding.any():
                 existing_texts.append(text)
                 existing_embeddings.append(embedding)
                 existing_ids.append(id_)
@@ -323,6 +332,8 @@ class ChromaCollector():
     def delete(self, ids_to_delete: list[str], where: dict):
         with self.lock:
             ids_to_delete = self.collection.get(ids=ids_to_delete, where=where)['ids']
+            if not ids_to_delete:
+                return
             self.collection.delete(ids=ids_to_delete, where=where)
 
             # Remove the deleted ids from self.ids and self.id_to_info
@@ -335,12 +346,7 @@ class ChromaCollector():
 
     def clear(self):
         with self.lock:
-            self.chroma_client.reset()
-
-            self.ids = []
-            self.chroma_client.delete_collection(name=self.name)
-            self.collection = self.chroma_client.create_collection(name=self.name, embedding_function=embedder)
-
+            self.__init__()  # reinitialize the collector
             logger.info('Successfully cleared all records and reset chromaDB.')
 
 
