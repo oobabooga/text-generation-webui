@@ -50,7 +50,6 @@ class GenerationOptions(BaseModel):
     negative_prompt: str = ''
     dry_sequence_breakers: str = '"\\n", ":", "\\"", "*"'
     grammar_string: str = ""
-    show_after: str = ""
 
 
 class CompletionRequestParams(BaseModel):
