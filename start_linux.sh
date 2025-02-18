@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-cd "$(dirname "${BASH_SOURCE[0]}")"
+cd "$(dirname "${BASH_SOURCE[0]}")" || {
+    sts="$?"
+    echo "Critical failure! Unable to change path to \"$(dirname "${BASH_SOURCE[0]}")\"."
+    exit "$sts"
+}
 
 if [[ "$(pwd)" =~ " " ]]; then echo This script relies on Miniconda which can not be silently installed under a path with spaces. && exit; fi
 
@@ -28,13 +32,43 @@ if "$CONDA_ROOT_PREFIX/bin/conda" --version &>/dev/null; then conda_exists="T"; 
 # (if necessary) install git and conda into a contained environment
 # download miniconda
 if [ "$conda_exists" == "F" ]; then
+    
+    # Remove miniconda install path and installer from failed installations
+    # This supports preventing an install loop of miniconda
+    #
+    # If the folder exists and it is a directory (cf. help test at bash prompt)
+    if [[ -e "$CONDA_ROOT_PREFIX" && -d "$CONDA_ROOT_PREFIX" ]]; then
+        echo "Attempting to remove previously-failed miniconda install path at \"$CONDA_ROOT_PREFIX\""
+        rm -rv "$CONDA_ROOT_PREFIX"
+        sts=$? # capture the return status of rm to pass it on as the exit status of the script if removal fails
+        if $sts; then
+            echo "Removal of \"$CONDA_ROOT_PREFIX\" succeeded."
+        else
+            # This shouldn't happen but if it does it requires manual intervention (likely a permissions issue)
+            echo "Removal of \"$CONDA_ROOT_PREFIX\" failed. Please manually remove the directory and then run this script again."
+            exit "$sts"
+        fi
+
+        # Remove the downloaded miniconda_installer.sh if it exists
+        if [ -e "$INSTALL_DIR/miniconda_installer.sh" ]; then
+            rm -v "$INSTALL_DIR/miniconda_installer.sh"
+            sts=$?
+            if $sts; then
+                echo "Removal of \"$INSTALL_DIR/miniconda_installer.sh\" succeeded."
+            else
+                echo "Removal of \"$CONDA_ROOT_PREFIX\" failed. Please manually remove the file and then run this script again."
+                exit "$sts"
+            fi
+        fi
+    fi
+    
     echo "Downloading Miniconda from $MINICONDA_DOWNLOAD_URL to $INSTALL_DIR/miniconda_installer.sh"
 
     mkdir -p "$INSTALL_DIR"
     curl -L "$MINICONDA_DOWNLOAD_URL" > "$INSTALL_DIR/miniconda_installer.sh"
 
     chmod u+x "$INSTALL_DIR/miniconda_installer.sh"
-    bash "$INSTALL_DIR/miniconda_installer.sh" -b -p $CONDA_ROOT_PREFIX
+    bash "$INSTALL_DIR/miniconda_installer.sh" -b -p "$CONDA_ROOT_PREFIX"
 
     # test the conda binary
     echo "Miniconda version:"
@@ -67,4 +101,4 @@ source "$CONDA_ROOT_PREFIX/etc/profile.d/conda.sh" # otherwise conda complains a
 conda activate "$INSTALL_ENV_DIR"
 
 # setup installer env
-python one_click.py $@
+python one_click.py "$@"
