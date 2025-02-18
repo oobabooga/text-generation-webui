@@ -90,8 +90,8 @@ def create_event_handlers():
     shared.gradio['delete_character_confirm'].click(handle_delete_character_confirm_click, gradio('character_menu'), gradio('character_menu', 'character_deleter'), show_progress=False)
     shared.gradio['save_tool_preset_confirm'].click(handle_save_tool_preset_confirm_click, gradio('save_tool_preset_filename', 'tool_menu'), gradio('tool_preset_menu', 'tool_preset_saver'), show_progress=False)
     shared.gradio['delete_tool_preset_confirm'].click(handle_delete_tool_preset_confirm_click, gradio('tool_preset_menu'), gradio('tool_preset_menu', 'tool_preset_deleter'), show_progress=False)
-    shared.gradio['save_tool_confirm'].click(handle_save_tool_confirm_click, gradio('save_tool_filename', 'tool_type', 'tool_description', 'tool_parameters', 'tool_action', 'tools'), gradio('tool_menu', 'tool_saver', 'tools'), show_progress=False)
-    shared.gradio['delete_tool_confirm'].click(handle_delete_tool_confirm_click, gradio('tool_menu', 'tool_name', 'tools'), gradio('tool_menu', 'tool_deleter'), show_progress=False)
+    shared.gradio['save_tool_confirm'].click(handle_save_tool_confirm_click, gradio('save_tool_filename', 'tool_type', 'tool_description', 'tool_parameters', 'tool_action', 'tools'), gradio('tool_menu', 'tool_saver', 'tools', 'tool_filename'), show_progress=False)
+    shared.gradio['delete_tool_confirm'].click(handle_delete_tool_confirm_click, gradio('tool_menu', 'tool_name', 'tools'), gradio('tool_menu', 'tool_deleter', 'tool_filename'), show_progress=False)
 
     shared.gradio['save_preset_cancel'].click(lambda: gr.update(visible=False), None, gradio('preset_saver'), show_progress=False)
     shared.gradio['save_cancel'].click(lambda: gr.update(visible=False), None, gradio('file_saver'))
@@ -240,7 +240,8 @@ def handle_save_tool_confirm_click(filename, type, description, parameters, acti
     if not tool_valid:
         return [
             gr.update(),
-            gr.update(visible=False)
+            gr.update(visible=False),
+            gr.update(choices=utils.get_available_tools())
         ]
 
     return chat.handle_save_tool(filename, type, description, parameters, action, tools)
@@ -253,7 +254,10 @@ def handle_delete_tool_confirm_click(selected_tools, tool_name, tools):
     except Exception:
         traceback.print_exc()
 
+    available_tools = utils.get_available_tools()
+
     return [
-        gr.update(choices=utils.get_available_tools(), value=list(set(selected_tools)-{tool_name})),
-        gr.update(visible=False)
+        gr.update(choices=available_tools, value=list(set(selected_tools)-{tool_name})),
+        gr.update(visible=False),
+        gr.update(choices=available_tools)
     ]

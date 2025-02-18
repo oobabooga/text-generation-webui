@@ -979,20 +979,21 @@ def load_instruction_template(template):
 
 
 # Assume JSON but idk
-def load_tool(tool_name):
+def load_tool(tool_filename):
     filepath = None
     for extension in ["yml", "yaml", "json"]:
-        filepath = Path(f'tools/{tool_name}.{extension}')
+        filepath = Path(f'tools/{tool_filename}.{extension}')
         if filepath.exists():
             break
 
     if filepath is None or not filepath.exists():
-        logger.error(f"Could not find the tool \"{tool_name}\" inside tools/. No tool has been loaded.")
+        logger.error(f"Could not find the tool \"{tool_filename}\" inside tools/. No tool has been loaded.")
         raise ValueError
 
     file_contents = open(filepath, 'r', encoding='utf-8').read()
     data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
     
+    tool_name = tool_filename
     tool_type = 'function'
     tool_description = ""
     tool_parameters = {}
@@ -1605,8 +1606,11 @@ def handle_tool_change(tool_checkbox_group, tools):
 
     print("Current tools:", tools)
     
-    return tool_name, tool_type, tool_description, json.dumps(tool_parameters, indent=4, sort_keys=True), tool_action, tools
+    return tool_name, tool_type, tool_description, json.dumps(tool_parameters, indent=4, sort_keys=True), tool_action, tools, gr.update(value=selected_tool)
 
+def load_tool_ui(tool_filename):
+    tool_name, tool_type, tool_description, tool_parameters, tool_action = load_tool(tool_filename)
+    return tool_name, tool_type, tool_description, json.dumps(tool_parameters, indent=4, sort_keys=True), tool_action
 
 def handle_save_tool_click(tool_name):
     return [

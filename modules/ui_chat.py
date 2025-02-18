@@ -101,7 +101,9 @@ def create_ui():
 def load_selected_tool_data():
     tool_name_list = utils.get_available_tools()
     if len(tool_name_list) > 0:
-        tool_name, tool_type, tool_description, tool_parameters, tool_action = chat.load_tool(tool_name_list[0])
+        tool_filename = tool_name_list[0]
+        tool_name, tool_type, tool_description, tool_parameters, tool_action = chat.load_tool(tool_filename)
+        shared.gradio['tool_filename'].value = tool_filename
         shared.gradio['tool_type'].value = tool_type
         shared.gradio['tool_name'].value = tool_name
         shared.gradio['tool_description'].value = tool_description
@@ -213,9 +215,10 @@ def create_chat_settings_ui():
             # Tool Details / Add New Tool
             with gr.Column():
                 with gr.Row():
-                    shared.gradio['tool_name'] = gr.Textbox(value='', lines=1, label='Tool Name', interactive=not mu)
+                    shared.gradio['tool_filename'] = gr.Dropdown(choices=utils.get_available_tools(), label="Tool Filename", elem_id="tool-filename-menu", interactive=not mu)
                     shared.gradio['save_tool'] = gr.Button('💾', elem_classes='refresh-button', elem_id="save-tool", interactive=not mu)
                     shared.gradio['delete_tool'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
+                shared.gradio['tool_name'] = gr.Textbox(value='', lines=1, label='Tool Name', interactive=not mu)
                 shared.gradio['tool_type'] = gr.Dropdown(value='function', choices=['function'], interactive=not mu, label='Tool Type', elem_id='tool-type-menu', info='Only function type available for now', elem_classes='slim-dropdown')
                 shared.gradio['tool_description'] = gr.Textbox(value='', lines=3, interactive=not mu, label='Tool Description', info='This helps the model determine when to use the tool.')
                 gr.HTML(value='<span class="tool-menu-label">Tool Parameters</span><div class="tool-menu-info">Specify the parameters for the tool in JSON. This helps the model determine what information to pass to the tool.</div>')
@@ -426,8 +429,9 @@ def create_event_handlers():
     shared.gradio['save_tool_preset'].click(chat.handle_save_tool_preset_click, gradio('tool_preset_menu'), gradio('save_tool_preset_filename', 'tool_preset_saver'), show_progress=False)
     shared.gradio['delete_tool_preset'].click(lambda: gr.update(visible=True), None, gradio('tool_preset_deleter'), show_progress=False)
 
-    shared.gradio['tool_menu'].change(chat.handle_tool_change, gradio('tool_menu', 'tools'), gradio('tool_name', 'tool_type', 'tool_description', 'tool_parameters', 'tool_action', 'tools'), show_progress=False)
+    shared.gradio['tool_menu'].change(chat.handle_tool_change, gradio('tool_menu', 'tools'), gradio('tool_name', 'tool_type', 'tool_description', 'tool_parameters', 'tool_action', 'tools', 'tool_filename'), show_progress=False)
 
+    shared.gradio['tool_filename'].change(chat.load_tool_ui, gradio('tool_filename'), gradio('tool_name', 'tool_type', 'tool_description', 'tool_parameters', 'tool_action'), show_progress=False)
     shared.gradio['save_tool'].click(chat.handle_save_tool_click, gradio('tool_name'), gradio('save_tool_filename', 'tool_saver'), show_progress=False)
     shared.gradio['delete_tool'].click(lambda: gr.update(visible=True), None, gradio('tool_deleter'), show_progress=False)
 
