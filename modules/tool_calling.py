@@ -11,29 +11,37 @@ def split_message_by_tool_calls(message):
     messages = []
     json_objects, indices = extract_json_from_response(message)
     # Preprocess to remove the JSON objects that aren't tool calls
-    not_tool_related = []
-    for i, json_object in enumerate(json_objects):
-        if 'id' not in json_object and 'tool_call_id' not in json_object:
-            not_tool_related.append(i)
-    for i in not_tool_related[::-1]:
-        del json_objects[i]
+    # Or maybe not, if we're not removing them from the message
     if len(json_objects) > 0:
+        start_index = 0
         for i, json_object in enumerate(json_objects):
             # Tool call
+            #start_index = indices[i-1][1] if i > 0 else 0
+            end_index = indices[i][0]
+            assistant_message = message[start_index:end_index] if len(message[start_index:end_index].strip()) > 0 else ""
             if 'id' in json_object:
-                start_index = indices[i-1][1] if i > 0 else 0
-                end_index = indices[i][0]
-                assistant_message = message[start_index:end_index] if len(message[start_index:end_index].strip()) > 0 else ""
                 # At least in Llama 3, putting content in the same message as the tool call actually throws out the content...
                 #messages.append({"role": "assistant", "content": assistant_message, "tool_calls": [json_object]})
                 if assistant_message != "":
                     messages.append({"role": "assistant", "content": assistant_message})
                 messages.append({"role": "assistant", "content": "", "tool_calls": [json_object]})
+                start_index = indices[i][1]
             # Tool response
             elif 'tool_call_id' in json_object:
                 messages.append(json_object)
+                start_index = indices[i][1]
             else:
-                print("Invalid JSON object found in response")
+                # TODO: Might need to add XML tags that happen just after, but it's special token dependent
+                assistant_message += message[indices[i][0]:indices[i][1]]
+                remaining_message = message[indices[i][1]:]
+                start_index = indices[i][1]
+                if remaining_message.strip().startswith('</tool'):
+                    extra_offset = remaining_message.find('>', 1)+1
+                    assistant_message += remaining_message[:extra_offset]
+                    start_index += extra_offset
+                    print('XML tag added?', assistant_message)
+                messages.append({"role": "assistant", "content": assistant_message})
+                #print("Invalid JSON object found in response")
         assistant_message = message[indices[-1][1]:]
         #if assistant_message != "": # I think this is necessary even if it's an empty message to ensure the next message role isn't tool/ipython
         messages.append({"role": "assistant", "content": assistant_message})

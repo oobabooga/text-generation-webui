@@ -476,9 +476,10 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             print(tool_calls)
             # Use chat/instruct template to modify the message to include the tool call(s) and response(s)
             # Delete the raw tool call
-            output['internal'][-1][1] = last_reply[0] + modified_message
-            output['visible'][-1][1] = last_reply[1] + modified_message
-            kwargs['last_assistant_response'] = last_reply[0] + modified_message
+            # Maybe it would be better to not do this
+            #output['internal'][-1][1] = last_reply[0] + modified_message
+            #output['visible'][-1][1] = last_reply[1] + modified_message
+            kwargs['last_assistant_response'] = reply # last_reply[0] + modified_message
             kwargs['tool_calls'] = tool_calls
             kwargs['tool_results'] = []
             # Add tool call to visible results but not internal results
@@ -500,6 +501,8 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             # If this setting is enabled, wait for confirmation (by pressing "continue") before executing the tool call
             if state['confirm_tool_use']:
                 output['visible'][-1][1] += "\n(Waiting for confirmation, press continue to run...)"
+                # Apply extensions before tool call
+                output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
                 yield output
                 return # Stop generation until clicking "continue"
 
