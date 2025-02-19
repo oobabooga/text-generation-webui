@@ -1,0 +1,7 @@
+{
+    "action": "import random\ndef random_number():\n    return random.random()",
+    "description": "Get a random number between 0 and 1.",
+    "name": "random_number",
+    "parameters": {},
+    "type": "function"
+}
