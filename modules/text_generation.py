@@ -12,6 +12,7 @@ import transformers
 from transformers import (
     LogitsProcessorList,
     QuantoQuantizedCache, 
+    HQQQuantizedCache,
     QuantizedCacheConfig,
     is_torch_npu_available,
     is_torch_xpu_available
@@ -80,6 +81,17 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
                     compute_dtype=shared.args.compute_dtype
                 )
                 shared_cache = QuantoQuantizedCache(cache_config=cache_config)
+            elif shared.args.cache_type in ['hqq4', 'hqq2']:
+                cache_config = QuantizedCacheConfig(
+                    axis_key=1,
+                    axis_value=1,
+                    backend='hqq',
+                    nbits=4 if shared.args.cache_type == 'hqq4' else 2,
+                    device=get_device(),
+                    compute_dtype=shared.args.compute_dtype
+                )
+                shared_cache = HQQQuantizedCache(cache_config=cache_config)
+
 
 
     # Prepare the input
