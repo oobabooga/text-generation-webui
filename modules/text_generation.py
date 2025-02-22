@@ -11,6 +11,8 @@ import torch
 import transformers
 from transformers import (
     LogitsProcessorList,
+    QuantoQuantizedCache, 
+    QuantizedCacheConfig,
     is_torch_npu_available,
     is_torch_xpu_available
 )
@@ -65,6 +67,21 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
         logger.info("PROMPT=")
         print_prompt(question)
 
+    shared_cache=None
+    if generate_func == generate_reply_HF:
+        if shared.args.loader == 'Transformers':
+            if shared.args.cache_type in ['quanto4', 'quanto2']:
+                cache_config = QuantizedCacheConfig(
+                    axis_key=0,
+                    axis_value=0,
+                    backend='quanto',
+                    nbits=4 if shared.args.cache_type == 'quanto4' else 2,
+                    device=get_device(),
+                    compute_dtype=shared.args.compute_dtype
+                )
+                shared_cache = QuantoQuantizedCache(cache_config=cache_config)
+
+
     # Prepare the input
     original_question = question
     if not is_chat:
@@ -94,7 +111,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
         min_update_interval = 1 / state['max_updates_second']
 
     # Generate
-    for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
+    for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat, shared_cache=shared_cache):
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
         if escape_html:
             reply = html.escape(reply)
@@ -282,7 +299,7 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
     return reply
 
 
-def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
+def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False, shared_cache=None):
     if shared.args.loader == 'Transformers':
         clear_torch_cache()
 
@@ -377,6 +394,10 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     generate_params['stopping_criteria'] = transformers.StoppingCriteriaList()
     generate_params['stopping_criteria'].append(_StopEverythingStoppingCriteria())
 
+    if shared_cache:
+        generate_params['past_key_values'] = shared_cache
+        generate_params['use_cache'] = True
+
     # Logits processor
     processor = state.get('logits_processor', LogitsProcessorList([]))
     if not isinstance(processor, LogitsProcessorList):
@@ -460,7 +481,7 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         return
 
 
-def generate_reply_custom(question, original_question, seed, state, stopping_strings=None, is_chat=False):
+def generate_reply_custom(question, original_question, seed, state, stopping_strings=None, is_chat=False, shared_cache=None):
     """
     For models that do not use the transformers library for sampling
     """

@@ -158,7 +158,7 @@ group.add_argument('--cpp-runner', action='store_true', help='Use the ModelRunne
 
 # Cache
 group = parser.add_argument_group('Cache')
-group.add_argument('--cache_type', type=str, default='fp16', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4.')
+group.add_argument('--cache_type', type=str, default='fp16', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; transformers - fp16, quanto4, quanto2.')
 
 # DeepSpeed
 group = parser.add_argument_group('DeepSpeed')
