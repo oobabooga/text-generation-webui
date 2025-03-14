@@ -183,6 +183,7 @@ def list_interface_input_elements():
         'eta_cutoff',
         'tfs',
         'top_a',
+        'top_n_sigma',
         'dry_multiplier',
         'dry_allowed_length',
         'dry_base',
