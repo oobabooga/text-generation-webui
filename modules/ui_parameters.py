@@ -37,6 +37,7 @@ def create_ui(default_preset):
 
                             gr.Markdown('## Curve cutoff')
                             shared.gradio['min_p'] = gr.Slider(0.0, 1.0, value=generate_params['min_p'], step=0.01, label='min_p')
+                            shared.gradio['top_n_sigma'] = gr.Slider(0.0, 5.0, value=generate_params['top_n_sigma'], step=0.01, label='top_n_sigma')
                             shared.gradio['top_p'] = gr.Slider(0.0, 1.0, value=generate_params['top_p'], step=0.01, label='top_p')
                             shared.gradio['top_k'] = gr.Slider(0, 200, value=generate_params['top_k'], step=1, label='top_k')
                             shared.gradio['typical_p'] = gr.Slider(0.0, 1.0, value=generate_params['typical_p'], step=0.01, label='typical_p')

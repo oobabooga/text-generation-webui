@@ -28,6 +28,7 @@ def default_preset():
         'eta_cutoff': 0,
         'tfs': 1,
         'top_a': 0,
+        'top_n_sigma': 0,
         'dry_multiplier': 0,
         'dry_allowed_length': 2,
         'dry_base': 1.75,
@@ -45,7 +46,7 @@ def default_preset():
         'do_sample': True,
         'dynamic_temperature': False,
         'temperature_last': False,
-        'sampler_priority': 'repetition_penalty\npresence_penalty\nfrequency_penalty\ndry\ntemperature\ndynamic_temperature\nquadratic_sampling\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nmirostat\nxtc\nencoder_repetition_penalty\nno_repeat_ngram',
+        'sampler_priority': 'repetition_penalty\npresence_penalty\nfrequency_penalty\ndry\ntemperature\ndynamic_temperature\nquadratic_sampling\ntop_n_sigma\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nmirostat\nxtc\nencoder_repetition_penalty\nno_repeat_ngram',
         'dry_sequence_breakers': '"\\n", ":", "\\"", "*"',
     }
 

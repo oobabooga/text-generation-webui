@@ -302,6 +302,7 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         'xtc_probability',
         'tfs',
         'top_a',
+        'top_n_sigma',
         'dry_multiplier',
         'dry_allowed_length',
         'dry_base',
