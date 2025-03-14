@@ -248,16 +248,6 @@ button {
     font-size: 100% !important;
 }
 
-.pretty_scrollbar {
-    scrollbar-width: thin !important;
-    scrollbar-color: rgb(140 140 140 / 35%) transparent;
-}
-
-.dark .pretty_scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: rgb(204 204 204 / 35%) transparent;
-}
-
 .pretty_scrollbar::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -267,37 +257,29 @@ button {
     background: transparent;
 }
 
-.pretty_scrollbar::-webkit-scrollbar-thumb {
-    background: rgb(140 140 140 / 35%);
-    border-radius: 4px;
-    transition: background 0.2s ease;
-}
-
+.pretty_scrollbar::-webkit-scrollbar-thumb,
 .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgb(140 140 140 / 55%);
+    background: var(--neutral-300);
+    border-radius: 30px;
 }
 
-.dark .pretty_scrollbar::-webkit-scrollbar-thumb {
-    background: rgb(204 204 204 / 35%);
-    border-radius: 4px;
-}
-
+.dark .pretty_scrollbar::-webkit-scrollbar-thumb,
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgb(204 204 204 / 55%);
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.pretty_scrollbar::-webkit-resizer {
+    background: #c5c5d2;
+}
+
+.dark .pretty_scrollbar::-webkit-resizer {
+    background: #ccc;
+    border-radius: 10px;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-corner {
     background: transparent;
-}
-
-.pretty_scrollbar::-webkit-resizer {
-    background: rgb(140 140 140 / 35%);
-    border-radius: 4px;
-}
-
-.dark .pretty_scrollbar::-webkit-resizer {
-    background: rgb(204 204 204 / 35%);
-    border-radius: 4px;
 }
 
 audio {
