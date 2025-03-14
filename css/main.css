@@ -248,38 +248,56 @@ button {
     font-size: 100% !important;
 }
 
+.pretty_scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(140 140 140 / 35%) transparent;
+}
+
+.dark .pretty_scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(204 204 204 / 35%) transparent;
+}
+
 .pretty_scrollbar::-webkit-scrollbar {
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.pretty_scrollbar::-webkit-scrollbar-thumb,
+.pretty_scrollbar::-webkit-scrollbar-thumb {
+    background: rgb(140 140 140 / 35%);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
 .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--neutral-300);
-    border-radius: 30px;
+    background: rgb(140 140 140 / 55%);
 }
 
-.dark .pretty_scrollbar::-webkit-scrollbar-thumb,
+.dark .pretty_scrollbar::-webkit-scrollbar-thumb {
+    background: rgb(204 204 204 / 35%);
+    border-radius: 4px;
+}
+
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #ccc;
-    border-radius: 10px;
-}
-
-.pretty_scrollbar::-webkit-resizer {
-    background: #c5c5d2;
-}
-
-.dark .pretty_scrollbar::-webkit-resizer {
-    background: #ccc;
-    border-radius: 10px;
+    background: rgb(204 204 204 / 55%);
 }
 
 .pretty_scrollbar::-webkit-scrollbar-corner {
     background: transparent;
+}
+
+.pretty_scrollbar::-webkit-resizer {
+    background: rgb(140 140 140 / 35%);
+    border-radius: 4px;
+}
+
+.dark .pretty_scrollbar::-webkit-resizer {
+    background: rgb(204 204 204 / 35%);
+    border-radius: 4px;
 }
 
 audio {
@@ -295,7 +313,7 @@ audio {
     width: 0;
     text-align: left;
     direction: rtl;
-    right: 5px;
+    right: 13px;
 }
 
 #default-token-counter {
