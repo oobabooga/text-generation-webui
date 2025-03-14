@@ -249,7 +249,7 @@ button {
 }
 
 .pretty_scrollbar {
-    scrollbar-width: thin;
+    scrollbar-width: thin !important;
     scrollbar-color: rgb(140 140 140 / 35%) transparent;
 }
 
@@ -1181,7 +1181,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .header_bar button.selected {
-    background: white;
+    background: #E0E0E0;
 }
 
 #chat-controls,
