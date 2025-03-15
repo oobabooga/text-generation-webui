@@ -147,8 +147,8 @@ def monkey_patch_llama_cpp_python(lib):
                 )
 
                 # Create environment with loopcontrols extension
-                from jinja2.ext import loopcontrols
                 import jinja2
+                from jinja2.ext import loopcontrols
 
                 self._environment = jinja2.sandbox.ImmutableSandboxedEnvironment(
                     loader=jinja2.BaseLoader(),
