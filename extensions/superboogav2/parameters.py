@@ -251,6 +251,10 @@ def get_is_manual() -> bool:
     return bool(Parameters.getInstance().hyperparameters['manual']['default'])
 
 
+def get_add_date_time() -> bool:
+    return bool(Parameters.getInstance().hyperparameters['add_date_time']['default'])
+
+
 def get_add_chat_to_data() -> bool:
     return bool(Parameters.getInstance().hyperparameters['add_chat_to_data']['default'])
 
@@ -329,6 +333,10 @@ def set_postfix(value: str):
 
 def set_manual(value: bool):
     Parameters.getInstance().hyperparameters['manual']['default'] = value
+
+
+def set_add_date_time(value: bool):
+    Parameters.getInstance().hyperparameters['add_date_time']['default'] = value
 
 
 def set_add_chat_to_data(value: bool):

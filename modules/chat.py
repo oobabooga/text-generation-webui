@@ -11,6 +11,7 @@ from pathlib import Path
 
 import gradio as gr
 import yaml
+from jinja2.ext import loopcontrols
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 from PIL import Image
 
@@ -35,7 +36,11 @@ def strftime_now(format):
     return datetime.now().strftime(format)
 
 
-jinja_env = ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
+jinja_env = ImmutableSandboxedEnvironment(
+    trim_blocks=True,
+    lstrip_blocks=True,
+    extensions=[loopcontrols]
+)
 jinja_env.globals["strftime_now"] = strftime_now
 
 

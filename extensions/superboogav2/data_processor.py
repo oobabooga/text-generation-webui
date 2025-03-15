@@ -6,6 +6,7 @@ It will only include full words.
 
 import bisect
 import re
+from datetime import datetime
 
 import extensions.superboogav2.parameters as parameters
 
@@ -153,6 +154,13 @@ def process_and_add_to_collector(corpus: str, collector: ChromaCollector, clear_
     data_chunks = []
     data_chunks_with_context = []
     data_chunk_starting_indices = []
+
+    if parameters.get_add_date_time():
+        now = datetime.now()
+        date_time_chunk = f"Current time is {now.strftime('%H:%M:%S')}. Today is {now.strftime('%A')}. The current date is {now.strftime('%Y-%m-%d')}."
+        data_chunks.append(date_time_chunk)
+        data_chunks_with_context.append(date_time_chunk)
+        data_chunk_starting_indices.append(0)
 
     # Handling chunk_regex
     if parameters.get_chunk_regex():

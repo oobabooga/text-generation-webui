@@ -39,11 +39,11 @@ def _markdown_hyperparams():
 # Convert numpy types to python types.
 def _convert_np_types(params):
     for key in params:
-        if type(params[key]) == np.bool_:
+        if isinstance(params[key], np.bool_):
             params[key] = bool(params[key])
-        elif type(params[key]) == np.int64:
+        elif isinstance(params[key], np.int64):
             params[key] = int(params[key])
-        elif type(params[key]) == np.float64:
+        elif isinstance(params[key], np.float64):
             params[key] = float(params[key])
     return params
 
