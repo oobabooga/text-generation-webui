@@ -1,7 +1,7 @@
 :root {
     --darker-gray: #202123;
-    --dark-gray: #343541;
-    --light-gray: #444654;
+    --dark-gray: #202123;
+    --light-gray: #303030;
     --light-theme-gray: #f5f5f5;
     --border-color-dark: #525252;
     --header-width: 112px;
@@ -265,7 +265,7 @@ button {
 
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb,
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #ccc;
+    background: #565869;
     border-radius: 10px;
 }
 
