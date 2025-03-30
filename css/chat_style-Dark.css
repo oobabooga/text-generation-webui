@@ -3,7 +3,7 @@
     grid-template-columns: 60px minmax(0, 1fr);
     padding-bottom: 28px;
     font-size: 18px;
-    font-family: 'Roboto', Arial, sans-serif; /* Modern font */
+    font-family: Roboto, Arial, sans-serif; /* Modern font */
     line-height: 1.5;
 }
 
@@ -12,7 +12,7 @@
     background-color: #2b2b2b; /* Darker background for circles */
     border-radius: 50%; /* Perfect circle */
     border: 1px solid #4a90e2; /* Soft blue border */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Soft shadow for depth */
+    box-shadow: 0 4px 8px rgb(0 0 0 / 50%); /* Soft shadow for depth */
 }
 
 .circle-bot img,
@@ -51,11 +51,11 @@
 
 .message-body {
     position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Soft white border */
+    border: 1px solid rgb(255 255 255 / 10%); /* Soft white border */
     border-radius: 8px; /* Slightly rounded corners */
     padding: 15px;
     background: #1e1e1e; /* Dark background */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
+    box-shadow: 0 4px 10px rgb(0 0 0 / 30%); /* Subtle shadow for depth */
     transition: background 0.3s ease; /* Smooth transition for background */
 }
 
@@ -71,7 +71,7 @@
     left: 10px;
     right: 10px;
     height: 1px;
-    background-color: rgba(255, 255, 255, 0.05); /* Faded lines for subtle separation */
+    background-color: rgb(255 255 255 / 5%); /* Faded lines for subtle separation */
 }
 
 .message-body::before {
@@ -99,13 +99,13 @@
     color: #a6a6a6 !important; /* Softer gray for emphasized text */
 }
 
-@media screen and (max-width: 688px) {
+@media screen and (width <= 688px) {
     .message {
         display: grid;
         grid-template-columns: 60px minmax(0, 1fr);
         padding-bottom: 25px;
         font-size: 15px;
-        font-family: 'Roboto', Arial, sans-serif; /* Modern font */
+        font-family: Roboto, Arial, sans-serif; /* Modern font */
         line-height: 1.5;
     }
 
