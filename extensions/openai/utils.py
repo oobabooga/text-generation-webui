@@ -72,20 +72,23 @@ def parseToolCall(answer: str, tool_names: list[str]):
         candidate = re.sub(r"^(json|python[^\n]*)\n", "", match.group(1).strip())
         try:
             # parse the candidate JSON into a dictionary
-            candidate_dict = json.loads(candidate)
+            candidates = json.loads(candidate)
+            if not isinstance(candidates, list):
+                candidates = [candidates]
 
-            # check if property 'function' exists and is a dictionary, otherwise adapt dict
-            if 'function' not in candidate_dict and 'name' in candidate_dict and isinstance(candidate_dict['name'], str):
-                candidate_dict = {"type": "function", "function": candidate_dict}
-            if 'function' in candidate_dict and isinstance(candidate_dict['function'], dict):
-                # check if 'name' exists within 'function' and is part of known tools
-                if 'name' in candidate_dict['function'] and candidate_dict['function']['name'] in tool_names:
-                    candidate_dict["type"] = "function"  # ensure required property 'type' exists and has the right value
-                    # map property 'parameters' used by some older models to 'arguments'
-                    if "arguments" not in candidate_dict["function"] and "parameters" in candidate_dict["function"]:
-                        candidate_dict["function"]["arguments"] = candidate_dict["function"]["parameters"]
-                        del candidate_dict["function"]["parameters"]
-                    matches.append(candidate_dict)
+            for candidate_dict in candidates:
+                # check if property 'function' exists and is a dictionary, otherwise adapt dict
+                if 'function' not in candidate_dict and 'name' in candidate_dict and isinstance(candidate_dict['name'], str):
+                    candidate_dict = {"type": "function", "function": candidate_dict}
+                if 'function' in candidate_dict and isinstance(candidate_dict['function'], dict):
+                    # check if 'name' exists within 'function' and is part of known tools
+                    if 'name' in candidate_dict['function'] and candidate_dict['function']['name'] in tool_names:
+                        candidate_dict["type"] = "function"  # ensure required property 'type' exists and has the right value
+                        # map property 'parameters' used by some older models to 'arguments'
+                        if "arguments" not in candidate_dict["function"] and "parameters" in candidate_dict["function"]:
+                            candidate_dict["function"]["arguments"] = candidate_dict["function"]["parameters"]
+                            del candidate_dict["function"]["parameters"]
+                        matches.append(candidate_dict)
 
         except json.JSONDecodeError:
             # Ignore invalid JSON silently
