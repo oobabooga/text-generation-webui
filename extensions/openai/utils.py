@@ -1,6 +1,9 @@
 import base64
 import os
 import time
+import json
+import random
+import re
 import traceback
 from typing import Callable, Optional
 
@@ -52,3 +55,47 @@ def _start_cloudflared(port: int, tunnel_id: str, max_attempts: int = 3, on_star
             time.sleep(3)
 
         raise Exception('Could not start cloudflared.')
+
+
+def getToolCallId() -> str:
+    letter_bytes = "abcdefghijklmnopqrstuvwxyz0123456789"
+    b = [random.choice(letter_bytes) for _ in range(8)]
+    return "call_" + "".join(b).lower()
+
+
+def parseToolCall(answer: str, tool_names: list[str]):
+    pattern = r"```(.*?)```"
+
+    matches = []
+
+    for match in re.finditer(pattern, answer, re.DOTALL):
+        candidate = re.sub(r"^(json|python[^\n]*)\n", "", match.group(1).strip())
+        print(f'candidate: [{candidate}]')
+        try:
+            # parse the candidate JSON into a dictionary
+            candidate_dict = json.loads(candidate)
+
+            print(f'candidate dict checking for tools {tool_names}')
+            print(f'"name" in candidate dict? {"name" in candidate_dict}')
+            if 'name' in candidate_dict:
+                print(f'in tool names? {candidate_dict["name"] in tool_names}')
+
+            # check if property 'function' exists and is a dictionary, otherwise adapt dict
+            if 'function' not in candidate_dict and 'name' in candidate_dict and isinstance(candidate_dict['name'], str):
+                candidate_dict = {"type": "function", "function": candidate_dict}
+            if 'function' in candidate_dict and isinstance(candidate_dict['function'], dict):
+                # check if 'name' exists within 'function' and is part of known tools
+                if 'name' in candidate_dict['function'] and candidate_dict['function']['name'] in tool_names:
+                    candidate_dict["type"] = "function"  # ensure required property 'type' exists and has the right value
+                    # map property 'parameters' used by some older models to 'arguments'
+                    if "arguments" not in candidate_dict["function"] and "parameters" in candidate_dict["function"]:
+                        candidate_dict["function"]["arguments"] = candidate_dict["function"]["parameters"]
+                        del candidate_dict["function"]["parameters"]
+                    matches.append(candidate_dict)
+                    print('adding match!')
+
+        except json.JSONDecodeError:
+            # Ignore invalid JSON silently
+            continue
+
+    return matches
