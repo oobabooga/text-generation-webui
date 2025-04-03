@@ -83,7 +83,6 @@ class FunctionCall(BaseModel):
     @validator('arguments', allow_reuse=True)
     def checkPropertyArgsOrParams(cls, v, values, **kwargs):
         if not v and not values.get('parameters'):
-            print('checkPropertyArgsOrParams failed')
             raise ValueError("At least one of 'arguments' or 'parameters' must be provided as property in FunctionCall type")
         return v
 

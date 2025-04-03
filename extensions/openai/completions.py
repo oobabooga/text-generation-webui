@@ -266,12 +266,8 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
     else:
         instruction_template_str = shared.settings['instruction_template_str']
 
-    # print(f'instruction_template_str\n\n{instruction_template_str}\n')
-
     chat_template_str = body['chat_template_str'] or shared.default_settings['chat_template_str']
     chat_instruct_command = body['chat_instruct_command'] or shared.default_settings['chat-instruct_command']
-
-    # print(f'chat_template_str\n\n{chat_template_str}\n')
 
     # Chat character
     character = body['character'] or shared.default_settings['character']
@@ -330,9 +326,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         # else:
         #    chunk[resp_list][0]["logprobs"] = None
 
-        if chunk_tool_calls is not None:
-            print(json.dumps(chunk, indent=3))
-
         return chunk
 
     # generate reply #######################################
@@ -340,9 +333,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
     if prompt_only:
         yield {'prompt': prompt}
         return
-
-    print(f"\n=== prompt ===\n{prompt}\n\n")
-    # print(json.dumps({'prompt': prompt, 'generate_params': generate_params}, indent=3))
 
     if stream:
         yield chat_streaming_chunk('')
@@ -356,10 +346,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
     tool_calls = []
     end_last_tool_call = 0
     supported_tools = [x["function"]["name"] for x in tools] if tools is not None else None
-    if supported_tools is not None:
-        print(f"available tools: {supported_tools}\n")
-    else:
-        print("no tools available\n")
 
     for a in generator:
         answer = a['internal'][-1][1]
@@ -383,7 +369,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
                         tc["index"] = str(len(tool_calls))
                         tc["function"]["arguments"] = json.dumps(tc["function"]["arguments"])
                         tool_calls.append(tc)
-                    print(f"found tool call: {json.dumps(tool_call)}")
                     end_last_tool_call = len(answer)
                     chunk = chat_streaming_chunk('', tool_call)
                     yield chunk
@@ -404,8 +389,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             "completion_tokens": completion_token_count,
             "total_tokens": token_count + completion_token_count
         }
-
-        print(f"==== response ====\n{answer}\nnum tool calls: {len(tool_calls) if tools is not None else 'n/a'}\n\n")
 
         yield chunk
     else:
@@ -431,8 +414,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             resp[resp_list][0]["logprobs"] = {'top_logprobs': [top_logprobs]}
         # else:
         #     resp[resp_list][0]["logprobs"] = None
-
-        print(json.dumps(resp_list, indent=3), f"\n\nnon-stream response, len tools {len(tool_calls)}")
 
         yield resp
 
@@ -612,11 +593,9 @@ def stream_completions(body: dict, is_legacy: bool = False):
 
 
 def validateTools(tools: str):
-    print('in tools')
     # Validate each tool definition in the JSON array
     valid_tools = []
     for tool in tools:
-        print(type(tool), tool)
         try:
             tool_definition = ToolDefinition(**tool)
             valid_tools.append(tool_definition)
