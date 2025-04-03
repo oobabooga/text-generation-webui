@@ -121,7 +121,7 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
 async def openai_chat_completions(request: Request, request_data: ChatCompletionRequest):
     path = request.url.path
     is_legacy = "/generate" in path
-    print(request)
+
     if request_data.stream:
         async def generator():
             async with streaming_semaphore:
