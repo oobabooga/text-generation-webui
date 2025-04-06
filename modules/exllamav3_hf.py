@@ -4,15 +4,11 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import torch
+from exllamav3 import Cache, Config, Model
 from torch.nn import CrossEntropyLoss
 from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
-from exllamav3 import (
-    Model,
-    Cache,
-    Config
-)
 from modules import shared
 from modules.logging_colors import logger
 
@@ -38,7 +34,7 @@ class Exllamav3HF(PreTrainedModel):
             max_tokens = adjusted_tokens
 
         self.ex_cache = Cache(self.ex_model, max_num_tokens=max_tokens)
-        self.ex_model.load(progressbar = True)
+        self.ex_model.load(progressbar=True)
         self.past_seq = None
         self.max_tokens = max_tokens
 
@@ -94,7 +90,7 @@ class Exllamav3HF(PreTrainedModel):
 
                 if longest_prefix > 0:
                     reset = False
-                    ex_cache.current_seq_len = longest_prefix
+                    current_len = longest_prefix
                     if len(seq_tensor) - longest_prefix > 1:
                         self.ex_model.forward(
                             input_ids=seq_tensor[longest_prefix:-1].view(1, -1),
@@ -105,13 +101,9 @@ class Exllamav3HF(PreTrainedModel):
                                 "batch_shape": (1, self.max_tokens)
                             }
                         )
-                    elif len(seq_tensor) == longest_prefix:
-                        # Very tricky: if the prefix we are reusing *is* the input_ids, then we have to back up the cache pointer by one,
-                        # because we feed input_ids[-1] to forward() below, but that last token is already in the cache!
-                        ex_cache.current_seq_len -= 1
+                        current_len = longest_prefix + len(seq_tensor) - longest_prefix - 1
 
             if reset:
-                ex_cache.current_seq_len = 0
                 if len(seq_tensor) > 1:
                     self.ex_model.forward(
                         input_ids=seq_tensor[:-1].view(1, -1),
@@ -122,18 +114,20 @@ class Exllamav3HF(PreTrainedModel):
                             "batch_shape": (1, self.max_tokens)
                         }
                     )
+                    current_len = len(seq_tensor) - 1
+                else:
+                    current_len = 0
 
             logits = self.ex_model.forward(
                 input_ids=seq_tensor[-1:].view(1, -1),
                 params={
                     "attn_mode": "flash_attn",
                     "cache": ex_cache,
-                    "past_len": ex_cache.current_seq_len,
+                    "past_len": current_len,
                     "batch_shape": (1, self.max_tokens)
                 }
             ).to(input_ids.device).float()
         else:
-            ex_cache.current_seq_len = 0
             logits = self.ex_model.forward(
                 input_ids=seq_tensor.view(1, -1),
                 params={
