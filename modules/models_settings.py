@@ -155,14 +155,14 @@ def infer_loader(model_name, model_settings):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     if not path_to_model.exists():
         loader = None
-    elif (path_to_model / 'quantize_config.json').exists():  # Old GPTQ metadata file
-        loader = 'ExLlamav2_HF'
     elif len(list(path_to_model.glob('*.gguf'))) > 0 and path_to_model.is_dir() and (path_to_model / 'tokenizer_config.json').exists():
         loader = 'llamacpp_HF'
     elif len(list(path_to_model.glob('*.gguf'))) > 0:
         loader = 'llama.cpp'
     elif re.match(r'.*\.gguf', model_name.lower()):
         loader = 'llama.cpp'
+    elif re.match(r'.*exl3', model_name.lower()):
+        loader = 'ExLlamav3_HF'
     elif re.match(r'.*exl2', model_name.lower()):
         loader = 'ExLlamav2_HF'
     elif re.match(r'.*-hqq', model_name.lower()):

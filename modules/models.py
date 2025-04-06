@@ -69,8 +69,9 @@ def load_model(model_name, loader=None):
         'Transformers': huggingface_loader,
         'llama.cpp': llamacpp_loader,
         'llamacpp_HF': llamacpp_HF_loader,
-        'ExLlamav2': ExLlamav2_loader,
+        'ExLlamav3_HF': ExLlamav3_HF_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
+        'ExLlamav2': ExLlamav2_loader,
         'HQQ': HQQ_loader,
         'TensorRT-LLM': TensorRT_LLM_loader,
     }
@@ -304,17 +305,23 @@ def llamacpp_HF_loader(model_name):
         return model
 
 
-def ExLlamav2_loader(model_name):
-    from modules.exllamav2 import Exllamav2Model
+def ExLlamav3_HF_loader(model_name):
+    from modules.exllamav3_hf import Exllamav3HF
 
-    model, tokenizer = Exllamav2Model.from_pretrained(model_name)
-    return model, tokenizer
+    return Exllamav3HF.from_pretrained(model_name)
 
 
 def ExLlamav2_HF_loader(model_name):
     from modules.exllamav2_hf import Exllamav2HF
 
     return Exllamav2HF.from_pretrained(model_name)
+
+
+def ExLlamav2_loader(model_name):
+    from modules.exllamav2 import Exllamav2Model
+
+    model, tokenizer = Exllamav2Model.from_pretrained(model_name)
+    return model, tokenizer
 
 
 def HQQ_loader(model_name):
