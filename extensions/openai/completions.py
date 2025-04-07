@@ -372,6 +372,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
                     end_last_tool_call = len(answer)
                     chunk = chat_streaming_chunk('', tool_call)
                     yield chunk
+                    break
 
     token_count = len(encode(prompt)[0])
     completion_token_count = len(encode(answer)[0])
