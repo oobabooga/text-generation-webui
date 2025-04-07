@@ -17,9 +17,9 @@ import sys
 
 
 # Define the required PyTorch version
-TORCH_VERSION = "2.4.1"
-TORCHVISION_VERSION = "0.19.1"
-TORCHAUDIO_VERSION = "2.4.1"
+TORCH_VERSION = "2.6.0"
+TORCHVISION_VERSION = "0.21.0"
+TORCHAUDIO_VERSION = "2.6.0"
 
 # Environment
 script_dir = os.getcwd()
@@ -109,7 +109,7 @@ def update_pytorch():
     if "+cu118" in torver:
         install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cu118"
     elif "+cu" in torver:
-        install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cu121"
+        install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cu126"
     elif "+rocm" in torver:
         install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.1"
     elif "+cpu" in torver:
@@ -297,7 +297,7 @@ def install_webui():
         if use_cuda118 == 'Y':
             install_pytorch += "--index-url https://download.pytorch.org/whl/cu118"
         else:
-            install_pytorch += "--index-url https://download.pytorch.org/whl/cu121"
+            install_pytorch += "--index-url https://download.pytorch.org/whl/cu126"
     elif selected_gpu == "AMD":
         install_pytorch += "--index-url https://download.pytorch.org/whl/rocm6.1"
     elif selected_gpu in ["APPLE", "NONE"]:
@@ -436,7 +436,7 @@ def update_requirements(initial_installation=False, pull=True):
 
     if "+cu118" in torver:
         textgen_requirements = [
-            req.replace('+cu121', '+cu118').replace('+cu122', '+cu118')
+            req.replace('+cu126', '+cu118').replace('+cu122', '+cu118')
             for req in textgen_requirements
             if "autoawq" not in req.lower()
         ]
