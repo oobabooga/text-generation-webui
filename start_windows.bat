@@ -25,8 +25,8 @@ set TEMP=%cd%\installer_files
 set INSTALL_DIR=%cd%\installer_files
 set CONDA_ROOT_PREFIX=%cd%\installer_files\conda
 set INSTALL_ENV_DIR=%cd%\installer_files\env
-set MINICONDA_DOWNLOAD_URL=https://repo.anaconda.com/miniconda/Miniconda3-py311_24.11.1-0-Windows-x86_64.exe
-set MINICONDA_CHECKSUM=43dcbcc315ff91edf959e002cd2f1ede38c64b999fefcc951bccf2ed69c9e8bb
+set MINICONDA_DOWNLOAD_URL=https://repo.anaconda.com/miniconda/Miniconda3-py312_24.11.1-0-Windows-x86_64.exe
+set MINICONDA_CHECKSUM=be382fc02742c734fd3c399c5e5d322bc9b43292117827ab9aa6f7446351e45c
 set conda_exists=F
 
 @rem figure out whether git and conda needs to be installed
