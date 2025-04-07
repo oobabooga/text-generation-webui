@@ -9,9 +9,9 @@ the `settings.json` file, see the Examples below. Retrieve your authtoken on the
 
 # Documentation
 
-For a list of all available options, see [the configuration documentation](https://ngrok.com/docs/ngrok-agent/config/) or [the connect example](https://github.com/ngrok/ngrok-py/blob/main/examples/ngrok-connect-full.py).
+For a list of all available options, see [the configuration documentation](https://ngrok.com/docs/ngrok-agent/config/) or [the forward example](https://github.com/ngrok/ngrok-python/blob/main/examples/ngrok-forward-full.py).
 
-The ngrok Python SDK is [on github here](https://github.com/ngrok/ngrok-py). A quickstart guide and a full API reference are included in the [ngrok-py Python API documentation](https://ngrok.github.io/ngrok-py/).
+The ngrok Python SDK is [on github here](https://github.com/ngrok/ngrok-py). A quickstart guide and a full API reference are included in the [ngrok-py Python API documentation](https://ngrok.github.io/ngrok-python/).
 
 # Running
 
