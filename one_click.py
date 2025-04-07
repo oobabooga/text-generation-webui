@@ -106,9 +106,7 @@ def update_pytorch():
     torver = torch_version()
     base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION}"
 
-    if "+cu118" in torver:
-        install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cu118"
-    elif "+cu" in torver:
+    if "+cu" in torver:
         install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cu121"
     elif "+rocm" in torver:
         install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.1"
@@ -236,24 +234,21 @@ def install_webui():
         choice = os.environ["GPU_CHOICE"].upper()
         print_big_message(f"Selected GPU choice \"{choice}\" based on the GPU_CHOICE environment variable.")
 
-        # Warn about changed meanings and handle old NVIDIA choice
+        # Warn about changed meanings and handle old choices
         if choice == "B":
-            print_big_message("Warning: GPU_CHOICE='B' now means 'NVIDIA (CUDA 11.8)' in the new version.")
+            print_big_message("Warning: GPU_CHOICE='B' now means 'AMD' in the new version.")
         elif choice == "C":
-            print_big_message("Warning: GPU_CHOICE='C' now means 'AMD' in the new version.")
+            print_big_message("Warning: GPU_CHOICE='C' now means 'Apple M Series' in the new version.")
         elif choice == "D":
-            print_big_message("Warning: GPU_CHOICE='D' now means 'Apple M Series' in the new version.")
-        elif choice == "A" and "USE_CUDA118" in os.environ:
-            choice = "B" if os.environ.get("USE_CUDA118", "").lower() in ("yes", "y", "true", "1", "t", "on") else "A"
+            print_big_message("Warning: GPU_CHOICE='D' now means 'Intel Arc' in the new version.")
     else:
         choice = get_user_choice(
             "What is your GPU?",
             {
-                'A': 'NVIDIA - CUDA 12.1 (recommended)',
-                'B': 'NVIDIA - CUDA 11.8 (legacy GPUs)',
-                'C': 'AMD - Linux/macOS only, requires ROCm 6.1',
-                'D': 'Apple M Series',
-                'E': 'Intel Arc (beta)',
+                'A': 'NVIDIA - CUDA 12.1',
+                'B': 'AMD - Linux/macOS only, requires ROCm 6.1',
+                'C': 'Apple M Series',
+                'D': 'Intel Arc (beta)',
                 'N': 'CPU mode'
             },
         )
@@ -261,15 +256,13 @@ def install_webui():
     # Convert choices to GPU names for compatibility
     gpu_choice_to_name = {
         "A": "NVIDIA",
-        "B": "NVIDIA",
-        "C": "AMD",
-        "D": "APPLE",
-        "E": "INTEL",
+        "B": "AMD",
+        "C": "APPLE",
+        "D": "INTEL",
         "N": "NONE"
     }
 
     selected_gpu = gpu_choice_to_name[choice]
-    use_cuda118 = (choice == "B")  # CUDA version is now determined by menu choice
 
     # Write a flag to CMD_FLAGS.txt for CPU mode
     if selected_gpu == "NONE":
@@ -280,10 +273,7 @@ def install_webui():
 
     # Handle CUDA version display
     elif any((is_windows(), is_linux())) and selected_gpu == "NVIDIA":
-        if use_cuda118:
-            print("CUDA: 11.8")
-        else:
-            print("CUDA: 12.1")
+        print("CUDA: 12.1")
 
     # No PyTorch for AMD on Windows (?)
     elif is_windows() and selected_gpu == "AMD":
@@ -294,10 +284,7 @@ def install_webui():
     install_pytorch = f"python -m pip install torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION} "
 
     if selected_gpu == "NVIDIA":
-        if use_cuda118 == 'Y':
-            install_pytorch += "--index-url https://download.pytorch.org/whl/cu118"
-        else:
-            install_pytorch += "--index-url https://download.pytorch.org/whl/cu121"
+        install_pytorch += "--index-url https://download.pytorch.org/whl/cu121"
     elif selected_gpu == "AMD":
         install_pytorch += "--index-url https://download.pytorch.org/whl/rocm6.1"
     elif selected_gpu in ["APPLE", "NONE"]:
@@ -433,16 +420,6 @@ def update_requirements(initial_installation=False, pull=True):
 
     if not initial_installation and not wheels_changed:
         textgen_requirements = [line for line in textgen_requirements if '.whl' not in line]
-
-    if "+cu118" in torver:
-        textgen_requirements = [
-            req.replace('+cu121', '+cu118').replace('+cu122', '+cu118')
-            for req in textgen_requirements
-            if "autoawq" not in req.lower()
-        ]
-
-    if is_windows() and "+cu118" in torver:  # No flash-attention on Windows for CUDA 11
-        textgen_requirements = [req for req in textgen_requirements if 'oobabooga/flash-attention' not in req]
 
     with open('temp_requirements.txt', 'w') as file:
         file.write('\n'.join(textgen_requirements))
