@@ -101,6 +101,7 @@ class Exllamav3HF(PreTrainedModel):
                                 "batch_shape": (1, self.max_tokens)
                             }
                         )
+
                         current_len = longest_prefix + len(seq_tensor) - longest_prefix - 1
 
             if reset:
@@ -114,6 +115,7 @@ class Exllamav3HF(PreTrainedModel):
                             "batch_shape": (1, self.max_tokens)
                         }
                     )
+
                     current_len = len(seq_tensor) - 1
                 else:
                     current_len = 0
