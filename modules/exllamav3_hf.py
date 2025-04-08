@@ -34,7 +34,14 @@ class Exllamav3HF(PreTrainedModel):
             max_tokens = adjusted_tokens
 
         self.ex_cache = Cache(self.ex_model, max_num_tokens=max_tokens)
-        self.ex_model.load(progressbar=True)
+
+        # Create load parameters dictionary
+        load_params = {'progressbar': True}
+        if shared.args.gpu_split:
+            split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
+            load_params['use_per_device'] = split
+
+        self.ex_model.load(**load_params)
         self.past_seq = None
         self.max_tokens = max_tokens
 

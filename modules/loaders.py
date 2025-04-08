@@ -23,7 +23,6 @@ loaders_and_params = OrderedDict({
         'use_double_quant',
         'use_eager_attention',
         'bf16',
-
         'trust_remote_code',
         'no_use_fast',
     ],
@@ -78,6 +77,7 @@ loaders_and_params = OrderedDict({
     ],
     'ExLlamav3_HF': [
         'max_seq_len',
+        'gpu_split',
         'cfg_cache',
         'trust_remote_code',
         'no_use_fast',
