@@ -22,6 +22,7 @@ except Exception:
 class Exllamav3HF(PreTrainedModel):
     def __init__(self, model_dir):
         super().__init__(PretrainedConfig())
+        self.generation_config = GenerationConfig()
 
         config = Config.from_directory(model_dir)
         self.ex_model = Model.from_config(config)
