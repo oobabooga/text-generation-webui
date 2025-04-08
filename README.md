@@ -87,13 +87,7 @@ conda activate textgen
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/.
 
-For NVIDIA, you also need to install the CUDA runtime libraries:
-
-```
-conda install -y -c "nvidia/label/cuda-12.4.1" cuda-runtime
-```
-
-If you need `nvcc` to compile some library manually, replace the command above with
+If you need `nvcc` to compile some library manually, you will additionally need to install this:
 
 ```
 conda install -y -c "nvidia/label/cuda-12.4.1" cuda
