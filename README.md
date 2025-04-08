@@ -90,13 +90,13 @@ The up-to-date commands can be found here: https://pytorch.org/get-started/local
 For NVIDIA, you also need to install the CUDA runtime libraries:
 
 ```
-conda install -y -c "nvidia/label/cuda-12.6.3" cuda-runtime
+conda install -y -c "nvidia/label/cuda-12.4.1" cuda-runtime
 ```
 
 If you need `nvcc` to compile some library manually, replace the command above with
 
 ```
-conda install -y -c "nvidia/label/cuda-12.6.3" cuda
+conda install -y -c "nvidia/label/cuda-12.4.1" cuda
 ```
 
 #### 3. Install the web UI
