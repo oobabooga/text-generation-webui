@@ -200,8 +200,10 @@ def create_event_handlers():
 
 
 def load_model_wrapper(selected_model, loader, autoload=False):
+    settings = get_model_metadata(selected_model)
+
     if not autoload:
-        yield f"The settings for `{selected_model}` have been updated.\n\nClick on \"Load\" to load it."
+        yield "### {}\n\n- Settings updated: Click \"Load\" to load the model\n- Max sequence length: {}".format(selected_model, settings['truncation_length_info'])
         return
 
     if selected_model == 'None':
@@ -214,11 +216,9 @@ def load_model_wrapper(selected_model, loader, autoload=False):
                 shared.model, shared.tokenizer = load_model(selected_model, loader)
 
             if shared.model is not None:
-                output = f"Successfully loaded `{selected_model}`."
-
-                settings = get_model_metadata(selected_model)
+                output = f"Successfully loaded `{selected_model}`.\n\n"
                 if 'instruction_template' in settings:
-                    output += '\n\nIt seems to be an instruction-following model with template "{}". In the chat tab, instruct or chat-instruct modes should be used.'.format(settings['instruction_template'])
+                    output += '- It seems to be an instruction-following model with template "{}". In the chat tab, instruct or chat-instruct modes should be used.\n'.format(settings['instruction_template'])
 
                 yield output
             else:
