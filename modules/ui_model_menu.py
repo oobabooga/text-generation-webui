@@ -216,11 +216,7 @@ def load_model_wrapper(selected_model, loader, autoload=False):
                 shared.model, shared.tokenizer = load_model(selected_model, loader)
 
             if shared.model is not None:
-                output = f"Successfully loaded `{selected_model}`.\n\n"
-                if 'instruction_template' in settings:
-                    output += '- It seems to be an instruction-following model with template "{}". In the chat tab, instruct or chat-instruct modes should be used.\n'.format(settings['instruction_template'])
-
-                yield output
+                yield f"Successfully loaded `{selected_model}`."
             else:
                 yield f"Failed to load `{selected_model}`."
         except:
