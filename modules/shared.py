@@ -53,7 +53,7 @@ settings = {
     'skip_special_tokens': True,
     'stream': True,
     'static_cache': False,
-    'truncation_length': 2048,
+    'truncation_length': 8192,
     'seed': -1,
     'custom_stopping_strings': '',
     'custom_token_bans': '',
@@ -117,7 +117,7 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 group = parser.add_argument_group('llama.cpp')
 group.add_argument('--flash-attn', action='store_true', help='Use flash-attention.')
 group.add_argument('--tensorcores', action='store_true', help='NVIDIA only: use llama-cpp-python compiled without GGML_CUDA_FORCE_MMQ. This may improve performance on newer cards.')
-group.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
+group.add_argument('--n_ctx', type=int, default=8192, help='Size of the prompt context.')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
 group.add_argument('--no_mul_mat_q', action='store_true', help='Disable the mulmat kernels.')
@@ -139,7 +139,7 @@ group.add_argument('--tokenizer-dir', type=str, help='Load the tokenizer from th
 group = parser.add_argument_group('ExLlamaV2')
 group.add_argument('--gpu-split', type=str, help='Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.')
 group.add_argument('--autosplit', action='store_true', help='Autosplit the model tensors across the available GPUs. This causes --gpu-split to be ignored.')
-group.add_argument('--max_seq_len', type=int, default=2048, help='Maximum sequence length.')
+group.add_argument('--max_seq_len', type=int, default=8192, help='Maximum sequence length.')
 group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.')
 group.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
 group.add_argument('--no_xformers', action='store_true', help='Force xformers to not be used.')
