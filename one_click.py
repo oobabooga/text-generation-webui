@@ -20,7 +20,7 @@ import sys
 TORCH_VERSION = "2.6.0"
 TORCHVISION_VERSION = "0.21.0"
 TORCHAUDIO_VERSION = "2.6.0"
-PYTHON_VERSION = "3.12"
+PYTHON_VERSION = "3.11"
 
 # Environment
 script_dir = os.getcwd()
@@ -105,10 +105,10 @@ def torch_version():
 def update_pytorch_and_python():
     print_big_message("Checking for PyTorch and Python updates.")
 
-    # Only update Python if needed
-    current_python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
-    if current_python_version != PYTHON_VERSION:
-        run_cmd(f"conda install -y python={PYTHON_VERSION}", assert_success=True, environment=True)
+    # Update the Python version. Left here for future reference in case this becomes necessary.
+    # current_python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+    # if current_python_version != PYTHON_VERSION:
+    #     run_cmd(f"conda install -y python={PYTHON_VERSION}", assert_success=True, environment=True)
 
     torver = torch_version()
     base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION}"
