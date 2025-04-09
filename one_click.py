@@ -103,7 +103,6 @@ def torch_version():
 
 
 def update_pytorch_and_python():
-
     print_big_message("Checking for PyTorch updates.")
 
     # Update the Python version. Left here for future reference in case this becomes necessary.
