@@ -21,6 +21,7 @@ TORCH_VERSION = "2.6.0"
 TORCHVISION_VERSION = "0.21.0"
 TORCHAUDIO_VERSION = "2.6.0"
 PYTHON_VERSION = "3.11"
+LIBSTDCXX_VERSION_LINUX = "12.1.0"
 
 # Environment
 script_dir = os.getcwd()
@@ -435,7 +436,7 @@ def update_requirements(initial_installation=False, pull=True):
         install_extensions_requirements()
 
     if is_linux():
-        run_cmd("conda install -y -c conda-forge libstdcxx-ng==12.1.0", assert_success=True, environment=True)
+        run_cmd(f"conda install -y -c conda-forge libstdcxx-ng=={LIBSTDCXX_VERSION_LINUX}", assert_success=True, environment=True)
 
     # Update PyTorch
     if not initial_installation:
