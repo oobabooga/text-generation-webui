@@ -103,9 +103,11 @@ def torch_version():
 
 
 def update_pytorch_and_python():
-    print_big_message("Checking for PyTorch and Python updates.")
+
+    print_big_message("Checking for PyTorch updates.")
 
     # Update the Python version. Left here for future reference in case this becomes necessary.
+    # print_big_message("Checking for PyTorch and Python updates.")
     # current_python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
     # if current_python_version != PYTHON_VERSION:
     #     run_cmd(f"conda install -y python={PYTHON_VERSION}", assert_success=True, environment=True)
@@ -437,6 +439,7 @@ def update_requirements(initial_installation=False, pull=True):
     if not initial_installation:
         clean_outdated_pytorch_cuda_dependencies()
         update_pytorch_and_python()
+        torver = torch_version()
 
     print_big_message(f"Installing webui requirements from file: {requirements_file}")
     print(f"TORCH: {torver}\n")
