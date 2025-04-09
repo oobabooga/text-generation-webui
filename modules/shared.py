@@ -53,7 +53,7 @@ settings = {
     'skip_special_tokens': True,
     'stream': True,
     'static_cache': False,
-    'truncation_length': 2048,
+    'truncation_length': 8192,
     'seed': -1,
     'custom_stopping_strings': '',
     'custom_token_bans': '',
@@ -79,7 +79,6 @@ group.add_argument('--model', type=str, help='Name of the model to load by defau
 group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
 group.add_argument('--model-dir', type=str, default='models/', help='Path to directory with all the models.')
 group.add_argument('--lora-dir', type=str, default='loras/', help='Path to directory with all the loras.')
-group.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
 group.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 group.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
@@ -87,7 +86,7 @@ group.add_argument('--idle-timeout', type=int, default=0, help='Unload model aft
 
 # Model loader
 group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, HQQ, TensorRT-LLM.')
+group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav3_HF, ExLlamav2_HF, ExLlamav2, HQQ, TensorRT-LLM.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
@@ -118,7 +117,7 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 group = parser.add_argument_group('llama.cpp')
 group.add_argument('--flash-attn', action='store_true', help='Use flash-attention.')
 group.add_argument('--tensorcores', action='store_true', help='NVIDIA only: use llama-cpp-python compiled without GGML_CUDA_FORCE_MMQ. This may improve performance on newer cards.')
-group.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
+group.add_argument('--n_ctx', type=int, default=8192, help='Size of the prompt context.')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
 group.add_argument('--no_mul_mat_q', action='store_true', help='Disable the mulmat kernels.')
@@ -140,7 +139,7 @@ group.add_argument('--tokenizer-dir', type=str, help='Load the tokenizer from th
 group = parser.add_argument_group('ExLlamaV2')
 group.add_argument('--gpu-split', type=str, help='Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.')
 group.add_argument('--autosplit', action='store_true', help='Autosplit the model tensors across the available GPUs. This causes --gpu-split to be ignored.')
-group.add_argument('--max_seq_len', type=int, default=2048, help='Maximum sequence length.')
+group.add_argument('--max_seq_len', type=int, default=8192, help='Maximum sequence length.')
 group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.')
 group.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
 group.add_argument('--no_xformers', action='store_true', help='Force xformers to not be used.')
@@ -215,6 +214,7 @@ group.add_argument('--disable_exllama', action='store_true', help='DEPRECATED')
 group.add_argument('--disable_exllamav2', action='store_true', help='DEPRECATED')
 group.add_argument('--wbits', type=int, default=0, help='DEPRECATED')
 group.add_argument('--groupsize', type=int, default=-1, help='DEPRECATED')
+group.add_argument('--model-menu', action='store_true', help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -273,6 +273,8 @@ def fix_loader_name(name):
         return 'ExLlamav2'
     elif name in ['exllamav2-hf', 'exllamav2_hf', 'exllama-v2-hf', 'exllama_v2_hf', 'exllama-v2_hf', 'exllama2-hf', 'exllama2_hf', 'exllama-2-hf', 'exllama_2_hf', 'exllama-2_hf']:
         return 'ExLlamav2_HF'
+    elif name in ['exllamav3-hf', 'exllamav3_hf', 'exllama-v3-hf', 'exllama_v3_hf', 'exllama-v3_hf', 'exllama3-hf', 'exllama3_hf', 'exllama-3-hf', 'exllama_3_hf', 'exllama-3_hf']:
+        return 'ExLlamav3_HF'
     elif name in ['hqq']:
         return 'HQQ'
     elif name in ['tensorrt', 'tensorrtllm', 'tensorrt_llm', 'tensorrt-llm', 'tensort', 'tensortllm']:

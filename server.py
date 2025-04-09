@@ -218,27 +218,9 @@ if __name__ == "__main__":
         if extension not in shared.args.extensions:
             shared.args.extensions.append(extension)
 
-    available_models = utils.get_available_models()
-
     # Model defined through --model
     if shared.args.model is not None:
         shared.model_name = shared.args.model
-
-    # Select the model from a command-line menu
-    elif shared.args.model_menu:
-        if len(available_models) == 0:
-            logger.error('No models are available! Please download at least one.')
-            sys.exit(0)
-        else:
-            print('The following models are available:\n')
-            for i, model in enumerate(available_models):
-                print(f'{i+1}. {model}')
-
-            print(f'\nWhich one do you want to load? 1-{len(available_models)}\n')
-            i = int(input()) - 1
-            print()
-
-        shared.model_name = available_models[i]
 
     # If any model has been selected, load it
     if shared.model_name != 'None':

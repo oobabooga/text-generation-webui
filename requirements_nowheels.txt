@@ -1,4 +1,4 @@
-accelerate==1.4.*
+accelerate==1.5.*
 colorama
 datasets
 einops
@@ -9,7 +9,7 @@ markdown
 numba==0.59.*
 numpy==1.26.*
 pandas
-peft==0.12.*
+peft==0.15.*
 Pillow>=9.5.0
 psutil
 pydantic==2.8.2
@@ -20,7 +20,7 @@ safetensors==0.5.*
 scipy
 sentencepiece
 tensorboard
-transformers==4.49.*
+transformers==4.50.*
 tqdm
 wandb
 
