@@ -16,10 +16,11 @@ import sys
 # os.environ["HCC_AMDGPU_TARGET"] = 'gfx1030'
 
 
-# Define the required PyTorch version
-TORCH_VERSION = "2.4.1"
-TORCHVISION_VERSION = "0.19.1"
-TORCHAUDIO_VERSION = "2.4.1"
+# Define the required versions
+TORCH_VERSION = "2.6.0"
+TORCHVISION_VERSION = "0.21.0"
+TORCHAUDIO_VERSION = "2.6.0"
+PYTHON_VERSION = "3.11"
 
 # Environment
 script_dir = os.getcwd()
@@ -101,13 +102,20 @@ def torch_version():
     return torver
 
 
-def update_pytorch():
+def update_pytorch_and_python():
     print_big_message("Checking for PyTorch updates.")
+
+    # Update the Python version. Left here for future reference in case this becomes necessary.
+    # print_big_message("Checking for PyTorch and Python updates.")
+    # current_python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+    # if current_python_version != PYTHON_VERSION:
+    #     run_cmd(f"conda install -y python={PYTHON_VERSION}", assert_success=True, environment=True)
+
     torver = torch_version()
     base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION}"
 
     if "+cu" in torver:
-        install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cu121"
+        install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cu124"
     elif "+rocm" in torver:
         install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.1"
     elif "+cpu" in torver:
@@ -245,7 +253,7 @@ def install_webui():
         choice = get_user_choice(
             "What is your GPU?",
             {
-                'A': 'NVIDIA - CUDA 12.1',
+                'A': 'NVIDIA - CUDA 12.4',
                 'B': 'AMD - Linux/macOS only, requires ROCm 6.1',
                 'C': 'Apple M Series',
                 'D': 'Intel Arc (beta)',
@@ -273,7 +281,7 @@ def install_webui():
 
     # Handle CUDA version display
     elif any((is_windows(), is_linux())) and selected_gpu == "NVIDIA":
-        print("CUDA: 12.1")
+        print("CUDA: 12.4")
 
     # No PyTorch for AMD on Windows (?)
     elif is_windows() and selected_gpu == "AMD":
@@ -284,7 +292,7 @@ def install_webui():
     install_pytorch = f"python -m pip install torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION} "
 
     if selected_gpu == "NVIDIA":
-        install_pytorch += "--index-url https://download.pytorch.org/whl/cu121"
+        install_pytorch += "--index-url https://download.pytorch.org/whl/cu124"
     elif selected_gpu == "AMD":
         install_pytorch += "--index-url https://download.pytorch.org/whl/rocm6.1"
     elif selected_gpu in ["APPLE", "NONE"]:
@@ -297,7 +305,7 @@ def install_webui():
 
     # Install Git and then Pytorch
     print_big_message("Installing PyTorch.")
-    run_cmd(f"conda install -y -k ninja git && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
+    run_cmd(f"conda install -y ninja git && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
 
     if selected_gpu == "INTEL":
         # Install oneAPI dependencies via conda
@@ -321,6 +329,24 @@ def install_extensions_requirements():
         print(f"\n\n--- [{i + 1}/{len(extensions)}]: {extension}\n\n")
         extension_req_path = os.path.join("extensions", extension, "requirements.txt")
         run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
+
+
+def clean_outdated_pytorch_cuda_dependencies():
+    patterns = ["cu121", "cu122", "torch2.4"]
+    result = run_cmd("python -m pip list --format=freeze", capture_output=True, environment=True)
+    matching_packages = []
+
+    for line in result.stdout.decode('utf-8').splitlines():
+        if "==" in line:
+            pkg_name, version = line.split('==', 1)
+            if any(pattern in version for pattern in patterns):
+                matching_packages.append(pkg_name)
+
+    if matching_packages:
+        print(f"Uninstalling: {', '.join(matching_packages)}")
+        run_cmd(f"python -m pip uninstall -y {' '.join(matching_packages)}", assert_success=True, environment=True)
+
+    return matching_packages
 
 
 def update_requirements(initial_installation=False, pull=True):
@@ -410,7 +436,9 @@ def update_requirements(initial_installation=False, pull=True):
 
     # Update PyTorch
     if not initial_installation:
-        update_pytorch()
+        clean_outdated_pytorch_cuda_dependencies()
+        update_pytorch_and_python()
+        torver = torch_version()
 
     print_big_message(f"Installing webui requirements from file: {requirements_file}")
     print(f"TORCH: {torver}\n")
