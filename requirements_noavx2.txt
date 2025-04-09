@@ -49,5 +49,5 @@ https://github.com/oobabooga/exllamav3/releases/download/v0.0.1/exllamav3-0.0.1+
 https://github.com/oobabooga/exllamav2/releases/download/v0.2.8/exllamav2-0.2.8+cu124.torch2.6.0-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
 https://github.com/oobabooga/exllamav2/releases/download/v0.2.8/exllamav2-0.2.8+cu124.torch2.6.0-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
 https://github.com/oobabooga/exllamav2/releases/download/v0.2.8/exllamav2-0.2.8-py3-none-any.whl; platform_system == "Linux" and platform_machine != "x86_64"
-https://github.com/oobabooga/flash-attention/releases/download/v2.7.3/flash_attn-2.7.3+cu122torch2.6.0cxx11abiFALSE-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://github.com/oobabooga/flash-attention/releases/download/v2.7.3/flash_attn-2.7.3+cu124torch2.6.0cxx11abiFALSE-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
 https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.3/flash_attn-2.7.3+cu12torch2.6cxx11abiFALSE-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
