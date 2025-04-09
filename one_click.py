@@ -436,9 +436,9 @@ def update_requirements(initial_installation=False, pull=True):
 
     # Update PyTorch
     if not initial_installation:
-        clean_outdated_pytorch_cuda_dependencies()
         update_pytorch_and_python()
         torver = torch_version()
+        clean_outdated_pytorch_cuda_dependencies()
 
     print_big_message(f"Installing webui requirements from file: {requirements_file}")
     print(f"TORCH: {torver}\n")
