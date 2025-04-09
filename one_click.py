@@ -330,6 +330,24 @@ def install_extensions_requirements():
         run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
 
 
+def clean_outdated_pytorch_cuda_dependencies():
+    patterns = ["cu121", "cu122", "torch2.4"]
+    result = run_cmd("python -m pip list --format=freeze", capture_output=True, environment=True)
+    matching_packages = []
+
+    for line in result.stdout.decode('utf-8').splitlines():
+        if "==" in line:
+            pkg_name, version = line.split('==', 1)
+            if any(pattern in version for pattern in patterns):
+                matching_packages.append(pkg_name)
+
+    if matching_packages:
+        print(f"Uninstalling: {', '.join(matching_packages)}")
+        run_cmd(f"python -m pip uninstall -y {' '.join(matching_packages)}", assert_success=True, environment=True)
+
+    return matching_packages
+
+
 def update_requirements(initial_installation=False, pull=True):
     # Create .git directory if missing
     if not os.path.exists(os.path.join(script_dir, ".git")):
@@ -417,6 +435,7 @@ def update_requirements(initial_installation=False, pull=True):
 
     # Update PyTorch
     if not initial_installation:
+        clean_outdated_pytorch_cuda_dependencies()
         update_pytorch_and_python()
 
     print_big_message(f"Installing webui requirements from file: {requirements_file}")
