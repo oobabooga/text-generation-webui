@@ -343,7 +343,7 @@ def clean_outdated_pytorch_cuda_dependencies():
                 matching_packages.append(pkg_name)
 
     if matching_packages:
-        print(f"Uninstalling: {', '.join(matching_packages)}")
+        print(f"\nUninstalling: {', '.join(matching_packages)}\n")
         run_cmd(f"python -m pip uninstall -y {' '.join(matching_packages)}", assert_success=True, environment=True)
 
     return matching_packages
