@@ -47,6 +47,8 @@ loaders_and_params = OrderedDict({
         'no_mmap',
         'mlock',
         'numa',
+        'draft_model',
+        'num_pred_tokens',
     ],
     'llamacpp_HF': [
         'n_gpu_layers',

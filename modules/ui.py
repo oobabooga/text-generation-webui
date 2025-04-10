@@ -123,6 +123,8 @@ def list_model_elements():
         'compute_dtype',
         'quant_type',
         'attention_sink_size',
+        'draft_model',
+        'num_pred_tokens',
         'num_experts_per_token',
         'tensorcores',
         'load_in_8bit',
