@@ -197,10 +197,6 @@ group.add_argument('--api-enable-ipv6', action='store_true', help='Enable IPv6 f
 group.add_argument('--api-disable-ipv4', action='store_true', help='Disable IPv4 for the API')
 group.add_argument('--nowebui', action='store_true', help='Do not launch the Gradio UI. Useful for launching the API in standalone mode.')
 
-# Multimodal
-group = parser.add_argument_group('Multimodal')
-group.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
-
 # Deprecated parameters
 group = parser.add_argument_group('Deprecated')
 group.add_argument('--cache_4bit', action='store_true', help='DEPRECATED')
@@ -215,6 +211,7 @@ group.add_argument('--disable_exllamav2', action='store_true', help='DEPRECATED'
 group.add_argument('--wbits', type=int, default=0, help='DEPRECATED')
 group.add_argument('--groupsize', type=int, default=-1, help='DEPRECATED')
 group.add_argument('--model-menu', action='store_true', help='DEPRECATED')
+group.add_argument('--multimodal-pipeline', type=str, default=None, help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -369,10 +366,6 @@ def load_user_config():
 
 args.loader = fix_loader_name(args.loader)
 args = transform_legacy_kv_cache_options(args)
-
-# Activate the multimodal extension
-if args.multimodal_pipeline is not None:
-    add_extension('multimodal')
 
 # Activate the API extension
 if args.api or args.public_api:
