@@ -184,7 +184,7 @@ List of command-line flags
 </summary>
 
 ```txt
-usage: server.py [-h] [--multi-user] [--character CHARACTER] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--model-menu] [--settings SETTINGS]
+usage: server.py [-h] [--multi-user] [--character CHARACTER] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--settings SETTINGS]
                  [--extensions EXTENSIONS [EXTENSIONS ...]] [--verbose] [--idle-timeout IDLE_TIMEOUT] [--loader LOADER] [--cpu] [--auto-devices] [--gpu-memory GPU_MEMORY [GPU_MEMORY ...]]
                  [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast]
                  [--use_flash_attention_2] [--use_eager_attention] [--torch-compile] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE] [--flash-attn]
@@ -195,8 +195,8 @@ usage: server.py [-h] [--multi-user] [--character CHARACTER] [--model MODEL] [--
                  [--local_rank LOCAL_RANK] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE] [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT]
                  [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE]
                  [--subpath SUBPATH] [--old-colors] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6]
-                 [--api-disable-ipv4] [--nowebui] [--multimodal-pipeline MULTIMODAL_PIPELINE] [--cache_4bit] [--cache_8bit] [--chat-buttons] [--triton] [--no_inject_fused_mlp] [--no_use_cuda_fp16]
-                 [--desc_act] [--disable_exllama] [--disable_exllamav2] [--wbits WBITS] [--groupsize GROUPSIZE]
+                 [--api-disable-ipv4] [--nowebui] [--cache_4bit] [--cache_8bit] [--chat-buttons] [--triton] [--no_inject_fused_mlp] [--no_use_cuda_fp16] [--desc_act] [--disable_exllama]
+                 [--disable_exllamav2] [--wbits WBITS] [--groupsize GROUPSIZE] [--model-menu] [--multimodal-pipeline MULTIMODAL_PIPELINE]
 
 Text generation web UI
 
@@ -210,7 +210,6 @@ Basic settings:
   --lora LORA [LORA ...]                         The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.
   --model-dir MODEL_DIR                          Path to directory with all the models.
   --lora-dir LORA_DIR                            Path to directory with all the loras.
-  --model-menu                                   Show a model menu in the terminal when the web UI is first launched.
   --settings SETTINGS                            Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this
                                                  file will be loaded by default without the need to use the --settings flag.
   --extensions EXTENSIONS [EXTENSIONS ...]       The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.
@@ -218,8 +217,8 @@ Basic settings:
   --idle-timeout IDLE_TIMEOUT                    Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.
 
 Model loader:
-  --loader LOADER                                Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2,
-                                                 HQQ, TensorRT-LLM.
+  --loader LOADER                                Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav3_HF, ExLlamav2_HF,
+                                                 ExLlamav2, HQQ, TensorRT-LLM.
 
 Transformers/Accelerate:
   --cpu                                          Use the CPU to generate text. Warning: Training on CPU is extremely slow.
@@ -319,9 +318,6 @@ API:
   --api-enable-ipv6                              Enable IPv6 for the API
   --api-disable-ipv4                             Disable IPv4 for the API
   --nowebui                                      Do not launch the Gradio UI. Useful for launching the API in standalone mode.
-
-Multimodal:
-  --multimodal-pipeline MULTIMODAL_PIPELINE      The multimodal pipeline to use. Examples: llava-7b, llava-13b.
 ```
 
 </details>
