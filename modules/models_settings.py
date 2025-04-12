@@ -40,7 +40,12 @@ def get_model_metadata(model):
         hf_metadata = None
 
     if 'loader' not in model_settings:
-        model_settings['loader'] = infer_loader(model, model_settings)
+        quant_method = None if hf_metadata is None else hf_metadata.get("quantization_config", {}).get("quant_method", None)
+        model_settings['loader'] = infer_loader(
+            model,
+            model_settings,
+            hf_quant_method=quant_method
+        )
 
     # GGUF metadata
     if model_settings['loader'] in ['llama.cpp', 'llamacpp_HF']:
@@ -154,7 +159,7 @@ def get_model_metadata(model):
     return model_settings
 
 
-def infer_loader(model_name, model_settings):
+def infer_loader(model_name, model_settings, hf_quant_method=None):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     if not path_to_model.exists():
         loader = None
@@ -164,6 +169,10 @@ def infer_loader(model_name, model_settings):
         loader = 'llama.cpp'
     elif re.match(r'.*\.gguf', model_name.lower()):
         loader = 'llama.cpp'
+    elif hf_quant_method == 'exl3':
+        loader = 'ExLlamav3_HF'
+    elif hf_quant_method in ['exl2', 'gptq']:
+        loader = 'ExLlamav2_HF'
     elif re.match(r'.*exl3', model_name.lower()):
         loader = 'ExLlamav3_HF'
     elif re.match(r'.*exl2', model_name.lower()):
