@@ -101,7 +101,8 @@ class LlamaServer:
                 executable = "llama-server.exe"
             else:
                 executable = "llama-server"
-            self.server_path = os.path.join("..", "bin", "llama.cpp", executable)
+
+            self.server_path = os.path.join("bin", "llama.cpp", executable)
 
         # Build the command
         cmd = [
