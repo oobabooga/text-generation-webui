@@ -27,20 +27,6 @@ class LlamacppHF(PreTrainedModel):
     def prepare_inputs_for_generation(self, input_ids, **kwargs):
         return {'input_ids': input_ids, **kwargs}
 
-    def save_cache(self):
-        self.llamacpp_cache.update({
-            'n_tokens': self.model.n_tokens,
-            'input_ids': self.model.input_ids,
-            'scores': self.model.scores,
-            'ctx': self.model._ctx.ctx
-        })
-
-    def load_cache(self):
-        self.model.n_tokens = self.llamacpp_cache['n_tokens']
-        self.model.input_ids = self.llamacpp_cache['input_ids']
-        self.model.scores = self.llamacpp_cache['scores']
-        self.model._ctx.ctx = self.llamacpp_cache['ctx']
-
     @property
     def device(self) -> torch.device:
         return torch.device(0)
@@ -51,13 +37,21 @@ class LlamacppHF(PreTrainedModel):
 
         input_ids = args[0] if len(args) > 0 else kwargs['input_ids']
         seq = input_ids[0].tolist()
-        seq_tensor = torch.tensor(seq)
 
-        # Make the forward call. The prefix-match code has been adapted from
-        # https://github.com/abetlen/llama-cpp-python/commit/f4090a0bb2a2a25acfe28d31c82cc1aa273bedee
         if labels is None:
-            # logits = ...
-            logits = torch.tensor(self.model.scores[self.model, :]).view(1, 1, -1).to(input_ids.device)
+            logits_data = self.model.get_logits(seq)
+            vocab_size = self.model.max_context_length
+
+            logits_tensor = torch.full((vocab_size,), float('-inf'), device=input_ids.device)
+            for item in logits_data:
+                token_id = item['id']
+                log_prob = item['logprob']
+                if token_id < vocab_size:
+                    logits_tensor[token_id] = log_prob
+                else:
+                    print(token_id)
+
+            logits = logits_tensor.view(1, 1, -1)
         else:
             # logits = ..., logits_all=True
             logits = logits.view(1, logits.shape[0], logits.shape[1]).to(input_ids.device)

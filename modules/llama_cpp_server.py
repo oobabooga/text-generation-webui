@@ -173,10 +173,29 @@ class LlamaServer:
 
             if response and "data" in response and len(response["data"]) > 0:
                 model_info = response["data"][0]
-                if "meta" in model_info and "n_ctx_train" in model_info["meta"]:
-                    self.max_context_length = model_info["meta"]["n_ctx_train"]
+                if "meta" in model_info and "n_vocab" in model_info["meta"]:
+                    self.max_context_length = model_info["meta"]["n_vocab"]
         except Exception as e:
             print(f"Failed to get model info: {e}")
+
+    def get_logits(self, input_ids, n_probs=4096):
+        """Get the logits/probabilities for the next token after a prompt"""
+        url = f"http://localhost:{self.port}/completion"
+
+        payload = {
+            "prompt": "",
+            "n_predict": 0,
+            "logprobs": True,
+            "n_probs": n_probs,
+            "tokens": input_ids,
+        }
+
+        result = self._request_with_retry(url, payload)
+
+        if "completion_probabilities" in result:
+            return result["completion_probabilities"][0]["top_logprobs"]
+        else:
+            raise Exception(f"Unexpected response format: 'completion_probabilities' not found in {result}")
 
     def __enter__(self):
         """Support for context manager."""
