@@ -110,7 +110,7 @@ class LlamaServer:
             "--model", self.model_path,
             "--ctx-size", str(self.ctx_size),
             "--n-gpu-layers", str(self.n_gpu_layers),
-            "--port", str(self.port)
+            "--port", str(self.port),
         ]
 
         # Add any additional arguments
@@ -131,7 +131,7 @@ class LlamaServer:
                 env["LD_LIBRARY_PATH"] = lib_path
 
         # Start the server
-        self.process = subprocess.Popen(cmd, env=env)
+        self.process = subprocess.Popen(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         # Wait for server to be healthy using _request_with_retry with appropriate parameters
         health_url = f"http://localhost:{self.port}/health"
@@ -183,11 +183,11 @@ class LlamaServer:
         url = f"http://localhost:{self.port}/completion"
 
         payload = {
-            "prompt": "",
+            "prompt": input_ids,
             "n_predict": 0,
             "logprobs": True,
             "n_probs": n_probs,
-            "tokens": input_ids,
+            "post_sampling_probs": False
         }
 
         result = self._request_with_retry(url, payload)
