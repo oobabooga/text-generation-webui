@@ -8,16 +8,16 @@ import requests
 
 
 class LlamaServer:
-    def __init__(self, model_path, ctx_size=8192, n_gpu_layers=100, server_path=None, **kwargs):
+    def __init__(
+        self,
+        model_path,
+        ctx_size=8192,
+        n_gpu_layers=100,
+        server_path=None,
+        **kwargs
+    ):
         """
         Initialize and start a server for llama.cpp models.
-
-        Args:
-            model_path (str): Path to the model file (.gguf)
-            ctx_size (int): Context size parameter
-            n_gpu_layers (int): Number of GPU layers to use
-            server_path (str, optional): Path to the llama-server executable
-            **kwargs: Additional arguments to pass to the server
         """
         self.model_path = model_path
         self.ctx_size = ctx_size
@@ -28,7 +28,7 @@ class LlamaServer:
         self.process = None
         self.max_context_length = None
 
-        # Start the server immediately
+        # Start the server
         self._start_server()
 
     def _find_available_port(self):
@@ -37,7 +37,17 @@ class LlamaServer:
             s.bind(('', 0))  # Bind to port 0 to get an available port
             return s.getsockname()[1]
 
-    def _request_with_retry(self, url, payload=None, method="POST", max_retries=5, initial_delay=0.01, max_delay=1.0, health_check=False, max_wait_time=None):
+    def _request_with_retry(
+        self,
+        url,
+        payload=None,
+        method="POST",
+        max_retries=5,
+        initial_delay=0.01,
+        max_delay=1.0,
+        health_check=False,
+        max_wait_time=None
+    ):
         """Make a request with exponential backoff retry"""
         delay = initial_delay
         start_time = time.time()
@@ -142,8 +152,10 @@ class LlamaServer:
         For backward compatibility - returns port if server is already running.
         Otherwise starts the server.
         """
+
         if self.process is None:
             return self._start_server()
+
         return self.port
 
     def _get_max_context_length(self):
@@ -185,4 +197,5 @@ class LlamaServer:
                 self.process.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 self.process.kill()
+
             self.process = None
