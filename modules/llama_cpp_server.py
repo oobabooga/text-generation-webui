@@ -86,14 +86,12 @@ class LlamaServer:
 
         # Wait for server to be healthy
         health_url = f"http://localhost:{self.port}/health"
-        print(health_url)
         start_time = time.time()
         current_delay = 1.0
         max_delay = 10.0
         max_wait_time = 7200  # 2 hours
 
         while time.time() - start_time < max_wait_time:
-            print("Trying health...", self.port)
             try:
                 response = requests.get(health_url)
                 if response.status_code == 200:
