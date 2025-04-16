@@ -38,7 +38,7 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
         return 'Error: No model is loaded1 Select one in the Model tab.', previous
 
     is_non_hf_exllamav2 = shared.model.__class__.__name__ == 'Exllamav2Model'
-    is_non_hf_llamacpp = shared.model.__class__.__name__ == 'LlamaCppModel'
+    is_non_hf_llamacpp = shared.model.__class__.__name__ == 'LlamaServer'
 
     if use_samplers:
         if any([is_non_hf_exllamav2, is_non_hf_llamacpp]):
