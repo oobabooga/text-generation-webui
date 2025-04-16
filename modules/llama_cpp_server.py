@@ -12,22 +12,12 @@ from modules import shared
 
 
 class LlamaServer:
-    def __init__(
-        self,
-        model_path,
-        ctx_size=8192,
-        n_gpu_layers=100,
-        server_path=None,
-        **kwargs
-    ):
+    def __init__(self, model_path, server_path=None):
         """
         Initialize and start a server for llama.cpp models.
         """
         self.model_path = model_path
-        self.ctx_size = ctx_size
-        self.n_gpu_layers = n_gpu_layers
         self.server_path = server_path
-        self.additional_args = kwargs
         self.port = self._find_available_port()
         self.process = None
         self.max_context_length = None
@@ -59,8 +49,8 @@ class LlamaServer:
         cmd = [
             self.server_path,
             "--model", self.model_path,
-            "--ctx-size", str(self.ctx_size),
-            "--n-gpu-layers", str(self.n_gpu_layers),
+            "--ctx-size", str(shared.args.n_ctx),
+            "--n-gpu-layers", str(shared.args.n_gpu_layers),
             "--port", str(self.port),
         ]
 
