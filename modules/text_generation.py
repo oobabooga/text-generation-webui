@@ -133,7 +133,11 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
         raise ValueError('No tokenizer is loaded')
 
     if shared.model.__class__.__name__ in ['LlamaServer', 'Exllamav2Model', 'TensorRTLLMModel']:
-        input_ids = shared.tokenizer.encode(str(prompt))
+        if shared.model.__class__.__name__ == 'LlamaServer':
+            input_ids = shared.tokenizer.encode(str(prompt), add_bos_token=add_bos_token)
+        else:
+            input_ids = shared.tokenizer.encode(str(prompt))
+
         if shared.model.__class__.__name__ not in ['Exllamav2Model']:
             input_ids = np.array(input_ids).reshape(1, len(input_ids))
     else:

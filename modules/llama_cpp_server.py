@@ -167,16 +167,23 @@ class LlamaServer:
         else:
             raise Exception(f"Unexpected response format: 'completion_probabilities' not found in {result}")
 
-    def encode(self, text, **kwargs):
+    def encode(self, text, add_bos_token=False, **kwargs):
         url = f"http://localhost:{self.port}/tokenize"
-        payload = {"content": text}
+        payload = {
+            "content": text,
+            "add_special": add_bos_token,
+        }
+
         response = requests.post(url, json=payload)
         result = response.json()
         return result.get("tokens", [])
 
     def decode(self, token_ids, **kwargs):
         url = f"http://localhost:{self.port}/detokenize"
-        payload = {"tokens": token_ids}
+        payload = {
+            "tokens": token_ids,
+        }
+
         response = requests.post(url, json=payload)
         result = response.json()
         return result.get("content", "")
@@ -189,7 +196,7 @@ class LlamaServer:
         url = f"http://localhost:{self.port}/completion"
 
         payload = {
-            "prompt": self.encode(prompt),
+            "prompt": self.encode(prompt, add_bos_token=state["add_bos_token"]),
             "n_predict": state["max_new_tokens"],
             "temperature": state["temperature"],
             "top_k": state["top_k"],
