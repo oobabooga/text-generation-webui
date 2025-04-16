@@ -168,6 +168,11 @@ class LlamaServer:
             raise Exception(f"Unexpected response format: 'completion_probabilities' not found in {result}")
 
     def encode(self, text, add_bos_token=False, **kwargs):
+        bos_tokens = ['<s>', '<|startoftext|>', '<BOS_TOKEN>', '<bos>', '<|endoftext|>']
+        has_bos_already = any(text.startswith(token) for token in bos_tokens)
+        if has_bos_already:
+            add_bos_token = False
+
         url = f"http://localhost:{self.port}/tokenize"
         payload = {
             "content": text,
