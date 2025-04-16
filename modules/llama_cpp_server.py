@@ -54,13 +54,6 @@ class LlamaServer:
             "--port", str(self.port),
         ]
 
-        # Add any additional arguments
-        for key, value in self.additional_args.items():
-            key = key.replace('_', '-')  # Convert snake_case to kebab-case for CLI args
-            cmd.append(f"--{key}")
-            if value is not None:
-                cmd.append(str(value))
-
         # Create environment with correct library path based on OS
         env = os.environ.copy()
         lib_dir = os.path.dirname(self.server_path)
