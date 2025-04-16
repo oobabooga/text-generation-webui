@@ -6,7 +6,6 @@ import subprocess
 import time
 
 import requests
-from llama_cpp_binaries import get_binary_path
 
 from modules import shared
 
@@ -45,7 +44,15 @@ class LlamaServer:
         """Start the llama.cpp server and wait until it's ready."""
         # Determine the server path
         if self.server_path is None:
-            self.server_path = get_binary_path()
+            if shared.args.cpu:
+                import llama_cpp_binaries
+                self.server_path = llama_cpp_binaries.get_binary_path()
+            elif shared.args.tensorcores:
+                import llama_cpp_binaries_cuda_tensorcores
+                self.server_path = llama_cpp_binaries_cuda_tensorcores.get_binary_path()
+            else:
+                import llama_cpp_binaries_cuda
+                self.server_path = llama_cpp_binaries_cuda.get_binary_path()
 
         # Build the command
         cmd = [
