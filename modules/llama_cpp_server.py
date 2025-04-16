@@ -1,4 +1,5 @@
 import json
+import threading
 import os
 import platform
 import socket
@@ -91,8 +92,25 @@ class LlamaServer:
             else:
                 env['PATH'] = lib_dir
 
-        # Start the server
-        self.process = subprocess.Popen(cmd, env=env)
+        # Start the server with pipes for output
+        self.process = subprocess.Popen(
+            cmd,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1
+        )
+
+        # Simple filter function in a thread
+        def filter_output(pipe):
+            for line in pipe:
+                if not line.startswith(("srv", "slot")):
+                    print(line, end='')
+
+        # Start threads for stdout and stderr
+        threading.Thread(target=filter_output, args=(self.process.stdout,), daemon=True).start()
+        threading.Thread(target=filter_output, args=(self.process.stderr,), daemon=True).start()
 
         # Wait for server to be healthy
         health_url = f"http://localhost:{self.port}/health"
