@@ -8,6 +8,8 @@ import time
 import requests
 from llama_cpp_binaries import get_binary_path
 
+from modules import shared
+
 
 class LlamaServer:
     def __init__(
@@ -149,19 +151,28 @@ class LlamaServer:
     def generate_with_streaming(
         self,
         prompt,
-        n_predict=128,
-        temp=0.8,
-        top_k=40,
-        top_p=0.9,
+        state,
     ):
         url = f"http://localhost:{self.port}/completion"
 
         payload = {
             "prompt": prompt,
-            "n_predict": n_predict,
-            "temp": temp,
-            "top_k": top_k,
-            "top_p": top_p,
+            "n_predict": state["max_new_tokens"],
+            "temperature": state["temperature"],
+            "top_k": state["top_k"],
+            "top_p": state["top_p"],
+            "min_p": state["min_p"],
+            "tfs_z": state["tfs"],
+            "typical_p": state["typical_p"],
+            "repeat_penalty": state["repetition_penalty"],
+            "repeat_last_n": state["repetition_penalty_range"],
+            "presence_penalty": state["presence_penalty"],
+            "frequency_penalty": state["frequency_penalty"],
+            "mirostat": state["mirostat_mode"],
+            "mirostat_tau": state["mirostat_tau"],
+            "mirostat_eta": state["mirostat_eta"],
+            "seed": state["seed"],
+            "ignore_eos": state["ban_eos_token"],
             "stream": True
         }
 
@@ -173,6 +184,9 @@ class LlamaServer:
 
         # Process the streaming response
         for line in response.iter_lines():
+            if shared.stop_everything:
+                break
+
             if line:
                 try:
                     # Check if the line starts with "data: " and remove it
