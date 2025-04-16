@@ -67,7 +67,7 @@ def load_model(model_name, loader=None):
     shared.model_name = model_name
     load_func_map = {
         'Transformers': huggingface_loader,
-        'llama.cpp': llamacpp_loader,
+        'llama.cpp': llama_cpp_server_loader,
         'ExLlamav3_HF': ExLlamav3_HF_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ExLlamav2': ExLlamav2_loader,
@@ -267,8 +267,8 @@ def huggingface_loader(model_name):
     return model
 
 
-def llamacpp_loader(model_name):
-    from modules.llamacpp_model import LlamaCppModel
+def llama_cpp_server_loader(model_name):
+    from modules.llama_cpp_server import LlamaServer
 
     path = Path(f'{shared.args.model_dir}/{model_name}')
     if path.is_file():
@@ -277,8 +277,8 @@ def llamacpp_loader(model_name):
         model_file = sorted(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0]
 
     logger.info(f"llama.cpp weights detected: \"{model_file}\"")
-    model, tokenizer = LlamaCppModel.from_pretrained(model_file)
-    return model, tokenizer
+    model = LlamaServer(model_file)
+    return model, model
 
 
 def ExLlamav3_HF_loader(model_name):

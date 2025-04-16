@@ -1,3 +1,4 @@
+import json
 import os
 import platform
 import socket
@@ -36,60 +37,6 @@ class LlamaServer:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind(('', 0))  # Bind to port 0 to get an available port
             return s.getsockname()[1]
-
-    def _request_with_retry(
-        self,
-        url,
-        payload=None,
-        method="POST",
-        max_retries=5,
-        initial_delay=0.01,
-        max_delay=1.0,
-        health_check=False,
-        max_wait_time=None
-    ):
-        """Make a request with exponential backoff retry"""
-        delay = initial_delay
-        start_time = time.time()
-        attempt = 0
-
-        while max_wait_time is None or time.time() - start_time < max_wait_time:
-            try:
-                if method.upper() == "GET":
-                    response = requests.get(url)
-                else:
-                    response = requests.post(url, json=payload)
-
-                # Special handling for health check
-                if health_check:
-                    if response.status_code == 200:
-                        return response.json()
-                    elif response.status_code == 503:
-                        # Still loading, continue retrying
-                        pass
-                    else:
-                        response.raise_for_status()
-                else:
-                    # Normal handling for other requests
-                    response.raise_for_status()
-                    return response.json()
-
-            except requests.exceptions.RequestException:
-                pass
-
-            # Increment attempt count for regular retry logic
-            if not health_check and attempt >= max_retries - 1:
-                raise Exception(f"Failed to connect after {max_retries} attempts")
-
-            # Sleep with backoff
-            time.sleep(delay)
-            delay = min(delay * 1.5, max_delay)
-            attempt += 1
-
-        if max_wait_time is not None:
-            raise TimeoutError(f"Request timed out after {max_wait_time} seconds")
-        else:
-            raise Exception(f"Failed to connect after {max_retries} attempts")
 
     def _start_server(self):
         """Start the llama.cpp server and wait until it's ready."""
@@ -131,52 +78,45 @@ class LlamaServer:
                 env["LD_LIBRARY_PATH"] = lib_path
 
         # Start the server
-        self.process = subprocess.Popen(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        # self.process = subprocess.Popen(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.process = subprocess.Popen(cmd, env=env)
 
-        # Wait for server to be healthy using _request_with_retry with appropriate parameters
+        # Wait for server to be healthy
         health_url = f"http://localhost:{self.port}/health"
-        self._request_with_retry(
-            health_url,
-            method="GET",
-            initial_delay=1.0,
-            max_delay=10.0,
-            health_check=True,
-            max_wait_time=7200  # 2 hours max wait time
-        )
+        print(health_url)
+        start_time = time.time()
+        current_delay = 1.0
+        max_delay = 10.0
+        max_wait_time = 7200  # 2 hours
+
+        while time.time() - start_time < max_wait_time:
+            print("Trying health...", self.port)
+            try:
+                response = requests.get(health_url)
+                if response.status_code == 200:
+                    break
+            except Exception as e:
+                print(e)
+                pass
+            
+            time.sleep(current_delay)
+            current_delay = min(current_delay * 1.5, max_delay)
+        else:
+            raise TimeoutError(f"Server health check timed out after {max_wait_time} seconds")
 
         # Server is now healthy, get model info
         self._get_max_context_length()
         return self.port
 
-    def start(self):
-        """
-        For backward compatibility - returns port if server is already running.
-        Otherwise starts the server.
-        """
-
-        if self.process is None:
-            return self._start_server()
-
-        return self.port
-
     def _get_max_context_length(self):
         """Get and store the model's maximum context length."""
-        try:
-            models_url = f"http://localhost:{self.port}/v1/models"
-            response = self._request_with_retry(
-                models_url,
-                method="GET",
-                max_retries=20,
-                initial_delay=1.0,
-                max_delay=10.0
-            )
+        models_url = f"http://localhost:{self.port}/v1/models"
+        response = requests.get(models_url).json()
 
-            if response and "data" in response and len(response["data"]) > 0:
-                model_info = response["data"][0]
-                if "meta" in model_info and "n_vocab" in model_info["meta"]:
-                    self.max_context_length = model_info["meta"]["n_vocab"]
-        except Exception as e:
-            print(f"Failed to get model info: {e}")
+        if "data" in response and len(response["data"]) > 0:
+            model_info = response["data"][0]
+            if "meta" in model_info and "n_vocab" in model_info["meta"]:
+                self.max_context_length = model_info["meta"]["n_vocab"]
 
     def get_logits(self, input_ids, n_probs=4096):
         """Get the logits/probabilities for the next token after a prompt"""
@@ -190,12 +130,80 @@ class LlamaServer:
             "post_sampling_probs": False
         }
 
-        result = self._request_with_retry(url, payload)
+        response = requests.post(url, json=payload)
+        result = response.json()
 
         if "completion_probabilities" in result:
             return result["completion_probabilities"][0]["top_logprobs"]
         else:
             raise Exception(f"Unexpected response format: 'completion_probabilities' not found in {result}")
+
+    def encode(self, text, **kwargs):
+        url = f"http://localhost:{self.port}/tokenize"
+        payload = {"content": text}
+        response = requests.post(url, json=payload)
+        result = response.json()
+        return result.get("tokens", [])
+
+    def decode(self, token_ids, **kwargs):
+        url = f"http://localhost:{self.port}/detokenize"
+        payload = {"tokens": token_ids}
+        response = requests.post(url, json=payload)
+        result = response.json()
+        return result.get("content", "")
+
+    def generate_with_streaming(
+        self,
+        prompt,
+        n_predict=128,
+        temp=0.8,
+        top_k=40,
+        top_p=0.9,
+    ):
+        url = f"http://localhost:{self.port}/completion"
+
+        payload = {
+            "prompt": prompt,
+            "n_predict": n_predict,
+            "temp": temp,
+            "top_k": top_k,
+            "top_p": top_p,
+            "stream": True
+        }
+
+        # Make a direct request with streaming enabled
+        response = requests.post(url, json=payload, stream=True)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+
+        full_text = ""
+
+        # Process the streaming response
+        for line in response.iter_lines():
+            if line:
+                try:
+                    # Check if the line starts with "data: " and remove it
+                    line_str = line.decode('utf-8')
+                    if line_str.startswith('data: '):
+                        line_str = line_str[6:]  # Remove the "data: " prefix
+                    
+                    # Parse the JSON data
+                    data = json.loads(line_str)
+                    
+                    # Extract the token content
+                    if 'content' in data:
+                        token_text = data['content']
+                        full_text += token_text
+                        yield full_text
+                    
+                    # Check if generation is complete
+                    if data.get('stop', False):
+                        break
+                        
+                except json.JSONDecodeError as e:
+                    # Log the error and the problematic line
+                    print(f"JSON decode error: {e}")
+                    print(f"Problematic line: {line}")
+                    continue
 
     def __enter__(self):
         """Support for context manager."""
