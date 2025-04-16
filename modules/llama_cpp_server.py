@@ -3,7 +3,6 @@ import os
 import platform
 import socket
 import subprocess
-import threading
 import time
 
 import requests
