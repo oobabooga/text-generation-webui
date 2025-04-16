@@ -94,7 +94,7 @@ class LlamaServer:
             except Exception as e:
                 print(e)
                 pass
-            
+
             time.sleep(current_delay)
             current_delay = min(current_delay * 1.5, max_delay)
         else:
@@ -193,20 +193,20 @@ class LlamaServer:
                     line_str = line.decode('utf-8')
                     if line_str.startswith('data: '):
                         line_str = line_str[6:]  # Remove the "data: " prefix
-                    
+
                     # Parse the JSON data
                     data = json.loads(line_str)
-                    
+
                     # Extract the token content
                     if 'content' in data:
                         token_text = data['content']
                         full_text += token_text
                         yield full_text
-                    
+
                     # Check if generation is complete
                     if data.get('stop', False):
                         break
-                        
+
                 except json.JSONDecodeError as e:
                     # Log the error and the problematic line
                     print(f"JSON decode error: {e}")
