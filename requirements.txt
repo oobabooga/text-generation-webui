@@ -24,6 +24,7 @@ tensorboard
 transformers==4.50.*
 tqdm
 wandb
+optimum-quanto>=0.2.6
 
 # API
 SpeechRecognition==3.10.0
