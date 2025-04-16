@@ -79,21 +79,11 @@ class LlamaServer:
         self.process = subprocess.Popen(
             cmd,
             env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            # stdout=subprocess.DEVNULL,
+            # stderr=subprocess.DEVNULL,
             text=True,
             bufsize=1
         )
-
-        # Simple filter function in a thread
-        def filter_output(pipe):
-            for line in pipe:
-                if not line.startswith(("srv", "slot")):
-                    print(line, end='')
-
-        # Start threads for stdout and stderr
-        threading.Thread(target=filter_output, args=(self.process.stdout,), daemon=True).start()
-        threading.Thread(target=filter_output, args=(self.process.stderr,), daemon=True).start()
 
         # Wait for server to be healthy
         health_url = f"http://localhost:{self.port}/health"
