@@ -6,6 +6,7 @@ import subprocess
 import time
 
 import requests
+from llama_cpp_binaries import get_binary_path
 
 
 class LlamaServer:
@@ -42,14 +43,7 @@ class LlamaServer:
         """Start the llama.cpp server and wait until it's ready."""
         # Determine the server path
         if self.server_path is None:
-            # Default path from the original command
-            system = platform.system()
-            if system == "Windows":
-                executable = "llama-server.exe"
-            else:
-                executable = "llama-server"
-
-            self.server_path = os.path.join("bin", "llama.cpp", executable)
+            self.server_path = get_binary_path()
 
         # Build the command
         cmd = [
