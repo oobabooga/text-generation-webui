@@ -293,6 +293,7 @@ loaders_samplers = {
         'mirostat_tau',
         'mirostat_eta',
         'ban_eos_token',
+        'add_bos_token',
         'seed',
         'custom_token_bans',
         'grammar_string',
