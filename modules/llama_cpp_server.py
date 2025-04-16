@@ -189,7 +189,7 @@ class LlamaServer:
         url = f"http://localhost:{self.port}/completion"
 
         payload = {
-            "prompt": prompt,
+            "prompt": self.encode(prompt),
             "n_predict": state["max_new_tokens"],
             "temperature": state["temperature"],
             "top_k": state["top_k"],
