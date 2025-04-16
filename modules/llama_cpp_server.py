@@ -70,18 +70,28 @@ class LlamaServer:
             if value is not None:
                 cmd.append(str(value))
 
-        # Set up environment
+        # Create environment with correct library path based on OS
         env = os.environ.copy()
-        if platform.system() == "Linux":
-            # Add the LD_LIBRARY_PATH for Linux
-            lib_path = "/usr/lib/x86_64-linux-gnu"
-            if "LD_LIBRARY_PATH" in env:
-                env["LD_LIBRARY_PATH"] = f"{lib_path}:{env['LD_LIBRARY_PATH']}"
+        lib_dir = os.path.dirname(self.server_path)
+
+        system = platform.system()
+        if system == "Linux":
+            if 'LD_LIBRARY_PATH' in env:
+                env['LD_LIBRARY_PATH'] = f"{lib_dir}:{env['LD_LIBRARY_PATH']}"
             else:
-                env["LD_LIBRARY_PATH"] = lib_path
+                env['LD_LIBRARY_PATH'] = lib_dir
+        elif system == "Darwin":  # macOS
+            if 'DYLD_LIBRARY_PATH' in env:
+                env['DYLD_LIBRARY_PATH'] = f"{lib_dir}:{env['DYLD_LIBRARY_PATH']}"
+            else:
+                env['DYLD_LIBRARY_PATH'] = lib_dir
+        elif system == "Windows":
+            if 'PATH' in env:
+                env['PATH'] = f"{lib_dir};{env['PATH']}"
+            else:
+                env['PATH'] = lib_dir
 
         # Start the server
-        # self.process = subprocess.Popen(cmd, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         self.process = subprocess.Popen(cmd, env=env)
 
         # Wait for server to be healthy
