@@ -86,7 +86,7 @@ group.add_argument('--idle-timeout', type=int, default=0, help='Unload model aft
 
 # Model loader
 group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav3_HF, ExLlamav2_HF, ExLlamav2, HQQ, TensorRT-LLM.')
+group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav2_HF, ExLlamav2, HQQ, TensorRT-LLM.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
@@ -262,8 +262,6 @@ def fix_loader_name(name):
     name = name.lower()
     if name in ['llamacpp', 'llama.cpp', 'llama-cpp', 'llama cpp']:
         return 'llama.cpp'
-    if name in ['llamacpp_hf', 'llama.cpp_hf', 'llama-cpp-hf', 'llamacpp-hf', 'llama.cpp-hf']:
-        return 'llamacpp_HF'
     elif name in ['transformers', 'huggingface', 'hf', 'hugging_face', 'hugging face']:
         return 'Transformers'
     elif name in ['exllamav2', 'exllama-v2', 'ex_llama-v2', 'exlamav2', 'exlama-v2', 'exllama2', 'exllama-2']:
@@ -316,7 +314,7 @@ def transform_legacy_kv_cache_options(opts):
                 set('cache_type', 'fp8')
             elif cache_4bit:
                 set('cache_type', 'q4')
-        elif loader.lower() in ['llama.cpp', 'llamacpp_hf']:
+        elif loader.lower() == 'llama.cpp':
             # Llama.cpp loader-specific cache type
             if cache_4bit:
                 set('cache_type', 'q4_0')

@@ -132,7 +132,6 @@ def create_ui():
                             shared.gradio['logits_all'] = gr.Checkbox(label="logits_all", value=shared.args.logits_all, info='Needs to be set for perplexity evaluation to work with this loader. Otherwise, ignore it, as it makes prompt processing slower.')
                             shared.gradio['trust_remote_code'] = gr.Checkbox(label="trust-remote-code", value=shared.args.trust_remote_code, info='Set trust_remote_code=True while loading the tokenizer/model. To enable this option, start the web UI with the --trust-remote-code flag.', interactive=shared.args.trust_remote_code)
                             shared.gradio['no_use_fast'] = gr.Checkbox(label="no_use_fast", value=shared.args.no_use_fast, info='Set use_fast=False while loading the tokenizer.')
-                            shared.gradio['llamacpp_HF_info'] = gr.Markdown("llamacpp_HF loads llama.cpp as a Transformers model. To use it, you need to place your GGUF in a subfolder of models/ with the necessary tokenizer files.\n\nYou can use the \"llamacpp_HF creator\" menu to do that automatically.")
                             shared.gradio['exllamav2_info'] = gr.Markdown("ExLlamav2_HF is recommended over ExLlamav2 for better integration with extensions and more consistent sampling behavior across loaders.")
                             shared.gradio['tensorrt_llm_info'] = gr.Markdown('* TensorRT-LLM has to be installed manually in a separate Python 3.10 environment at the moment. For a guide, consult the description of [this PR](https://github.com/oobabooga/text-generation-webui/pull/5715). \n\n* `max_seq_len` is only used when `cpp-runner` is checked.\n\n* `cpp_runner` does not support streaming at the moment.')
 
@@ -146,15 +145,6 @@ def create_ui():
                     with gr.Row():
                         shared.gradio['download_model_button'] = gr.Button("Download", variant='primary', interactive=not mu)
                         shared.gradio['get_file_list'] = gr.Button("Get file list", interactive=not mu)
-
-                with gr.Tab("llamacpp_HF creator"):
-                    with gr.Row():
-                        shared.gradio['gguf_menu'] = gr.Dropdown(choices=utils.get_available_ggufs(), value=lambda: shared.model_name, label='Choose your GGUF', elem_classes='slim-dropdown', interactive=not mu)
-                        ui.create_refresh_button(shared.gradio['gguf_menu'], lambda: None, lambda: {'choices': utils.get_available_ggufs()}, 'refresh-button', interactive=not mu)
-
-                    shared.gradio['unquantized_url'] = gr.Textbox(label="Enter the URL for the original (unquantized) model", info="Example: https://huggingface.co/lmsys/vicuna-13b-v1.5", max_lines=1)
-                    shared.gradio['create_llamacpp_hf_button'] = gr.Button("Submit", variant="primary", interactive=not mu)
-                    gr.Markdown("This will move your gguf file into a subfolder of `models` along with the necessary tokenizer files.")
 
                 with gr.Tab("Customize instruction template"):
                     with gr.Row():
@@ -195,7 +185,6 @@ def create_event_handlers():
     shared.gradio['download_model_button'].click(download_model_wrapper, gradio('custom_model_menu', 'download_specific_file'), gradio('model_status'), show_progress=True)
     shared.gradio['get_file_list'].click(partial(download_model_wrapper, return_links=True), gradio('custom_model_menu', 'download_specific_file'), gradio('model_status'), show_progress=True)
     shared.gradio['autoload_model'].change(lambda x: gr.update(visible=not x), gradio('autoload_model'), gradio('load_model'))
-    shared.gradio['create_llamacpp_hf_button'].click(create_llamacpp_hf, gradio('gguf_menu', 'unquantized_url'), gradio('model_status'), show_progress=True)
     shared.gradio['customized_template_submit'].click(save_instruction_template, gradio('model_menu', 'customized_template'), gradio('model_status'), show_progress=True)
 
 
@@ -286,34 +275,11 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
         yield traceback.format_exc().replace('\n', '\n\n')
 
 
-def create_llamacpp_hf(gguf_name, unquantized_url, progress=gr.Progress()):
-    try:
-        downloader = importlib.import_module("download-model").ModelDownloader()
-
-        progress(0.0)
-        model, branch = downloader.sanitize_model_and_branch_names(unquantized_url, None)
-
-        yield ("Getting the tokenizer files links from Hugging Face")
-        links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=True)
-        output_folder = Path(shared.args.model_dir) / (re.sub(r'(?i)\.gguf$', '', gguf_name) + "-HF")
-
-        yield (f"Downloading tokenizer to `{output_folder}/`")
-        downloader.download_model_files(model, branch, links, sha256, output_folder, progress_bar=progress, threads=4, is_llamacpp=False)
-
-        # Move the GGUF
-        (Path(shared.args.model_dir) / gguf_name).rename(output_folder / gguf_name)
-
-        yield (f"Model saved to `{output_folder}/`.\n\nYou can now load it using llamacpp_HF.")
-    except:
-        progress(1.0)
-        yield traceback.format_exc().replace('\n', '\n\n')
-
-
 def update_truncation_length(current_length, state):
     if 'loader' in state:
         if state['loader'].lower().startswith('exllama'):
             return state['max_seq_len']
-        elif state['loader'] in ['llama.cpp', 'llamacpp_HF']:
+        elif state['loader'] == 'llama.cpp':
             return state['n_ctx']
 
     return current_length
