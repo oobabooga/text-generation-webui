@@ -113,16 +113,32 @@ class LlamaServer:
                     print(f"Problematic line: {line}")
                     continue
 
-    def get_logits(self, input_ids, n_probs=4096):
+    def get_logits(self, prompt, state, n_probs=128, use_samplers=False):
         """Get the logits/probabilities for the next token after a prompt"""
         url = f"http://localhost:{self.port}/completion"
 
         payload = {
-            "prompt": input_ids,
+            "prompt": self.encode(prompt, add_bos_token=state["add_bos_token"]),
             "n_predict": 0,
             "logprobs": True,
             "n_probs": n_probs,
-            "post_sampling_probs": False
+            "stream": False
+            "post_sampling_probs": use_samplers,
+            "temperature": state["temperature"],
+            "top_k": state["top_k"],
+            "top_p": state["top_p"],
+            "min_p": state["min_p"],
+            "tfs_z": state["tfs"],
+            "typical_p": state["typical_p"],
+            "repeat_penalty": state["repetition_penalty"],
+            "repeat_last_n": state["repetition_penalty_range"],
+            "presence_penalty": state["presence_penalty"],
+            "frequency_penalty": state["frequency_penalty"],
+            "mirostat": state["mirostat_mode"],
+            "mirostat_tau": state["mirostat_tau"],
+            "mirostat_eta": state["mirostat_eta"],
+            "seed": state["seed"],
+            "ignore_eos": state["ban_eos_token"],
         }
 
         response = requests.post(url, json=payload)
