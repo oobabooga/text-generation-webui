@@ -122,7 +122,7 @@ class LlamaServer:
             "n_predict": 0,
             "logprobs": True,
             "n_probs": n_probs,
-            "stream": False
+            "stream": False,
             "post_sampling_probs": use_samplers,
             "temperature": state["temperature"],
             "top_k": state["top_k"],
@@ -145,7 +145,10 @@ class LlamaServer:
         result = response.json()
 
         if "completion_probabilities" in result:
-            return result["completion_probabilities"][0]["top_logprobs"]
+            if use_samplers:
+                return result["completion_probabilities"][0]["top_probs"]
+            else:
+                return result["completion_probabilities"][0]["top_logprobs"]
         else:
             raise Exception(f"Unexpected response format: 'completion_probabilities' not found in {result}")
 

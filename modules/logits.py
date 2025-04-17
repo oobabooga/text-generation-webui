@@ -47,7 +47,7 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
             output = {}
             for entry in logprobs:
                 token = entry['token']
-                prob = np.exp(entry['logprob'])
+                prob = entry['prob'] if use_samplers else np.exp(entry['logprob'])
                 output[token] = prob
 
             return output
@@ -55,11 +55,14 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
             output = ''
             for entry in logprobs:
                 token = entry['token']
-                prob = np.exp(entry['logprob'])
+                prob = entry['prob'] if use_samplers else np.exp(entry['logprob'])
                 output += f"{prob:.5f}  -  {token}\n"
 
             return output, previous
     else:
+        if not use_samplers:
+            state = {'stream': True}
+
         if use_samplers:
             if is_non_hf_exllamav2:
                 logger.error("Sampler hijacking is not supported non-Huggingface loaders.")
