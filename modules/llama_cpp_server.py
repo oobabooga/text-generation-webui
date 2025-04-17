@@ -1,6 +1,4 @@
 import json
-import os
-import platform
 import socket
 import subprocess
 import time
@@ -194,47 +192,9 @@ class LlamaServer:
         if shared.args.row_split:
             cmd += ["--split-mode", "row"]
 
-        # Create environment with correct library path based on OS
-        env = os.environ.copy()
-        system = platform.system()
-
-        # Set CUDA environment variables if in Conda
-        if "CONDA_PREFIX" in os.environ:
-            env["CUDA_PATH"] = os.environ["CONDA_PREFIX"]
-            env["CUDA_HOME"] = os.environ["CONDA_PREFIX"]
-
-        # Set up path variable information by OS
-        path_info = {
-            "Linux": ("LD_LIBRARY_PATH", ":"),
-            "Darwin": ("DYLD_LIBRARY_PATH", ":"),
-            "Windows": ("PATH", ";")
-        }
-
-        if system in path_info:
-            path_var, separator = path_info[system]
-
-            # Prepare paths to add
-            paths = []
-
-            # Add Conda lib path if in Conda environment
-            if "CONDA_PREFIX" in os.environ:
-                conda_lib_dir = os.path.join(
-                    os.environ["CONDA_PREFIX"],
-                    "Library" if system == "Windows" else "lib"
-                )
-                paths.insert(0, conda_lib_dir)  # Add conda lib before lib_dir
-
-            # Add existing path if present
-            if path_var in env and env[path_var]:
-                paths.append(env[path_var])
-
-            # Set the environment variable
-            env[path_var] = separator.join(paths)
-
         # Start the server with pipes for output
         self.process = subprocess.Popen(
             cmd,
-            env=env,
             # stdout=subprocess.DEVNULL,
             # stderr=subprocess.DEVNULL,
             text=True,
