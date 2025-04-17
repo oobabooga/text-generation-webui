@@ -30,7 +30,7 @@ loaders_and_params = OrderedDict({
         'n_gpu_layers',
         'threads',
         'threads_batch',
-        'n_batch',
+        'batch_size',
         'n_ctx',
         'cache_type',
         'tensor_split',

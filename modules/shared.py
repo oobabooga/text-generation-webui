@@ -120,7 +120,7 @@ group.add_argument('--tensorcores', action='store_true', help='NVIDIA only: use 
 group.add_argument('--n_ctx', type=int, default=8192, help='Size of the prompt context.')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
-group.add_argument('--n_batch', type=int, default=512, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
+group.add_argument('--batch-size', type=int, default=2048, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
 group.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 group.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
 group.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')

@@ -110,7 +110,7 @@ def list_model_elements():
         'n_gpu_layers',
         'threads',
         'threads_batch',
-        'n_batch',
+        'batch_size',
         'hqq_backend',
         'n_ctx',
         'max_seq_len',

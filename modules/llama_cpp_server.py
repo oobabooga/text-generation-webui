@@ -171,30 +171,26 @@ class LlamaServer:
             "--model", self.model_path,
             "--ctx-size", str(shared.args.n_ctx),
             "--n-gpu-layers", str(shared.args.n_gpu_layers),
+            "--batch-size", str(shared.args.batch_size),
             "--port", str(self.port),
         ]
 
         if shared.args.flash_attn:
             cmd.append("--flash-attn")
-
         if shared.args.threads > 0:
             cmd += ["--threads", str(shared.args.threads)]
-
         if shared.args.threads_batch > 0:
             cmd += ["--threads-batch", str(shared.args.threads_batch)]
-
         if shared.args.no_mmap:
             cmd.append("--no-mmap")
-
         if shared.args.mlock:
             cmd.append("--mlock")
-
         if shared.args.tensor_split is not None:
             cmd += ["--tensor-split", shared.args.tensor_split]
-
+        if shared.args.numa:
+            cmd += ["--numa", "distribute"]
         if shared.args.no_kv_offload:
             cmd.append("--no-kv-offload")
-
         if shared.args.row_split:
             cmd += ["--split-mode", "row"]
 
