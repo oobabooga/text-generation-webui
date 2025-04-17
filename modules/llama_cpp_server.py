@@ -196,7 +196,6 @@ class LlamaServer:
 
         # Create environment with correct library path based on OS
         env = os.environ.copy()
-        lib_dir = os.path.dirname(self.server_path)
         system = platform.system()
 
         # Set CUDA environment variables if in Conda
@@ -215,7 +214,7 @@ class LlamaServer:
             path_var, separator = path_info[system]
 
             # Prepare paths to add
-            paths = [lib_dir]
+            paths = []
 
             # Add Conda lib path if in Conda environment
             if "CONDA_PREFIX" in os.environ:
