@@ -122,7 +122,6 @@ def list_model_elements():
         'compress_pos_emb',
         'compute_dtype',
         'quant_type',
-        'attention_sink_size',
         'num_experts_per_token',
         'tensorcores',
         'load_in_8bit',
@@ -130,7 +129,6 @@ def list_model_elements():
         'torch_compile',
         'flash_attn',
         'use_flash_attention_2',
-        'streaming_llm',
         'auto_devices',
         'cpu',
         'disk',
@@ -150,7 +148,6 @@ def list_model_elements():
         'no_sdpa',
         'cfg_cache',
         'cpp_runner',
-        'logits_all',
         'trust_remote_code',
         'no_use_fast',
     ]
