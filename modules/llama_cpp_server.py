@@ -223,10 +223,7 @@ class LlamaServer:
         # Wait for server to be healthy
         health_url = f"http://localhost:{self.port}/health"
         start_time = time.time()
-        current_delay = 1.0
-        max_delay = 10.0
-        max_wait_time = 7200  # 2 hours
-
+        max_wait_time = 3600 * 8  # 8 hours
         while time.time() - start_time < max_wait_time:
             try:
                 response = requests.get(health_url)
@@ -236,7 +233,7 @@ class LlamaServer:
                 print(e)
                 pass
 
-            time.sleep(current_delay)
+            time.sleep(1)
             current_delay = min(current_delay * 1.5, max_delay)
         else:
             raise TimeoutError(f"Server health check timed out after {max_wait_time} seconds")
