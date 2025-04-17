@@ -216,8 +216,8 @@ class LlamaServer:
         # Wait for server to be healthy
         health_url = f"http://localhost:{self.port}/health"
         start_time = time.time()
-        max_wait_time = 3600 * 8  # 8 hours
-        while time.time() - start_time < max_wait_time:
+        timeout = 3600 * 8  # 8 hours
+        while time.time() - start_time < timeout:
             try:
                 response = requests.get(health_url)
                 if response.status_code == 200:
@@ -228,7 +228,7 @@ class LlamaServer:
 
             time.sleep(1)
         else:
-            raise TimeoutError(f"Server health check timed out after {max_wait_time} seconds")
+            raise TimeoutError(f"Server health check timed out after {timeout} seconds")
 
         # Server is now healthy, get model info
         self._get_max_context_length()
