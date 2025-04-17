@@ -133,7 +133,7 @@ def list_model_elements():
         'cpu',
         'disk',
         'row_split',
-        'no_offload_kqv',
+        'no_kv_offload',
         'no_mul_mat_q',
         'no_mmap',
         'mlock',

@@ -174,6 +174,30 @@ class LlamaServer:
             "--port", str(self.port),
         ]
 
+        if shared.args.flash_attn:
+            cmd.append("--flash-attn")
+
+        if shared.args.threads > 0:
+            cmd += ["--threads", str(shared.args.threads)]
+
+        if shared.args.threads_batch > 0:
+            cmd += ["--threads-batch", str(shared.args.threads_batch)]
+
+        if shared.args.no_mmap:
+            cmd.append("--no-mmap")
+
+        if shared.args.mlock:
+            cmd.append("--mlock")
+
+        if shared.args.tensor_split is not None:
+            cmd += ["--tensor-split", shared.args.tensor_split]
+
+        if shared.args.no_kv_offload:
+            cmd.append("--no-kv-offload")
+
+        if shared.args.row_split:
+            cmd += ["--split-mode", "row"]
+
         # Create environment with correct library path based on OS
         env = os.environ.copy()
         lib_dir = os.path.dirname(self.server_path)

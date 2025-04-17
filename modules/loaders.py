@@ -40,7 +40,7 @@ loaders_and_params = OrderedDict({
         'flash_attn',
         'cpu',
         'row_split',
-        'no_offload_kqv',
+        'no_kv_offload',
         'no_mul_mat_q',
         'no_mmap',
         'mlock',
