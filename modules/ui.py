@@ -123,7 +123,6 @@ def list_model_elements():
         'compute_dtype',
         'quant_type',
         'num_experts_per_token',
-        'tensorcores',
         'load_in_8bit',
         'load_in_4bit',
         'torch_compile',

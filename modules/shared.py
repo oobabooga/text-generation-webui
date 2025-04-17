@@ -116,7 +116,6 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
 group.add_argument('--flash-attn', action='store_true', help='Use flash-attention.')
-group.add_argument('--tensorcores', action='store_true', help='NVIDIA only: use llama-cpp-python compiled without GGML_CUDA_FORCE_MMQ. This may improve performance on newer cards.')
 group.add_argument('--n_ctx', type=int, default=8192, help='Size of the prompt context.')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
@@ -212,6 +211,7 @@ group.add_argument('--tokenizer-dir', type=str, help='DEPRECATED')
 group.add_argument('--logits_all', action='store_true', help='DEPRECATED')
 group.add_argument('--no_mul_mat_q', action='store_true', help='DEPRECATED')
 group.add_argument('--cache-capacity', type=str, help='DEPRECATED')
+group.add_argument('--tensorcores', action='store_true', help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])

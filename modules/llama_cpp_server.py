@@ -3,6 +3,7 @@ import socket
 import subprocess
 import time
 
+import llama_cpp_binaries
 import requests
 
 from modules import shared
@@ -172,15 +173,7 @@ class LlamaServer:
         """Start the llama.cpp server and wait until it's ready."""
         # Determine the server path
         if self.server_path is None:
-            if shared.args.cpu:
-                import llama_cpp_binaries
-                self.server_path = llama_cpp_binaries.get_binary_path()
-            elif shared.args.tensorcores:
-                import llama_cpp_binaries_cuda_tensorcores
-                self.server_path = llama_cpp_binaries_cuda_tensorcores.get_binary_path()
-            else:
-                import llama_cpp_binaries_cuda
-                self.server_path = llama_cpp_binaries_cuda.get_binary_path()
+            self.server_path = llama_cpp_binaries.get_binary_path()
 
         # Build the command
         cmd = [
@@ -234,7 +227,6 @@ class LlamaServer:
                 pass
 
             time.sleep(1)
-            current_delay = min(current_delay * 1.5, max_delay)
         else:
             raise TimeoutError(f"Server health check timed out after {max_wait_time} seconds")
 
