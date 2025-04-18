@@ -244,6 +244,8 @@ class LlamaServer:
             cmd += ["--split-mode", "row"]
         if shared.args.cache_type != "fp16" and shared.args.cache_type in llamacpp_valid_cache_types:
             cmd += ["-cache-type-k", shared.args.cache_type, "--cache-type-v", shared.args.cache_type]
+        if shared.args.compress_pos_emb != 1:
+            cmd += ["--rope-freq-scale", str(1.0 / shared.args.compress_pos_emb)]
 
         # Start the server with pipes for output
         self.process = subprocess.Popen(
