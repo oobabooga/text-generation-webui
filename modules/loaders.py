@@ -110,6 +110,7 @@ loaders_and_params = OrderedDict({
         'no_flash_attn',
         'no_xformers',
         'no_sdpa',
+        'exllamav2_info',
     ],
     'HQQ': [
         'hqq_backend',

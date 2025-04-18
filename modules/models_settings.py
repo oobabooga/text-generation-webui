@@ -172,11 +172,11 @@ def infer_loader(model_name, model_settings, hf_quant_method=None):
     elif hf_quant_method == 'exl3':
         loader = 'ExLlamav3_HF'
     elif hf_quant_method in ['exl2', 'gptq']:
-        loader = 'ExLlamav2'
+        loader = 'ExLlamav2_HF'
     elif re.match(r'.*exl3', model_name.lower()):
         loader = 'ExLlamav3_HF'
     elif re.match(r'.*exl2', model_name.lower()):
-        loader = 'ExLlamav2'
+        loader = 'ExLlamav2_HF'
     elif re.match(r'.*-hqq', model_name.lower()):
         return 'HQQ'
     else:
