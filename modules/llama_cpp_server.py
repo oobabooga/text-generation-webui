@@ -54,14 +54,25 @@ class LlamaServer:
         return result.get("content", "")
 
     def prepare_payload(self, state):
+        # Prepare DRY
         dry_sequence_breakers = state['dry_sequence_breakers']
         if not dry_sequence_breakers.startswith("["):
             dry_sequence_breakers = "[" + dry_sequence_breakers + "]"
         dry_sequence_breakers = json.loads(dry_sequence_breakers)
 
+        # Prepare the sampler order
         samplers = state["sampler_priority"]
         samplers = samplers.split("\n") if isinstance(samplers, str) else samplers
-        samplers = [s.strip() for s in samplers if s.strip() in ["dry", "top_k", "typ_p", "top_p", "min_p", "xtc", "temperature"]]
+        penalty_found = False
+        filtered_samplers = []
+        for s in samplers:
+            if s.strip() in ["dry", "top_k", "typ_p", "top_p", "min_p", "xtc", "temperature"]:
+                filtered_samplers.append(s.strip())
+            elif not penalty_found and s.strip() in ["repetition_penalty", "presence_penalty", "frequency_penalty"]:
+                filtered_samplers.append("penalties")
+                penalty_found = True
+
+        samplers = filtered_samplers
 
         # Move temperature to the end if temperature_last is true and temperature exists in the list
         if state["temperature_last"] and "temperature" in samplers:
@@ -278,7 +289,7 @@ class LlamaServer:
                 response = requests.get(health_url)
                 if response.status_code == 200:
                     break
-            except Exception as e:
+            except:
                 pass
 
             time.sleep(1)
