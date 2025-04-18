@@ -153,6 +153,9 @@ class Exllamav3HF(PreTrainedModel):
         else:
             self.past_seq = seq_tensor
 
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()
+
         loss = None
         if labels is not None:
             # Shift so that tokens < n predict n
