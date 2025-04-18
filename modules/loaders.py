@@ -39,7 +39,6 @@ loaders_and_params = OrderedDict({
         'flash_attn',
         'row_split',
         'no_kv_offload',
-        'no_mul_mat_q',
         'no_mmap',
         'mlock',
         'numa',

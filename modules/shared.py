@@ -192,26 +192,6 @@ group.add_argument('--nowebui', action='store_true', help='Do not launch the Gra
 
 # Deprecated parameters
 group = parser.add_argument_group('Deprecated')
-group.add_argument('--cache_4bit', action='store_true', help='DEPRECATED')
-group.add_argument('--cache_8bit', action='store_true', help='DEPRECATED')
-group.add_argument('--chat-buttons', action='store_true', help='DEPRECATED')
-group.add_argument('--triton', action='store_true', help='DEPRECATED')
-group.add_argument('--no_inject_fused_mlp', action='store_true', help='DEPRECATED')
-group.add_argument('--no_use_cuda_fp16', action='store_true', help='DEPRECATED')
-group.add_argument('--desc_act', action='store_true', help='DEPRECATED')
-group.add_argument('--disable_exllama', action='store_true', help='DEPRECATED')
-group.add_argument('--disable_exllamav2', action='store_true', help='DEPRECATED')
-group.add_argument('--wbits', type=int, default=0, help='DEPRECATED')
-group.add_argument('--groupsize', type=int, default=-1, help='DEPRECATED')
-group.add_argument('--model-menu', action='store_true', help='DEPRECATED')
-group.add_argument('--multimodal-pipeline', type=str, default=None, help='DEPRECATED')
-group.add_argument('--streaming-llm', action='store_true', help='DEPRECATED')
-group.add_argument('--attention-sink-size', type=int, default=5, help='DEPRECATED')
-group.add_argument('--tokenizer-dir', type=str, help='DEPRECATED')
-group.add_argument('--logits_all', action='store_true', help='DEPRECATED')
-group.add_argument('--no_mul_mat_q', action='store_true', help='DEPRECATED')
-group.add_argument('--cache-capacity', type=str, help='DEPRECATED')
-group.add_argument('--tensorcores', action='store_true', help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -276,58 +256,6 @@ def fix_loader_name(name):
         return 'TensorRT-LLM'
 
 
-def transform_legacy_kv_cache_options(opts):
-    # Handle both argparse.Namespace and dict here
-    def get(key):
-        return opts.get(key) if isinstance(opts, dict) else getattr(opts, key, None)
-
-    def set(key, value):
-        if isinstance(opts, dict):
-            opts[key] = value
-        else:
-            setattr(opts, key, value)
-
-    def del_key(key, fallback_set):
-        # only remove from user dict, can't delete from argparse.Namespace
-        if type(opts) is dict:
-            if key in opts:
-                del opts[key]
-        else:
-            setattr(opts, key, fallback_set)
-
-    # Retrieve values
-    loader = get('loader')
-    cache_8bit = get('cache_8bit')
-    cache_4bit = get('cache_4bit')
-
-    # Determine cache type based on loader or legacy flags
-    if cache_8bit or cache_4bit:
-        if not loader:
-            # Legacy behavior: prefer 8-bit over 4-bit to minimize breakage
-            if cache_8bit:
-                set('cache_type', 'fp8')
-            elif cache_4bit:
-                set('cache_type', 'q4')
-        elif loader.lower() in ['exllamav2', 'exllamav2_hf']:
-            # ExLlamaV2 loader-specific cache type
-            if cache_8bit:
-                set('cache_type', 'fp8')
-            elif cache_4bit:
-                set('cache_type', 'q4')
-        elif loader.lower() == 'llama.cpp':
-            # Llama.cpp loader-specific cache type
-            if cache_4bit:
-                set('cache_type', 'q4_0')
-            elif cache_8bit:
-                set('cache_type', 'q8_0')
-
-    # Clean up legacy keys
-    del_key('cache_4bit', False)
-    del_key('cache_8bit', False)
-
-    return opts
-
-
 def add_extension(name, last=False):
     if args.extensions is None:
         args.extensions = [name]
@@ -356,14 +284,10 @@ def load_user_config():
     else:
         user_config = {}
 
-    for model_name in user_config:
-        user_config[model_name] = transform_legacy_kv_cache_options(user_config[model_name])
-
     return user_config
 
 
 args.loader = fix_loader_name(args.loader)
-args = transform_legacy_kv_cache_options(args)
 
 # Activate the API extension
 if args.api or args.public_api:
