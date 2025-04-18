@@ -281,7 +281,7 @@ class LlamaServer:
 
         def filter_stderr():
             for line in iter(self.process.stderr.readline, ''):
-                if not line.startswith(('srv ', 'slot ')):
+                if not line.startswith(('srv ', 'slot ')) and not 'log_server_r: request: GET /health' in line:
                     sys.stderr.write(line)
                     sys.stderr.flush()
 
