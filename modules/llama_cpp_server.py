@@ -69,7 +69,7 @@ class LlamaServer:
         for s in samplers:
             if s.strip() in ["dry", "top_k", "typ_p", "top_p", "min_p", "xtc", "temperature"]:
                 filtered_samplers.append(s.strip())
-            elif not penalty_found and s.strip() in ["repetition_penalty", "presence_penalty", "frequency_penalty"]:
+            elif not penalty_found and s.strip() in == "repetition_penalty":
                 filtered_samplers.append("penalties")
                 penalty_found = True
 
