@@ -214,6 +214,14 @@ def convert_history(history):
 
 
 def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, prompt_only=False) -> dict:
+    # TODO: Implement the API methods for tool calls
+    # The API spec uses 'tool' instead of 'function' now.
+    if body.get('tools', []):
+        raise InvalidRequestError(message="tools is not supported.", param='tools')
+
+    if body.get('tool_call', ''):
+        raise InvalidRequestError(message="tool_call is not supported.", param='tool_call')
+
     if body.get('functions', []):
         raise InvalidRequestError(message="functions is not supported.", param='functions')
 
@@ -227,6 +235,10 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
     for m in messages:
         if 'role' not in m:
             raise InvalidRequestError(message="messages: missing role", param='messages')
+        elif m['role'] == 'tool':
+            raise InvalidRequestError(message="role: tool is not supported.", param='messages')
+        elif m['role'] == 'ipython':
+            raise InvalidRequestError(message="role: ipython is not supported.", param='messages')
         elif m['role'] == 'function':
             raise InvalidRequestError(message="role: function is not supported.", param='messages')
 

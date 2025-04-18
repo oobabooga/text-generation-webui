@@ -29,6 +29,14 @@ from modules.text_generation import (
     get_encoded_length,
     get_max_prompt_length
 )
+from modules.tool_calling import (
+    split_message_by_tool_calls,
+    get_visible_tools,
+    define_tool_action,
+    process_tool_calls,
+    extract_tool_calls_to_be_executed,
+    execute_tool_call
+)
 from modules.utils import delete_file, get_available_characters, save_file
 
 
@@ -106,9 +114,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
     instruct_renderer = partial(
         instruction_template.render,
-        builtin_tools=None,
-        tools=None,
-        tools_in_user_message=False,
+        #builtin_tools=None, # Somehow this is still being used? I'm getting an error of NoneType is not iterable on Llama 3 8B (but not Llama 3 1B)
+        tools=get_visible_tools(state), # Visible tools don't include the source code for the tool function
+        tools_in_user_message=state['tools_in_user_message'],
         add_generation_prompt=False
     )
 
@@ -118,7 +126,11 @@ def generate_chat_prompt(user_input, state, **kwargs):
         name1=state['name1'],
         name2=state['name2'],
         user_bio=replace_character_names(state['user_bio'], state['name1'], state['name2']),
+        tools=get_visible_tools(state),
+        tools_in_user_message=state['tools_in_user_message'],
     )
+    # Adding tools to the chat renderer did not work. Currently tools only work in instruct mode.
+    # Might need the system prompt, but adding it to the chat renderer would cause compatibility issues with existing chats...
 
     messages = []
 
@@ -138,7 +150,11 @@ def generate_chat_prompt(user_input, state, **kwargs):
         assistant_msg = assistant_msg.strip()
 
         if assistant_msg:
-            messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
+            # The assistant message may contain tool calls and responses, so split it into multiple messages
+            assistant_msgs = reversed(split_message_by_tool_calls(assistant_msg))
+            for msg in assistant_msgs:
+                messages.insert(insert_pos, msg)
+            # messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
 
         if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
             messages.insert(insert_pos, {"role": "user", "content": user_msg})
@@ -146,6 +162,25 @@ def generate_chat_prompt(user_input, state, **kwargs):
     user_input = user_input.strip()
     if user_input and not impersonate and not _continue:
         messages.append({"role": "user", "content": user_input})
+
+    # Add tools from the last response. This 'last_assistant_response' param is used to store the part of the message before the tool call, if any
+    # It could probably use a better name though
+    last_assistant_response = kwargs.get('last_assistant_response', None)
+    print("Last assistant response:", last_assistant_response)
+    if last_assistant_response is not None:
+        if last_assistant_response != "":
+            messages.append({"role": "assistant", "content": last_assistant_response})
+        # Add the messages for tool calls and tool responses
+        # The content field is ignored (at least in Llama 3, which is why it needs to be added to a previous message)
+        if 'tool_calls' in kwargs and len(kwargs.get('tool_calls', [])) > 0:
+            messages.append({"role": "assistant", "content": "", "tool_calls": kwargs.get('tool_calls', [])})
+        for tool_result in kwargs.get('tool_results', []):
+            messages.append(tool_result) # {"role": "tool", "tool_call_id": ..., "content": ...}
+
+    # Debug: Display messages before rendering the template
+    print("Messages:")
+    for msg in messages:
+        print(msg)
 
     def remove_extra_bos(prompt):
         for bos_token in ['<s>', '<|startoftext|>', '<BOS_TOKEN>', '<|endoftext|>']:
@@ -315,6 +350,8 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     stopping_strings = get_stopping_strings(state)
     is_stream = state['stream']
 
+    # Allow for continuing after tool use
+    last_reply = ["", ""]
     # Prepare the input
     if not (regenerate or _continue):
         visible_text = html.escape(text)
@@ -357,39 +394,154 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     if prompt is None:
         prompt = generate_chat_prompt(text, state, **kwargs)
 
-    # Generate
-    reply = None
-    for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True, for_ui=for_ui)):
+    # This loop is added to allow the model to continue after a tool call, so that it can interpret the result.
+    tool_used = False
+    continue_generation = True
+    consecutive_tool_uses = 0
+    while continue_generation:
+        continue_generation = False
 
-        # Extract the reply
-        if state['mode'] in ['chat', 'chat-instruct']:
-            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply + '▍')
-        else:
-            visible_reply = reply + '▍'
-
-        visible_reply = html.escape(visible_reply)
-
-        if shared.stop_everything:
-            if output['visible'][-1][1].endswith('▍'):
-                output['visible'][-1][1] = output['visible'][-1][1][:-1]
-
-            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+        # When in the mode which requires clicking "continue", check for tool calls in previous message which haven't been executed
+        if _continue and state['confirm_tool_use']:
+            print("Executing tool call (pre-generate)")
+            tool_calls = extract_tool_calls_to_be_executed(last_reply[0], state['tools'])
+            #kwargs['last_assistant_response'] = '' # The message prior to the tool call?
+            #kwargs['tool_calls'] = tool_calls
+            #kwargs['tool_results'] = []
+            for tool_call in tool_calls:
+                tool_result = execute_tool_call(tool_call)
+                #kwargs['tool_results'].append(tool_result)
+                output['internal'][-1][1] += json.dumps(tool_result)
+                output['visible'][-1][1] += f"\n\nTOOL RESULT: ```\n{tool_result['content']}\n```\n\n"
             yield output
-            return
 
-        if _continue:
-            output['internal'][-1] = [text, last_reply[0] + reply]
-            output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
-            if is_stream:
+            # Without this, the message keeps getting deleted over and over
+            last_reply = [output['internal'][-1][1], output['visible'][-1][1]]
+
+            # We've already added the tool calls and results to the output, so remove them from the list
+            # Hence removing the kwargs settings above
+            
+            # After all tool calls (or max tool uses)
+            if consecutive_tool_uses < state['max_consecutive_tool_uses']:
+                print("Previous prompt:")
+                print(prompt)
+                new_prompt = generate_chat_prompt(text, state, **kwargs)
+                print("New prompt:")
+                print(new_prompt) # Testing
+                #print("Continuing generation after tool use...")
+                #continue_generation = True
+                #tool_used = True
+                prompt = new_prompt
+            else:
+                print("Max consecutive tool uses reached. Stopping generation.")
+                break
+
+        # Generate
+        reply = None
+        for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True, for_ui=for_ui)):
+
+            # Extract the reply
+            if state['mode'] in ['chat', 'chat-instruct']:
+                visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply + '▍')
+            else:
+                visible_reply = reply + '▍'
+
+            visible_reply = html.escape(visible_reply)
+
+            if shared.stop_everything:
+                if output['visible'][-1][1].endswith('▍'):
+                    output['visible'][-1][1] = output['visible'][-1][1][:-1]
+
+                output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
                 yield output
-        elif not (j == 0 and visible_reply.strip() == ''):
-            output['internal'][-1] = [text, reply.lstrip(' ')]
-            output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
-            if is_stream:
+                return
+
+            if _continue or tool_used:
+                output['internal'][-1] = [text, last_reply[0] + reply]
+                output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
+                if is_stream:
+                    yield output
+            elif not (j == 0 and visible_reply.strip() == ''):
+                output['internal'][-1] = [text, reply.lstrip(' ')]
+                output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
+                if is_stream:
+                    yield output
+
+        if output['visible'][-1][1].endswith('▍'):
+            output['visible'][-1][1] = output['visible'][-1][1][:-1]
+
+        # Displaying the reply for debugging
+        print("Reply:")
+        print(reply)
+        # Detect whether any tool calls were made by the model. Only use the last part of the reponse
+        modified_message, tool_calls = process_tool_calls(reply.lstrip(' '), state['tools'])
+
+        if len(tool_calls) > 0:
+            print("Tool calls detected:")
+            print(tool_calls)
+            # Use chat/instruct template to modify the message to include the tool call(s) and response(s)
+            # Delete the raw tool call
+            # Maybe it would be better to not do this
+            #output['internal'][-1][1] = last_reply[0] + modified_message
+            #output['visible'][-1][1] = last_reply[1] + modified_message
+            kwargs['last_assistant_response'] = reply # last_reply[0] + modified_message
+            kwargs['tool_calls'] = tool_calls
+            kwargs['tool_results'] = []
+            # Add tool call to visible results but not internal results
+            for tool_call in tool_calls:
+                output['internal'][-1][1] += json.dumps(tool_call)
+                output['visible'][-1][1] += f"\n\nTOOL CALL: ```\n{json.dumps(tool_call, indent=4)}\n```"
+                tool_call_type = tool_call['type']
+                if tool_call_type in tool_call.keys():
+                    tool_call_details = tool_call[tool_call_type]
+                    tool_call_params = None
+                    if 'parameters' in tool_call_details:
+                        tool_call_params = tool_call_details['parameters']
+                    elif 'arguments' in tool_call_details:
+                        tool_call_params = tool_call_details['arguments']
+                    if tool_call_params is not None and 'code' in tool_call_params.keys():
+                        output['visible'][-1][1] += f"\n\nTOOL CODE:\n<pre><code>{tool_call_params['code']}</code></pre>"
+            yield output
+            
+            # If this setting is enabled, wait for confirmation (by pressing "continue") before executing the tool call
+            if state['confirm_tool_use']:
+                output['visible'][-1][1] += "\n(Waiting for confirmation, press continue to run...)"
+                # Apply extensions before tool call
+                output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+                yield output
+                return # Stop generation until clicking "continue"
+
+            else:
+                print("Executing tool call (post-generate)")
+                # Get tool results
+                for tool_call in tool_calls:
+                    tool_result = execute_tool_call(tool_call)
+                    kwargs['tool_results'].append(tool_result)
+                    output['internal'][-1][1] += json.dumps(tool_result)
+                    output['visible'][-1][1] += f"\n\nTOOL RESULT: ```\n{tool_result['content']}\n```\n\n"
+                    consecutive_tool_uses += 1
+                    if consecutive_tool_uses >= state['max_consecutive_tool_uses']:
+                        print("Max consecutive tool uses reached.")
+                        break
                 yield output
 
-    if output['visible'][-1][1].endswith('▍'):
-        output['visible'][-1][1] = output['visible'][-1][1][:-1]
+                # Without this, the message keeps getting deleted over and over
+                last_reply = [output['internal'][-1][1], output['visible'][-1][1]]
+
+                # After all tool calls (or max tool uses)
+                if consecutive_tool_uses < state['max_consecutive_tool_uses']:
+                    # Displaying the prompt for debugging, as it can be different depending on how the model uses special tokens to format tool calls
+                    print("Previous prompt:")
+                    print(prompt)
+                    new_prompt = generate_chat_prompt(text, state, **kwargs)
+                    print("New prompt:")
+                    print(new_prompt) # Testing
+                    print("Continuing generation after tool use...")
+                    continue_generation = True
+                    tool_used = True
+                    prompt = new_prompt
+                else:
+                    break
 
     output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
     yield output
@@ -693,6 +845,22 @@ def update_character_menu_after_deletion(idx):
     return gr.update(choices=characters, value=characters[idx])
 
 
+def update_tool_preset_menu_after_deletion(idx):
+    tool_presets = utils.get_available_tool_presets()
+    idx = min(int(idx), len(tool_presets) - 1)
+    idx = max(0, idx)
+    return gr.update(choices=tool_presets, value=tool_presets[idx])
+
+
+def update_tools_after_deletion(tool_name, state):
+    # Remove tool from state, if present
+    if 'tools' in state:
+        for i, tool in enumerate(state['tools']):
+            if tool['name'] == tool_name:
+                del state['tools'][i]
+                return
+
+
 def load_history(unique_id, character, mode):
     p = get_history_file_path(unique_id, character, mode)
 
@@ -816,6 +984,48 @@ def load_instruction_template(template):
         return data['instruction_template']
     else:
         return jinja_template_from_old_format(data)
+
+
+# Assume JSON but idk
+def load_tool(tool_filename):
+    filepath = None
+    for extension in ["yml", "yaml", "json"]:
+        filepath = Path(f'tools/{tool_filename}.{extension}')
+        if filepath.exists():
+            break
+
+    if filepath is None or not filepath.exists():
+        logger.error(f"Could not find the tool \"{tool_filename}\" inside tools/. No tool has been loaded.")
+        raise ValueError
+
+    file_contents = open(filepath, 'r', encoding='utf-8').read()
+    data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
+    
+    tool_name = tool_filename
+    tool_type = 'function'
+    tool_description = ""
+    tool_parameters = {}
+    tool_action = ""
+    if 'name' in data:
+        tool_name = data['name'] # If this is different from the filename, it could cause issues...
+    if 'type' in data:
+        tool_type = data['type']
+    if 'description' in data:
+        tool_description = data['description']
+    if 'parameters' in data:
+        tool_parameters = data['parameters']
+    if 'action' in data:
+        tool_action = data['action']
+    
+    return tool_name, tool_type, tool_description, tool_parameters, tool_action
+
+
+def load_tool_preset(preset):
+    filepath = Path(f'tools/presets/{preset}.txt')
+    if not filepath.exists():
+        return
+    file_contents = open(filepath, 'r', encoding='utf-8').read()
+    return file_contents
 
 
 @functools.cache
@@ -944,6 +1154,59 @@ def delete_character(name, instruct=False):
         delete_file(Path(f'characters/{name}.{extension}'))
 
     delete_file(Path(f'characters/{name}.png'))
+
+
+# Assuming name == filename for now..
+def generate_tool_json(name, type, description, parameters, action):
+    try:
+        data = {
+            'name': name,
+            'type': type,
+            'description': description,
+            'parameters': json.loads(parameters),
+            'action': action
+        }
+    except json.decoder.JSONDecodeError:
+        logger.error("Failed to parse tool parameters JSON")
+        gr.Warning("Failed to parse tool parameters JSON")
+        return
+    
+    return json.dumps(data, indent=4, sort_keys=True)
+
+
+# This isn't a good format tbh
+def save_tool_preset(filename, selected_tools):
+    if filename == "":
+        logger.error("The filename is empty, so the tool preset will not be saved.")
+        return
+    data = ",".join(selected_tools)
+    # Check whether the tools/presets directory exists, and if not, create it
+    if not Path('tools/presets').exists():
+        Path('tools/presets').mkdir(parents=True)
+    filepath = Path(f'tools/presets/{filename}.txt')
+    save_file(filepath, data)
+
+
+def delete_tool_preset(name):
+    delete_file(Path(f'tools/presets/{name}.txt'))
+
+
+def save_tool(filename, type, description, parameters, action):
+    if filename == "":
+        logger.error("The filename is empty, so the tool will not be saved.")
+        return
+
+    data = generate_tool_json(filename, type, description, parameters, action)
+    if data is not None:
+        filepath = Path(f'tools/{filename}.json')
+        save_file(filepath, data)
+        return True
+    return False
+
+
+def delete_tool(name):
+    for extension in ["yml", "yaml", "json"]:
+        delete_file(Path(f'tools/{name}.{extension}'))
 
 
 def jinja_template_from_old_format(params, verbose=False):
@@ -1265,6 +1528,159 @@ def handle_your_picture_change(picture, state):
     html = redraw_html(state['history'], state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'], reset_cache=True)
 
     return html
+
+
+def handle_save_tool_preset_click(tool_preset_menu):
+    return [
+        f"{tool_preset_menu}", # Filename
+        gr.update(visible=True) # Saver
+    ]
+
+
+def handle_tool_preset_change(tool_preset_menu):
+    tool_preset = load_tool_preset(tool_preset_menu)
+    selected_tools = []
+    if tool_preset is not None:
+        selected_tools = tool_preset.split(',')
+    return gr.update(value=selected_tools)
+
+
+def handle_tool_change(tool_checkbox_group, tools):
+    # TODO: Define this when state is initialized to avoid needing to do this
+    if tools is None:
+        tools = []
+        
+    # Determine which element was toggled...
+    tools_in_state = set([tool['name'] for tool in tools])
+    tools_selected = set(tool_checkbox_group)
+    #print("Tools in list:", tools_in_state)
+    #print("Tools selected:", tools_selected)
+
+    selected_tool = None
+    tools_to_add = []
+    tools_to_remove = []
+
+    if len(tools_selected - tools_in_state) > 0:
+        # Tool(s) selected
+        tools_to_add = sorted(list(tools_selected - tools_in_state))
+    if len(tools_in_state - tools_selected) > 0:
+        # Tool(s) deselected
+        tools_to_remove = sorted(list(tools_in_state - tools_selected))
+    if tools_in_state == tools_selected:
+        # No tool selected (e.g. the selected tool was deleted or the "None" preset was chosen)
+        # Try to load the first tool
+        available_tools = utils.get_available_tools()
+        if len(available_tools) > 0:
+            selected_tool = available_tools[0]
+        else:
+            return "", "function", "", "{}", "", tools
+
+    # Remove deselected tools
+    for tool_name in tools_to_remove:
+        index = None
+        for idx, tool in enumerate(tools):
+            if tool['name'] == tool_name:
+                index = idx
+                break
+        if index is not None:
+            del tools[index]
+            print("Removed tool:", tool_name)
+        else:
+            print("Tool not found in list?", tool_name)
+
+    # Then add selected tools
+    for selected_tool in tools_to_add:
+        # Load tool file based on name, then add/update in the list of tools
+        tool_name, tool_type, tool_description, tool_parameters, tool_action = load_tool(selected_tool)
+
+        tool = {
+            'name': tool_name,
+            'type': tool_type,
+            'description': tool_description,
+            'parameters': tool_parameters,
+            'action': tool_action
+        }
+        tools.append(tool)
+        # Evaluate tool action
+        valid = define_tool_action(tool)
+        if not valid:
+            gr.Warning("Tool action definition failed! Check your code.")
+        print("Added tool:", tool_name)
+    
+    # Account for situation where tool(s) were removed but not added, but still need to display the selection
+    if selected_tool is None:
+        selected_tool = tool_name # Use the last removed tool
+        tool_name, tool_type, tool_description, tool_parameters, tool_action = load_tool(selected_tool)
+
+    print("Current tools:", tools)
+    
+    return tool_name, tool_type, tool_description, json.dumps(tool_parameters, indent=4, sort_keys=True), tool_action, tools, gr.update(value=selected_tool)
+
+def load_tool_ui(tool_filename):
+    tool_name, tool_type, tool_description, tool_parameters, tool_action = load_tool(tool_filename)
+    return tool_name, tool_type, tool_description, json.dumps(tool_parameters, indent=4, sort_keys=True), tool_action
+
+def handle_save_tool_click(tool_name):
+    return [
+        f"{tool_name}", # Filename (.json)
+        gr.update(visible=True) # Saver
+    ]
+
+
+def handle_save_tool(tool_name, tool_type, tool_description, tool_parameters, tool_action, tools):
+    # TODO: Define this when state is initialized to avoid needing to do this
+    if tools is None:
+        tools = []
+    
+    tool_exists = False
+    tools_in_state = set([tool['name'] for tool in tools])
+    tools_accounted_for = set()
+    tool_options = utils.get_available_tools()
+    for tool in tool_options:
+        if tool in tools_in_state:
+            tools_accounted_for.add(tool)
+        if tool == tool_name:
+            # Existing Tool
+            tool_exists = True
+
+    if tools_accounted_for != tools_in_state:
+        # Tool was renamed!
+        # should be a set with one element
+        possible_previous_tool_names = tools_in_state - tools_accounted_for
+        if len(possible_previous_tool_names) > 1:
+            print("More than one renamed tool? How is that possible?")
+        # Just assume it's the first one...
+        previous_tool_name = list(possible_previous_tool_names)[0]
+        tool_exists = True
+        # Rename in list
+        for i, tool_option in enumerate(tool_options):
+            if tool_option == previous_tool_name:
+                tool_options[i] = tool_name
+    else:
+        previous_tool_name = tool_name
+
+    # Change the tool content in the state
+    for tool in tools:
+        if tool['name'] == previous_tool_name:
+            tool['name'] = tool_name
+            tool['type'] = tool_type
+            tool['description'] = tool_description
+            tool['parameters'] = json.dumps(tool_parameters, indent=4, sort_keys=True)
+            tool['action'] = tool_action
+            # Re-evaluate tool action
+            valid = define_tool_action(tool)
+            if not valid:
+                gr.Warning("Tool action definition failed! Check your code.")
+
+    if not tool_exists:
+        # New Tool (not initially added to state)
+        tool_options.append(tool_name)
+
+    return [
+        gr.update(choices=sorted(tool_options)),
+        gr.update(visible=False),
+        tools
+    ]
 
 
 def handle_send_instruction_click(state):
