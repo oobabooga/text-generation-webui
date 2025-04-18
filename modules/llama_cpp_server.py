@@ -192,7 +192,7 @@ class LlamaServer:
             "post_sampling_probs": use_samplers,
         })
 
-        if shared.args.verbose:
+        if shared.args.verbose and use_samplers:
             logger.info("GENERATE_PARAMS=")
             printable_payload = {k: v for k, v in payload.items() if k != "prompt"}
             pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(printable_payload)
