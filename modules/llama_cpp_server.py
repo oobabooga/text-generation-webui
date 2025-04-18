@@ -221,7 +221,7 @@ class LlamaServer:
             cmd.append("--no-mmap")
         if shared.args.mlock:
             cmd.append("--mlock")
-        if shared.args.tensor_split is not None:
+        if shared.args.tensor_split:
             cmd += ["--tensor-split", shared.args.tensor_split]
         if shared.args.numa:
             cmd += ["--numa", "distribute"]
