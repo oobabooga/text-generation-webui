@@ -69,7 +69,7 @@ class LlamaServer:
         for s in samplers:
             if s.strip() in ["dry", "top_k", "typ_p", "top_p", "min_p", "xtc", "temperature"]:
                 filtered_samplers.append(s.strip())
-            elif not penalty_found and s.strip() in == "repetition_penalty":
+            elif not penalty_found and s.strip() == "repetition_penalty":
                 filtered_samplers.append("penalties")
                 penalty_found = True
 
@@ -267,7 +267,7 @@ class LlamaServer:
         if shared.args.row_split:
             cmd += ["--split-mode", "row"]
         if shared.args.cache_type != "fp16" and shared.args.cache_type in llamacpp_valid_cache_types:
-            cmd += ["-cache-type-k", shared.args.cache_type, "--cache-type-v", shared.args.cache_type]
+            cmd += ["--cache-type-k", shared.args.cache_type, "--cache-type-v", shared.args.cache_type]
         if shared.args.compress_pos_emb != 1:
             cmd += ["--rope-freq-scale", str(1.0 / shared.args.compress_pos_emb)]
 
