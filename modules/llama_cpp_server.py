@@ -1,4 +1,5 @@
 import json
+import pprint
 import socket
 import subprocess
 import sys
@@ -9,6 +10,7 @@ import llama_cpp_binaries
 import requests
 
 from modules import shared
+from modules.logging_colors import logger
 
 llamacpp_valid_cache_types = {"fp16", "q8_0", "q4_0"}
 
@@ -133,6 +135,12 @@ class LlamaServer:
             "stream": True,
         })
 
+        if shared.args.verbose:
+            logger.info("GENERATE_PARAMS=")
+            printable_payload = {k: v for k, v in payload.items() if k != "prompt"}
+            pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(printable_payload)
+            print()
+
         # Make a direct request with streaming enabled
         response = requests.post(url, json=payload, stream=True)
         response.raise_for_status()  # Raise an exception for HTTP errors
@@ -183,6 +191,12 @@ class LlamaServer:
             "stream": False,
             "post_sampling_probs": use_samplers,
         })
+
+        if shared.args.verbose:
+            logger.info("GENERATE_PARAMS=")
+            printable_payload = {k: v for k, v in payload.items() if k != "prompt"}
+            pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(printable_payload)
+            print()
 
         response = requests.post(url, json=payload)
         result = response.json()
