@@ -21,13 +21,13 @@ class LlamaServer:
         self.port = self._find_available_port()
         self.process = None
         self.max_context_length = None
+        self.bos_token = "<s>"
 
         # Start the server
         self._start_server()
 
     def encode(self, text, add_bos_token=False, **kwargs):
-        bos_tokens = ['<s>', '<|startoftext|>', '<BOS_TOKEN>', '<bos>', '<|endoftext|>']
-        has_bos_already = any(text.startswith(token) for token in bos_tokens)
+        has_bos_already = text.startswith(self.bos_token)
         if has_bos_already:
             add_bos_token = False
 
@@ -181,13 +181,20 @@ class LlamaServer:
 
     def _get_max_context_length(self):
         """Get and store the model's maximum context length."""
-        models_url = f"http://localhost:{self.port}/v1/models"
-        response = requests.get(models_url).json()
+        url = f"http://localhost:{self.port}/v1/models"
+        response = requests.get(url).json()
 
         if "data" in response and len(response["data"]) > 0:
             model_info = response["data"][0]
             if "meta" in model_info and "n_vocab" in model_info["meta"]:
                 self.max_context_length = model_info["meta"]["n_vocab"]
+
+    def _get_bos_token(self):
+        """Get and store the model's BOS token."""
+        url = f"http://localhost:{self.port}/props"
+        response = requests.get(url).json()
+        if "bos_token" in response:
+            self.bos_token = response["bos_token"]
 
     def _find_available_port(self):
         """Find an available port by letting the OS assign one."""
@@ -265,6 +272,7 @@ class LlamaServer:
 
         # Server is now healthy, get model info
         self._get_max_context_length()
+        self._get_bos_token()
         return self.port
 
     def __enter__(self):
