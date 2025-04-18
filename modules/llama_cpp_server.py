@@ -51,17 +51,17 @@ class LlamaServer:
         result = response.json()
         return result.get("content", "")
 
-    def generate_with_streaming(
-        self,
-        prompt,
-        state,
-    ):
-        url = f"http://localhost:{self.port}/completion"
+    def prepare_payload(self, state):
+        dry_sequence_breakers = state['dry_sequence_breakers']
+        if not dry_sequence_breakers.startswith("["):
+            dry_sequence_breakers = "[" + dry_sequence_breakers + "]"
+        dry_sequence_breakers = json.loads(dry_sequence_breakers)
+
+        samplers = state["sampler_priority"]
+        samplers = samplers.split("\n") if isinstance(samplers, str) else samplers
+        samplers = [s for s in samplers if s in ["dry", "top_k", "typ_p", "top_p", "min_p", "xtc", "temperature"]]
 
         payload = {
-            "prompt": self.encode(prompt, add_bos_token=state["add_bos_token"]),
-            "n_predict": state["max_new_tokens"],
-            "stream": True,
             "temperature": state["temperature"] if not state["dynamic_temperature"] else (state["dynatemp_low"] + state["dynatemp_high"]) / 2,
             "dynatemp_range": 0 if not state["dynamic_temperature"] else (state["dynatemp_high"] - state["dynatemp_low"]) / 2,
             "dynatemp_exponent": state["dynatemp_exponent"],
@@ -78,7 +78,7 @@ class LlamaServer:
             "dry_base": state["dry_base"],
             "dry_allowed_length": state["dry_allowed_length"],
             "dry_penalty_last_n": state["repetition_penalty_range"],
-            "dry_sequence_breakers": state["dry_sequence_breakers"],
+            "dry_sequence_breakers": dry_sequence_breakers,
             "xtc_probability": state["xtc_probability"],
             "xtc_threshold": state["xtc_threshold"],
             "mirostat": state["mirostat_mode"],
@@ -87,8 +87,24 @@ class LlamaServer:
             "grammar": state["grammar_string"],
             "seed": state["seed"],
             "ignore_eos": state["ban_eos_token"],
-            "samplers": state["sampler_priority"],
+            "samplers": samplers,
         }
+
+        return payload
+
+    def generate_with_streaming(
+        self,
+        prompt,
+        state,
+    ):
+        url = f"http://localhost:{self.port}/completion"
+
+        payload = self.prepare_payload(state)
+        payload.update({
+            "prompt": self.encode(prompt, add_bos_token=state["add_bos_token"]),
+            "n_predict": state["max_new_tokens"],
+            "stream": True,
+        })
 
         # Make a direct request with streaming enabled
         response = requests.post(url, json=payload, stream=True)
@@ -131,40 +147,15 @@ class LlamaServer:
         """Get the logits/probabilities for the next token after a prompt"""
         url = f"http://localhost:{self.port}/completion"
 
-        payload = {
+        payload = self.prepare_payload(state)
+        payload.update({
             "prompt": self.encode(prompt, add_bos_token=state["add_bos_token"]),
             "n_predict": 0,
             "logprobs": True,
             "n_probs": n_probs,
             "stream": False,
             "post_sampling_probs": use_samplers,
-            "temperature": state["temperature"] if not state["dynamic_temperature"] else (state["dynatemp_low"] + state["dynatemp_high"]) / 2,
-            "dynatemp_range": 0 if not state["dynamic_temperature"] else (state["dynatemp_high"] - state["dynatemp_low"]) / 2,
-            "dynatemp_exponent": state["dynatemp_exponent"],
-            "top_k": state["top_k"],
-            "top_p": state["top_p"],
-            "min_p": state["min_p"],
-            "tfs_z": state["tfs"],
-            "typical_p": state["typical_p"],
-            "repeat_penalty": state["repetition_penalty"],
-            "repeat_last_n": state["repetition_penalty_range"],
-            "presence_penalty": state["presence_penalty"],
-            "frequency_penalty": state["frequency_penalty"],
-            "dry_multiplier": state["dry_multiplier"],
-            "dry_base": state["dry_base"],
-            "dry_allowed_length": state["dry_allowed_length"],
-            "dry_penalty_last_n": state["repetition_penalty_range"],
-            "dry_sequence_breakers": state["dry_sequence_breakers"],
-            "xtc_probability": state["xtc_probability"],
-            "xtc_threshold": state["xtc_threshold"],
-            "mirostat": state["mirostat_mode"],
-            "mirostat_tau": state["mirostat_tau"],
-            "mirostat_eta": state["mirostat_eta"],
-            "grammar": state["grammar_string"],
-            "seed": state["seed"],
-            "ignore_eos": state["ban_eos_token"],
-            "samplers": state["sampler_priority"],
-        }
+        })
 
         response = requests.post(url, json=payload)
         result = response.json()
