@@ -23,6 +23,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 - Simple LoRA fine-tuning tool.
 - Requirements installed in a self-contained `installer_files` directory that doesn't interfere with the system environment.
 - Extension support, with numerous built-in and user-contributed extensions available. See the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
+- Completely private: no telemetry, no tracking, no remote connections.
 
 ## How to install
 
