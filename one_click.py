@@ -26,6 +26,7 @@ LIBSTDCXX_VERSION_LINUX = "12.1.0"
 # Environment
 script_dir = os.getcwd()
 conda_env_path = os.path.join(script_dir, "installer_files", "env")
+state_file = '.installer_state.json'
 
 # Command-line flags
 cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
@@ -238,6 +239,9 @@ def get_user_choice(question, options_dict):
 
 
 def install_webui():
+    if os.path.isfile(state_file):
+        os.remove(state_file)
+
     # Ask the user for the GPU vendor
     if "GPU_CHOICE" in os.environ:
         choice = os.environ["GPU_CHOICE"].upper()
@@ -372,7 +376,6 @@ def update_requirements(initial_installation=False, pull=True):
         requirements_file = "requirements" + ("_noavx2" if not cpu_has_avx2() else "") + ".txt"
 
     # Load state from JSON file
-    state_file = '.installer_state.json'
     current_commit = get_current_commit()
     wheels_changed = False
     if os.path.exists(state_file):

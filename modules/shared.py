@@ -86,7 +86,7 @@ group.add_argument('--idle-timeout', type=int, default=0, help='Unload model aft
 
 # Model loader
 group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav3_HF, ExLlamav2_HF, ExLlamav2, HQQ, TensorRT-LLM.')
+group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav2_HF, ExLlamav2, HQQ, TensorRT-LLM.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
@@ -116,24 +116,17 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
 group.add_argument('--flash-attn', action='store_true', help='Use flash-attention.')
-group.add_argument('--tensorcores', action='store_true', help='NVIDIA only: use llama-cpp-python compiled without GGML_CUDA_FORCE_MMQ. This may improve performance on newer cards.')
 group.add_argument('--n_ctx', type=int, default=8192, help='Size of the prompt context.')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
-group.add_argument('--no_mul_mat_q', action='store_true', help='Disable the mulmat kernels.')
-group.add_argument('--n_batch', type=int, default=512, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
+group.add_argument('--batch-size', type=int, default=2048, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
 group.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 group.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
 group.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
-group.add_argument('--tensor_split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.')
+group.add_argument('--tensor-split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.')
 group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
-group.add_argument('--logits_all', action='store_true', help='Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower.')
-group.add_argument('--no_offload_kqv', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
-group.add_argument('--cache-capacity', type=str, help='Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed.')
-group.add_argument('--row_split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
-group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
-group.add_argument('--attention-sink-size', type=int, default=5, help='StreamingLLM: number of sink tokens. Only used if the trimmed prompt does not share a prefix with the old prompt.')
-group.add_argument('--tokenizer-dir', type=str, help='Load the tokenizer from this folder. Meant to be used with llamacpp_HF through the command-line.')
+group.add_argument('--no-kv-offload', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
+group.add_argument('--row-split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
 
 # ExLlamaV2
 group = parser.add_argument_group('ExLlamaV2')
@@ -197,24 +190,8 @@ group.add_argument('--api-enable-ipv6', action='store_true', help='Enable IPv6 f
 group.add_argument('--api-disable-ipv4', action='store_true', help='Disable IPv4 for the API')
 group.add_argument('--nowebui', action='store_true', help='Do not launch the Gradio UI. Useful for launching the API in standalone mode.')
 
-# Multimodal
-group = parser.add_argument_group('Multimodal')
-group.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
-
 # Deprecated parameters
 group = parser.add_argument_group('Deprecated')
-group.add_argument('--cache_4bit', action='store_true', help='DEPRECATED')
-group.add_argument('--cache_8bit', action='store_true', help='DEPRECATED')
-group.add_argument('--chat-buttons', action='store_true', help='DEPRECATED')
-group.add_argument('--triton', action='store_true', help='DEPRECATED')
-group.add_argument('--no_inject_fused_mlp', action='store_true', help='DEPRECATED')
-group.add_argument('--no_use_cuda_fp16', action='store_true', help='DEPRECATED')
-group.add_argument('--desc_act', action='store_true', help='DEPRECATED')
-group.add_argument('--disable_exllama', action='store_true', help='DEPRECATED')
-group.add_argument('--disable_exllamav2', action='store_true', help='DEPRECATED')
-group.add_argument('--wbits', type=int, default=0, help='DEPRECATED')
-group.add_argument('--groupsize', type=int, default=-1, help='DEPRECATED')
-group.add_argument('--model-menu', action='store_true', help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -224,28 +201,8 @@ for arg in sys.argv[1:]:
     if hasattr(args, arg):
         provided_arguments.append(arg)
 
-deprecated_args = [
-    'cache_4bit',
-    'cache_8bit',
-    'chat_buttons',
-    'triton',
-    'no_inject_fused_mlp',
-    'no_use_cuda_fp16',
-    'desc_act',
-    'disable_exllama',
-    'disable_exllamav2',
-    'wbits',
-    'groupsize'
-]
-
 
 def do_cmd_flags_warnings():
-
-    # Deprecation warnings
-    for k in deprecated_args:
-        if k in provided_arguments:
-            logger.warning(f'The --{k} flag has been deprecated and will be removed soon. Please remove that flag.')
-
     # Security warnings
     if args.trust_remote_code:
         logger.warning('trust_remote_code is enabled. This is dangerous.')
@@ -263,10 +220,8 @@ def fix_loader_name(name):
         return name
 
     name = name.lower()
-    if name in ['llamacpp', 'llama.cpp', 'llama-cpp', 'llama cpp']:
+    if name in ['llama.cpp', 'llamacpp', 'llama-cpp', 'llama cpp']:
         return 'llama.cpp'
-    if name in ['llamacpp_hf', 'llama.cpp_hf', 'llama-cpp-hf', 'llamacpp-hf', 'llama.cpp-hf']:
-        return 'llamacpp_HF'
     elif name in ['transformers', 'huggingface', 'hf', 'hugging_face', 'hugging face']:
         return 'Transformers'
     elif name in ['exllamav2', 'exllama-v2', 'ex_llama-v2', 'exlamav2', 'exlama-v2', 'exllama2', 'exllama-2']:
@@ -279,58 +234,6 @@ def fix_loader_name(name):
         return 'HQQ'
     elif name in ['tensorrt', 'tensorrtllm', 'tensorrt_llm', 'tensorrt-llm', 'tensort', 'tensortllm']:
         return 'TensorRT-LLM'
-
-
-def transform_legacy_kv_cache_options(opts):
-    # Handle both argparse.Namespace and dict here
-    def get(key):
-        return opts.get(key) if isinstance(opts, dict) else getattr(opts, key, None)
-
-    def set(key, value):
-        if isinstance(opts, dict):
-            opts[key] = value
-        else:
-            setattr(opts, key, value)
-
-    def del_key(key, fallback_set):
-        # only remove from user dict, can't delete from argparse.Namespace
-        if type(opts) is dict:
-            if key in opts:
-                del opts[key]
-        else:
-            setattr(opts, key, fallback_set)
-
-    # Retrieve values
-    loader = get('loader')
-    cache_8bit = get('cache_8bit')
-    cache_4bit = get('cache_4bit')
-
-    # Determine cache type based on loader or legacy flags
-    if cache_8bit or cache_4bit:
-        if not loader:
-            # Legacy behavior: prefer 8-bit over 4-bit to minimize breakage
-            if cache_8bit:
-                set('cache_type', 'fp8')
-            elif cache_4bit:
-                set('cache_type', 'q4')
-        elif loader.lower() in ['exllamav2', 'exllamav2_hf']:
-            # ExLlamaV2 loader-specific cache type
-            if cache_8bit:
-                set('cache_type', 'fp8')
-            elif cache_4bit:
-                set('cache_type', 'q4')
-        elif loader.lower() in ['llama.cpp', 'llamacpp_hf']:
-            # Llama.cpp loader-specific cache type
-            if cache_4bit:
-                set('cache_type', 'q4_0')
-            elif cache_8bit:
-                set('cache_type', 'q8_0')
-
-    # Clean up legacy keys
-    del_key('cache_4bit', False)
-    del_key('cache_8bit', False)
-
-    return opts
 
 
 def add_extension(name, last=False):
@@ -361,18 +264,10 @@ def load_user_config():
     else:
         user_config = {}
 
-    for model_name in user_config:
-        user_config[model_name] = transform_legacy_kv_cache_options(user_config[model_name])
-
     return user_config
 
 
 args.loader = fix_loader_name(args.loader)
-args = transform_legacy_kv_cache_options(args)
-
-# Activate the multimodal extension
-if args.multimodal_pipeline is not None:
-    add_extension('multimodal')
 
 # Activate the API extension
 if args.api or args.public_api:

@@ -29,7 +29,7 @@ def get_model_metadata(model):
     # Get settings from models/config.yaml and models/config-user.yaml
     settings = shared.model_config
     for pat in settings:
-        if re.match(pat.lower(), model.lower()):
+        if re.match(pat.lower(), Path(model).name.lower()):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
@@ -40,10 +40,15 @@ def get_model_metadata(model):
         hf_metadata = None
 
     if 'loader' not in model_settings:
-        model_settings['loader'] = infer_loader(model, model_settings)
+        quant_method = None if hf_metadata is None else hf_metadata.get("quantization_config", {}).get("quant_method", None)
+        model_settings['loader'] = infer_loader(
+            model,
+            model_settings,
+            hf_quant_method=quant_method
+        )
 
     # GGUF metadata
-    if model_settings['loader'] in ['llama.cpp', 'llamacpp_HF']:
+    if model_settings['loader'] == 'llama.cpp':
         path = Path(f'{shared.args.model_dir}/{model}')
         if path.is_file():
             model_file = path
@@ -143,7 +148,7 @@ def get_model_metadata(model):
     # Apply user settings from models/config-user.yaml
     settings = shared.user_config
     for pat in settings:
-        if re.match(pat.lower(), model.lower()):
+        if re.match(pat.lower(), Path(model).name.lower()):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
@@ -154,16 +159,18 @@ def get_model_metadata(model):
     return model_settings
 
 
-def infer_loader(model_name, model_settings):
+def infer_loader(model_name, model_settings, hf_quant_method=None):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     if not path_to_model.exists():
         loader = None
-    elif len(list(path_to_model.glob('*.gguf'))) > 0 and path_to_model.is_dir() and (path_to_model / 'tokenizer_config.json').exists():
-        loader = 'llamacpp_HF'
     elif len(list(path_to_model.glob('*.gguf'))) > 0:
         loader = 'llama.cpp'
     elif re.match(r'.*\.gguf', model_name.lower()):
         loader = 'llama.cpp'
+    elif hf_quant_method == 'exl3':
+        loader = 'ExLlamav3_HF'
+    elif hf_quant_method in ['exl2', 'gptq']:
+        loader = 'ExLlamav2_HF'
     elif re.match(r'.*exl3', model_name.lower()):
         loader = 'ExLlamav3_HF'
     elif re.match(r'.*exl2', model_name.lower()):
@@ -245,7 +252,7 @@ def save_model_settings(model, state):
         return
 
     user_config = shared.load_user_config()
-    model_regex = model + '$'  # For exact matches
+    model_regex = Path(model).name + '$'  # For exact matches
     if model_regex not in user_config:
         user_config[model_regex] = {}
 
@@ -272,7 +279,7 @@ def save_instruction_template(model, template):
         return
 
     user_config = shared.load_user_config()
-    model_regex = model + '$'  # For exact matches
+    model_regex = Path(model).name + '$'  # For exact matches
     if model_regex not in user_config:
         user_config[model_regex] = {}
 

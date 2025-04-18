@@ -126,17 +126,6 @@ Then browse to
 
 `http://localhost:7860/?__theme=dark`
 
-##### AMD GPU on Windows
-
-1) Use `requirements_cpu_only.txt` or `requirements_cpu_only_noavx2.txt` in the command above.
-
-2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-with-hardware-acceleration).
-    * Use the `LLAMA_HIPBLAS=on` toggle.
-    * Note the [Windows remarks](https://github.com/abetlen/llama-cpp-python#windows-remarks).
-
-3) Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#install-from-source).
-    * Perform the from-source installation - there are no prebuilt ROCm packages for Windows.
-
 ##### Manual install
 
 The `requirements*.txt` above contain various wheels precompiled through GitHub Actions. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
@@ -184,19 +173,17 @@ List of command-line flags
 </summary>
 
 ```txt
-usage: server.py [-h] [--multi-user] [--character CHARACTER] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--model-menu] [--settings SETTINGS]
+usage: server.py [-h] [--multi-user] [--character CHARACTER] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--settings SETTINGS]
                  [--extensions EXTENSIONS [EXTENSIONS ...]] [--verbose] [--idle-timeout IDLE_TIMEOUT] [--loader LOADER] [--cpu] [--auto-devices] [--gpu-memory GPU_MEMORY [GPU_MEMORY ...]]
                  [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast]
                  [--use_flash_attention_2] [--use_eager_attention] [--torch-compile] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE] [--flash-attn]
-                 [--tensorcores] [--n_ctx N_CTX] [--threads THREADS] [--threads-batch THREADS_BATCH] [--no_mul_mat_q] [--n_batch N_BATCH] [--no-mmap] [--mlock] [--n-gpu-layers N_GPU_LAYERS]
-                 [--tensor_split TENSOR_SPLIT] [--numa] [--logits_all] [--no_offload_kqv] [--cache-capacity CACHE_CAPACITY] [--row_split] [--streaming-llm] [--attention-sink-size ATTENTION_SINK_SIZE]
-                 [--tokenizer-dir TOKENIZER_DIR] [--gpu-split GPU_SPLIT] [--autosplit] [--max_seq_len MAX_SEQ_LEN] [--cfg-cache] [--no_flash_attn] [--no_xformers] [--no_sdpa]
+                 [--n_ctx N_CTX] [--threads THREADS] [--threads-batch THREADS_BATCH] [--batch-size BATCH_SIZE] [--no-mmap] [--mlock] [--n-gpu-layers N_GPU_LAYERS] [--tensor-split TENSOR_SPLIT]
+                 [--numa] [--no-kv-offload] [--row-split] [--gpu-split GPU_SPLIT] [--autosplit] [--max_seq_len MAX_SEQ_LEN] [--cfg-cache] [--no_flash_attn] [--no_xformers] [--no_sdpa]
                  [--num_experts_per_token NUM_EXPERTS_PER_TOKEN] [--enable_tp] [--hqq-backend HQQ_BACKEND] [--cpp-runner] [--cache_type CACHE_TYPE] [--deepspeed] [--nvme-offload-dir NVME_OFFLOAD_DIR]
                  [--local_rank LOCAL_RANK] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE] [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT]
                  [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE]
                  [--subpath SUBPATH] [--old-colors] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6]
-                 [--api-disable-ipv4] [--nowebui] [--multimodal-pipeline MULTIMODAL_PIPELINE] [--cache_4bit] [--cache_8bit] [--chat-buttons] [--triton] [--no_inject_fused_mlp] [--no_use_cuda_fp16]
-                 [--desc_act] [--disable_exllama] [--disable_exllamav2] [--wbits WBITS] [--groupsize GROUPSIZE]
+                 [--api-disable-ipv4] [--nowebui]
 
 Text generation web UI
 
@@ -210,7 +197,6 @@ Basic settings:
   --lora LORA [LORA ...]                         The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.
   --model-dir MODEL_DIR                          Path to directory with all the models.
   --lora-dir LORA_DIR                            Path to directory with all the loras.
-  --model-menu                                   Show a model menu in the terminal when the web UI is first launched.
   --settings SETTINGS                            Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this
                                                  file will be loaded by default without the need to use the --settings flag.
   --extensions EXTENSIONS [EXTENSIONS ...]       The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.
@@ -218,7 +204,7 @@ Basic settings:
   --idle-timeout IDLE_TIMEOUT                    Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.
 
 Model loader:
-  --loader LOADER                                Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2,
+  --loader LOADER                                Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav2_HF, ExLlamav2,
                                                  HQQ, TensorRT-LLM.
 
 Transformers/Accelerate:
@@ -247,24 +233,17 @@ bitsandbytes 4-bit:
 
 llama.cpp:
   --flash-attn                                   Use flash-attention.
-  --tensorcores                                  NVIDIA only: use llama-cpp-python compiled without GGML_CUDA_FORCE_MMQ. This may improve performance on newer cards.
   --n_ctx N_CTX                                  Size of the prompt context.
   --threads THREADS                              Number of threads to use.
   --threads-batch THREADS_BATCH                  Number of threads to use for batches/prompt processing.
-  --no_mul_mat_q                                 Disable the mulmat kernels.
-  --n_batch N_BATCH                              Maximum number of prompt tokens to batch together when calling llama_eval.
+  --batch-size BATCH_SIZE                        Maximum number of prompt tokens to batch together when calling llama_eval.
   --no-mmap                                      Prevent mmap from being used.
   --mlock                                        Force the system to keep the model in RAM.
   --n-gpu-layers N_GPU_LAYERS                    Number of layers to offload to the GPU.
-  --tensor_split TENSOR_SPLIT                    Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.
+  --tensor-split TENSOR_SPLIT                    Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.
   --numa                                         Activate NUMA task allocation for llama.cpp.
-  --logits_all                                   Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower.
-  --no_offload_kqv                               Do not offload the K, Q, V to the GPU. This saves VRAM but reduces the performance.
-  --cache-capacity CACHE_CAPACITY                Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed.
-  --row_split                                    Split the model by rows across GPUs. This may improve multi-gpu performance.
-  --streaming-llm                                Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.
-  --attention-sink-size ATTENTION_SINK_SIZE      StreamingLLM: number of sink tokens. Only used if the trimmed prompt does not share a prefix with the old prompt.
-  --tokenizer-dir TOKENIZER_DIR                  Load the tokenizer from this folder. Meant to be used with llamacpp_HF through the command-line.
+  --no-kv-offload                                Do not offload the K, Q, V to the GPU. This saves VRAM but reduces the performance.
+  --row-split                                    Split the model by rows across GPUs. This may improve multi-gpu performance.
 
 ExLlamaV2:
   --gpu-split GPU_SPLIT                          Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.
@@ -319,9 +298,6 @@ API:
   --api-enable-ipv6                              Enable IPv6 for the API
   --api-disable-ipv4                             Disable IPv4 for the API
   --nowebui                                      Do not launch the Gradio UI. Useful for launching the API in standalone mode.
-
-Multimodal:
-  --multimodal-pipeline MULTIMODAL_PIPELINE      The multimodal pipeline to use. Examples: llava-7b, llava-13b.
 ```
 
 </details>
