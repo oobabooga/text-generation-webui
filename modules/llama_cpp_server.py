@@ -1,6 +1,8 @@
 import json
 import socket
 import subprocess
+import sys
+import threading
 import time
 
 import llama_cpp_binaries
@@ -207,11 +209,18 @@ class LlamaServer:
         # Start the server with pipes for output
         self.process = subprocess.Popen(
             cmd,
-            # stdout=subprocess.DEVNULL,
-            # stderr=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
             text=True,
             bufsize=1
         )
+
+        def filter_stderr():
+            for line in iter(self.process.stderr.readline, ''):
+                if not line.startswith(('srv ', 'slot ')):
+                    sys.stderr.write(line)
+                    sys.stderr.flush()
+
+        threading.Thread(target=filter_stderr, daemon=True).start()
 
         # Wait for server to be healthy
         health_url = f"http://localhost:{self.port}/health"
