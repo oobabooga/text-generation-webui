@@ -59,7 +59,12 @@ class LlamaServer:
 
         samplers = state["sampler_priority"]
         samplers = samplers.split("\n") if isinstance(samplers, str) else samplers
-        samplers = [s for s in samplers if s in ["dry", "top_k", "typ_p", "top_p", "min_p", "xtc", "temperature"]]
+        samplers = [s.strip() for s in samplers if s.strip() in ["dry", "top_k", "typ_p", "top_p", "min_p", "xtc", "temperature"]]
+
+        # Move temperature to the end if temperature_last is true and temperature exists in the list
+        if state["temperature_last"] and "temperature" in samplers:
+            samplers.remove("temperature")
+            samplers.append("temperature")
 
         payload = {
             "temperature": state["temperature"] if not state["dynamic_temperature"] else (state["dynatemp_low"] + state["dynatemp_high"]) / 2,
