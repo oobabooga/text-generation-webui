@@ -40,15 +40,11 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
     '''
 
     if shared.args.loader == "llama.cpp":
-        logger.error("llamacpp_HF is required for perplexity evaluation with GGUF models. Please reload the model with llamacpp_HF instead of llama.cpp.")
+        logger.error("Perplexity evaluation is not implemented for the llama.cpp loader.")
         raise ValueError
 
     if shared.args.loader == "ExLlamav2":
         logger.error("ExLlamav2_HF is required for perplexity evaluation with EXL2 models. Please reload the model with ExLlamav2_HF instead of ExLlamav2.")
-        raise ValueError
-
-    if shared.args.loader == "llamacpp_HF" and not shared.args.logits_all:
-        logger.error("--logits_all is required for perplexity evaluation with GGUF models. Please reload the model with that option set/checked.")
         raise ValueError
 
     if not shared.args.no_use_fast:

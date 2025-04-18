@@ -67,8 +67,7 @@ def load_model(model_name, loader=None):
     shared.model_name = model_name
     load_func_map = {
         'Transformers': huggingface_loader,
-        'llama.cpp': llamacpp_loader,
-        'llamacpp_HF': llamacpp_HF_loader,
+        'llama.cpp': llama_cpp_server_loader,
         'ExLlamav3_HF': ExLlamav3_HF_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ExLlamav2': ExLlamav2_loader,
@@ -101,7 +100,7 @@ def load_model(model_name, loader=None):
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
     if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt'):
         shared.settings['truncation_length'] = shared.args.max_seq_len
-    elif loader in ['llama.cpp', 'llamacpp_HF']:
+    elif loader == 'llama.cpp':
         shared.settings['truncation_length'] = shared.args.n_ctx
 
     logger.info(f"Loaded \"{model_name}\" in {(time.time()-t0):.2f} seconds.")
@@ -268,8 +267,8 @@ def huggingface_loader(model_name):
     return model
 
 
-def llamacpp_loader(model_name):
-    from modules.llamacpp_model import LlamaCppModel
+def llama_cpp_server_loader(model_name):
+    from modules.llama_cpp_server import LlamaServer
 
     path = Path(f'{shared.args.model_dir}/{model_name}')
     if path.is_file():
@@ -278,31 +277,11 @@ def llamacpp_loader(model_name):
         model_file = sorted(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0]
 
     logger.info(f"llama.cpp weights detected: \"{model_file}\"")
-    model, tokenizer = LlamaCppModel.from_pretrained(model_file)
-    return model, tokenizer
-
-
-def llamacpp_HF_loader(model_name):
-    from modules.llamacpp_hf import LlamacppHF
-
-    if shared.args.tokenizer_dir:
-        logger.info(f'Using tokenizer from: \"{shared.args.tokenizer_dir}\"')
-    else:
-        path = Path(f'{shared.args.model_dir}/{model_name}')
-        # Check if a HF tokenizer is available for the model
-        if all((path / file).exists() for file in ['tokenizer_config.json']):
-            logger.info(f'Using tokenizer from: \"{path}\"')
-        else:
-            logger.error("Could not load the model because a tokenizer in Transformers format was not found.")
-            return None, None
-
-    model = LlamacppHF.from_pretrained(model_name)
-
-    if shared.args.tokenizer_dir:
-        tokenizer = load_tokenizer(model_name, tokenizer_dir=shared.args.tokenizer_dir)
-        return model, tokenizer
-    else:
-        return model
+    try:
+        model = LlamaServer(model_file)
+        return model, model
+    except Exception as e:
+        logger.error(f"Error loading the model with llama.cpp: {str(e)}")
 
 
 def ExLlamav3_HF_loader(model_name):

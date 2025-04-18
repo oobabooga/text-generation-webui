@@ -48,7 +48,7 @@ def get_model_metadata(model):
         )
 
     # GGUF metadata
-    if model_settings['loader'] in ['llama.cpp', 'llamacpp_HF']:
+    if model_settings['loader'] == 'llama.cpp':
         path = Path(f'{shared.args.model_dir}/{model}')
         if path.is_file():
             model_file = path
@@ -163,8 +163,6 @@ def infer_loader(model_name, model_settings, hf_quant_method=None):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     if not path_to_model.exists():
         loader = None
-    elif len(list(path_to_model.glob('*.gguf'))) > 0 and path_to_model.is_dir() and (path_to_model / 'tokenizer_config.json').exists():
-        loader = 'llamacpp_HF'
     elif len(list(path_to_model.glob('*.gguf'))) > 0:
         loader = 'llama.cpp'
     elif re.match(r'.*\.gguf', model_name.lower()):

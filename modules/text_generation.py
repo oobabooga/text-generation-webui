@@ -17,7 +17,6 @@ from transformers import (
 
 import modules.shared as shared
 from modules import models, sampler_hijack
-from modules.cache_utils import process_llamacpp_cache
 from modules.callbacks import (
     Iteratorize,
     Stream,
@@ -56,7 +55,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             yield ''
             return
 
-        if shared.model.__class__.__name__ in ['LlamaCppModel', 'Exllamav2Model', 'TensorRTLLMModel']:
+        if shared.model.__class__.__name__ in ['LlamaServer', 'Exllamav2Model', 'TensorRTLLMModel']:
             generate_func = generate_reply_custom
         else:
             generate_func = generate_reply_HF
@@ -133,8 +132,12 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     if shared.tokenizer is None:
         raise ValueError('No tokenizer is loaded')
 
-    if shared.model.__class__.__name__ in ['LlamaCppModel', 'Exllamav2Model', 'TensorRTLLMModel']:
-        input_ids = shared.tokenizer.encode(str(prompt))
+    if shared.model.__class__.__name__ in ['LlamaServer', 'Exllamav2Model', 'TensorRTLLMModel']:
+        if shared.model.__class__.__name__ == 'LlamaServer':
+            input_ids = shared.tokenizer.encode(str(prompt), add_bos_token=add_bos_token)
+        else:
+            input_ids = shared.tokenizer.encode(str(prompt))
+
         if shared.model.__class__.__name__ not in ['Exllamav2Model']:
             input_ids = np.array(input_ids).reshape(1, len(input_ids))
     else:
@@ -159,7 +162,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     if truncation_length is not None:
         input_ids = input_ids[:, -truncation_length:]
 
-    if shared.model.__class__.__name__ in ['LlamaCppModel', 'Exllamav2Model', 'TensorRTLLMModel'] or shared.args.cpu:
+    if shared.model.__class__.__name__ in ['LlamaServer', 'Exllamav2Model', 'TensorRTLLMModel'] or shared.args.cpu:
         return input_ids
     else:
         device = get_device()
@@ -186,7 +189,7 @@ def get_encoded_length(prompt):
 
 def get_token_ids(prompt):
     tokens = encode(prompt)[0]
-    decoded_tokens = [shared.tokenizer.decode([i]) for i in tokens]
+    decoded_tokens = [shared.tokenizer.decode([int(i)]) for i in tokens]
 
     output = ''
     for row in list(zip(tokens, decoded_tokens)):
@@ -400,12 +403,6 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
         logger.info("PROMPT=")
         print_prompt(decode(input_ids[0], skip_special_tokens=False))
-
-    # Handle StreamingLLM for llamacpp_HF
-    if shared.model.__class__.__name__ == 'LlamacppHF' and shared.args.streaming_llm:
-        tmp = process_llamacpp_cache(shared.model.model, input_ids[-1].tolist(), shared.model.model._input_ids.tolist())
-        shared.model.past_seq = torch.tensor(tmp)
-        shared.model.save_cache()
 
     t0 = time.time()
     try:

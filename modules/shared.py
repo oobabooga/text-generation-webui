@@ -86,7 +86,7 @@ group.add_argument('--idle-timeout', type=int, default=0, help='Unload model aft
 
 # Model loader
 group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav3_HF, ExLlamav2_HF, ExLlamav2, HQQ, TensorRT-LLM.')
+group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav2_HF, ExLlamav2, HQQ, TensorRT-LLM.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
@@ -116,24 +116,17 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
 group.add_argument('--flash-attn', action='store_true', help='Use flash-attention.')
-group.add_argument('--tensorcores', action='store_true', help='NVIDIA only: use llama-cpp-python compiled without GGML_CUDA_FORCE_MMQ. This may improve performance on newer cards.')
 group.add_argument('--n_ctx', type=int, default=8192, help='Size of the prompt context.')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
-group.add_argument('--no_mul_mat_q', action='store_true', help='Disable the mulmat kernels.')
-group.add_argument('--n_batch', type=int, default=512, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
+group.add_argument('--batch-size', type=int, default=2048, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
 group.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 group.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
 group.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
-group.add_argument('--tensor_split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.')
+group.add_argument('--tensor-split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.')
 group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
-group.add_argument('--logits_all', action='store_true', help='Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower.')
-group.add_argument('--no_offload_kqv', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
-group.add_argument('--cache-capacity', type=str, help='Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed.')
-group.add_argument('--row_split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
-group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
-group.add_argument('--attention-sink-size', type=int, default=5, help='StreamingLLM: number of sink tokens. Only used if the trimmed prompt does not share a prefix with the old prompt.')
-group.add_argument('--tokenizer-dir', type=str, help='Load the tokenizer from this folder. Meant to be used with llamacpp_HF through the command-line.')
+group.add_argument('--no-kv-offload', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
+group.add_argument('--row-split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
 
 # ExLlamaV2
 group = parser.add_argument_group('ExLlamaV2')
@@ -212,6 +205,13 @@ group.add_argument('--wbits', type=int, default=0, help='DEPRECATED')
 group.add_argument('--groupsize', type=int, default=-1, help='DEPRECATED')
 group.add_argument('--model-menu', action='store_true', help='DEPRECATED')
 group.add_argument('--multimodal-pipeline', type=str, default=None, help='DEPRECATED')
+group.add_argument('--streaming-llm', action='store_true', help='DEPRECATED')
+group.add_argument('--attention-sink-size', type=int, default=5, help='DEPRECATED')
+group.add_argument('--tokenizer-dir', type=str, help='DEPRECATED')
+group.add_argument('--logits_all', action='store_true', help='DEPRECATED')
+group.add_argument('--no_mul_mat_q', action='store_true', help='DEPRECATED')
+group.add_argument('--cache-capacity', type=str, help='DEPRECATED')
+group.add_argument('--tensorcores', action='store_true', help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -262,8 +262,6 @@ def fix_loader_name(name):
     name = name.lower()
     if name in ['llamacpp', 'llama.cpp', 'llama-cpp', 'llama cpp']:
         return 'llama.cpp'
-    if name in ['llamacpp_hf', 'llama.cpp_hf', 'llama-cpp-hf', 'llamacpp-hf', 'llama.cpp-hf']:
-        return 'llamacpp_HF'
     elif name in ['transformers', 'huggingface', 'hf', 'hugging_face', 'hugging face']:
         return 'Transformers'
     elif name in ['exllamav2', 'exllama-v2', 'ex_llama-v2', 'exlamav2', 'exlama-v2', 'exllama2', 'exllama-2']:
@@ -316,7 +314,7 @@ def transform_legacy_kv_cache_options(opts):
                 set('cache_type', 'fp8')
             elif cache_4bit:
                 set('cache_type', 'q4')
-        elif loader.lower() in ['llama.cpp', 'llamacpp_hf']:
+        elif loader.lower() == 'llama.cpp':
             # Llama.cpp loader-specific cache type
             if cache_4bit:
                 set('cache_type', 'q4_0')
