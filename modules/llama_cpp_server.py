@@ -10,6 +10,8 @@ import requests
 
 from modules import shared
 
+llamacpp_valid_cache_types = {"fp16", "q8_0", "q4_0"}
+
 
 class LlamaServer:
     def __init__(self, model_path, server_path=None):
@@ -236,6 +238,8 @@ class LlamaServer:
             cmd.append("--no-kv-offload")
         if shared.args.row_split:
             cmd += ["--split-mode", "row"]
+        if shared.args.cache_type != "fp16" and shared.args.cache_type in llamacpp_valid_cache_types:
+            cmd += ["-cache-type-k", shared.args.cache_type, "--cache-type-v", shared.args.cache_type]
 
         # Start the server with pipes for output
         self.process = subprocess.Popen(
