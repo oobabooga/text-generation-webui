@@ -279,7 +279,6 @@ class LlamaServer:
                 if response.status_code == 200:
                     break
             except Exception as e:
-                print(e)
                 pass
 
             time.sleep(1)

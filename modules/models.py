@@ -279,10 +279,9 @@ def llama_cpp_server_loader(model_name):
     logger.info(f"llama.cpp weights detected: \"{model_file}\"")
     try:
         model = LlamaServer(model_file)
-    except:
-        return None
-
-    return model, model
+        return model, model
+    except Exception as e:
+        logger.error(f"Error loading the model with llama.cpp: {str(e)}")
 
 
 def ExLlamav3_HF_loader(model_name):
