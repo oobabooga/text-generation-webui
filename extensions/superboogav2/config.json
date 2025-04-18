@@ -127,6 +127,9 @@
       "default": "\n\n<<document end>>\n\n"
     },
     "manual": {
+      "default": false
+    },
+    "add_date_time": {
       "default": true
     },
     "add_chat_to_data": {

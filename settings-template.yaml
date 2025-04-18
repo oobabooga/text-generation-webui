@@ -25,10 +25,11 @@ add_bos_token: true
 skip_special_tokens: true
 stream: true
 static_cache: false
-truncation_length: 2048
+truncation_length: 8192
 seed: -1
 custom_stopping_strings: ''
 custom_token_bans: ''
+show_after: ''
 negative_prompt: ''
 autoload_model: false
 dark_theme: true

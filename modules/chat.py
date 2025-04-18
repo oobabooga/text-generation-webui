@@ -11,6 +11,7 @@ from pathlib import Path
 
 import gradio as gr
 import yaml
+from jinja2.ext import loopcontrols
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 from PIL import Image
 
@@ -35,7 +36,11 @@ def strftime_now(format):
     return datetime.now().strftime(format)
 
 
-jinja_env = ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
+jinja_env = ImmutableSandboxedEnvironment(
+    trim_blocks=True,
+    lstrip_blocks=True,
+    extensions=[loopcontrols]
+)
 jinja_env.globals["strftime_now"] = strftime_now
 
 
@@ -412,8 +417,16 @@ def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_
             yield history
             return
 
+    show_after = html.escape(state.get("show_after")) if state.get("show_after") else None
     for history in chatbot_wrapper(text, state, regenerate=regenerate, _continue=_continue, loading_message=loading_message, for_ui=for_ui):
-        yield history
+        if show_after:
+            after = history["visible"][-1][1].partition(show_after)[2] or "*Is thinking...*"
+            yield {
+                'internal': history['internal'],
+                'visible': history['visible'][:-1] + [[history['visible'][-1][0], after]]
+            }
+        else:
+            yield history
 
 
 def character_is_loaded(state, raise_exception=False):

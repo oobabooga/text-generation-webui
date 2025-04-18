@@ -21,6 +21,7 @@ class GenerationOptions(BaseModel):
     eta_cutoff: float = 0
     tfs: float = 1
     top_a: float = 0
+    top_n_sigma: float = 0
     dry_multiplier: float = 0
     dry_allowed_length: int = 2
     dry_base: float = 1.75

@@ -1,0 +1,128 @@
+.message {
+    display: grid;
+    grid-template-columns: 60px minmax(0, 1fr);
+    padding-bottom: 28px;
+    font-size: 18px;
+    font-family: Roboto, Arial, sans-serif; /* Modern font */
+    line-height: 1.5;
+}
+
+.circle-you,
+.circle-bot {
+    background-color: #2b2b2b; /* Darker background for circles */
+    border-radius: 50%; /* Perfect circle */
+    border: 1px solid #4a90e2; /* Soft blue border */
+    box-shadow: 0 4px 8px rgb(0 0 0 / 50%); /* Soft shadow for depth */
+}
+
+.circle-bot img,
+.circle-you img {
+    border-radius: 50%; /* Make images circular */
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.circle-you, .circle-bot {
+    width: 64px; /* Smaller size for modern look */
+    height: 64px;
+}
+
+.text {
+    padding-left: 12px; /* Reduced padding for a cleaner layout */
+    color: #f0f0f0; /* Light text color for readability */
+}
+
+.text p {
+    margin-top: 2px;
+}
+
+.username {
+    padding-left: 10px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #e0e0e0; /* Light gray text */
+    transition: color 0.3s ease; /* Smooth color transition */
+}
+
+.username:hover {
+    color: #4a90e2; /* Blue color on hover */
+}
+
+.message-body {
+    position: relative;
+    border: 1px solid rgb(255 255 255 / 10%); /* Soft white border */
+    border-radius: 8px; /* Slightly rounded corners */
+    padding: 15px;
+    background: #1e1e1e; /* Dark background */
+    box-shadow: 0 4px 10px rgb(0 0 0 / 30%); /* Subtle shadow for depth */
+    transition: background 0.3s ease; /* Smooth transition for background */
+}
+
+.message-body:hover {
+    background: #252525; /* Slightly lighter on hover */
+}
+
+/* Adds 2 extra lines at the top and bottom of the message */
+.message-body::before,
+.message-body::after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    height: 1px;
+    background-color: rgb(255 255 255 / 5%); /* Faded lines for subtle separation */
+}
+
+.message-body::before {
+    top: 4px;
+}
+
+.message-body::after {
+    bottom: 4px;
+}
+
+.message-body img {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 10px; /* Rounded corners for images */
+}
+
+.message-body p {
+    margin-bottom: 0 !important;
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+    color: #e0e0e0 !important; /* Light color for text */
+}
+
+.message-body p em {
+    color: #a6a6a6 !important; /* Softer gray for emphasized text */
+}
+
+@media screen and (width <= 688px) {
+    .message {
+        display: grid;
+        grid-template-columns: 60px minmax(0, 1fr);
+        padding-bottom: 25px;
+        font-size: 15px;
+        font-family: Roboto, Arial, sans-serif; /* Modern font */
+        line-height: 1.5;
+    }
+
+    .circle-you, .circle-bot {
+        width: 40px; /* Smaller size for mobile */
+        height: 40px;
+    }
+
+    .text {
+        padding-left: 10px; /* Reduced padding for mobile */
+    }
+
+    .message-body p {
+        font-size: 14px !important; /* Smaller text for mobile */
+    }
+
+    .username {
+        font-size: 18px; /* Smaller username for mobile */
+    }
+}

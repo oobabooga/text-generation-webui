@@ -2,7 +2,7 @@
     --darker-gray: #202123;
     --dark-gray: #343541;
     --light-gray: #444654;
-    --light-theme-gray: #f4f4f4;
+    --light-theme-gray: #f5f5f5;
     --border-color-dark: #525252;
     --header-width: 112px;
     --selected-item-color-dark: #32333e;
@@ -249,8 +249,8 @@ button {
 }
 
 .pretty_scrollbar::-webkit-scrollbar {
-    width: 7px;
-    height: 7px;
+    width: 8px;
+    height: 8px;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-track {
@@ -295,7 +295,7 @@ audio {
     width: 0;
     text-align: left;
     direction: rtl;
-    right: 5px;
+    right: 13px;
 }
 
 #default-token-counter {
@@ -1163,7 +1163,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .header_bar button.selected {
-    background: white;
+    background: #E0E0E0;
 }
 
 #chat-controls,
