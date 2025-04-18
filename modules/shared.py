@@ -201,28 +201,8 @@ for arg in sys.argv[1:]:
     if hasattr(args, arg):
         provided_arguments.append(arg)
 
-deprecated_args = [
-    'cache_4bit',
-    'cache_8bit',
-    'chat_buttons',
-    'triton',
-    'no_inject_fused_mlp',
-    'no_use_cuda_fp16',
-    'desc_act',
-    'disable_exllama',
-    'disable_exllamav2',
-    'wbits',
-    'groupsize'
-]
-
 
 def do_cmd_flags_warnings():
-
-    # Deprecation warnings
-    for k in deprecated_args:
-        if k in provided_arguments:
-            logger.warning(f'The --{k} flag has been deprecated and will be removed soon. Please remove that flag.')
-
     # Security warnings
     if args.trust_remote_code:
         logger.warning('trust_remote_code is enabled. This is dangerous.')
