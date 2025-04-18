@@ -245,6 +245,7 @@ class LlamaServer:
             "--ctx-size", str(shared.args.n_ctx),
             "--n-gpu-layers", str(shared.args.n_gpu_layers),
             "--batch-size", str(shared.args.batch_size),
+            "--rope-freq-base", str(shared.args.rope_freq_base),
             "--port", str(self.port),
         ]
 
