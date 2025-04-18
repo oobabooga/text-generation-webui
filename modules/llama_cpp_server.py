@@ -98,11 +98,16 @@ class LlamaServer:
         state,
     ):
         url = f"http://localhost:{self.port}/completion"
-
         payload = self.prepare_payload(state)
+
+        if state['auto_max_new_tokens']:
+            max_new_tokens = state['truncation_length'] - ids.shape[-1]
+        else:
+            max_new_tokens = state['max_new_tokens']
+
         payload.update({
             "prompt": self.encode(prompt, add_bos_token=state["add_bos_token"]),
-            "n_predict": state["max_new_tokens"],
+            "n_predict": max_new_tokens,
             "stream": True,
         })
 
