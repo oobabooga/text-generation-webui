@@ -91,7 +91,7 @@ def get_available_models():
         item_path = model_dir / item
         if item_path.is_dir():
             # Check if there are safetensors files directly under this directory
-            if any(file.lower().endswith('.safetensors') for file in os.listdir(item_path) if (item_path / file).is_file()):
+            if any(file.lower().endswith(('.safetensors', '.pt')) for file in os.listdir(item_path) if (item_path / file).is_file()):
                 dirs_with_safetensors.add(item)
 
     # Find valid model directories
