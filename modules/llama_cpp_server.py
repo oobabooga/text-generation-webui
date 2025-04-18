@@ -268,6 +268,12 @@ class LlamaServer:
         start_time = time.time()
         timeout = 3600 * 8  # 8 hours
         while time.time() - start_time < timeout:
+            # Check if process is still alive
+            if self.process.poll() is not None:
+                # Process has terminated
+                exit_code = self.process.poll()
+                raise RuntimeError(f"Server process terminated unexpectedly with exit code: {exit_code}")
+
             try:
                 response = requests.get(health_url)
                 if response.status_code == 200:

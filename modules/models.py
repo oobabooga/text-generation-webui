@@ -277,7 +277,11 @@ def llama_cpp_server_loader(model_name):
         model_file = sorted(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0]
 
     logger.info(f"llama.cpp weights detected: \"{model_file}\"")
-    model = LlamaServer(model_file)
+    try:
+        model = LlamaServer(model_file)
+    except:
+        return None
+
     return model, model
 
 
