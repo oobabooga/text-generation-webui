@@ -97,6 +97,10 @@ class LlamaServer:
             "samplers": samplers,
         }
 
+        if state['custom_token_bans']:
+            to_ban = [[int(token_id), False] for token_id in state['custom_token_bans'].split(',')]
+            payload["logit_bias"] = to_ban
+
         return payload
 
     def generate_with_streaming(
