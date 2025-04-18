@@ -447,7 +447,7 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
                     new_content = get_reply_from_output_ids(output, state, starting_from=starting_from)
                     # check the partial unicode character
-                    if new_content.endswith(chr(0xfffd)):
+                    if chr(0xfffd) in new_content:
                         continue
 
                     cumulative_reply += new_content
