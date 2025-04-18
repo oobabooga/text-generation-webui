@@ -29,8 +29,7 @@ class LlamaServer:
         self._start_server()
 
     def encode(self, text, add_bos_token=False, **kwargs):
-        has_bos_already = text.startswith(self.bos_token)
-        if has_bos_already:
+        if self.bos_token and text.startswith(self.bos_token):
             add_bos_token = False
 
         url = f"http://localhost:{self.port}/tokenize"
