@@ -220,7 +220,7 @@ def fix_loader_name(name):
         return name
 
     name = name.lower()
-    if name in ['llamacpp', 'llama.cpp', 'llama-cpp', 'llama cpp']:
+    if name in ['llama.cpp', 'llamacpp', 'llama-cpp', 'llama cpp']:
         return 'llama.cpp'
     elif name in ['transformers', 'huggingface', 'hf', 'hugging_face', 'hugging face']:
         return 'Transformers'

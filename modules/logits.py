@@ -65,10 +65,8 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
 
         if use_samplers:
             if is_non_hf_exllamav2:
+                # sampling is all done in C++ for exllama, so it is really hard to hijack
                 logger.error("Sampler hijacking is not supported non-Huggingface loaders.")
-                # sampling is all done in c for exllama, so it is really hard to hijack
-                # it should be possible to hijack llamacpp sampler by hijacking all their sampling methods,
-                # but it is not implemented yet
                 return 'Error: Sampler hijacking is not supported non-Huggingface loaders. Please disable the "Use samplers" option.', previous
 
             state['max_new_tokens'] = 1
