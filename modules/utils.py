@@ -73,28 +73,59 @@ def natural_keys(text):
 
 
 def get_available_models():
-    ggufs: list[str] = get_available_ggufs()
-    llamacpp_HF = [Path(model).stem + "-HF" for model in ggufs]
-    
-    model_list = []
-    for dirpath, _, files in os.walk(Path(f'{shared.args.model_dir}/'), followlinks=True):
-        for file in files:
-            if not file.lower().endswith(('.txt', '-np', '.pt', '.json', '.yaml', '.py', '.gguf', ".md")) and 'llama-tokenizer' not in file.lower():
-                display_name = os.path.relpath(dirpath, Path(f'{shared.args.model_dir}/'))
-                if display_name not in model_list:
-                    if Path(display_name).stem in llamacpp_HF:
-                        ggufs.pop(llamacpp_HF.index(Path(display_name).stem))
-                    model_list.append(display_name)
+    # Get all GGUF files
+    gguf_files = get_available_ggufs()
 
-    return ['None'] + sorted(model_list + ggufs, key=natural_keys)
+    model_dir = Path(shared.args.model_dir)
+
+    # Find top-level directories containing GGUF files
+    dirs_with_gguf = set()
+    for gguf_path in gguf_files:
+        path = Path(gguf_path)
+        if path.parts:  # If in a subdirectory
+            dirs_with_gguf.add(path.parts[0])  # Add top-level directory
+
+    # Find directories with safetensors files directly under them
+    dirs_with_safetensors = set()
+    for item in os.listdir(model_dir):
+        item_path = model_dir / item
+        if item_path.is_dir():
+            # Check if there are safetensors files directly under this directory
+            if any(file.lower().endswith('.safetensors') for file in os.listdir(item_path) if (item_path / file).is_file()):
+                dirs_with_safetensors.add(item)
+
+    # Find valid model directories
+    model_dirs = []
+
+    for item in os.listdir(model_dir):
+        item_path = model_dir / item
+
+        # Skip if not a directory
+        if not item_path.is_dir():
+            continue
+
+        # Include directory if it either:
+        # 1. Doesn't contain GGUF files, OR
+        # 2. Contains both GGUF and safetensors files
+        if item not in dirs_with_gguf or item in dirs_with_safetensors:
+            model_dirs.append(item)
+
+    model_dirs = sorted(model_dirs, key=natural_keys)
+
+    # Combine all models
+    return ['None'] + gguf_files + model_dirs
 
 
 def get_available_ggufs():
     model_list = []
-    for dirpath, _, files in os.walk(Path(f'{shared.args.model_dir}/'), followlinks=True):
+    model_dir = Path(shared.args.model_dir)
+
+    for dirpath, _, files in os.walk(model_dir, followlinks=True):
         for file in files:
             if file.lower().endswith(".gguf"):
-                model_list.append(os.path.relpath(Path(dirpath).joinpath(file), Path(f'{shared.args.model_dir}/')))
+                model_path = Path(dirpath) / file
+                rel_path = model_path.relative_to(model_dir)
+                model_list.append(str(rel_path))
 
     return sorted(model_list, key=natural_keys)
 
