@@ -280,13 +280,17 @@ class LlamaServer:
             bufsize=1
         )
 
-        def filter_stderr():
-            for line in iter(self.process.stderr.readline, ''):
-                if not line.startswith(('srv ', 'slot ')) and 'log_server_r: request: GET /health' not in line:
-                    sys.stderr.write(line)
-                    sys.stderr.flush()
+        def filter_stderr(process_stderr):
+            try:
+                for line in iter(process_stderr.readline, ''):
+                    if not line.startswith(('srv ', 'slot ')) and 'log_server_r: request: GET /health' not in line:
+                        sys.stderr.write(line)
+                        sys.stderr.flush()
+            except (ValueError, IOError):
+                # Handle pipe closed exceptions
+                pass
 
-        threading.Thread(target=filter_stderr, daemon=True).start()
+        threading.Thread(target=filter_stderr, args=(self.process.stderr,), daemon=True).start()
 
         # Wait for server to be healthy
         health_url = f"http://localhost:{self.port}/health"
