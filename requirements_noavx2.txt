@@ -19,6 +19,7 @@ requests
 rich
 safetensors==0.5.*
 scipy
+sseclient-py==1.8.0
 sentencepiece
 tensorboard
 transformers==4.50.*

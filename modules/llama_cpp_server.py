@@ -8,6 +8,7 @@ import time
 
 import llama_cpp_binaries
 import requests
+import sseclient
 
 from modules import shared
 from modules.logging_colors import logger
@@ -138,42 +139,43 @@ class LlamaServer:
             pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(printable_payload)
             print()
 
-        # Make a direct request with streaming enabled
-        response = requests.post(url, json=payload, stream=True)
-        response.raise_for_status()  # Raise an exception for HTTP errors
+        # Configure headers for Server-Sent Events
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream'
+        }
+
+        response = requests.post(url, json=payload, stream=True, headers=headers)
+        response.raise_for_status()
+
+        # Initialize SSE client for proper event stream parsing
+        client = sseclient.SSEClient(response)
 
         full_text = ""
 
-        # Process the streaming response
-        for line in response.iter_lines():
+        for event in client.events():
             if shared.stop_everything:
                 break
 
-            if line:
-                try:
-                    # Check if the line starts with "data: " and remove it
-                    line_str = line.decode('utf-8')
-                    if line_str.startswith('data: '):
-                        line_str = line_str[6:]  # Remove the "data: " prefix
+            try:
+                # Handle stream termination marker
+                if event.data == '[DONE]':
+                    break
 
-                    # Parse the JSON data
-                    data = json.loads(line_str)
+                data = json.loads(event.data)
 
-                    # Extract the token content
-                    if 'content' in data:
-                        token_text = data['content']
-                        full_text += token_text
-                        yield full_text
+                if 'content' in data:
+                    token_text = data['content']
+                    full_text += token_text
+                    yield full_text
 
-                    # Check if generation is complete
-                    if data.get('stop', False):
-                        break
+                if data.get('stop', False):
+                    break
 
-                except json.JSONDecodeError as e:
-                    # Log the error and the problematic line
-                    print(f"JSON decode error: {e}")
-                    print(f"Problematic line: {line}")
-                    continue
+            except json.JSONDecodeError as e:
+                print(f"JSON decode error: {e}")
+                print(f"Problematic data: {event.data}")
+                continue
 
     def generate(self, prompt, state):
         output = ""
