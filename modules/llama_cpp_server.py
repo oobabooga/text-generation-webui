@@ -141,22 +141,14 @@ class LlamaServer:
             print()
 
         # Make a direct request with streaming enabled using a context manager
-        with self.session.post(url, json=payload, stream=True, timeout=(5, 0.1)) as response:
+        with self.session.post(url, json=payload, stream=True) as response:
             response.raise_for_status()  # Raise an exception for HTTP errors
 
             full_text = ""
-            iterator = response.iter_lines(decode_unicode=True)
 
-            while True:
+            # Process the streaming response
+            for line in response.iter_lines(decode_unicode=True):
                 if shared.stop_everything:
-                    break
-
-                try:
-                    line = next(iterator)
-                except requests.exceptions.Timeout:
-                    # Check stop flag again on timeout
-                    continue
-                except StopIteration:
                     break
 
                 if line:
