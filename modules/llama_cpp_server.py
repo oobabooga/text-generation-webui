@@ -152,7 +152,7 @@ class LlamaServer:
             full_text = ""
 
             # Process the streaming response
-            for line in response.iter_lines(decode_unicode=True):
+            for line in response.iter_lines():
                 if shared.stop_everything:
                     break
 
@@ -160,6 +160,8 @@ class LlamaServer:
                     continue
 
                 try:
+                    line = line.decode('utf-8')
+
                     # Check if the line starts with "data: " and remove it
                     if line.startswith('data: '):
                         line = line[6:]  # Remove the "data: " prefix
