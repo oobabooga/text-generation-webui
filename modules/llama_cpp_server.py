@@ -27,6 +27,8 @@ class LlamaServer:
         self.session = requests.Session()
         self.vocabulary_size = None
         self.bos_token = "<s>"
+        self.last_input_length = 0
+        self.last_output_length = 0
 
         # Start the server
         self._start_server()
@@ -140,6 +142,9 @@ class LlamaServer:
             pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(printable_payload)
             print()
 
+        self.last_input_length = len(token_ids)
+        self.last_output_length = 0
+
         # Make a direct request with streaming enabled using a context manager
         with self.session.post(url, json=payload, stream=True) as response:
             response.raise_for_status()  # Raise an exception for HTTP errors
@@ -151,30 +156,32 @@ class LlamaServer:
                 if shared.stop_everything:
                     break
 
-                if line:
-                    try:
-                        # Check if the line starts with "data: " and remove it
-                        if line.startswith('data: '):
-                            line = line[6:]  # Remove the "data: " prefix
+                if not line:
+                    continue
 
-                        # Parse the JSON data
-                        data = json.loads(line)
+                try:
+                    # Check if the line starts with "data: " and remove it
+                    if line.startswith('data: '):
+                        line = line[6:]  # Remove the "data: " prefix
 
-                        # Extract the token content
-                        if 'content' in data:
-                            token_text = data['content']
-                            full_text += token_text
-                            yield full_text
+                    # Parse the JSON data
+                    data = json.loads(line)
 
-                        # Check if generation is complete
-                        if data.get('stop', False):
-                            break
+                    # Extract the token content
+                    if data.get('content', ''):
+                        full_text += data['content']
+                        self.last_output_length += 1
+                        yield full_text
 
-                    except json.JSONDecodeError as e:
-                        # Log the error and the problematic line
-                        print(f"JSON decode error: {e}")
-                        print(f"Problematic line: {line}")
-                        continue
+                    # Check if generation is complete
+                    if data.get('stop', False):
+                        break
+
+                except json.JSONDecodeError as e:
+                    # Log the error and the problematic line
+                    print(f"JSON decode error: {e}")
+                    print(f"Problematic line: {line}")
+                    continue
 
     def generate(self, prompt, state):
         output = ""
