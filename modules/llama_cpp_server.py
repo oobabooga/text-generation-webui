@@ -147,19 +147,18 @@ class LlamaServer:
             full_text = ""
 
             # Process the streaming response
-            for line in response.iter_lines():
+            for line in response.iter_lines(decode_unicode=True):
                 if shared.stop_everything:
                     break
 
                 if line:
                     try:
                         # Check if the line starts with "data: " and remove it
-                        line_str = line.decode('utf-8')
-                        if line_str.startswith('data: '):
-                            line_str = line_str[6:]  # Remove the "data: " prefix
+                        if line.startswith('data: '):
+                            line = line[6:]  # Remove the "data: " prefix
 
                         # Parse the JSON data
-                        data = json.loads(line_str)
+                        data = json.loads(line)
 
                         # Extract the token content
                         if 'content' in data:
