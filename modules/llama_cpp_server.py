@@ -250,7 +250,6 @@ class LlamaServer:
             "--ctx-size", str(shared.args.n_ctx),
             "--n-gpu-layers", str(shared.args.n_gpu_layers),
             "--batch-size", str(shared.args.batch_size),
-            "--rope-freq-base", str(shared.args.rope_freq_base),
             "--port", str(self.port),
         ]
 
@@ -276,6 +275,8 @@ class LlamaServer:
             cmd += ["--cache-type-k", shared.args.cache_type, "--cache-type-v", shared.args.cache_type]
         if shared.args.compress_pos_emb != 1:
             cmd += ["--rope-freq-scale", str(1.0 / shared.args.compress_pos_emb)]
+        if shared.args.rope_freq_base > 0:
+            cmd += ["--rope-freq-base", str(shared.args.rope_freq_base)]
 
         # Start the server with pipes for output
         self.process = subprocess.Popen(
