@@ -2,6 +2,7 @@ import base64
 import copy
 import re
 import time
+import json
 from collections import deque
 from io import BytesIO
 
@@ -13,7 +14,9 @@ from PIL import Image
 from transformers import LogitsProcessor, LogitsProcessorList
 
 from extensions.openai.errors import InvalidRequestError
-from extensions.openai.utils import debug_msg
+from extensions.openai.utils import debug_msg, getToolCallId, parseToolCall
+from extensions.openai.typing import ToolDefinition
+from pydantic import ValidationError
 from modules import shared
 from modules.chat import (
     generate_chat_prompt,
@@ -191,19 +194,24 @@ def convert_history(history):
             user_input = content
             user_input_last = True
             if current_message:
-                chat_dialogue.append([current_message, ''])
+                chat_dialogue.append([current_message, '', ''])
                 current_message = ""
 
             current_message = content
         elif role == "assistant":
+            if "tool_calls" in entry and isinstance(entry["tool_calls"], list) and len(entry["tool_calls"]) > 0 and content.strip() == "":
+                continue  # skip tool calls
             current_reply = content
             user_input_last = False
             if current_message:
-                chat_dialogue.append([current_message, current_reply])
+                chat_dialogue.append([current_message, current_reply, ''])
                 current_message = ""
                 current_reply = ""
             else:
-                chat_dialogue.append(['', current_reply])
+                chat_dialogue.append(['', current_reply, ''])
+        elif role == "tool":
+            user_input_last = False
+            chat_dialogue.append(['', '', content])
         elif role == "system":
             system_message += f"\n{content}" if system_message else content
 
@@ -222,6 +230,11 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
 
     if 'messages' not in body:
         raise InvalidRequestError(message="messages is required", param='messages')
+
+    tools = None
+    if 'tools' in body and body['tools'] is not None and isinstance(body['tools'], list) and len(body['tools']) > 0:
+        # validateTools(body['tools']) # raises InvalidRequestError if validation fails
+        tools = body['tools']
 
     messages = body['messages']
     for m in messages:
@@ -280,6 +293,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         'custom_system_message': custom_system_message,
         'chat_template_str': chat_template_str,
         'chat-instruct_command': chat_instruct_command,
+        'tools': tools,
         'history': history,
         'stream': stream
     })
@@ -292,7 +306,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
     requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
 
-    def chat_streaming_chunk(content):
+    def chat_streaming_chunk(content, chunk_tool_calls=None):
         # begin streaming
         chunk = {
             "id": cmpl_id,
@@ -302,7 +316,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             resp_list: [{
                 "index": 0,
                 "finish_reason": None,
-                "delta": {'role': 'assistant', 'content': content},
+                "delta": {'role': 'assistant', 'content': content, 'tool_calls': chunk_tool_calls},
             }],
         }
 
@@ -311,6 +325,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             chunk[resp_list][0]["logprobs"] = {'top_logprobs': [top_logprobs]}
         # else:
         #    chunk[resp_list][0]["logprobs"] = None
+
         return chunk
 
     # generate reply #######################################
@@ -318,8 +333,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
     if prompt_only:
         yield {'prompt': prompt}
         return
-
-    debug_msg({'prompt': prompt, 'generate_params': generate_params})
 
     if stream:
         yield chat_streaming_chunk('')
@@ -330,6 +343,10 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
     answer = ''
     seen_content = ''
 
+    tool_calls = []
+    end_last_tool_call = 0
+    supported_tools = [x["function"]["name"] for x in tools] if tools is not None else None
+
     for a in generator:
         answer = a['internal'][-1][1]
         if stream:
@@ -339,13 +356,29 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             if not new_content or chr(0xfffd) in new_content:  # partial unicode character, don't send it yet.
                 continue
 
-            seen_content = answer
             chunk = chat_streaming_chunk(new_content)
+
+            seen_content = answer
             yield chunk
+
+            if supported_tools is not None:
+                tool_call = parseToolCall(answer[end_last_tool_call:], supported_tools) if len(answer) > 0 else []
+                if len(tool_call) > 0:
+                    for tc in tool_call:
+                        tc["id"] = getToolCallId()
+                        tc["index"] = str(len(tool_calls))
+                        tc["function"]["arguments"] = json.dumps(tc["function"]["arguments"])
+                        tool_calls.append(tc)
+                    end_last_tool_call = len(answer)
+                    chunk = chat_streaming_chunk('', tool_call)
+                    yield chunk
+                    break
 
     token_count = len(encode(prompt)[0])
     completion_token_count = len(encode(answer)[0])
     stop_reason = "stop"
+    if len(tool_calls) > 0:
+        stop_reason = "tool_calls"
     if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= generate_params['max_new_tokens']:
         stop_reason = "length"
 
@@ -368,7 +401,8 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             resp_list: [{
                 "index": 0,
                 "finish_reason": stop_reason,
-                "message": {"role": "assistant", "content": answer}
+                "message": {"role": "assistant", "content": answer},
+                "tool_calls": tool_calls
             }],
             "usage": {
                 "prompt_tokens": token_count,
@@ -557,3 +591,16 @@ def completions(body: dict, is_legacy: bool = False) -> dict:
 def stream_completions(body: dict, is_legacy: bool = False):
     for resp in completions_common(body, is_legacy, stream=True):
         yield resp
+
+
+def validateTools(tools: str):
+    # Validate each tool definition in the JSON array
+    valid_tools = []
+    for tool in tools:
+        try:
+            tool_definition = ToolDefinition(**tool)
+            valid_tools.append(tool_definition)
+        except ValidationError:
+            raise InvalidRequestError(message="Invalid tool specification.", param='tools')
+
+    return valid_tools
