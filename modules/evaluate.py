@@ -2,7 +2,6 @@ import datetime
 from pathlib import Path
 
 import pandas as pd
-import torch
 from datasets import load_dataset
 from tqdm import tqdm
 
@@ -11,7 +10,6 @@ from modules.logging_colors import logger
 from modules.models import load_model, unload_model
 from modules.models_settings import get_model_metadata, update_model_parameters
 from modules.text_generation import encode
-from modules.torch_utils import clear_torch_cache
 
 
 def load_past_evaluations():
@@ -39,6 +37,10 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
     Based on:
     https://huggingface.co/docs/transformers/perplexity#calculating-ppl-with-fixedlength-models
     '''
+
+    import torch
+
+    from modules.torch_utils import clear_torch_cache
 
     if shared.args.loader == "llama.cpp":
         logger.error("Perplexity evaluation is not implemented for the llama.cpp loader.")
