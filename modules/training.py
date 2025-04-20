@@ -15,13 +15,6 @@ from datetime import datetime
 from pathlib import Path
 
 import gradio as gr
-import torch
-import transformers
-from datasets import Dataset, load_dataset
-from transformers import is_torch_xpu_available
-from transformers.models.auto.modeling_auto import (
-    MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
-)
 
 from modules import shared, ui, utils
 from modules.evaluate import (
@@ -33,7 +26,6 @@ from modules.logging_colors import logger
 from modules.models import reload_model
 from modules.utils import natural_keys
 
-MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
 PARAMETERS = ["lora_name", "always_override", "q_proj_en", "v_proj_en", "k_proj_en", "o_proj_en", "gate_proj_en", "down_proj_en", "up_proj_en", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
 WANT_INTERRUPT = False
 
@@ -284,6 +276,9 @@ def calc_trainable_parameters(model):
 
 def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: bool, k_proj_en: bool, o_proj_en: bool, gate_proj_en: bool, down_proj_en: bool, up_proj_en: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
 
+    import torch
+    import transformers
+    from datasets import Dataset, load_dataset
     from peft import (
         LoraConfig,
         get_peft_model,
@@ -293,6 +288,12 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     from peft.utils.other import \
         TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
         model_to_lora_modules
+    from transformers import is_torch_xpu_available
+    from transformers.models.auto.modeling_auto import (
+        MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
+    )
+
+    MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
 
     global WANT_INTERRUPT
     WANT_INTERRUPT = False
