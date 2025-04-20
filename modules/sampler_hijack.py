@@ -13,7 +13,7 @@ from transformers.generation.logits_process import (
 
 from modules import shared
 from modules.logging_colors import logger
-from modules.models import get_device
+from modules.torch_utils import get_device
 
 global_scores = None
 

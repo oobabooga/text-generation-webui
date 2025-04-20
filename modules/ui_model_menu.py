@@ -1,14 +1,9 @@
 import importlib
-import math
-import re
 import traceback
 from functools import partial
 from pathlib import Path
 
 import gradio as gr
-import psutil
-import torch
-from transformers import is_torch_npu_available, is_torch_xpu_available
 
 from modules import loaders, shared, ui, utils
 from modules.logging_colors import logger
@@ -26,35 +21,6 @@ from modules.utils import gradio
 
 def create_ui():
     mu = shared.args.multi_user
-
-    # Finding the default values for the GPU and CPU memories
-    total_mem = []
-    if is_torch_xpu_available():
-        for i in range(torch.xpu.device_count()):
-            total_mem.append(math.floor(torch.xpu.get_device_properties(i).total_memory / (1024 * 1024)))
-    elif is_torch_npu_available():
-        for i in range(torch.npu.device_count()):
-            total_mem.append(math.floor(torch.npu.get_device_properties(i).total_memory / (1024 * 1024)))
-    else:
-        for i in range(torch.cuda.device_count()):
-            total_mem.append(math.floor(torch.cuda.get_device_properties(i).total_memory / (1024 * 1024)))
-
-    default_gpu_mem = []
-    if shared.args.gpu_memory is not None and len(shared.args.gpu_memory) > 0:
-        for i in shared.args.gpu_memory:
-            if 'mib' in i.lower():
-                default_gpu_mem.append(int(re.sub('[a-zA-Z ]', '', i)))
-            else:
-                default_gpu_mem.append(int(re.sub('[a-zA-Z ]', '', i)) * 1000)
-
-    while len(default_gpu_mem) < len(total_mem):
-        default_gpu_mem.append(0)
-
-    total_cpu_mem = math.floor(psutil.virtual_memory().total / (1024 * 1024))
-    if shared.args.cpu_memory is not None:
-        default_cpu_mem = re.sub('[a-zA-Z ]', '', shared.args.cpu_memory)
-    else:
-        default_cpu_mem = 0
 
     with gr.Tab("Model", elem_id="model-tab"):
         with gr.Row():
@@ -80,10 +46,6 @@ def create_ui():
                 with gr.Blocks():
                     with gr.Row():
                         with gr.Column():
-                            for i in range(len(total_mem)):
-                                shared.gradio[f'gpu_memory_{i}'] = gr.Slider(label=f"gpu-memory in MiB for device :{i}", maximum=total_mem[i], value=default_gpu_mem[i])
-
-                            shared.gradio['cpu_memory'] = gr.Slider(label="cpu-memory in MiB", maximum=total_cpu_mem, value=default_cpu_mem)
                             shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=256, value=shared.args.n_gpu_layers, info='Must be greater than 0 for the GPU to be used. ⚠️ Lower this value if you can\'t load the model.')
                             shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=256, value=shared.args.threads)
                             shared.gradio['threads_batch'] = gr.Slider(label="threads_batch", minimum=0, step=1, maximum=256, value=shared.args.threads_batch)
@@ -94,6 +56,7 @@ def create_ui():
                             shared.gradio['cache_type'] = gr.Dropdown(label="cache_type", choices=['fp16', 'q8_0', 'q4_0', 'fp8', 'q8', 'q6', 'q4'], value=shared.args.cache_type, info='Valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4.')
                             shared.gradio['tensor_split'] = gr.Textbox(label='tensor_split', info='List of proportions to split the model across multiple GPUs. Example: 60,40')
                             shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info='Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7')
+                            shared.gradio['cpu_memory'] = gr.Number(label="Maximum CPU memory in GiB. Use this for CPU offloading.", value=shared.args.cpu_memory)
                             shared.gradio['alpha_value'] = gr.Number(label='alpha_value', value=shared.args.alpha_value, precision=2, info='Positional embeddings alpha factor for NTK RoPE scaling. Recommended values (NTKv1): 1.75 for 1.5x context, 2.5 for 2x context. Use either this or compress_pos_emb, not both.')
                             shared.gradio['rope_freq_base'] = gr.Number(label='rope_freq_base', value=shared.args.rope_freq_base, precision=0, info='Positional embeddings frequency base for NTK RoPE scaling. Related to alpha_value by rope_freq_base = 10000 * alpha_value ^ (64 / 63). 0 = from model.')
                             shared.gradio['compress_pos_emb'] = gr.Number(label='compress_pos_emb', value=shared.args.compress_pos_emb, precision=2, info='Positional embeddings compression factor. Should be set to (context length) / (model\'s original context length). Equal to 1/rope_freq_scale.')
@@ -107,7 +70,6 @@ def create_ui():
                             shared.gradio['torch_compile'] = gr.Checkbox(label="torch-compile", value=shared.args.torch_compile, info='Compile the model with torch.compile for improved performance.')
                             shared.gradio['flash_attn'] = gr.Checkbox(label="flash_attn", value=shared.args.flash_attn, info='Use flash-attention.')
                             shared.gradio['use_flash_attention_2'] = gr.Checkbox(label="use_flash_attention_2", value=shared.args.use_flash_attention_2, info='Set use_flash_attention_2=True while loading the model.')
-                            shared.gradio['auto_devices'] = gr.Checkbox(label="auto-devices", value=shared.args.auto_devices)
                             shared.gradio['cpu'] = gr.Checkbox(label="cpu", value=shared.args.cpu, info='llama.cpp: Use llama-cpp-python compiled without GPU acceleration. Transformers: use PyTorch in CPU mode.')
                             shared.gradio['disk'] = gr.Checkbox(label="disk", value=shared.args.disk)
                             shared.gradio['row_split'] = gr.Checkbox(label="row_split", value=shared.args.row_split, info='Split the model by rows across GPUs. This may improve multi-gpu performance.')
