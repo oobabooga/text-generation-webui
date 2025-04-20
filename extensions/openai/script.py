@@ -6,7 +6,6 @@ import traceback
 from collections import deque
 from threading import Thread
 
-import speech_recognition as sr
 import uvicorn
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -163,6 +162,8 @@ def handle_billing_usage():
 
 @app.post('/v1/audio/transcriptions', dependencies=check_key)
 async def handle_audio_transcription(request: Request):
+    import speech_recognition as sr
+
     r = sr.Recognizer()
 
     form = await request.form()
