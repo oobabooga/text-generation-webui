@@ -60,11 +60,6 @@ def load_model(model_name, loader=None):
     return model, tokenizer
 
 
-def transformers_loader(model_name):
-    from modules.transformers_loader import load_model_HF
-    return load_model_HF(model_name)
-
-
 def llama_cpp_server_loader(model_name):
     from modules.llama_cpp_server import LlamaServer
 
@@ -80,6 +75,11 @@ def llama_cpp_server_loader(model_name):
         return model, model
     except Exception as e:
         logger.error(f"Error loading the model with llama.cpp: {str(e)}")
+
+
+def transformers_loader(model_name):
+    from modules.transformers_loader import load_model_HF
+    return load_model_HF(model_name)
 
 
 def ExLlamav3_HF_loader(model_name):
