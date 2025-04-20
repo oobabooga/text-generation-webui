@@ -126,7 +126,6 @@ def list_model_elements():
         'torch_compile',
         'flash_attn',
         'use_flash_attention_2',
-        'auto_devices',
         'cpu',
         'disk',
         'row_split',

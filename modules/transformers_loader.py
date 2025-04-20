@@ -108,7 +108,6 @@ def load_model_HF(model_name):
         shared.args.cpu,
         shared.args.load_in_8bit,
         shared.args.load_in_4bit,
-        shared.args.auto_devices,
         shared.args.disk,
         shared.args.deepspeed,
         shared.args.cpu_memory is not None,
@@ -173,7 +172,7 @@ def load_model_HF(model_name):
                 params['quantization_config'] = BitsAndBytesConfig(**quantization_config_params)
 
             elif shared.args.load_in_8bit:
-                if shared.args.auto_devices or shared.args.gpu_split:
+                if shared.args.gpu_split:
                     params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
                 else:
                     params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True)

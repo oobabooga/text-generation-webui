@@ -15,7 +15,6 @@ loaders_and_params = OrderedDict({
         'load_in_4bit',
         'torch_compile',
         'use_flash_attention_2',
-        'auto_devices',
         'cpu',
         'disk',
         'use_double_quant',
