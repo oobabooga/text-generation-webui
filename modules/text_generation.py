@@ -14,11 +14,11 @@ from modules.callbacks import Iteratorize
 from modules.extensions import apply_extensions
 from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
-from modules.models import load_model
 
 
 def generate_reply(*args, **kwargs):
     if shared.args.idle_timeout > 0 and shared.model is None and shared.model_name not in [None, 'None']:
+        from modules.models import load_model
         shared.model, shared.tokenizer = load_model(shared.model_name)
 
     shared.generation_lock.acquire()
