@@ -1,28 +1,5 @@
-import gc
-import os
-import pprint
-import re
 import time
 from pathlib import Path
-
-import torch
-import transformers
-from accelerate import infer_auto_device_map, init_empty_weights
-from accelerate.utils import (
-    is_ccl_available,
-    is_npu_available,
-    is_xpu_available
-)
-from transformers import (
-    AutoConfig,
-    AutoModel,
-    AutoModelForCausalLM,
-    AutoModelForSeq2SeqLM,
-    AutoTokenizer,
-    BitsAndBytesConfig,
-    is_torch_npu_available,
-    is_torch_xpu_available
-)
 
 import modules.shared as shared
 from modules.logging_colors import logger
@@ -67,6 +44,7 @@ def load_model(model_name, loader=None):
         if model is None:
             return None, None
         else:
+            from modules.transformers_loader import load_tokenizer
             tokenizer = load_tokenizer(model_name)
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})

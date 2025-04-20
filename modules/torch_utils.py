@@ -1,3 +1,12 @@
+import gc
+
+import torch
+from accelerate.utils import is_npu_available, is_xpu_available
+from transformers import is_torch_npu_available, is_torch_xpu_available
+
+from modules import shared
+
+
 def get_device():
     if torch.cuda.is_available():
         return torch.device('cuda')
@@ -26,4 +35,3 @@ def clear_torch_cache():
         elif torch.backends.mps.is_available():
             if hasattr(torch.backends.mps, 'empty_cache'):
                 torch.backends.mps.empty_cache()
-

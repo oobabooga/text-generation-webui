@@ -1,8 +1,6 @@
-import gc
 import os
 import pprint
 import re
-import time
 from pathlib import Path
 
 import torch
@@ -19,14 +17,12 @@ from transformers import (
     AutoModelForCausalLM,
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
-    BitsAndBytesConfig,
-    is_torch_npu_available,
-    is_torch_xpu_available
+    BitsAndBytesConfig
 )
 
 import modules.shared as shared
 from modules.logging_colors import logger
-from modules.models_settings import get_model_metadata
+from modules.torch_utils import get_device
 
 transformers.logging.set_verbosity_error()
 
@@ -54,7 +50,6 @@ if shared.args.deepspeed:
         deepspeed.init_distributed()
     ds_config = generate_ds_config(shared.args.bf16, 1 * world_size, shared.args.nvme_offload_dir)
     dschf = HfDeepSpeedConfig(ds_config)  # Keep this object alive for the Transformers integration
-
 
 
 def load_tokenizer(model_name, tokenizer_dir=None):
