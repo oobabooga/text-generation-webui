@@ -27,7 +27,8 @@ from modules.grammar.grammar_utils import initialize_grammar
 from modules.grammar.logits_process import GrammarConstrainedLogitsProcessor
 from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
-from modules.models import clear_torch_cache, get_device, load_model
+from modules.models import load_model
+from modules.torch_utils import clear_torch_cache, get_device
 
 sampler_hijack.hijack_samplers()
 

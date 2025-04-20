@@ -8,9 +8,10 @@ from tqdm import tqdm
 
 from modules import shared
 from modules.logging_colors import logger
-from modules.models import clear_torch_cache, load_model, unload_model
+from modules.models import load_model, unload_model
 from modules.models_settings import get_model_metadata, update_model_parameters
 from modules.text_generation import encode
+from modules.torch_utils import clear_torch_cache
 
 
 def load_past_evaluations():

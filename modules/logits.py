@@ -6,8 +6,9 @@ import torch
 
 from modules import models, sampler_hijack, shared
 from modules.logging_colors import logger
-from modules.models import get_device, load_model
+from modules.models import load_model
 from modules.text_generation import generate_reply
+from modules.torch_utils import get_device
 
 global_scores = None
 
