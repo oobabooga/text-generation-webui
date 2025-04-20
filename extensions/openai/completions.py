@@ -7,10 +7,7 @@ from io import BytesIO
 
 import requests
 import tiktoken
-import torch
-import torch.nn.functional as F
 from PIL import Image
-from transformers import LogitsProcessor, LogitsProcessorList
 
 from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg
@@ -22,54 +19,7 @@ from modules.chat import (
     load_instruction_template_memoized
 )
 from modules.presets import load_preset_memoized
-from modules.text_generation import (
-    decode,
-    encode,
-    generate_reply,
-    get_reply_from_output_ids
-)
-
-
-class LogitsBiasProcessor(LogitsProcessor):
-    def __init__(self, logit_bias={}):
-        self.logit_bias = logit_bias
-        if self.logit_bias:
-            self.keys = list([int(key) for key in self.logit_bias.keys()])
-            values = [self.logit_bias[str(key)] for key in self.keys]
-            self.values = torch.tensor(values, dtype=torch.float, device=shared.model.device)
-            debug_msg(f"{self})")
-
-    def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
-        if self.logit_bias:
-            debug_msg(logits[0, self.keys], " + ", self.values)
-            logits[0, self.keys] += self.values
-            debug_msg(" --> ", logits[0, self.keys])
-            debug_msg(" max/min ", float(torch.max(logits[0])), float(torch.min(logits[0])))
-
-        return logits
-
-    def __repr__(self):
-        return f"<{self.__class__.__name__}(logit_bias={self.logit_bias})>"
-
-
-class LogprobProcessor(LogitsProcessor):
-    def __init__(self, logprobs=None):
-        self.logprobs = logprobs
-        self.token_alternatives = {}
-
-    def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
-        if self.logprobs is not None:  # 0-5
-            log_e_probabilities = F.log_softmax(logits, dim=1)
-            top_values, top_indices = torch.topk(log_e_probabilities, k=self.logprobs + 1)
-            top_tokens = [get_reply_from_output_ids([tok]) for tok in top_indices[0]]
-            top_probs = [float(x) for x in top_values[0]]
-            self.token_alternatives = dict(zip(top_tokens, top_probs))
-            debug_msg(repr(self))
-
-        return logits
-
-    def __repr__(self):
-        return f"<{self.__class__.__name__}(logprobs={self.logprobs}, token_alternatives={self.token_alternatives})>"
+from modules.text_generation import decode, encode, generate_reply
 
 
 def convert_logprobs_to_tiktoken(model, logprobs):
@@ -107,21 +57,29 @@ def process_parameters(body, is_legacy=False):
         elif isinstance(body['stop'], list):
             generate_params['custom_stopping_strings'] = body['stop']
 
-    logits_processor = []
-    logit_bias = body.get('logit_bias', None)
-    if logit_bias:  # {str: float, ...}
-        logits_processor = [LogitsBiasProcessor(logit_bias)]
+    if shared.args.loader != 'llama.cpp':
+        from transformers import LogitsProcessorList
 
-    logprobs = None  # coming to chat eventually
-    if 'logprobs' in body:
-        logprobs = body.get('logprobs', 0)  # maybe cap at topk? don't clamp 0-5.
-        generate_params['logprob_proc'] = LogprobProcessor(logprobs)
-        logits_processor.extend([generate_params['logprob_proc']])
-    else:
-        logprobs = None
+        from modules.transformers_loader import (
+            LogitsBiasProcessor,
+            LogprobProcessor
+        )
 
-    if logits_processor:  # requires logits_processor support
-        generate_params['logits_processor'] = LogitsProcessorList(logits_processor)
+        logits_processor = []
+        logit_bias = body.get('logit_bias', None)
+        if logit_bias:  # {str: float, ...}
+            logits_processor = [LogitsBiasProcessor(logit_bias)]
+
+        logprobs = None  # coming to chat eventually
+        if 'logprobs' in body:
+            logprobs = body.get('logprobs', 0)  # maybe cap at topk? don't clamp 0-5.
+            generate_params['logprob_proc'] = LogprobProcessor(logprobs)
+            logits_processor.extend([generate_params['logprob_proc']])
+        else:
+            logprobs = None
+
+        if logits_processor:  # requires logits_processor support
+            generate_params['logits_processor'] = LogitsProcessorList(logits_processor)
 
     return generate_params
 

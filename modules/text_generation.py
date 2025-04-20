@@ -10,13 +10,8 @@ import numpy as np
 
 import modules.shared as shared
 from modules import models
-from modules.callbacks import (
-    Iteratorize,
-    Stream,
-    _StopEverythingStoppingCriteria
-)
+from modules.callbacks import Iteratorize
 from modules.extensions import apply_extensions
-from modules.grammar.grammar_utils import initialize_grammar
 from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
 from modules.models import load_model
@@ -36,7 +31,6 @@ def generate_reply(*args, **kwargs):
 
 
 def _generate_reply(question, state, stopping_strings=None, is_chat=False, escape_html=False, for_ui=False):
-
     # Find the appropriate generation function
     generate_func = apply_extensions('custom_generate_reply')
     if generate_func is None:
@@ -70,7 +64,6 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             all_stop_strings += st
 
     shared.stop_everything = False
-    seed = set_manual_seed(state['seed'])
     last_update = -1
     reply = ''
     is_stream = state['stream']
@@ -83,7 +76,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
         min_update_interval = 1 / state['max_updates_second']
 
     # Generate
-    for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
+    for reply in generate_func(question, original_question, state, stopping_strings, is_chat=is_chat):
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
         if escape_html:
             reply = html.escape(reply)
@@ -289,18 +282,25 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
     return reply
 
 
-def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
+def generate_reply_HF(question, original_question, state, stopping_strings=None, is_chat=False):
     import torch
     import transformers
     from transformers import LogitsProcessorList
 
+    from modules.grammar.grammar_utils import initialize_grammar
     from modules.grammar.logits_process import (
         GrammarConstrainedLogitsProcessor
     )
     from modules.torch_utils import clear_torch_cache, get_device
+    from modules.transformers_loader import (
+        Stream,
+        _StopEverythingStoppingCriteria
+    )
 
     if shared.args.loader == 'Transformers':
         clear_torch_cache()
+
+    seed = set_manual_seed(state['seed'])
 
     generate_params = {}
     for k in [
@@ -471,11 +471,15 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         return
 
 
-def generate_reply_custom(question, original_question, seed, state, stopping_strings=None, is_chat=False):
+def generate_reply_custom(question, original_question, state, stopping_strings=None, is_chat=False):
     """
     For models that do not use the transformers library for sampling
     """
-    seed = set_manual_seed(state['seed'])
+
+    seed = state['seed']
+    if shared.args.loader != 'llama.cpp':
+        print(shared.args.loader)
+        seed = set_manual_seed(seed)
 
     t0 = time.time()
     reply = ''

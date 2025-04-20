@@ -3,6 +3,7 @@ import pprint
 from pathlib import Path
 
 import torch
+import torch.nn.functional as F
 import transformers
 from accelerate import infer_auto_device_map, init_empty_weights
 from accelerate.utils import (
@@ -16,12 +17,14 @@ from transformers import (
     AutoModelForCausalLM,
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
-    BitsAndBytesConfig
+    BitsAndBytesConfig,
+    LogitsProcessor
 )
 
 import modules.shared as shared
 from modules import sampler_hijack
 from modules.logging_colors import logger
+from modules.text_generation import get_reply_from_output_ids
 from modules.torch_utils import get_device
 
 transformers.logging.set_verbosity_error()
@@ -51,6 +54,62 @@ if shared.args.deepspeed:
         deepspeed.init_distributed()
     ds_config = generate_ds_config(shared.args.bf16, 1 * world_size, shared.args.nvme_offload_dir)
     dschf = HfDeepSpeedConfig(ds_config)  # Keep this object alive for the Transformers integration
+
+
+class _StopEverythingStoppingCriteria(transformers.StoppingCriteria):
+    def __init__(self):
+        transformers.StoppingCriteria.__init__(self)
+
+    def __call__(self, input_ids: torch.LongTensor, _scores: torch.FloatTensor) -> bool:
+        return shared.stop_everything
+
+
+class Stream(transformers.StoppingCriteria):
+    def __init__(self, callback_func=None):
+        self.callback_func = callback_func
+
+    def __call__(self, input_ids, scores) -> bool:
+        if self.callback_func is not None:
+            self.callback_func(input_ids[0])
+
+        return False
+
+
+class LogitsBiasProcessor(LogitsProcessor):
+    def __init__(self, logit_bias={}):
+        self.logit_bias = logit_bias
+        if self.logit_bias:
+            self.keys = list([int(key) for key in self.logit_bias.keys()])
+            values = [self.logit_bias[str(key)] for key in self.keys]
+            self.values = torch.tensor(values, dtype=torch.float, device=shared.model.device)
+
+    def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
+        if self.logit_bias:
+            logits[0, self.keys] += self.values
+
+        return logits
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}(logit_bias={self.logit_bias})>"
+
+
+class LogprobProcessor(LogitsProcessor):
+    def __init__(self, logprobs=None):
+        self.logprobs = logprobs
+        self.token_alternatives = {}
+
+    def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
+        if self.logprobs is not None:  # 0-5
+            log_e_probabilities = F.log_softmax(logits, dim=1)
+            top_values, top_indices = torch.topk(log_e_probabilities, k=self.logprobs + 1)
+            top_tokens = [get_reply_from_output_ids([tok]) for tok in top_indices[0]]
+            top_probs = [float(x) for x in top_values[0]]
+            self.token_alternatives = dict(zip(top_tokens, top_probs))
+
+        return logits
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}(logprobs={self.logprobs}, token_alternatives={self.token_alternatives})>"
 
 
 def load_tokenizer(model_name, tokenizer_dir=None):
