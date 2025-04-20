@@ -2,9 +2,7 @@ import copy
 from pathlib import Path
 
 import gradio as gr
-import torch
 import yaml
-from transformers import is_torch_xpu_available
 
 import extensions
 from modules import shared
@@ -149,13 +147,6 @@ def list_model_elements():
         'trust_remote_code',
         'no_use_fast',
     ]
-
-    if is_torch_xpu_available():
-        for i in range(torch.xpu.device_count()):
-            elements.append(f'gpu_memory_{i}')
-    else:
-        for i in range(torch.cuda.device_count()):
-            elements.append(f'gpu_memory_{i}')
 
     return elements
 

@@ -1,6 +1,5 @@
 import os
 import pprint
-import re
 from pathlib import Path
 
 import torch
@@ -112,7 +111,6 @@ def load_model_HF(model_name):
         shared.args.auto_devices,
         shared.args.disk,
         shared.args.deepspeed,
-        shared.args.gpu_memory is not None,
         shared.args.cpu_memory is not None,
         shared.args.compress_pos_emb > 1,
         shared.args.alpha_value > 1,
@@ -175,7 +173,7 @@ def load_model_HF(model_name):
                 params['quantization_config'] = BitsAndBytesConfig(**quantization_config_params)
 
             elif shared.args.load_in_8bit:
-                if shared.args.auto_devices or shared.args.gpu_memory:
+                if shared.args.auto_devices or shared.args.gpu_split:
                     params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
                 else:
                     params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True)
@@ -213,29 +211,11 @@ def load_model_HF(model_name):
 
 def get_max_memory_dict():
     max_memory = {}
-    max_cpu_memory = shared.args.cpu_memory.strip() if shared.args.cpu_memory is not None else '99GiB'
-    if shared.args.gpu_memory:
-        memory_map = list(map(lambda x: x.strip(), shared.args.gpu_memory))
-        for i in range(len(memory_map)):
-            max_memory[i] = f'{memory_map[i]}GiB' if not re.match('.*ib$', memory_map[i].lower()) else memory_map[i]
+    if shared.args.cpu_memory > 0:
+        max_memory['cpu'] = f'{shared.args.cpu_memory}GiB'
 
-        max_memory['cpu'] = f'{max_cpu_memory}GiB' if not re.match('.*ib$', max_cpu_memory.lower()) else max_cpu_memory
-
-    # If --auto-devices is provided standalone, try to get a reasonable value
-    # for the maximum memory of device :0
-    elif shared.args.auto_devices:
-        if is_xpu_available():
-            total_mem = (torch.xpu.get_device_properties(0).total_memory / (1024 * 1024))
-        else:
-            total_mem = (torch.cuda.get_device_properties(0).total_memory / (1024 * 1024))
-
-        suggestion = round((total_mem - 1000) / 1000) * 1000
-        if total_mem - suggestion < 800:
-            suggestion -= 1000
-
-        suggestion = int(round(suggestion / 1000))
-        logger.warning(f"Auto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors. You can manually set other values.")
-        max_memory[0] = f'{suggestion}GiB'
-        max_memory['cpu'] = f'{max_cpu_memory}GiB' if not re.match('.*ib$', max_cpu_memory.lower()) else max_cpu_memory
+    if shared.args.gpu_split:
+        for i, memory in enumerate(shared.args.gpu_split.split(',')):
+            max_memory[i] = f'{memory}GiB'
 
     return max_memory if len(max_memory) > 0 else None
