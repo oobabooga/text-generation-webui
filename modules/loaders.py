@@ -12,6 +12,7 @@ loaders_and_params = OrderedDict({
         'alpha_value',
         'compress_pos_emb',
         'compute_dtype',
+        'cache_type',
         'quant_type',
         'load_in_8bit',
         'load_in_4bit',
