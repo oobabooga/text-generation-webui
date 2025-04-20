@@ -35,7 +35,6 @@ def load_model(model_name, loader=None):
                 raise ValueError
 
     shared.args.loader = loader
-    clear_torch_cache()
     output = load_func_map[loader](model_name)
     if type(output) is tuple:
         model, tokenizer = output
@@ -127,10 +126,14 @@ def TensorRT_LLM_loader(model_name):
 
 
 def unload_model(keep_model_name=False):
+    is_llamacpp = (shared.model.__class__.__name__ == 'LlamaServer')
+
     shared.model = shared.tokenizer = None
     shared.lora_names = []
     shared.model_dirty_from_training = False
-    clear_torch_cache()
+    if not is_llamacpp:
+        from modules.torch_utils import clear_torch_cache
+        clear_torch_cache()
 
     if not keep_model_name:
         shared.model_name = 'None'
