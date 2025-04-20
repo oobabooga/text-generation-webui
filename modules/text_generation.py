@@ -28,7 +28,6 @@ from modules.grammar.logits_process import GrammarConstrainedLogitsProcessor
 from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
 from modules.models import load_model
-from modules.torch_utils import clear_torch_cache, get_device
 
 sampler_hijack.hijack_samplers()
 
@@ -133,44 +132,53 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     if shared.tokenizer is None:
         raise ValueError('No tokenizer is loaded')
 
-    if shared.model.__class__.__name__ in ['LlamaServer', 'Exllamav2Model', 'TensorRTLLMModel']:
-        if shared.model.__class__.__name__ == 'LlamaServer':
-            input_ids = shared.tokenizer.encode(str(prompt), add_bos_token=add_bos_token)
-        else:
+    # llama.cpp case
+    if shared.model.__class__.__name__ == 'LlamaServer':
+        input_ids = shared.tokenizer.encode(str(prompt), add_bos_token=add_bos_token)
+        input_ids = np.array(input_ids).reshape(1, len(input_ids))
+
+        if truncation_length is not None:
+            input_ids = input_ids[:, -truncation_length:]
+
+        return input_ids
+
+    # All other model types
+    else:
+        from modules.torch_utils import get_device
+
+        if shared.model.__class__.__name__ in ['Exllamav2Model', 'TensorRTLLMModel']:
             input_ids = shared.tokenizer.encode(str(prompt))
+            if shared.model.__class__.__name__ != 'Exllamav2Model':
+                input_ids = np.array(input_ids).reshape(1, len(input_ids))
+        else:
+            input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', add_special_tokens=add_special_tokens)
 
-        if shared.model.__class__.__name__ not in ['Exllamav2Model']:
-            input_ids = np.array(input_ids).reshape(1, len(input_ids))
-    else:
-        input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', add_special_tokens=add_special_tokens)
+            if hasattr(shared.tokenizer, 'bos_token_id') and shared.tokenizer.bos_token_id is not None:
+                if add_bos_token:
+                    # Add BOS token if missing
+                    if (len(input_ids[0]) > 0 and input_ids[0][0] != shared.tokenizer.bos_token_id) or len(input_ids[0]) == 0:
+                        bos_tensor = torch.tensor([[shared.tokenizer.bos_token_id]])
+                        input_ids = torch.cat((bos_tensor, input_ids), 1)
 
-        if hasattr(shared.tokenizer, 'bos_token_id') and shared.tokenizer.bos_token_id is not None:
-            if add_bos_token:
-                if (len(input_ids[0]) > 0 and input_ids[0][0] != shared.tokenizer.bos_token_id) or len(input_ids[0]) == 0:
-                    # Add a missing bos token (it may not have been added due to faulty model metadata)
-                    bos_tensor = torch.tensor([[shared.tokenizer.bos_token_id]])
-                    input_ids = torch.cat((bos_tensor, input_ids), 1)
+                    # Prevent double BOS tokens from jinja templates
+                    while len(input_ids[0]) > 1 and input_ids[0][0] == shared.tokenizer.bos_token_id and input_ids[0][1] == shared.tokenizer.bos_token_id:
+                        input_ids = input_ids[:, 1:]
+                else:
+                    # Remove BOS tokens when not wanted
+                    while len(input_ids[0]) > 0 and input_ids[0][0] == shared.tokenizer.bos_token_id:
+                        input_ids = input_ids[:, 1:]
 
-                # Prevent double bos token due to jinja templates with <s> somewhere
-                while len(input_ids[0]) > 1 and input_ids[0][0] == shared.tokenizer.bos_token_id and input_ids[0][1] == shared.tokenizer.bos_token_id:
-                    input_ids = input_ids[:, 1:]
-            else:
-                # Remove any bos token that may have been added
-                while len(input_ids[0]) > 0 and input_ids[0][0] == shared.tokenizer.bos_token_id:
-                    input_ids = input_ids[:, 1:]
+        if truncation_length is not None:
+            input_ids = input_ids[:, -truncation_length:]
 
-    # Handling truncation
-    if truncation_length is not None:
-        input_ids = input_ids[:, -truncation_length:]
+        if shared.model.__class__.__name__ in ['Exllamav2Model', 'TensorRTLLMModel'] or shared.args.cpu:
+            return input_ids
+        else:
+            device = get_device()
+            if device:
+                return input_ids.to(device)
 
-    if shared.model.__class__.__name__ in ['LlamaServer', 'Exllamav2Model', 'TensorRTLLMModel'] or shared.args.cpu:
-        return input_ids
-    else:
-        device = get_device()
-        if device:
-            return input_ids.to(device)
-
-        return input_ids
+            return input_ids
 
 
 def decode(output_ids, skip_special_tokens=True):
@@ -287,6 +295,8 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
 
 
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
+    from modules.torch_utils import clear_torch_cache, get_device
+
     if shared.args.loader == 'Transformers':
         clear_torch_cache()
 
