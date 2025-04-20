@@ -7,13 +7,6 @@ import time
 import traceback
 
 import numpy as np
-import torch
-import transformers
-from transformers import (
-    LogitsProcessorList,
-    is_torch_npu_available,
-    is_torch_xpu_available
-)
 
 import modules.shared as shared
 from modules import models
@@ -24,7 +17,6 @@ from modules.callbacks import (
 )
 from modules.extensions import apply_extensions
 from modules.grammar.grammar_utils import initialize_grammar
-from modules.grammar.logits_process import GrammarConstrainedLogitsProcessor
 from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
 from modules.models import load_model
@@ -142,6 +134,8 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
 
     # All other model types
     else:
+        import torch
+
         from modules.torch_utils import get_device
 
         if shared.model.__class__.__name__ in ['Exllamav2Model', 'TensorRTLLMModel']:
@@ -228,6 +222,9 @@ def formatted_outputs(reply, model_name):
 
 
 def set_manual_seed(seed):
+    import torch
+    from transformers import is_torch_npu_available, is_torch_xpu_available
+
     seed = int(seed)
     if seed == -1:
         seed = random.randint(1, 2**31)
@@ -293,6 +290,13 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
 
 
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
+    import torch
+    import transformers
+    from transformers import LogitsProcessorList
+
+    from modules.grammar.logits_process import (
+        GrammarConstrainedLogitsProcessor
+    )
     from modules.torch_utils import clear_torch_cache, get_device
 
     if shared.args.loader == 'Transformers':
