@@ -39,17 +39,13 @@ def load_model(model_name, loader=None):
     shared.model_name = model_name
     load_func_map = {
         'llama.cpp': llama_cpp_server_loader,
-        'Transformers': None,
+        'Transformers': transformers_loader,
         'ExLlamav3_HF': ExLlamav3_HF_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ExLlamav2': ExLlamav2_loader,
         'HQQ': HQQ_loader,
         'TensorRT-LLM': TensorRT_LLM_loader,
     }
-
-    if loader and loader == 'Transformers':
-        from modules.transformers_loader import load_model_HF
-        load_func_map = load_model_HF
 
     metadata = get_model_metadata(model_name)
     if loader is None:
