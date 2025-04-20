@@ -16,7 +16,7 @@ from transformers import (
 )
 
 import modules.shared as shared
-from modules import models, sampler_hijack
+from modules import models
 from modules.callbacks import (
     Iteratorize,
     Stream,
@@ -28,8 +28,6 @@ from modules.grammar.logits_process import GrammarConstrainedLogitsProcessor
 from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
 from modules.models import load_model
-
-sampler_hijack.hijack_samplers()
 
 
 def generate_reply(*args, **kwargs):

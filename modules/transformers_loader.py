@@ -21,10 +21,12 @@ from transformers import (
 )
 
 import modules.shared as shared
+from modules import sampler_hijack
 from modules.logging_colors import logger
 from modules.torch_utils import get_device
 
 transformers.logging.set_verbosity_error()
+sampler_hijack.hijack_samplers()
 
 local_rank = None
 if shared.args.deepspeed:
