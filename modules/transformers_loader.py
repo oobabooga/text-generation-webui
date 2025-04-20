@@ -176,6 +176,8 @@ def load_model_HF(model_name):
 
     # Load the model without any special settings
     if should_use_default_loading:
+        params['device_map'] = 'auto'
+
         logger.info("TRANSFORMERS_PARAMS=")
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(params)
         print()
