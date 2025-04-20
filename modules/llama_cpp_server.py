@@ -1,4 +1,5 @@
 import json
+import os
 import pprint
 import socket
 import subprocess
@@ -255,6 +256,7 @@ class LlamaServer:
             "--batch-size", str(shared.args.batch_size),
             "--port", str(self.port),
         ]
+        env = os.environ.copy()
 
         if shared.args.flash_attn:
             cmd.append("--flash-attn")
@@ -280,13 +282,16 @@ class LlamaServer:
             cmd += ["--rope-freq-scale", str(1.0 / shared.args.compress_pos_emb)]
         if shared.args.rope_freq_base > 0:
             cmd += ["--rope-freq-base", str(shared.args.rope_freq_base)]
+        if os.name == 'posix':
+            env |= {'LD_LIBRARY_PATH': os.path.dirname(self.server_path)}
 
         # Start the server with pipes for output
         self.process = subprocess.Popen(
             cmd,
             stderr=subprocess.PIPE,
             text=True,
-            bufsize=1
+            bufsize=1,
+            env=env
         )
 
         def filter_stderr(process_stderr):
