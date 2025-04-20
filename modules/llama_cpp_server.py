@@ -27,8 +27,6 @@ class LlamaServer:
         self.session = requests.Session()
         self.vocabulary_size = None
         self.bos_token = "<s>"
-        self.last_input_length = 0
-        self.last_output_length = 0
 
         # Start the server
         self._start_server()
@@ -142,9 +140,6 @@ class LlamaServer:
             pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(printable_payload)
             print()
 
-        self.last_input_length = len(token_ids)
-        self.last_output_length = 0
-
         # Make a direct request with streaming enabled using a context manager
         with self.session.post(url, json=payload, stream=True) as response:
             response.raise_for_status()  # Raise an exception for HTTP errors
@@ -172,7 +167,6 @@ class LlamaServer:
                     # Extract the token content
                     if data.get('content', ''):
                         full_text += data['content']
-                        self.last_output_length += 1
                         yield full_text
 
                     # Check if generation is complete

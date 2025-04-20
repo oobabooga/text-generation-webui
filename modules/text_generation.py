@@ -481,12 +481,8 @@ def generate_reply_custom(question, original_question, seed, state, stopping_str
         traceback.print_exc()
     finally:
         t1 = time.time()
-        if shared.args.loader == 'llama.cpp':
-            original_tokens = shared.model.last_input_length
-            new_tokens = shared.model.last_output_length
-        else:
-            original_tokens = len(encode(original_question)[0])
-            new_tokens = len(encode(original_question + reply)[0]) - original_tokens
+        original_tokens = len(encode(original_question)[0])
+        new_tokens = len(encode(original_question + reply)[0]) - original_tokens
 
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
