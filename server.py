@@ -1,9 +1,8 @@
 import os
 import warnings
 
-from modules import shared
-
 import modules.one_click_installer_check
+from modules import shared
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
 
@@ -36,7 +35,6 @@ import yaml
 
 import modules.extensions as extensions_module
 from modules import (
-    chat,
     training,
     ui,
     ui_chat,
