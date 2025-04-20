@@ -6,7 +6,12 @@ from typing import Any, Dict, Optional, Union
 import torch
 from exllamav3 import Cache, Config, Model
 from torch.nn import CrossEntropyLoss
-from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
+from transformers import (
+    GenerationConfig,
+    GenerationMixin,
+    PretrainedConfig,
+    PreTrainedModel
+)
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import shared
@@ -19,7 +24,7 @@ except Exception:
     traceback.print_exc()
 
 
-class Exllamav3HF(PreTrainedModel):
+class Exllamav3HF(PreTrainedModel, GenerationMixin):
     def __init__(self, model_dir):
         super().__init__(PretrainedConfig())
         self.generation_config = GenerationConfig()

@@ -1,3 +1,4 @@
+import sys
 import time
 from pathlib import Path
 
@@ -33,6 +34,10 @@ def load_model(model_name, loader=None):
             if loader is None:
                 logger.error('The path to the model does not exist. Exiting.')
                 raise ValueError
+
+    if loader != 'llama.cpp' and 'sampler_hijack' not in sys.modules:
+        from modules import sampler_hijack
+        sampler_hijack.hijack_samplers()
 
     shared.args.loader = loader
     output = load_func_map[loader](model_name)
