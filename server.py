@@ -85,7 +85,7 @@ def create_interface():
 
     # Force some events to be triggered on page load
     shared.persistent_interface_state.update({
-        'loader': shared.args.loader or 'Transformers',
+        'loader': shared.args.loader or 'llama.cpp',
         'mode': shared.settings['mode'] if shared.settings['mode'] == 'instruct' else gr.update(),
         'character_menu': shared.args.character or shared.settings['character'],
         'instruction_template_str': shared.settings['instruction_template_str'],
