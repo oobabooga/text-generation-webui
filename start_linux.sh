@@ -2,6 +2,13 @@
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
+# Portable install case
+if [ -d "portable_env" ]; then
+    PYTHON_PATH="./portable_env/bin/python3"
+    $PYTHON_PATH server.py "$@"
+    exit $?
+fi
+
 if [[ "$(pwd)" =~ " " ]]; then echo This script relies on Miniconda which can not be silently installed under a path with spaces. && exit; fi
 
 # deactivate existing conda envs as needed to avoid conflicts
