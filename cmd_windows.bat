@@ -2,13 +2,6 @@
 
 cd /D "%~dp0"
 
-@rem Check if portable_env exists and exit if it does
-if exist "portable_env" (
-    echo Portable installation detected (portable_env folder exists).
-    echo The CMD feature is not available on portable installs.
-    goto end
-)
-
 set PATH=%PATH%;%SystemRoot%\system32
 
 echo "%CD%"| findstr /C:" " >nul && echo This script relies on Miniconda which can not be silently installed under a path with spaces. && goto end

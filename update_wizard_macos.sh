@@ -1,12 +1,5 @@
 #!/bin/bash
 
-# Check if portable_env exists and exit if it does
-if [ -d "portable_env" ]; then
-    echo "Portable installation detected (portable_env folder exists)."
-    echo "The update wizard is not available on portable installs."
-    exit 1
-fi
-
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 if [[ "$(pwd)" =~ " " ]]; then echo This script relies on Miniconda which can not be silently installed under a path with spaces. && exit; fi
