@@ -131,6 +131,9 @@ def TensorRT_LLM_loader(model_name):
 
 
 def unload_model(keep_model_name=False):
+    if shared.model is None:
+        return
+
     is_llamacpp = (shared.model.__class__.__name__ == 'LlamaServer')
 
     shared.model = shared.tokenizer = None
