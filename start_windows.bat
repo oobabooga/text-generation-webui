@@ -3,7 +3,7 @@ setlocal enabledelayedexpansion
 
 cd /D "%~dp0"
 
-@REM Portable install case
+@rem Portable install case
 if exist "portable_env" (
     set PYTHON_PATH=.\portable_env\python.exe
     %PYTHON_PATH% server.py %*
