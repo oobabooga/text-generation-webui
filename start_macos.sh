@@ -4,8 +4,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 
 # Portable install case
 if [ -d "portable_env" ]; then
-    PYTHON_PATH="./portable_env/bin/python3"
-    $PYTHON_PATH server.py --api --auto-launch "$@"
+    ./portable_env/bin/python3 server.py --api --auto-launch "$@"
     exit $?
 fi
 
