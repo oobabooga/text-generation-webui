@@ -2,7 +2,6 @@ import datetime
 from pathlib import Path
 
 import pandas as pd
-from datasets import load_dataset
 from tqdm import tqdm
 
 from modules import shared
@@ -39,6 +38,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
     '''
 
     import torch
+    from datasets import load_dataset
 
     from modules.torch_utils import clear_torch_cache
 
