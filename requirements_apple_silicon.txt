@@ -19,7 +19,7 @@ safetensors==0.5.*
 scipy
 sentencepiece
 tensorboard
-transformers==4.50.*
+transformers==4.51.*
 tqdm
 wandb
 
