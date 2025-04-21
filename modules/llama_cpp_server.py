@@ -283,7 +283,7 @@ class LlamaServer:
         if shared.args.rope_freq_base > 0:
             cmd += ["--rope-freq-base", str(shared.args.rope_freq_base)]
         if os.name == 'posix':
-            env |= {'LD_LIBRARY_PATH': os.path.dirname(self.server_path)}
+            env['LD_LIBRARY_PATH'] = f"{env.get('LD_LIBRARY_PATH')};{os.path.dirname(self.server_path)}"
 
         # Start the server with pipes for output
         self.process = subprocess.Popen(
