@@ -6,7 +6,7 @@ cd /D "%~dp0"
 @rem Portable install case
 if exist "portable_env" (
     set PYTHON_PATH=.\portable_env\python.exe
-    %PYTHON_PATH% server.py %*
+    %PYTHON_PATH% server.py --api --auto-launch %*
     exit /b %errorlevel%
 )
 
