@@ -256,7 +256,6 @@ class LlamaServer:
             "--batch-size", str(shared.args.batch_size),
             "--port", str(self.port),
         ]
-        env = os.environ.copy()
 
         if shared.args.flash_attn:
             cmd.append("--flash-attn")
@@ -282,8 +281,14 @@ class LlamaServer:
             cmd += ["--rope-freq-scale", str(1.0 / shared.args.compress_pos_emb)]
         if shared.args.rope_freq_base > 0:
             cmd += ["--rope-freq-base", str(shared.args.rope_freq_base)]
+
+        env = os.environ.copy()
         if os.name == 'posix':
-            env['LD_LIBRARY_PATH'] = f"{env.get('LD_LIBRARY_PATH')};{os.path.dirname(self.server_path)}"
+            current_path = env.get('LD_LIBRARY_PATH', '')
+            if current_path:
+                env['LD_LIBRARY_PATH'] = f"{current_path}:{os.path.dirname(self.server_path)}"
+            else:
+                env['LD_LIBRARY_PATH'] = os.path.dirname(self.server_path)
 
         # Start the server with pipes for output
         self.process = subprocess.Popen(
