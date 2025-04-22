@@ -176,7 +176,7 @@ jobs:
         continue-on-error: true
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ../textgen-portable-${{ inputs.version }}*.zip
+          file: ../textgen-portable-*.zip
           tag: ${{ inputs.version }}
           file_glob: true
           make_latest: false
