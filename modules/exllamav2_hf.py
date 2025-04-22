@@ -4,6 +4,15 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import torch
+from torch.nn import CrossEntropyLoss
+from transformers import (
+    GenerationConfig,
+    GenerationMixin,
+    PretrainedConfig,
+    PreTrainedModel
+)
+from transformers.modeling_outputs import CausalLMOutputWithPast
+
 from exllamav2 import (
     ExLlamaV2,
     ExLlamaV2Cache,
@@ -14,15 +23,6 @@ from exllamav2 import (
     ExLlamaV2Cache_TP,
     ExLlamaV2Config
 )
-from torch.nn import CrossEntropyLoss
-from transformers import (
-    GenerationConfig,
-    GenerationMixin,
-    PretrainedConfig,
-    PreTrainedModel
-)
-from transformers.modeling_outputs import CausalLMOutputWithPast
-
 from modules import shared
 from modules.logging_colors import logger
 
