@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version tag of llama-cpp-binaries to build: v3.0'
+        description: 'Version tag of text-generation-webui to build: v3.0'
         default: 'v3.0'
         required: true
         type: string
