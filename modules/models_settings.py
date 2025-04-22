@@ -188,40 +188,19 @@ def update_model_parameters(state, initial=False):
     UI: update the command-line arguments based on the interface values
     '''
     elements = ui.list_model_elements()  # the names of the parameters
-    gpu_memories = []
 
     for i, element in enumerate(elements):
         if element not in state:
             continue
 
         value = state[element]
-        if element.startswith('gpu_memory'):
-            gpu_memories.append(value)
-            continue
-
         if initial and element in shared.provided_arguments:
             continue
 
-        if element in ['cpu_memory'] and value == 0:
+        if element == 'cpu_memory' and value == 0:
             value = vars(shared.args_defaults)[element]
 
-        # Making some simple conversions
-        if element == 'cpu_memory' and value is not None:
-            value = f"{value}MiB"
-
         setattr(shared.args, element, value)
-
-    found_positive = False
-    for i in gpu_memories:
-        if i > 0:
-            found_positive = True
-            break
-
-    if not (initial and vars(shared.args)['gpu_memory'] != vars(shared.args_defaults)['gpu_memory']):
-        if found_positive:
-            shared.args.gpu_memory = [f"{i}MiB" for i in gpu_memories]
-        else:
-            shared.args.gpu_memory = None
 
 
 def apply_model_settings_to_state(model, state):

@@ -3,6 +3,12 @@ setlocal enabledelayedexpansion
 
 cd /D "%~dp0"
 
+@rem Portable install case
+if exist "portable_env" (
+    .\portable_env\python.exe server.py --api --auto-launch %*
+    exit /b %errorlevel%
+)
+
 set PATH=%PATH%;%SystemRoot%\system32
 
 echo "%CD%"| findstr /C:" " >nul && echo This script relies on Miniconda which can not be silently installed under a path with spaces. && goto end

@@ -1,4 +1,5 @@
 import json
+import os
 import pprint
 import socket
 import subprocess
@@ -281,12 +282,21 @@ class LlamaServer:
         if shared.args.rope_freq_base > 0:
             cmd += ["--rope-freq-base", str(shared.args.rope_freq_base)]
 
+        env = os.environ.copy()
+        if os.name == 'posix':
+            current_path = env.get('LD_LIBRARY_PATH', '')
+            if current_path:
+                env['LD_LIBRARY_PATH'] = f"{current_path}:{os.path.dirname(self.server_path)}"
+            else:
+                env['LD_LIBRARY_PATH'] = os.path.dirname(self.server_path)
+
         # Start the server with pipes for output
         self.process = subprocess.Popen(
             cmd,
             stderr=subprocess.PIPE,
             text=True,
-            bufsize=1
+            bufsize=1,
+            env=env
         )
 
         def filter_stderr(process_stderr):

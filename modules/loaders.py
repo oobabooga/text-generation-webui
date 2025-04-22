@@ -3,29 +3,7 @@ from collections import OrderedDict
 
 import gradio as gr
 
-from modules import shared
-
 loaders_and_params = OrderedDict({
-    'Transformers': [
-        'gpu_memory',
-        'cpu_memory',
-        'alpha_value',
-        'compress_pos_emb',
-        'compute_dtype',
-        'quant_type',
-        'load_in_8bit',
-        'load_in_4bit',
-        'torch_compile',
-        'use_flash_attention_2',
-        'auto_devices',
-        'cpu',
-        'disk',
-        'use_double_quant',
-        'use_eager_attention',
-        'bf16',
-        'trust_remote_code',
-        'no_use_fast',
-    ],
     'llama.cpp': [
         'n_gpu_layers',
         'threads',
@@ -42,6 +20,25 @@ loaders_and_params = OrderedDict({
         'no_mmap',
         'mlock',
         'numa',
+    ],
+    'Transformers': [
+        'gpu_split',
+        'cpu_memory',
+        'alpha_value',
+        'compress_pos_emb',
+        'compute_dtype',
+        'quant_type',
+        'load_in_8bit',
+        'load_in_4bit',
+        'torch_compile',
+        'use_flash_attention_2',
+        'cpu',
+        'disk',
+        'use_double_quant',
+        'use_eager_attention',
+        'bf16',
+        'trust_remote_code',
+        'no_use_fast',
     ],
     'ExLlamav3_HF': [
         'max_seq_len',
@@ -346,21 +343,12 @@ def blacklist_samplers(loader, dynamic_temperature):
     return output
 
 
-def get_gpu_memory_keys():
-    return [k for k in shared.gradio if k.startswith('gpu_memory')]
-
-
 @functools.cache
 def get_all_params():
     all_params = set()
     for k in loaders_and_params:
         for el in loaders_and_params[k]:
             all_params.add(el)
-
-    if 'gpu_memory' in all_params:
-        all_params.remove('gpu_memory')
-        for k in get_gpu_memory_keys():
-            all_params.add(k)
 
     return sorted(all_params)
 
@@ -370,9 +358,5 @@ def make_loader_params_visible(loader):
     all_params = get_all_params()
     if loader in loaders_and_params:
         params = loaders_and_params[loader]
-
-        if 'gpu_memory' in params:
-            params.remove('gpu_memory')
-            params += get_gpu_memory_keys()
 
     return [gr.update(visible=True) if k in params else gr.update(visible=False) for k in all_params]

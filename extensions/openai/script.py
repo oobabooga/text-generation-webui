@@ -6,7 +6,6 @@ import traceback
 from collections import deque
 from threading import Thread
 
-import speech_recognition as sr
 import uvicorn
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,11 +15,9 @@ from pydub import AudioSegment
 from sse_starlette import EventSourceResponse
 
 import extensions.openai.completions as OAIcompletions
-import extensions.openai.embeddings as OAIembeddings
 import extensions.openai.images as OAIimages
 import extensions.openai.logits as OAIlogits
 import extensions.openai.models as OAImodels
-import extensions.openai.moderations as OAImoderations
 from extensions.openai.errors import ServiceUnavailableError
 from extensions.openai.tokens import token_count, token_decode, token_encode
 from extensions.openai.utils import _start_cloudflared
@@ -165,6 +162,8 @@ def handle_billing_usage():
 
 @app.post('/v1/audio/transcriptions', dependencies=check_key)
 async def handle_audio_transcription(request: Request):
+    import speech_recognition as sr
+
     r = sr.Recognizer()
 
     form = await request.form()
@@ -211,6 +210,8 @@ async def handle_image_generation(request: Request):
 
 @app.post("/v1/embeddings", response_model=EmbeddingsResponse, dependencies=check_key)
 async def handle_embeddings(request: Request, request_data: EmbeddingsRequest):
+    import extensions.openai.embeddings as OAIembeddings
+
     input = request_data.input
     if not input:
         raise HTTPException(status_code=400, detail="Missing required argument input")
@@ -224,6 +225,8 @@ async def handle_embeddings(request: Request, request_data: EmbeddingsRequest):
 
 @app.post("/v1/moderations", dependencies=check_key)
 async def handle_moderations(request: Request):
+    import extensions.openai.moderations as OAImoderations
+
     body = await request.json()
     input = body["input"]
     if not input:

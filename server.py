@@ -1,11 +1,8 @@
 import os
 import warnings
 
-from modules import shared
-
-import accelerate  # This early import makes Intel GPUs happy
-
 import modules.one_click_installer_check
+from modules import shared
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
 
@@ -38,7 +35,6 @@ import yaml
 
 import modules.extensions as extensions_module
 from modules import (
-    chat,
     training,
     ui,
     ui_chat,
@@ -89,7 +85,7 @@ def create_interface():
 
     # Force some events to be triggered on page load
     shared.persistent_interface_state.update({
-        'loader': shared.args.loader or 'Transformers',
+        'loader': shared.args.loader or 'llama.cpp',
         'mode': shared.settings['mode'] if shared.settings['mode'] == 'instruct' else gr.update(),
         'character_menu': shared.args.character or shared.settings['character'],
         'instruction_template_str': shared.settings['instruction_template_str'],
@@ -218,9 +214,27 @@ if __name__ == "__main__":
         if extension not in shared.args.extensions:
             shared.args.extensions.append(extension)
 
+    available_models = utils.get_available_models()
+
     # Model defined through --model
     if shared.args.model is not None:
         shared.model_name = shared.args.model
+
+    # Select the model from a command-line menu
+    elif shared.args.model_menu:
+        if len(available_models) == 0:
+            logger.error('No models are available! Please download at least one.')
+            sys.exit(0)
+        else:
+            print('The following models are available:\n')
+            for i, model in enumerate(available_models):
+                print(f'{i+1}. {model}')
+
+            print(f'\nWhich one do you want to load? 1-{len(available_models)}\n')
+            i = int(input()) - 1
+            print()
+
+        shared.model_name = available_models[i]
 
     # If any model has been selected, load it
     if shared.model_name != 'None':

@@ -79,6 +79,7 @@ group.add_argument('--model', type=str, help='Name of the model to load by defau
 group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
 group.add_argument('--model-dir', type=str, default='models/', help='Path to directory with all the models.')
 group.add_argument('--lora-dir', type=str, default='loras/', help='Path to directory with all the loras.')
+group.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
 group.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 group.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
@@ -91,9 +92,7 @@ group.add_argument('--loader', type=str, help='Choose the model loader manually,
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
 group.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
-group.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
-group.add_argument('--gpu-memory', type=str, nargs='+', help='Maximum GPU memory in GiB to be allocated per GPU. Example: --gpu-memory 10 for a single GPU, --gpu-memory 10 5 for two GPUs. You can also set values in MiB like --gpu-memory 3500MiB.')
-group.add_argument('--cpu-memory', type=str, help='Maximum CPU memory in GiB to allocate for offloaded weights. Same as above.')
+group.add_argument('--cpu-memory', type=float, default=0, help='Maximum CPU memory in GiB. Use this for CPU offloading.')
 group.add_argument('--disk', action='store_true', help='If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.')
 group.add_argument('--disk-cache-dir', type=str, default='cache', help='Directory to save the disk cache to. Defaults to "cache".')
 group.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision (using bitsandbytes).')

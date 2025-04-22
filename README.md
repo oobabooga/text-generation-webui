@@ -27,6 +27,14 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## How to install
 
+#### Option 1: Portable builds
+
+Compatible with GGUF (llama.cpp) models, just unzip and run, no installation. Available for Windows, Linux, and macOS.
+
+Download from: https://github.com/oobabooga/text-generation-webui/releases
+
+#### Option 2: One-click installer
+
 1) Clone or [download the repository](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip).
 2) Run the script that matches your OS: `start_linux.sh`, `start_windows.bat`, `start_macos.sh`, or `start_wsl.bat`.
 3) Select your GPU vendor when asked.
@@ -351,6 +359,10 @@ Run `python download-model.py --help` to see all the options.
 ## Google Colab notebook
 
 https://colab.research.google.com/github/oobabooga/text-generation-webui/blob/main/Colab-TextGen-GPU.ipynb
+
+## Community
+
+https://www.reddit.com/r/Oobabooga/
 
 ## Acknowledgment
 
