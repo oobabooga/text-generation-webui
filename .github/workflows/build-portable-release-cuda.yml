@@ -160,7 +160,8 @@ jobs:
 
             # 6. Create ZIP file
             cd ..
-            ZIP_NAME="textgen-portable-${VERSION}-${PLATFORM}-cuda${CUDA_VERSION}.zip"
+            VERSION_CLEAN="${VERSION#v}"
+            ZIP_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}-cuda${CUDA_VERSION}.zip"
             echo "Creating archive: $ZIP_NAME"
 
             if [[ "$RUNNER_OS" == "Windows" ]]; then
