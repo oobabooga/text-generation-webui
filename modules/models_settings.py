@@ -197,12 +197,8 @@ def update_model_parameters(state, initial=False):
         if initial and element in shared.provided_arguments:
             continue
 
-        if element in ['cpu_memory'] and value == 0:
+        if element == 'cpu_memory' and value == 0:
             value = vars(shared.args_defaults)[element]
-
-        # Making some simple conversions
-        if element == 'cpu_memory' and value is not None:
-            value = f"{value}MiB"
 
         setattr(shared.args, element, value)
 
