@@ -3,7 +3,7 @@ gradio==4.37.*
 jinja2==3.1.6
 markdown
 numpy==1.26.*
-pydantic==2.8.2
+pydantic==2.11.3
 pyyaml
 requests
 rich
