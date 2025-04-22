@@ -356,14 +356,18 @@ def update_requirements(initial_installation=False, pull=True):
         )
 
     torver = torch_version()
+    requirements_base = os.path.join("requirements", "full")
+
     if "+rocm" in torver:
-        requirements_file = "requirements_amd" + ("_noavx2" if not cpu_has_avx2() else "") + ".txt"
+        file_name = f"requirements_amd{'_noavx2' if not cpu_has_avx2() else ''}.txt"
     elif "+cpu" in torver or "+cxx11" in torver:
-        requirements_file = "requirements_cpu_only" + ("_noavx2" if not cpu_has_avx2() else "") + ".txt"
+        file_name = f"requirements_cpu_only{'_noavx2' if not cpu_has_avx2() else ''}.txt"
     elif is_macos():
-        requirements_file = "requirements_apple_" + ("intel" if is_x86_64() else "silicon") + ".txt"
+        file_name = f"requirements_apple_{'intel' if is_x86_64() else 'silicon'}.txt"
     else:
-        requirements_file = "requirements" + ("_noavx2" if not cpu_has_avx2() else "") + ".txt"
+        file_name = f"requirements{'_noavx2' if not cpu_has_avx2() else ''}.txt"
+
+    requirements_file = os.path.join(requirements_base, file_name)
 
     # Load state from JSON file
     current_commit = get_current_commit()

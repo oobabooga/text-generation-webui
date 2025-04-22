@@ -1,0 +1,15 @@
+fastapi==0.112.4
+gradio==4.37.*
+jinja2==3.1.6
+markdown
+numpy==1.26.*
+pydantic==2.8.2
+pyyaml
+requests
+rich
+tqdm
+
+# API
+flask_cloudflared==0.0.14
+sse-starlette==1.6.5
+tiktoken
