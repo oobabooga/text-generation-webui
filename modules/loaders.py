@@ -4,6 +4,23 @@ from collections import OrderedDict
 import gradio as gr
 
 loaders_and_params = OrderedDict({
+    'llama.cpp': [
+        'n_gpu_layers',
+        'threads',
+        'threads_batch',
+        'batch_size',
+        'n_ctx',
+        'cache_type',
+        'tensor_split',
+        'rope_freq_base',
+        'compress_pos_emb',
+        'flash_attn',
+        'row_split',
+        'no_kv_offload',
+        'no_mmap',
+        'mlock',
+        'numa',
+    ],
     'Transformers': [
         'gpu_split',
         'cpu_memory',
@@ -22,23 +39,6 @@ loaders_and_params = OrderedDict({
         'bf16',
         'trust_remote_code',
         'no_use_fast',
-    ],
-    'llama.cpp': [
-        'n_gpu_layers',
-        'threads',
-        'threads_batch',
-        'batch_size',
-        'n_ctx',
-        'cache_type',
-        'tensor_split',
-        'rope_freq_base',
-        'compress_pos_emb',
-        'flash_attn',
-        'row_split',
-        'no_kv_offload',
-        'no_mmap',
-        'mlock',
-        'numa',
     ],
     'ExLlamav3_HF': [
         'max_seq_len',
