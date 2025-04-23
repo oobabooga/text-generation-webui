@@ -90,7 +90,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: 'oobabooga/text-generation-webui'
-          ref: ${{ inputs.version }}
+          ref: 'main'
           submodules: 'recursive'
 
       - uses: actions/setup-python@v4
