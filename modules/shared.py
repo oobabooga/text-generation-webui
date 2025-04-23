@@ -13,6 +13,7 @@ from modules.logging_colors import logger
 model = None
 tokenizer = None
 model_name = 'None'
+draft_model_name = 'None'
 is_seq2seq = False
 model_dirty_from_training = False
 lora_names = []
@@ -126,6 +127,14 @@ group.add_argument('--tensor-split', type=str, default=None, help='Split the mod
 group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
 group.add_argument('--no-kv-offload', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
 group.add_argument('--row-split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
+
+# Speculative decoding
+group = parser.add_argument_group('Speculative decoding')
+group.add_argument('--model-draft', type=str, default=None, help='Path to the draft model for speculative decoding.')
+group.add_argument('--draft-max', type=int, default=4, help='Number of tokens to draft for speculative decoding.')
+group.add_argument('--gpu-layers-draft', type=int, default=0, help='Number of layers to offload to the GPU for the draft model.')
+group.add_argument('--device-draft', type=str, default=None, help='Comma-separated list of devices to use for offloading the draft model.')
+group.add_argument('--ctx-size-draft', type=int, default=0, help='Size of the prompt context for the draft model. If 0, uses the same as the main model.')
 
 # ExLlamaV2
 group = parser.add_argument_group('ExLlamaV2')

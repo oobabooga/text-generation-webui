@@ -1291,3 +1291,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .dark .footer-button:hover svg {
     stroke: rgb(209 213 219);
 }
+
+.tgw-accordion {
+    padding: 10px 12px !important;
+}
+
+.dark .tgw-accordion {
+    border: 1px solid var(--border-color-dark);
+}

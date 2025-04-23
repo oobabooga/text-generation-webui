@@ -145,6 +145,11 @@ def list_model_elements():
         'cpp_runner',
         'trust_remote_code',
         'no_use_fast',
+        'model_draft',
+        'draft_max',
+        'gpu_layers_draft',
+        'device_draft',
+        'ctx_size_draft',
     ]
 
     return elements
