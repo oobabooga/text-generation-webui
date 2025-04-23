@@ -20,6 +20,12 @@ loaders_and_params = OrderedDict({
         'no_mmap',
         'mlock',
         'numa',
+        'model_draft',
+        'draft_max',
+        'gpu_layers_draft',
+        'device_draft',
+        'ctx_size_draft',
+        'speculative_decoding_accordion'
     ],
     'Transformers': [
         'gpu_split',
