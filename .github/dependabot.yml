@@ -6,13 +6,9 @@
 version: 2
 updates:
   - package-ecosystem: "pip"
-    directory: "/requirements/full/"
-    target-branch: "dev"
-    schedule:
-      interval: "weekly"
-
-  - package-ecosystem: "pip"
-    directory: "/requirements/portable/"
+    directories: "/requirements/full/"
+      - "/requirements/full/"
+      - "/requirements/portable/"
     target-branch: "dev"
     schedule:
       interval: "weekly"
