@@ -6,7 +6,7 @@
 version: 2
 updates:
   - package-ecosystem: "pip"
-    directories: "/requirements/full/"
+    directories:
       - "/requirements/full/"
       - "/requirements/portable/"
     target-branch: "dev"
