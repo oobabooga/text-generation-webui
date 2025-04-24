@@ -85,7 +85,70 @@ class Exllamav2Model:
             model.load_autosplit(cache)
 
         tokenizer = ExLlamaV2Tokenizer(config)
-        generator = ExLlamaV2StreamingGenerator(model, cache, tokenizer)
+
+        # Load draft model if specified
+        draft_model = None
+        draft_cache = None
+
+        if shared.args.model_draft and shared.args.model_draft not in [None, 'None']:
+            logger.info(f"Loading draft model for speculative decoding: {shared.args.model_draft}")
+
+            # Find the draft model path
+            draft_path = Path(shared.args.model_draft)
+            if not draft_path.exists():
+                draft_path = Path(f'{shared.args.model_dir}') / Path(shared.args.model_draft)
+
+            # Set up the draft model configuration
+            draft_config = ExLlamaV2Config()
+            draft_config.model_dir = str(draft_path)
+            draft_config.prepare()
+
+            # Use the same context size or specified one
+            if shared.args.ctx_size_draft > 0:
+                draft_config.max_seq_len = shared.args.ctx_size_draft
+            else:
+                draft_config.max_seq_len = config.max_seq_len
+
+            # Copy settings from main model
+            draft_config.scale_pos_emb = config.scale_pos_emb
+            draft_config.scale_alpha_value = config.scale_alpha_value
+            draft_config.no_flash_attn = config.no_flash_attn
+            draft_config.no_xformers = config.no_xformers
+            draft_config.no_sdpa = config.no_sdpa
+
+            # Create the draft model
+            draft_model = ExLlamaV2(draft_config)
+
+            # Configure device mapping for draft model
+            device_draft = None
+            if shared.args.device_draft:
+                device_draft = [device.strip() for device in shared.args.device_draft.split(',')]
+
+            # Load the draft model based on settings
+            if shared.args.gpu_layers_draft > 0:
+                logger.info(f"Loading draft model with {shared.args.gpu_layers_draft} GPU layers")
+                draft_model.load(device_map=device_draft, gpu_layers=shared.args.gpu_layers_draft)
+                draft_cache = cache_type(draft_model)
+            else:
+                logger.info(f"Loading draft model with autosplit")
+                draft_cache = cache_type(draft_model, lazy=True)
+                draft_model.load_autosplit(draft_cache)
+
+            logger.info(f"Draft model loaded with {shared.args.draft_max} speculative tokens")
+
+        # Create the generator with optional draft model
+        if draft_model is not None:
+            generator = ExLlamaV2StreamingGenerator(
+                model,
+                cache,
+                tokenizer,
+                draft_model=draft_model,
+                draft_cache=draft_cache,
+                num_speculative_tokens=shared.args.draft_max
+            )
+            logger.info("Using streaming generator with speculative decoding")
+        else:
+            generator = ExLlamaV2StreamingGenerator(model, cache, tokenizer)
 
         result = self()
         result.model = model
@@ -93,6 +156,8 @@ class Exllamav2Model:
         result.tokenizer = tokenizer
         result.generator = generator
         result.loras = None
+        result.draft_model = draft_model
+        result.draft_cache = draft_cache
         return result, result
 
     def encode(self, string, **kwargs):
@@ -181,6 +246,10 @@ class Exllamav2Model:
 
         self.generator.begin_stream(ids, settings, loras=self.loras)
 
+        # Get speed stats if draft model is being used
+        if hasattr(self, 'draft_model') and self.draft_model is not None:
+            self.generator.reset_sd_stats()
+
         decoded_text = ''
         for i in range(max_new_tokens):
             chunk, eos, _ = self.generator.stream()
@@ -189,6 +258,12 @@ class Exllamav2Model:
 
             decoded_text += chunk
             yield decoded_text
+
+        # Log speculative decoding stats if using draft model
+        if hasattr(self, 'draft_model') and self.draft_model is not None:
+            efficiency, accuracy, total_tokens, total_draft_tokens, accepted_draft_tokens = self.generator.get_sd_stats()
+            logger.info(f"Speculative decoding stats: efficiency={efficiency:.2f}, accuracy={accuracy:.2f}, "
+                       f"accepted={accepted_draft_tokens}/{total_draft_tokens} tokens")
 
     def generate(self, prompt, state):
         output = ''
