@@ -32,7 +32,7 @@ need_restart = False
 settings = {
     'show_controls': True,
     'start_with': '',
-    'mode': 'chat-instruct',
+    'mode': 'instruct',
     'chat_style': 'cai-chat',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'prompt-default': 'QA',
