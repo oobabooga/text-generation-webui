@@ -1,6 +1,7 @@
 import argparse
 import copy
 import os
+import shlex
 import sys
 from collections import OrderedDict
 from pathlib import Path
@@ -200,6 +201,21 @@ group.add_argument('--nowebui', action='store_true', help='Do not launch the Gra
 
 # Deprecated parameters
 group = parser.add_argument_group('Deprecated')
+
+# Handle CMD_FLAGS.txt
+cmd_flags_path = Path(__file__).parent.parent / "CMD_FLAGS.txt"
+if cmd_flags_path.exists():
+    with cmd_flags_path.open('r', encoding='utf-8') as f:
+        cmd_flags = ' '.join(
+            line.strip().rstrip('\\').strip()
+            for line in f
+            if line.strip().rstrip('\\').strip() and not line.strip().startswith('#')
+        )
+
+    if cmd_flags:
+        # Command-line takes precedence over CMD_FLAGS.txt
+        sys.argv = [sys.argv[0]] + shlex.split(cmd_flags) + sys.argv[1:]
+
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])

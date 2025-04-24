@@ -28,14 +28,7 @@ conda_env_path = os.path.join(script_dir, "installer_files", "env")
 state_file = '.installer_state.json'
 
 # Command-line flags
-cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
-if os.path.exists(cmd_flags_path):
-    with open(cmd_flags_path, 'r') as f:
-        CMD_FLAGS = ' '.join(line.strip().rstrip('\\').strip() for line in f if line.strip().rstrip('\\').strip() and not line.strip().startswith('#'))
-else:
-    CMD_FLAGS = ''
-
-flags = f"{' '.join([flag for flag in sys.argv[1:] if flag != '--update-wizard'])} {CMD_FLAGS}"
+flags = f"{' '.join([flag for flag in sys.argv[1:] if flag != '--update-wizard'])}"
 
 
 def signal_handler(sig, frame):
@@ -300,6 +293,7 @@ def install_webui():
 
     # Write a flag to CMD_FLAGS.txt for CPU mode
     if selected_gpu == "NONE":
+        cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
         with open(cmd_flags_path, 'r+') as cmd_flags_file:
             if "--cpu" not in cmd_flags_file.read():
                 print_big_message("Adding the --cpu flag to CMD_FLAGS.txt.")
