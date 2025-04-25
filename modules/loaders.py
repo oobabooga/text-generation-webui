@@ -9,7 +9,7 @@ loaders_and_params = OrderedDict({
         'threads',
         'threads_batch',
         'batch_size',
-        'n_ctx',
+        'ctx_size',
         'cache_type',
         'tensor_split',
         'extra_flags',
@@ -48,14 +48,14 @@ loaders_and_params = OrderedDict({
         'no_use_fast',
     ],
     'ExLlamav3_HF': [
-        'max_seq_len',
+        'ctx_size',
         'gpu_split',
         'cfg_cache',
         'trust_remote_code',
         'no_use_fast',
     ],
     'ExLlamav2_HF': [
-        'max_seq_len',
+        'ctx_size',
         'cache_type',
         'gpu_split',
         'alpha_value',
@@ -71,7 +71,7 @@ loaders_and_params = OrderedDict({
         'no_use_fast',
     ],
     'ExLlamav2': [
-        'max_seq_len',
+        'ctx_size',
         'cache_type',
         'gpu_split',
         'alpha_value',
@@ -93,7 +93,7 @@ loaders_and_params = OrderedDict({
         'no_use_fast',
     ],
     'TensorRT-LLM': [
-        'max_seq_len',
+        'ctx_size',
         'cpp_runner',
         'tensorrt_llm_info',
     ]

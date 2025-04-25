@@ -1,15 +1,15 @@
 from pathlib import Path
 
-import tensorrt_llm
 import torch
-from tensorrt_llm.runtime import ModelRunner, ModelRunnerCpp
 
+import tensorrt_llm
 from modules import shared
 from modules.logging_colors import logger
 from modules.text_generation import (
     get_max_prompt_length,
     get_reply_from_output_ids
 )
+from tensorrt_llm.runtime import ModelRunner, ModelRunnerCpp
 
 
 class TensorRTLLMModel:
@@ -35,7 +35,7 @@ class TensorRTLLMModel:
             logger.info("TensorRT-LLM: Using \"ModelRunnerCpp\"")
             runner_kwargs.update(
                 max_batch_size=1,
-                max_input_len=shared.args.max_seq_len - 512,
+                max_input_len=shared.args.ctx_size - 512,
                 max_output_len=512,
                 max_beam_width=1,
                 max_attention_window_size=None,

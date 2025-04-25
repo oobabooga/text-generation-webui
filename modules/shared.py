@@ -116,7 +116,6 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
 group.add_argument('--flash-attn', action='store_true', help='Use flash-attention.')
-group.add_argument('--n_ctx', type=int, default=8192, help='Size of the prompt context.')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
 group.add_argument('--batch-size', type=int, default=256, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
@@ -130,6 +129,11 @@ group.add_argument('--row-split', action='store_true', help='Split the model by 
 group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to pass to llama-server. Format: "flag1=value1;flag2;flag3=value3". Example: "override-tensor=exps=CPU"')
 group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
 
+# Cache
+group = parser.add_argument_group('Context and cache management')
+group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=8192, help='Context size in tokens.')
+group.add_argument('--cache_type', type=str, default='fp16', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4.')
+
 # Speculative decoding
 group = parser.add_argument_group('Speculative decoding')
 group.add_argument('--model-draft', type=str, default=None, help='Path to the draft model for speculative decoding.')
@@ -142,7 +146,6 @@ group.add_argument('--ctx-size-draft', type=int, default=0, help='Size of the pr
 group = parser.add_argument_group('ExLlamaV2')
 group.add_argument('--gpu-split', type=str, help='Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.')
 group.add_argument('--autosplit', action='store_true', help='Autosplit the model tensors across the available GPUs. This causes --gpu-split to be ignored.')
-group.add_argument('--max_seq_len', type=int, default=8192, help='Maximum sequence length.')
 group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.')
 group.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
 group.add_argument('--no_xformers', action='store_true', help='Force xformers to not be used.')

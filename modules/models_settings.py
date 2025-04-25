@@ -11,8 +11,7 @@ def get_fallback_settings():
     return {
         'bf16': False,
         'use_eager_attention': False,
-        'max_seq_len': 2048,
-        'n_ctx': 2048,
+        'ctx_size': 2048,
         'rope_freq_base': 0,
         'compress_pos_emb': 1,
         'alpha_value': 1,
@@ -59,7 +58,7 @@ def get_model_metadata(model):
 
         for k in metadata:
             if k.endswith('context_length'):
-                model_settings['n_ctx'] = min(metadata[k], 8192)
+                model_settings['ctx_size'] = min(metadata[k], 8192)
                 model_settings['truncation_length_info'] = metadata[k]
             elif k.endswith('rope.freq_base'):
                 model_settings['rope_freq_base'] = metadata[k]
@@ -97,7 +96,7 @@ def get_model_metadata(model):
                 if k in metadata:
                     model_settings['truncation_length'] = metadata[k]
                     model_settings['truncation_length_info'] = metadata[k]
-                    model_settings['max_seq_len'] = min(metadata[k], 8192)
+                    model_settings['ctx_size'] = min(metadata[k], 8192)
 
             if 'rope_theta' in metadata:
                 model_settings['rope_freq_base'] = metadata['rope_theta']

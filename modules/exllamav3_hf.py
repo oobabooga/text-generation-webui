@@ -33,7 +33,7 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
         self.ex_model = Model.from_config(config)
 
         # Calculate the closest multiple of 256 at or above the chosen value
-        max_tokens = shared.args.max_seq_len
+        max_tokens = shared.args.ctx_size
         if max_tokens % 256 != 0:
             adjusted_tokens = ((max_tokens // 256) + 1) * 256
             logger.warning(f"max_num_tokens must be a multiple of 256. Adjusting from {max_tokens} to {adjusted_tokens}")

@@ -254,7 +254,7 @@ class LlamaServer:
         cmd = [
             self.server_path,
             "--model", self.model_path,
-            "--ctx-size", str(shared.args.n_ctx),
+            "--ctx-size", str(shared.args.ctx_size),
             "--n-gpu-layers", str(shared.args.n_gpu_layers),
             "--batch-size", str(shared.args.batch_size),
             "--port", str(self.port),
