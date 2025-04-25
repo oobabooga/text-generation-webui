@@ -1314,7 +1314,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   margin-bottom: 12px;
   border-radius: 8px;
   border: 1px solid rgba(0, 0, 0, 0.1);
-  background-color: rgba(0, 0, 0, 0.02);
+  background-color: var(--darker-gray);
   overflow: hidden;
 }
 
@@ -1352,10 +1352,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   color: rgba(0, 0, 0, 0.7);
   font-size: 14px;
   line-height: 1.5;
-  white-space: pre-wrap;
   overflow-wrap: break-word;
-  max-height: 100px;
+  max-height: 300px;
   overflow-y: scroll;
+  contain: layout;
 }
 
 /* Animation for opening thinking blocks */

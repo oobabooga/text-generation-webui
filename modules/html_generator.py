@@ -155,7 +155,7 @@ def convert_to_markdown(string, message_id=None):
 
         # Check if thinking is complete or still in progress
         is_streaming = not remaining_content
-        title_text = "Thinking..." if is_streaming else "Thinking"
+        title_text = "Thinking..." if is_streaming else "Thought"
 
         thinking_block = f'''
         <details class="thinking-block" data-block-id="{block_id}" data-streaming="{str(is_streaming).lower()}">
