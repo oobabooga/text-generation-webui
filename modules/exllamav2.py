@@ -3,7 +3,6 @@ import traceback
 from pathlib import Path
 
 import torch
-
 from exllamav2 import (
     ExLlamaV2,
     ExLlamaV2Cache,
@@ -16,6 +15,7 @@ from exllamav2 import (
     ExLlamaV2Tokenizer
 )
 from exllamav2.generator import ExLlamaV2Sampler, ExLlamaV2StreamingGenerator
+
 from modules import shared
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
@@ -98,43 +98,27 @@ class Exllamav2Model:
             if not draft_path.exists():
                 draft_path = Path(f'{shared.args.model_dir}') / Path(shared.args.model_draft)
 
-            # Set up draft model config
+            # Initialize draft config directly as in the example
             draft_config = ExLlamaV2Config()
             draft_config.model_dir = str(draft_path)
             draft_config.prepare()
+            draft_config.arch_compat_overrides()
 
-            # Set draft context size
+            # Set context size for draft model
             if shared.args.ctx_size_draft > 0:
                 draft_config.max_seq_len = shared.args.ctx_size_draft
             else:
                 draft_config.max_seq_len = config.max_seq_len
 
-            # Copy relevant settings from main model
-            draft_config.scale_pos_emb = config.scale_pos_emb
-            draft_config.scale_alpha_value = config.scale_alpha_value
-            draft_config.no_flash_attn = config.no_flash_attn
-            draft_config.no_xformers = config.no_xformers
-            draft_config.no_sdpa = config.no_sdpa
-
-            # Create the draft model
+            # Create draft model
             draft_model = ExLlamaV2(draft_config)
 
-            # Set up device mapping for draft model
-            device_draft = None
-            if shared.args.device_draft:
-                device_draft = [d.strip() for d in shared.args.device_draft.split(",")]
+            # Create draft cache with lazy=True as in the example
+            draft_cache = cache_type(draft_model, lazy=True)
 
-            # Load the draft model with specified settings
-            if shared.args.gpu_layers_draft > 0:
-                logger.info(f"Loading draft model with {shared.args.gpu_layers_draft} GPU layers")
-                draft_model.load(device_map=device_draft, gpu_layers=shared.args.gpu_layers_draft)
-            else:
-                draft_cache = cache_type(draft_model, lazy=True)
-                draft_model.load_autosplit(draft_cache)
-
-            # Create cache if not created during loading
-            if draft_cache is None:
-                draft_cache = cache_type(draft_model)
+            # Load draft model with autosplit as in the example
+            logger.info(f"Loading draft model with autosplit")
+            draft_model.load_autosplit(draft_cache)
 
             logger.info(f"Draft model loaded successfully with max_draft={shared.args.draft_max}")
 
