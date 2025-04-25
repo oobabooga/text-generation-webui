@@ -112,22 +112,31 @@ def extract_thinking_block(string):
     if not string:
         return None, string
 
-    # Check if the message starts with a <think> tag (allowing for whitespace)
-    thinking_start_pattern = re.compile(r'^\s*&lt;think&gt;([\s\S]*)')
-    thinking_match = thinking_start_pattern.match(string)
+    THINK_START_TAG = "&lt;think&gt;"
+    THINK_END_TAG = "&lt;/think&gt;"
 
-    if not thinking_match:
+    # Look for opening tag
+    start_pos = string.lstrip().find(THINK_START_TAG)
+    if start_pos == -1:
         return None, string
 
-    # Extract everything after the opening <think> tag
-    thinking_content = thinking_match.group(1)
+    # Adjust start position to account for any leading whitespace
+    start_pos = string.find(THINK_START_TAG)
 
-    # Check if there's a closing </think> tag
-    end_tag_match = re.search(r'([\s\S]*?)&lt;/think&gt;([\s\S]*)', thinking_content)
+    # Find the content after the opening tag
+    content_start = start_pos + len(THINK_START_TAG)
 
-    if end_tag_match:
-        return end_tag_match.group(1), end_tag_match.group(2)
+    # Look for closing tag
+    end_pos = string.find(THINK_END_TAG, content_start)
+
+    if end_pos != -1:
+        # Both tags found - extract content between them
+        thinking_content = string[content_start:end_pos]
+        remaining_content = string[end_pos + len(THINK_END_TAG):]
+        return thinking_content, remaining_content
     else:
+        # Only opening tag found - everything else is thinking content
+        thinking_content = string[content_start:]
         return thinking_content, ""
 
 
