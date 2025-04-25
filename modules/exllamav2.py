@@ -86,7 +86,7 @@ class Exllamav2Model:
 
         tokenizer = ExLlamaV2Tokenizer(config)
 
-        # Initialize draft model for speculative decoding if requested
+        # Initialize draft model for speculative decoding
         draft_model = None
         draft_cache = None
 
@@ -115,7 +115,6 @@ class Exllamav2Model:
 
             logger.info(f"Draft model loaded successfully with max_draft={shared.args.draft_max}")
 
-        # Create streaming generator with draft model if available
         generator = ExLlamaV2StreamingGenerator(
             model,
             cache,
