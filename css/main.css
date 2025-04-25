@@ -625,19 +625,19 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         width: 100%;
         overflow-y: visible;
     }
-    
+
     .message {
         break-inside: avoid;
     }
-    
+
     .gradio-container {
         overflow: visible;
     }
-    
+
     .tab-nav {
         display: none !important;
     }
-    
+
     #chat-tab > :first-child {
         max-width: unset;
     }
@@ -1307,4 +1307,97 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     opacity: 0.7;
     padding-left: 1rem;
     padding-right: 1rem;
+}
+
+/* Thinking blocks styling */
+.thinking-block {
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: rgba(0, 0, 0, 0.02);
+  overflow: hidden;
+}
+
+.thinking-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.7);
+  transition: background-color 0.2s;
+}
+
+.thinking-header:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.thinking-header::-webkit-details-marker {
+  display: none;
+}
+
+.thinking-icon {
+  margin-right: 8px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.thinking-title {
+  font-weight: 500;
+}
+
+.thinking-content {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  color: rgba(0, 0, 0, 0.7);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* Animation for opening thinking blocks */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.thinking-block[open] .thinking-content {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Additional style for in-progress thinking */
+.thinking-block[data-streaming="true"] .thinking-title {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .thinking-block {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .thinking-header {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .thinking-header:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+  }
+
+  .thinking-icon {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .thinking-content {
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+  }
 }

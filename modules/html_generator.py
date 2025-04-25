@@ -108,9 +108,40 @@ def replace_blockquote(m):
 
 
 @functools.lru_cache(maxsize=None)
-def convert_to_markdown(string):
+def convert_to_markdown(string, message_id=None):
     if not string:
         return ""
+
+    # Use a default message ID if none provided
+    if message_id is None:
+        message_id = "unknown"
+
+    # Extract thinking blocks before any other processing
+    # Only match <think> tags at the beginning of the message (allowing for whitespace)
+    # and handle the case where there's no closing tag
+    thinking_blocks = []
+
+    # First check if the message starts with a <think> tag
+    thinking_start_pattern = re.compile(r'^\s*&lt;think&gt;([\s\S]*)')
+    thinking_match = thinking_start_pattern.match(string)
+
+    if thinking_match:
+        # Extract everything after the opening <think> tag
+        thinking_content = thinking_match.group(1)
+
+        # Check if there's a closing </think> tag
+        end_tag_match = re.search(r'([\s\S]*?)&lt;/think&gt;([\s\S]*)', thinking_content)
+
+        if end_tag_match:
+            # Complete thinking block with start and end tags
+            thinking_blocks.append(end_tag_match.group(1))
+            # Replace the thinking block with a placeholder
+            string = end_tag_match.group(2)
+        else:
+            # Incomplete thinking block (streaming in progress)
+            thinking_blocks.append(thinking_content)
+            # Replace the entire content with an empty string
+            string = ""
 
     # Make \[ \]  LaTeX equations inline
     pattern = r'^\s*\\\[\s*\n([\s\S]*?)\n\s*\\\]\s*$'
@@ -206,18 +237,51 @@ def convert_to_markdown(string):
     # Unescape backslashes
     html_output = html_output.replace('\\\\', '\\')
 
+    # Restore thinking blocks with proper HTML structure
+    for i, content in enumerate(thinking_blocks):
+        # First, convert the thinking content to markdown as well
+        thinking_content = markdown.markdown(content, extensions=['fenced_code', 'tables', SaneListExtension()])
+
+        # Generate a message-scoped ID using message_id and block position
+        block_id = f"thinking-{message_id}-{i}"
+
+        # For incomplete thinking blocks (during streaming), show a different icon/title
+        is_streaming = not re.search(r'</think>', string + content)
+        title_text = "Thinking..." if is_streaming else "Thinking"
+
+        thinking_html = f'''
+        <details class="thinking-block" data-block-id="{block_id}" data-streaming="{str(is_streaming).lower()}">
+            <summary class="thinking-header">
+                <svg class="thinking-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 1.33334C4.31868 1.33334 1.33334 4.31868 1.33334 8.00001C1.33334 11.6813 4.31868 14.6667 8 14.6667C11.6813 14.6667 14.6667 11.6813 14.6667 8.00001C14.6667 4.31868 11.6813 1.33334 8 1.33334Z" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 10.6667V8.00001" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 5.33334H8.00667" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="thinking-title">{title_text}</span>
+            </summary>
+            <div class="thinking-content">{thinking_content}</div>
+        </details>
+        '''
+
+        if string:
+            # If there's content after the thinking block
+            html_output = thinking_html + html_output
+        else:
+            # If the entire message is just a thinking block
+            html_output = thinking_html
+
     return html_output
 
 
-def convert_to_markdown_wrapped(string, use_cache=True):
+def convert_to_markdown_wrapped(string, message_id=None, use_cache=True):
     '''
     Used to avoid caching convert_to_markdown calls during streaming.
     '''
 
     if use_cache:
-        return convert_to_markdown(string)
+        return convert_to_markdown(string, message_id=message_id)
 
-    return convert_to_markdown.__wrapped__(string)
+    return convert_to_markdown.__wrapped__(string, message_id=message_id)
 
 
 def generate_basic_html(string):
@@ -273,7 +337,7 @@ def generate_instruct_html(history):
     for i in range(len(history['visible'])):
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
-        converted_visible = [convert_to_markdown_wrapped(entry, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+        converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
         if converted_visible[0]:  # Don't display empty user messages
             output += (
@@ -320,7 +384,7 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
     for i in range(len(history['visible'])):
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
-        converted_visible = [convert_to_markdown_wrapped(entry, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+        converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
         if converted_visible[0]:  # Don't display empty user messages
             output += (
@@ -360,7 +424,7 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
     for i in range(len(history['visible'])):
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
-        converted_visible = [convert_to_markdown_wrapped(entry, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+        converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
         if converted_visible[0]:  # Don't display empty user messages
             output += (

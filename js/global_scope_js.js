@@ -47,6 +47,17 @@ function handleMorphdomUpdate(text) {
             return false; // Skip updating the <pre> element
           }
         }
+
+        // Preserve open/closed state for thinking blocks
+        if (fromEl.classList && fromEl.classList.contains('thinking-block') &&
+            toEl.classList && toEl.classList.contains('thinking-block')) {
+          // Check if IDs match exactly (handles streaming updates)
+          if (fromEl.getAttribute('data-block-id') === toEl.getAttribute('data-block-id') &&
+              fromEl.hasAttribute('open')) {
+            toEl.setAttribute('open', '');
+          }
+        }
+
         return !fromEl.isEqualNode(toEl); // Update only if nodes differ
       }
     }
