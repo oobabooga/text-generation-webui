@@ -301,6 +301,8 @@ class LlamaServer:
                 cmd += ["--device-draft", shared.args.device_draft]
             if shared.args.ctx_size_draft > 0:
                 cmd += ["--ctx-size-draft", str(shared.args.ctx_size_draft)]
+        if shared.args.streaming_llm:
+            cmd += ["--cache-reuse", "1"]
         if shared.args.extra_flags:
             # Clean up the input
             extra_flags = shared.args.extra_flags.strip()
