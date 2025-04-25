@@ -12,6 +12,7 @@ loaders_and_params = OrderedDict({
         'n_ctx',
         'cache_type',
         'tensor_split',
+        'extra_flags',
         'rope_freq_base',
         'compress_pos_emb',
         'flash_attn',

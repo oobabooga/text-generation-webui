@@ -114,6 +114,7 @@ def list_model_elements():
         'max_seq_len',
         'cache_type',
         'tensor_split',
+        'extra_flags',
         'gpu_split',
         'alpha_value',
         'rope_freq_base',

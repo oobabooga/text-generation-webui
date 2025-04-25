@@ -301,6 +301,20 @@ class LlamaServer:
                 cmd += ["--device-draft", shared.args.device_draft]
             if shared.args.ctx_size_draft > 0:
                 cmd += ["--ctx-size-draft", str(shared.args.ctx_size_draft)]
+        if shared.args.extra_flags:
+            # Clean up the input
+            extra_flags = shared.args.extra_flags.strip()
+            if extra_flags.startswith('"') and extra_flags.endswith('"'):
+                extra_flags = extra_flags[1:-1].strip()
+            elif extra_flags.startswith("'") and extra_flags.endswith("'"):
+                extra_flags = extra_flags[1:-1].strip()
+
+            for flag_item in extra_flags.split(';'):
+                if '=' in flag_item:
+                    flag, value = flag_item.split('=', 1)
+                    cmd += [f"--{flag}", value]
+                else:
+                    cmd.append(f"--{flag_item}")
 
         env = os.environ.copy()
         if os.name == 'posix':
