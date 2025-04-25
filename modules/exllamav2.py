@@ -98,7 +98,6 @@ class Exllamav2Model:
             if not draft_path.exists():
                 draft_path = Path(f'{shared.args.model_dir}') / Path(shared.args.model_draft)
 
-            # Initialize draft config directly as in the example
             draft_config = ExLlamaV2Config()
             draft_config.model_dir = str(draft_path)
             draft_config.prepare()
@@ -110,14 +109,8 @@ class Exllamav2Model:
             else:
                 draft_config.max_seq_len = config.max_seq_len
 
-            # Create draft model
             draft_model = ExLlamaV2(draft_config)
-
-            # Create draft cache with lazy=True as in the example
             draft_cache = cache_type(draft_model, lazy=True)
-
-            # Load draft model with autosplit as in the example
-            logger.info(f"Loading draft model with autosplit")
             draft_model.load_autosplit(draft_cache)
 
             logger.info(f"Draft model loaded successfully with max_draft={shared.args.draft_max}")
@@ -244,8 +237,7 @@ class Exllamav2Model:
         # Log speculative decoding stats if using draft model
         if hasattr(self, 'draft_model') and self.draft_model is not None:
             efficiency, accuracy, total_tokens, total_draft_tokens, accepted_draft_tokens = self.generator.get_sd_stats()
-            logger.info(f"Speculative decoding stats: efficiency={efficiency:.2f}, accuracy={accuracy:.2f}, "
-                        f"accepted={accepted_draft_tokens}/{total_draft_tokens} tokens")
+            logger.info(f"Speculative decoding: accepted={accepted_draft_tokens}/{total_draft_tokens} tokens")
 
     def generate(self, prompt, state):
         output = ''
