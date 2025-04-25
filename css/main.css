@@ -1354,6 +1354,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: break-word;
+  max-height: 100px;
+  overflow-y: scroll;
 }
 
 /* Animation for opening thinking blocks */
