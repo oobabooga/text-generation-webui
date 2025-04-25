@@ -116,8 +116,8 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 group = parser.add_argument_group('llama.cpp')
 group.add_argument('--flash-attn', action='store_true', help='Use flash-attention.')
 group.add_argument('--n_ctx', type=int, default=8192, help='Size of the prompt context.')
-group.add_argument('--threads', type=int, default=max(1, int(os.cpu_count() / 2)), help='Number of threads to use.')
-group.add_argument('--threads-batch', type=int, default=os.cpu_count() * 2, help='Number of threads to use for batches/prompt processing.')
+group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
+group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
 group.add_argument('--batch-size', type=int, default=256, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
 group.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 group.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
@@ -149,7 +149,7 @@ group.add_argument('--cpp-runner', action='store_true', help='Use the ModelRunne
 
 # Cache
 group = parser.add_argument_group('Cache')
-group.add_argument('--cache_type', type=str, default='fp16', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4. \nTry to match the quantization of the model you are using for the most benefit. There is no accuracy benefit using fp16 when the model is quantized smaller.')
+group.add_argument('--cache_type', type=str, default='fp16', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4.')
 
 # DeepSpeed
 group = parser.add_argument_group('DeepSpeed')
