@@ -25,7 +25,7 @@ loaders_and_params = OrderedDict({
         'gpu_layers_draft',
         'device_draft',
         'ctx_size_draft',
-        'speculative_decoding_accordion'
+        'speculative_decoding_accordion',
     ],
     'Transformers': [
         'gpu_split',
@@ -82,6 +82,9 @@ loaders_and_params = OrderedDict({
         'no_xformers',
         'no_sdpa',
         'exllamav2_info',
+        'model_draft',
+        'ctx_size_draft',
+        'speculative_decoding_accordion',
     ],
     'HQQ': [
         'hqq_backend',
