@@ -1314,8 +1314,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   margin-bottom: 12px;
   border-radius: 8px;
   border: 1px solid rgba(0, 0, 0, 0.1);
-  background-color: var(--darker-gray);
+  background-color: var(--light-theme-gray);
   overflow: hidden;
+}
+
+.dark .thinking-block {
+  background-color: var(--darker-gray);
 }
 
 .thinking-header {
@@ -1377,29 +1381,4 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   0% { opacity: 0.6; }
   50% { opacity: 1; }
   100% { opacity: 0.6; }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .thinking-block {
-    background-color: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .thinking-header {
-    color: rgba(255, 255, 255, 0.8);
-  }
-
-  .thinking-header:hover {
-    background-color: rgba(255, 255, 255, 0.07);
-  }
-
-  .thinking-icon {
-    color: rgba(255, 255, 255, 0.6);
-  }
-
-  .thinking-content {
-    border-color: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.8);
-  }
 }
