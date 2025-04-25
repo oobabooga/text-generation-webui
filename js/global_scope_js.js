@@ -31,16 +31,25 @@ function removeLastClick() {
 }
 
 function handleMorphdomUpdate(text) {
-  // Store references to any open thinking blocks and their scroll positions before update
-  const openBlocks = {};
+  // Track closed blocks
+  const closedBlocks = new Set();
+  document.querySelectorAll(".thinking-block").forEach(block => {
+    const blockId = block.getAttribute("data-block-id");
+    // If block exists and is not open, add to closed set
+    if (blockId && !block.hasAttribute("open")) {
+      closedBlocks.add(blockId);
+    }
+  });
+
+  // Store scroll positions for any open blocks
+  const scrollPositions = {};
   document.querySelectorAll(".thinking-block[open]").forEach(block => {
     const content = block.querySelector(".thinking-content");
     const blockId = block.getAttribute("data-block-id");
-    if (content) {
-      // Check if user was scrolled to bottom (with small tolerance)
+    if (content && blockId) {
       const isAtBottom = Math.abs((content.scrollHeight - content.scrollTop) - content.clientHeight) < 5;
-      openBlocks[blockId] = {
-        element: block,
+      scrollPositions[blockId] = {
+        position: content.scrollTop,
         isAtBottom: isAtBottom
       };
     }
@@ -51,6 +60,7 @@ function handleMorphdomUpdate(text) {
     "<div class=\"prose svelte-1ybaih5\">" + text + "</div>",
     {
       onBeforeElUpdated: function(fromEl, toEl) {
+        // Preserve code highlighting
         if (fromEl.tagName === "PRE" && fromEl.querySelector("code[data-highlighted]")) {
           const fromCode = fromEl.querySelector("code");
           const toCode = toEl.querySelector("code");
@@ -58,46 +68,46 @@ function handleMorphdomUpdate(text) {
           if (fromCode && toCode && fromCode.textContent === toCode.textContent) {
             toEl.className = fromEl.className;
             toEl.innerHTML = fromEl.innerHTML;
-            return false; // Skip updating the <pre> element
+            return false;
           }
         }
 
-        // Preserve open/closed state for thinking blocks
+        // For thinking blocks, respect closed state
         if (fromEl.classList && fromEl.classList.contains("thinking-block") &&
             toEl.classList && toEl.classList.contains("thinking-block")) {
-          // Check if IDs match exactly (handles streaming updates)
-          if (fromEl.getAttribute("data-block-id") === toEl.getAttribute("data-block-id") &&
-              fromEl.hasAttribute("open")) {
-            toEl.setAttribute("open", "");
+          const blockId = toEl.getAttribute("data-block-id");
+          // If this block was closed by user, keep it closed
+          if (blockId && closedBlocks.has(blockId)) {
+            toEl.removeAttribute("open");
           }
         }
 
-        return !fromEl.isEqualNode(toEl); // Update only if nodes differ
+        return !fromEl.isEqualNode(toEl);
       },
 
-      // Add this callback to handle after element updates
       onElUpdated: function(el) {
-        // Check if this is a thinking-block that was open before
+        // Restore scroll positions for open thinking blocks
         if (el.classList && el.classList.contains("thinking-block") && el.hasAttribute("open")) {
           const blockId = el.getAttribute("data-block-id");
           const content = el.querySelector(".thinking-content");
 
-          if (content) {
-            // If this is a newly opened block or was at the bottom before, scroll to bottom
-            if (!openBlocks[blockId] || openBlocks[blockId].isAtBottom) {
-              setTimeout(() => {
+          if (content && blockId && scrollPositions[blockId]) {
+            setTimeout(() => {
+              if (scrollPositions[blockId].isAtBottom) {
                 content.scrollTop = content.scrollHeight;
-              }, 0);
-            }
+              } else {
+                content.scrollTop = scrollPositions[blockId].position;
+              }
+            }, 0);
           }
         }
       }
     }
   );
 
-  // Also add event listener for when details are opened manually
+  // Add toggle listeners for new blocks
   document.querySelectorAll(".thinking-block").forEach(block => {
-    if (!block._hasOpenListener) {
+    if (!block._hasToggleListener) {
       block.addEventListener("toggle", function(e) {
         if (this.open) {
           const content = this.querySelector(".thinking-content");
@@ -108,7 +118,7 @@ function handleMorphdomUpdate(text) {
           }
         }
       });
-      block._hasOpenListener = true;
+      block._hasToggleListener = true;
     }
   });
 }
