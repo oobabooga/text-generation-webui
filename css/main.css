@@ -1299,3 +1299,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .dark .tgw-accordion {
     border: 1px solid var(--border-color-dark);
 }
+
+.welcome-greeting {
+    text-align: center;
+    margin-top: 35vh;
+    font-size: 24px;
+    opacity: 0.6;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}

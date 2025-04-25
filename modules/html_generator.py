@@ -1,3 +1,4 @@
+import datetime
 import functools
 import html
 import os
@@ -389,8 +390,21 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
     return output
 
 
+def time_greeting():
+    current_hour = datetime.datetime.now().hour
+    if 5 <= current_hour < 12:
+        return "Good morning!"
+    elif 12 <= current_hour < 18:
+        return "Good afternoon!"
+    else:
+        return "Good evening!"
+
+
 def chat_html_wrapper(history, name1, name2, mode, style, character, reset_cache=False):
-    if mode == 'instruct':
+    if len(history['visible']) == 0:
+        greeting = f"<div class=\"welcome-greeting\">{time_greeting()} How can I help you today?</div>"
+        result = f'<div class="chat" id="chat">{greeting}</div>'
+    elif mode == 'instruct':
         result = generate_instruct_html(history)
     elif style == 'wpp':
         result = generate_chat_html(history, name1, name2)
