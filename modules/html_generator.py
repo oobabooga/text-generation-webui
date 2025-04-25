@@ -107,6 +107,30 @@ def replace_blockquote(m):
     return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
 
+def extract_thinking_block(string):
+    """Extract thinking blocks from the beginning of a string."""
+    if not string:
+        return None, string
+
+    # Check if the message starts with a <think> tag (allowing for whitespace)
+    thinking_start_pattern = re.compile(r'^\s*&lt;think&gt;([\s\S]*)')
+    thinking_match = thinking_start_pattern.match(string)
+
+    if not thinking_match:
+        return None, string
+
+    # Extract everything after the opening <think> tag
+    thinking_content = thinking_match.group(1)
+
+    # Check if there's a closing </think> tag
+    end_tag_match = re.search(r'([\s\S]*?)&lt;/think&gt;([\s\S]*)', thinking_content)
+
+    if end_tag_match:
+        return end_tag_match.group(1), end_tag_match.group(2)
+    else:
+        return thinking_content, ""
+
+
 @functools.lru_cache(maxsize=None)
 def convert_to_markdown(string, message_id=None):
     if not string:
@@ -116,32 +140,47 @@ def convert_to_markdown(string, message_id=None):
     if message_id is None:
         message_id = "unknown"
 
-    # Extract thinking blocks before any other processing
-    # Only match <think> tags at the beginning of the message (allowing for whitespace)
-    # and handle the case where there's no closing tag
-    thinking_blocks = []
+    # Extract thinking block if present
+    thinking_content, remaining_content = extract_thinking_block(string)
 
-    # First check if the message starts with a <think> tag
-    thinking_start_pattern = re.compile(r'^\s*&lt;think&gt;([\s\S]*)')
-    thinking_match = thinking_start_pattern.match(string)
+    # Process the main content
+    html_output = process_markdown_content(remaining_content)
 
-    if thinking_match:
-        # Extract everything after the opening <think> tag
-        thinking_content = thinking_match.group(1)
+    # If thinking content was found, process it using the same function
+    if thinking_content is not None:
+        thinking_html = process_markdown_content(thinking_content)
 
-        # Check if there's a closing </think> tag
-        end_tag_match = re.search(r'([\s\S]*?)&lt;/think&gt;([\s\S]*)', thinking_content)
+        # Generate unique ID for the thinking block
+        block_id = f"thinking-{message_id}-0"
 
-        if end_tag_match:
-            # Complete thinking block with start and end tags
-            thinking_blocks.append(end_tag_match.group(1))
-            # Replace the thinking block with a placeholder
-            string = end_tag_match.group(2)
-        else:
-            # Incomplete thinking block (streaming in progress)
-            thinking_blocks.append(thinking_content)
-            # Replace the entire content with an empty string
-            string = ""
+        # Check if thinking is complete or still in progress
+        is_streaming = not remaining_content
+        title_text = "Thinking..." if is_streaming else "Thinking"
+
+        thinking_block = f'''
+        <details class="thinking-block" data-block-id="{block_id}" data-streaming="{str(is_streaming).lower()}">
+            <summary class="thinking-header">
+                <svg class="thinking-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 1.33334C4.31868 1.33334 1.33334 4.31868 1.33334 8.00001C1.33334 11.6813 4.31868 14.6667 8 14.6667C11.6813 14.6667 14.6667 11.6813 14.6667 8.00001C14.6667 4.31868 11.6813 1.33334 8 1.33334Z" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 10.6667V8.00001" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 5.33334H8.00667" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="thinking-title">{title_text}</span>
+            </summary>
+            <div class="thinking-content pretty_scrollbar">{thinking_html}</div>
+        </details>
+        '''
+
+        # Prepend the thinking block to the message HTML
+        html_output = thinking_block + html_output
+
+    return html_output
+
+
+def process_markdown_content(string):
+    """Process a string through the markdown conversion pipeline."""
+    if not string:
+        return ""
 
     # Make \[ \]  LaTeX equations inline
     pattern = r'^\s*\\\[\s*\n([\s\S]*?)\n\s*\\\]\s*$'
@@ -236,39 +275,6 @@ def convert_to_markdown(string, message_id=None):
 
     # Unescape backslashes
     html_output = html_output.replace('\\\\', '\\')
-
-    # Restore thinking blocks with proper HTML structure
-    for i, content in enumerate(thinking_blocks):
-        # First, convert the thinking content to markdown as well
-        thinking_content = markdown.markdown(content, extensions=['fenced_code', 'tables', SaneListExtension()])
-
-        # Generate a message-scoped ID using message_id and block position
-        block_id = f"thinking-{message_id}-{i}"
-
-        # For incomplete thinking blocks (during streaming), show a different icon/title
-        is_streaming = not re.search(r'</think>', string + content)
-        title_text = "Thinking..." if is_streaming else "Thinking"
-
-        thinking_html = f'''
-        <details class="thinking-block" data-block-id="{block_id}" data-streaming="{str(is_streaming).lower()}">
-            <summary class="thinking-header">
-                <svg class="thinking-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 1.33334C4.31868 1.33334 1.33334 4.31868 1.33334 8.00001C1.33334 11.6813 4.31868 14.6667 8 14.6667C11.6813 14.6667 14.6667 11.6813 14.6667 8.00001C14.6667 4.31868 11.6813 1.33334 8 1.33334Z" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M8 10.6667V8.00001" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M8 5.33334H8.00667" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span class="thinking-title">{title_text}</span>
-            </summary>
-            <div class="thinking-content">{thinking_content}</div>
-        </details>
-        '''
-
-        if string:
-            # If there's content after the thinking block
-            html_output = thinking_html + html_output
-        else:
-            # If the entire message is just a thinking block
-            html_output = thinking_html
 
     return html_output
 
