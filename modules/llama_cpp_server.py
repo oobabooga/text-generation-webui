@@ -57,6 +57,20 @@ class LlamaServer:
         return result.get("content", "")
 
     def prepare_payload(self, state):
+        # add default values as per https://github.com/ggml-org/llama.cpp/blob/master/examples/server/README.md
+        if "dry_multiplier" not in state:
+            state["dry_multiplier"] = 0.0
+        if "dry_base" not in state:
+            state["dry_base"] = 1.75
+        if "dry_allowed_length" not in state:
+            state["dry_allowed_length"] = 2
+        if "xtc_probability" not in state:
+            state["xtc_probability"] = 0.0
+        if "xtc_threshold" not in state:
+            state["xtc_threshold"] = 0.1
+        if "dry_sequence_breakers" not in state:
+            state["dry_sequence_breakers"] = '["\\n", ":", "\\\"", "*"]'
+        
         payload = {
             "temperature": state["temperature"] if not state["dynamic_temperature"] else (state["dynatemp_low"] + state["dynatemp_high"]) / 2,
             "dynatemp_range": 0 if not state["dynamic_temperature"] else (state["dynatemp_high"] - state["dynatemp_low"]) / 2,
