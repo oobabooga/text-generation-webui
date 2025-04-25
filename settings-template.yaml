@@ -29,7 +29,6 @@ truncation_length: 8192
 seed: -1
 custom_stopping_strings: ''
 custom_token_bans: ''
-show_after: ''
 negative_prompt: ''
 autoload_model: false
 dark_theme: true

@@ -417,16 +417,8 @@ def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_
             yield history
             return
 
-    show_after = html.escape(state.get("show_after")) if state.get("show_after") else None
     for history in chatbot_wrapper(text, state, regenerate=regenerate, _continue=_continue, loading_message=loading_message, for_ui=for_ui):
-        if show_after:
-            after = history["visible"][-1][1].partition(show_after)[2] or "*Is thinking...*"
-            yield {
-                'internal': history['internal'],
-                'visible': history['visible'][:-1] + [[history['visible'][-1][0], after]]
-            }
-        else:
-            yield history
+        yield history
 
 
 def character_is_loaded(state, raise_exception=False):
