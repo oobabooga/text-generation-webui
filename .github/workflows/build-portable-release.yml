@@ -15,7 +15,7 @@ on:
         type: string
       exclude:
         description: 'Exclude build configurations: key1-1:item1-1,key1-2:item1-2;key2-1:item2-1,key2-2:item2-2'
-        default: 'os:macos-13,avx:AVX;os:macos-14,avx:AVX'
+        default: 'None'
         required: false
         type: string
   workflow_call:
@@ -32,7 +32,7 @@ on:
         type: string
       exclude:
         description: 'Exclude build configurations: key1-1:item1-1,key1-2:item1-2;key2-1:item2-1,key2-2:item2-2'
-        default: 'os:macos-13,avx:AVX;os:macos-14,avx:AVX'
+        default: 'None'
         required: false
         type: string
 
@@ -59,7 +59,7 @@ jobs:
           $matrix = @{
               'os' = @('ubuntu-22.04', 'windows-2019', 'macos-13', 'macos-14')
               'pyver' = @("3.11")
-              'avx' = @("AVX2", "AVX")
+              'avx' = @("AVX2")
           }
 
           if ($env:CONFIGIN -ne 'Default') {$env:CONFIGIN.split(';').foreach({$matrix[$_.split(':')[0]] = $_.split(':')[1].split(',')})}
@@ -171,11 +171,7 @@ jobs:
             # 5. Create ZIP file
             cd ..
             VERSION_CLEAN="${VERSION#v}"
-            if [[ "$AVX_SUPPORT" == "AVX2" ]]; then
-                ZIP_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}.zip"
-            else
-                ZIP_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}-noavx2.zip"
-            fi
+            ZIP_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}.zip"
             echo "Creating archive: $ZIP_NAME"
 
             if [[ "$RUNNER_OS" == "Windows" ]]; then
