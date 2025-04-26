@@ -180,7 +180,7 @@ def create_interface():
             ssl_keyfile=shared.args.ssl_keyfile,
             ssl_certfile=shared.args.ssl_certfile,
             root_path=shared.args.subpath,
-            allowed_paths=["css", "js", "user_data/cache", "user_data/extensions"]
+            allowed_paths=["css", "js", "extensions", "user_data/cache"]
         )
 
 
