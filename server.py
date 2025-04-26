@@ -46,7 +46,6 @@ from modules import (
     ui_session,
     utils
 )
-from modules.api.script import setup as launch_api
 from modules.extensions import apply_extensions
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model_if_idle
