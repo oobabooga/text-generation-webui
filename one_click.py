@@ -115,7 +115,11 @@ def get_current_commit():
 
 
 def get_extensions_names():
-    return [foldername for foldername in os.listdir('extensions') if os.path.isfile(os.path.join('extensions', foldername, 'requirements.txt'))]
+    extensions_path = os.path.join('user_data', 'extensions')
+    return [
+        foldername for foldername in os.listdir(extensions_path)
+        if os.path.isfile(os.path.join(extensions_path, foldername, 'requirements.txt'))
+    ]
 
 
 def check_env():
@@ -468,7 +472,7 @@ def install_extensions_requirements():
     extensions = get_extensions_names()
     for i, extension in enumerate(extensions):
         print(f"\n\n--- [{i + 1}/{len(extensions)}]: {extension}\n\n")
-        extension_req_path = os.path.join("extensions", extension, "requirements.txt")
+        extension_req_path = os.path.join("user_data", "extensions", extension, "requirements.txt")
         run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
 
 
