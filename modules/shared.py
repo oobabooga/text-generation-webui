@@ -207,7 +207,7 @@ group.add_argument('--nowebui', action='store_true', help='Do not launch the Gra
 group = parser.add_argument_group('Deprecated')
 
 # Handle CMD_FLAGS.txt
-cmd_flags_path = Path(__file__).parent.parent / "CMD_FLAGS.txt"
+cmd_flags_path = Path(__file__).parent.parent / "user_data" / "CMD_FLAGS.txt"
 if cmd_flags_path.exists():
     with cmd_flags_path.open('r', encoding='utf-8') as f:
         cmd_flags = ' '.join(
