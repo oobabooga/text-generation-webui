@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 
 class GenerationOptions(BaseModel):
-    preset: str | None = Field(default=None, description="The name of a file under text-generation-webui/presets (without the .yaml extension). The sampling parameters that get overwritten by this option are the keys in the default_preset() function in modules/presets.py.")
+    preset: str | None = Field(default=None, description="The name of a file under text-generation-webui/user_data/presets (without the .yaml extension). The sampling parameters that get overwritten by this option are the keys in the default_preset() function in modules/presets.py.")
     dynatemp_low: float = 1
     dynatemp_high: float = 1
     dynatemp_exponent: float = 1
@@ -103,10 +103,10 @@ class ChatCompletionRequestParams(BaseModel):
 
     mode: str = Field(default='instruct', description="Valid options: instruct, chat, chat-instruct.")
 
-    instruction_template: str | None = Field(default=None, description="An instruction template defined under text-generation-webui/instruction-templates. If not set, the correct template will be automatically obtained from the model metadata.")
+    instruction_template: str | None = Field(default=None, description="An instruction template defined under text-generation-webui/user_data/instruction-templates. If not set, the correct template will be automatically obtained from the model metadata.")
     instruction_template_str: str | None = Field(default=None, description="A Jinja2 instruction template. If set, will take precedence over everything else.")
 
-    character: str | None = Field(default=None, description="A character defined under text-generation-webui/characters. If not set, the default \"Assistant\" character will be used.")
+    character: str | None = Field(default=None, description="A character defined under text-generation-webui/user_data/characters. If not set, the default \"Assistant\" character will be used.")
     bot_name: str | None = Field(default=None, description="Overwrites the value set by character field.", alias="name2")
     context: str | None = Field(default=None, description="Overwrites the value set by character field.")
     greeting: str | None = Field(default=None, description="Overwrites the value set by character field.")
