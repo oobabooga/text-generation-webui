@@ -250,6 +250,11 @@ async def handle_moderations(request: Request):
     return JSONResponse(response)
 
 
+@app.get("/v1/internal/health", dependencies=check_key)
+async def handle_health_check():
+    return JSONResponse(content={"status": "ok"})
+
+
 @app.post("/v1/internal/encode", response_model=EncodeResponse, dependencies=check_key)
 async def handle_token_encode(request_data: EncodeRequest):
     response = token_encode(request_data.text)
