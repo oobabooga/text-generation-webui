@@ -297,10 +297,6 @@ def load_user_config():
 
 args.loader = fix_loader_name(args.loader)
 
-# Activate the API extension
-if args.api or args.public_api:
-    add_extension('openai', last=True)
-
 # Load model-specific settings
 with Path(f'{args.model_dir}/config.yaml') as p:
     if p.exists():
