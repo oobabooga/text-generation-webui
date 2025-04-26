@@ -347,8 +347,7 @@ text-generation-webui
             ├── pytorch_model.bin.index.json
             ├── special_tokens_map.json
             ├── tokenizer_config.json
-            ├── tokenizer.model
-            └── pytorch_model-00006-of-00007.bin
+            └── tokenizer.model
 ```
 
 In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download it via the command-line with:
