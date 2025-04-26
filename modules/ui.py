@@ -94,7 +94,7 @@ if not shared.args.old_colors:
         input_radius='0.375rem',
     )
 
-if Path("notification.mp3").exists():
+if Path("user_data/notification.mp3").exists():
     audio_notification_js = "document.querySelector('#audio_notification audio')?.play();"
 else:
     audio_notification_js = ""

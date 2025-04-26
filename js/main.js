@@ -395,7 +395,7 @@ let bigPictureVisible = false;
 function addBigPicture() {
   var imgElement = document.createElement("img");
   var timestamp = new Date().getTime();
-  imgElement.src = "/file/cache/pfp_character.png?time=" + timestamp;
+  imgElement.src = "/file/user_data/cache/pfp_character.png?time=" + timestamp;
   imgElement.classList.add("bigProfilePicture");
   imgElement.addEventListener("load", function () {
     this.style.visibility = "visible";

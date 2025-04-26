@@ -72,13 +72,13 @@ def generate_html():
     global cards
     cards = []
     # Iterate through files in image folder
-    for file in sorted(Path("characters").glob("*")):
+    for file in sorted(Path("user_data/characters").glob("*")):
         if file.suffix in [".json", ".yml", ".yaml"]:
             character = file.stem
             container_html = '<div class="character-container">'
             image_html = "<div class='placeholder'></div>"
 
-            for path in [Path(f"characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
+            for path in [Path(f"user_data/characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
                 if path.exists():
                     image_html = f'<img src="file/{get_image_cache(path)}">'
                     break

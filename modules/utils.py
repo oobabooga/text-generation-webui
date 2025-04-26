@@ -98,7 +98,7 @@ def get_available_models():
     dirs_with_gguf = set()
     for gguf_path in gguf_files:
         path = Path(gguf_path)
-        if path.parts:
+        if len(path.parts) > 0:
             dirs_with_gguf.add(path.parts[0])
 
     # Find directories with safetensors files
@@ -141,11 +141,11 @@ def get_available_ggufs():
 
 
 def get_available_presets():
-    return sorted(set((k.stem for k in Path('presets').glob('*.yaml'))), key=natural_keys)
+    return sorted(set((k.stem for k in Path('user_data/presets').glob('*.yaml'))), key=natural_keys)
 
 
 def get_available_prompts():
-    prompt_files = list(Path('prompts').glob('*.txt'))
+    prompt_files = list(Path('user_data/prompts').glob('*.txt'))
     sorted_files = sorted(prompt_files, key=lambda x: x.stat().st_mtime, reverse=True)
     prompts = [file.stem for file in sorted_files]
     prompts.append('None')
@@ -153,12 +153,12 @@ def get_available_prompts():
 
 
 def get_available_characters():
-    paths = (x for x in Path('characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
+    paths = (x for x in Path('user_data/characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
     return sorted(set((k.stem for k in paths)), key=natural_keys)
 
 
 def get_available_instruction_templates():
-    path = "instruction-templates"
+    path = "user_data/instruction-templates"
     paths = []
     if os.path.exists(path):
         paths = (x for x in Path(path).iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
@@ -189,4 +189,4 @@ def get_available_chat_styles():
 
 
 def get_available_grammars():
-    return ['None'] + sorted([item.name for item in list(Path('grammars').glob('*.gbnf'))], key=natural_keys)
+    return ['None'] + sorted([item.name for item in list(Path('user_data/grammars').glob('*.gbnf'))], key=natural_keys)

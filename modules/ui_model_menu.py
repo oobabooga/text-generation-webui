@@ -223,9 +223,9 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
             model_dir=shared.args.model_dir if shared.args.model_dir != shared.args_defaults.model_dir else None
         )
 
-        if output_folder == Path("models"):
+        if output_folder == Path("user_data/models"):
             output_folder = Path(shared.args.model_dir)
-        elif output_folder == Path("loras"):
+        elif output_folder == Path("user_data/loras"):
             output_folder = Path(shared.args.lora_dir)
 
         if check:

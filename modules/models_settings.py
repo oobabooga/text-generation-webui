@@ -25,7 +25,7 @@ def get_fallback_settings():
 def get_model_metadata(model):
     model_settings = {}
 
-    # Get settings from models/config.yaml and models/config-user.yaml
+    # Get settings from user_data/models/config.yaml and user_data/models/config-user.yaml
     settings = shared.model_config
     for pat in settings:
         if re.match(pat.lower(), Path(model).name.lower()):
@@ -144,7 +144,7 @@ def get_model_metadata(model):
     if 'rope_freq_base' in model_settings and model_settings['rope_freq_base'] == 10000:
         model_settings.pop('rope_freq_base')
 
-    # Apply user settings from models/config-user.yaml
+    # Apply user settings from user_data/models/config-user.yaml
     settings = shared.user_config
     for pat in settings:
         if re.match(pat.lower(), Path(model).name.lower()):
@@ -223,7 +223,7 @@ def apply_model_settings_to_state(model, state):
 
 def save_model_settings(model, state):
     '''
-    Save the settings for this model to models/config-user.yaml
+    Save the settings for this model to user_data/models/config-user.yaml
     '''
     if model == 'None':
         yield ("Not saving the settings because no model is selected in the menu.")
