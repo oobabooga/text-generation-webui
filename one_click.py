@@ -297,7 +297,7 @@ def install_webui():
 
     # Write a flag to CMD_FLAGS.txt for CPU mode
     if selected_gpu == "NONE":
-        cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
+        cmd_flags_path = os.path.join(script_dir, "user_data", "CMD_FLAGS.txt")
         with open(cmd_flags_path, 'r+') as cmd_flags_file:
             if "--cpu" not in cmd_flags_file.read():
                 print_big_message("Adding the --cpu flag to CMD_FLAGS.txt.")
@@ -513,7 +513,7 @@ if __name__ == "__main__":
                 if choice == 'A':
                     install_extensions_requirements()
                 else:
-                    extension_req_path = os.path.join("extensions", choices[choice], "requirements.txt")
+                    extension_req_path = os.path.join("user_data", "extensions", choices[choice], "requirements.txt")
                     run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
 
                 update_requirements(pull=False)

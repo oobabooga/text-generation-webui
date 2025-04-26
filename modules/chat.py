@@ -848,7 +848,7 @@ def upload_character(file, img, tavern=False):
     if img is not None:
         img.save(Path(f'user_data/characters/{outfile_name}.png'))
 
-    logger.info(f'New character saved to "characters/{outfile_name}.yaml".')
+    logger.info(f'New character saved to "user_data/characters/{outfile_name}.yaml".')
     return gr.update(value=outfile_name, choices=get_available_characters())
 
 
