@@ -14,13 +14,13 @@ from fastapi.responses import JSONResponse
 from pydub import AudioSegment
 from sse_starlette import EventSourceResponse
 
-import extensions.openai.completions as OAIcompletions
-import extensions.openai.images as OAIimages
-import extensions.openai.logits as OAIlogits
-import extensions.openai.models as OAImodels
-from extensions.openai.errors import ServiceUnavailableError
-from extensions.openai.tokens import token_count, token_decode, token_encode
-from extensions.openai.utils import _start_cloudflared
+from . import completions as OAIcompletions
+from . import images as OAIimages
+from . import logits as OAIlogits
+from . import models as OAImodels
+from .errors import ServiceUnavailableError
+from .tokens import token_count, token_decode, token_encode
+from .utils import _start_cloudflared
 from modules import shared
 from modules.logging_colors import logger
 from modules.models import unload_model
@@ -210,7 +210,7 @@ async def handle_image_generation(request: Request):
 
 @app.post("/v1/embeddings", response_model=EmbeddingsResponse, dependencies=check_key)
 async def handle_embeddings(request: Request, request_data: EmbeddingsRequest):
-    import extensions.openai.embeddings as OAIembeddings
+    from . import embeddings as OAIembeddings
 
     input = request_data.input
     if not input:
@@ -225,7 +225,7 @@ async def handle_embeddings(request: Request, request_data: EmbeddingsRequest):
 
 @app.post("/v1/moderations", dependencies=check_key)
 async def handle_moderations(request: Request):
-    import extensions.openai.moderations as OAImoderations
+    from . import moderations as OAImoderations
 
     body = await request.json()
     input = body["input"]

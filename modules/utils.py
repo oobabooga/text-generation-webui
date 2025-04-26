@@ -167,7 +167,7 @@ def get_available_instruction_templates():
 
 
 def get_available_extensions():
-    extensions = sorted(set(map(lambda x: x.parts[1], Path('user_data/extensions').glob('*/script.py'))), key=natural_keys)
+    extensions = sorted(set(map(lambda x: x.parts[2], Path('user_data/extensions').glob('*/script.py'))), key=natural_keys)
     extensions = [v for v in extensions if v not in github.new_extensions]
     return extensions
 

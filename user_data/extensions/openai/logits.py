@@ -1,4 +1,4 @@
-from extensions.openai.completions import process_parameters
+from .completions import process_parameters
 from modules.logits import get_next_logits
 
 

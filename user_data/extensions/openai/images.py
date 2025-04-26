@@ -3,7 +3,7 @@ import time
 
 import requests
 
-from extensions.openai.errors import ServiceUnavailableError
+from .errors import ServiceUnavailableError
 
 
 def generations(prompt: str, size: str, response_format: str, n: int):
@@ -50,7 +50,7 @@ def generations(prompt: str, size: str, response_format: str, n: int):
         'created': int(time.time()),
         'data': []
     }
-    from extensions.openai.script import params
+    from .script import params
 
     # TODO: support SD_WEBUI_AUTH username:password pair.
     sd_url = f"{os.environ.get('SD_WEBUI_URL', params.get('sd_webui_url', ''))}/sdapi/v1/txt2img"

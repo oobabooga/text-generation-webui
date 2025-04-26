@@ -23,7 +23,7 @@ def float_list_to_base64(float_array: np.ndarray) -> str:
 
 
 def debug_msg(*args, **kwargs):
-    from extensions.openai.script import params
+    from .script import params
     if os.environ.get("OPENEDAI_DEBUG", params.get('debug', 0)):
         print(*args, **kwargs)
 

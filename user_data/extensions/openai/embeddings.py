@@ -3,8 +3,8 @@ import os
 import numpy as np
 from transformers import AutoModel
 
-from extensions.openai.errors import ServiceUnavailableError
-from extensions.openai.utils import debug_msg, float_list_to_base64
+from .errors import ServiceUnavailableError
+from .utils import debug_msg, float_list_to_base64
 from modules.logging_colors import logger
 
 embeddings_params_initialized = False
@@ -17,7 +17,7 @@ def initialize_embedding_params():
     '''
     global embeddings_params_initialized
     if not embeddings_params_initialized:
-        from extensions.openai.script import params
+        from .script import params
 
         global st_model, embeddings_model, embeddings_device
 

@@ -9,8 +9,8 @@ import requests
 import tiktoken
 from PIL import Image
 
-from extensions.openai.errors import InvalidRequestError
-from extensions.openai.utils import debug_msg
+from .errors import InvalidRequestError
+from .utils import debug_msg
 from modules import shared
 from modules.chat import (
     generate_chat_prompt,
