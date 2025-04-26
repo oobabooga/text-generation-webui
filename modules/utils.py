@@ -98,8 +98,8 @@ def get_available_models():
     dirs_with_gguf = set()
     for gguf_path in gguf_files:
         path = Path(gguf_path)
-        if path.parts:
-            dirs_with_gguf.add(path.parts[1])
+        if len(path.parts) > 0:
+            dirs_with_gguf.add(path.parts[0])
 
     # Find directories with safetensors files
     dirs_with_safetensors = set()
