@@ -192,10 +192,10 @@ if __name__ == "__main__":
     settings_file = None
     if shared.args.settings is not None and Path(shared.args.settings).exists():
         settings_file = Path(shared.args.settings)
-    elif Path('settings.yaml').exists():
-        settings_file = Path('settings.yaml')
-    elif Path('settings.json').exists():
-        settings_file = Path('settings.json')
+    elif Path('user_data/settings.yaml').exists():
+        settings_file = Path('user_data/settings.yaml')
+    elif Path('user_data/settings.json').exists():
+        settings_file = Path('user_data/settings.json')
 
     if settings_file is not None:
         logger.info(f"Loading settings from \"{settings_file}\"")

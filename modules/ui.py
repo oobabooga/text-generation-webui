@@ -4,7 +4,7 @@ from pathlib import Path
 import gradio as gr
 import yaml
 
-import extensions
+from user_data import extensions
 from modules import shared
 
 with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r') as f:
