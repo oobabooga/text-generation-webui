@@ -1,7 +1,6 @@
 import os
 import warnings
 
-import modules.one_click_installer_check
 from modules import shared
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
