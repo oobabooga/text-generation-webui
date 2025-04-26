@@ -30,7 +30,7 @@ params = {
 
 current_params = params.copy()
 
-with open(Path("extensions/silero_tts/languages.json"), encoding='utf8') as f:
+with open(Path("user_data/extensions/silero_tts/languages.json"), encoding='utf8') as f:
     languages = json.load(f)
 
 voice_pitches = ['x-low', 'low', 'medium', 'high', 'x-high']
@@ -129,7 +129,7 @@ def output_modifier(string, state):
     if string == '':
         string = '*Empty reply, try regenerating*'
     else:
-        output_file = Path(f'extensions/silero_tts/outputs/{state["character_menu"]}_{int(time.time())}.wav')
+        output_file = Path(f'user_data/extensions/silero_tts/outputs/{state["character_menu"]}_{int(time.time())}.wav')
         prosody = '<prosody rate="{}" pitch="{}">'.format(params['voice_speed'], params['voice_pitch'])
         silero_input = f'<speak>{prosody}{xmlesc(string)}</prosody></speak>'
         model.save_wav(ssml_text=silero_input, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
@@ -149,7 +149,7 @@ def setup():
 
 
 def random_sentence():
-    with open(Path("extensions/silero_tts/harvard_sentences.txt")) as f:
+    with open(Path("user_data/extensions/silero_tts/harvard_sentences.txt")) as f:
         return random.choice(list(f))
 
 
@@ -164,7 +164,7 @@ def voice_preview(string):
 
     string = tts_preprocessor.preprocess(string or random_sentence())
 
-    output_file = Path('extensions/silero_tts/outputs/voice_preview.wav')
+    output_file = Path('user_data/extensions/silero_tts/outputs/voice_preview.wav')
     prosody = f"<prosody rate=\"{params['voice_speed']}\" pitch=\"{params['voice_pitch']}\">"
     silero_input = f'<speak>{prosody}{xmlesc(string)}</prosody></speak>'
     model.save_wav(ssml_text=silero_input, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))

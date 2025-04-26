@@ -99,7 +99,7 @@ def optimize(collector, progress=gr.Progress()):
             return scores_cache[params_hash]
 
         # Benchmark the current set of parameters.
-        score, max_score = benchmark(Path("extensions/superboogav2/benchmark_texts/questions.json"), collector)
+        score, max_score = benchmark(Path("user_data/extensions/superboogav2/benchmark_texts/questions.json"), collector)
 
         # Cache the score
         scores_cache[params_hash] = score

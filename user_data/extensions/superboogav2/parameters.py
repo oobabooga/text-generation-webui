@@ -58,7 +58,7 @@ class Parameters:
             raise Exception("This class is a singleton!")
         else:
             Parameters._instance = self
-            self.hyperparameters = self._load_from_json(Path("extensions/superboogav2/config.json"))
+            self.hyperparameters = self._load_from_json(Path("user_data/extensions/superboogav2/config.json"))
 
     def _load_from_json(self, file_path):
         logger.debug('Loading hyperparameters...')

@@ -95,8 +95,8 @@ def create_interface():
         'filter_by_loader': shared.args.loader or 'All'
     })
 
-    if Path("cache/pfp_character.png").exists():
-        Path("cache/pfp_character.png").unlink()
+    if Path("user_data/cache/pfp_character.png").exists():
+        Path("user_data/cache/pfp_character.png").unlink()
 
     # css/js strings
     css = ui.css

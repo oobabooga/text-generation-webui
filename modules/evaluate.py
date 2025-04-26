@@ -69,7 +69,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
         data = load_dataset('ptb_text_only', 'penn_treebank', split='test')
         text = " ".join(data['sentence'])
     else:
-        with open(Path(f'training/datasets/{input_dataset}.txt'), 'r', encoding='utf-8') as f:
+        with open(Path(f'user_data/training/datasets/{input_dataset}.txt'), 'r', encoding='utf-8') as f:
             text = f.read()
 
     for model in models:

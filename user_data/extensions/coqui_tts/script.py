@@ -87,14 +87,14 @@ def toggle_text_in_history(history):
 
 
 def random_sentence():
-    with open(Path("extensions/coqui_tts/harvard_sentences.txt")) as f:
+    with open(Path("user_data/extensions/coqui_tts/harvard_sentences.txt")) as f:
         return random.choice(list(f))
 
 
 def voice_preview(string):
     string = html.unescape(string) or random_sentence()
 
-    output_file = Path('extensions/coqui_tts/outputs/voice_preview.wav')
+    output_file = Path('user_data/extensions/coqui_tts/outputs/voice_preview.wav')
     model.tts_to_file(
         text=string,
         file_path=output_file,
@@ -141,7 +141,7 @@ def output_modifier(string, state):
     if string == '':
         string = '*Empty reply, try regenerating*'
     else:
-        output_file = Path(f'extensions/coqui_tts/outputs/{state["character_menu"]}_{int(time.time())}.wav')
+        output_file = Path(f'user_data/extensions/coqui_tts/outputs/{state["character_menu"]}_{int(time.time())}.wav')
         model.tts_to_file(
             text=string,
             file_path=output_file,

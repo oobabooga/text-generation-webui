@@ -310,7 +310,7 @@ def ui():
         
         if raw_text_file not in ['None', '']:
             logger.info("Loading Text file...")
-            fullpath = clean_path('training/datasets', f'{raw_text_file}')
+            fullpath = clean_path('user_data/training/datasets', f'{raw_text_file}')
             fullpath = Path(fullpath)
             if fullpath.is_dir():
                 logger.info('Training path directory {}'.format(raw_text_file))
@@ -670,7 +670,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     if raw_text_file not in ['None', '']:
         train_template["template_type"] = "raw_text"
         logger.info("Loading text file...")
-        fullpath = clean_path('training/datasets', f'{raw_text_file}')
+        fullpath = clean_path('user_data/training/datasets', f'{raw_text_file}')
         fullpath = Path(fullpath)
         if fullpath.is_dir():
             logger.info('Training path directory {}'.format(raw_text_file))
@@ -1157,8 +1157,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 decoded_entries.append({"value": decoded_text})
 
             # Write the log file
-            Path('logs').mkdir(exist_ok=True)
-            with open(Path('logs/train_dataset_sample.json'), 'w') as json_file:
+            Path('user_data/logs').mkdir(exist_ok=True)
+            with open(Path('user_data/logs/train_dataset_sample.json'), 'w') as json_file:
                 json.dump(decoded_entries, json_file, indent=4)
 
             logger.info("Log file 'train_dataset_sample.json' created in the 'logs' directory.")

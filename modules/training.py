@@ -676,8 +676,8 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
                 decoded_entries.append({"value": decoded_text})
 
             # Write the log file
-            Path('logs').mkdir(exist_ok=True)
-            with open(Path('logs/train_dataset_sample.json'), 'w') as json_file:
+            Path('user_data/logs').mkdir(exist_ok=True)
+            with open(Path('user_data/logs/train_dataset_sample.json'), 'w') as json_file:
                 json.dump(decoded_entries, json_file, indent=4)
 
             logger.info("Log file 'train_dataset_sample.json' created in the 'logs' directory.")
