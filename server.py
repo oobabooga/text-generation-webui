@@ -46,6 +46,7 @@ from modules import (
     ui_session,
     utils
 )
+from modules.api.script import setup as launch_api
 from modules.extensions import apply_extensions
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model_if_idle
@@ -265,7 +266,12 @@ if __name__ == "__main__":
         shared.args.extensions = [x for x in shared.args.extensions if x != 'gallery']
         if shared.args.extensions is not None and len(shared.args.extensions) > 0:
             extensions_module.load_extensions()
+
+        launch_api()
     else:
+        if shared.args.api:
+            launch_api()
+
         # Launch the web UI
         create_interface()
         while True:
