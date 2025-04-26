@@ -12,8 +12,8 @@ from modules.text_generation import encode
 
 
 def load_past_evaluations():
-    if Path('logs/evaluations.csv').exists():
-        df = pd.read_csv(Path('logs/evaluations.csv'), dtype=str)
+    if Path('user_data/logs/evaluations.csv').exists():
+        df = pd.read_csv(Path('user_data/logs/evaluations.csv'), dtype=str)
         df['Perplexity'] = pd.to_numeric(df['Perplexity'])
         return df
     else:
