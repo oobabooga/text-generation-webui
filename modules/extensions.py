@@ -5,7 +5,7 @@ from inspect import signature
 
 import gradio as gr
 
-import extensions
+from user_data import extensions
 import modules.shared as shared
 from modules.logging_colors import logger
 
@@ -34,9 +34,9 @@ def load_extensions():
                 logger.info(f'Loading the extension "{name}"')
             try:
                 try:
-                    extension = importlib.import_module(f"extensions.{name}.script")
+                    extension = importlib.import_module(f"user_data.extensions.{name}.script")
                 except ModuleNotFoundError:
-                    logger.error(f"Could not import the requirements for '{name}'. Make sure to install the requirements for the extension.\n\n* To install requirements for all available extensions, launch the\n  update_wizard script for your OS and choose the B option.\n\n* To install the requirements for this extension alone, launch the\n  cmd script for your OS and paste the following command in the\n  terminal window that appears:\n\nLinux / Mac:\n\npip install -r extensions/{name}/requirements.txt --upgrade\n\nWindows:\n\npip install -r extensions\\{name}\\requirements.txt --upgrade\n")
+                    logger.error(f"Could not import the requirements for '{name}'. Make sure to install the requirements for the extension.\n\n* To install requirements for all available extensions, launch the\n  update_wizard script for your OS and choose the B option.\n\n* To install the requirements for this extension alone, launch the\n  cmd script for your OS and paste the following command in the\n  terminal window that appears:\n\nLinux / Mac:\n\npip install -r user_data/extensions/{name}/requirements.txt --upgrade\n\nWindows:\n\npip install -r user_data\\extensions\\{name}\\requirements.txt --upgrade\n")
                     raise
 
                 # Only run setup() and apply settings from settings.yaml once

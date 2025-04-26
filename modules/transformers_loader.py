@@ -249,7 +249,7 @@ def load_model_HF(model_name):
                     )
 
             if shared.args.disk:
-                params['offload_folder'] = shared.args.disk_cache_dir
+                params['offload_folder'] = str(Path(shared.args.disk_cache_dir))
 
         if shared.args.compress_pos_emb > 1:
             params['rope_scaling'] = {'type': 'linear', 'factor': shared.args.compress_pos_emb}

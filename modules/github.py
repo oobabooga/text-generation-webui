@@ -7,7 +7,7 @@ new_extensions = set()
 def clone_or_pull_repository(github_url):
     global new_extensions
 
-    repository_folder = Path("extensions")
+    repository_folder = Path("user_data/extensions")
     repo_name = github_url.rstrip("/").split("/")[-1].split(".")[0]
 
     # Check if the repository folder exists

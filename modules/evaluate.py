@@ -26,7 +26,7 @@ past_evaluations = load_past_evaluations()
 def save_past_evaluations(df):
     global past_evaluations
     past_evaluations = df
-    filepath = Path('logs/evaluations.csv')
+    filepath = Path('user_data/logs/evaluations.csv')
     filepath.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(filepath, index=False)
 

@@ -525,9 +525,9 @@ def start_new_chat(state):
 
 def get_history_file_path(unique_id, character, mode):
     if mode == 'instruct':
-        p = Path(f'logs/instruct/{unique_id}.json')
+        p = Path(f'user_data/logs/instruct/{unique_id}.json')
     else:
-        p = Path(f'logs/chat/{character}/{unique_id}.json')
+        p = Path(f'user_data/logs/chat/{character}/{unique_id}.json')
 
     return p
 
@@ -563,13 +563,13 @@ def rename_history(old_id, new_id, character, mode):
 
 def get_paths(state):
     if state['mode'] == 'instruct':
-        return Path('logs/instruct').glob('*.json')
+        return Path('user_data/logs/instruct').glob('*.json')
     else:
         character = state['character_menu']
 
         # Handle obsolete filenames and paths
-        old_p = Path(f'logs/{character}_persistent.json')
-        new_p = Path(f'logs/persistent_{character}.json')
+        old_p = Path(f'user_data/logs/{character}_persistent.json')
+        new_p = Path(f'user_data/logs/persistent_{character}.json')
         if old_p.exists():
             logger.warning(f"Renaming \"{old_p}\" to \"{new_p}\"")
             old_p.rename(new_p)
@@ -581,7 +581,7 @@ def get_paths(state):
             p.parent.mkdir(exist_ok=True)
             new_p.rename(p)
 
-        return Path(f'logs/chat/{character}').glob('*.json')
+        return Path(f'user_data/logs/chat/{character}').glob('*.json')
 
 
 def find_all_histories(state):
