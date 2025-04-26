@@ -86,6 +86,20 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def validate_host_header(request: Request, call_next):
+    # Be strict about only approving access to localhost by default
+    if not (shared.args.listen or shared.args.public_api):
+        host = request.headers.get("host", "").split(":")[0]
+        if host not in ["localhost", "127.0.0.1"]:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "Invalid host header"}
+            )
+
+    return await call_next(request)
+
+
 @app.options("/", dependencies=check_key)
 async def options_route():
     return JSONResponse(content="OK")
