@@ -387,12 +387,12 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
 
     # We use ?character and ?time.time() to force the browser to reset caches
     img_bot = (
-        f'<img src="file/cache/pfp_character_thumb.png?{character}" class="pfp_character">'
+        f'<img src="file/user_data/cache/pfp_character_thumb.png?{character}" class="pfp_character">'
         if Path("user_data/cache/pfp_character_thumb.png").exists() else ''
     )
 
     img_me = (
-        f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
+        f'<img src="file/user_data/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
         if Path("user_data/cache/pfp_me.png").exists() else ''
     )
 
