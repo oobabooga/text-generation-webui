@@ -158,7 +158,7 @@ def get_available_characters():
 
 
 def get_available_instruction_templates():
-    path = "instruction-templates"
+    path = "user_data/instruction-templates"
     paths = []
     if os.path.exists(path):
         paths = (x for x in Path(path).iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
