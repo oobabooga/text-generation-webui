@@ -81,7 +81,7 @@ group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to loa
 group.add_argument('--model-dir', type=str, default='user_data/models', help='Path to directory with all the models.')
 group.add_argument('--lora-dir', type=str, default='user_data/loras', help='Path to directory with all the loras.')
 group.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
-group.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
+group.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See user_data/settings-template.yaml for an example. If you create a file called user_data/settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 group.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 group.add_argument('--idle-timeout', type=int, default=0, help='Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.')
