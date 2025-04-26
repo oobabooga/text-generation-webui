@@ -1,3 +1,3 @@
-# Only used by the one-click installer.
+# Add persistent flags here to use every time you launch the web UI.
 # Example:
 # --listen --api
