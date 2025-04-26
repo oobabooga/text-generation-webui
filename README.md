@@ -43,7 +43,7 @@ Download from: https://github.com/oobabooga/text-generation-webui/releases
 
 To restart the web UI later, just run the same `start_` script. If you need to reinstall, delete the `installer_files` folder created during setup and run the script again.
 
-You can use command-line flags, like `./start_linux.sh --help`, or add them to `CMD_FLAGS.txt` (such as `--api` to enable API use). To update the project, run `update_wizard_linux.sh`, `update_wizard_windows.bat`, `update_wizard_macos.sh`, or `update_wizard_wsl.bat`.
+You can use command-line flags, like `./start_linux.sh --help`, or add them to `user_data/CMD_FLAGS.txt` (such as `--api` to enable API use). To update the project, run `update_wizard_linux.sh`, `update_wizard_windows.bat`, `update_wizard_macos.sh`, or `update_wizard_wsl.bat`.
 
 <details>
 <summary>
@@ -157,7 +157,7 @@ mkdir -p logs cache
 #   TORCH_CUDA_ARCH_LIST based on your GPU model
 #   APP_RUNTIME_GID      your host user's group id (run `id -g` in a terminal)
 #   BUILD_EXTENIONS      optionally add comma separated list of extensions to build
-# Edit CMD_FLAGS.txt and add in it the options you want to execute (like --listen --cpu)
+# Edit user_data/CMD_FLAGS.txt and add in it the options you want to execute (like --listen --cpu)
 # 
 docker compose up --build
 ```
