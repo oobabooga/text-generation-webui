@@ -13,6 +13,7 @@ loaders_and_params = OrderedDict({
         'cache_type',
         'tensor_split',
         'extra_flags',
+        'streaming_llm',
         'rope_freq_base',
         'compress_pos_emb',
         'flash_attn',
@@ -49,6 +50,7 @@ loaders_and_params = OrderedDict({
     ],
     'ExLlamav3_HF': [
         'ctx_size',
+        'cache_type',
         'gpu_split',
         'cfg_cache',
         'trust_remote_code',
