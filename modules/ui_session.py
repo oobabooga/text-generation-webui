@@ -47,8 +47,8 @@ def handle_save_settings(state, preset, extensions, show_controls, theme):
     contents = ui.save_settings(state, preset, extensions, show_controls, theme)
     return [
         contents,
-        "settings.yaml",
-        "./",
+        "user_data/settings.yaml",
+        "./user_data",
         gr.update(visible=True)
     ]
 

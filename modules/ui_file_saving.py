@@ -72,7 +72,7 @@ def create_event_handlers():
 
 def handle_save_preset_confirm_click(filename, contents):
     try:
-        utils.save_file(f"presets/{filename}.yaml", contents)
+        utils.save_file(f"user_data/presets/{filename}.yaml", contents)
         available_presets = utils.get_available_presets()
         output = gr.update(choices=available_presets, value=filename)
     except Exception:
@@ -145,7 +145,7 @@ def handle_save_preset_click(state):
 def handle_delete_preset_click(preset):
     return [
         f"{preset}.yaml",
-        "presets/",
+        "user_data/presets/",
         gr.update(visible=True)
     ]
 
@@ -154,7 +154,7 @@ def handle_save_grammar_click(grammar_string):
     return [
         grammar_string,
         "My Fancy Grammar.gbnf",
-        "grammars/",
+        "user_data/grammars/",
         gr.update(visible=True)
     ]
 
@@ -162,6 +162,6 @@ def handle_save_grammar_click(grammar_string):
 def handle_delete_grammar_click(grammar_file):
     return [
         grammar_file,
-        "grammars/",
+        "user_data/grammars/",
         gr.update(visible=True)
     ]

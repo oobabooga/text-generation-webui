@@ -1238,7 +1238,7 @@ def handle_save_template_click(instruction_template_str):
     contents = generate_instruction_template_yaml(instruction_template_str)
     return [
         "My Template.yaml",
-        "instruction-templates/",
+        "user_data/instruction-templates/",
         contents,
         gr.update(visible=True)
     ]
@@ -1247,7 +1247,7 @@ def handle_save_template_click(instruction_template_str):
 def handle_delete_template_click(template):
     return [
         f"{template}.yaml",
-        "instruction-templates/",
+        "user_data/instruction-templates/",
         gr.update(visible=False)
     ]
 
