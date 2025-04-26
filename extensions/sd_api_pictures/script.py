@@ -167,7 +167,7 @@ def get_SD_pictures(description, character):
             img_data = base64.b64decode(img_str)
 
             variadic = f'{date.today().strftime("%Y_%m_%d")}/{character}_{int(time.time())}'
-            output_file = Path(f'user_data/extensions/sd_api_pictures/outputs/{variadic}.png')
+            output_file = Path(f'extensions/sd_api_pictures/outputs/{variadic}.png')
             output_file.parent.mkdir(parents=True, exist_ok=True)
 
             with open(output_file.as_posix(), 'wb') as f:
