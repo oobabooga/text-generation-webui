@@ -28,7 +28,7 @@ def create_ui():
 
     # Character saver/deleter
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['character_saver']:
-        shared.gradio['save_character_filename'] = gr.Textbox(lines=1, label='File name', info='The character will be saved to your characters/ folder with this base filename.')
+        shared.gradio['save_character_filename'] = gr.Textbox(lines=1, label='File name', info='The character will be saved to your user_data/characters folder with this base filename.')
         with gr.Row():
             shared.gradio['save_character_cancel'] = gr.Button('Cancel', elem_classes="small-button")
             shared.gradio['save_character_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
@@ -41,7 +41,7 @@ def create_ui():
 
     # Preset saver
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['preset_saver']:
-        shared.gradio['save_preset_filename'] = gr.Textbox(lines=1, label='File name', info='The preset will be saved to your presets/ folder with this base filename.')
+        shared.gradio['save_preset_filename'] = gr.Textbox(lines=1, label='File name', info='The preset will be saved to your user_data/presets folder with this base filename.')
         shared.gradio['save_preset_contents'] = gr.Textbox(lines=10, label='File contents')
         with gr.Row():
             shared.gradio['save_preset_cancel'] = gr.Button('Cancel', elem_classes="small-button")

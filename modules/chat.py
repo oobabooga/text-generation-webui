@@ -757,7 +757,7 @@ def load_character(character, name1, name2):
             break
 
     if filepath is None or not filepath.exists():
-        logger.error(f"Could not find the character \"{character}\" inside characters/. No character has been loaded.")
+        logger.error(f"Could not find the character \"{character}\" inside user_data/characters. No character has been loaded.")
         raise ValueError
 
     file_contents = open(filepath, 'r', encoding='utf-8').read()

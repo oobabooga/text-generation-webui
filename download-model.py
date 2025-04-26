@@ -1,5 +1,5 @@
 '''
-Downloads models from Hugging Face to models/username_modelname.
+Downloads models from Hugging Face to user_data/models/username_modelname.
 
 Example:
 python download-model.py facebook/opt-1.3b
