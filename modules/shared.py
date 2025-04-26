@@ -131,7 +131,7 @@ group.add_argument('--streaming-llm', action='store_true', help='Activate Stream
 
 # Cache
 group = parser.add_argument_group('Context and cache management')
-group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=8192, help='Context size in tokens.')
+group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=8192, metavar='N', help='Context size in tokens.')
 group.add_argument('--cache_type', type=str, default='fp16', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).')
 
 # Speculative decoding
@@ -150,7 +150,7 @@ group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF: Creat
 group.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
 group.add_argument('--no_xformers', action='store_true', help='Force xformers to not be used.')
 group.add_argument('--no_sdpa', action='store_true', help='Force Torch SDPA to not be used.')
-group.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
+group.add_argument('--num_experts_per_token', type=int, default=2, metavar='N', help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
 group.add_argument('--enable_tp', action='store_true', help='Enable Tensor Parallelism (TP) in ExLlamaV2.')
 
 # HQQ
