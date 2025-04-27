@@ -9,6 +9,7 @@ from functools import wraps
 
 import gradio as gr
 import gradio.routes
+import gradio.utils
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from modules import shared
@@ -30,6 +31,7 @@ def create_app_with_trustedhost(*args, **kwargs):
 
 
 gradio.routes.App.create_app = create_app_with_trustedhost
+gradio.utils.launch_counter = lambda: None
 
 
 class GradioDeprecationWarning(DeprecationWarning):
