@@ -312,7 +312,7 @@ class LlamaServer:
             elif extra_flags.startswith("'") and extra_flags.endswith("'"):
                 extra_flags = extra_flags[1:-1].strip()
 
-            for flag_item in extra_flags.split(';'):
+            for flag_item in extra_flags.split(','):
                 if '=' in flag_item:
                     flag, value = flag_item.split('=', 1)
                     cmd += [f"--{flag}", value]
