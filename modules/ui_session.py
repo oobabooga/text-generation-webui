@@ -13,7 +13,7 @@ def create_ui():
                 shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions and restart", interactive=not mu)
                 with gr.Row():
                     shared.gradio['toggle_dark_mode'] = gr.Button('Toggle 💡')
-                    shared.gradio['save_settings'] = gr.Button('Save UI defaults to settings.yaml', interactive=not mu)
+                    shared.gradio['save_settings'] = gr.Button('Save UI defaults to user_data/settings.yaml', interactive=not mu)
 
                 with gr.Row():
                     with gr.Column():
@@ -48,7 +48,7 @@ def handle_save_settings(state, preset, extensions, show_controls, theme):
     return [
         contents,
         "settings.yaml",
-        "./",
+        "user_data/",
         gr.update(visible=True)
     ]
 

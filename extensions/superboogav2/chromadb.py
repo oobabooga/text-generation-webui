@@ -148,7 +148,7 @@ class ChromaCollector():
             id_ = new_ids[i]
             metadata = metadatas[i] if metadatas is not None else None
             embedding = self.embeddings_cache.get(text)
-            if embedding is not None and embedding.any():
+            if embedding is not None and any(embedding):
                 existing_texts.append(text)
                 existing_embeddings.append(embedding)
                 existing_ids.append(id_)

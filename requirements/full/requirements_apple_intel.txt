@@ -29,7 +29,7 @@ sse-starlette==1.6.5
 tiktoken
 
 # Mac wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.3.0/llama_cpp_binaries-0.3.0-cp311-cp311-macosx_15_0_x86_64.whl; platform_system == "Darwin" and platform_release >= "24.0.0" and platform_release < "25.0.0" and python_version == "3.11"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.3.0/llama_cpp_binaries-0.3.0-cp311-cp311-macosx_14_0_x86_64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0" and python_version == "3.11"
-https://github.com/oobabooga/exllamav3/releases/download/v0.0.1a3/exllamav3-0.0.1a3-py3-none-any.whl
-https://github.com/oobabooga/exllamav2/releases/download/v0.2.8/exllamav2-0.2.8-py3-none-any.whl
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.6.0/llama_cpp_binaries-0.6.0-py3-none-macosx_15_0_x86_64.whl; platform_system == "Darwin" and platform_release >= "24.0.0" and platform_release < "25.0.0" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.6.0/llama_cpp_binaries-0.6.0-py3-none-macosx_14_0_x86_64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0" and python_version == "3.11"
+https://github.com/oobabooga/exllamav3/releases/download/v0.0.1a4/exllamav3-0.0.1a4-py3-none-any.whl
+https://github.com/oobabooga/exllamav2/releases/download/v0.2.9/exllamav2-0.2.9-py3-none-any.whl

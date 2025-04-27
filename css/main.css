@@ -625,19 +625,19 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         width: 100%;
         overflow-y: visible;
     }
-    
+
     .message {
         break-inside: avoid;
     }
-    
+
     .gradio-container {
         overflow: visible;
     }
-    
+
     .tab-nav {
         display: none !important;
     }
-    
+
     #chat-tab > :first-child {
         max-width: unset;
     }
@@ -1290,4 +1290,95 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 .dark .footer-button:hover svg {
     stroke: rgb(209 213 219);
+}
+
+.tgw-accordion {
+    padding: 10px 12px !important;
+}
+
+.dark .tgw-accordion {
+    border: 1px solid var(--border-color-dark);
+}
+
+.welcome-greeting {
+    text-align: center;
+    margin-top: 40vh;
+    font-size: 24px;
+    opacity: 0.7;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+/* Thinking blocks styling */
+.thinking-block {
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: 1px solid rgb(0 0 0 / 10%);
+    background-color: var(--light-theme-gray);
+    overflow: hidden;
+}
+
+.dark .thinking-block {
+    background-color: var(--darker-gray);
+}
+
+.thinking-header {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 14px;
+    color: rgb(0 0 0 / 70%);
+    transition: background-color 0.2s;
+}
+
+.thinking-header:hover {
+    background-color: rgb(0 0 0 / 3%);
+}
+
+.thinking-header::-webkit-details-marker {
+    display: none;
+}
+
+.thinking-icon {
+    margin-right: 8px;
+    color: rgb(0 0 0 / 50%);
+}
+
+.thinking-title {
+    font-weight: 500;
+}
+
+.thinking-content {
+    padding: 12px 16px;
+    border-top: 1px solid rgb(0 0 0 / 7%);
+    color: rgb(0 0 0 / 70%);
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: break-word;
+    max-height: 250px;
+    overflow-y: scroll;
+    contain: layout;
+}
+
+/* Animation for opening thinking blocks */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.thinking-block[open] .thinking-content {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Additional style for in-progress thinking */
+.thinking-block[data-streaming="true"] .thinking-title {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
 }

@@ -1,26 +1,8 @@
-/cache
-/characters
 /css
 /extensions
-/grammars
 /installer_files
-/logs
-/loras
-/models
-/presets
-/prompts
 /repositories
-/softprompts
-/torch-dumps
-/training/datasets
-
-/CMD_FLAGS.txt
-/img_bot*
-/img_me*
-/models/config-user.yaml
-/notification.mp3
-/settings*.json
-/settings*.yaml
+/user_data
 
 .chroma
 .DS_Store

@@ -1,6 +1,7 @@
 import argparse
 import copy
 import os
+import shlex
 import sys
 from collections import OrderedDict
 from pathlib import Path
@@ -31,7 +32,7 @@ need_restart = False
 settings = {
     'show_controls': True,
     'start_with': '',
-    'mode': 'chat-instruct',
+    'mode': 'instruct',
     'chat_style': 'cai-chat',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'prompt-default': 'QA',
@@ -57,7 +58,6 @@ settings = {
     'seed': -1,
     'custom_stopping_strings': '',
     'custom_token_bans': '',
-    'show_after': '',
     'negative_prompt': '',
     'autoload_model': False,
     'dark_theme': True,
@@ -77,10 +77,10 @@ group.add_argument('--multi-user', action='store_true', help='Multi-user mode. C
 group.add_argument('--character', type=str, help='The name of the character to load in chat mode by default.')
 group.add_argument('--model', type=str, help='Name of the model to load by default.')
 group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
-group.add_argument('--model-dir', type=str, default='models/', help='Path to directory with all the models.')
-group.add_argument('--lora-dir', type=str, default='loras/', help='Path to directory with all the loras.')
+group.add_argument('--model-dir', type=str, default='user_data/models', help='Path to directory with all the models.')
+group.add_argument('--lora-dir', type=str, default='user_data/loras', help='Path to directory with all the loras.')
 group.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
-group.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
+group.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See user_data/settings-template.yaml for an example. If you create a file called user_data/settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 group.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 group.add_argument('--idle-timeout', type=int, default=0, help='Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.')
@@ -94,7 +94,7 @@ group = parser.add_argument_group('Transformers/Accelerate')
 group.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
 group.add_argument('--cpu-memory', type=float, default=0, help='Maximum CPU memory in GiB. Use this for CPU offloading.')
 group.add_argument('--disk', action='store_true', help='If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.')
-group.add_argument('--disk-cache-dir', type=str, default='cache', help='Directory to save the disk cache to. Defaults to "cache".')
+group.add_argument('--disk-cache-dir', type=str, default='user_data/cache', help='Directory to save the disk cache to. Defaults to "user_data/cache".')
 group.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision (using bitsandbytes).')
 group.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
 group.add_argument('--no-cache', action='store_true', help='Set use_cache to False while generating text. This reduces VRAM usage slightly, but it comes at a performance cost.')
@@ -115,10 +115,9 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
 group.add_argument('--flash-attn', action='store_true', help='Use flash-attention.')
-group.add_argument('--n_ctx', type=int, default=8192, help='Size of the prompt context.')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
-group.add_argument('--batch-size', type=int, default=2048, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
+group.add_argument('--batch-size', type=int, default=256, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
 group.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 group.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
 group.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
@@ -126,17 +125,31 @@ group.add_argument('--tensor-split', type=str, default=None, help='Split the mod
 group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
 group.add_argument('--no-kv-offload', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
 group.add_argument('--row-split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
+group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"')
+group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
+
+# Cache
+group = parser.add_argument_group('Context and cache management')
+group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=8192, metavar='N', help='Context size in tokens.')
+group.add_argument('--cache_type', type=str, default='fp16', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).')
+
+# Speculative decoding
+group = parser.add_argument_group('Speculative decoding')
+group.add_argument('--model-draft', type=str, default=None, help='Path to the draft model for speculative decoding.')
+group.add_argument('--draft-max', type=int, default=4, help='Number of tokens to draft for speculative decoding.')
+group.add_argument('--gpu-layers-draft', type=int, default=256, help='Number of layers to offload to the GPU for the draft model.')
+group.add_argument('--device-draft', type=str, default=None, help='Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1')
+group.add_argument('--ctx-size-draft', type=int, default=0, help='Size of the prompt context for the draft model. If 0, uses the same as the main model.')
 
 # ExLlamaV2
 group = parser.add_argument_group('ExLlamaV2')
 group.add_argument('--gpu-split', type=str, help='Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.')
 group.add_argument('--autosplit', action='store_true', help='Autosplit the model tensors across the available GPUs. This causes --gpu-split to be ignored.')
-group.add_argument('--max_seq_len', type=int, default=8192, help='Maximum sequence length.')
 group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.')
 group.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
 group.add_argument('--no_xformers', action='store_true', help='Force xformers to not be used.')
 group.add_argument('--no_sdpa', action='store_true', help='Force Torch SDPA to not be used.')
-group.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
+group.add_argument('--num_experts_per_token', type=int, default=2, metavar='N', help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
 group.add_argument('--enable_tp', action='store_true', help='Enable Tensor Parallelism (TP) in ExLlamaV2.')
 
 # HQQ
@@ -192,12 +205,36 @@ group.add_argument('--nowebui', action='store_true', help='Do not launch the Gra
 # Deprecated parameters
 group = parser.add_argument_group('Deprecated')
 
+# Handle CMD_FLAGS.txt
+cmd_flags_path = Path(__file__).parent.parent / "user_data" / "CMD_FLAGS.txt"
+if cmd_flags_path.exists():
+    with cmd_flags_path.open('r', encoding='utf-8') as f:
+        cmd_flags = ' '.join(
+            line.strip().rstrip('\\').strip()
+            for line in f
+            if line.strip().rstrip('\\').strip() and not line.strip().startswith('#')
+        )
+
+    if cmd_flags:
+        # Command-line takes precedence over CMD_FLAGS.txt
+        sys.argv = [sys.argv[0]] + shlex.split(cmd_flags) + sys.argv[1:]
+
+
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
+
+# Create a mapping of all argument aliases to their canonical names
+alias_to_dest = {}
+for action in parser._actions:
+    for opt in action.option_strings:
+        alias_to_dest[opt.lstrip('-').replace('-', '_')] = action.dest
+
 provided_arguments = []
 for arg in sys.argv[1:]:
     arg = arg.lstrip('-').replace('-', '_')
-    if hasattr(args, arg):
+    if arg in alias_to_dest:
+        provided_arguments.append(alias_to_dest[arg])
+    elif hasattr(args, arg):
         provided_arguments.append(arg)
 
 

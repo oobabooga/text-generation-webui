@@ -76,44 +76,54 @@ def get_available_models():
     # Get all GGUF files
     gguf_files = get_available_ggufs()
 
+    # Filter out non-first parts of multipart GGUF files
+    filtered_gguf_files = []
+    for gguf_path in gguf_files:
+        filename = os.path.basename(gguf_path)
+
+        match = re.search(r'-(\d+)-of-\d+\.gguf$', filename)
+
+        if match:
+            part_number = match.group(1)
+            # Keep only if it's part 1
+            if part_number.lstrip("0") == "1":
+                filtered_gguf_files.append(gguf_path)
+        else:
+            # Not a multi-part file
+            filtered_gguf_files.append(gguf_path)
+
     model_dir = Path(shared.args.model_dir)
 
     # Find top-level directories containing GGUF files
     dirs_with_gguf = set()
     for gguf_path in gguf_files:
         path = Path(gguf_path)
-        if path.parts:  # If in a subdirectory
-            dirs_with_gguf.add(path.parts[0])  # Add top-level directory
+        if len(path.parts) > 0:
+            dirs_with_gguf.add(path.parts[0])
 
-    # Find directories with safetensors files directly under them
+    # Find directories with safetensors files
     dirs_with_safetensors = set()
     for item in os.listdir(model_dir):
         item_path = model_dir / item
         if item_path.is_dir():
-            # Check if there are safetensors files directly under this directory
             if any(file.lower().endswith(('.safetensors', '.pt')) for file in os.listdir(item_path) if (item_path / file).is_file()):
                 dirs_with_safetensors.add(item)
 
     # Find valid model directories
     model_dirs = []
-
     for item in os.listdir(model_dir):
         item_path = model_dir / item
-
-        # Skip if not a directory
         if not item_path.is_dir():
             continue
 
-        # Include directory if it either:
-        # 1. Doesn't contain GGUF files, OR
-        # 2. Contains both GGUF and safetensors files
+        # Include directory if it either doesn't contain GGUF files
+        # or contains both GGUF and safetensors files
         if item not in dirs_with_gguf or item in dirs_with_safetensors:
             model_dirs.append(item)
 
     model_dirs = sorted(model_dirs, key=natural_keys)
 
-    # Combine all models
-    return ['None'] + gguf_files + model_dirs
+    return ['None'] + filtered_gguf_files + model_dirs
 
 
 def get_available_ggufs():
@@ -131,11 +141,11 @@ def get_available_ggufs():
 
 
 def get_available_presets():
-    return sorted(set((k.stem for k in Path('presets').glob('*.yaml'))), key=natural_keys)
+    return sorted(set((k.stem for k in Path('user_data/presets').glob('*.yaml'))), key=natural_keys)
 
 
 def get_available_prompts():
-    prompt_files = list(Path('prompts').glob('*.txt'))
+    prompt_files = list(Path('user_data/prompts').glob('*.txt'))
     sorted_files = sorted(prompt_files, key=lambda x: x.stat().st_mtime, reverse=True)
     prompts = [file.stem for file in sorted_files]
     prompts.append('None')
@@ -143,12 +153,12 @@ def get_available_prompts():
 
 
 def get_available_characters():
-    paths = (x for x in Path('characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
+    paths = (x for x in Path('user_data/characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
     return sorted(set((k.stem for k in paths)), key=natural_keys)
 
 
 def get_available_instruction_templates():
-    path = "instruction-templates"
+    path = "user_data/instruction-templates"
     paths = []
     if os.path.exists(path):
         paths = (x for x in Path(path).iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
@@ -179,4 +189,4 @@ def get_available_chat_styles():
 
 
 def get_available_grammars():
-    return ['None'] + sorted([item.name for item in list(Path('grammars').glob('*.gbnf'))], key=natural_keys)
+    return ['None'] + sorted([item.name for item in list(Path('user_data/grammars').glob('*.gbnf'))], key=natural_keys)

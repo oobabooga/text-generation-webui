@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional, Union
 
 import torch
 from exllamav3 import Cache, Config, Model
+from exllamav3.cache import CacheLayer_fp16, CacheLayer_quant
 from torch.nn import CrossEntropyLoss
 from transformers import (
     GenerationConfig,
@@ -33,13 +34,39 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
         self.ex_model = Model.from_config(config)
 
         # Calculate the closest multiple of 256 at or above the chosen value
-        max_tokens = shared.args.max_seq_len
+        max_tokens = shared.args.ctx_size
         if max_tokens % 256 != 0:
             adjusted_tokens = ((max_tokens // 256) + 1) * 256
             logger.warning(f"max_num_tokens must be a multiple of 256. Adjusting from {max_tokens} to {adjusted_tokens}")
             max_tokens = adjusted_tokens
 
-        self.ex_cache = Cache(self.ex_model, max_num_tokens=max_tokens)
+        # Parse cache type
+        cache_type = shared.args.cache_type.lower()
+        cache_kwargs = {}
+        if cache_type == 'fp16':
+            layer_type = CacheLayer_fp16
+        elif cache_type.startswith('q'):
+            layer_type = CacheLayer_quant
+            if '_' in cache_type:
+                # Different bits for k and v (e.g., q4_q8)
+                k_part, v_part = cache_type.split('_')
+                k_bits = int(k_part[1:])
+                v_bits = int(v_part[1:])
+            else:
+                # Same bits for k and v (e.g., q4)
+                k_bits = v_bits = int(cache_type[1:])
+
+            # Validate bit ranges
+            if not (2 <= k_bits <= 8 and 2 <= v_bits <= 8):
+                logger.warning(f"Invalid quantization bits: k_bits={k_bits}, v_bits={v_bits}. Must be between 2 and 8. Falling back to fp16.")
+                layer_type = CacheLayer_fp16
+            else:
+                cache_kwargs = {'k_bits': k_bits, 'v_bits': v_bits}
+        else:
+            logger.warning(f"Unrecognized cache type: {cache_type}. Falling back to fp16.")
+            layer_type = CacheLayer_fp16
+
+        self.ex_cache = Cache(self.ex_model, max_num_tokens=max_tokens, layer_type=layer_type, **cache_kwargs)
 
         # Create load parameters dictionary
         load_params = {'progressbar': True}

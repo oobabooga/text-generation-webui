@@ -52,10 +52,8 @@ def load_model(model_name, loader=None):
             tokenizer = load_tokenizer(model_name)
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
-    if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt'):
-        shared.settings['truncation_length'] = shared.args.max_seq_len
-    elif loader == 'llama.cpp':
-        shared.settings['truncation_length'] = shared.args.n_ctx
+    if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt') or loader == 'llama.cpp':
+        shared.settings['truncation_length'] = shared.args.ctx_size
 
     logger.info(f"Loaded \"{model_name}\" in {(time.time()-t0):.2f} seconds.")
     logger.info(f"LOADER: \"{loader}\"")

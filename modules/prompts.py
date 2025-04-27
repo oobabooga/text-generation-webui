@@ -7,7 +7,7 @@ def load_prompt(fname):
     if fname in ['None', '']:
         return ''
     else:
-        file_path = Path(f'prompts/{fname}.txt')
+        file_path = Path(f'user_data/prompts/{fname}.txt')
         if not file_path.exists():
             return ''
 

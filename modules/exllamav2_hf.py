@@ -192,7 +192,7 @@ class Exllamav2HF(PreTrainedModel, GenerationMixin):
         config.model_dir = str(pretrained_model_name_or_path)
         config.prepare()
 
-        config.max_seq_len = shared.args.max_seq_len
+        config.max_seq_len = shared.args.ctx_size
         config.scale_pos_emb = shared.args.compress_pos_emb
         config.scale_alpha_value = shared.args.alpha_value
         config.no_flash_attn = shared.args.no_flash_attn

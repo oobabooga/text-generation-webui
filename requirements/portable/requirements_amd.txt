@@ -15,4 +15,4 @@ sse-starlette==1.6.5
 tiktoken
 
 # AMD wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.3.0/llama_cpp_binaries-0.3.0+rocm6.1.2-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.6.0/llama_cpp_binaries-0.6.0+rocm6.1.2-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"

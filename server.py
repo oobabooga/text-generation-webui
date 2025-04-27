@@ -1,7 +1,6 @@
 import os
 import warnings
 
-import modules.one_click_installer_check
 from modules import shared
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
@@ -94,8 +93,8 @@ def create_interface():
         'filter_by_loader': shared.args.loader or 'All'
     })
 
-    if Path("cache/pfp_character.png").exists():
-        Path("cache/pfp_character.png").unlink()
+    if Path("user_data/cache/pfp_character.png").exists():
+        Path("user_data/cache/pfp_character.png").unlink()
 
     # css/js strings
     css = ui.css
@@ -112,8 +111,8 @@ def create_interface():
         shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
 
         # Audio notification
-        if Path("notification.mp3").exists():
-            shared.gradio['audio_notification'] = gr.Audio(interactive=False, value="notification.mp3", elem_id="audio_notification", visible=False)
+        if Path("user_data/notification.mp3").exists():
+            shared.gradio['audio_notification'] = gr.Audio(interactive=False, value="user_data/notification.mp3", elem_id="audio_notification", visible=False)
 
         # Floating menus for saving/deleting files
         ui_file_saving.create_ui()
@@ -179,7 +178,7 @@ def create_interface():
             ssl_keyfile=shared.args.ssl_keyfile,
             ssl_certfile=shared.args.ssl_certfile,
             root_path=shared.args.subpath,
-            allowed_paths=["cache", "css", "extensions", "js"]
+            allowed_paths=["css", "js", "extensions", "user_data/cache"]
         )
 
 
@@ -192,10 +191,10 @@ if __name__ == "__main__":
     settings_file = None
     if shared.args.settings is not None and Path(shared.args.settings).exists():
         settings_file = Path(shared.args.settings)
-    elif Path('settings.yaml').exists():
-        settings_file = Path('settings.yaml')
-    elif Path('settings.json').exists():
-        settings_file = Path('settings.json')
+    elif Path('user_data/settings.yaml').exists():
+        settings_file = Path('user_data/settings.yaml')
+    elif Path('user_data/settings.json').exists():
+        settings_file = Path('user_data/settings.json')
 
     if settings_file is not None:
         logger.info(f"Loading settings from \"{settings_file}\"")

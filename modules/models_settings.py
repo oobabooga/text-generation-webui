@@ -11,8 +11,7 @@ def get_fallback_settings():
     return {
         'bf16': False,
         'use_eager_attention': False,
-        'max_seq_len': 2048,
-        'n_ctx': 2048,
+        'ctx_size': 2048,
         'rope_freq_base': 0,
         'compress_pos_emb': 1,
         'alpha_value': 1,
@@ -26,7 +25,7 @@ def get_fallback_settings():
 def get_model_metadata(model):
     model_settings = {}
 
-    # Get settings from models/config.yaml and models/config-user.yaml
+    # Get settings from user_data/models/config.yaml and user_data/models/config-user.yaml
     settings = shared.model_config
     for pat in settings:
         if re.match(pat.lower(), Path(model).name.lower()):
@@ -59,7 +58,7 @@ def get_model_metadata(model):
 
         for k in metadata:
             if k.endswith('context_length'):
-                model_settings['n_ctx'] = min(metadata[k], 8192)
+                model_settings['ctx_size'] = min(metadata[k], 8192)
                 model_settings['truncation_length_info'] = metadata[k]
             elif k.endswith('rope.freq_base'):
                 model_settings['rope_freq_base'] = metadata[k]
@@ -97,7 +96,7 @@ def get_model_metadata(model):
                 if k in metadata:
                     model_settings['truncation_length'] = metadata[k]
                     model_settings['truncation_length_info'] = metadata[k]
-                    model_settings['max_seq_len'] = min(metadata[k], 8192)
+                    model_settings['ctx_size'] = min(metadata[k], 8192)
 
             if 'rope_theta' in metadata:
                 model_settings['rope_freq_base'] = metadata['rope_theta']
@@ -145,7 +144,7 @@ def get_model_metadata(model):
     if 'rope_freq_base' in model_settings and model_settings['rope_freq_base'] == 10000:
         model_settings.pop('rope_freq_base')
 
-    # Apply user settings from models/config-user.yaml
+    # Apply user settings from user_data/models/config-user.yaml
     settings = shared.user_config
     for pat in settings:
         if re.match(pat.lower(), Path(model).name.lower()):
@@ -224,7 +223,7 @@ def apply_model_settings_to_state(model, state):
 
 def save_model_settings(model, state):
     '''
-    Save the settings for this model to models/config-user.yaml
+    Save the settings for this model to user_data/models/config-user.yaml
     '''
     if model == 'None':
         yield ("Not saving the settings because no model is selected in the menu.")

@@ -1,6 +1,6 @@
 show_controls: true
 start_with: ''
-mode: chat-instruct
+mode: instruct
 chat_style: cai-chat
 chat-instruct_command: |-
   Continue the chat dialogue below. Write a single reply for the character "<|character|>".
@@ -29,7 +29,6 @@ truncation_length: 8192
 seed: -1
 custom_stopping_strings: ''
 custom_token_bans: ''
-show_after: ''
 negative_prompt: ''
 autoload_model: false
 dark_theme: true

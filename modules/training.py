@@ -52,7 +52,7 @@ def create_ui():
                         with gr.Column():
                             always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
 
-                    with gr.Accordion(label='Target Modules', open=False):
+                    with gr.Accordion(label='Target Modules', open=False, elem_classes='tgw-accordion'):
                         gr.Markdown("Selects which modules to target in training. Targeting more modules is closer to a full fine-tune at the cost of increased VRAM requirements and adapter size.\nNOTE: Only works for model_id='llama', other types will retain default training behavior and not use these settings.")
                         with gr.Row():
                             with gr.Column():
@@ -86,7 +86,7 @@ def create_ui():
                             with gr.Row():
                                 lr_scheduler_type = gr.Dropdown(label='LR Scheduler', value='linear', choices=['linear', 'constant', 'constant_with_warmup', 'cosine', 'cosine_with_restarts', 'polynomial', 'inverse_sqrt'], info='Learning rate scheduler - defines how the learning rate changes over time. "Constant" means never change, "linear" means to go in a straight line from the learning rate down to 0, cosine follows a curve, etc.', elem_classes=['slim-dropdown'])
 
-                    with gr.Accordion(label='Advanced Options', open=False):
+                    with gr.Accordion(label='Advanced Options', open=False, elem_classes='tgw-accordion'):
                         with gr.Row():
                             with gr.Column():
                                 lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.')
@@ -106,23 +106,23 @@ def create_ui():
                 with gr.Column():
                     with gr.Tab(label='Formatted Dataset'):
                         with gr.Row():
-                            format = gr.Dropdown(choices=utils.get_datasets('training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(format, lambda: None, lambda: {'choices': utils.get_datasets('training/formats', 'json')}, 'refresh-button', interactive=not mu)
+                            format = gr.Dropdown(choices=utils.get_datasets('user_data/training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(format, lambda: None, lambda: {'choices': utils.get_datasets('user_data/training/formats', 'json')}, 'refresh-button', interactive=not mu)
 
                         with gr.Row():
-                            dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button', interactive=not mu)
+                            dataset = gr.Dropdown(choices=utils.get_datasets('user_data/training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(dataset, lambda: None, lambda: {'choices': utils.get_datasets('user_data/training/datasets', 'json')}, 'refresh-button', interactive=not mu)
 
                         with gr.Row():
-                            eval_dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button', interactive=not mu)
+                            eval_dataset = gr.Dropdown(choices=utils.get_datasets('user_data/training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': utils.get_datasets('user_data/training/datasets', 'json')}, 'refresh-button', interactive=not mu)
 
                         eval_steps = gr.Number(label='Evaluate every n steps', value=100, info='If an evaluation dataset is given, test it every time this many steps pass.')
 
                     with gr.Tab(label="Raw text file"):
                         with gr.Row():
-                            raw_text_file = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, 'refresh-button', interactive=not mu)
+                            raw_text_file = gr.Dropdown(choices=utils.get_datasets('user_data/training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('user_data/training/datasets', 'txt')}, 'refresh-button', interactive=not mu)
 
                         with gr.Row():
                             with gr.Column():
@@ -143,7 +143,7 @@ def create_ui():
             with gr.Row():
                 with gr.Column():
                     models = gr.Dropdown(utils.get_available_models(), label='Models', multiselect=True, interactive=not mu)
-                    evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + utils.get_datasets('training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under training/datasets.', interactive=not mu)
+                    evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + utils.get_datasets('user_data/training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under user_data/training/datasets.', interactive=not mu)
                     with gr.Row():
                         with gr.Column():
                             stride_length = gr.Slider(label='Stride', minimum=0, maximum=32768, value=512, step=256, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
@@ -402,7 +402,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     if raw_text_file not in ['None', '']:
         train_template["template_type"] = "raw_text"
         logger.info("Loading raw text file dataset")
-        fullpath = clean_path('training/datasets', f'{raw_text_file}')
+        fullpath = clean_path('user_data/training/datasets', f'{raw_text_file}')
         fullpath = Path(fullpath)
         if fullpath.is_dir():
             logger.info('Training path directory {}'.format(raw_text_file))
@@ -415,7 +415,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
 
                     logger.info(f"Loaded training file: {file_path.name}")
         else:
-            with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
+            with open(clean_path('user_data/training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
                 raw_text = file.read().replace('\r', '')
 
         cut_string = hard_cut_string.replace('\\n', '\n')
@@ -460,7 +460,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
 
         train_template["template_type"] = "dataset"
 
-        with open(clean_path('training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
+        with open(clean_path('user_data/training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
             format_data: dict[str, str] = json.load(formatFile)
 
         # == store training prompt ==
@@ -482,13 +482,13 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
             return tokenize(prompt, add_eos_token)
 
         logger.info("Loading JSON datasets")
-        data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
+        data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{dataset}.json'))
         train_data = data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
 
         if eval_dataset == 'None':
             eval_data = None
         else:
-            eval_data = load_dataset("json", data_files=clean_path('training/datasets', f'{eval_dataset}.json'))
+            eval_data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{eval_dataset}.json'))
             eval_data = eval_data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
 
     # == We MUST reload model if it went through any previous training, even failed one ==
@@ -676,11 +676,11 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
                 decoded_entries.append({"value": decoded_text})
 
             # Write the log file
-            Path('logs').mkdir(exist_ok=True)
-            with open(Path('logs/train_dataset_sample.json'), 'w') as json_file:
+            Path('user_data/logs').mkdir(exist_ok=True)
+            with open(Path('user_data/logs/train_dataset_sample.json'), 'w') as json_file:
                 json.dump(decoded_entries, json_file, indent=4)
 
-            logger.info("Log file 'train_dataset_sample.json' created in the 'logs' directory.")
+            logger.info("Log file 'train_dataset_sample.json' created in the 'user_data/logs' directory.")
         except Exception as e:
             logger.error(f"Failed to create log file due to error: {e}")
 

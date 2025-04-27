@@ -93,7 +93,6 @@ def create_ui(default_preset):
                             shared.gradio['sampler_priority'] = gr.Textbox(value=generate_params['sampler_priority'], lines=12, label='Sampler priority', info='Parameter names separated by new lines or commas.', elem_classes=['add_scrollbar'])
                             shared.gradio['custom_stopping_strings'] = gr.Textbox(lines=2, value=shared.settings["custom_stopping_strings"] or None, label='Custom stopping strings', info='Written between "" and separated by commas.', placeholder='"\\n", "\\nYou:"')
                             shared.gradio['custom_token_bans'] = gr.Textbox(value=shared.settings['custom_token_bans'] or None, label='Token bans', info='Token IDs to ban, separated by commas. The IDs can be found in the Default or Notebook tab.')
-                            shared.gradio['show_after'] = gr.Textbox(value=shared.settings['show_after'] or None, label='Show after', info='Hide the reply before this text.', placeholder="</think>")
                             shared.gradio['negative_prompt'] = gr.Textbox(value=shared.settings['negative_prompt'], label='Negative prompt', info='For CFG. Only used when guidance_scale is different than 1.', lines=3, elem_classes=['add_scrollbar'])
                             shared.gradio['dry_sequence_breakers'] = gr.Textbox(value=generate_params['dry_sequence_breakers'], label='dry_sequence_breakers', info='Tokens across which sequence matching is not continued. Specified as a comma-separated list of quoted strings.')
                             with gr.Row() as shared.gradio['grammar_file_row']:
@@ -122,16 +121,14 @@ def create_event_handlers():
 
 
 def get_truncation_length():
-    if 'max_seq_len' in shared.provided_arguments or shared.args.max_seq_len != shared.args_defaults.max_seq_len:
-        return shared.args.max_seq_len
-    elif 'n_ctx' in shared.provided_arguments or shared.args.n_ctx != shared.args_defaults.n_ctx:
-        return shared.args.n_ctx
+    if 'ctx_size' in shared.provided_arguments or shared.args.ctx_size != shared.args_defaults.ctx_size:
+        return shared.args.ctx_size
     else:
         return shared.settings['truncation_length']
 
 
 def load_grammar(name):
-    p = Path(f'grammars/{name}')
+    p = Path(f'user_data/grammars/{name}')
     if p.exists():
         return open(p, 'r', encoding='utf-8').read()
     else:

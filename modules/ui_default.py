@@ -102,7 +102,7 @@ def handle_save_prompt(text):
     return [
         text,
         utils.current_time() + ".txt",
-        "prompts/",
+        "user_data/prompts/",
         gr.update(visible=True)
     ]
 
@@ -110,6 +110,6 @@ def handle_save_prompt(text):
 def handle_delete_prompt(prompt):
     return [
         prompt + ".txt",
-        "prompts/",
+        "user_data/prompts/",
         gr.update(visible=True)
     ]

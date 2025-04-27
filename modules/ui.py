@@ -94,7 +94,7 @@ if not shared.args.old_colors:
         input_radius='0.375rem',
     )
 
-if Path("notification.mp3").exists():
+if Path("user_data/notification.mp3").exists():
     audio_notification_js = "document.querySelector('#audio_notification audio')?.play();"
 else:
     audio_notification_js = ""
@@ -110,10 +110,10 @@ def list_model_elements():
         'threads_batch',
         'batch_size',
         'hqq_backend',
-        'n_ctx',
-        'max_seq_len',
+        'ctx_size',
         'cache_type',
         'tensor_split',
+        'extra_flags',
         'gpu_split',
         'alpha_value',
         'rope_freq_base',
@@ -145,6 +145,11 @@ def list_model_elements():
         'cpp_runner',
         'trust_remote_code',
         'no_use_fast',
+        'model_draft',
+        'draft_max',
+        'gpu_layers_draft',
+        'device_draft',
+        'ctx_size_draft',
     ]
 
     return elements
@@ -201,7 +206,6 @@ def list_interface_input_elements():
         'sampler_priority',
         'custom_stopping_strings',
         'custom_token_bans',
-        'show_after',
         'negative_prompt',
         'dry_sequence_breakers',
         'grammar_string',
@@ -262,7 +266,7 @@ def apply_interface_values(state, use_persistent=False):
         if 'textbox-default' in state and 'prompt_menu-default' in state:
             state.pop('prompt_menu-default')
 
-        if 'textbox-notebook' and 'prompt_menu-notebook' in state:
+        if 'textbox-notebook' in state and 'prompt_menu-notebook' in state:
             state.pop('prompt_menu-notebook')
 
     elements = list_interface_input_elements()
