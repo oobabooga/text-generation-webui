@@ -29,7 +29,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 #### Option 1: Portable builds
 
-Compatible with GGUF (llama.cpp) models, just unzip and run, no installation. Available for Windows, Linux, and macOS.
+No installation needed – just unzip and run. Compatible with GGUF (llama.cpp) models on Windows, Linux, and macOS.
 
 Download from: https://github.com/oobabooga/text-generation-webui/releases
 
@@ -38,7 +38,7 @@ Download from: https://github.com/oobabooga/text-generation-webui/releases
 1) Clone or [download the repository](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip).
 2) Run the script that matches your OS: `start_linux.sh`, `start_windows.bat`, `start_macos.sh`, or `start_wsl.bat`.
 3) Select your GPU vendor when asked.
-4) Once the installation ends, browse to `http://localhost:7860`.
+4) After installation completes, browse to `http://localhost:7860`.
 5) Have fun!
 
 To restart the web UI later, just run the same `start_` script. If you need to reinstall, delete the `installer_files` folder created during setup and run the script again.
