@@ -130,7 +130,7 @@ group.add_argument('--streaming-llm', action='store_true', help='Activate Stream
 
 # Cache
 group = parser.add_argument_group('Context and cache management')
-group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=8192, metavar='N', dest='ctx_size', help='Context size in tokens.')
+group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=8192, metavar='N', help='Context size in tokens.')
 group.add_argument('--cache_type', type=str, default='fp16', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).')
 
 # Speculative decoding
@@ -222,10 +222,19 @@ if cmd_flags_path.exists():
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
+
+# Create a mapping of all argument aliases to their canonical names
+alias_to_dest = {}
+for action in parser._actions:
+    for opt in action.option_strings:
+        alias_to_dest[opt.lstrip('-').replace('-', '_')] = action.dest
+
 provided_arguments = []
 for arg in sys.argv[1:]:
     arg = arg.lstrip('-').replace('-', '_')
-    if hasattr(args, arg):
+    if arg in alias_to_dest:
+        provided_arguments.append(alias_to_dest[arg])
+    elif hasattr(args, arg):
         provided_arguments.append(arg)
 
 
