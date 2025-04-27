@@ -86,6 +86,7 @@ loaders_and_params = OrderedDict({
         'no_sdpa',
         'exllamav2_info',
         'model_draft',
+        'draft_max',
         'ctx_size_draft',
         'speculative_decoding_accordion',
     ],
