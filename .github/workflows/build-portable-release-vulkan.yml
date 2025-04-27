@@ -136,6 +136,7 @@ jobs:
             else
                 BASE_REQ_FILE="requirements/portable/requirements_vulkan_noavx2.txt"
             fi
+            REQ_FILE="$BASE_REQ_FILE"
 
             cd text-generation-webui
 
