@@ -266,7 +266,7 @@ def apply_interface_values(state, use_persistent=False):
         if 'textbox-default' in state and 'prompt_menu-default' in state:
             state.pop('prompt_menu-default')
 
-        if 'textbox-notebook' and 'prompt_menu-notebook' in state:
+        if 'textbox-notebook' in state and 'prompt_menu-notebook' in state:
             state.pop('prompt_menu-notebook')
 
     elements = list_interface_input_elements()
