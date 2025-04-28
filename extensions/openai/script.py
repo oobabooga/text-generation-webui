@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import socket
 import traceback
 from collections import deque
 from threading import Thread
@@ -374,9 +375,26 @@ async def handle_unload_loras():
     return JSONResponse(content="OK")
 
 
+def find_available_port(starting_port):
+    """Try the starting port, then find an available one if it's taken."""
+    try:
+        # Try to create a socket with the starting port
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', starting_port))
+            return starting_port
+    except OSError:
+        # Port is already in use, so find a new one
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))  # Bind to port 0 to get an available port
+            new_port = s.getsockname()[1]
+            logger.warning(f"Port {starting_port} is already in use. Using port {new_port} instead.")
+            return new_port
+
+
 def run_server():
     # Parse configuration
     port = int(os.environ.get('OPENEDAI_PORT', shared.args.api_port))
+    port = find_available_port(port)
     ssl_certfile = os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
     ssl_keyfile = os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
 
