@@ -327,6 +327,11 @@ class LlamaServer:
             else:
                 env['LD_LIBRARY_PATH'] = os.path.dirname(self.server_path)
 
+        if shared.args.verbose:
+            logger.info(f"llama-server command-line flags:")
+            print(' '.join(str(item) for item in cmd[1:]))
+            print()
+
         # Start the server with pipes for output
         self.process = subprocess.Popen(
             cmd,
