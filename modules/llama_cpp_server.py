@@ -340,9 +340,7 @@ class LlamaServer:
 
         # Wait for server to be healthy
         health_url = f"http://127.0.0.1:{self.port}/health"
-        start_time = time.time()
-        timeout = 3600 * 8  # 8 hours
-        while time.time() - start_time < timeout:
+        while True:
             # Check if process is still alive
             if self.process.poll() is not None:
                 # Process has terminated
@@ -357,8 +355,6 @@ class LlamaServer:
                 pass
 
             time.sleep(1)
-        else:
-            raise TimeoutError(f"Server health check timed out after {timeout} seconds")
 
         # Server is now healthy, get model info
         self._get_vocabulary_size()
