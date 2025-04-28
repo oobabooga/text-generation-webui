@@ -96,7 +96,7 @@ def create_ui():
                             # Speculative decoding
                             with gr.Accordion("Speculative decoding", open=False, elem_classes='tgw-accordion') as shared.gradio['speculative_decoding_accordion']:
                                 with gr.Row():
-                                    shared.gradio['model_draft'] = gr.Dropdown(label="model-draft", choices=utils.get_available_models(), value=lambda: shared.args.model_draft, elem_classes='slim-dropdown', interactive=not mu)
+                                    shared.gradio['model_draft'] = gr.Dropdown(label="model-draft", choices=utils.get_available_models(), value=lambda: shared.args.model_draft, elem_classes='slim-dropdown',     info='Draft model. Speculative decoding only works with models sharing the same vocabulary (e.g., same model family).', interactive=not mu)
                                     ui.create_refresh_button(shared.gradio['model_draft'], lambda: None, lambda: {'choices': utils.get_available_models()}, 'refresh-button', interactive=not mu)
 
                                 shared.gradio['draft_max'] = gr.Number(label="draft-max", precision=0, step=1, value=shared.args.draft_max, info='Number of tokens to draft for speculative decoding.')
