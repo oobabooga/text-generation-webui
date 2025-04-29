@@ -114,6 +114,7 @@ def list_model_elements():
         'cache_type',
         'tensor_split',
         'extra_flags',
+        'streaming_llm',
         'gpu_split',
         'alpha_value',
         'rope_freq_base',
