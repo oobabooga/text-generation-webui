@@ -198,6 +198,7 @@ def list_interface_input_elements():
         'auto_max_new_tokens',
         'ban_eos_token',
         'add_bos_token',
+        'enable_thinking',
         'skip_special_tokens',
         'stream',
         'static_cache',

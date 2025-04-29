@@ -51,6 +51,7 @@ settings = {
     'auto_max_new_tokens': True,
     'ban_eos_token': False,
     'add_bos_token': True,
+    'enable_thinking': True,
     'skip_special_tokens': True,
     'stream': True,
     'static_cache': False,
