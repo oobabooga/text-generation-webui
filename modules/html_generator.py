@@ -167,7 +167,7 @@ def convert_to_markdown(string, message_id=None):
         title_text = "Thinking..." if is_streaming else "Thought"
 
         thinking_block = f'''
-        <details class="thinking-block" data-block-id="{block_id}" data-streaming="{str(is_streaming).lower()}" open>
+        <details class="thinking-block" data-block-id="{block_id}" data-streaming="{str(is_streaming).lower()}">
             <summary class="thinking-header">
                 <svg class="thinking-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M8 1.33334C4.31868 1.33334 1.33334 4.31868 1.33334 8.00001C1.33334 11.6813 4.31868 14.6667 8 14.6667C11.6813 14.6667 14.6667 11.6813 14.6667 8.00001C14.6667 4.31868 11.6813 1.33334 8 1.33334Z" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>

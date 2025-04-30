@@ -31,13 +31,13 @@ function removeLastClick() {
 }
 
 function handleMorphdomUpdate(text) {
-  // Track closed blocks
-  const closedBlocks = new Set();
+  // Track open blocks
+  const openBlocks = new Set();
   document.querySelectorAll(".thinking-block").forEach(block => {
     const blockId = block.getAttribute("data-block-id");
-    // If block exists and is not open, add to closed set
-    if (blockId && !block.hasAttribute("open")) {
-      closedBlocks.add(blockId);
+    // If block exists and is open, add to open set
+    if (blockId && block.hasAttribute("open")) {
+      openBlocks.add(blockId);
     }
   });
 
@@ -72,13 +72,15 @@ function handleMorphdomUpdate(text) {
           }
         }
 
-        // For thinking blocks, respect closed state
+        // For thinking blocks, assume closed by default
         if (fromEl.classList && fromEl.classList.contains("thinking-block") &&
-            toEl.classList && toEl.classList.contains("thinking-block")) {
+           toEl.classList && toEl.classList.contains("thinking-block")) {
           const blockId = toEl.getAttribute("data-block-id");
-          // If this block was closed by user, keep it closed
-          if (blockId && closedBlocks.has(blockId)) {
-            toEl.removeAttribute("open");
+          // Remove open attribute by default
+          toEl.removeAttribute("open");
+          // If this block was explicitly opened by user, keep it open
+          if (blockId && openBlocks.has(blockId)) {
+            toEl.setAttribute("open", "");
           }
         }
 
