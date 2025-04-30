@@ -135,6 +135,7 @@ class LlamaServer:
             "prompt": token_ids,
             "n_predict": max_new_tokens,
             "stream": True,
+            "cache_prompt": True
         })
 
         if shared.args.verbose:
