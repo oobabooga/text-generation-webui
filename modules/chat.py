@@ -90,6 +90,44 @@ def get_generation_prompt(renderer, impersonate=False, strip_trailing_spaces=Tru
     return prefix, suffix
 
 
+def get_thinking_suppression_string(template):
+    """
+    Determines what string needs to be added to suppress thinking mode
+    by comparing template renderings with thinking enabled vs disabled.
+    """
+
+    # Render with thinking enabled
+    with_thinking = template.render(
+        messages=[{'role': 'user', 'content': ''}],
+        builtin_tools=None,
+        tools=None,
+        tools_in_user_message=False,
+        add_generation_prompt=True,
+        enable_thinking=True
+    )
+
+    # Render with thinking disabled
+    without_thinking = template.render(
+        messages=[{'role': 'user', 'content': ''}],
+        builtin_tools=None,
+        tools=None,
+        tools_in_user_message=False,
+        add_generation_prompt=True,
+        enable_thinking=False
+    )
+
+    # Find the difference (what gets added to suppress thinking)
+    i = 0
+    while i < min(len(with_thinking), len(without_thinking)) and with_thinking[i] == without_thinking[i]:
+        i += 1
+
+    j = 0
+    while j < min(len(with_thinking), len(without_thinking)) - i and with_thinking[-1 - j] == without_thinking[-1 - j]:
+        j += 1
+
+    return without_thinking[i:len(without_thinking) - j if j else None]
+
+
 def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs.get('impersonate', False)
     _continue = kwargs.get('_continue', False)
@@ -147,13 +185,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
     if user_input and not impersonate and not _continue:
         messages.append({"role": "user", "content": user_input})
 
-    def remove_extra_bos(prompt):
-        for bos_token in ['<s>', '<|startoftext|>', '<BOS_TOKEN>', '<|endoftext|>']:
-            while prompt.startswith(bos_token):
-                prompt = prompt[len(bos_token):]
-
-        return prompt
-
     def make_prompt(messages):
         if state['mode'] == 'chat-instruct' and _continue:
             prompt = renderer(messages=messages[:-1])
@@ -165,7 +196,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
             if state['custom_system_message'].strip() != '':
                 outer_messages.append({"role": "system", "content": state['custom_system_message']})
 
-            prompt = remove_extra_bos(prompt)
             command = state['chat-instruct_command']
             command = command.replace('<|character|>', state['name2'] if not impersonate else state['name1'])
             command = command.replace('<|prompt|>', prompt)
@@ -182,11 +212,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
             outer_messages.append({"role": "user", "content": command})
             outer_messages.append({"role": "assistant", "content": prefix})
 
-            prompt = instruction_template.render(messages=outer_messages)
+            prompt = instruct_renderer(messages=outer_messages)
             suffix = get_generation_prompt(instruct_renderer, impersonate=False)[1]
             if len(suffix) > 0:
                 prompt = prompt[:-len(suffix)]
-
         else:
             if _continue:
                 suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
@@ -199,7 +228,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
                 prompt += prefix
 
-        prompt = remove_extra_bos(prompt)
+        if state['mode'] == 'instruct' and not any((_continue, impersonate, state['enable_thinking'])):
+            prompt += get_thinking_suppression_string(instruction_template)
+
         return prompt
 
     prompt = make_prompt(messages)

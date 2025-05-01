@@ -36,7 +36,7 @@ Download from: https://github.com/oobabooga/text-generation-webui/releases
 #### Option 2: One-click installer
 
 1) Clone or [download the repository](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip).
-2) Run the script that matches your OS: `start_linux.sh`, `start_windows.bat`, `start_macos.sh`, or `start_wsl.bat`.
+2) Run the script that matches your OS: `start_linux.sh`, `start_windows.bat`, or `start_macos.sh`.
 3) Select your GPU vendor when asked.
 4) After installation completes, browse to `http://localhost:7860`.
 5) Have fun!
