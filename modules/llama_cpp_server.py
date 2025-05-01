@@ -329,7 +329,7 @@ class LlamaServer:
                 env['LD_LIBRARY_PATH'] = os.path.dirname(self.server_path)
 
         if shared.args.verbose:
-            logger.info(f"llama-server command-line flags:")
+            logger.info("llama-server command-line flags:")
             print(' '.join(str(item) for item in cmd[1:]))
             print()
 
