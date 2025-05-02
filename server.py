@@ -90,7 +90,7 @@ def create_interface():
         'instruction_template_str': shared.settings['instruction_template_str'],
         'prompt_menu-default': shared.settings['prompt-default'],
         'prompt_menu-notebook': shared.settings['prompt-notebook'],
-        'filter_by_loader': shared.args.loader or 'All'
+        'filter_by_loader': (shared.args.loader or 'All') if not shared.args.portable else 'llama.cpp'
     })
 
     if Path("user_data/cache/pfp_character.png").exists():
@@ -127,7 +127,8 @@ def create_interface():
 
         ui_parameters.create_ui(shared.settings['preset'])  # Parameters tab
         ui_model_menu.create_ui()  # Model tab
-        training.create_ui()  # Training tab
+        if not shared.args.portable:
+            training.create_ui()  # Training tab
         ui_session.create_ui()  # Session tab
 
         # Generation events

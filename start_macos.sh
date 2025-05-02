@@ -4,7 +4,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 
 # Portable install case
 if [ -d "portable_env" ]; then
-    ./portable_env/bin/python3 server.py --api --auto-launch --api-port 5005 "$@"
+    ./portable_env/bin/python3 server.py --portable --api --auto-launch --api-port 5005 "$@"
     exit $?
 fi
 

@@ -21,7 +21,7 @@ def create_ui(default_preset):
                         shared.gradio['random_preset'] = gr.Button('🎲', elem_classes='refresh-button')
 
                 with gr.Column():
-                    shared.gradio['filter_by_loader'] = gr.Dropdown(label="Filter by loader", choices=["All"] + list(loaders.loaders_and_params.keys()), value="All", elem_classes='slim-dropdown')
+                    shared.gradio['filter_by_loader'] = gr.Dropdown(label="Filter by loader", choices=["All"] + list(loaders.loaders_and_params.keys()) if not shared.args.portable else ['llama.cpp'], value="All", elem_classes='slim-dropdown')
 
             with gr.Row():
                 with gr.Column():
