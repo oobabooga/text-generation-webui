@@ -31,7 +31,6 @@ seed: -1
 custom_stopping_strings: ''
 custom_token_bans: ''
 negative_prompt: ''
-autoload_model: false
 dark_theme: true
 default_extensions: []
 instruction_template_str: |-
