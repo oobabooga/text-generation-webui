@@ -391,6 +391,10 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     # Generate
     reply = None
     for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True, for_ui=for_ui)):
+        # Handle start_with text (add it only once at the beginning)
+        if state.get('start_with', '') and j == 0 and not _continue and not regenerate:
+            reply = state['start_with'] + " " + reply
+            state['start_with'] = ''  # Clear it after using
 
         # Extract the reply
         if state['mode'] in ['chat', 'chat-instruct']:
@@ -409,20 +413,33 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             return
 
         if _continue:
-            output['internal'][-1] = [text, last_reply[0] + reply]
-            output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
+            # For continuation, we need to separate the already translated part from the new generated text
+            original_translated = output['visible'][-1][1]  # Already translated part
+            new_content = reply[len(output['internal'][-1][1]):] if reply.startswith(output['internal'][-1][1]) else reply
+            new_content = new_content.lstrip()
+            
+            # Only send the new content for translation
+            translated_new_content = apply_extensions('output', new_content, state, is_chat=True)
+            
+            # Combine with the existing translation
+            full_translated = original_translated + " " + translated_new_content
+            
+            output['internal'][-1] = [text, reply.lstrip(' ')]
+            output['visible'][-1] = [visible_text, full_translated]
             if is_stream:
                 yield output
         elif not (j == 0 and visible_reply.strip() == ''):
             output['internal'][-1] = [text, reply.lstrip(' ')]
-            output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
+            output['visible'][-1] = [visible_text, apply_extensions('output', visible_reply.lstrip(' '), state, is_chat=True)]
             if is_stream:
                 yield output
 
     if output['visible'][-1][1].endswith('▍'):
         output['visible'][-1][1] = output['visible'][-1][1][:-1]
 
-    output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+    # No need to apply extensions here for _continue case as we already handled it
+    if not _continue:
+        output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
     yield output
 
 
