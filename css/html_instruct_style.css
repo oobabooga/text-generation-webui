@@ -61,11 +61,11 @@
 }
 
 .dark .chat .user-message {
-    background: transparent;
+    background: var(--light-gray);
 }
 
 .dark .chat .assistant-message {
-    background: var(--light-gray);
+    background: transparent;
 }
 
 .chat .user-message .text,
