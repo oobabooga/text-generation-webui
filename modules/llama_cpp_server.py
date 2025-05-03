@@ -210,14 +210,15 @@ class LlamaServer:
             pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(printable_payload)
             print()
 
-        response = self.session.post(url, json=payload)
-        result = response.json()
+        for retry in range(5):
+            response = self.session.post(url, json=payload)
+            result = response.json()
 
-        if "completion_probabilities" in result:
-            if use_samplers:
-                return result["completion_probabilities"][0]["top_probs"]
-            else:
-                return result["completion_probabilities"][0]["top_logprobs"]
+            if "completion_probabilities" in result:
+                if use_samplers:
+                    return result["completion_probabilities"][0]["top_probs"]
+                else:
+                    return result["completion_probabilities"][0]["top_logprobs"]
         else:
             raise Exception(f"Unexpected response format: 'completion_probabilities' not found in {result}")
 
