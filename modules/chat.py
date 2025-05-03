@@ -447,10 +447,6 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
     if output['visible'][-1][1].endswith('▍'):
         output['visible'][-1][1] = output['visible'][-1][1][:-1]
-
-    # Final translation if not in continue mode
-    if not _continue:
-        output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
     
     yield output
 
