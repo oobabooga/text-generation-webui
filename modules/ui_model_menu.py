@@ -192,6 +192,26 @@ def load_lora_wrapper(selected_loras):
 
 def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False, check=False):
     try:
+        # Handle direct GGUF URLs
+        if repo_id.startswith("https://") and ("huggingface.co" in repo_id) and (repo_id.endswith(".gguf") or repo_id.endswith(".gguf?download=true")):
+            try:
+                path = repo_id.split("huggingface.co/")[1]
+
+                # Extract the repository ID (first two parts of the path)
+                parts = path.split("/")
+                if len(parts) >= 2:
+                    extracted_repo_id = f"{parts[0]}/{parts[1]}"
+
+                    # Extract the filename (last part of the path)
+                    filename = repo_id.split("/")[-1]
+                    if "?download=true" in filename:
+                        filename = filename.replace("?download=true", "")
+
+                    repo_id = extracted_repo_id
+                    specific_file = filename
+            except:
+                pass
+
         if repo_id == "":
             yield ("Please enter a model path")
             return
@@ -205,6 +225,18 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
 
         yield ("Getting the download links from Hugging Face")
         links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=False, specific_file=specific_file)
+
+        # Check for multiple GGUF files
+        gguf_files = [link for link in links if link.lower().endswith('.gguf')]
+        if len(gguf_files) > 1 and not specific_file:
+            output = "Multiple GGUF files found. Please copy one of the following filenames to the 'File name' field:\n\n```\n"
+            for link in gguf_files:
+                output += f"{Path(link).name}\n"
+
+            output += "```"
+            yield output
+            return
+
         if return_links:
             output = "```\n"
             for link in links:
