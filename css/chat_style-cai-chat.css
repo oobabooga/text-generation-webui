@@ -1,5 +1,6 @@
 .message {
     display: grid;
+    align-items: start;
     grid-template-columns: 60px minmax(0, 1fr);
     padding-bottom: 2em;
     font-size: 15px;

@@ -1,5 +1,6 @@
 .message {
     display: grid;
+    align-items: start;
     grid-template-columns: 60px minmax(0, 1fr);
     padding-bottom: 28px;
     font-size: 18px;
@@ -102,6 +103,7 @@
 @media screen and (width <= 688px) {
     .message {
         display: grid;
+        align-items: start;
         grid-template-columns: 60px minmax(0, 1fr);
         padding-bottom: 25px;
         font-size: 15px;

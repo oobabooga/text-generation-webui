@@ -403,6 +403,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .chat-parent {
     height: calc(100dvh - 98px - var(--input-delta));
     overflow: auto !important;
+    /* scroll-behavior: smooth; */
     border-radius: 0 !important;
     margin-bottom: var(--input-delta) !important;
 }
@@ -1381,4 +1382,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     0% { opacity: 0.6; }
     50% { opacity: 1; }
     100% { opacity: 0.6; }
+}
+
+.streaming {
+    min-height: 70vh;
 }
