@@ -391,9 +391,13 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     # Generate
     reply = None
     for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True, for_ui=for_ui)):
-        # Handle start_with text (add it only once at the beginning)
+        # Handle start_with text (add to both internal and visible)
         if state.get('start_with', '') and j == 0 and not _continue and not regenerate:
-            reply = state['start_with'] + " " + reply
+            start_text = state['start_with']
+            # Add to internal (English) version
+            reply = start_text + " " + reply
+            # Add to visible (translated) version
+            translated_start = apply_extensions('output', start_text, state, is_chat=True)
             state['start_with'] = ''  # Clear it after using
 
         # Extract the reply
@@ -413,33 +417,41 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             return
 
         if _continue:
-            # For continuation, we need to separate the already translated part from the new generated text
-            original_translated = output['visible'][-1][1]  # Already translated part
-            new_content = reply[len(output['internal'][-1][1]):] if reply.startswith(output['internal'][-1][1]) else reply
+            # Separate already existing content from new content
+            original_internal = output['internal'][-1][1]
+            original_visible = output['visible'][-1][1]
+            
+            # Get only the new generated part
+            new_content = reply[len(original_internal):] if reply.startswith(original_internal) else reply
             new_content = new_content.lstrip()
             
-            # Only send the new content for translation
-            translated_new_content = apply_extensions('output', new_content, state, is_chat=True)
+            # Translate only the new part
+            translated_new = apply_extensions('output', new_content, state, is_chat=True)
             
-            # Combine with the existing translation
-            full_translated = original_translated + " " + translated_new_content
+            # Update both internal and visible versions
+            updated_internal = original_internal + " " + new_content
+            updated_visible = original_visible + " " + translated_new
             
-            output['internal'][-1] = [text, reply.lstrip(' ')]
-            output['visible'][-1] = [visible_text, full_translated]
+            output['internal'][-1] = [text, updated_internal]
+            output['visible'][-1] = [visible_text, updated_visible]
+            
             if is_stream:
                 yield output
         elif not (j == 0 and visible_reply.strip() == ''):
+            # For normal generation, translate the whole reply
+            translated_reply = apply_extensions('output', visible_reply.lstrip(' '), state, is_chat=True)
             output['internal'][-1] = [text, reply.lstrip(' ')]
-            output['visible'][-1] = [visible_text, apply_extensions('output', visible_reply.lstrip(' '), state, is_chat=True)]
+            output['visible'][-1] = [visible_text, translated_reply]
             if is_stream:
                 yield output
 
     if output['visible'][-1][1].endswith('▍'):
         output['visible'][-1][1] = output['visible'][-1][1][:-1]
 
-    # No need to apply extensions here for _continue case as we already handled it
+    # Final translation if not in continue mode
     if not _continue:
         output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+    
     yield output
 
 
