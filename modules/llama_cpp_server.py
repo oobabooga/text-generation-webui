@@ -317,9 +317,15 @@ class LlamaServer:
             for flag_item in extra_flags.split(','):
                 if '=' in flag_item:
                     flag, value = flag_item.split('=', 1)
-                    cmd += [f"--{flag}", value]
+                    if len(flag) <= 3:
+                        cmd += [f"-{flag}", value]
+                    else:
+                        cmd += [f"--{flag}", value]
                 else:
-                    cmd.append(f"--{flag_item}")
+                    if len(flag_item) <= 3:
+                        cmd.append(f"-{flag_item}")
+                    else:
+                        cmd.append(f"--{flag_item}")
 
         env = os.environ.copy()
         if os.name == 'posix':
