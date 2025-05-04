@@ -442,12 +442,6 @@ function updateCssProperties() {
 
   // Check if the chat container is visible
   if (chatContainer.clientHeight > 0) {
-    const chatContainerParentHeight = chatContainer.parentNode.clientHeight;
-    const newChatHeight = `${chatContainerParentHeight - chatInputHeight - 80}px`;
-
-    document.documentElement.style.setProperty("--chat-height", newChatHeight);
-    document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
-
     // Adjust scrollTop based on input height change
     if (chatInputHeight !== currentChatInputHeight) {
       const deltaHeight = chatInputHeight - currentChatInputHeight;
@@ -456,7 +450,6 @@ function updateCssProperties() {
       } else {
         chatContainer.scrollTop += deltaHeight;
       }
-
       currentChatInputHeight = chatInputHeight;
     }
   }
@@ -720,7 +713,7 @@ function isMobile() {
 // Function to initialize sidebars
 function initializeSidebars() {
   const isOnMobile = isMobile();
-  
+
   if (isOnMobile) {
     // Mobile state: Hide sidebars and set closed states
     [pastChatsRow, chatControlsRow, headerBar].forEach(el => {

@@ -389,7 +389,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .chat {
     margin-left: auto;
     margin-right: auto;
-    min-height: var(--chat-height);
+    flex: 1;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -401,11 +401,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat-parent {
-    height: calc(100dvh - 98px - var(--input-delta));
+    flex: 1;
     overflow: auto !important;
-    /* scroll-behavior: smooth; */
     border-radius: 0 !important;
-    margin-bottom: var(--input-delta) !important;
 }
 
 .chat-parent .prose {
@@ -422,8 +420,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat-parent.bigchat {
-    height: calc(100dvh - 98px - var(--input-delta)) !important;
-    margin-bottom: var(--input-delta) !important;
+    flex: 1;
 }
 
 .chat > .messages {
@@ -790,7 +787,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-input-container {
-    min-width: 0 !important;
+    display: flex;
+    flex-direction: column;
 }
 
 #chat-input-container > .form {
@@ -799,9 +797,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-input-row {
-    padding-bottom: 1.5em;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding: 1rem;
 }
 
 #chat-input-row.bigchat {
@@ -809,22 +805,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-col {
-    padding-bottom: 100px;
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - 100px);
+    padding-bottom: 0;
 }
 
 @media screen and (width <= 924px) {
     #chat-col {
-        padding-bottom: 100px;
+        height: calc(100dvh - 132px);
         margin-top: 32px;
-        position: relative; /* Ensure positioning for the pseudo-element */
-    }
-
-    .chat-parent {
-        height: calc(100dvh - 98px - var(--input-delta) - 32px);
-    }
-
-    .chat-parent.bigchat {
-        height: calc(100dvh - 98px - var(--input-delta) - 32px) !important;
     }
 }
 
