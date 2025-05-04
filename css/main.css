@@ -787,6 +787,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-input-container {
     display: flex;
     flex-direction: column;
+    min-width: 0 !important;
 }
 
 #chat-input-container > .form {
@@ -807,12 +808,13 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     display: flex;
     flex-direction: column;
     padding-bottom: 0;
+    gap: 0;
 }
 
 @media screen and (width <= 924px) {
     #chat-col {
-        height: calc(100dvh - 132px);
         margin-top: 32px;
+        height: calc(100dvh - 32px);
     }
 }
 
