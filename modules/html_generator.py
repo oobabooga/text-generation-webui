@@ -9,7 +9,7 @@ from pathlib import Path
 import markdown
 from PIL import Image, ImageOps
 
-from modules import shared
+from modules import shared, message_versioning
 from modules.sane_markdown_lists import SaneListExtension
 from modules.utils import get_available_chat_styles
 
@@ -353,21 +353,27 @@ def generate_instruct_html(history):
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
         converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+        versioning_nav_user = message_versioning.get_message_version_nav_elements(i, 0)
+        versioning_nav_bot = message_versioning.get_message_version_nav_elements(i, 1)
 
         if converted_visible[0]:  # Don't display empty user messages
+            selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
             output += (
-                f'<div class="user-message" '
+                f'<div class="user-message{selected_class}" '
+                f'data-history-index="{i}" '
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
                 f'{copy_button}'
+                f'{versioning_nav_user}'
                 f'</div>'
                 f'</div>'
             )
 
-        streaming_class = " streaming" if i == len(history["visible"]) - 1 else ""
+        selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
-            f'<div class="assistant-message{streaming_class}" '
+            f'<div class="assistant-message{selected_class}" '
+            f'data-history-index="{i}" '
             f'data-raw="{html.escape(row_internal[1], quote=True)}">'
             f'<div class="text">'
             f'<div class="message-body">{converted_visible[1]}</div>'
@@ -375,6 +381,7 @@ def generate_instruct_html(history):
             f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
             f'{continue_button if i == len(history["visible"]) - 1 else ""}'
             f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'{versioning_nav_bot}'
             f'</div>'
             f'</div>'
         )
@@ -402,22 +409,30 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
         row_internal = history['internal'][i]
         converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
+        versioning_nav_user = message_versioning.get_message_version_nav_elements(i, 0)
+        versioning_nav_bot = message_versioning.get_message_version_nav_elements(i, 1)
+
         if converted_visible[0]:  # Don't display empty user messages
+            selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
             output += (
-                f'<div class="message" '
+                f'<div class="message{selected_class}" '
+                f'data-history-index="{i}" data-message-type="0" '
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="circle-you">{img_me}</div>'
                 f'<div class="text">'
                 f'<div class="username">{name1}</div>'
                 f'<div class="message-body">{converted_visible[0]}</div>'
                 f'{copy_button}'
+                f'{versioning_nav_user}'
                 f'</div>'
                 f'</div>'
             )
 
         streaming_class = " streaming" if i == len(history["visible"]) - 1 else ""
+        selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
-            f'<div class="message{streaming_class}" '
+            f'<div class="message{streaming_class}{selected_class}" '
+            f'data-history-index="{i}" data-message-type="1" '
             f'data-raw="{html.escape(row_internal[1], quote=True)}">'
             f'<div class="circle-bot">{img_bot}</div>'
             f'<div class="text">'
@@ -427,6 +442,7 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
             f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
             f'{continue_button if i == len(history["visible"]) - 1 else ""}'
             f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'{versioning_nav_bot}'
             f'</div>'
             f'</div>'
         )
@@ -443,20 +459,28 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
         row_internal = history['internal'][i]
         converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
+        versioning_nav_user = message_versioning.get_message_version_nav_elements(i, 0)
+        versioning_nav_bot = message_versioning.get_message_version_nav_elements(i, 1)
+
         if converted_visible[0]:  # Don't display empty user messages
+            selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
             output += (
-                f'<div class="message" '
+                f'<div class="message{selected_class}" '
+                f'data-history-index="{i}" data-message-type="0" '
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text-you">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
                 f'{copy_button}'
+                f'{versioning_nav_user}'
                 f'</div>'
                 f'</div>'
             )
 
         streaming_class = " streaming" if i == len(history["visible"]) - 1 else ""
+        selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
-            f'<div class="message{streaming_class}" '
+            f'<div class="message{streaming_class}{selected_class}" '
+            f'data-history-index="{i}" data-message-type="1" '
             f'data-raw="{html.escape(row_internal[1], quote=True)}">'
             f'<div class="text-bot">'
             f'<div class="message-body">{converted_visible[1]}</div>'
@@ -464,6 +488,7 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
             f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
             f'{continue_button if i == len(history["visible"]) - 1 else ""}'
             f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'{versioning_nav_bot}'
             f'</div>'
             f'</div>'
         )

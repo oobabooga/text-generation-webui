@@ -1387,3 +1387,96 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .streaming {
     min-height: 70vh;
 }
+
+/* --- Message Versioning Styles --- */
+
+.message-versioning-container {
+    position: absolute;
+    bottom: -23px;
+    right: 0;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+
+.message:hover .message-versioning-container,
+.user-message:hover .message-versioning-container
+.assistant-message:hover .message-versioning-container {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.selected-message .message-versioning-container {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.message-versioning-nav-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.message-versioning-nav-arrow {
+    position: static;
+    margin: 0;
+    padding: 2px;
+    width: 20px;
+    height: 20px;
+    line-height: 0;
+    transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+}
+
+.message .message-versioning-nav-arrow:not([activated]),
+.user-message .message-versioning-nav-arrow:not([activated]),
+.assistant-message .message-versioning-nav-arrow:not([activated]) {
+    cursor: not-allowed;
+    opacity: 0.3;
+    transform: scale(0.95);
+}
+
+.message .message-versioning-nav-arrow:not([activated]):hover,
+.user-message .message-versioning-nav-arrow:not([activated]):hover
+.assistant-message .message-versioning-nav-arrow:not([activated]):hover {
+    opacity: 0.3;
+}
+
+.message-versioning-nav-pos {
+    font-size: 11px;
+    font-family: monospace;
+    color: rgb(156 163 175); /* Match SVG stroke color */
+    user-select: none;
+    min-width: 25px;
+    text-align: center;
+    line-height: 20px;
+    padding: 0 2px;
+}
+
+.dark .message-versioning-nav-pos {
+    color: rgb(156 163 175); /* Same color for dark mode */
+}
+
+ /* If you want the other buttons to be visible when a message is selected, uncomment the lines below */
+.selected-message:not(:hover) .message-versioning-nav-arrow[activated]/*,
+.selected-message:not(:hover) .footer-button*/ {
+    opacity: 0.4;
+}
+
+.selected-message:not(:hover) .message-versioning-nav-arrow:not([activated]) {
+    opacity: 0.1;
+}
+
+.selected-message:hover .message-versioning-nav-arrow[activated]/*,
+.selected-message:hover .footer-button*/ {
+    opacity: 1;
+}
+
+.selected-message:hover .message-versioning-nav-arrow:not([activated]) {
+    opacity: 0.3;
+}
+
+.message-versioning-container[hidden] {
+    display: none;
+}
