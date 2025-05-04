@@ -581,6 +581,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #chat-input textarea {
     padding: 0.65rem 2.5rem;
+    border: 0;
 }
 
 #chat-input textarea::placeholder {
