@@ -44,7 +44,7 @@ Download from: https://github.com/oobabooga/text-generation-webui/releases
 
 To restart the web UI later, just run the same `start_` script. If you need to reinstall, delete the `installer_files` folder created during setup and run the script again.
 
-You can use command-line flags, like `./start_linux.sh --help`, or add them to `user_data/CMD_FLAGS.txt` (such as `--api` to enable API use). To update the project, run `update_wizard_linux.sh`, `update_wizard_windows.bat`, `update_wizard_macos.sh`, or `update_wizard_wsl.bat`.
+You can use command-line flags, like `./start_linux.sh --help`, or add them to `user_data/CMD_FLAGS.txt` (such as `--api` to enable API use). To update the project, run `update_wizard_linux.sh`, `update_wizard_windows.bat`, or `update_wizard_macos.sh`.
 
 <details>
 <summary>
@@ -55,7 +55,7 @@ Setup details and information about installing manually
 
 The script uses Miniconda to set up a Conda environment in the `installer_files` folder.
 
-If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, `cmd_macos.sh`, or `cmd_wsl.bat`.
+If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, or `cmd_macos.sh`.
 
 * There is no need to run any of those scripts (`start_`, `update_wizard_`, or `cmd_`) as admin/root.
 * To install the requirements for extensions, you can use the `extensions_reqs` script for your OS. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
