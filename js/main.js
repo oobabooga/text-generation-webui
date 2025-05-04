@@ -450,6 +450,7 @@ function updateCssProperties() {
       } else {
         chatContainer.scrollTop += deltaHeight;
       }
+
       currentChatInputHeight = chatInputHeight;
     }
   }
