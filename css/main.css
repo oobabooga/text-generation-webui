@@ -601,8 +601,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat-input-positioned {
-    position: absolute;
-    bottom: 0;
     max-width: 54rem;
     left: 50%;
     transform: translateX(-50%);
@@ -805,9 +803,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-col {
+    height: 100dvh;
     display: flex;
     flex-direction: column;
-    height: calc(100dvh - 100px);
     padding-bottom: 0;
 }
 
