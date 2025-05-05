@@ -979,6 +979,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     cursor: pointer;
 }
 
+#past-chats .selected,
+#past-chats label:hover {
+    background-color: rgb(224, 224, 224) !important;
+}
+
 #past-chats-buttons,
 #delete-chat-row,
 #rename-row {
@@ -986,7 +991,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     justify-content: center;
     gap: 9px;
 }
-
 
 #past-chats-row,
 #chat-controls {
