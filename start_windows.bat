@@ -1,6 +1,11 @@
 @echo off
 setlocal enabledelayedexpansion
 
+@rem environment isolation
+set PYTHONNOUSERSITE=1
+set PYTHONPATH=
+set PYTHONHOME=
+
 cd /D "%~dp0"
 
 @rem Portable install case
@@ -87,10 +92,6 @@ if not exist "%INSTALL_ENV_DIR%" (
 @rem check if conda environment was actually created
 if not exist "%INSTALL_ENV_DIR%\python.exe" ( echo. && echo Conda environment is empty. && goto end )
 
-@rem environment isolation
-set PYTHONNOUSERSITE=1
-set PYTHONPATH=
-set PYTHONHOME=
 set "CUDA_PATH=%INSTALL_ENV_DIR%"
 set "CUDA_HOME=%CUDA_PATH%"
 
