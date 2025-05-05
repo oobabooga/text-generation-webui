@@ -30,6 +30,8 @@ function removeLastClick() {
   document.getElementById("Remove-last").click();
 }
 
+// === History navigation handled in main.js === //
+
 function handleMorphdomUpdate(text) {
   // Track open blocks
   const openBlocks = new Set();
