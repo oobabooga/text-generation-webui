@@ -483,6 +483,8 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     history = state['history']
     for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True, for_ui=True)):
         yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
+        if i == 0:
+            save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 
