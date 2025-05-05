@@ -591,17 +591,28 @@ def redraw_html(history, name1, name2, mode, style, character, reset_cache=False
 
 def start_new_chat(state):
     mode = state['mode']
-    history = {'internal': [], 'visible': []}
+    history = []
 
     if mode != 'instruct':
         greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
+        # Add assistant's greeting
         if greeting != '':
-            history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            history['visible'] += [['', apply_extensions('output', html.escape(greeting), state, is_chat=True)]]
+            history.append({
+                'role': 'user',
+                'content': '<|BEGIN-VISIBLE-CHAT|>',
+                'visible-content': '',
+                'date': current_date()
+            })
+
+            history.append({
+                'role': 'assistant',
+                'content': greeting,
+                'visible-content': apply_extensions('output', html.escape(greeting), state, is_chat=True),
+                'date': current_date()
+            })
 
     unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
     save_history(history, unique_id, state['character_menu'], state['mode'])
-
     return history
 
 
@@ -1343,7 +1354,7 @@ def handle_your_picture_change(picture, state):
 
 def handle_send_instruction_click(state):
     state['mode'] = 'instruct'
-    state['history'] = {'internal': [], 'visible': []}
+    state['history'] = []
 
     output = generate_chat_prompt("Input", state)
 
