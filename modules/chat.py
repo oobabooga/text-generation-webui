@@ -37,7 +37,7 @@ def strftime_now(format):
 
 
 def current_date():
-    return strftime_now('%Y-%m-%d %H:%M')
+    return strftime_now('%Y-%m-%d %H:%M:%S')
 
 
 jinja_env = ImmutableSandboxedEnvironment(

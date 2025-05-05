@@ -531,7 +531,7 @@ def time_greeting():
 
 
 def chat_html_wrapper(history, name1, name2, mode, style, character, reset_cache=False):
-    if len(history['visible']) == 0:
+    if len(history) == 0:
         greeting = f"<div class=\"welcome-greeting\">{time_greeting()} How can I help you today?</div>"
         result = f'<div class="chat" id="chat">{greeting}</div>'
     elif mode == 'instruct':
