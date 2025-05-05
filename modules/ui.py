@@ -192,7 +192,6 @@ def list_interface_input_elements():
         'max_new_tokens',
         'prompt_lookup_num_tokens',
         'max_tokens_second',
-        'max_updates_second',
         'do_sample',
         'dynamic_temperature',
         'temperature_last',
