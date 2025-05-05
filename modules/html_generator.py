@@ -349,34 +349,51 @@ remove_button = f'<button class="footer-button footer-remove-button" title="Remo
 def generate_instruct_html(history):
     output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
 
-    for i in range(len(history['visible'])):
-        row_visible = history['visible'][i]
-        row_internal = history['internal'][i]
-        converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+    # Process each message
+    for i, item in enumerate(history):
+        # Skip system messages
+        if isinstance(item, dict) and item['role'] == 'user' and item['content'] == '<|BEGIN-VISIBLE-CHAT|>':
+            continue
 
-        if converted_visible[0]:  # Don't display empty user messages
+        # Handle user messages
+        if isinstance(item, dict) and item['role'] == 'user':
+            if item['visible-content']:  # Don't display empty user messages
+                converted = convert_to_markdown_wrapped(item['visible-content'], message_id=i, use_cache=True)
+                output += (
+                    f'<div class="user-message" '
+                    f'data-raw="{html.escape(item["content"], quote=True)}">'
+                    f'<div class="text">'
+                    f'<div class="message-body">{converted}</div>'
+                    f'{copy_button}'
+                    f'</div>'
+                    f'</div>'
+                )
+
+        # Handle assistant messages (both single messages and regeneration lists)
+        elif (isinstance(item, dict) and item['role'] == 'assistant') or \
+             (isinstance(item, list) and item and item[0]['role'] == 'assistant'):
+
+            # Get the actual message content (either from the message or last in regeneration list)
+            if isinstance(item, dict):
+                assistant_msg = item
+            else:  # it's a regeneration list
+                assistant_msg = item[-1]
+
+            is_last = (i == len(history) - 1)
+            converted = convert_to_markdown_wrapped(assistant_msg['visible-content'], message_id=i, use_cache=not is_last)
+
             output += (
-                f'<div class="user-message" '
-                f'data-raw="{html.escape(row_internal[0], quote=True)}">'
+                f'<div class="assistant-message" '
+                f'data-raw="{html.escape(assistant_msg["content"], quote=True)}">'
                 f'<div class="text">'
-                f'<div class="message-body">{converted_visible[0]}</div>'
+                f'<div class="message-body">{converted}</div>'
                 f'{copy_button}'
+                f'{refresh_button if is_last else ""}'
+                f'{continue_button if is_last else ""}'
+                f'{remove_button if is_last else ""}'
                 f'</div>'
                 f'</div>'
             )
-
-        output += (
-            f'<div class="assistant-message" '
-            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
-            f'<div class="text">'
-            f'<div class="message-body">{converted_visible[1]}</div>'
-            f'{copy_button}'
-            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
-            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
-            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
-            f'</div>'
-            f'</div>'
-        )
 
     output += "</div></div>"
     return output
@@ -396,38 +413,55 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
         if Path("user_data/cache/pfp_me.png").exists() else ''
     )
 
-    for i in range(len(history['visible'])):
-        row_visible = history['visible'][i]
-        row_internal = history['internal'][i]
-        converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+    # Process each message
+    for i, item in enumerate(history):
+        # Skip system messages
+        if isinstance(item, dict) and item['role'] == 'user' and item['content'] == '<|BEGIN-VISIBLE-CHAT|>':
+            continue
 
-        if converted_visible[0]:  # Don't display empty user messages
+        # Handle user messages
+        if isinstance(item, dict) and item['role'] == 'user':
+            if item['visible-content']:  # Don't display empty user messages
+                converted = convert_to_markdown_wrapped(item['visible-content'], message_id=i, use_cache=True)
+                output += (
+                    f'<div class="message" '
+                    f'data-raw="{html.escape(item["content"], quote=True)}">'
+                    f'<div class="circle-you">{img_me}</div>'
+                    f'<div class="text">'
+                    f'<div class="username">{name1}</div>'
+                    f'<div class="message-body">{converted}</div>'
+                    f'{copy_button}'
+                    f'</div>'
+                    f'</div>'
+                )
+
+        # Handle assistant messages (both single messages and regeneration lists)
+        elif (isinstance(item, dict) and item['role'] == 'assistant') or \
+             (isinstance(item, list) and item and item[0]['role'] == 'assistant'):
+
+            # Get the actual message content (either from the message or last in regeneration list)
+            if isinstance(item, dict):
+                assistant_msg = item
+            else:  # it's a regeneration list
+                assistant_msg = item[-1]
+
+            is_last = (i == len(history) - 1)
+            converted = convert_to_markdown_wrapped(assistant_msg['visible-content'], message_id=i, use_cache=not is_last)
+
             output += (
                 f'<div class="message" '
-                f'data-raw="{html.escape(row_internal[0], quote=True)}">'
-                f'<div class="circle-you">{img_me}</div>'
+                f'data-raw="{html.escape(assistant_msg["content"], quote=True)}">'
+                f'<div class="circle-bot">{img_bot}</div>'
                 f'<div class="text">'
-                f'<div class="username">{name1}</div>'
-                f'<div class="message-body">{converted_visible[0]}</div>'
+                f'<div class="username">{name2}</div>'
+                f'<div class="message-body">{converted}</div>'
                 f'{copy_button}'
+                f'{refresh_button if is_last else ""}'
+                f'{continue_button if is_last else ""}'
+                f'{remove_button if is_last else ""}'
                 f'</div>'
                 f'</div>'
             )
-
-        output += (
-            f'<div class="message" '
-            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
-            f'<div class="circle-bot">{img_bot}</div>'
-            f'<div class="text">'
-            f'<div class="username">{name2}</div>'
-            f'<div class="message-body">{converted_visible[1]}</div>'
-            f'{copy_button}'
-            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
-            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
-            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
-            f'</div>'
-            f'</div>'
-        )
 
     output += "</div></div>"
     return output
@@ -436,34 +470,51 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
 def generate_chat_html(history, name1, name2, reset_cache=False):
     output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat"><div class="messages">'
 
-    for i in range(len(history['visible'])):
-        row_visible = history['visible'][i]
-        row_internal = history['internal'][i]
-        converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+    # Process each message
+    for i, item in enumerate(history):
+        # Skip system messages
+        if isinstance(item, dict) and item['role'] == 'user' and item['content'] == '<|BEGIN-VISIBLE-CHAT|>':
+            continue
 
-        if converted_visible[0]:  # Don't display empty user messages
+        # Handle user messages
+        if isinstance(item, dict) and item['role'] == 'user':
+            if item['visible-content']:  # Don't display empty user messages
+                converted = convert_to_markdown_wrapped(item['visible-content'], message_id=i, use_cache=True)
+                output += (
+                    f'<div class="message" '
+                    f'data-raw="{html.escape(item["content"], quote=True)}">'
+                    f'<div class="text-you">'
+                    f'<div class="message-body">{converted}</div>'
+                    f'{copy_button}'
+                    f'</div>'
+                    f'</div>'
+                )
+
+        # Handle assistant messages (both single messages and regeneration lists)
+        elif (isinstance(item, dict) and item['role'] == 'assistant') or \
+             (isinstance(item, list) and item and item[0]['role'] == 'assistant'):
+
+            # Get the actual message content (either from the message or last in regeneration list)
+            if isinstance(item, dict):
+                assistant_msg = item
+            else:  # it's a regeneration list
+                assistant_msg = item[-1]
+
+            is_last = (i == len(history) - 1)
+            converted = convert_to_markdown_wrapped(assistant_msg['visible-content'], message_id=i, use_cache=not is_last)
+
             output += (
                 f'<div class="message" '
-                f'data-raw="{html.escape(row_internal[0], quote=True)}">'
-                f'<div class="text-you">'
-                f'<div class="message-body">{converted_visible[0]}</div>'
+                f'data-raw="{html.escape(assistant_msg["content"], quote=True)}">'
+                f'<div class="text-bot">'
+                f'<div class="message-body">{converted}</div>'
                 f'{copy_button}'
+                f'{refresh_button if is_last else ""}'
+                f'{continue_button if is_last else ""}'
+                f'{remove_button if is_last else ""}'
                 f'</div>'
                 f'</div>'
             )
-
-        output += (
-            f'<div class="message" '
-            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
-            f'<div class="text-bot">'
-            f'<div class="message-body">{converted_visible[1]}</div>'
-            f'{copy_button}'
-            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
-            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
-            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
-            f'</div>'
-            f'</div>'
-        )
 
     output += "</div></div>"
     return output
