@@ -61,7 +61,7 @@ if not shared.args.old_colors:
         background_fill_primary_dark='var(--darker-gray)',
         body_background_fill="white",
         block_background_fill="transparent",
-        body_text_color="#333",
+        body_text_color='rgb(64, 64, 64)',
         button_secondary_background_fill="#f4f4f4",
         button_secondary_border_color="var(--border-color-primary)",
 

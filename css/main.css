@@ -2,7 +2,7 @@
     --darker-gray: #202123;
     --dark-gray: #343541;
     --light-gray: #444654;
-    --light-theme-gray: #f5f5f5;
+    --light-theme-gray: #f3f4f6;
     --border-color-dark: #525252;
     --header-width: 112px;
     --selected-item-color-dark: #32333e;
@@ -580,6 +580,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-input textarea {
+    background: var(--light-theme-gray);
     padding: 0.65rem 2.5rem;
     border: 0;
 }
