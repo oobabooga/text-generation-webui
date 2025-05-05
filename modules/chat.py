@@ -136,7 +136,11 @@ def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs.get('impersonate', False)
     _continue = kwargs.get('_continue', False)
     also_return_rows = kwargs.get('also_return_rows', False)
-    history = kwargs.get('history', state['history'])['internal']
+    history = kwargs.get('history', state['history'])
+
+    # Ensure history is in the new format
+    if not isinstance(history, list):
+        history = convert_old_history_to_new(history)
 
     # Templates
     chat_template_str = state['chat_template_str']
@@ -174,16 +178,24 @@ def generate_chat_prompt(user_input, state, **kwargs):
             context = replace_character_names(state['context'], state['name1'], state['name2'])
             messages.append({"role": "system", "content": context})
 
+    # Process history to build messages list
     insert_pos = len(messages)
-    for user_msg, assistant_msg in reversed(history):
-        user_msg = user_msg.strip()
-        assistant_msg = assistant_msg.strip()
-
-        if assistant_msg:
-            messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
-
-        if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
-            messages.insert(insert_pos, {"role": "user", "content": user_msg})
+    for msg in reversed(history):
+        if isinstance(msg, dict):
+            if msg['role'] == 'assistant':
+                assistant_msg = msg['content'].strip()
+                if assistant_msg:
+                    messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
+            elif msg['role'] == 'user':
+                user_msg = msg['content'].strip()
+                if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
+                    messages.insert(insert_pos, {"role": "user", "content": user_msg})
+        elif isinstance(msg, list) and msg:
+            # Handle regeneration list - use only the last message
+            if msg[-1]['role'] == 'assistant':
+                assistant_msg = msg[-1]['content'].strip()
+                if assistant_msg:
+                    messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
 
     user_input = user_input.strip()
     if user_input and not impersonate and not _continue:
@@ -255,7 +267,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
             # Resort to truncating the user input
             else:
-
                 user_message = messages[-1]['content']
 
                 # Bisect the truncation point
@@ -342,8 +353,7 @@ def get_stopping_strings(state):
 
 def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_message=True, for_ui=False):
     history = state['history']
-    output = copy.deepcopy(history)
-    output = apply_extensions('history', output)
+    output = apply_extensions('history', copy.deepcopy(history))  # Only one deepcopy needed
     state = apply_extensions('state', state)
 
     visible_text = None
@@ -353,40 +363,66 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     # Prepare the input
     if not (regenerate or _continue):
         visible_text = html.escape(text)
-
-        # Apply extensions
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
         text = apply_extensions('input', text, state, is_chat=True)
 
-        output['internal'].append([text, ''])
-        output['visible'].append([visible_text, ''])
+        # Add user message
+        output.append({
+            'role': 'user',
+            'content': text,
+            'visible-content': visible_text,
+            'date': current_date()
+        })
 
         # *Is typing...*
         if loading_message:
-            yield {
-                'visible': output['visible'][:-1] + [[output['visible'][-1][0], shared.processing_message]],
-                'internal': output['internal']
-            }
+            # Create a modified copy for the "typing" message
+            typing_output = output + [{
+                'role': 'assistant',
+                'content': '',
+                'visible-content': shared.processing_message,
+                'date': current_date()
+            }]
+            yield typing_output
     else:
-        text, visible_text = output['internal'][-1][0], output['visible'][-1][0]
-        if regenerate:
-            if loading_message:
-                yield {
-                    'visible': output['visible'][:-1] + [[visible_text, shared.processing_message]],
-                    'internal': output['internal'][:-1] + [[text, '']]
-                }
-        elif _continue:
-            last_reply = [output['internal'][-1][1], output['visible'][-1][1]]
-            if loading_message:
-                yield {
-                    'visible': output['visible'][:-1] + [[visible_text, last_reply[1] + '...']],
-                    'internal': output['internal']
-                }
+        # For regenerate or continue, find the last user message and response
+        last_user_idx = -1
+        last_assistant_idx = -1
+
+        for i in range(len(output) - 1, -1, -1):
+            if isinstance(output[i], dict):
+                if output[i]['role'] == 'user' and last_user_idx == -1:
+                    last_user_idx = i
+                    text = output[i]['content']
+                    visible_text = output[i]['visible-content']
+                elif output[i]['role'] == 'assistant' and last_assistant_idx == -1:
+                    last_assistant_idx = i
+
+        if regenerate and loading_message:
+            if last_assistant_idx != -1:
+                # Remove the last assistant message for regeneration
+                output = output[:last_assistant_idx]
+
+            typing_output = output + [{
+                'role': 'assistant',
+                'content': '',
+                'visible-content': shared.processing_message,
+                'date': current_date()
+            }]
+            yield typing_output
+
+        elif _continue and loading_message:
+            if last_assistant_idx != -1:
+                last_reply = [output[last_assistant_idx]['content'], output[last_assistant_idx]['visible-content']]
+                # Create a modified copy with "..." appended
+                typing_output = copy.deepcopy(output)
+                typing_output[last_assistant_idx]['visible-content'] = last_reply[1] + '...'
+                yield typing_output
 
     # Generate the prompt
     kwargs = {
         '_continue': _continue,
-        'history': output if _continue else {k: v[:-1] for k, v in output.items()}
+        'history': output if _continue else output[:-1] if output else []
     }
     prompt = apply_extensions('custom_generate_chat_prompt', text, state, **kwargs)
     if prompt is None:
@@ -395,8 +431,6 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     # Generate
     reply = None
     for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True, for_ui=for_ui)):
-
-        # Extract the reply
         if state['mode'] in ['chat', 'chat-instruct']:
             visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply + '▍')
         else:
@@ -405,28 +439,47 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         visible_reply = html.escape(visible_reply)
 
         if shared.stop_everything:
-            if output['visible'][-1][1].endswith('▍'):
-                output['visible'][-1][1] = output['visible'][-1][1][:-1]
-
-            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+            # Remove cursor if present
+            if last_assistant_idx != -1 and output[last_assistant_idx]['visible-content'].endswith('▍'):
+                output[last_assistant_idx]['visible-content'] = output[last_assistant_idx]['visible-content'][:-1]
+                output[last_assistant_idx]['visible-content'] = apply_extensions('output', output[last_assistant_idx]['visible-content'], state, is_chat=True)
             yield output
             return
 
         if _continue:
-            output['internal'][-1] = [text, last_reply[0] + reply]
-            output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
+            # Update the last assistant message
+            output[last_assistant_idx]['content'] = last_reply[0] + reply
+            output[last_assistant_idx]['visible-content'] = last_reply[1] + visible_reply
             if is_stream:
                 yield output
         elif not (j == 0 and visible_reply.strip() == ''):
-            output['internal'][-1] = [text, reply.lstrip(' ')]
-            output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
+            # For first iteration or non-empty replies
+            if j == 0:  # First iteration
+                output.append({
+                    'role': 'assistant',
+                    'content': reply.lstrip(' '),
+                    'visible-content': visible_reply.lstrip(' '),
+                    'date': current_date()
+                })
+                last_assistant_idx = len(output) - 1
+            else:  # Update existing message
+                output[last_assistant_idx]['content'] = reply.lstrip(' ')
+                output[last_assistant_idx]['visible-content'] = visible_reply.lstrip(' ')
+
             if is_stream:
                 yield output
 
-    if output['visible'][-1][1].endswith('▍'):
-        output['visible'][-1][1] = output['visible'][-1][1][:-1]
+    # Final cleanup
+    if last_assistant_idx != -1 or (not _continue and reply is not None):
+        if _continue:
+            idx = last_assistant_idx
+        else:
+            idx = len(output) - 1
 
-    output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+        if output[idx]['visible-content'].endswith('▍'):
+            output[idx]['visible-content'] = output[idx]['visible-content'][:-1]
+        output[idx]['visible-content'] = apply_extensions('output', output[idx]['visible-content'], state, is_chat=True)
+
     yield output
 
 
@@ -448,7 +501,7 @@ def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_
     history = state['history']
     if regenerate or _continue:
         text = ''
-        if (len(history['visible']) == 1 and not history['visible'][0][0]) or len(history['internal']) == 0:
+        if (len(history) == 1 and isinstance(history[0], dict) and history[0]['role'] == 'user' and not history[0]['visible-content']) or len(history) == 0:
             yield history
             return
 
@@ -704,18 +757,30 @@ def find_all_histories_with_first_prompts(state):
             continue
 
         data = json.loads(file_content)
+
+        # Convert to new format if needed
+        if not isinstance(data, list):
+            data = convert_old_history_to_new(data)
+
+        # Now process with the unified logic for new format
         if re.match(r'^[0-9]{8}-[0-9]{2}-[0-9]{2}-[0-9]{2}$', filename):
             first_prompt = ""
-            if data and 'visible' in data and len(data['visible']) > 0:
-                if data['internal'][0][0] == '<|BEGIN-VISIBLE-CHAT|>':
-                    if len(data['visible']) > 1:
-                        first_prompt = html.unescape(data['visible'][1][0])
-                    elif i == 0:
-                        first_prompt = "New chat"
-                else:
-                    first_prompt = html.unescape(data['visible'][0][0])
-            elif i == 0:
+
+            # Look for the first non-system user message
+            found_system = False
+            for msg in data:
+                if isinstance(msg, dict) and msg['role'] == 'user':
+                    if msg['content'] == '<|BEGIN-VISIBLE-CHAT|>':
+                        found_system = True
+                        continue
+
+                    first_prompt = html.unescape(msg['visible-content'])
+                    break
+
+            # If we only found a system message or nothing, and this is the first history
+            if not first_prompt and (found_system or not data) and i == 0:
                 first_prompt = "New chat"
+
         else:
             first_prompt = filename
 
@@ -781,14 +846,16 @@ def update_character_menu_after_deletion(idx):
 def load_history(unique_id, character, mode):
     p = get_history_file_path(unique_id, character, mode)
 
-    f = json.loads(open(p, 'rb').read())
-    if 'internal' in f and 'visible' in f:
-        history = f
+    with open(p, 'rb') as f:
+        data = json.loads(f.read())
+
+    # Check if this is the old or new format
+    if isinstance(data, list):
+        # Already in new format
+        history = data
     else:
-        history = {
-            'internal': f['data'],
-            'visible': f['data_visible']
-        }
+        # Convert from any old format
+        history = convert_old_history_to_new(data)
 
     return history
 
@@ -796,14 +863,15 @@ def load_history(unique_id, character, mode):
 def load_history_json(file, history):
     try:
         file = file.decode('utf-8')
-        f = json.loads(file)
-        if 'internal' in f and 'visible' in f:
-            history = f
+        data = json.loads(file)
+
+        # Check if this is the old or new format
+        if isinstance(data, list):
+            # Already in new format
+            history = data
         else:
-            history = {
-                'internal': f['data'],
-                'visible': f['data_visible']
-            }
+            # Convert from any old format
+            history = convert_old_history_to_new(data)
 
         return history
     except:
@@ -813,6 +881,47 @@ def load_history_json(file, history):
 def delete_history(unique_id, character, mode):
     p = get_history_file_path(unique_id, character, mode)
     delete_file(p)
+
+
+def convert_old_history_to_new(old_data):
+    """Convert history from any old format to the new format."""
+    # Handle the case where we received the even older format
+    if not ('internal' in old_data and 'visible' in old_data):
+        if 'data' in old_data and 'data_visible' in old_data:
+            old_data = {
+                'internal': old_data['data'],
+                'visible': old_data['data_visible']
+            }
+        else:
+            # If it's in neither format, return an empty history
+            return []
+
+    new_history = []
+
+    # Process paired messages
+    for i in range(len(old_data['internal'])):
+        internal_pair = old_data['internal'][i]
+        visible_pair = old_data['visible'][i] if i < len(old_data['visible']) else ['', '']
+
+        # Add user message if it exists (not empty for regular messages)
+        if internal_pair[0] != '':
+            new_history.append({
+                'role': 'user',
+                'content': internal_pair[0],
+                'visible-content': visible_pair[0],
+                'date': ''  # We don't have historical dates
+            })
+
+        # Add assistant message if it exists
+        if internal_pair[1] != '':
+            new_history.append({
+                'role': 'assistant',
+                'content': internal_pair[1],
+                'visible-content': visible_pair[1],
+                'date': ''  # We don't have historical dates
+            })
+
+    return new_history
 
 
 def replace_character_names(text, name1, name2):
