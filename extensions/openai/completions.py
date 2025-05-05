@@ -84,41 +84,26 @@ def convert_history(history):
     Converts OpenAI chat histories to our internal format.
     Our new format is a list of message objects similar to OpenAI's format.
     '''
-    new_history = []
-    user_input = ""
-    user_input_last = True
     system_message = ""
+    new_history = []
 
     for entry in history:
         content = entry["content"]
         role = entry["role"]
 
-        if role == "user":
-            user_input = content
-            user_input_last = True
+        new_history.append({
+            'role': role,
+            'content': content,
+            'visible-content': content,
+            'date': ''
+        })
 
-            new_history.append({
-                'role': 'user',
-                'content': content,
-                'visible-content': content,
-                'date': ''
-            })
-        elif role == "assistant":
-            user_input_last = False
+    # Get the last user input if it exists, otherwise empty string
+    user_input = ""
+    if new_history and new_history[-1]['role'] == 'user':
+        user_input = new_history[-1]['content']
 
-            new_history.append({
-                'role': 'assistant',
-                'content': content,
-                'visible-content': content,
-                'date': ''
-            })
-        elif role == "system":
-            system_message += f"\n{content}" if system_message else content
-
-    if not user_input_last:
-        user_input = ""
-
-    return user_input, system_message, new_history
+    return user_input, new_history
 
 
 def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, prompt_only=False) -> dict:
@@ -175,7 +160,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
     user_bio = body['user_bio'] or ''
 
     # History
-    user_input, custom_system_message, history = convert_history(messages)
+    user_input, history = convert_history(messages)
 
     generate_params.update({
         'mode': body['mode'],
@@ -185,7 +170,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         'greeting': greeting,
         'user_bio': user_bio,
         'instruction_template_str': instruction_template_str,
-        'custom_system_message': custom_system_message,
         'chat_template_str': chat_template_str,
         'chat-instruct_command': chat_instruct_command,
         'history': history,
