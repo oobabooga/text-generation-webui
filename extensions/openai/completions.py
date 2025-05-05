@@ -86,21 +86,19 @@ def process_parameters(body, is_legacy=False):
 
 def convert_history(history):
     '''
-    Chat histories in this program are in the format [message, reply].
-    This function converts OpenAI histories to that format.
+    Converts OpenAI chat histories to our internal format.
+    Our new format is a list of message objects similar to OpenAI's format.
     '''
-    chat_dialogue = []
-    current_message = ""
-    current_reply = ""
+    new_history = []
     user_input = ""
     user_input_last = True
     system_message = ""
 
     # Multimodal: convert OpenAI format to multimodal extension format
     if any('content' in entry and isinstance(entry['content'], list) for entry in history):
-        new_history = []
+        temp_history = []
         for entry in history:
-            if isinstance(entry['content'], list):
+            if isinstance(entry.get('content'), list):
                 for item in entry['content']:
                     if not isinstance(item, dict):
                         continue
@@ -112,15 +110,16 @@ def convert_history(history):
                     elif item['type'] == 'text' and isinstance(item['text'], str):
                         content = item['text']
                     if image_url:
-                        new_history.append({"image_url": image_url, "role": "user"})
+                        temp_history.append({"image_url": image_url, "role": "user"})
                     if content:
-                        new_history.append({"content": content, "role": "user"})
+                        temp_history.append({"content": content, "role": "user"})
             else:
-                new_history.append(entry)
+                temp_history.append(entry)
 
-        history = new_history
+        history = temp_history
 
     for entry in history:
+        # Process image URLs
         if "image_url" in entry:
             image_url = entry['image_url']
             if "base64" in image_url:
@@ -148,27 +147,29 @@ def convert_history(history):
         if role == "user":
             user_input = content
             user_input_last = True
-            if current_message:
-                chat_dialogue.append([current_message, ''])
-                current_message = ""
 
-            current_message = content
+            new_history.append({
+                'role': 'user',
+                'content': content,
+                'visible-content': content,
+                'date': ''
+            })
         elif role == "assistant":
-            current_reply = content
             user_input_last = False
-            if current_message:
-                chat_dialogue.append([current_message, current_reply])
-                current_message = ""
-                current_reply = ""
-            else:
-                chat_dialogue.append(['', current_reply])
+
+            new_history.append({
+                'role': 'assistant',
+                'content': content,
+                'visible-content': content,
+                'date': ''
+            })
         elif role == "system":
             system_message += f"\n{content}" if system_message else content
 
     if not user_input_last:
         user_input = ""
 
-    return user_input, system_message, {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
+    return user_input, system_message, new_history
 
 
 def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, prompt_only=False) -> dict:
@@ -289,7 +290,13 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
     seen_content = ''
 
     for a in generator:
-        answer = a['internal'][-1][1]
+        if isinstance(a[-1], dict):
+            # Direct message
+            answer = a[-1]['content']
+        else:
+            # Regeneration list - use the last item
+            answer = a[-1][-1]['content']
+
         if stream:
             len_seen = len(seen_content)
             new_content = answer[len_seen:]
