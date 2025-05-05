@@ -1,13 +1,8 @@
-import base64
 import copy
-import re
 import time
 from collections import deque
-from io import BytesIO
 
-import requests
 import tiktoken
-from PIL import Image
 
 from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg
@@ -97,28 +92,7 @@ def convert_history(history):
     system_message = ""
 
     for entry in history:
-        if "image_url" in entry:
-            image_url = entry['image_url']
-            if "base64" in image_url:
-                image_url = re.sub('^data:image/.+;base64,', '', image_url)
-                img = Image.open(BytesIO(base64.b64decode(image_url)))
-            else:
-                try:
-                    my_res = requests.get(image_url)
-                    img = Image.open(BytesIO(my_res.content))
-                except Exception:
-                    raise 'Image cannot be loaded from the URL!'
-
-            buffered = BytesIO()
-            if img.mode in ("RGBA", "P"):
-                img = img.convert("RGB")
-
-            img.save(buffered, format="JPEG")
-            img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
-            content = f'<img src="data:image/jpeg;base64,{img_str}">'
-        else:
-            content = entry["content"]
-
+        content = entry["content"]
         role = entry["role"]
 
         if role == "user":
