@@ -494,28 +494,22 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
 
 def remove_last_message(history):
-    if not isinstance(history, list):
-        return "", history
-
     # Walk backward to find last user message
     for i in reversed(range(len(history))):
-        if not isinstance(history[i], (dict, list)):
-            continue
-
-        if isinstance(history[i], dict) and history[i].get('role') == 'user':
+        if isinstance(history[i], dict) and history[i]['role'] == 'user':
             # Skip initial system message
-            if history[i].get('content') == '<|BEGIN-VISIBLE-CHAT|>':
+            if history[i]['content'] == '<|BEGIN-VISIBLE-CHAT|>':
                 return "", history
 
-            removed_content = html.unescape(history[i].get('visible-content', ''))
-            del history[i]  # Remove user message
+            removed_content = html.unescape(history[i]['visible-content'])
+            del history[i]
 
             # Remove following assistant message if exists
             if i < len(history):
                 next_msg = history[i]
-                if isinstance(next_msg, dict) and next_msg.get('role') == 'assistant':
+                if isinstance(next_msg, dict) and next_msg['role'] == 'assistant':
                     del history[i]
-                elif isinstance(next_msg, list) and next_msg and isinstance(next_msg[0], dict) and next_msg[0].get('role') == 'assistant':
+                elif isinstance(next_msg, list) and next_msg and next_msg[0]['role'] == 'assistant':
                     del history[i]
 
             return removed_content, history
@@ -524,34 +518,30 @@ def remove_last_message(history):
 
 
 def send_last_reply_to_input(history):
-    if not history or not isinstance(history, list):
+    if not history:
         return ''
 
-    last_msg = history[-1] if history else None
-    if isinstance(last_msg, dict) and last_msg.get('role') == 'assistant':
-        return html.unescape(last_msg.get('visible-content', ''))
-    elif isinstance(last_msg, list) and last_msg and isinstance(last_msg[-1], dict) and last_msg[-1].get('role') == 'assistant':
-        return html.unescape(last_msg[-1].get('visible-content', ''))
+    last_msg = history[-1]
+    if isinstance(last_msg, dict) and last_msg['role'] == 'assistant':
+        return html.unescape(last_msg['visible-content'])
+    elif isinstance(last_msg, list) and last_msg and last_msg[-1]['role'] == 'assistant':
+        return html.unescape(last_msg[-1]['visible-content'])
 
     return ''
 
 
 def replace_last_reply(text, state):
     history = state['history']
-
     if len(text.strip()) == 0:
         return history
 
     # Find the last assistant message (could be single or in a regeneration list)
     last_assistant = None
     for msg in reversed(history):
-        if isinstance(msg, list):  # Regeneration case
-            if msg and msg[-1]['role'] == 'assistant':
-                last_assistant = msg[-1]
-                break
-        elif msg['role'] == 'assistant':
+        if isinstance(msg, dict) and msg['role'] == 'assistant':
             last_assistant = msg
-            break
+        elif isinstance(msg, list) and msg and msg[-1]['role'] == 'assistant':
+            last_assistant = msg
 
     if last_assistant:
         visible_text = html.escape(text)
