@@ -72,7 +72,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
     # Generate
     last_update = time.monotonic()
-    latency_threshold = 1/1000
+    latency_threshold = 1 / 1000
     for reply in generate_func(question, original_question, state, stopping_strings, is_chat=is_chat):
         cur_time = time.monotonic()
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
@@ -94,7 +94,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             else:
                 # If 'generate_func' takes less than 0.001 seconds to yield the next token
                 # (equivalent to more than 1000 tok/s), assume that the UI is lagging behind and skip yielding
-                if (cur_time-last_update) > latency_threshold:
+                if (cur_time - last_update) > latency_threshold:
                     yield reply
                 last_update = time.monotonic()
 
