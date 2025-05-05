@@ -494,20 +494,46 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
 
 def remove_last_message(history):
-    if len(history['visible']) > 0 and history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
-        last = history['visible'].pop()
-        history['internal'].pop()
-    else:
-        last = ['', '']
+    if not isinstance(history, list):
+        return "", history
 
-    return html.unescape(last[0]), history
+    # Walk backward to find last user message
+    for i in reversed(range(len(history))):
+        if not isinstance(history[i], (dict, list)):
+            continue
+
+        if isinstance(history[i], dict) and history[i].get('role') == 'user':
+            # Skip initial system message
+            if history[i].get('content') == '<|BEGIN-VISIBLE-CHAT|>':
+                return "", history
+
+            removed_content = html.unescape(history[i].get('visible-content', ''))
+            del history[i]  # Remove user message
+
+            # Remove following assistant message if exists
+            if i < len(history):
+                next_msg = history[i]
+                if isinstance(next_msg, dict) and next_msg.get('role') == 'assistant':
+                    del history[i]
+                elif isinstance(next_msg, list) and next_msg and isinstance(next_msg[0], dict) and next_msg[0].get('role') == 'assistant':
+                    del history[i]
+
+            return removed_content, history
+
+    return "", history
 
 
 def send_last_reply_to_input(history):
-    if len(history['visible']) > 0:
-        return html.unescape(history['visible'][-1][1])
-    else:
+    if not history or not isinstance(history, list):
         return ''
+
+    last_msg = history[-1] if history else None
+    if isinstance(last_msg, dict) and last_msg.get('role') == 'assistant':
+        return html.unescape(last_msg.get('visible-content', ''))
+    elif isinstance(last_msg, list) and last_msg and isinstance(last_msg[-1], dict) and last_msg[-1].get('role') == 'assistant':
+        return html.unescape(last_msg[-1].get('visible-content', ''))
+
+    return ''
 
 
 def replace_last_reply(text, state):
