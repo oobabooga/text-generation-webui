@@ -86,7 +86,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
                 if diff > 0:
                     time.sleep(diff)
 
-                last_update = time.time()
+                last_update = time.monotonic()
                 yield reply
 
             # Limit updates to avoid lag in the Gradio UI
