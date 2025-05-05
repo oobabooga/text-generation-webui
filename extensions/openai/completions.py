@@ -97,7 +97,7 @@ def convert_history(history):
     if any('content' in entry and isinstance(entry['content'], list) for entry in history):
         temp_history = []
         for entry in history:
-            if isinstance(entry.get('content'), list):
+            if isinstance(entry['content'], list):
                 for item in entry['content']:
                     if not isinstance(item, dict):
                         continue
