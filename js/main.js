@@ -157,7 +157,7 @@ const observer = new MutationObserver(function(mutations) {
     const lastChild = messagesContainer?.lastElementChild;
     const prevSibling = lastChild?.previousElementSibling;
     if (lastChild && prevSibling) {
-      lastChild.style.minHeight = `calc(100vh - ${prevSibling.offsetHeight}px - 102px)`;
+      lastChild.style.minHeight = `calc(max(70vh, 100vh - ${prevSibling.offsetHeight}px - 102px))`;
     }
   }
 });
