@@ -292,6 +292,8 @@ class ChromaCollector():
 
         for doc in documents:
             doc_tokens = encode(doc)[0]
+            if isinstance(doc_tokens, np.ndarray):
+                doc_tokens = doc_tokens.tolist()
             doc_token_count = len(doc_tokens)
             if current_token_count + doc_token_count > max_token_count:
                 # If adding this document would exceed the max token count,
