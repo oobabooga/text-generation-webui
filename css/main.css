@@ -1375,7 +1375,3 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     50% { opacity: 1; }
     100% { opacity: 0.6; }
 }
-
-.streaming {
-    min-height: 70vh;
-}

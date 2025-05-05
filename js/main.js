@@ -150,6 +150,16 @@ const observer = new MutationObserver(function(mutations) {
   if (!isScrolled && targetElement.scrollTop !== targetElement.scrollHeight) {
     targetElement.scrollTop = targetElement.scrollHeight;
   }
+
+  const chatElement = document.getElementById("chat");
+  if (chatElement) {
+    const messagesContainer = chatElement.querySelector(".messages");
+    const lastChild = messagesContainer?.lastElementChild;
+    const prevSibling = lastChild?.previousElementSibling;
+    if (lastChild && prevSibling) {
+      lastChild.style.minHeight = `calc(100vh - ${prevSibling.offsetHeight}px - 102px)`;
+    }
+  }
 });
 
 // Configure the observer to watch for changes in the subtree and attributes

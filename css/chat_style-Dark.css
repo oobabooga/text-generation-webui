@@ -2,7 +2,8 @@
     display: grid;
     align-items: start;
     grid-template-columns: 60px minmax(0, 1fr);
-    padding-bottom: 28px;
+    padding-bottom: 14px;
+    padding-top: 14px;
     font-size: 18px;
     font-family: Roboto, Arial, sans-serif; /* Modern font */
     line-height: 1.5;
