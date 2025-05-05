@@ -349,9 +349,7 @@ remove_button = f'<button class="footer-button footer-remove-button" title="Remo
 def generate_instruct_html(history):
     output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
 
-    # Process each message
     for i, item in enumerate(history):
-        # Skip system messages
         if isinstance(item, dict) and item['role'] == 'user' and item['content'] == '<|BEGIN-VISIBLE-CHAT|>':
             continue
 
@@ -370,18 +368,14 @@ def generate_instruct_html(history):
                 )
 
         # Handle assistant messages (both single messages and regeneration lists)
-        elif (isinstance(item, dict) and item['role'] == 'assistant') or \
-             (isinstance(item, list) and item and item[0]['role'] == 'assistant'):
-
-            # Get the actual message content (either from the message or last in regeneration list)
+        elif (isinstance(item, dict) and item['role'] == 'assistant') or (isinstance(item, list) and item and item[0]['role'] == 'assistant'):
             if isinstance(item, dict):
                 assistant_msg = item
-            else:  # it's a regeneration list
+            else:
                 assistant_msg = item[-1]
 
             is_last = (i == len(history) - 1)
             converted = convert_to_markdown_wrapped(assistant_msg['visible-content'], message_id=i, use_cache=not is_last)
-
             output += (
                 f'<div class="assistant-message" '
                 f'data-raw="{html.escape(assistant_msg["content"], quote=True)}">'
@@ -413,9 +407,7 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
         if Path("user_data/cache/pfp_me.png").exists() else ''
     )
 
-    # Process each message
     for i, item in enumerate(history):
-        # Skip system messages
         if isinstance(item, dict) and item['role'] == 'user' and item['content'] == '<|BEGIN-VISIBLE-CHAT|>':
             continue
 
@@ -436,18 +428,14 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
                 )
 
         # Handle assistant messages (both single messages and regeneration lists)
-        elif (isinstance(item, dict) and item['role'] == 'assistant') or \
-             (isinstance(item, list) and item and item[0]['role'] == 'assistant'):
-
-            # Get the actual message content (either from the message or last in regeneration list)
+        elif (isinstance(item, dict) and item['role'] == 'assistant') or (isinstance(item, list) and item and item[0]['role'] == 'assistant'):
             if isinstance(item, dict):
                 assistant_msg = item
-            else:  # it's a regeneration list
+            else:
                 assistant_msg = item[-1]
 
             is_last = (i == len(history) - 1)
             converted = convert_to_markdown_wrapped(assistant_msg['visible-content'], message_id=i, use_cache=not is_last)
-
             output += (
                 f'<div class="message" '
                 f'data-raw="{html.escape(assistant_msg["content"], quote=True)}">'
@@ -470,9 +458,7 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
 def generate_chat_html(history, name1, name2, reset_cache=False):
     output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat"><div class="messages">'
 
-    # Process each message
     for i, item in enumerate(history):
-        # Skip system messages
         if isinstance(item, dict) and item['role'] == 'user' and item['content'] == '<|BEGIN-VISIBLE-CHAT|>':
             continue
 
@@ -491,18 +477,14 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
                 )
 
         # Handle assistant messages (both single messages and regeneration lists)
-        elif (isinstance(item, dict) and item['role'] == 'assistant') or \
-             (isinstance(item, list) and item and item[0]['role'] == 'assistant'):
-
-            # Get the actual message content (either from the message or last in regeneration list)
+        elif (isinstance(item, dict) and item['role'] == 'assistant') or (isinstance(item, list) and item and item[0]['role'] == 'assistant'):
             if isinstance(item, dict):
                 assistant_msg = item
-            else:  # it's a regeneration list
+            else:
                 assistant_msg = item[-1]
 
             is_last = (i == len(history) - 1)
             converted = convert_to_markdown_wrapped(assistant_msg['visible-content'], message_id=i, use_cache=not is_last)
-
             output += (
                 f'<div class="message" '
                 f'data-raw="{html.escape(assistant_msg["content"], quote=True)}">'
