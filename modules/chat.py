@@ -350,20 +350,20 @@ def get_stopping_strings(state):
 
 def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_message=True, for_ui=False):
     history = state['history']
-    output = apply_extensions('history', copy.deepcopy(history))  # One necessary deepcopy
+    output = apply_extensions('history', copy.deepcopy(history))
     state = apply_extensions('state', state)
 
     visible_text = None
     stopping_strings = get_stopping_strings(state)
     is_stream = state['stream']
 
-    # Prepare the input
+    last_user_idx = last_assistant_idx = -1
+
     if not (regenerate or _continue):
         visible_text = html.escape(text)
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
         text = apply_extensions('input', text, state, is_chat=True)
 
-        # Add user message
         output.append({
             'role': 'user',
             'content': text,
@@ -371,23 +371,16 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             'date': current_date()
         })
 
-        # *Is typing...*
         if loading_message:
-            # Avoid deepcopy by creating a new list with all existing items plus the typing message
-            typing_output = output + [{
+            yield output + [{
                 'role': 'assistant',
                 'content': '',
                 'visible-content': shared.processing_message,
                 'date': current_date()
             }]
-            yield typing_output
     else:
-        # For regenerate or continue, find the last user message and response
-        last_user_idx = -1
-        last_assistant_idx = -1
-
         for i in range(len(output) - 1, -1, -1):
-            if isinstance(output[i], dict) and output[i]['role'] == 'user' and last_user_idx == -1:
+            if last_user_idx == -1 and isinstance(output[i], dict) and output[i]['role'] == 'user':
                 last_user_idx = i
                 text = output[i]['content']
                 visible_text = output[i]['visible-content']
@@ -397,143 +390,93 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
                 elif isinstance(output[i], list) and output[i] and output[i][0]['role'] == 'assistant':
                     last_assistant_idx = i
 
-        if regenerate and loading_message:
-            # Proper handling of regeneration:
-            if last_assistant_idx != -1:
-                # Instead of modifying output, create a new list up to last_assistant_idx
-                modified_output = output[:last_assistant_idx]
+        if loading_message:
+            msg = {
+                'role': 'assistant',
+                'content': '',
+                'visible-content': shared.processing_message,
+                'date': current_date()
+            }
 
-                # Add the regeneration list
-                if isinstance(output[last_assistant_idx], dict):
-                    # Create a list with the original message and typing message
-                    regen_list = [
-                        output[last_assistant_idx],
-                        {
-                            'role': 'assistant',
-                            'content': '',
-                            'visible-content': shared.processing_message,
-                            'date': current_date()
-                        }
-                    ]
-                    modified_output.append(regen_list)
+            if regenerate:
+                if last_assistant_idx != -1:
+                    regen_list = (
+                        [output[last_assistant_idx]] if isinstance(output[last_assistant_idx], dict)
+                        else list(output[last_assistant_idx])
+                    )
+                    regen_list.append(msg)
+                    output = output[:last_assistant_idx] + [regen_list] + output[last_assistant_idx + 1:]
                 else:
-                    # Copy the existing list and add typing message
-                    regen_list = output[last_assistant_idx] + [{
-                        'role': 'assistant',
-                        'content': '',
-                        'visible-content': shared.processing_message,
-                        'date': current_date()
-                    }]
-                    modified_output.append(regen_list)
+                    output.append(msg)
 
-                # Add remaining items
-                if last_assistant_idx < len(output) - 1:
-                    modified_output.extend(output[last_assistant_idx + 1:])
+                yield output
 
-                yield modified_output
-            else:
-                # If no assistant message found, just add a new one
-                typing_output = output + [{
-                    'role': 'assistant',
-                    'content': '',
-                    'visible-content': shared.processing_message,
-                    'date': current_date()
-                }]
-                yield typing_output
+            elif _continue:
+                if last_assistant_idx != -1:
+                    modified_output = list(output)
+                    container = modified_output[last_assistant_idx]
+                    last_msg = container if isinstance(container, dict) else container[-1]
+                    last_msg = dict(last_msg)
+                    last_msg['visible-content'] += '...'
+                    if isinstance(container, dict):
+                        modified_output[last_assistant_idx] = last_msg
+                    else:
+                        container[-1] = last_msg
+                        modified_output[last_assistant_idx] = container
 
-        elif _continue and loading_message:
-            if last_assistant_idx != -1:
-                # Create a modified output by copying most elements by reference except the one we modify
-                modified_output = list(output)  # Shallow copy the list
+                    yield modified_output
 
-                if isinstance(output[last_assistant_idx], dict):
-                    # Make a copy of just the last message
-                    last_msg = dict(output[last_assistant_idx])
-                    last_reply = [last_msg['content'], last_msg['visible-content']]
-                    last_msg['visible-content'] = last_reply[1] + '...'
-                    modified_output[last_assistant_idx] = last_msg
-                else:
-                    # Shallow copy the regeneration list
-                    regen_list = list(output[last_assistant_idx])
-                    # Make a copy of just the last regenerated message
-                    last_msg = dict(regen_list[-1])
-                    last_reply = [last_msg['content'], last_msg['visible-content']]
-                    last_msg['visible-content'] = last_reply[1] + '...'
-                    regen_list[-1] = last_msg
-                    modified_output[last_assistant_idx] = regen_list
+    prompt = apply_extensions(
+        'custom_generate_chat_prompt',
+        text,
+        state,
+        _continue=_continue,
+        regenerate=regenerate,
+        history=output if _continue else output[:-1] if output else []
+    )
 
-                yield modified_output
-
-    # Generate the prompt
-    kwargs = {
-        '_continue': _continue,
-        'regenerate': regenerate,
-        'history': output if _continue else output[:-1] if output else []
-    }
-    prompt = apply_extensions('custom_generate_chat_prompt', text, state, **kwargs)
     if prompt is None:
-        prompt = generate_chat_prompt(text, state, **kwargs)
+        prompt = generate_chat_prompt(
+            text,
+            state,
+            _continue=_continue,
+            regenerate=regenerate,
+            history=output if _continue else output[:-1] if output else []
+        )
 
-    # Generate
-    reply = None
-    last_reply = None
-
-    # For regeneration, store the original message or list
+    reply = last_reply = None
     if regenerate and last_assistant_idx != -1:
-        # Store the last assistant message/list to handle regeneration
-        orig_assistant = output[last_assistant_idx]
-        if isinstance(orig_assistant, dict):
-            # Convert to a list with the original message
-            output[last_assistant_idx] = [orig_assistant]
+        if isinstance(output[last_assistant_idx], dict):
+            output[last_assistant_idx] = [output[last_assistant_idx]]
 
     for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True, for_ui=for_ui)):
-        if state['mode'] in ['chat', 'chat-instruct']:
-            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply + '▍')
-        else:
-            visible_reply = reply + '▍'
-
+        visible_reply = re.sub(r"(<USER>|<user>|{{user}})", state['name1'], reply + '▍') if state['mode'] in ['chat', 'chat-instruct'] else reply + '▍'
         visible_reply = html.escape(visible_reply)
 
         if shared.stop_everything:
-            # Remove cursor if present from the last assistant message
             if last_assistant_idx != -1:
-                if isinstance(output[last_assistant_idx], dict):
-                    if output[last_assistant_idx]['visible-content'].endswith('▍'):
-                        output[last_assistant_idx]['visible-content'] = output[last_assistant_idx]['visible-content'][:-1]
-                        output[last_assistant_idx]['visible-content'] = apply_extensions('output', output[last_assistant_idx]['visible-content'], state, is_chat=True)
-                elif isinstance(output[last_assistant_idx], list):
-                    last_msg = output[last_assistant_idx][-1]
-                    if last_msg['visible-content'].endswith('▍'):
-                        last_msg['visible-content'] = last_msg['visible-content'][:-1]
-                        last_msg['visible-content'] = apply_extensions('output', last_msg['visible-content'], state, is_chat=True)
+                target = output[last_assistant_idx] if isinstance(output[last_assistant_idx], dict) else output[last_assistant_idx][-1]
+                if target['visible-content'].endswith('▍'):
+                    target['visible-content'] = apply_extensions('output', target['visible-content'][:-1], state, is_chat=True)
 
             yield output
             return
 
-        if _continue:
-            # Update the last assistant message
-            if isinstance(output[last_assistant_idx], dict):
-                # On first iteration, store the original response
-                if j == 0:
-                    last_reply = [output[last_assistant_idx]['content'], output[last_assistant_idx]['visible-content']]
+        if _continue and last_assistant_idx != -1:
+            container = output[last_assistant_idx]
+            if j == 0:
+                last_msg = container if isinstance(container, dict) else container[-1]
+                last_reply = [last_msg['content'], last_msg['visible-content']]
 
-                output[last_assistant_idx]['content'] = last_reply[0] + reply
-                output[last_assistant_idx]['visible-content'] = last_reply[1] + visible_reply
-            else:  # It's a regeneration list
-                # On first iteration, store the original response
-                if j == 0:
-                    last_reply = [output[last_assistant_idx][-1]['content'], output[last_assistant_idx][-1]['visible-content']]
-
-                output[last_assistant_idx][-1]['content'] = last_reply[0] + reply
-                output[last_assistant_idx][-1]['visible-content'] = last_reply[1] + visible_reply
-
+            target = container if isinstance(container, dict) else container[-1]
+            target['content'] = last_reply[0] + reply
+            target['visible-content'] = last_reply[1] + visible_reply
             if is_stream:
                 yield output
+
         elif regenerate:
-            # For regeneration, add to the existing list
-            if j == 0:  # First iteration
-                # Create a new message for the regeneration
-                new_msg = {
+            if j == 0:
+                msg = {
                     'role': 'assistant',
                     'content': reply.lstrip(' '),
                     'visible-content': visible_reply.lstrip(' '),
@@ -541,52 +484,43 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
                 }
 
                 if last_assistant_idx != -1:
-                    # Add to the regeneration list
-                    output[last_assistant_idx].append(new_msg)
+                    output[last_assistant_idx].append(msg)
                 else:
-                    # Create new assistant message
-                    output.append(new_msg)
+                    output.append(msg)
                     last_assistant_idx = len(output) - 1
             else:
-                # Update the last message in the regeneration list or the single message
-                if last_assistant_idx != -1:
-                    if isinstance(output[last_assistant_idx], list):
-                        output[last_assistant_idx][-1]['content'] = reply.lstrip(' ')
-                        output[last_assistant_idx][-1]['visible-content'] = visible_reply.lstrip(' ')
-                    else:
-                        output[last_assistant_idx]['content'] = reply.lstrip(' ')
-                        output[last_assistant_idx]['visible-content'] = visible_reply.lstrip(' ')
+                target = output[last_assistant_idx][-1] if isinstance(output[last_assistant_idx], list) else output[last_assistant_idx]
+                target['content'] = reply.lstrip(' ')
+                target['visible-content'] = visible_reply.lstrip(' ')
 
             if is_stream:
                 yield output
+
         elif not (j == 0 and visible_reply.strip() == ''):
-            # For regular generation (not regenerate or continue)
-            if j == 0:  # First iteration
-                output.append({
+            if j == 0:
+                msg = {
                     'role': 'assistant',
                     'content': reply.lstrip(' '),
                     'visible-content': visible_reply.lstrip(' '),
                     'date': current_date()
-                })
+                }
+
+                output.append(msg)
                 last_assistant_idx = len(output) - 1
-            else:  # Update existing message
+            else:
                 output[last_assistant_idx]['content'] = reply.lstrip(' ')
                 output[last_assistant_idx]['visible-content'] = visible_reply.lstrip(' ')
 
             if is_stream:
                 yield output
 
-    # Final cleanup - remove cursor and apply extensions
+    # Final cleanup
     if last_assistant_idx != -1:
-        if isinstance(output[last_assistant_idx], dict):
-            if output[last_assistant_idx]['visible-content'].endswith('▍'):
-                output[last_assistant_idx]['visible-content'] = output[last_assistant_idx]['visible-content'][:-1]
-            output[last_assistant_idx]['visible-content'] = apply_extensions('output', output[last_assistant_idx]['visible-content'], state, is_chat=True)
-        elif isinstance(output[last_assistant_idx], list):
-            last_msg = output[last_assistant_idx][-1]
-            if last_msg['visible-content'].endswith('▍'):
-                last_msg['visible-content'] = last_msg['visible-content'][:-1]
-            last_msg['visible-content'] = apply_extensions('output', last_msg['visible-content'], state, is_chat=True)
+        target = output[last_assistant_idx] if isinstance(output[last_assistant_idx], dict) else output[last_assistant_idx][-1]
+        if target['visible-content'].endswith('▍'):
+            target['visible-content'] = target['visible-content'][:-1]
+
+        target['visible-content'] = apply_extensions('output', target['visible-content'], state, is_chat=True)
 
     yield output
 
