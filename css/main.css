@@ -2,7 +2,7 @@
     --darker-gray: #202123;
     --dark-gray: #343541;
     --light-gray: #444654;
-    --light-theme-gray: #f3f4f6;
+    --light-theme-gray: #f9fbff;
     --border-color-dark: #525252;
     --header-width: 112px;
     --selected-item-color-dark: #32333e;
@@ -580,7 +580,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-input textarea {
-    background: var(--light-theme-gray);
+    background: #f3f4f6;
     padding: 0.65rem 2.5rem;
     border: 0;
 }
@@ -981,7 +981,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #past-chats .selected,
 #past-chats label:hover {
-    background-color: rgb(224, 224, 224) !important;
+    background-color: #dbeafe !important;
 }
 
 #past-chats-buttons,
@@ -1123,8 +1123,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     border: 0 !important;
 }
 
-.dark #past-chats .selected,
-.dark #past-chats label:hover {
+.dark gradio-app .gradio-container.gradio-container-4-37-2 .contain #past-chats .selected,
+.dark gradio-app .gradio-container.gradio-container-4-37-2 .contain #past-chats label:hover {
     background-color: var(--selected-item-color-dark) !important;
 }
 
@@ -1161,7 +1161,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .header_bar button.selected {
-    background: #E0E0E0;
+    background: #dbeafe;
 }
 
 #chat-controls,
