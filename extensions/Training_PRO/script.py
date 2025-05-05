@@ -175,23 +175,23 @@ def ui():
                     with gr.Row():
                         with gr.Column():
                             with gr.Row():
-                                dataset = gr.Dropdown(choices=get_datasets('training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.', elem_classes=['slim-dropdown'])
-                                create_refresh_button(dataset, lambda: None, lambda: {'choices': get_datasets('training/datasets', 'json')}, 'refresh-button')
+                                dataset = gr.Dropdown(choices=get_datasets('user_data/training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.', elem_classes=['slim-dropdown'])
+                                create_refresh_button(dataset, lambda: None, lambda: {'choices': get_datasets('user_data/training/datasets', 'json')}, 'refresh-button')
                             with gr.Row():
-                                eval_dataset = gr.Dropdown(choices=get_datasets('training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'])
-                                create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': get_datasets('training/datasets', 'json')}, 'refresh-button')
+                                eval_dataset = gr.Dropdown(choices=get_datasets('user_data/training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'])
+                                create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': get_datasets('user_data/training/datasets', 'json')}, 'refresh-button')
 
                         with gr.Column():
                             with gr.Row():
-                                format = gr.Dropdown(choices=get_datasets('training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.', elem_classes=['slim-dropdown'])
-                                create_refresh_button(format, lambda: None, lambda: {'choices': get_datasets('training/formats', 'json')}, 'refresh-button')
+                                format = gr.Dropdown(choices=get_datasets('user_data/training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.', elem_classes=['slim-dropdown'])
+                                create_refresh_button(format, lambda: None, lambda: {'choices': get_datasets('user_data/training/formats', 'json')}, 'refresh-button')
                             with gr.Row():
                                 eval_steps = gr.Number(label='Evaluate every n steps', value=100, info='If an evaluation dataset is given, test it every time this many steps pass.')
 
                 with gr.Tab(label="Text file"):
                     with gr.Row():
-                        raw_text_file = gr.Dropdown(choices=get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The text file to use for training.', elem_classes=['slim-dropdown'])
-                        create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': get_datasets('training/datasets', 'txt')}, 'refresh-button')
+                        raw_text_file = gr.Dropdown(choices=get_datasets('user_data/training/datasets', 'txt'), value='None', label='Text file', info='The text file to use for training.', elem_classes=['slim-dropdown'])
+                        create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': get_datasets('user_data/training/datasets', 'txt')}, 'refresh-button')
 
                     with gr.Row():
                         with gr.Column():
@@ -208,7 +208,7 @@ def ui():
                             download_file_url = gr.Textbox(label='Download JSON or txt file to datasets (or formats) folder', value='',info='The URL of a file to download. If on github, make sure you get url of the raw file (https://raw.githubusercontent.com/...). If huggin face, make sure the url has /resolve/ in it not /blob/')
                             with gr.Row():
                                 download_check_overwrite = gr.Checkbox(label='Overwrite', value=False, info='Overwrite if file exist')
-                                download_folder = gr.Radio(label="Destination", value='training/datasets', choices=['training/datasets', 'training/formats'], interactive=True)
+                                download_folder = gr.Radio(label="Destination", value='user_data/training/datasets', choices=['user_data/training/datasets', 'user_data/training/formats'], interactive=True)
                             download_button = gr.Button('Download')
                             download_status = gr.Textbox(label='Download Status', value='', interactive=False)
                 with gr.Row():
@@ -235,7 +235,7 @@ def ui():
         with gr.Row():
             with gr.Column():
                 models = gr.Dropdown(utils.get_available_models(), label='Models', multiselect=True)
-                evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + get_datasets('training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under training/datasets.')
+                evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + get_datasets('user_data/training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under user_data/training/datasets.')
                 with gr.Row():
                     with gr.Column():
                         stride_length = gr.Slider(label='Stride', minimum=1, maximum=2048, value=512, step=1, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
@@ -310,7 +310,7 @@ def ui():
         
         if raw_text_file not in ['None', '']:
             logger.info("Loading Text file...")
-            fullpath = clean_path('training/datasets', f'{raw_text_file}')
+            fullpath = clean_path('user_data/training/datasets', f'{raw_text_file}')
             fullpath = Path(fullpath)
             if fullpath.is_dir():
                 logger.info('Training path directory {}'.format(raw_text_file))
@@ -324,10 +324,10 @@ def ui():
                         logger.info(f"Loaded training file: {file_path.name}")
             else:
                 try:
-                    with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
+                    with open(clean_path('user_data/training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
                         raw_text = file.read().replace('\r', '')
                 except:
-                    yield f"{raw_text_file}.txt doesn't seem to exsist anymore... check your training/datasets folder"
+                    yield f"{raw_text_file}.txt doesn't seem to exsist anymore... check your user_data/training/datasets folder"
                     return
             
  
@@ -353,7 +353,7 @@ def ui():
                 yield "Select format choice for dataset."
                 return
 
-            with open(clean_path('training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
+            with open(clean_path('user_data/training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
                 format_data: dict[str, str] = json.load(formatFile)
 
             def generate_prompt(data_point: dict[str, str]):
@@ -381,7 +381,7 @@ def ui():
                 return tokenize_dummy(prompt)
 
             logger.info("Loading JSON datasets...")
-            data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
+            data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{dataset}.json'))
             
             data_keys = [] 
 
@@ -456,7 +456,7 @@ def ui():
     #debug_slicer.change(lambda x: non_serialized_params.update({"debug_slicer": x}), debug_slicer, None)
 
     def update_dataset():
-        return gr.update(choices=get_datasets('training/datasets', 'json')), gr.update(choices=get_datasets('training/datasets', 'txt'))
+        return gr.update(choices=get_datasets('user_data/training/datasets', 'json')), gr.update(choices=get_datasets('user_data/training/datasets', 'txt'))
 
     download_button.click(download_file_from_url, [download_file_url,download_check_overwrite,download_folder] , download_status).then(update_dataset,None,[dataset , raw_text_file])
 
@@ -670,7 +670,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     if raw_text_file not in ['None', '']:
         train_template["template_type"] = "raw_text"
         logger.info("Loading text file...")
-        fullpath = clean_path('training/datasets', f'{raw_text_file}')
+        fullpath = clean_path('user_data/training/datasets', f'{raw_text_file}')
         fullpath = Path(fullpath)
         if fullpath.is_dir():
             logger.info('Training path directory {}'.format(raw_text_file))
@@ -683,7 +683,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
                     logger.info(f"Loaded training file: {file_path.name}")
         else:
-            with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
+            with open(clean_path('user_data/training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
                 raw_text = file.read().replace('\r', '')
         
         # FPHAM PRECISE SLICING        
@@ -720,7 +720,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         train_template["template_type"] = "dataset"
 
-        with open(clean_path('training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
+        with open(clean_path('user_data/training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
             format_data: dict[str, str] = json.load(formatFile)
 
         # == store training prompt ==
@@ -742,7 +742,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             return tokenize(prompt, add_eos_token, add_bos_token)
 
         logger.info("Loading JSON datasets...")
-        data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
+        data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{dataset}.json'))
         train_data = data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
 
         print(f"BOS: {add_bos_token} EOS: {add_eos_token}") 
@@ -751,7 +751,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         if eval_dataset == 'None':
             eval_data = None
         else:
-            eval_data = load_dataset("json", data_files=clean_path('training/datasets', f'{eval_dataset}.json'))
+            eval_data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{eval_dataset}.json'))
             eval_data = eval_data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
 
     # == We MUST reload model if it went through any previous training, even failed one ==
@@ -1157,11 +1157,11 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 decoded_entries.append({"value": decoded_text})
 
             # Write the log file
-            Path('logs').mkdir(exist_ok=True)
-            with open(Path('logs/train_dataset_sample.json'), 'w') as json_file:
+            Path('user_data/logs').mkdir(exist_ok=True)
+            with open(Path('user_data/logs/train_dataset_sample.json'), 'w') as json_file:
                 json.dump(decoded_entries, json_file, indent=4)
 
-            logger.info("Log file 'train_dataset_sample.json' created in the 'logs' directory.")
+            logger.info("Log file 'train_dataset_sample.json' created in the 'user_data/logs' directory.")
         except Exception as e:
             logger.error(f"Failed to create log file due to error: {e}")
 

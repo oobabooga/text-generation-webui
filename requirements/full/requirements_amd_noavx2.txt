@@ -1,0 +1,34 @@
+accelerate==1.5.*
+colorama
+datasets
+einops
+fastapi==0.112.4
+gradio==4.37.*
+jinja2==3.1.6
+markdown
+numpy==1.26.*
+pandas
+peft==0.15.*
+Pillow>=9.5.0
+psutil
+pydantic==2.8.2
+pyyaml
+requests
+rich
+safetensors==0.5.*
+scipy
+sentencepiece
+tensorboard
+transformers==4.50.*
+tqdm
+wandb
+
+# API
+flask_cloudflared==0.0.14
+sse-starlette==1.6.5
+tiktoken
+
+# AMD wheels
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.8.0/llama_cpp_binaries-0.8.0+rocm6.1.2avx-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/oobabooga/exllamav2/releases/download/v0.2.9/exllamav2-0.2.9+rocm6.1.torch2.6.0-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/oobabooga/exllamav2/releases/download/v0.2.9/exllamav2-0.2.9-py3-none-any.whl; platform_system != "Darwin" and platform_machine != "x86_64"

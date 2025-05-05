@@ -90,6 +90,44 @@ def get_generation_prompt(renderer, impersonate=False, strip_trailing_spaces=Tru
     return prefix, suffix
 
 
+def get_thinking_suppression_string(template):
+    """
+    Determines what string needs to be added to suppress thinking mode
+    by comparing template renderings with thinking enabled vs disabled.
+    """
+
+    # Render with thinking enabled
+    with_thinking = template.render(
+        messages=[{'role': 'user', 'content': ''}],
+        builtin_tools=None,
+        tools=None,
+        tools_in_user_message=False,
+        add_generation_prompt=True,
+        enable_thinking=True
+    )
+
+    # Render with thinking disabled
+    without_thinking = template.render(
+        messages=[{'role': 'user', 'content': ''}],
+        builtin_tools=None,
+        tools=None,
+        tools_in_user_message=False,
+        add_generation_prompt=True,
+        enable_thinking=False
+    )
+
+    # Find the difference (what gets added to suppress thinking)
+    i = 0
+    while i < min(len(with_thinking), len(without_thinking)) and with_thinking[i] == without_thinking[i]:
+        i += 1
+
+    j = 0
+    while j < min(len(with_thinking), len(without_thinking)) - i and with_thinking[-1 - j] == without_thinking[-1 - j]:
+        j += 1
+
+    return without_thinking[i:len(without_thinking) - j if j else None]
+
+
 def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs.get('impersonate', False)
     _continue = kwargs.get('_continue', False)
@@ -151,13 +189,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
     if user_input and not impersonate and not _continue:
         messages.append({"role": "user", "content": user_input})
 
-    def remove_extra_bos(prompt):
-        for bos_token in ['<s>', '<|startoftext|>', '<BOS_TOKEN>', '<|endoftext|>']:
-            while prompt.startswith(bos_token):
-                prompt = prompt[len(bos_token):]
-
-        return prompt
-
     def make_prompt(messages):
         if state['mode'] == 'chat-instruct' and _continue:
             prompt = renderer(messages=messages[:-1])
@@ -169,7 +200,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
             if state['custom_system_message'].strip() != '':
                 outer_messages.append({"role": "system", "content": state['custom_system_message']})
 
-            prompt = remove_extra_bos(prompt)
             command = state['chat-instruct_command']
             command = command.replace('<|character|>', state['name2'] if not impersonate else state['name1'])
             command = command.replace('<|prompt|>', prompt)
@@ -186,11 +216,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
             outer_messages.append({"role": "user", "content": command})
             outer_messages.append({"role": "assistant", "content": prefix})
 
-            prompt = instruction_template.render(messages=outer_messages)
+            prompt = instruct_renderer(messages=outer_messages)
             suffix = get_generation_prompt(instruct_renderer, impersonate=False)[1]
             if len(suffix) > 0:
                 prompt = prompt[:-len(suffix)]
-
         else:
             if _continue:
                 suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
@@ -203,7 +232,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
                 prompt += prefix
 
-        prompt = remove_extra_bos(prompt)
+        if state['mode'] == 'instruct' and not any((_continue, impersonate, state['enable_thinking'])):
+            prompt += get_thinking_suppression_string(instruction_template)
+
         return prompt
 
     prompt = make_prompt(messages)
@@ -421,16 +452,8 @@ def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_
             yield history
             return
 
-    show_after = html.escape(state.get("show_after")) if state.get("show_after") else None
     for history in chatbot_wrapper(text, state, regenerate=regenerate, _continue=_continue, loading_message=loading_message, for_ui=for_ui):
-        if show_after:
-            after = history["visible"][-1][1].partition(show_after)[2] or "*Is thinking...*"
-            yield {
-                'internal': history['internal'],
-                'visible': history['visible'][:-1] + [[history['visible'][-1][0], after]]
-            }
-        else:
-            yield history
+        yield history
 
 
 def character_is_loaded(state, raise_exception=False):
@@ -537,9 +560,9 @@ def start_new_chat(state):
 
 def get_history_file_path(unique_id, character, mode):
     if mode == 'instruct':
-        p = Path(f'logs/instruct/{unique_id}.json')
+        p = Path(f'user_data/logs/instruct/{unique_id}.json')
     else:
-        p = Path(f'logs/chat/{character}/{unique_id}.json')
+        p = Path(f'user_data/logs/chat/{character}/{unique_id}.json')
 
     return p
 
@@ -575,13 +598,13 @@ def rename_history(old_id, new_id, character, mode):
 
 def get_paths(state):
     if state['mode'] == 'instruct':
-        return Path('logs/instruct').glob('*.json')
+        return Path('user_data/logs/instruct').glob('*.json')
     else:
         character = state['character_menu']
 
         # Handle obsolete filenames and paths
-        old_p = Path(f'logs/{character}_persistent.json')
-        new_p = Path(f'logs/persistent_{character}.json')
+        old_p = Path(f'user_data/logs/{character}_persistent.json')
+        new_p = Path(f'user_data/logs/persistent_{character}.json')
         if old_p.exists():
             logger.warning(f"Renaming \"{old_p}\" to \"{new_p}\"")
             old_p.rename(new_p)
@@ -593,7 +616,7 @@ def get_paths(state):
             p.parent.mkdir(exist_ok=True)
             new_p.rename(p)
 
-        return Path(f'logs/chat/{character}').glob('*.json')
+        return Path(f'user_data/logs/chat/{character}').glob('*.json')
 
 
 def find_all_histories(state):
@@ -744,7 +767,7 @@ def generate_pfp_cache(character):
     if not cache_folder.exists():
         cache_folder.mkdir()
 
-    for path in [Path(f"characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
+    for path in [Path(f"user_data/characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
         if path.exists():
             original_img = Image.open(path)
             original_img.save(Path(f'{cache_folder}/pfp_character.png'), format='PNG')
@@ -764,12 +787,12 @@ def load_character(character, name1, name2):
 
     filepath = None
     for extension in ["yml", "yaml", "json"]:
-        filepath = Path(f'characters/{character}.{extension}')
+        filepath = Path(f'user_data/characters/{character}.{extension}')
         if filepath.exists():
             break
 
     if filepath is None or not filepath.exists():
-        logger.error(f"Could not find the character \"{character}\" inside characters/. No character has been loaded.")
+        logger.error(f"Could not find the character \"{character}\" inside user_data/characters. No character has been loaded.")
         raise ValueError
 
     file_contents = open(filepath, 'r', encoding='utf-8').read()
@@ -808,7 +831,7 @@ def load_instruction_template(template):
     if template == 'None':
         return ''
 
-    for filepath in [Path(f'instruction-templates/{template}.yaml'), Path('instruction-templates/Alpaca.yaml')]:
+    for filepath in [Path(f'user_data/instruction-templates/{template}.yaml'), Path('user_data/instruction-templates/Alpaca.yaml')]:
         if filepath.exists():
             break
     else:
@@ -850,17 +873,17 @@ def upload_character(file, img, tavern=False):
 
     outfile_name = name
     i = 1
-    while Path(f'characters/{outfile_name}.yaml').exists():
+    while Path(f'user_data/characters/{outfile_name}.yaml').exists():
         outfile_name = f'{name}_{i:03d}'
         i += 1
 
-    with open(Path(f'characters/{outfile_name}.yaml'), 'w', encoding='utf-8') as f:
+    with open(Path(f'user_data/characters/{outfile_name}.yaml'), 'w', encoding='utf-8') as f:
         f.write(yaml_data)
 
     if img is not None:
-        img.save(Path(f'characters/{outfile_name}.png'))
+        img.save(Path(f'user_data/characters/{outfile_name}.png'))
 
-    logger.info(f'New character saved to "characters/{outfile_name}.yaml".')
+    logger.info(f'New character saved to "user_data/characters/{outfile_name}.yaml".')
     return gr.update(value=outfile_name, choices=get_available_characters())
 
 
@@ -935,9 +958,9 @@ def save_character(name, greeting, context, picture, filename):
         return
 
     data = generate_character_yaml(name, greeting, context)
-    filepath = Path(f'characters/{filename}.yaml')
+    filepath = Path(f'user_data/characters/{filename}.yaml')
     save_file(filepath, data)
-    path_to_img = Path(f'characters/{filename}.png')
+    path_to_img = Path(f'user_data/characters/{filename}.png')
     if picture is not None:
         picture.save(path_to_img)
         logger.info(f'Saved {path_to_img}.')
@@ -945,9 +968,9 @@ def save_character(name, greeting, context, picture, filename):
 
 def delete_character(name, instruct=False):
     for extension in ["yml", "yaml", "json"]:
-        delete_file(Path(f'characters/{name}.{extension}'))
+        delete_file(Path(f'user_data/characters/{name}.{extension}'))
 
-    delete_file(Path(f'characters/{name}.png'))
+    delete_file(Path(f'user_data/characters/{name}.png'))
 
 
 def jinja_template_from_old_format(params, verbose=False):
@@ -1250,7 +1273,7 @@ def handle_save_template_click(instruction_template_str):
     contents = generate_instruction_template_yaml(instruction_template_str)
     return [
         "My Template.yaml",
-        "instruction-templates/",
+        "user_data/instruction-templates/",
         contents,
         gr.update(visible=True)
     ]
@@ -1259,7 +1282,7 @@ def handle_save_template_click(instruction_template_str):
 def handle_delete_template_click(template):
     return [
         f"{template}.yaml",
-        "instruction-templates/",
+        "user_data/instruction-templates/",
         gr.update(visible=False)
     ]
 

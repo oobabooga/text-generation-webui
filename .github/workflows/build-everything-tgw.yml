@@ -1,0 +1,63 @@
+name: Build Everything TGW
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag of text-generation-webui to build: v3.0'
+        default: 'v3.0'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build_release_cuda_windows:
+    name: CUDA Windows
+    uses: ./.github/workflows/build-portable-release-cuda.yml
+    with:
+      version: ${{ inputs.version }}
+      config: 'os:windows-2019'
+
+  build_release_cuda_linux:
+    name: CUDA Linux
+    uses: ./.github/workflows/build-portable-release-cuda.yml
+    with:
+      version: ${{ inputs.version }}
+      config: 'os:ubuntu-22.04'
+
+  build_release_vulkan_windows:
+    name: Vulkan Windows
+    uses: ./.github/workflows/build-portable-release-vulkan.yml
+    with:
+      version: ${{ inputs.version }}
+      config: 'os:windows-2019'
+
+  build_release_vulkan_linux:
+    name: Vulkan Linux
+    uses: ./.github/workflows/build-portable-release-vulkan.yml
+    with:
+      version: ${{ inputs.version }}
+      config: 'os:ubuntu-22.04'
+
+  build_release_cpu_windows:
+    name: CPU Windows
+    uses: ./.github/workflows/build-portable-release.yml
+    with:
+      version: ${{ inputs.version }}
+      config: 'os:windows-2019'
+
+  build_release_cpu_linux:
+    name: CPU Linux
+    uses: ./.github/workflows/build-portable-release.yml
+    with:
+      version: ${{ inputs.version }}
+      config: 'os:ubuntu-22.04'
+
+  build_release_macos:
+    name: macOS
+    uses: ./.github/workflows/build-portable-release.yml
+    with:
+      version: ${{ inputs.version }}
+      config: 'os:macos-13,macos-14'

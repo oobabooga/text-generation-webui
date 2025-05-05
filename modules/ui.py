@@ -2,9 +2,7 @@ import copy
 from pathlib import Path
 
 import gradio as gr
-import torch
 import yaml
-from transformers import is_torch_xpu_available
 
 import extensions
 from modules import shared
@@ -96,7 +94,7 @@ if not shared.args.old_colors:
         input_radius='0.375rem',
     )
 
-if Path("notification.mp3").exists():
+if Path("user_data/notification.mp3").exists():
     audio_notification_js = "document.querySelector('#audio_notification audio')?.play();"
 else:
     audio_notification_js = ""
@@ -110,33 +108,29 @@ def list_model_elements():
         'n_gpu_layers',
         'threads',
         'threads_batch',
-        'n_batch',
+        'batch_size',
         'hqq_backend',
-        'n_ctx',
-        'max_seq_len',
+        'ctx_size',
         'cache_type',
         'tensor_split',
+        'extra_flags',
+        'streaming_llm',
         'gpu_split',
         'alpha_value',
         'rope_freq_base',
         'compress_pos_emb',
         'compute_dtype',
         'quant_type',
-        'attention_sink_size',
         'num_experts_per_token',
-        'tensorcores',
         'load_in_8bit',
         'load_in_4bit',
         'torch_compile',
         'flash_attn',
         'use_flash_attention_2',
-        'streaming_llm',
-        'auto_devices',
         'cpu',
         'disk',
         'row_split',
-        'no_offload_kqv',
-        'no_mul_mat_q',
+        'no_kv_offload',
         'no_mmap',
         'mlock',
         'numa',
@@ -150,17 +144,14 @@ def list_model_elements():
         'no_sdpa',
         'cfg_cache',
         'cpp_runner',
-        'logits_all',
         'trust_remote_code',
         'no_use_fast',
+        'model_draft',
+        'draft_max',
+        'gpu_layers_draft',
+        'device_draft',
+        'ctx_size_draft',
     ]
-
-    if is_torch_xpu_available():
-        for i in range(torch.xpu.device_count()):
-            elements.append(f'gpu_memory_{i}')
-    else:
-        for i in range(torch.cuda.device_count()):
-            elements.append(f'gpu_memory_{i}')
 
     return elements
 
@@ -208,6 +199,7 @@ def list_interface_input_elements():
         'auto_max_new_tokens',
         'ban_eos_token',
         'add_bos_token',
+        'enable_thinking',
         'skip_special_tokens',
         'stream',
         'static_cache',
@@ -216,7 +208,6 @@ def list_interface_input_elements():
         'sampler_priority',
         'custom_stopping_strings',
         'custom_token_bans',
-        'show_after',
         'negative_prompt',
         'dry_sequence_breakers',
         'grammar_string',
@@ -277,7 +268,7 @@ def apply_interface_values(state, use_persistent=False):
         if 'textbox-default' in state and 'prompt_menu-default' in state:
             state.pop('prompt_menu-default')
 
-        if 'textbox-notebook' and 'prompt_menu-notebook' in state:
+        if 'textbox-notebook' in state and 'prompt_menu-notebook' in state:
             state.pop('prompt_menu-notebook')
 
     elements = list_interface_input_elements()

@@ -11,12 +11,12 @@ def get_fallback_settings():
     return {
         'bf16': False,
         'use_eager_attention': False,
-        'max_seq_len': 2048,
-        'n_ctx': 2048,
+        'ctx_size': 2048,
         'rope_freq_base': 0,
         'compress_pos_emb': 1,
         'alpha_value': 1,
         'truncation_length': shared.settings['truncation_length'],
+        'truncation_length_info': shared.settings['truncation_length'],
         'skip_special_tokens': shared.settings['skip_special_tokens'],
         'custom_stopping_strings': shared.settings['custom_stopping_strings'],
     }
@@ -25,10 +25,10 @@ def get_fallback_settings():
 def get_model_metadata(model):
     model_settings = {}
 
-    # Get settings from models/config.yaml and models/config-user.yaml
+    # Get settings from user_data/models/config.yaml and user_data/models/config-user.yaml
     settings = shared.model_config
     for pat in settings:
-        if re.match(pat.lower(), model.lower()):
+        if re.match(pat.lower(), Path(model).name.lower()):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
@@ -39,10 +39,15 @@ def get_model_metadata(model):
         hf_metadata = None
 
     if 'loader' not in model_settings:
-        model_settings['loader'] = infer_loader(model, model_settings)
+        quant_method = None if hf_metadata is None else hf_metadata.get("quantization_config", {}).get("quant_method", None)
+        model_settings['loader'] = infer_loader(
+            model,
+            model_settings,
+            hf_quant_method=quant_method
+        )
 
     # GGUF metadata
-    if model_settings['loader'] in ['llama.cpp', 'llamacpp_HF']:
+    if model_settings['loader'] == 'llama.cpp':
         path = Path(f'{shared.args.model_dir}/{model}')
         if path.is_file():
             model_file = path
@@ -53,7 +58,8 @@ def get_model_metadata(model):
 
         for k in metadata:
             if k.endswith('context_length'):
-                model_settings['n_ctx'] = metadata[k]
+                model_settings['ctx_size'] = min(metadata[k], 8192)
+                model_settings['truncation_length_info'] = metadata[k]
             elif k.endswith('rope.freq_base'):
                 model_settings['rope_freq_base'] = metadata[k]
             elif k.endswith('rope.scale_linear'):
@@ -89,7 +95,8 @@ def get_model_metadata(model):
             for k in ['max_position_embeddings', 'model_max_length', 'max_seq_len']:
                 if k in metadata:
                     model_settings['truncation_length'] = metadata[k]
-                    model_settings['max_seq_len'] = metadata[k]
+                    model_settings['truncation_length_info'] = metadata[k]
+                    model_settings['ctx_size'] = min(metadata[k], 8192)
 
             if 'rope_theta' in metadata:
                 model_settings['rope_freq_base'] = metadata['rope_theta']
@@ -137,10 +144,10 @@ def get_model_metadata(model):
     if 'rope_freq_base' in model_settings and model_settings['rope_freq_base'] == 10000:
         model_settings.pop('rope_freq_base')
 
-    # Apply user settings from models/config-user.yaml
+    # Apply user settings from user_data/models/config-user.yaml
     settings = shared.user_config
     for pat in settings:
-        if re.match(pat.lower(), model.lower()):
+        if re.match(pat.lower(), Path(model).name.lower()):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
@@ -151,18 +158,20 @@ def get_model_metadata(model):
     return model_settings
 
 
-def infer_loader(model_name, model_settings):
+def infer_loader(model_name, model_settings, hf_quant_method=None):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     if not path_to_model.exists():
         loader = None
-    elif (path_to_model / 'quantize_config.json').exists():  # Old GPTQ metadata file
-        loader = 'ExLlamav2_HF'
-    elif len(list(path_to_model.glob('*.gguf'))) > 0 and path_to_model.is_dir() and (path_to_model / 'tokenizer_config.json').exists():
-        loader = 'llamacpp_HF'
     elif len(list(path_to_model.glob('*.gguf'))) > 0:
         loader = 'llama.cpp'
     elif re.match(r'.*\.gguf', model_name.lower()):
         loader = 'llama.cpp'
+    elif hf_quant_method == 'exl3':
+        loader = 'ExLlamav3_HF'
+    elif hf_quant_method in ['exl2', 'gptq']:
+        loader = 'ExLlamav2_HF'
+    elif re.match(r'.*exl3', model_name.lower()):
+        loader = 'ExLlamav3_HF'
     elif re.match(r'.*exl2', model_name.lower()):
         loader = 'ExLlamav2_HF'
     elif re.match(r'.*-hqq', model_name.lower()):
@@ -178,40 +187,19 @@ def update_model_parameters(state, initial=False):
     UI: update the command-line arguments based on the interface values
     '''
     elements = ui.list_model_elements()  # the names of the parameters
-    gpu_memories = []
 
     for i, element in enumerate(elements):
         if element not in state:
             continue
 
         value = state[element]
-        if element.startswith('gpu_memory'):
-            gpu_memories.append(value)
-            continue
-
         if initial and element in shared.provided_arguments:
             continue
 
-        if element in ['cpu_memory'] and value == 0:
+        if element == 'cpu_memory' and value == 0:
             value = vars(shared.args_defaults)[element]
 
-        # Making some simple conversions
-        if element == 'cpu_memory' and value is not None:
-            value = f"{value}MiB"
-
         setattr(shared.args, element, value)
-
-    found_positive = False
-    for i in gpu_memories:
-        if i > 0:
-            found_positive = True
-            break
-
-    if not (initial and vars(shared.args)['gpu_memory'] != vars(shared.args_defaults)['gpu_memory']):
-        if found_positive:
-            shared.args.gpu_memory = [f"{i}MiB" for i in gpu_memories]
-        else:
-            shared.args.gpu_memory = None
 
 
 def apply_model_settings_to_state(model, state):
@@ -235,14 +223,14 @@ def apply_model_settings_to_state(model, state):
 
 def save_model_settings(model, state):
     '''
-    Save the settings for this model to models/config-user.yaml
+    Save the settings for this model to user_data/models/config-user.yaml
     '''
     if model == 'None':
         yield ("Not saving the settings because no model is selected in the menu.")
         return
 
     user_config = shared.load_user_config()
-    model_regex = model + '$'  # For exact matches
+    model_regex = Path(model).name + '$'  # For exact matches
     if model_regex not in user_config:
         user_config[model_regex] = {}
 
@@ -269,7 +257,7 @@ def save_instruction_template(model, template):
         return
 
     user_config = shared.load_user_config()
-    model_regex = model + '$'  # For exact matches
+    model_regex = Path(model).name + '$'  # For exact matches
     if model_regex not in user_config:
         user_config[model_regex] = {}
 

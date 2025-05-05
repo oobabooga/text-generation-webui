@@ -2,10 +2,6 @@ import os
 import warnings
 
 from modules import shared
-
-import accelerate  # This early import makes Intel GPUs happy
-
-import modules.one_click_installer_check
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
 
@@ -38,7 +34,6 @@ import yaml
 
 import modules.extensions as extensions_module
 from modules import (
-    chat,
     training,
     ui,
     ui_chat,
@@ -89,7 +84,7 @@ def create_interface():
 
     # Force some events to be triggered on page load
     shared.persistent_interface_state.update({
-        'loader': shared.args.loader or 'Transformers',
+        'loader': shared.args.loader or 'llama.cpp',
         'mode': shared.settings['mode'] if shared.settings['mode'] == 'instruct' else gr.update(),
         'character_menu': shared.args.character or shared.settings['character'],
         'instruction_template_str': shared.settings['instruction_template_str'],
@@ -98,8 +93,8 @@ def create_interface():
         'filter_by_loader': shared.args.loader or 'All'
     })
 
-    if Path("cache/pfp_character.png").exists():
-        Path("cache/pfp_character.png").unlink()
+    if Path("user_data/cache/pfp_character.png").exists():
+        Path("user_data/cache/pfp_character.png").unlink()
 
     # css/js strings
     css = ui.css
@@ -116,8 +111,8 @@ def create_interface():
         shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
 
         # Audio notification
-        if Path("notification.mp3").exists():
-            shared.gradio['audio_notification'] = gr.Audio(interactive=False, value="notification.mp3", elem_id="audio_notification", visible=False)
+        if Path("user_data/notification.mp3").exists():
+            shared.gradio['audio_notification'] = gr.Audio(interactive=False, value="user_data/notification.mp3", elem_id="audio_notification", visible=False)
 
         # Floating menus for saving/deleting files
         ui_file_saving.create_ui()
@@ -183,7 +178,7 @@ def create_interface():
             ssl_keyfile=shared.args.ssl_keyfile,
             ssl_certfile=shared.args.ssl_certfile,
             root_path=shared.args.subpath,
-            allowed_paths=["cache", "css", "extensions", "js"]
+            allowed_paths=["css", "js", "extensions", "user_data/cache"]
         )
 
 
@@ -196,10 +191,10 @@ if __name__ == "__main__":
     settings_file = None
     if shared.args.settings is not None and Path(shared.args.settings).exists():
         settings_file = Path(shared.args.settings)
-    elif Path('settings.yaml').exists():
-        settings_file = Path('settings.yaml')
-    elif Path('settings.json').exists():
-        settings_file = Path('settings.json')
+    elif Path('user_data/settings.yaml').exists():
+        settings_file = Path('user_data/settings.yaml')
+    elif Path('user_data/settings.json').exists():
+        settings_file = Path('user_data/settings.json')
 
     if settings_file is not None:
         logger.info(f"Loading settings from \"{settings_file}\"")
@@ -218,9 +213,27 @@ if __name__ == "__main__":
         if extension not in shared.args.extensions:
             shared.args.extensions.append(extension)
 
+    available_models = utils.get_available_models()
+
     # Model defined through --model
     if shared.args.model is not None:
         shared.model_name = shared.args.model
+
+    # Select the model from a command-line menu
+    elif shared.args.model_menu:
+        if len(available_models) == 0:
+            logger.error('No models are available! Please download at least one.')
+            sys.exit(0)
+        else:
+            print('The following models are available:\n')
+            for i, model in enumerate(available_models):
+                print(f'{i+1}. {model}')
+
+            print(f'\nWhich one do you want to load? 1-{len(available_models)}\n')
+            i = int(input()) - 1
+            print()
+
+        shared.model_name = available_models[i]
 
     # If any model has been selected, load it
     if shared.model_name != 'None':

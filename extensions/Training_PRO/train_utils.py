@@ -194,13 +194,13 @@ def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool, c
 
     if debug_slicer:
                     # Write the log file
-        Path('logs').mkdir(exist_ok=True)
+        Path('user_data/logs').mkdir(exist_ok=True)
         sentencelist_dict = {index: sentence for index, sentence in enumerate(sentencelist)}
-        output_file = "logs/sentencelist.json"
+        output_file = "user_data/logs/sentencelist.json"
         with open(output_file, 'w') as f:
             json.dump(sentencelist_dict, f,indent=2)
         
-        print("Saved sentencelist.json in logs folder")
+        print("Saved sentencelist.json in user_data/logs folder")
     
     return sentencelist   
 
@@ -281,13 +281,13 @@ def sliding_block_cut(text: str, min_chars_cut: int, eos_to_hc: bool, cutoff_len
 
     if debug_slicer:
                     # Write the log file
-        Path('logs').mkdir(exist_ok=True)
+        Path('user_data/logs').mkdir(exist_ok=True)
         sentencelist_dict = {index: sentence for index, sentence in enumerate(sentencelist)}
-        output_file = "logs/sentencelist.json"
+        output_file = "user_data/logs/sentencelist.json"
         with open(output_file, 'w') as f:
             json.dump(sentencelist_dict, f,indent=2)
         
-        print("Saved sentencelist.json in logs folder")
+        print("Saved sentencelist.json in user_data/logs folder")
     
     return sentencelist   
 

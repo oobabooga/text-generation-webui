@@ -12,29 +12,39 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Features
 
-- Supports multiple text generation backends in one UI/API, including [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp), and [ExLlamaV2](https://github.com/turboderp-org/exllamav2). [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) is supported via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile), and the Transformers loader is compatible with libraries like [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [HQQ](https://github.com/mobiusml/hqq), and [AQLM](https://github.com/Vahe1994/AQLM), but they must be installed manually.
-- OpenAI-compatible API with Chat and Completions endpoints – see [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
-- Automatic prompt formatting using Jinja2 templates.
+- Supports multiple text generation backends in one UI/API, including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), and [ExLlamaV2](https://github.com/turboderp-org/exllamav2).
+  - [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) is also supported via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile).
+  - Additional quantization libraries like [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [HQQ](https://github.com/mobiusml/hqq), and [AQLM](https://github.com/Vahe1994/AQLM) can be used with the Transformers loader if you install them manually.
+- Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for llama.cpp GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory that doesn't interfere with your system environment.
+- UI that resembles the original ChatGPT style.
+- Automatic prompt formatting using Jinja2 templates. You don't need to ever worry about prompt formats.
 - Three chat modes: `instruct`, `chat-instruct`, and `chat`, with automatic prompt templates in `chat-instruct`.
-- "Past chats" menu to quickly switch between conversations.
 - Free-form text generation in the Default/Notebook tabs without being limited to chat turns. You can send formatted conversations from the Chat tab to these.
 - Multiple sampling parameters and generation options for sophisticated text generation control.
-- Switch between different models easily in the UI without restarting.
-- Simple LoRA fine-tuning tool.
-- Requirements installed in a self-contained `installer_files` directory that doesn't interfere with the system environment.
+- Switch between different models easily in the UI without restarting, with fine control over settings.
+- OpenAI-compatible API with Chat and Completions endpoints – see [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
+- 100% offline and private, with zero telemetry, external resources, or remote update requests.
 - Extension support, with numerous built-in and user-contributed extensions available. See the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
 
 ## How to install
 
+#### Option 1: Portable builds (start here)
+
+No installation needed – just unzip and run. Compatible with GGUF (llama.cpp) models on Windows, Linux, and macOS.
+
+Download from: https://github.com/oobabooga/text-generation-webui/releases
+
+#### Option 2: One-click installer
+
 1) Clone or [download the repository](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip).
-2) Run the script that matches your OS: `start_linux.sh`, `start_windows.bat`, `start_macos.sh`, or `start_wsl.bat`.
+2) Run the script that matches your OS: `start_linux.sh`, `start_windows.bat`, or `start_macos.sh`.
 3) Select your GPU vendor when asked.
-4) Once the installation ends, browse to `http://localhost:7860`.
+4) After installation completes, browse to `http://localhost:7860`.
 5) Have fun!
 
 To restart the web UI later, just run the same `start_` script. If you need to reinstall, delete the `installer_files` folder created during setup and run the script again.
 
-You can use command-line flags, like `./start_linux.sh --help`, or add them to `CMD_FLAGS.txt` (such as `--api` to enable API use). To update the project, run `update_wizard_linux.sh`, `update_wizard_windows.bat`, `update_wizard_macos.sh`, or `update_wizard_wsl.bat`.
+You can use command-line flags, like `./start_linux.sh --help`, or add them to `user_data/CMD_FLAGS.txt` (such as `--api` to enable API use). To update the project, run `update_wizard_linux.sh`, `update_wizard_windows.bat`, `update_wizard_macos.sh`, or `update_wizard_wsl.bat`.
 
 <details>
 <summary>
@@ -78,25 +88,19 @@ conda activate textgen
 
 | System | GPU | Command |
 |--------|---------|---------|
-| Linux/WSL | NVIDIA | `pip3 install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu121` |
-| Linux/WSL | CPU only | `pip3 install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cpu` |
-| Linux | AMD | `pip3 install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/rocm6.1` |
-| MacOS + MPS | Any | `pip3 install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1` |
-| Windows | NVIDIA | `pip3 install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu121` |
-| Windows | CPU only | `pip3 install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1` |
+| Linux/WSL | NVIDIA | `pip3 install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124` |
+| Linux/WSL | CPU only | `pip3 install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu` |
+| Linux | AMD | `pip3 install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/rocm6.1` |
+| MacOS + MPS | Any | `pip3 install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0` |
+| Windows | NVIDIA | `pip3 install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124` |
+| Windows | CPU only | `pip3 install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0` |
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/.
 
-For NVIDIA, you also need to install the CUDA runtime libraries:
+If you need `nvcc` to compile some library manually, you will additionally need to install this:
 
 ```
-conda install -y -c "nvidia/label/cuda-12.1.1" cuda-runtime
-```
-
-If you need `nvcc` to compile some library manually, replace the command above with
-
-```
-conda install -y -c "nvidia/label/cuda-12.1.1" cuda
+conda install -y -c "nvidia/label/cuda-12.4.1" cuda
 ```
 
 #### 3. Install the web UI
@@ -132,30 +136,6 @@ Then browse to
 
 `http://localhost:7860/?__theme=dark`
 
-##### AMD GPU on Windows
-
-1) Use `requirements_cpu_only.txt` or `requirements_cpu_only_noavx2.txt` in the command above.
-
-2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-with-hardware-acceleration).
-    * Use the `LLAMA_HIPBLAS=on` toggle.
-    * Note the [Windows remarks](https://github.com/abetlen/llama-cpp-python#windows-remarks).
-
-3) Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#install-from-source).
-    * Perform the from-source installation - there are no prebuilt ROCm packages for Windows.
-
-##### Older NVIDIA GPUs
-
-1) For Kepler GPUs and older, you will need to install CUDA 11.8 instead of 12:
-
-```
-pip3 install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu118
-conda install -y -c "nvidia/label/cuda-11.8.0" cuda-runtime
-```
-
-2) bitsandbytes >= 0.39 may not work. In that case, to use `--load-in-8bit`, you may have to downgrade like this:
-    * Linux: `pip install bitsandbytes==0.38.1`
-    * Windows: `pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl`
-
 ##### Manual install
 
 The `requirements*.txt` above contain various wheels precompiled through GitHub Actions. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
@@ -178,7 +158,7 @@ mkdir -p logs cache
 #   TORCH_CUDA_ARCH_LIST based on your GPU model
 #   APP_RUNTIME_GID      your host user's group id (run `id -g` in a terminal)
 #   BUILD_EXTENIONS      optionally add comma separated list of extensions to build
-# Edit CMD_FLAGS.txt and add in it the options you want to execute (like --listen --cpu)
+# Edit user_data/CMD_FLAGS.txt and add in it the options you want to execute (like --listen --cpu)
 # 
 docker compose up --build
 ```
@@ -204,143 +184,138 @@ List of command-line flags
 
 ```txt
 usage: server.py [-h] [--multi-user] [--character CHARACTER] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--model-menu] [--settings SETTINGS]
-                 [--extensions EXTENSIONS [EXTENSIONS ...]] [--verbose] [--idle-timeout IDLE_TIMEOUT] [--loader LOADER] [--cpu] [--auto-devices] [--gpu-memory GPU_MEMORY [GPU_MEMORY ...]]
-                 [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast]
-                 [--use_flash_attention_2] [--use_eager_attention] [--torch-compile] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE] [--flash-attn]
-                 [--tensorcores] [--n_ctx N_CTX] [--threads THREADS] [--threads-batch THREADS_BATCH] [--no_mul_mat_q] [--n_batch N_BATCH] [--no-mmap] [--mlock] [--n-gpu-layers N_GPU_LAYERS]
-                 [--tensor_split TENSOR_SPLIT] [--numa] [--logits_all] [--no_offload_kqv] [--cache-capacity CACHE_CAPACITY] [--row_split] [--streaming-llm] [--attention-sink-size ATTENTION_SINK_SIZE]
-                 [--tokenizer-dir TOKENIZER_DIR] [--gpu-split GPU_SPLIT] [--autosplit] [--max_seq_len MAX_SEQ_LEN] [--cfg-cache] [--no_flash_attn] [--no_xformers] [--no_sdpa]
-                 [--num_experts_per_token NUM_EXPERTS_PER_TOKEN] [--enable_tp] [--hqq-backend HQQ_BACKEND] [--cpp-runner] [--cache_type CACHE_TYPE] [--deepspeed] [--nvme-offload-dir NVME_OFFLOAD_DIR]
-                 [--local_rank LOCAL_RANK] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE] [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT]
-                 [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE]
-                 [--subpath SUBPATH] [--old-colors] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6]
-                 [--api-disable-ipv4] [--nowebui] [--multimodal-pipeline MULTIMODAL_PIPELINE] [--cache_4bit] [--cache_8bit] [--chat-buttons] [--triton] [--no_inject_fused_mlp] [--no_use_cuda_fp16]
-                 [--desc_act] [--disable_exllama] [--disable_exllamav2] [--wbits WBITS] [--groupsize GROUPSIZE]
+                 [--extensions EXTENSIONS [EXTENSIONS ...]] [--verbose] [--idle-timeout IDLE_TIMEOUT] [--loader LOADER] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR]
+                 [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast] [--use_flash_attention_2] [--use_eager_attention] [--torch-compile] [--load-in-4bit]
+                 [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE] [--flash-attn] [--threads THREADS] [--threads-batch THREADS_BATCH] [--batch-size BATCH_SIZE] [--no-mmap]
+                 [--mlock] [--n-gpu-layers N_GPU_LAYERS] [--tensor-split TENSOR_SPLIT] [--numa] [--no-kv-offload] [--row-split] [--extra-flags EXTRA_FLAGS] [--streaming-llm] [--ctx-size N]
+                 [--model-draft MODEL_DRAFT] [--draft-max DRAFT_MAX] [--gpu-layers-draft GPU_LAYERS_DRAFT] [--device-draft DEVICE_DRAFT] [--ctx-size-draft CTX_SIZE_DRAFT] [--gpu-split GPU_SPLIT]
+                 [--autosplit] [--cfg-cache] [--no_flash_attn] [--no_xformers] [--no_sdpa] [--num_experts_per_token N] [--enable_tp] [--hqq-backend HQQ_BACKEND] [--cpp-runner]
+                 [--cache_type CACHE_TYPE] [--deepspeed] [--nvme-offload-dir NVME_OFFLOAD_DIR] [--local_rank LOCAL_RANK] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE]
+                 [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH]
+                 [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE] [--subpath SUBPATH] [--old-colors] [--api] [--public-api]
+                 [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6] [--api-disable-ipv4] [--nowebui]
 
 Text generation web UI
 
 options:
-  -h, --help                                     show this help message and exit
+  -h, --help                                show this help message and exit
 
 Basic settings:
-  --multi-user                                   Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.
-  --character CHARACTER                          The name of the character to load in chat mode by default.
-  --model MODEL                                  Name of the model to load by default.
-  --lora LORA [LORA ...]                         The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.
-  --model-dir MODEL_DIR                          Path to directory with all the models.
-  --lora-dir LORA_DIR                            Path to directory with all the loras.
-  --model-menu                                   Show a model menu in the terminal when the web UI is first launched.
-  --settings SETTINGS                            Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this
-                                                 file will be loaded by default without the need to use the --settings flag.
-  --extensions EXTENSIONS [EXTENSIONS ...]       The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.
-  --verbose                                      Print the prompts to the terminal.
-  --idle-timeout IDLE_TIMEOUT                    Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.
+  --multi-user                              Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.
+  --character CHARACTER                     The name of the character to load in chat mode by default.
+  --model MODEL                             Name of the model to load by default.
+  --lora LORA [LORA ...]                    The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.
+  --model-dir MODEL_DIR                     Path to directory with all the models.
+  --lora-dir LORA_DIR                       Path to directory with all the loras.
+  --model-menu                              Show a model menu in the terminal when the web UI is first launched.
+  --settings SETTINGS                       Load the default interface settings from this yaml file. See user_data/settings-template.yaml for an example. If you create a file called
+                                            user_data/settings.yaml, this file will be loaded by default without the need to use the --settings flag.
+  --extensions EXTENSIONS [EXTENSIONS ...]  The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.
+  --verbose                                 Print the prompts to the terminal.
+  --idle-timeout IDLE_TIMEOUT               Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.
 
 Model loader:
-  --loader LOADER                                Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2,
-                                                 HQQ, TensorRT-LLM.
+  --loader LOADER                           Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav2_HF, ExLlamav2, HQQ,
+                                            TensorRT-LLM.
 
 Transformers/Accelerate:
-  --cpu                                          Use the CPU to generate text. Warning: Training on CPU is extremely slow.
-  --auto-devices                                 Automatically split the model across the available GPU(s) and CPU.
-  --gpu-memory GPU_MEMORY [GPU_MEMORY ...]       Maximum GPU memory in GiB to be allocated per GPU. Example: --gpu-memory 10 for a single GPU, --gpu-memory 10 5 for two GPUs. You can also set values
-                                                 in MiB like --gpu-memory 3500MiB.
-  --cpu-memory CPU_MEMORY                        Maximum CPU memory in GiB to allocate for offloaded weights. Same as above.
-  --disk                                         If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.
-  --disk-cache-dir DISK_CACHE_DIR                Directory to save the disk cache to. Defaults to "cache".
-  --load-in-8bit                                 Load the model with 8-bit precision (using bitsandbytes).
-  --bf16                                         Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.
-  --no-cache                                     Set use_cache to False while generating text. This reduces VRAM usage slightly, but it comes at a performance cost.
-  --trust-remote-code                            Set trust_remote_code=True while loading the model. Necessary for some models.
-  --force-safetensors                            Set use_safetensors=True while loading the model. This prevents arbitrary code execution.
-  --no_use_fast                                  Set use_fast=False while loading the tokenizer (it's True by default). Use this if you have any problems related to use_fast.
-  --use_flash_attention_2                        Set use_flash_attention_2=True while loading the model.
-  --use_eager_attention                          Set attn_implementation= eager while loading the model.
-  --torch-compile                                Compile the model with torch.compile for improved performance.
+  --cpu                                     Use the CPU to generate text. Warning: Training on CPU is extremely slow.
+  --cpu-memory CPU_MEMORY                   Maximum CPU memory in GiB. Use this for CPU offloading.
+  --disk                                    If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.
+  --disk-cache-dir DISK_CACHE_DIR           Directory to save the disk cache to. Defaults to "user_data/cache".
+  --load-in-8bit                            Load the model with 8-bit precision (using bitsandbytes).
+  --bf16                                    Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.
+  --no-cache                                Set use_cache to False while generating text. This reduces VRAM usage slightly, but it comes at a performance cost.
+  --trust-remote-code                       Set trust_remote_code=True while loading the model. Necessary for some models.
+  --force-safetensors                       Set use_safetensors=True while loading the model. This prevents arbitrary code execution.
+  --no_use_fast                             Set use_fast=False while loading the tokenizer (it's True by default). Use this if you have any problems related to use_fast.
+  --use_flash_attention_2                   Set use_flash_attention_2=True while loading the model.
+  --use_eager_attention                     Set attn_implementation= eager while loading the model.
+  --torch-compile                           Compile the model with torch.compile for improved performance.
 
 bitsandbytes 4-bit:
-  --load-in-4bit                                 Load the model with 4-bit precision (using bitsandbytes).
-  --use_double_quant                             use_double_quant for 4-bit.
-  --compute_dtype COMPUTE_DTYPE                  compute dtype for 4-bit. Valid options: bfloat16, float16, float32.
-  --quant_type QUANT_TYPE                        quant_type for 4-bit. Valid options: nf4, fp4.
+  --load-in-4bit                            Load the model with 4-bit precision (using bitsandbytes).
+  --use_double_quant                        use_double_quant for 4-bit.
+  --compute_dtype COMPUTE_DTYPE             compute dtype for 4-bit. Valid options: bfloat16, float16, float32.
+  --quant_type QUANT_TYPE                   quant_type for 4-bit. Valid options: nf4, fp4.
 
 llama.cpp:
-  --flash-attn                                   Use flash-attention.
-  --tensorcores                                  NVIDIA only: use llama-cpp-python compiled without GGML_CUDA_FORCE_MMQ. This may improve performance on newer cards.
-  --n_ctx N_CTX                                  Size of the prompt context.
-  --threads THREADS                              Number of threads to use.
-  --threads-batch THREADS_BATCH                  Number of threads to use for batches/prompt processing.
-  --no_mul_mat_q                                 Disable the mulmat kernels.
-  --n_batch N_BATCH                              Maximum number of prompt tokens to batch together when calling llama_eval.
-  --no-mmap                                      Prevent mmap from being used.
-  --mlock                                        Force the system to keep the model in RAM.
-  --n-gpu-layers N_GPU_LAYERS                    Number of layers to offload to the GPU.
-  --tensor_split TENSOR_SPLIT                    Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.
-  --numa                                         Activate NUMA task allocation for llama.cpp.
-  --logits_all                                   Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower.
-  --no_offload_kqv                               Do not offload the K, Q, V to the GPU. This saves VRAM but reduces the performance.
-  --cache-capacity CACHE_CAPACITY                Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed.
-  --row_split                                    Split the model by rows across GPUs. This may improve multi-gpu performance.
-  --streaming-llm                                Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.
-  --attention-sink-size ATTENTION_SINK_SIZE      StreamingLLM: number of sink tokens. Only used if the trimmed prompt does not share a prefix with the old prompt.
-  --tokenizer-dir TOKENIZER_DIR                  Load the tokenizer from this folder. Meant to be used with llamacpp_HF through the command-line.
+  --flash-attn                              Use flash-attention.
+  --threads THREADS                         Number of threads to use.
+  --threads-batch THREADS_BATCH             Number of threads to use for batches/prompt processing.
+  --batch-size BATCH_SIZE                   Maximum number of prompt tokens to batch together when calling llama_eval.
+  --no-mmap                                 Prevent mmap from being used.
+  --mlock                                   Force the system to keep the model in RAM.
+  --n-gpu-layers N_GPU_LAYERS               Number of layers to offload to the GPU.
+  --tensor-split TENSOR_SPLIT               Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.
+  --numa                                    Activate NUMA task allocation for llama.cpp.
+  --no-kv-offload                           Do not offload the K, Q, V to the GPU. This saves VRAM but reduces the performance.
+  --row-split                               Split the model by rows across GPUs. This may improve multi-gpu performance.
+  --extra-flags EXTRA_FLAGS                 Extra flags to pass to llama-server. Format: "flag1=value1;flag2;flag3=value3". Example: "override-tensor=exps=CPU"
+  --streaming-llm                           Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.
+
+Context and cache management:
+  --ctx-size N, --n_ctx N, --max_seq_len N  Context size in tokens.
+
+Speculative decoding:
+  --model-draft MODEL_DRAFT                 Path to the draft model for speculative decoding.
+  --draft-max DRAFT_MAX                     Number of tokens to draft for speculative decoding.
+  --gpu-layers-draft GPU_LAYERS_DRAFT       Number of layers to offload to the GPU for the draft model.
+  --device-draft DEVICE_DRAFT               Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1
+  --ctx-size-draft CTX_SIZE_DRAFT           Size of the prompt context for the draft model. If 0, uses the same as the main model.
 
 ExLlamaV2:
-  --gpu-split GPU_SPLIT                          Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.
-  --autosplit                                    Autosplit the model tensors across the available GPUs. This causes --gpu-split to be ignored.
-  --max_seq_len MAX_SEQ_LEN                      Maximum sequence length.
-  --cfg-cache                                    ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.
-  --no_flash_attn                                Force flash-attention to not be used.
-  --no_xformers                                  Force xformers to not be used.
-  --no_sdpa                                      Force Torch SDPA to not be used.
-  --num_experts_per_token NUM_EXPERTS_PER_TOKEN  Number of experts to use for generation. Applies to MoE models like Mixtral.
-  --enable_tp                                    Enable Tensor Parallelism (TP) in ExLlamaV2.
+  --gpu-split GPU_SPLIT                     Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.
+  --autosplit                               Autosplit the model tensors across the available GPUs. This causes --gpu-split to be ignored.
+  --cfg-cache                               ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.
+  --no_flash_attn                           Force flash-attention to not be used.
+  --no_xformers                             Force xformers to not be used.
+  --no_sdpa                                 Force Torch SDPA to not be used.
+  --num_experts_per_token N                 Number of experts to use for generation. Applies to MoE models like Mixtral.
+  --enable_tp                               Enable Tensor Parallelism (TP) in ExLlamaV2.
 
 HQQ:
-  --hqq-backend HQQ_BACKEND                      Backend for the HQQ loader. Valid options: PYTORCH, PYTORCH_COMPILE, ATEN.
+  --hqq-backend HQQ_BACKEND                 Backend for the HQQ loader. Valid options: PYTORCH, PYTORCH_COMPILE, ATEN.
 
 TensorRT-LLM:
-  --cpp-runner                                   Use the ModelRunnerCpp runner, which is faster than the default ModelRunner but doesn't support streaming yet.
+  --cpp-runner                              Use the ModelRunnerCpp runner, which is faster than the default ModelRunner but doesn't support streaming yet.
 
 Cache:
-  --cache_type CACHE_TYPE                        KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4.
+  --cache_type CACHE_TYPE                   KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4.
 
 DeepSpeed:
-  --deepspeed                                    Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.
-  --nvme-offload-dir NVME_OFFLOAD_DIR            DeepSpeed: Directory to use for ZeRO-3 NVME offloading.
-  --local_rank LOCAL_RANK                        DeepSpeed: Optional argument for distributed setups.
+  --deepspeed                               Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.
+  --nvme-offload-dir NVME_OFFLOAD_DIR       DeepSpeed: Directory to use for ZeRO-3 NVME offloading.
+  --local_rank LOCAL_RANK                   DeepSpeed: Optional argument for distributed setups.
 
 RoPE:
-  --alpha_value ALPHA_VALUE                      Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both.
-  --rope_freq_base ROPE_FREQ_BASE                If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63).
-  --compress_pos_emb COMPRESS_POS_EMB            Positional embeddings compression factor. Should be set to (context length) / (model's original context length). Equal to 1/rope_freq_scale.
+  --alpha_value ALPHA_VALUE                 Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both.
+  --rope_freq_base ROPE_FREQ_BASE           If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63).
+  --compress_pos_emb COMPRESS_POS_EMB       Positional embeddings compression factor. Should be set to (context length) / (model's original context length). Equal to 1/rope_freq_scale.
 
 Gradio:
-  --listen                                       Make the web UI reachable from your local network.
-  --listen-port LISTEN_PORT                      The listening port that the server will use.
-  --listen-host LISTEN_HOST                      The hostname that the server will use.
-  --share                                        Create a public URL. This is useful for running the web UI on Google Colab or similar.
-  --auto-launch                                  Open the web UI in the default browser upon launch.
-  --gradio-auth GRADIO_AUTH                      Set Gradio authentication password in the format "username:password". Multiple credentials can also be supplied with "u1:p1,u2:p2,u3:p3".
-  --gradio-auth-path GRADIO_AUTH_PATH            Set the Gradio authentication file path. The file should contain one or more user:password pairs in the same format as above.
-  --ssl-keyfile SSL_KEYFILE                      The path to the SSL certificate key file.
-  --ssl-certfile SSL_CERTFILE                    The path to the SSL certificate cert file.
-  --subpath SUBPATH                              Customize the subpath for gradio, use with reverse proxy
-  --old-colors                                   Use the legacy Gradio colors, before the December/2024 update.
+  --listen                                  Make the web UI reachable from your local network.
+  --listen-port LISTEN_PORT                 The listening port that the server will use.
+  --listen-host LISTEN_HOST                 The hostname that the server will use.
+  --share                                   Create a public URL. This is useful for running the web UI on Google Colab or similar.
+  --auto-launch                             Open the web UI in the default browser upon launch.
+  --gradio-auth GRADIO_AUTH                 Set Gradio authentication password in the format "username:password". Multiple credentials can also be supplied with "u1:p1,u2:p2,u3:p3".
+  --gradio-auth-path GRADIO_AUTH_PATH       Set the Gradio authentication file path. The file should contain one or more user:password pairs in the same format as above.
+  --ssl-keyfile SSL_KEYFILE                 The path to the SSL certificate key file.
+  --ssl-certfile SSL_CERTFILE               The path to the SSL certificate cert file.
+  --subpath SUBPATH                         Customize the subpath for gradio, use with reverse proxy
+  --old-colors                              Use the legacy Gradio colors, before the December/2024 update.
 
 API:
-  --api                                          Enable the API extension.
-  --public-api                                   Create a public URL for the API using Cloudfare.
-  --public-api-id PUBLIC_API_ID                  Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.
-  --api-port API_PORT                            The listening port for the API.
-  --api-key API_KEY                              API authentication key.
-  --admin-key ADMIN_KEY                          API authentication key for admin tasks like loading and unloading models. If not set, will be the same as --api-key.
-  --api-enable-ipv6                              Enable IPv6 for the API
-  --api-disable-ipv4                             Disable IPv4 for the API
-  --nowebui                                      Do not launch the Gradio UI. Useful for launching the API in standalone mode.
-
-Multimodal:
-  --multimodal-pipeline MULTIMODAL_PIPELINE      The multimodal pipeline to use. Examples: llava-7b, llava-13b.
+  --api                                     Enable the API extension.
+  --public-api                              Create a public URL for the API using Cloudfare.
+  --public-api-id PUBLIC_API_ID             Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.
+  --api-port API_PORT                       The listening port for the API.
+  --api-key API_KEY                         API authentication key.
+  --admin-key ADMIN_KEY                     API authentication key for admin tasks like loading and unloading models. If not set, will be the same as --api-key.
+  --api-enable-ipv6                         Enable IPv6 for the API
+  --api-disable-ipv4                        Disable IPv4 for the API
+  --nowebui                                 Do not launch the Gradio UI. Useful for launching the API in standalone mode.
 ```
 
 </details>
@@ -351,35 +326,37 @@ https://github.com/oobabooga/text-generation-webui/wiki
 
 ## Downloading models
 
-Models should be placed in the folder `text-generation-webui/models`. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads).
+Models should be placed in the folder `text-generation-webui/user_data/models`. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads).
 
-* GGUF models are a single file and should be placed directly into `models`. Example:
+* GGUF models are a single file and should be placed directly into `user_data/models`. Example:
 
 ```
 text-generation-webui
-└── models
-    └── llama-2-13b-chat.Q4_K_M.gguf
+└── user_data
+    └── models
+        └── llama-2-13b-chat.Q4_K_M.gguf
 ```
 
 * The remaining model types (like 16-bit Transformers models and EXL2 models) are made of several files and must be placed in a subfolder. Example:
 
 ```
 text-generation-webui
-├── models
-│   ├── lmsys_vicuna-33b-v1.3
-│   │   ├── config.json
-│   │   ├── generation_config.json
-│   │   ├── pytorch_model-00001-of-00007.bin
-│   │   ├── pytorch_model-00002-of-00007.bin
-│   │   ├── pytorch_model-00003-of-00007.bin
-│   │   ├── pytorch_model-00004-of-00007.bin
-│   │   ├── pytorch_model-00005-of-00007.bin
-│   │   ├── pytorch_model-00006-of-00007.bin
-│   │   ├── pytorch_model-00007-of-00007.bin
-│   │   ├── pytorch_model.bin.index.json
-│   │   ├── special_tokens_map.json
-│   │   ├── tokenizer_config.json
-│   │   └── tokenizer.model
+└── user_data
+    └── models
+        └── lmsys_vicuna-33b-v1.3
+            ├── config.json
+            ├── generation_config.json
+            ├── pytorch_model-00001-of-00007.bin
+            ├── pytorch_model-00002-of-00007.bin
+            ├── pytorch_model-00003-of-00007.bin
+            ├── pytorch_model-00004-of-00007.bin
+            ├── pytorch_model-00005-of-00007.bin
+            ├── pytorch_model-00006-of-00007.bin
+            ├── pytorch_model-00007-of-00007.bin
+            ├── pytorch_model.bin.index.json
+            ├── special_tokens_map.json
+            ├── tokenizer_config.json
+            └── tokenizer.model
 ```
 
 In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download it via the command-line with:
@@ -393,6 +370,10 @@ Run `python download-model.py --help` to see all the options.
 ## Google Colab notebook
 
 https://colab.research.google.com/github/oobabooga/text-generation-webui/blob/main/Colab-TextGen-GPU.ipynb
+
+## Community
+
+https://www.reddit.com/r/Oobabooga/
 
 ## Acknowledgment
 

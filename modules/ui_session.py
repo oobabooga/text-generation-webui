@@ -13,7 +13,7 @@ def create_ui():
                 shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions and restart", interactive=not mu)
                 with gr.Row():
                     shared.gradio['toggle_dark_mode'] = gr.Button('Toggle 💡')
-                    shared.gradio['save_settings'] = gr.Button('Save UI defaults to settings.yaml', interactive=not mu)
+                    shared.gradio['save_settings'] = gr.Button('Save UI defaults to user_data/settings.yaml', interactive=not mu)
 
                 with gr.Row():
                     with gr.Column():
@@ -48,7 +48,7 @@ def handle_save_settings(state, preset, extensions, show_controls, theme):
     return [
         contents,
         "settings.yaml",
-        "./",
+        "user_data/",
         gr.update(visible=True)
     ]
 
@@ -69,10 +69,8 @@ def set_interface_arguments(extensions, bool_active):
 
 
 def get_boolean_arguments(active=False):
-    exclude = shared.deprecated_args
-
     cmd_list = vars(shared.args)
-    bool_list = sorted([k for k in cmd_list if type(cmd_list[k]) is bool and k not in exclude + ui.list_model_elements()])
+    bool_list = sorted([k for k in cmd_list if type(cmd_list[k]) is bool and k not in ui.list_model_elements()])
     bool_active = [k for k in bool_list if vars(shared.args)[k]]
 
     if active:
