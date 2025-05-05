@@ -71,7 +71,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
         state['stream'] = True
 
     # Generate
-    last_update = time.monotonic()
+    last_update = -1
     latency_threshold = 1 / 1000
     for reply in generate_func(question, original_question, state, stopping_strings, is_chat=is_chat):
         cur_time = time.monotonic()
