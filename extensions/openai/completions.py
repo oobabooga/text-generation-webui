@@ -1,5 +1,4 @@
 import base64
-import copy
 import re
 import time
 from collections import deque
