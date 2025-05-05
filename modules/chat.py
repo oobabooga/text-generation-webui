@@ -515,28 +515,57 @@ def replace_last_reply(text, state):
 
     if len(text.strip()) == 0:
         return history
-    elif len(history['visible']) > 0:
-        history['visible'][-1][1] = html.escape(text)
-        history['internal'][-1][1] = apply_extensions('input', text, state, is_chat=True)
+
+    # Find the last assistant message (could be single or in a regeneration list)
+    last_assistant = None
+    for msg in reversed(history):
+        if isinstance(msg, list):  # Regeneration case
+            if msg and msg[-1]['role'] == 'assistant':
+                last_assistant = msg[-1]
+                break
+        elif msg['role'] == 'assistant':
+            last_assistant = msg
+            break
+
+    if last_assistant:
+        visible_text = html.escape(text)
+        internal_text = apply_extensions('input', text, state, is_chat=True)
+        last_assistant.update({
+            'content': internal_text,
+            'visible-content': visible_text,
+            'date': current_date()
+        })
 
     return history
 
 
 def send_dummy_message(text, state):
     history = state['history']
-    history['visible'].append([html.escape(text), ''])
-    history['internal'].append([apply_extensions('input', text, state, is_chat=True), ''])
+    visible_text = html.escape(text)
+    internal_text = apply_extensions('input', text, state, is_chat=True)
+
+    history.append({
+        'role': 'user',
+        'content': internal_text,
+        'visible-content': visible_text,
+        'date': current_date()
+    })
+
     return history
 
 
 def send_dummy_reply(text, state):
     history = state['history']
-    if len(history['visible']) > 0 and not history['visible'][-1][1] == '':
-        history['visible'].append(['', ''])
-        history['internal'].append(['', ''])
+    visible_text = html.escape(text)
+    internal_text = apply_extensions('input', text, state, is_chat=True)
 
-    history['visible'][-1][1] = html.escape(text)
-    history['internal'][-1][1] = apply_extensions('input', text, state, is_chat=True)
+    history.append({
+        'role': 'assistant',
+        'content': internal_text,
+        'visible-content': visible_text,
+        'date': current_date()
+    })
+
     return history
 
 
