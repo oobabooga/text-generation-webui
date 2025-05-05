@@ -139,10 +139,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
     also_return_rows = kwargs.get('also_return_rows', False)
     history = kwargs.get('history', state['history'])
 
-    # Ensure history is in the new format
-    if not isinstance(history, list):
-        history = convert_old_history_to_new(history)
-
     # Templates
     chat_template_str = state['chat_template_str']
     if state['mode'] != 'instruct':
