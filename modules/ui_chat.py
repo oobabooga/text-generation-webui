@@ -93,8 +93,8 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
 
-                with gr.Row(visible=True): # TODO: Make visible based on mode
-                     shared.gradio['message_versioning_display_mode'] = gr.Radio(choices=['html', 'off'], value='html', label="Message Versioning Display", info="Controls how message version navigation is displayed.", elem_id="message-versioning-display-mode", elem_classes=['slim-dropdown'])
+                with gr.Row(visible=True):  # TODO: Make visible based on mode
+                    shared.gradio['message_versioning_display_mode'] = gr.Radio(choices=['html', 'off'], value='html', label="Message Versioning Display", info="Controls how message version navigation is displayed.", elem_id="message-versioning-display-mode", elem_classes=['slim-dropdown'])
 
                 with gr.Row():
                     shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=12, label='Command for chat-instruct mode', info='<|character|> and <|prompt|> get replaced with the bot name and the regular chat prompt respectively.', visible=shared.settings['mode'] == 'chat-instruct', elem_classes=['add_scrollbar'])

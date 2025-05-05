@@ -14,16 +14,18 @@ import logging as logger
 _loaded_history = {'visible': [], 'internal': [], '_character': None, '_unique_id': None, '_mode': None}
 _mode = 'html'
 
+
 def validate_list(lst: List, i: int):
     """Ensure list is properly extended to index i"""
     if len(lst) <= i:
         lst.extend([None] * (i + 1 - len(lst)))
 
+
 def validate_history_structure(history_data: Dict, i: int):
     """Ensure history_data structure is properly extended to index i"""
     for history_type in ['visible', 'internal']:
         if history_type not in history_data:
-             history_data[history_type] = []
+            history_data[history_type] = []
         validate_list(history_data[history_type], i)
 
 
@@ -37,6 +39,7 @@ def initialize_history_entry(history_data: Dict, i: int):
                 {'text': [], 'pos': 0}   # Bot message data
             ]
 
+
 def load_or_initialize_history_data(character: Optional[str], unique_id: Optional[str], mode: str) -> Dict:
     """
     Loads history data from file if character and unique_id are provided, the file exists,
@@ -46,10 +49,10 @@ def load_or_initialize_history_data(character: Optional[str], unique_id: Optiona
     global _loaded_history
 
     # --- Check if requested context matches already loaded context ---
-    if (character == _loaded_history.get('_character') and
-            unique_id == _loaded_history.get('_unique_id') and
-            mode == _loaded_history.get('_mode') and
-            _loaded_history.get('_character') is not None):
+    if (character == _loaded_history.get('_character')  # noqa: W503
+            and unique_id == _loaded_history.get('_unique_id')  # noqa: W503
+            and mode == _loaded_history.get('_mode')  # noqa: W503
+            and _loaded_history.get('_character') is not None):
         logger.debug(f"Requested context matches loaded context ({character}/{unique_id}/{mode}). Returning cached history.")
         return _loaded_history
 
@@ -61,9 +64,9 @@ def load_or_initialize_history_data(character: Optional[str], unique_id: Optiona
         return {'visible': [], 'internal': [], '_character': char, '_unique_id': uid, '_mode': md}
 
     if not character or not unique_id:
-         logger.warning("Cannot load history data: Character or ID is missing.")
-         _loaded_history = _create_empty_history(character, unique_id, mode)
-         return _loaded_history
+        logger.warning("Cannot load history data: Character or ID is missing.")
+        _loaded_history = _create_empty_history(character, unique_id, mode)
+        return _loaded_history
 
     path = get_history_data_path(unique_id, character, mode)
     if not path.exists():
@@ -86,9 +89,9 @@ def load_or_initialize_history_data(character: Optional[str], unique_id: Optiona
                 _loaded_history = _create_empty_history(character, unique_id, mode)
                 return _loaded_history
     except json.JSONDecodeError:
-         logger.error(f"Error decoding JSON from history data file: {path}. Initializing empty.", exc_info=True)
-         _loaded_history = _create_empty_history(character, unique_id, mode)
-         return _loaded_history
+        logger.error(f"Error decoding JSON from history data file: {path}. Initializing empty.", exc_info=True)
+        _loaded_history = _create_empty_history(character, unique_id, mode)
+        return _loaded_history
     except Exception as e:
         logger.error(f"Error loading message versioning history data from {path}: {e}", exc_info=True)
         _loaded_history = _create_empty_history(character, unique_id, mode)
@@ -111,8 +114,8 @@ def append_to_history_data(history: Dict, state: Dict, is_bot=True) -> bool:
 
     i = len(history['visible']) - 1
     if i < 0 or len(history['visible'][i]) <= msg_type or len(history['internal'][i]) <= msg_type:
-         logger.warning(f"Input history index {i} or msg_type {msg_type} out of bounds for appending.")
-         return False
+        logger.warning(f"Input history index {i} or msg_type {msg_type} out of bounds for appending.")
+        return False
 
     visible_text = history['visible'][i][msg_type]
     if not visible_text:
@@ -125,9 +128,9 @@ def append_to_history_data(history: Dict, state: Dict, is_bot=True) -> bool:
 
         # Append the strings to the respective lists in _loaded_history
         if 'text' not in _loaded_history['visible'][i][msg_type]:
-             _loaded_history['visible'][i][msg_type]['text'] = []
+            _loaded_history['visible'][i][msg_type]['text'] = []
         if 'text' not in _loaded_history['internal'][i][msg_type]:
-             _loaded_history['internal'][i][msg_type]['text'] = []
+            _loaded_history['internal'][i][msg_type]['text'] = []
 
         vis_list = _loaded_history['visible'][i][msg_type]['text']
         int_list = _loaded_history['internal'][i][msg_type]['text']
@@ -146,17 +149,18 @@ def append_to_history_data(history: Dict, state: Dict, is_bot=True) -> bool:
         unique_id = state['unique_id']
         mode = state['mode']
         if character and unique_id:
-             save_history_data(character, unique_id, mode, _loaded_history)
+            save_history_data(character, unique_id, mode, _loaded_history)
         else:
-             logger.warning("Could not save history data after append: character or unique_id missing in state.")
+            logger.warning("Could not save history data after append: character or unique_id missing in state.")
 
         return True
 
     except IndexError:
-         logger.error(f"IndexError during history data append: index={i}, msg_type={msg_type}. History state: {_loaded_history}", exc_info=True)
+        logger.error(f"IndexError during history data append: index={i}, msg_type={msg_type}. History state: {_loaded_history}", exc_info=True)
     except Exception as e:
         logger.error(f"Error appending to history data: {e}", exc_info=True)
     return False
+
 
 def save_history_data(character: str, unique_id: str, mode: str, history_data: Dict) -> bool:
     """Save the provided history data structure to disk"""
@@ -177,10 +181,11 @@ def save_history_data(character: str, unique_id: str, mode: str, history_data: D
         logger.debug(f"Message versioning history data saved to {path}")
         return True
     except TypeError as e:
-         logger.error(f"TypeError saving history data (possibly non-serializable data): {e}. Data: {history_data}", exc_info=True)
+        logger.error(f"TypeError saving history data (possibly non-serializable data): {e}. Data: {history_data}", exc_info=True)
     except Exception as e:
         logger.error(f"Error saving message versioning history data to {path}: {e}", exc_info=True)
     return False
+
 
 def get_history_data_path(unique_id: str, character: str, mode: str) -> Path:
     """Get the path to the history data file"""
@@ -205,23 +210,27 @@ def get_history_data_path(unique_id: str, character: str, mode: str) -> Path:
     final_path = path / storage_filename
     return final_path
 
+
 # --- Functions to be called by integrated logic ---
 
 def get_loaded_history():
     """Returns the current in-memory loaded history data."""
     return _loaded_history
 
+
 def set_history_storage_mode(new_mode: str):
     """Sets the display mode ('html', 'overlay', 'off')."""
     global _mode, _loaded_history
-    _mode = new_mode # Keep legacy global updated for now
+    _mode = new_mode  # Keep legacy global updated for now
     _loaded_history['_mode'] = new_mode
     logger.debug(f"Message versioning history storage mode set to: {new_mode}")
+
 
 def get_history_storage_mode():
     """Gets the current display mode from the loaded history."""
     current_mode = _loaded_history.get('_mode', _mode)
     return current_mode
+
 
 def clear_history_data(unique_id: str, character: str, mode: str):
     """
@@ -238,6 +247,7 @@ def clear_history_data(unique_id: str, character: str, mode: str):
             logger.warning(f"Message versioning history data file not found for deletion: {history_data_path}")
     except Exception as e:
         logger.error(f"Error deleting message versioning history data file {history_data_path}: {e}", exc_info=True)
+
 
 def rename_history_data(old_id: str, new_id: str, character: str, mode: str):
     """
@@ -268,6 +278,7 @@ def rename_history_data(old_id: str, new_id: str, character: str, mode: str):
 _last_history_index = -1
 _last_msg_type = -1
 
+
 # --- Helper Functions ---
 
 def recursive_get(data: Dict | Iterable, keyList: List[int | str], default=None):
@@ -281,6 +292,7 @@ def recursive_get(data: Dict | Iterable, keyList: List[int | str], default=None)
         logger.error(f"Error in recursive_get: {e}", exc_info=True)
         return None
 
+
 def length(data: Iterable):
     """Get length of iterable with try-catch."""
     try:
@@ -291,6 +303,7 @@ def length(data: Iterable):
     except Exception as e:
         logger.error(f"Error getting length: {e}", exc_info=True)
         return 0
+
 
 # --- Core Functions ---
 
@@ -310,6 +323,7 @@ def get_message_positions(history_index: int, msg_type: int):
     pos = recursive_get(msg_data, ['pos'], 0)
     total = length(recursive_get(msg_data, ['text'], []))
     return pos, total
+
 
 def navigate_message_version(history_index: float, msg_type: float, direction: str, state: Dict):
     """
@@ -382,13 +396,13 @@ def navigate_message_version(history_index: float, msg_type: float, direction: s
         if i < len(current_history['visible']) and m_type < len(current_history['visible'][i]):
             current_history['visible'][i][m_type] = new_visible
         else:
-             logger.error(f"History structure invalid (visible) for update at index {i}, type {m_type}")
+            logger.error(f"History structure invalid (visible) for update at index {i}, type {m_type}")
 
         if i < len(current_history['internal']) and m_type < len(current_history['internal'][i]):
             current_history['internal'][i][m_type] = new_internal
         else:
-             logger.error(f"History structure invalid (internal) for update at index {i}, type {m_type}")
-            
+            logger.error(f"History structure invalid (internal) for update at index {i}, type {m_type}")
+
         _last_history_index = i
         _last_msg_type = m_type
 
@@ -401,6 +415,7 @@ def navigate_message_version(history_index: float, msg_type: float, direction: s
 
 
 # --- Functions to be called during HTML Generation ---
+
 
 def get_message_version_nav_elements(history_index: int, msg_type: int):
     """
@@ -437,15 +452,16 @@ def get_message_version_nav_elements(history_index: int, msg_type: int):
         )
 
         versioning_container = (
-             f'<div class="message-versioning-container">'
-             f'{nav_container}'
-             f'</div>'
+            f'<div class="message-versioning-container">'
+            f'{nav_container}'
+            f'</div>'
         )
         return versioning_container
 
     except Exception as e:
         logger.error(f"Error generating message versioning nav elements for index {history_index}, type {msg_type}: {e}", exc_info=True)
         return ""
+
 
 def is_message_selected(history_index: int, msg_type: int) -> bool:
     """
@@ -457,16 +473,16 @@ def is_message_selected(history_index: int, msg_type: int) -> bool:
 
 # --- Functions to be called by Gradio Event Handlers ---
 
+
 def handle_unique_id_select(unique_id: str, state: Dict):
     """
     Handles the selection of a unique_id from the dropdown.
     Loads the corresponding message versioning history data.
     """
     global _last_history_index, _last_msg_type
-    # print(f"DEBUG: Entering handle_unique_id_select with unique_id: {unique_id}") # Keep print for debug?
     _last_history_index = -1
     _last_msg_type = -1
-    
+
     logger.debug(f"Handling unique_id selection: {unique_id}")
     if not unique_id:
         logger.warning("handle_unique_id_select called with empty unique_id.")
@@ -483,6 +499,7 @@ def handle_unique_id_select(unique_id: str, state: Dict):
     else:
         load_or_initialize_history_data(character, unique_id, mode)
 
+
 def handle_message_versioning_change_display_mode(display_mode: str, state: Dict):
     """
     Handles changes to the message versioning display mode radio button.
@@ -490,6 +507,7 @@ def handle_message_versioning_change_display_mode(display_mode: str, state: Dict
     """
     logger.debug(f"Handling message versioning display mode change to: {display_mode}")
     set_history_storage_mode(display_mode)
+
 
 def handle_message_versioning_navigate_click(history_index: float, msg_type: float, direction: str, state: Dict):
     """
@@ -512,5 +530,5 @@ def handle_message_versioning_navigate_click(history_index: float, msg_type: flo
         state['chat_style'],
         state['character_menu']
     )
-    
+
     return updated_history, new_html
