@@ -18,7 +18,6 @@ max_new_tokens_min: 1
 max_new_tokens_max: 4096
 prompt_lookup_num_tokens: 0
 max_tokens_second: 0
-max_updates_second: 12
 auto_max_new_tokens: true
 ban_eos_token: false
 add_bos_token: true

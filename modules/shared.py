@@ -47,7 +47,6 @@ settings = {
     'max_new_tokens_max': 4096,
     'prompt_lookup_num_tokens': 0,
     'max_tokens_second': 0,
-    'max_updates_second': 12,
     'auto_max_new_tokens': True,
     'ban_eos_token': False,
     'add_bos_token': True,
