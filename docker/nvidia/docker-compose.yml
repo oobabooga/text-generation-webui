@@ -22,7 +22,7 @@ services:
         TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST:-7.5} 
         BUILD_EXTENSIONS: ${BUILD_EXTENSIONS:-}
         APP_GID: ${APP_GID:-6972} 
-        APP_UID: ${APP_UID-6972} 
+        APP_UID: ${APP_UID:-6972} 
     env_file: .env
     user: "${APP_RUNTIME_UID:-6972}:${APP_RUNTIME_GID:-6972}"
     ports:
