@@ -1,12 +1,8 @@
-import base64
-import re
+import copy
 import time
 from collections import deque
-from io import BytesIO
 
-import requests
 import tiktoken
-from PIL import Image
 
 from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg
@@ -93,54 +89,8 @@ def convert_history(history):
     user_input_last = True
     system_message = ""
 
-    # Multimodal: convert OpenAI format to multimodal extension format
-    if any('content' in entry and isinstance(entry['content'], list) for entry in history):
-        temp_history = []
-        for entry in history:
-            if isinstance(entry['content'], list):
-                for item in entry['content']:
-                    if not isinstance(item, dict):
-                        continue
-
-                    image_url = None
-                    content = None
-                    if item['type'] == 'image_url' and isinstance(item['image_url'], dict):
-                        image_url = item['image_url']['url']
-                    elif item['type'] == 'text' and isinstance(item['text'], str):
-                        content = item['text']
-                    if image_url:
-                        temp_history.append({"image_url": image_url, "role": "user"})
-                    if content:
-                        temp_history.append({"content": content, "role": "user"})
-            else:
-                temp_history.append(entry)
-
-        history = temp_history
-
     for entry in history:
-        # Process image URLs
-        if "image_url" in entry:
-            image_url = entry['image_url']
-            if "base64" in image_url:
-                image_url = re.sub('^data:image/.+;base64,', '', image_url)
-                img = Image.open(BytesIO(base64.b64decode(image_url)))
-            else:
-                try:
-                    my_res = requests.get(image_url)
-                    img = Image.open(BytesIO(my_res.content))
-                except Exception:
-                    raise 'Image cannot be loaded from the URL!'
-
-            buffered = BytesIO()
-            if img.mode in ("RGBA", "P"):
-                img = img.convert("RGB")
-
-            img.save(buffered, format="JPEG")
-            img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
-            content = f'<img src="data:image/jpeg;base64,{img_str}">'
-        else:
-            content = entry["content"]
-
+        content = entry["content"]
         role = entry["role"]
 
         if role == "user":
