@@ -761,6 +761,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     background: var(--button-secondary-background-fill-hover) !important;
 }
 
+.dark .hover-menu button:hover {
+    background: var(--selected-item-color-dark) !important;
+}
+
 .transparent-substring {
     opacity: 0.333;
 }
@@ -1109,12 +1113,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     color: #9ca3af;
 }
 
-.dark .hover-menu {
-    background-color: var(--darker-gray);
-}
-
 .dark .hover-menu button {
     border-color: var(--border-color-primary);
+    background-color: var(--darker-gray) !important;
 }
 
 .dark #chat-controls,
