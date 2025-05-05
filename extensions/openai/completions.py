@@ -1,4 +1,3 @@
-import copy
 import time
 from collections import deque
 
@@ -84,7 +83,6 @@ def convert_history(history):
     Converts OpenAI chat histories to our internal format.
     Our new format is a list of message objects similar to OpenAI's format.
     '''
-    system_message = ""
     new_history = []
 
     for entry in history:
