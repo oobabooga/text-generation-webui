@@ -135,6 +135,7 @@ def get_thinking_suppression_string(template):
 def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs.get('impersonate', False)
     _continue = kwargs.get('_continue', False)
+    regenerate = kwargs.get('regenerate', False)
     also_return_rows = kwargs.get('also_return_rows', False)
     history = kwargs.get('history', state['history'])
 
@@ -198,7 +199,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                     messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
 
     user_input = user_input.strip()
-    if user_input and not impersonate and not _continue:
+    if user_input and not impersonate and not _continue and not regenerate:
         messages.append({"role": "user", "content": user_input})
 
     def make_prompt(messages):
@@ -470,6 +471,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     # Generate the prompt
     kwargs = {
         '_continue': _continue,
+        'regenerate': regenerate,
         'history': output if _continue else output[:-1] if output else []
     }
     prompt = apply_extensions('custom_generate_chat_prompt', text, state, **kwargs)
