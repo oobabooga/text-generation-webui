@@ -96,30 +96,6 @@ def convert_history(history):
     user_input_last = True
     system_message = ""
 
-    # Multimodal: convert OpenAI format to multimodal extension format
-    if any('content' in entry and isinstance(entry['content'], list) for entry in history):
-        new_history = []
-        for entry in history:
-            if isinstance(entry['content'], list):
-                for item in entry['content']:
-                    if not isinstance(item, dict):
-                        continue
-
-                    image_url = None
-                    content = None
-                    if item['type'] == 'image_url' and isinstance(item['image_url'], dict):
-                        image_url = item['image_url']['url']
-                    elif item['type'] == 'text' and isinstance(item['text'], str):
-                        content = item['text']
-                    if image_url:
-                        new_history.append({"image_url": image_url, "role": "user"})
-                    if content:
-                        new_history.append({"content": content, "role": "user"})
-            else:
-                new_history.append(entry)
-
-        history = new_history
-
     for entry in history:
         if "image_url" in entry:
             image_url = entry['image_url']
