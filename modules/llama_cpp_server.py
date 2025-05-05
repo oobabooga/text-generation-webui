@@ -256,7 +256,7 @@ class LlamaServer:
             self.server_path,
             "--model", self.model_path,
             "--ctx-size", str(shared.args.ctx_size),
-            "--n-gpu-layers", str(shared.args.n_gpu_layers),
+            "--gpu-layers", str(shared.args.gpu_layers),
             "--batch-size", str(shared.args.batch_size),
             "--port", str(self.port),
         ]

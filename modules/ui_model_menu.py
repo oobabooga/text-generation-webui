@@ -49,7 +49,7 @@ def create_ui():
                 with gr.Blocks():
                     with gr.Row():
                         with gr.Column():
-                            shared.gradio['n_gpu_layers'] = gr.Slider(label="gpu-layers", minimum=0, maximum=256, value=shared.args.n_gpu_layers, info='Must be greater than 0 for the GPU to be used. ⚠️ Lower this value if you can\'t load the model.')
+                            shared.gradio['n_gpu_layers'] = gr.Slider(label="gpu-layers", minimum=0, maximum=256, value=shared.args.gpu_layers, info='Must be greater than 0 for the GPU to be used. ⚠️ Lower this value if you can\'t load the model.')
                             shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=256, value=shared.args.threads)
                             shared.gradio['threads_batch'] = gr.Slider(label="threads_batch", minimum=0, step=1, maximum=256, value=shared.args.threads_batch)
                             shared.gradio['batch_size'] = gr.Slider(label="batch_size", minimum=1, maximum=4096, step=1, value=shared.args.batch_size)
