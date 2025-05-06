@@ -611,9 +611,9 @@ def send_last_reply_to_input(history):
 
     last_msg = history[-1]
     if isinstance(last_msg, dict) and last_msg['role'] == 'assistant':
-        return html.unescape(last_msg['visible-content'])
+        return html.unescape(last_msg['visible-content']).strip()
     elif isinstance(last_msg, list) and last_msg and last_msg[-1]['role'] == 'assistant':
-        return html.unescape(last_msg[-1]['visible-content'])
+        return html.unescape(last_msg[-1]['visible-content']).strip()
 
     return ''
 
