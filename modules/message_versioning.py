@@ -2,15 +2,13 @@ from typing import Dict, List, Optional, Iterable
 from functools import reduce
 from operator import getitem
 from modules import shared
-import modules.chat as chat
 from pathlib import Path
 import json
 import logging as logger
 
 # --- History Storage Logic ---
 
-# Global variable for the currently loaded history data
-# Consider moving this to shared state if needed across modules more broadly
+# Global variables for the currently loaded history data and state
 loaded_history = {'visible': [], 'internal': []}
 last_state = {'character_menu': None, 'unique_id': None, 'mode': None, 'display_mode': 'html'}
 
@@ -195,10 +193,8 @@ def get_history_data_path(unique_id: str, character: str, mode: str) -> Path:
     if not unique_id or not character or not mode:
         raise ValueError("unique_id, character, and mode must be provided to get history data path.")
 
-    # Use the imported get_history_file_path to determine the base directory
-    # This ensures consistency with how text-generation-webui handles history paths
     try:
-        # We need the *directory* where the standard history file *would* be.
+        import modules.chat as chat
         base_history_path = chat.get_history_file_path(unique_id, character, mode)
         path = base_history_path.parent
     except Exception as e:
@@ -311,7 +307,7 @@ def get_message_positions(history_index: int, msg_type: int):
     Assumes the correct history data has already been loaded by the calling context.
     """
     global loaded_history
-    
+
     # Path: ['visible' or 'internal'][history_index][msg_type]['pos' or 'text']
     msg_data = recursive_get(loaded_history, ['visible', history_index, msg_type])
 
@@ -469,26 +465,29 @@ def is_message_selected(history_index: int, msg_type: int) -> bool:
 # --- Functions to be called by Gradio Event Handlers ---
 
 
-def handle_unique_id_select(unique_id: str, character: str, mode: str):
+def handle_unique_id_change(history: dict, unique_id: str, name1: str, name2: str, mode: str, chat_style: str, character: str):
     """
-    Handles the selection of a unique_id from the dropdown.
+    Handles changes to the unique_id.
     Loads the corresponding message versioning history data.
     """
     global last_history_index, last_msg_type
     last_history_index = -1
     last_msg_type = -1
 
-    logger.debug(f"Handling unique_id selection: {unique_id}")
+    logger.debug(f"Handling unique_id change: {unique_id}")
     if not unique_id:
-        logger.warning("handle_unique_id_select called with empty unique_id.")
+        logger.warning("handle_unique_id_change called with empty unique_id.")
         return
 
+    import modules.chat as chat
     if not character:
         logger.warning(f"Cannot load history for unique_id {unique_id}: character_menu not found in state.")
         # Avoid using stale data from a previous selection
         load_or_initialize_history_data(None, unique_id, mode)
     else:
         load_or_initialize_history_data(character, unique_id, mode)
+
+    return chat.redraw_html(history, name1, name2, mode, chat_style, character)
 
 
 def handle_message_versioning_change_display_mode(display_mode: str):
@@ -512,14 +511,6 @@ def handle_message_versioning_navigate_click(history_index: float, msg_type: flo
     updated_history = navigate_message_version(history_index, msg_type, direction, history, character, unique_id, mode)
 
     import modules.chat as chat
-
-    new_html = chat.redraw_html(
-        updated_history,
-        name1,
-        name2,
-        mode,
-        chat_style,
-        character
-    )
+    new_html = chat.redraw_html(updated_history, name1, name2, mode, chat_style, character)
 
     return updated_history, new_html
