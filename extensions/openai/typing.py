@@ -67,7 +67,7 @@ class ToolFunction(BaseModel):
 
 class ToolParameters(BaseModel):
     properties: Dict[str, 'ToolProperty']
-    required: list[str]
+    required: Optional[list[str]] = None
     type: str
 
 
