@@ -1402,7 +1402,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .message:hover .message-versioning-container,
-.user-message:hover .message-versioning-container
+.user-message:hover .message-versioning-container,
 .assistant-message:hover .message-versioning-container {
     opacity: 1;
     pointer-events: auto;
@@ -1438,7 +1438,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .message .message-versioning-nav-arrow:not([activated]):hover,
-.user-message .message-versioning-nav-arrow:not([activated]):hover
+.user-message .message-versioning-nav-arrow:not([activated]):hover,
 .assistant-message .message-versioning-nav-arrow:not([activated]):hover {
     opacity: 0.3;
 }
