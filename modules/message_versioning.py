@@ -11,7 +11,8 @@ import logging as logger
 
 # Global variable for the currently loaded history data
 # Consider moving this to shared state if needed across modules more broadly
-_loaded_history = {'visible': [], 'internal': [], '_character': None, '_unique_id': None, '_mode': None}
+_loaded_history = {'visible': [], 'internal': []}
+_cache = {'character_menu': None, 'unique_id': None, 'mode': None}
 _mode = 'html'
 
 
@@ -46,55 +47,59 @@ def load_or_initialize_history_data(character: Optional[str], unique_id: Optiona
     and the requested context (character, unique_id, mode) differs from the currently loaded context.
     Otherwise, returns the existing in-memory history or a new empty history structure.
     """
-    global _loaded_history
+    global _loaded_history, _cache
+
+    _character = _cache.get('character_menu')
+    _unique_id = _cache.get('unique_id')
+    _mode = _cache.get('mode')
 
     # --- Check if requested context matches already loaded context ---
-    if (character == _loaded_history.get('_character')  # noqa: W503
-            and unique_id == _loaded_history.get('_unique_id')  # noqa: W503
-            and mode == _loaded_history.get('_mode')  # noqa: W503
-            and _loaded_history.get('_character') is not None):
+    if (character == _character
+            and unique_id == _unique_id  # noqa: W503
+            and mode == _mode  # noqa: W503
+            and _character is not None):  # noqa: W503
         logger.debug(f"Requested context matches loaded context ({character}/{unique_id}/{mode}). Returning cached history.")
         return _loaded_history
 
     # --- Context differs or history not loaded, proceed with load/initialization ---
-    logger.debug(f"Context changed or history not loaded. Requested: {character}/{unique_id}/{mode}. Loaded: {_loaded_history.get('_character')}/{_loaded_history.get('_unique_id')}/{_loaded_history.get('_mode')}")
+    logger.debug(f"Context changed or history not loaded. Requested: {character}/{unique_id}/{mode}. Loaded: {_character}/{_unique_id}/{_mode}")
 
     # Function to create a standard empty history structure with context
-    def _create_empty_history(char, uid, md):
-        return {'visible': [], 'internal': [], '_character': char, '_unique_id': uid, '_mode': md}
+    def _create_empty_history():
+        return {'visible': [], 'internal': []}
 
     if not character or not unique_id:
         logger.warning("Cannot load history data: Character or ID is missing.")
-        _loaded_history = _create_empty_history(character, unique_id, mode)
+        _loaded_history = _create_empty_history()
         return _loaded_history
 
     path = get_history_data_path(unique_id, character, mode)
     if not path.exists():
         logger.info(f"Initialized empty message versioning history data for {character}/{unique_id} (file not found)")
-        _loaded_history = _create_empty_history(character, unique_id, mode)
+        _loaded_history = _create_empty_history()
         return _loaded_history
     try:
         with open(path, 'r', encoding='utf-8') as f:
             contents = f.read()
             if contents:
                 loaded_data = json.loads(contents)
-                loaded_data['_character'] = character
-                loaded_data['_unique_id'] = unique_id
-                loaded_data['_mode'] = mode
+                _cache['character_menu'] = character
+                _cache['unique_id'] = unique_id
+                _cache['mode'] = mode
                 logger.debug(f"Loaded message versioning history data from {path}")
                 _loaded_history = loaded_data
                 return _loaded_history
             else:
                 logger.info(f"Initialized empty message versioning history data (file was empty) for {character}/{unique_id}")
-                _loaded_history = _create_empty_history(character, unique_id, mode)
+                _loaded_history = _create_empty_history()
                 return _loaded_history
     except json.JSONDecodeError:
         logger.error(f"Error decoding JSON from history data file: {path}. Initializing empty.", exc_info=True)
-        _loaded_history = _create_empty_history(character, unique_id, mode)
+        _loaded_history = _create_empty_history()
         return _loaded_history
     except Exception as e:
         logger.error(f"Error loading message versioning history data from {path}: {e}", exc_info=True)
-        _loaded_history = _create_empty_history(character, unique_id, mode)
+        _loaded_history = _create_empty_history()
         return _loaded_history
 
 
@@ -170,7 +175,6 @@ def save_history_data(character: str, unique_id: str, mode: str, history_data: D
         return False
 
     current_mode = mode or history_data.get('_mode') or shared.persistent_interface_state.get('mode', 'chat')
-    history_data['_mode'] = current_mode
 
     path = get_history_data_path(unique_id, character, current_mode)
     try:
@@ -220,9 +224,8 @@ def get_loaded_history():
 
 def set_history_storage_mode(new_mode: str):
     """Sets the display mode ('html', 'overlay', 'off')."""
-    global _mode, _loaded_history
-    _mode = new_mode  # Keep legacy global updated for now
-    _loaded_history['_mode'] = new_mode
+    global _loaded_history, _cache
+    _cache['mode'] = new_mode
     logger.debug(f"Message versioning history storage mode set to: {new_mode}")
 
 
