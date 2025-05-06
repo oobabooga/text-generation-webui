@@ -619,26 +619,26 @@ def send_last_reply_to_input(history):
 
 
 def replace_last_reply(text, state):
+    if not text.strip():
+        return state['history']
+
     history = state['history']
-    if len(text.strip()) == 0:
-        return history
 
-    # Find the last assistant message (could be single or in a regeneration list)
-    last_assistant = None
-    for msg in reversed(history):
-        if isinstance(msg, dict) and msg['role'] == 'assistant':
-            last_assistant = msg
-        elif isinstance(msg, list) and msg and msg[-1]['role'] == 'assistant':
-            last_assistant = msg
+    # Find the last assistant message
+    for item in reversed(history):
+        assistant_msg = None
+        if isinstance(item, dict) and item.get('role') == 'assistant':
+            assistant_msg = item
+        elif isinstance(item, list) and item and item[-1].get('role') == 'assistant':
+            assistant_msg = item[-1]
 
-    if last_assistant:
-        visible_text = html.escape(text)
-        internal_text = apply_extensions('input', text, state, is_chat=True)
-        last_assistant.update({
-            'content': internal_text,
-            'visible-content': visible_text,
-            'date': current_date()
-        })
+        if assistant_msg:
+            assistant_msg.update({
+                'content': apply_extensions('input', text, state, is_chat=True),
+                'visible-content': html.escape(text),
+                'date': current_date()
+            })
+            break
 
     return history
 
