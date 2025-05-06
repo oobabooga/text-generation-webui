@@ -494,14 +494,13 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True, for_ui=True)):
         yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
 
-    if history is not None:
-        if len(history['internal']) > initial_history_len or regenerate or _continue:
-            # Check if the last message has a bot reply before appending
-            if history['internal'] and history['internal'][-1][1]:
-                message_versioning.append_to_history_data(history, state, is_bot=True)
-        save_history(history, state['unique_id'], state['character_menu'], state['mode'])
-    else:
-        save_history(state['history'], state['unique_id'], state['character_menu'], state['mode'])
+    if len(history['internal']) > initial_history_len or regenerate or _continue:
+        # Check if the last message has a non-empty bot reply before appending
+        if history['internal'] and history['internal'][-1][1]:
+            message_versioning.append_to_history_data(history, state, is_bot=True)
+    save_history(history, state['unique_id'], state['character_menu'], state['mode'])
+    
+    yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
 
 
 def remove_last_message(history):
