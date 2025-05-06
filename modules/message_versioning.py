@@ -176,7 +176,7 @@ def save_history_data(character: str, unique_id: str, mode: str, history_data: D
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, 'w', encoding='utf-8') as f:
-            data_to_save = history_data.copy()
+            data_to_save = {'visible': history_data['visible'], 'internal': history_data['internal']}  # Exclude temp data
             json.dump(data_to_save, f, indent=4)
         logger.debug(f"Message versioning history data saved to {path}")
         return True
