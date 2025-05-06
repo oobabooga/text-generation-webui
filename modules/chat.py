@@ -167,7 +167,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
     if state['mode'] == 'instruct':
         renderer = instruct_renderer
-        if state['custom_system_message'].strip() != '':
+        if state.get('custom_system_message', '').strip() != '':
             messages.append({"role": "system", "content": state['custom_system_message']})
     else:
         renderer = chat_renderer
@@ -176,23 +176,20 @@ def generate_chat_prompt(user_input, state, **kwargs):
             messages.append({"role": "system", "content": context})
 
     # Process history to build messages list
-    insert_pos = len(messages)
-    for msg in reversed(history):
-        if isinstance(msg, dict):
-            if msg['role'] == 'assistant':
-                assistant_msg = msg['content'].strip()
-                if assistant_msg:
-                    messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
-            elif msg['role'] == 'user':
-                user_msg = msg['content'].strip()
-                if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
-                    messages.insert(insert_pos, {"role": "user", "content": user_msg})
-        elif isinstance(msg, list) and msg:
+    messages = []
+    for msg in history:
+        if isinstance(msg, dict) and 'role' in msg and 'content' in msg:
+            # Filter out empty messages and special markers
+            content = msg['content'].strip()
+            if content and content != '<|BEGIN-VISIBLE-CHAT|>':
+                messages.append({"role": msg['role'], "content": content})
+        elif isinstance(msg, list) and msg and isinstance(msg[-1], dict):
             # Handle regeneration list - use only the last message
-            if msg[-1]['role'] == 'assistant':
-                assistant_msg = msg[-1]['content'].strip()
-                if assistant_msg:
-                    messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
+            last_msg = msg[-1]
+            if 'role' in last_msg and 'content' in last_msg:
+                content = last_msg['content'].strip()
+                if content:
+                    messages.append({"role": last_msg['role'], "content": content})
 
     user_input = user_input.strip()
     if user_input and not impersonate and not _continue and not regenerate:
