@@ -66,6 +66,7 @@ class LlamaServer:
             "top_k": state["top_k"],
             "top_p": state["top_p"],
             "min_p": state["min_p"],
+            "top_n_sigma": state["top_n_sigma"] if state["top_n_sigma"] > 0 else -1,
             "tfs_z": state["tfs"],
             "typical_p": state["typical_p"],
             "repeat_penalty": state["repetition_penalty"],
@@ -102,8 +103,10 @@ class LlamaServer:
 
             penalty_found = False
             for s in samplers:
-                if s.strip() in ["dry", "top_k", "typ_p", "top_p", "min_p", "xtc", "temperature"]:
+                if s.strip() in ["dry", "top_k", "top_p", "top_n_sigma", "min_p", "temperature", "xtc"]:
                     filtered_samplers.append(s.strip())
+                elif s.strip() == "typical_p":
+                    filtered_samplers.append("typ_p")
                 elif not penalty_found and s.strip() == "repetition_penalty":
                     filtered_samplers.append("penalties")
                     penalty_found = True
