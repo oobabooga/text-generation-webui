@@ -191,8 +191,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
 
     tools = None
     if 'tools' in body and body['tools'] is not None and isinstance(body['tools'], list) and len(body['tools']) > 0:
-        # validateTools(body['tools']) # raises InvalidRequestError if validation fails
-        tools = body['tools']
+        tools = validateTools(body['tools']) # raises InvalidRequestError if validation fails
 
     messages = body['messages']
     for m in messages:
@@ -553,14 +552,17 @@ def stream_completions(body: dict, is_legacy: bool = False):
         yield resp
 
 
-def validateTools(tools: str):
+def validateTools(tools: list[dict]):
     # Validate each tool definition in the JSON array
-    valid_tools = []
-    for tool in tools:
+    valid_tools = None
+    for idx in range(len(tools)):
+        tool = tools[idx]
         try:
             tool_definition = ToolDefinition(**tool)
-            valid_tools.append(tool_definition)
+            if valid_tools is None:
+                valid_tools = []
+            valid_tools.append(tool)
         except ValidationError:
-            raise InvalidRequestError(message="Invalid tool specification.", param='tools')
+            raise InvalidRequestError(message=f"Invalid tool specification at index {idx}.", param='tools')
 
     return valid_tools
