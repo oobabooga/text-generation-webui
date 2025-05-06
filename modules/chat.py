@@ -397,10 +397,11 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
             if regenerate:
                 if last_assistant_idx != -1:
-                    regen_list = (
-                        [output[last_assistant_idx]] if isinstance(output[last_assistant_idx], dict)
-                        else list(output[last_assistant_idx])
-                    )
+                    if isinstance(output[last_assistant_idx], dict):
+                        regen_list = [output[last_assistant_idx]]
+                    else:
+                        regen_list = output[last_assistant_idx]
+
                     regen_list.append(msg)
                     output = output[:last_assistant_idx] + [regen_list] + output[last_assistant_idx + 1:]
                 else:
@@ -408,20 +409,15 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
                 yield output
 
-            elif _continue:
-                if last_assistant_idx != -1:
-                    modified_output = list(output)
-                    container = modified_output[last_assistant_idx]
-                    last_msg = container if isinstance(container, dict) else container[-1]
-                    last_msg = dict(last_msg)
-                    last_msg['visible-content'] += '...'
-                    if isinstance(container, dict):
-                        modified_output[last_assistant_idx] = last_msg
-                    else:
-                        container[-1] = last_msg
-                        modified_output[last_assistant_idx] = container
-
-                    yield modified_output
+            elif _continue and last_assistant_idx != -1:
+                container = output[last_assistant_idx]
+                if isinstance(container, dict):
+                    last_msg = {**container, 'visible-content': container['visible-content'] + '...'}
+                    yield output[:last_assistant_idx] + [last_msg] + output[last_assistant_idx + 1:]
+                else:
+                    last = container[-1]
+                    modified_last = {**last, 'visible-content': last['visible-content'] + '...'}
+                    yield output[:last_assistant_idx] + [container[:-1] + [modified_last]] + output[last_assistant_idx + 1:]
 
     prompt = apply_extensions(
         'custom_generate_chat_prompt',
