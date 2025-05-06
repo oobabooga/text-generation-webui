@@ -426,6 +426,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .chat > .messages {
     display: flex;
     flex-direction: column;
+    min-height: calc(100vh - 102px);
 }
 
 .chat > .messages > :first-child {
