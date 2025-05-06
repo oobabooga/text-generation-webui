@@ -67,7 +67,6 @@ class LlamaServer:
             "top_p": state["top_p"],
             "min_p": state["min_p"],
             "top_n_sigma": state["top_n_sigma"] if state["top_n_sigma"] > 0 else -1,
-            "tfs_z": state["tfs"],
             "typical_p": state["typical_p"],
             "repeat_penalty": state["repetition_penalty"],
             "repeat_last_n": state["repetition_penalty_range"],
