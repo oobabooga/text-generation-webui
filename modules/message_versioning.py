@@ -12,7 +12,7 @@ import logging as logger
 # Global variable for the currently loaded history data
 # Consider moving this to shared state if needed across modules more broadly
 loaded_history = {'visible': [], 'internal': []}
-last_state = {'character_menu': None, 'unique_id': None, 'mode': None}
+last_state = {'character_menu': None, 'unique_id': None, 'mode': None, 'display_mode': 'html'}
 
 
 def validate_list(lst: List, i: int):
@@ -217,16 +217,16 @@ def get_history_data_path(unique_id: str, character: str, mode: str) -> Path:
 # --- Functions to be called by integrated logic ---
 
 
-def set_history_storage_mode(new_mode: str):
+def set_versioning_display_mode(new_dmode: str):
     """Sets the display mode ('html', 'overlay', 'off')."""
     global last_state
-    last_state['mode'] = new_mode
-    logger.debug(f"Message versioning history storage mode set to: {new_mode}")
+    last_state['display_mode'] = new_dmode
+    logger.debug(f"Message versioning history storage mode set to: {new_dmode}")
 
 
-def get_history_storage_mode():
+def get_versioning_display_mode():
     """Gets the current display mode from the loaded history."""
-    current_mode = last_state.get('mode')
+    current_mode = last_state.get('display_mode', 'html')
     return current_mode
 
 
@@ -422,7 +422,7 @@ def get_message_version_nav_elements(history_index: int, msg_type: int):
     Should be called by the HTML generator.
     Returns an empty string if history storage mode is 'off' or navigation is not needed.
     """
-    if get_history_storage_mode() == 'off':
+    if get_versioning_display_mode() == 'off':
         return ""
 
     try:
@@ -505,7 +505,7 @@ def handle_message_versioning_change_display_mode(display_mode: str, state: Dict
     Updates the history storage mode. The UI redraw should be triggered by the main logic.
     """
     logger.debug(f"Handling message versioning display mode change to: {display_mode}")
-    set_history_storage_mode(display_mode)
+    set_versioning_display_mode(display_mode)
 
 
 def handle_message_versioning_navigate_click(history_index: float, msg_type: float, direction: str, state: Dict):
