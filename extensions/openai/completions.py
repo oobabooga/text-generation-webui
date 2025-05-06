@@ -307,6 +307,17 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
 
     for a in generator:
         answer = a['internal'][-1][1]
+
+        if supported_tools is not None:
+            tool_call = parseToolCall(answer[end_last_tool_call:], supported_tools) if len(answer) > 0 else []
+            if len(tool_call) > 0:
+                for tc in tool_call:
+                    tc["id"] = getToolCallId()
+                    tc["index"] = str(len(tool_calls))
+                    tc["function"]["arguments"] = json.dumps(tc["function"]["arguments"])
+                    tool_calls.append(tc)
+                end_last_tool_call = len(answer)
+
         if stream:
             len_seen = len(seen_content)
             new_content = answer[len_seen:]
@@ -319,18 +330,9 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             seen_content = answer
             yield chunk
 
-            if supported_tools is not None:
-                tool_call = parseToolCall(answer[end_last_tool_call:], supported_tools) if len(answer) > 0 else []
-                if len(tool_call) > 0:
-                    for tc in tool_call:
-                        tc["id"] = getToolCallId()
-                        tc["index"] = str(len(tool_calls))
-                        tc["function"]["arguments"] = json.dumps(tc["function"]["arguments"])
-                        tool_calls.append(tc)
-                    end_last_tool_call = len(answer)
-                    chunk = chat_streaming_chunk('', tool_call)
-                    yield chunk
-                    break
+        # stop generation if tool_calls were generated previously
+        if len(tool_calls) > 0:
+            break
 
     token_count = len(encode(prompt)[0])
     completion_token_count = len(encode(answer)[0])
@@ -341,7 +343,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         stop_reason = "length"
 
     if stream:
-        chunk = chat_streaming_chunk('')
+        chunk = chat_streaming_chunk('', tool_calls)
         chunk[resp_list][0]['finish_reason'] = stop_reason
         chunk['usage'] = {
             "prompt_tokens": token_count,
