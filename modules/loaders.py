@@ -300,6 +300,7 @@ loaders_samplers = {
         'xtc_threshold',
         'xtc_probability',
         'tfs',
+        'top_n_sigma',
         'dry_multiplier',
         'dry_allowed_length',
         'dry_base',
