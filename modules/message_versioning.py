@@ -173,13 +173,13 @@ def save_history_data(character: str, unique_id: str, mode: str, history_data: D
         logger.warning("Cannot save history data: Character or ID is not set.")
         return False
 
-    current_mode = mode or history_data.get('_mode') or shared.persistent_interface_state.get('mode', 'chat')
+    current_mode = mode or last_state.get('mode') or shared.persistent_interface_state.get('mode', 'chat')
 
     path = get_history_data_path(unique_id, character, current_mode)
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, 'w', encoding='utf-8') as f:
-            data_to_save = {'visible': history_data['visible'], 'internal': history_data['internal']}  # Exclude temp data
+            data_to_save = {'visible': history_data['visible'], 'internal': history_data['internal']}
             json.dump(data_to_save, f, indent=4)
         logger.debug(f"Message versioning history data saved to {path}")
         return True
@@ -324,55 +324,55 @@ def get_message_positions(history_index: int, msg_type: int):
     return pos, total
 
 
-def navigate_message_version(history_index: float, msg_type: float, direction: str, state: Dict):
+def navigate_message_version(history_index: float, msg_type: float, direction: str, history: dict, character: str, unique_id: str, mode: str):
     """
     Handles navigation (left/right swipe) for a message version.
     Updates the history dictionary directly and returns the modified history.
     The calling function will be responsible for regenerating the HTML.
     """
-    global last_history_index, last_msg_type
+    global loaded_history, last_history_index, last_msg_type
     try:
         i = int(history_index)
         m_type = int(msg_type)
         last_history_index = i  # Default to current index/type
         last_msg_type = m_type
 
-        load_or_initialize_history_data(state['character_menu'], state['unique_id'], state['mode'])
+        load_or_initialize_history_data(character, unique_id, mode)
         current_pos, total_pos = get_message_positions(i, m_type)
 
         if total_pos <= 1:
-            return state['history']
+            return history
 
         # Calculate new position
         new_pos = current_pos
         if direction == "right":
             new_pos += 1
             if new_pos >= total_pos:
-                return state['history']
+                return history
         elif direction == "left":
             new_pos -= 1
             if new_pos < 0:
-                return state['history']
+                return history
         else:
             logger.warning(f"Invalid navigation direction: {direction}")
-            return state['history']
+            return history
 
-        loaded_history_data = get_loaded_history()
+        loaded_history_data = loaded_history
 
         visible_msg_data = recursive_get(loaded_history_data, ['visible', i, m_type])
         internal_msg_data = recursive_get(loaded_history_data, ['internal', i, m_type])
 
         if not visible_msg_data or not internal_msg_data or 'text' not in visible_msg_data or 'text' not in internal_msg_data:
             logger.error(f"Loaded history data structure invalid during navigation for index {i}, type {m_type}. Data: {loaded_history_data}")
-            return state['history']
+            return history
 
         # Check bounds for the new position against the text lists
         if new_pos < 0 or new_pos >= len(visible_msg_data['text']):
             logger.error(f"Navigation error: new_pos {new_pos} out of bounds for visible history text list (len {len(visible_msg_data['text'])})")
-            return state['history']
+            return history
         if new_pos < 0 or new_pos >= len(internal_msg_data['text']):
             logger.error(f"Navigation error: new_pos {new_pos} out of bounds for internal history text list (len {len(internal_msg_data['text'])})")
-            return state['history']
+            return history
 
         new_visible = visible_msg_data['text'][new_pos]
         new_internal = internal_msg_data['text'][new_pos]
@@ -381,17 +381,13 @@ def navigate_message_version(history_index: float, msg_type: float, direction: s
         visible_msg_data['pos'] = new_pos
         internal_msg_data['pos'] = new_pos
 
-        # Save the updated history data back to the file
-        character = state['character_menu']
-        unique_id = state['unique_id']
-        mode = state['mode']
         if character and unique_id:
             save_history_data(character, unique_id, mode, loaded_history_data)
         else:
             logger.warning("Could not save history data after navigation: character or unique_id missing in state.")
 
         # Update the main chat history dictionary in the state
-        current_history = state['history']
+        current_history = history
         if i < len(current_history['visible']) and m_type < len(current_history['visible'][i]):
             current_history['visible'][i][m_type] = new_visible
         else:
@@ -410,7 +406,7 @@ def navigate_message_version(history_index: float, msg_type: float, direction: s
 
     except Exception as e:
         logger.error(f"Error during message version navigation: {e}", exc_info=True)
-        return state.get('history', {'visible': [], 'internal': []})
+        return history
 
 
 # --- Functions to be called during HTML Generation ---
@@ -473,7 +469,7 @@ def is_message_selected(history_index: int, msg_type: int) -> bool:
 # --- Functions to be called by Gradio Event Handlers ---
 
 
-def handle_unique_id_select(unique_id: str, state: Dict):
+def handle_unique_id_select(unique_id: str, character: str, mode: str):
     """
     Handles the selection of a unique_id from the dropdown.
     Loads the corresponding message versioning history data.
@@ -487,10 +483,6 @@ def handle_unique_id_select(unique_id: str, state: Dict):
         logger.warning("handle_unique_id_select called with empty unique_id.")
         return
 
-    # Load/initialize history data for the selected unique_id
-    character = state['character_menu']
-    mode = state['mode']
-
     if not character:
         logger.warning(f"Cannot load history for unique_id {unique_id}: character_menu not found in state.")
         # Avoid using stale data from a previous selection
@@ -499,7 +491,7 @@ def handle_unique_id_select(unique_id: str, state: Dict):
         load_or_initialize_history_data(character, unique_id, mode)
 
 
-def handle_message_versioning_change_display_mode(display_mode: str, state: Dict):
+def handle_message_versioning_change_display_mode(display_mode: str):
     """
     Handles changes to the message versioning display mode radio button.
     Updates the history storage mode. The UI redraw should be triggered by the main logic.
@@ -508,7 +500,7 @@ def handle_message_versioning_change_display_mode(display_mode: str, state: Dict
     set_versioning_display_mode(display_mode)
 
 
-def handle_message_versioning_navigate_click(history_index: float, msg_type: float, direction: str, state: Dict):
+def handle_message_versioning_navigate_click(history_index: float, msg_type: float, direction: str, history: dict, character: str, unique_id: str, mode: str, name1: str, name2: str, chat_style: str):
     """
     Handles clicks on the navigation buttons generated by get_message_version_nav_elements.
     Calls navigate_message_version and returns the updated history and potentially the regenerated HTML.
@@ -517,17 +509,17 @@ def handle_message_versioning_navigate_click(history_index: float, msg_type: flo
     logger.debug(f"Handling message versioning navigate click: index={history_index}, type={msg_type}, direction={direction}")
 
     # Modifies history in-place
-    updated_history = navigate_message_version(history_index, msg_type, direction, state)
+    updated_history = navigate_message_version(history_index, msg_type, direction, history, character, unique_id, mode)
 
     import modules.chat as chat
 
     new_html = chat.redraw_html(
         updated_history,
-        state['name1'],
-        state['name2'],
-        state['mode'],
-        state['chat_style'],
-        state['character_menu']
+        name1,
+        name2,
+        mode,
+        chat_style,
+        character
     )
 
     return updated_history, new_html

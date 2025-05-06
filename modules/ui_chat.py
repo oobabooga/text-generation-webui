@@ -254,7 +254,7 @@ def create_event_handlers():
     if not shared.args.multi_user:
         shared.gradio['unique_id'].select(
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            message_versioning.handle_unique_id_select, gradio('unique_id', 'interface_state'), None, show_progress=False).then(
+            message_versioning.handle_unique_id_select, gradio('unique_id', 'character_menu', 'mode'), None, show_progress=False).then(
             chat.handle_unique_id_select, gradio('interface_state'), gradio('history', 'display'), show_progress=False)
 
     shared.gradio['Start new chat'].click(
@@ -306,13 +306,13 @@ def create_event_handlers():
     # Message Versioning event handlers
     shared.gradio['message_versioning_display_mode'].change(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        message_versioning.handle_message_versioning_change_display_mode, gradio('message_versioning_display_mode', 'interface_state'), None).then(
+        message_versioning.handle_message_versioning_change_display_mode, gradio('message_versioning_display_mode'), None).then(
         chat.redraw_html, gradio(reload_arr), gradio('display'), show_progress=False)
 
     shared.gradio['message_versioning_navigate_hidden'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         message_versioning.handle_message_versioning_navigate_click,
-        gradio('message_versioning_history_index_hidden', 'message_versioning_message_type_hidden', 'message_versioning_direction_hidden', 'interface_state'),
+        gradio('message_versioning_history_index_hidden', 'message_versioning_message_type_hidden', 'message_versioning_direction_hidden', 'history', 'character_menu', 'unique_id', 'mode', 'name1', 'name2', 'chat_style'),
         gradio('history', 'display'),
         show_progress=False)
 
