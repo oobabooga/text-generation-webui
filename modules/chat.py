@@ -398,16 +398,13 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             if regenerate:
                 if last_assistant_idx != -1:
                     if isinstance(output[last_assistant_idx], dict):
-                        regen_list = [output[last_assistant_idx]]
+                        regen_list = [output[last_assistant_idx], msg]
+                        yield output[:last_assistant_idx] + [regen_list] + output[last_assistant_idx + 1:]
                     else:
-                        regen_list = output[last_assistant_idx]
-
-                    regen_list.append(msg)
-                    output = output[:last_assistant_idx] + [regen_list] + output[last_assistant_idx + 1:]
+                        regen_list = output[last_assistant_idx] + [msg]
+                        yield output[:last_assistant_idx] + [regen_list] + output[last_assistant_idx + 1:]
                 else:
-                    output.append(msg)
-
-                yield output
+                    yield output + [msg]
 
             elif _continue and last_assistant_idx != -1:
                 container = output[last_assistant_idx]
