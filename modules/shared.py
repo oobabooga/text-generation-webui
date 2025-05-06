@@ -310,11 +310,13 @@ if args.api or args.public_api:
     add_extension('openai', last=True)
 
 # Load model-specific settings
-with Path(f'{args.model_dir}/config.yaml') as p:
-    if p.exists():
-        model_config = yaml.safe_load(open(p, 'r').read())
-    else:
-        model_config = {}
+p = Path(f'{args.model_dir}/config.yaml')
+if p.exists():
+    model_config = yaml.safe_load(open(p, 'r').read())
+else:
+    model_config = {}
+del p
+
 
 # Load custom model-specific settings
 user_config = load_user_config()
