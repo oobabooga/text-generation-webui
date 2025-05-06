@@ -545,7 +545,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     border-radius: 5px;
     font-size: 82%;
     padding: 1px 3px;
-    background: white !important;
+    background: #f3f4f6 !important;
     color: #1f2328;
 }
 
@@ -559,18 +559,17 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding: 15px;
 }
 
-.message-body :not(pre) > code::before {
-    content: "`";
-}
-
-.message-body :not(pre) > code::after {
-    content: "`";
-}
-
 .message-body :not(pre) > code {
     white-space: normal !important;
     font-weight: bold;
-    font-family: unset;
+    font-size: 0.95em;
+    font-family: Menlo,"Roboto Mono","Courier New",Courier,monospace,Inter,sans-serif;
+    padding: .15rem .3rem;
+    background-color: #ececec;
+}
+
+.dark .message-body :not(pre) > code {
+    background-color: rgb(255 255 255 / 12.5%);
 }
 
 #chat-input {
@@ -584,6 +583,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     background: #f3f4f6;
     padding: 0.65rem 2.5rem;
     border: 0;
+    box-shadow: 0;
 }
 
 #chat-input textarea::placeholder {
@@ -759,7 +759,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .hover-menu button:hover {
-    background: var(--button-secondary-background-fill-hover) !important;
+    background: #dbeafe !important;
 }
 
 .dark .hover-menu button:hover {
