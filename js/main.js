@@ -917,7 +917,7 @@ document.addEventListener('click', function(e) {
         const direction = button.getAttribute('data-direction');
         versioningNavigateClick(button, parseFloat(historyIndex), parseFloat(msgType), direction);
       }
-    } else if (msg.classList.contains('selected-message')) {
+    } else if (msg.classList.contains('selected-message') && !e.ctrlKey) {
       versioningDeselectMessages();
     } else {
       versioningSelectMessage(msg, parseInt(historyIndex), parseInt(msgType));
