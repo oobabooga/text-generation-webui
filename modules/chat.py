@@ -500,7 +500,8 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
             if history['internal'] and history['internal'][-1][1]:
                 message_versioning.append_to_history_data(history, state, is_bot=True)
         save_history(history, state['unique_id'], state['character_menu'], state['mode'])
-    save_history(state['history'], state['unique_id'], state['character_menu'], state['mode'])
+    else:
+        save_history(state['history'], state['unique_id'], state['character_menu'], state['mode'])
 
 
 def remove_last_message(history):
