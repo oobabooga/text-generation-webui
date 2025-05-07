@@ -308,7 +308,7 @@ def create_event_handlers():
     # Message Versioning event handlers
     shared.gradio['message_versioning_display_mode'].change(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        message_versioning.handle_change_display_mode, gradio('message_versioning_display_mode'), None).then(
+        message_versioning.handle_display_mode_change, gradio('message_versioning_display_mode'), None).then(
         chat.redraw_html, gradio(reload_arr), gradio('display'), show_progress=False)
 
     shared.gradio['message_versioning_navigate_hidden'].click(
