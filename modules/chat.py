@@ -489,7 +489,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         visible_text = html.escape(text)
         temp_history['internal'].append([text, ''])
         temp_history['visible'].append([visible_text, ''])
-        message_versioning.append_to_history_data(temp_history, state, is_bot=False)
+        message_versioning.append_message_version(temp_history, state, is_bot=False)
 
     for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True, for_ui=True)):
         yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
@@ -497,7 +497,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     if len(history['internal']) > initial_history_len or regenerate or _continue:
         # Check if the last message has a non-empty bot reply before appending
         if history['internal'] and history['internal'][-1][1]:
-            message_versioning.append_to_history_data(history, state, is_bot=True)
+            message_versioning.append_message_version(history, state, is_bot=True)
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 
     yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
@@ -1082,11 +1082,11 @@ def my_yaml_output(data):
 
 
 def handle_replace_last_reply_click(text, state):
-    last_msg = state['history']['internal'][-1][1] if len(state['history']['internal']) > 0 else None
+    last_reply = state['history']['internal'][-1][1] if len(state['history']['internal']) > 0 else None
     history = replace_last_reply(text, state)
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
-    if len(history['internal']) > 0 and history['internal'][-1][1] != last_msg:  # If the new message is different from the last one
-        message_versioning.append_to_history_data(history, state, is_bot=True)
+    if len(history['internal']) > 0 and history['internal'][-1][1] != last_reply:  # Differs from last reply
+        message_versioning.append_message_version(history, state, is_bot=True)
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     return [history, html, ""]
@@ -1095,7 +1095,7 @@ def handle_replace_last_reply_click(text, state):
 def handle_send_dummy_message_click(text, state):
     history = send_dummy_message(text, state)
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
-    message_versioning.append_to_history_data(history, state, is_bot=False)
+    message_versioning.append_message_version(history, state, is_bot=False)
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     return [history, html, ""]
@@ -1104,7 +1104,7 @@ def handle_send_dummy_message_click(text, state):
 def handle_send_dummy_reply_click(text, state):
     history = send_dummy_reply(text, state)
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
-    message_versioning.append_to_history_data(history, state, is_bot=True)
+    message_versioning.append_message_version(history, state, is_bot=True)
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     return [history, html, ""]
