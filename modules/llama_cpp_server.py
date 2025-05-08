@@ -261,6 +261,7 @@ class LlamaServer:
             "--gpu-layers", str(shared.args.gpu_layers),
             "--batch-size", str(shared.args.batch_size),
             "--port", str(self.port),
+            "--no-webui",
         ]
 
         if shared.args.flash_attn:
