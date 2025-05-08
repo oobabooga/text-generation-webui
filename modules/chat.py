@@ -145,7 +145,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     instruct_renderer = partial(
         instruction_template.render,
         builtin_tools=None,
-        tools=None,
+        tools=state['tools'] if 'tools' in state else None,
         tools_in_user_message=False,
         add_generation_prompt=False
     )
@@ -171,9 +171,13 @@ def generate_chat_prompt(user_input, state, **kwargs):
             messages.append({"role": "system", "content": context})
 
     insert_pos = len(messages)
-    for user_msg, assistant_msg in reversed(history):
-        user_msg = user_msg.strip()
-        assistant_msg = assistant_msg.strip()
+    for entry in reversed(history):
+        user_msg = entry[0].strip()
+        assistant_msg = entry[1].strip()
+        tool_msg = entry[2].strip() if len(entry) > 2 else ''
+
+        if tool_msg:
+            messages.insert(insert_pos, {"role": "tool", "content": tool_msg})
 
         if assistant_msg:
             messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
