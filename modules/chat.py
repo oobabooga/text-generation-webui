@@ -5,6 +5,7 @@ import html
 import json
 import pprint
 import re
+import time
 from datetime import datetime
 from functools import partial
 from pathlib import Path
@@ -485,10 +486,16 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         send_dummy_reply(state['start_with'], state)
 
     history = state['history']
+    last_save_time = time.monotonic()
+    save_interval = 8
     for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True, for_ui=True)):
         yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
-        if i == 0:
+
+        current_time = time.monotonic()
+        # Save on first iteration or if save_interval seconds have passed
+        if i == 0 or (current_time - last_save_time) >= save_interval:
             save_history(history, state['unique_id'], state['character_menu'], state['mode'])
+            last_save_time = current_time
 
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 
