@@ -32,7 +32,6 @@ services:
     tty: true
     volumes:
       - ./user_data:/home/app/text-generation-webui/user_data
-      - ./models:/home/app/text-generation-webui/user_data/models
     deploy:
       resources:
         reservations:
