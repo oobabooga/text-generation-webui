@@ -91,49 +91,58 @@ def parseToolCall(answer: str, tool_names: list[str]):
         return matches
 
     # Define the regex pattern to find the JSON content wrapped in <function>, <tools>, <tool_call>, and other tags observed from various models
-    pattern = r"<(function|tools{0,1}|tool_call|response|action|function-calls{0,1}|call)>(.*?)</\1>"
+    patterns = [ r"(```[^\n]*)\n(.*?)```", r"<([^>]+)>(.*?)</\1>" ]
 
-    for match in re.finditer(pattern, answer, re.DOTALL):
-        if match.group(2) is None:
-            continue
-        # remove backtick wraps if present
-        candidate = re.sub(r"^```(json|xml|python[^\n]*)\n", "", match.group(2).strip())
-        candidate = re.sub(r"```$", "", candidate.strip())
-
-        candidates = []
-        try:
-            # parse the candidate JSON into a dictionary
-            candidates = json.loads(candidate)
-            if not isinstance(candidates, list):
-                candidates = [candidates]
-        except json.JSONDecodeError:
-            # Ignore invalid JSON silently
-            continue
-
-        for candidate_dict in candidates:
-            checked_candidate = checkAndSanitizeToolCallCandidate(candidate_dict, tool_names)
-            if checked_candidate is not None:
-                matches.append(checked_candidate)
-
-    # last resort if nothing has been mapped: LLM might have produced plain json tool call without xml-like tags
-    if len(matches) == 0:
-        try:
-            candidate = answer
+    for pattern in patterns:
+        for match in re.finditer(pattern, answer, re.DOTALL):
+            # print(match.group(2))
+            if match.group(2) is None:
+                continue
             # remove backtick wraps if present
-            if "```" in answer:
-                match = re.search(r"```(.*?)```", answer, re.DOTALL)
-                if match is not None and match.group(1) is not None:
-                    candidate = re.sub(r"^(json|xml|python[^\n]*)\n", "", match.group(1).strip())
-            # parse the candidate JSON into a dictionary
-            candidates = json.loads(candidate)
-            if not isinstance(candidates, list):
-                candidates = [candidates]
+            candidate = re.sub(r"^```(json|xml|python[^\n]*)\n", "", match.group(2).strip())
+            candidate = re.sub(r"```$", "", candidate.strip())
+            # unwrap inner tags
+            candidate = re.sub(pattern, r"\2", candidate.strip(), flags=re.DOTALL)
+            # llm might have generated multiple json objects separated by linebreaks, check for this pattern and try parsing each object individually
+            if re.search(r"\}\s*\n\s*\{", candidate) is not None:
+                candidate = re.sub(r"\}\s*\n\s*\{", "},\n{", candidate)
+            if not candidate.strip().startswith("["):
+                candidate = "[" + candidate + "]"
+
+            candidates = []
+            try:
+                # parse the candidate JSON into a dictionary
+                candidates = json.loads(candidate)
+                if not isinstance(candidates, list):
+                    candidates = [candidates]
+            except json.JSONDecodeError:
+                # Ignore invalid JSON silently
+                continue
+
             for candidate_dict in candidates:
                 checked_candidate = checkAndSanitizeToolCallCandidate(candidate_dict, tool_names)
                 if checked_candidate is not None:
                     matches.append(checked_candidate)
-        except json.JSONDecodeError:
-            # Ignore invalid JSON silently
-            pass
+
+        # last resort if nothing has been mapped: LLM might have produced plain json tool call without xml-like tags
+        if len(matches) == 0:
+            try:
+                candidate = answer
+                # llm might have generated multiple json objects separated by linebreaks, check for this pattern and try parsing each object individually
+                if re.search(r"\}\s*\n\s*\{", candidate) is not None:
+                    candidate = re.sub(r"\}\s*\n\s*\{", "},\n{", candidate)
+                if not candidate.strip().startswith("["):
+                    candidate = "[" + candidate + "]"
+                # parse the candidate JSON into a dictionary
+                candidates = json.loads(candidate)
+                if not isinstance(candidates, list):
+                    candidates = [candidates]
+                for candidate_dict in candidates:
+                    checked_candidate = checkAndSanitizeToolCallCandidate(candidate_dict, tool_names)
+                    if checked_candidate is not None:
+                        matches.append(checked_candidate)
+            except json.JSONDecodeError:
+                # Ignore invalid JSON silently
+                pass
 
     return matches
