@@ -1,1 +1,1 @@
-Choose the desired page from the menu.
+text-generation-webui documentation
