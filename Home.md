@@ -1,1 +1,1 @@
-Come back soon!
+Choose the desired page from the menu.
