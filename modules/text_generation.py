@@ -14,6 +14,7 @@ from modules.callbacks import Iteratorize
 from modules.extensions import apply_extensions
 from modules.html_generator import generate_basic_html
 from modules.logging_colors import logger
+from modules.utils import check_model_loaded
 
 
 def generate_reply(*args, **kwargs):
@@ -34,8 +35,8 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
     # Find the appropriate generation function
     generate_func = apply_extensions('custom_generate_reply')
     if generate_func is None:
-        if shared.model_name == 'None' or shared.model is None:
-            logger.error("No model is loaded! Select one in the Model tab.")
+        model_is_loaded, error_message = check_model_loaded()
+        if not model_is_loaded:
             yield ''
             return
 
