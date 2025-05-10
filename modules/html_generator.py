@@ -267,14 +267,16 @@ refresh_button = f'<button class="footer-button footer-refresh-button" title="Re
 continue_button = f'<button class="footer-button footer-continue-button" title="Continue" onclick="continueClick()">{continue_svg}</button>'
 remove_button = f'<button class="footer-button footer-remove-button" title="Remove last reply" onclick="removeLastClick()">{remove_svg}</button>'
 
+
 def actions_html(history, i):
     return (f'<div class="message-actions">'
-    f'{copy_button}'
-    f'{branch_button}'
-    f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
-    f'{continue_button if i == len(history["visible"]) - 1 else ""}'
-    f'{remove_button if i == len(history["visible"]) - 1 else ""}'
-    f'</div>')
+            f'{copy_button}'
+            f'{branch_button}'
+            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
+            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
+            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'</div>')
+
 
 def generate_instruct_html(history):
     output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
@@ -308,7 +310,6 @@ def generate_instruct_html(history):
 
     output += "</div></div>"
     return output
-
 
 
 def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=False):

@@ -25,7 +25,7 @@ def create_ui():
             with gr.Column():
                 with gr.Row(elem_id='past-chats-buttons'):
                     shared.gradio['branch_chat'] = gr.Button('Branch', elem_classes='refresh-button', elem_id='Branch', interactive=not mu)
-                    shared.gradio['branch_index'] = gr.Number(value=-1, precision=0, visible=False, elem_id="branch_index", interactive=True)
+                    shared.gradio['branch_index'] = gr.Number(value=-1, precision=0, visible=False, elem_id="Branch-index", interactive=True)
                     shared.gradio['rename_chat'] = gr.Button('Rename', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['delete_chat'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['Start new chat'] = gr.Button('New chat', elem_classes=['refresh-button', 'focus-on-chat-input'])

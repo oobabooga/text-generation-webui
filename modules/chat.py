@@ -1121,8 +1121,8 @@ def handle_branch_chat_click(state):
         history = state['history']
     else:
         history = state['history']
-        history['visible'] = history['visible'][:branch_from_index+1]
-        history['internal'] = history['internal'][:branch_from_index+1]
+        history['visible'] = history['visible'][:branch_from_index + 1]
+        history['internal'] = history['internal'][:branch_from_index + 1]
     new_unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
     save_history(history, new_unique_id, state['character_menu'], state['mode'])
 
