@@ -210,6 +210,7 @@ def list_interface_input_elements():
         'negative_prompt',
         'dry_sequence_breakers',
         'grammar_string',
+        'branch_index'
     ]
 
     # Chat elements
