@@ -1116,7 +1116,13 @@ def handle_delete_chat_confirm_click(state):
 
 
 def handle_branch_chat_click(state):
-    history = state['history']
+    branch_from_index = state['branch_index']
+    if branch_from_index == -1:
+        history = state['history']
+    else:
+        history = state['history']
+        history['visible'] = history['visible'][:branch_from_index+1]
+        history['internal'] = history['internal'][:branch_from_index+1]
     new_unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
     save_history(history, new_unique_id, state['character_menu'], state['mode'])
 
@@ -1127,7 +1133,7 @@ def handle_branch_chat_click(state):
 
     past_chats_update = gr.update(choices=histories, value=new_unique_id)
 
-    return [history, html, past_chats_update]
+    return [history, html, past_chats_update, -1]
 
 
 def handle_rename_chat_click():

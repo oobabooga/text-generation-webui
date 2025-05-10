@@ -18,6 +18,47 @@ function copyToClipboard(element) {
   });
 }
 
+function branchHere(element) {
+  if (!element) return;
+
+  const messageElement = element.closest(".message, .user-message, .assistant-message");
+  if (!messageElement) return;
+
+  const index = messageElement.getAttribute("data-index");
+  if (!index) return;
+
+  const branchIndexInput = document.getElementById("branch_index").querySelector("input");
+  if (!branchIndexInput) {
+    console.error("Element with ID 'branch_index' not found.");
+    return;
+  }
+  const branchButton = document.getElementById("Branch");
+
+  if (!branchIndexInput || !branchButton) {
+    console.error("Required elements 'branch_index' or 'Branch' not found.");
+    return;
+  }
+
+  branchIndexInput.value = index;
+
+  // Trigger any 'change' or 'input' events Gradio might be listening for
+  // This is good practice, though .click() might implicitly do enough for Gradio.
+  const event = new Event('input', { bubbles: true }); // 'change' might also work
+  branchIndexInput.dispatchEvent(event);
+
+  branchButton.click(); // Gradio will now pick up the 'index'
+
+  // Schedule the reset to happen after the current call stack clears
+  // and after Gradio's click handler has had a chance to read the value.
+  // setTimeout(() => {
+  //   branchIndexInput.value = -1;
+  //   // Optionally, dispatch another event if Gradio needs to know about this reset
+  //   // const resetEvent = new Event('input', { bubbles: true });
+  //   // branchIndexInput.dispatchEvent(resetEvent);
+  //   console.log("Branch index reset to -1");
+  // }, 0); // 0ms delay pushes it to the next event loop cycle
+}
+
 function regenerateClick() {
   document.getElementById("Regenerate").click();
 }

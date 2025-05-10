@@ -259,12 +259,22 @@ copy_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" vie
 refresh_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-repeat"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg>'''
 continue_svg = '''<svg  xmlns="http://www.w3.org/2000/svg"  width="20"  height="20"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-player-play"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 4v16l13 -8z" /></svg>'''
 remove_svg = '''<svg  xmlns="http://www.w3.org/2000/svg"  width="20"  height="20"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-trash"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>'''
+branch_svg = '''<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-git-branch"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 18m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M7 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M17 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M7 8l0 8" /><path d="M9 18h6a2 2 0 0 0 2 -2v-5" /><path d="M14 14l3 -3l3 3" /></svg>'''
 
 copy_button = f'<button class="footer-button footer-copy-button" title="Copy" onclick="copyToClipboard(this)">{copy_svg}</button>'
+branch_button = f'<button class="footer-button footer-branch-button" title="Branch here" onclick="branchHere(this)">{branch_svg}</button>'
 refresh_button = f'<button class="footer-button footer-refresh-button" title="Regenerate" onclick="regenerateClick()">{refresh_svg}</button>'
 continue_button = f'<button class="footer-button footer-continue-button" title="Continue" onclick="continueClick()">{continue_svg}</button>'
 remove_button = f'<button class="footer-button footer-remove-button" title="Remove last reply" onclick="removeLastClick()">{remove_svg}</button>'
 
+def actions_html(history, i):
+    return (f'<div class="message-actions">'
+    f'{copy_button}'
+    f'{branch_button}'
+    f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
+    f'{continue_button if i == len(history["visible"]) - 1 else ""}'
+    f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+    f'</div>')
 
 def generate_instruct_html(history):
     output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
@@ -280,26 +290,25 @@ def generate_instruct_html(history):
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
-                f'{copy_button}'
+                f'<div class="message-actions">{copy_button}</div>'
                 f'</div>'
                 f'</div>'
             )
 
         output += (
             f'<div class="assistant-message" '
-            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
+            f'data-raw="{html.escape(row_internal[1], quote=True)}"'
+            f'data-index={i}>'
             f'<div class="text">'
             f'<div class="message-body">{converted_visible[1]}</div>'
-            f'{copy_button}'
-            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
-            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
-            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'{actions_html(history, i)}'
             f'</div>'
             f'</div>'
         )
 
     output += "</div></div>"
     return output
+
 
 
 def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=False):
@@ -329,22 +338,20 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
                 f'<div class="text">'
                 f'<div class="username">{name1}</div>'
                 f'<div class="message-body">{converted_visible[0]}</div>'
-                f'{copy_button}'
+                f'<div class="message-actions">{copy_button}</div>'
                 f'</div>'
                 f'</div>'
             )
 
         output += (
             f'<div class="message" '
-            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
+            f'data-raw="{html.escape(row_internal[1], quote=True)}"'
+            f'data-index={i}>'
             f'<div class="circle-bot">{img_bot}</div>'
             f'<div class="text">'
             f'<div class="username">{name2}</div>'
             f'<div class="message-body">{converted_visible[1]}</div>'
-            f'{copy_button}'
-            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
-            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
-            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'{actions_html(history, i)}'
             f'</div>'
             f'</div>'
         )
@@ -367,20 +374,18 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text-you">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
-                f'{copy_button}'
+                f'<div class="message-actions">{copy_button}</div>'
                 f'</div>'
                 f'</div>'
             )
 
         output += (
             f'<div class="message" '
-            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
+            f'data-raw="{html.escape(row_internal[1], quote=True)}"'
+            f'data-index={i}>'
             f'<div class="text-bot">'
             f'<div class="message-body">{converted_visible[1]}</div>'
-            f'{copy_button}'
-            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
-            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
-            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'{actions_html(history, i)}'
             f'</div>'
             f'</div>'
         )
