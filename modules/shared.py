@@ -128,9 +128,9 @@ group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to
 group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
 
 # Cache
-group = parser.add_argument_group('Context and cache management')
+group = parser.add_argument_group('Context and cache')
 group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=8192, metavar='N', help='Context size in tokens.')
-group.add_argument('--cache_type', type=str, default='fp16', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).')
+group.add_argument('--cache-type', '--cache_type', type=str, default='fp16', metavar='N', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).')
 
 # Speculative decoding
 group = parser.add_argument_group('Speculative decoding')
@@ -158,10 +158,6 @@ group.add_argument('--hqq-backend', type=str, default='PYTORCH_COMPILE', help='B
 # TensorRT-LLM
 group = parser.add_argument_group('TensorRT-LLM')
 group.add_argument('--cpp-runner', action='store_true', help='Use the ModelRunnerCpp runner, which is faster than the default ModelRunner but doesn\'t support streaming yet.')
-
-# Cache
-group = parser.add_argument_group('Cache')
-group.add_argument('--cache_type', type=str, default='fp16', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4.')
 
 # DeepSpeed
 group = parser.add_argument_group('DeepSpeed')
