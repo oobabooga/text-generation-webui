@@ -118,7 +118,6 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
                 for resp in response:
                     disconnected = await request.is_disconnected()
                     if disconnected:
-                        stop_everything_event()
                         break
 
                     yield {"data": json.dumps(resp)}
@@ -142,7 +141,6 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
                 for resp in response:
                     disconnected = await request.is_disconnected()
                     if disconnected:
-                        stop_everything_event()
                         break
 
                     yield {"data": json.dumps(resp)}
