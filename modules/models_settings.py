@@ -67,7 +67,7 @@ def get_model_metadata(model):
             elif k.endswith('rope.scaling.factor'):
                 model_settings['compress_pos_emb'] = metadata[k]
             elif k.endswith('block_count'):
-                model_settings['n_gpu_layers'] = metadata[k] + 1
+                model_settings['gpu_layers'] = metadata[k] + 1
 
         if 'tokenizer.chat_template' in metadata:
             template = metadata['tokenizer.chat_template']

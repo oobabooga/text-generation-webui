@@ -105,7 +105,7 @@ def list_model_elements():
         'filter_by_loader',
         'loader',
         'cpu_memory',
-        'n_gpu_layers',
+        'gpu_layers',
         'threads',
         'threads_batch',
         'batch_size',

@@ -5,7 +5,7 @@ import gradio as gr
 
 loaders_and_params = OrderedDict({
     'llama.cpp': [
-        'n_gpu_layers',
+        'gpu_layers',
         'threads',
         'threads_batch',
         'batch_size',
