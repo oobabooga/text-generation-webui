@@ -470,7 +470,7 @@ def generate_reply_HF(question, original_question, state, stopping_strings=None,
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
         new_tokens = len(output) - (original_tokens if not shared.is_seq2seq else 0)
-        print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
+        logger.info(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
 
 
@@ -499,7 +499,7 @@ def generate_reply_custom(question, original_question, state, stopping_strings=N
         t1 = time.time()
         original_tokens = len(encode(original_question)[0])
         new_tokens = len(encode(original_question + reply)[0]) - original_tokens
-        print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {state["seed"]})')
+        logger.info(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {state["seed"]})')
         return
 
 
