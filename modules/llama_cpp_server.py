@@ -146,9 +146,8 @@ class LlamaServer:
             pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(printable_payload)
             print()
 
-        # Make a request with streaming enabled
-        response = self.session.post(url, json=payload, stream=True)
-        try:
+        # Make a direct request with streaming enabled using a context manager
+        with self.session.post(url, json=payload, stream=True) as response:
             response.raise_for_status()  # Raise an exception for HTTP errors
 
             full_text = ""
@@ -185,9 +184,6 @@ class LlamaServer:
                     print(f"JSON decode error: {e}")
                     print(f"Problematic line: {line}")
                     continue
-
-        finally:
-            response.close()
 
     def generate(self, prompt, state):
         output = ""
