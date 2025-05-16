@@ -257,6 +257,85 @@ headers = {
 
 in any of the examples above.
 
+#### Tool/Function Calling Example
+
+You need to use a model with tools support. The prompt will be automatically formatted using the model's Jinja2 template.
+
+Request:
+
+```
+curl http://127.0.0.1:5000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a helpful assistant."
+      },
+      {
+        "role": "user",
+        "content": "What time is it currently in New York City?"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_current_time",
+          "description": "Get current time in a specific timezones",
+          "parameters": {
+            "type": "object",
+            "required": ["timezone"],
+            "properties": {
+              "timezone": {
+                "type": "string",
+                "description": "IANA timezone name (e.g., America/New_York, Europe/London). Use Europe/Berlin as local timezone if no timezone provided by the user."
+              }
+            }
+          }
+        }
+      }
+    ]
+  }'
+```
+
+Sample response:
+
+```
+{
+    "id": "chatcmpl-1746532051477984256",
+    "object": "chat.completion",
+    "created": 1746532051,
+    "model": "qwen2.5-coder-14b-instruct-q4_k_m.gguf",
+    "choices": [
+        {
+            "index": 0,
+            "finish_reason": "tool_calls",
+            "message": {
+                "role": "assistant",
+                "content": "```xml\n<function>\n{\n  \"name\": \"get_current_time\",\n  \"arguments\": {\n    \"timezone\": \"America/New_York\"\n  }\n}\n</function>\n```"
+            },
+            "tool_calls": [
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_current_time",
+                        "arguments": "{\"timezone\": \"America/New_York\"}"
+                    },
+                    "id": "call_52ij07mh",
+                    "index": "0"
+                }
+            ]
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 224,
+        "completion_tokens": 38,
+        "total_tokens": 262
+    }
+}
+```
+
 ### Environment variables
 
 The following environment variables can be used (they take precedence over everything else):

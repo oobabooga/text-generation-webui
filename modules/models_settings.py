@@ -1,7 +1,11 @@
+import functools
 import json
 import re
+import subprocess
+from math import exp
 from pathlib import Path
 
+import gradio as gr
 import yaml
 
 from modules import chat, loaders, metadata_gguf, shared, ui
@@ -54,7 +58,7 @@ def get_model_metadata(model):
         else:
             model_file = list(path.glob('*.gguf'))[0]
 
-        metadata = metadata_gguf.load_metadata(model_file)
+        metadata = load_gguf_metadata_with_cache(model_file)
 
         for k in metadata:
             if k.endswith('context_length'):
@@ -67,7 +71,7 @@ def get_model_metadata(model):
             elif k.endswith('rope.scaling.factor'):
                 model_settings['compress_pos_emb'] = metadata[k]
             elif k.endswith('block_count'):
-                model_settings['n_gpu_layers'] = metadata[k] + 1
+                model_settings['gpu_layers'] = metadata[k] + 1
 
         if 'tokenizer.chat_template' in metadata:
             template = metadata['tokenizer.chat_template']
@@ -209,14 +213,26 @@ def apply_model_settings_to_state(model, state):
     model_settings = get_model_metadata(model)
     if 'loader' in model_settings:
         loader = model_settings.pop('loader')
-
-        # If the user is using an alternative loader for the same model type, let them keep using it
         if not (loader == 'ExLlamav2_HF' and state['loader'] in ['ExLlamav2']):
             state['loader'] = loader
 
     for k in model_settings:
-        if k in state:
+        if k in state and k != 'gpu_layers':  # Skip gpu_layers, handle separately
             state[k] = model_settings[k]
+
+    # Handle GPU layers and VRAM update for llama.cpp
+    if state['loader'] == 'llama.cpp' and 'gpu_layers' in model_settings:
+        vram_info, gpu_layers_update = update_gpu_layers_and_vram(
+            state['loader'],
+            model,
+            model_settings['gpu_layers'],
+            state['ctx_size'],
+            state['cache_type'],
+            auto_adjust=True
+        )
+
+        state['gpu_layers'] = gpu_layers_update
+        state['vram_info'] = vram_info
 
     return state
 
@@ -277,3 +293,186 @@ def save_instruction_template(model, template):
         yield (f"Instruction template for `{model}` unset in `{p}`, as the value for template was `{template}`.")
     else:
         yield (f"Instruction template for `{model}` saved to `{p}` as `{template}`.")
+
+
+@functools.lru_cache(maxsize=1)
+def load_gguf_metadata_with_cache(model_file):
+    return metadata_gguf.load_metadata(model_file)
+
+
+def get_model_size_mb(model_file: Path) -> float:
+    filename = model_file.name
+
+    # Check for multipart pattern
+    match = re.match(r'(.+)-\d+-of-\d+\.gguf$', filename)
+
+    if match:
+        # It's a multipart file, find all matching parts
+        base_pattern = match.group(1)
+        part_files = sorted(model_file.parent.glob(f'{base_pattern}-*-of-*.gguf'))
+        total_size = sum(p.stat().st_size for p in part_files)
+    else:
+        # Single part
+        total_size = model_file.stat().st_size
+
+    return total_size / (1024 ** 2)  # Return size in MB
+
+
+def estimate_vram(gguf_file, gpu_layers, ctx_size, cache_type):
+    model_file = Path(f'{shared.args.model_dir}/{gguf_file}')
+    metadata = load_gguf_metadata_with_cache(model_file)
+    size_in_mb = get_model_size_mb(model_file)
+
+    # Extract values from metadata
+    n_layers = None
+    n_kv_heads = None
+    embedding_dim = None
+    context_length = None
+    feed_forward_dim = None
+
+    for key, value in metadata.items():
+        if key.endswith('.block_count'):
+            n_layers = value
+        elif key.endswith('.attention.head_count_kv'):
+            n_kv_heads = value
+        elif key.endswith('.embedding_length'):
+            embedding_dim = value
+        elif key.endswith('.context_length'):
+            context_length = value
+        elif key.endswith('.feed_forward_length'):
+            feed_forward_dim = value
+
+    if gpu_layers > n_layers:
+        gpu_layers = n_layers
+
+    # Convert cache_type to numeric
+    if cache_type == 'q4_0':
+        cache_type = 4
+    elif cache_type == 'q8_0':
+        cache_type = 8
+    else:
+        cache_type = 16
+
+    # Derived features
+    size_per_layer = size_in_mb / max(n_layers, 1e-6)
+    context_per_layer = context_length / max(n_layers, 1e-6)
+    ffn_per_embedding = feed_forward_dim / max(embedding_dim, 1e-6)
+    kv_cache_factor = n_kv_heads * cache_type * ctx_size
+
+    # Helper function for smaller
+    def smaller(x, y):
+        return 1 if x < y else 0
+
+    # Calculate VRAM using the model
+    # Details: https://oobabooga.github.io/blog/posts/gguf-vram-formula/
+    vram = (
+        (size_per_layer - 21.19195204848197)
+        * exp(0.0001047328491557063 * size_in_mb * smaller(ffn_per_embedding, 2.671096993407845))
+        + 0.0006621544775632052 * context_per_layer
+        + 3.34664386576376e-05 * kv_cache_factor
+    ) * (1.363306170123392 + gpu_layers) + 1255.163594536052
+
+    return vram
+
+
+def get_nvidia_free_vram():
+    """
+    Calculates the total free VRAM across all NVIDIA GPUs by parsing nvidia-smi output.
+
+    Returns:
+        int: The total free VRAM in MiB summed across all detected NVIDIA GPUs.
+             Returns -1 if nvidia-smi command fails (not found, error, etc.).
+             Returns 0 if nvidia-smi succeeds but no GPU memory info found.
+    """
+    try:
+        # Execute nvidia-smi command
+        result = subprocess.run(
+            ['nvidia-smi'],
+            capture_output=True,
+            text=True,
+            check=False
+        )
+
+        # Check if nvidia-smi returned an error
+        if result.returncode != 0:
+            return -1
+
+        # Parse the output for memory usage patterns
+        output = result.stdout
+
+        # Find memory usage like "XXXXMiB / YYYYMiB"
+        # Captures used and total memory for each GPU
+        matches = re.findall(r"(\d+)\s*MiB\s*/\s*(\d+)\s*MiB", output)
+
+        if not matches:
+            # No GPUs found in expected format
+            return 0
+
+        total_free_vram_mib = 0
+        for used_mem_str, total_mem_str in matches:
+            try:
+                used_mib = int(used_mem_str)
+                total_mib = int(total_mem_str)
+                total_free_vram_mib += (total_mib - used_mib)
+            except ValueError:
+                # Skip malformed entries
+                pass
+
+        return total_free_vram_mib
+
+    except FileNotFoundError:
+        # nvidia-smi not found (likely no NVIDIA drivers installed)
+        return -1
+    except Exception:
+        # Handle any other unexpected exceptions
+        return -1
+
+
+def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type, auto_adjust=False, for_ui=True):
+    """
+    Unified function to handle GPU layers and VRAM updates.
+
+    Args:
+        for_ui: If True, returns Gradio updates. If False, returns raw values.
+
+    Returns:
+        - If for_ui=True: (vram_info_update, gpu_layers_update) or just vram_info_update
+        - If for_ui=False: (vram_usage, adjusted_layers) or just vram_usage
+    """
+    if loader != 'llama.cpp' or model in ["None", None] or not model.endswith(".gguf"):
+        vram_info = "<div id=\"vram-info\"'>Estimated VRAM to load the model:</span>"
+        if for_ui:
+            return (vram_info, gr.update()) if auto_adjust else vram_info
+        else:
+            return (0, gpu_layers) if auto_adjust else 0
+
+    current_layers = gpu_layers
+    max_layers = gpu_layers
+
+    if auto_adjust:
+        # Get max layers from model metadata
+        model_settings = get_model_metadata(model)
+        max_layers = model_settings.get('gpu_layers', gpu_layers)
+
+        # Auto-adjust based on available VRAM
+        available_vram = get_nvidia_free_vram()
+        if available_vram > 0:
+            tolerance = 906
+            current_layers = max_layers
+            while current_layers > 0 and estimate_vram(model, current_layers, ctx_size, cache_type) > available_vram - tolerance:
+                current_layers -= 1
+
+    # Calculate VRAM with current layers
+    vram_usage = estimate_vram(model, current_layers, ctx_size, cache_type)
+
+    if for_ui:
+        vram_info = f"<div id=\"vram-info\"'>Estimated VRAM to load the model: <span class=\"value\">{vram_usage:.0f} MiB</span>"
+        if auto_adjust:
+            return vram_info, gr.update(value=current_layers, maximum=max_layers)
+        else:
+            return vram_info
+    else:
+        if auto_adjust:
+            return vram_usage, current_layers
+        else:
+            return vram_usage

@@ -126,7 +126,7 @@ def check_env():
         sys.exit(1)
 
     # Ensure this is a new environment and not the base environment
-    if os.environ["CONDA_DEFAULT_ENV"] == "base":
+    if os.environ.get("CONDA_DEFAULT_ENV", "") == "base":
         print("Create an environment for this project and activate it. Exiting...")
         sys.exit(1)
 
@@ -222,7 +222,7 @@ def update_pytorch_and_python():
     if "+cu" in torver:
         install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cu124"
     elif "+rocm" in torver:
-        install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.1"
+        install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.2.4"
     elif "+cpu" in torver:
         install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cpu"
     elif "+cxx11" in torver:
@@ -273,7 +273,7 @@ def install_webui():
             "What is your GPU?",
             {
                 'A': 'NVIDIA - CUDA 12.4',
-                'B': 'AMD - Linux/macOS only, requires ROCm 6.1',
+                'B': 'AMD - Linux/macOS only, requires ROCm 6.2.4',
                 'C': 'Apple M Series',
                 'D': 'Intel Arc (beta)',
                 'N': 'CPU mode'
@@ -314,7 +314,7 @@ def install_webui():
     if selected_gpu == "NVIDIA":
         install_pytorch += "--index-url https://download.pytorch.org/whl/cu124"
     elif selected_gpu == "AMD":
-        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm6.1"
+        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm6.2.4"
     elif selected_gpu in ["APPLE", "NONE"]:
         install_pytorch += "--index-url https://download.pytorch.org/whl/cpu"
     elif selected_gpu == "INTEL":

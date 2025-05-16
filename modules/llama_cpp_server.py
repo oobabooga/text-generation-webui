@@ -66,7 +66,7 @@ class LlamaServer:
             "top_k": state["top_k"],
             "top_p": state["top_p"],
             "min_p": state["min_p"],
-            "tfs_z": state["tfs"],
+            "top_n_sigma": state["top_n_sigma"] if state["top_n_sigma"] > 0 else -1,
             "typical_p": state["typical_p"],
             "repeat_penalty": state["repetition_penalty"],
             "repeat_last_n": state["repetition_penalty_range"],
@@ -102,8 +102,10 @@ class LlamaServer:
 
             penalty_found = False
             for s in samplers:
-                if s.strip() in ["dry", "top_k", "typ_p", "top_p", "min_p", "xtc", "temperature"]:
+                if s.strip() in ["dry", "top_k", "top_p", "top_n_sigma", "min_p", "temperature", "xtc"]:
                     filtered_samplers.append(s.strip())
+                elif s.strip() == "typical_p":
+                    filtered_samplers.append("typ_p")
                 elif not penalty_found and s.strip() == "repetition_penalty":
                     filtered_samplers.append("penalties")
                     penalty_found = True
@@ -144,8 +146,9 @@ class LlamaServer:
             pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(printable_payload)
             print()
 
-        # Make a direct request with streaming enabled using a context manager
-        with self.session.post(url, json=payload, stream=True) as response:
+        # Make the generation request
+        response = self.session.post(url, json=payload, stream=True)
+        try:
             response.raise_for_status()  # Raise an exception for HTTP errors
 
             full_text = ""
@@ -182,6 +185,8 @@ class LlamaServer:
                     print(f"JSON decode error: {e}")
                     print(f"Problematic line: {line}")
                     continue
+        finally:
+            response.close()
 
     def generate(self, prompt, state):
         output = ""
@@ -210,14 +215,15 @@ class LlamaServer:
             pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(printable_payload)
             print()
 
-        response = self.session.post(url, json=payload)
-        result = response.json()
+        for retry in range(5):
+            response = self.session.post(url, json=payload)
+            result = response.json()
 
-        if "completion_probabilities" in result:
-            if use_samplers:
-                return result["completion_probabilities"][0]["top_probs"]
-            else:
-                return result["completion_probabilities"][0]["top_logprobs"]
+            if "completion_probabilities" in result:
+                if use_samplers:
+                    return result["completion_probabilities"][0]["top_probs"]
+                else:
+                    return result["completion_probabilities"][0]["top_logprobs"]
         else:
             raise Exception(f"Unexpected response format: 'completion_probabilities' not found in {result}")
 
@@ -255,9 +261,10 @@ class LlamaServer:
             self.server_path,
             "--model", self.model_path,
             "--ctx-size", str(shared.args.ctx_size),
-            "--n-gpu-layers", str(shared.args.n_gpu_layers),
+            "--gpu-layers", str(shared.args.gpu_layers),
             "--batch-size", str(shared.args.batch_size),
             "--port", str(self.port),
+            "--no-webui",
         ]
 
         if shared.args.flash_attn:
@@ -278,8 +285,10 @@ class LlamaServer:
             cmd.append("--no-kv-offload")
         if shared.args.row_split:
             cmd += ["--split-mode", "row"]
+        cache_type = "fp16"
         if shared.args.cache_type != "fp16" and shared.args.cache_type in llamacpp_valid_cache_types:
             cmd += ["--cache-type-k", shared.args.cache_type, "--cache-type-v", shared.args.cache_type]
+            cache_type = shared.args.cache_type
         if shared.args.compress_pos_emb != 1:
             cmd += ["--rope-freq-scale", str(1.0 / shared.args.compress_pos_emb)]
         if shared.args.rope_freq_base > 0:
@@ -316,9 +325,15 @@ class LlamaServer:
             for flag_item in extra_flags.split(','):
                 if '=' in flag_item:
                     flag, value = flag_item.split('=', 1)
-                    cmd += [f"--{flag}", value]
+                    if len(flag) <= 3:
+                        cmd += [f"-{flag}", value]
+                    else:
+                        cmd += [f"--{flag}", value]
                 else:
-                    cmd.append(f"--{flag_item}")
+                    if len(flag_item) <= 3:
+                        cmd.append(f"-{flag_item}")
+                    else:
+                        cmd.append(f"--{flag_item}")
 
         env = os.environ.copy()
         if os.name == 'posix':
@@ -333,6 +348,7 @@ class LlamaServer:
             print(' '.join(str(item) for item in cmd[1:]))
             print()
 
+        logger.info(f"Using gpu_layers={shared.args.gpu_layers} | ctx_size={shared.args.ctx_size} | cache_type={cache_type}")
         # Start the server with pipes for output
         self.process = subprocess.Popen(
             cmd,

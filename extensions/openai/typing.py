@@ -1,8 +1,8 @@
 import json
 import time
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 
 class GenerationOptions(BaseModel):
@@ -54,6 +54,48 @@ class GenerationOptions(BaseModel):
     grammar_string: str = ""
 
 
+class ToolDefinition(BaseModel):
+    function: 'ToolFunction'
+    type: str
+
+
+class ToolFunction(BaseModel):
+    description: str
+    name: str
+    parameters: 'ToolParameters'
+
+
+class ToolParameters(BaseModel):
+    properties: Optional[Dict[str, 'ToolProperty']] = None
+    required: Optional[list[str]] = None
+    type: str
+    description: Optional[str] = None
+
+
+class ToolProperty(BaseModel):
+    description: Optional[str] = None
+    type: Optional[str] = None  # we are faced with definitions like anyOf, e.g. {'type': 'function', 'function': {'name': 'git_create_branch', 'description': 'Creates a new branch from an optional base branch', 'parameters': {'type': 'object', 'properties': {'repo_path': {'title': 'Repo Path', 'type': 'string'}, 'branch_name': {'title': 'Branch Name', 'type': 'string'}, 'base_branch': {'anyOf': [{'type': 'string'}, {'type': 'null'}], 'default': None, 'title': 'Base Branch'}}, 'required': ['repo_path', 'branch_name'], 'title': 'GitCreateBranch'}}}
+
+
+class FunctionCall(BaseModel):
+    name: str
+    arguments: Optional[str] = None
+    parameters: Optional[str] = None
+
+    @validator('arguments', allow_reuse=True)
+    def checkPropertyArgsOrParams(cls, v, values, **kwargs):
+        if not v and not values.get('parameters'):
+            raise ValueError("At least one of 'arguments' or 'parameters' must be provided as property in FunctionCall type")
+        return v
+
+
+class ToolCall(BaseModel):
+    id: str
+    index: int
+    type: str
+    function: FunctionCall
+
+
 class CompletionRequestParams(BaseModel):
     model: str | None = Field(default=None, description="Unused parameter. To change the model, use the /v1/internal/model/load endpoint.")
     prompt: str | List[str]
@@ -92,6 +134,7 @@ class ChatCompletionRequestParams(BaseModel):
     frequency_penalty: float | None = 0
     function_call: str | dict | None = Field(default=None, description="Unused parameter.")
     functions: List[dict] | None = Field(default=None, description="Unused parameter.")
+    tools: List[dict] | None = Field(default=None, description="Tools signatures passed via MCP.")
     logit_bias: dict | None = None
     max_tokens: int | None = None
     n: int | None = Field(default=1, description="Unused parameter.")

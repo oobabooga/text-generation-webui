@@ -5,6 +5,7 @@ import html
 import json
 import pprint
 import re
+import time
 from datetime import datetime
 from functools import partial
 from pathlib import Path
@@ -145,7 +146,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     instruct_renderer = partial(
         instruction_template.render,
         builtin_tools=None,
-        tools=None,
+        tools=state['tools'] if 'tools' in state else None,
         tools_in_user_message=False,
         add_generation_prompt=False
     )
@@ -171,9 +172,13 @@ def generate_chat_prompt(user_input, state, **kwargs):
             messages.append({"role": "system", "content": context})
 
     insert_pos = len(messages)
-    for user_msg, assistant_msg in reversed(history):
-        user_msg = user_msg.strip()
-        assistant_msg = assistant_msg.strip()
+    for entry in reversed(history):
+        user_msg = entry[0].strip()
+        assistant_msg = entry[1].strip()
+        tool_msg = entry[2].strip() if len(entry) > 2 else ''
+
+        if tool_msg:
+            messages.insert(insert_pos, {"role": "tool", "content": tool_msg})
 
         if assistant_msg:
             messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
@@ -394,16 +399,13 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
         # Extract the reply
         if state['mode'] in ['chat', 'chat-instruct']:
-            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply + '▍')
+            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
         else:
-            visible_reply = reply + '▍'
+            visible_reply = reply
 
         visible_reply = html.escape(visible_reply)
 
         if shared.stop_everything:
-            if output['visible'][-1][1].endswith('▍'):
-                output['visible'][-1][1] = output['visible'][-1][1][:-1]
-
             output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
             yield output
             return
@@ -418,9 +420,6 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
             if is_stream:
                 yield output
-
-    if output['visible'][-1][1].endswith('▍'):
-        output['visible'][-1][1] = output['visible'][-1][1][:-1]
 
     output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
     yield output
@@ -481,8 +480,16 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         send_dummy_reply(state['start_with'], state)
 
     history = state['history']
+    last_save_time = time.monotonic()
+    save_interval = 8
     for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True, for_ui=True)):
         yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
+
+        current_time = time.monotonic()
+        # Save on first iteration or if save_interval seconds have passed
+        if i == 0 or (current_time - last_save_time) >= save_interval:
+            save_history(history, state['unique_id'], state['character_menu'], state['mode'])
+            last_save_time = current_time
 
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 

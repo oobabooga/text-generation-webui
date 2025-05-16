@@ -150,6 +150,16 @@ const observer = new MutationObserver(function(mutations) {
   if (!isScrolled && targetElement.scrollTop !== targetElement.scrollHeight) {
     targetElement.scrollTop = targetElement.scrollHeight;
   }
+
+  const chatElement = document.getElementById("chat");
+  if (chatElement) {
+    const messagesContainer = chatElement.querySelector(".messages");
+    const lastChild = messagesContainer?.lastElementChild;
+    const prevSibling = lastChild?.previousElementSibling;
+    if (lastChild && prevSibling) {
+      lastChild.style.minHeight = `calc(max(70vh, 100vh - ${prevSibling.offsetHeight}px - 102px))`;
+    }
+  }
 });
 
 // Configure the observer to watch for changes in the subtree and attributes
@@ -442,12 +452,6 @@ function updateCssProperties() {
 
   // Check if the chat container is visible
   if (chatContainer.clientHeight > 0) {
-    const chatContainerParentHeight = chatContainer.parentNode.clientHeight;
-    const newChatHeight = `${chatContainerParentHeight - chatInputHeight - 80}px`;
-
-    document.documentElement.style.setProperty("--chat-height", newChatHeight);
-    document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
-
     // Adjust scrollTop based on input height change
     if (chatInputHeight !== currentChatInputHeight) {
       const deltaHeight = chatInputHeight - currentChatInputHeight;
@@ -720,7 +724,7 @@ function isMobile() {
 // Function to initialize sidebars
 function initializeSidebars() {
   const isOnMobile = isMobile();
-  
+
   if (isOnMobile) {
     // Mobile state: Hide sidebars and set closed states
     [pastChatsRow, chatControlsRow, headerBar].forEach(el => {
