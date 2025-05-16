@@ -1,9 +1,9 @@
 import base64
-import os
-import time
 import json
+import os
 import random
 import re
+import time
 import traceback
 from typing import Callable, Optional
 
@@ -91,7 +91,7 @@ def parseToolCall(answer: str, tool_names: list[str]):
         return matches
 
     # Define the regex pattern to find the JSON content wrapped in <function>, <tools>, <tool_call>, and other tags observed from various models
-    patterns = [ r"(```[^\n]*)\n(.*?)```", r"<([^>]+)>(.*?)</\1>" ]
+    patterns = [r"(```[^\n]*)\n(.*?)```", r"<([^>]+)>(.*?)</\1>"]
 
     for pattern in patterns:
         for match in re.finditer(pattern, answer, re.DOTALL):

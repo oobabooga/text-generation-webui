@@ -1,14 +1,14 @@
 import copy
-import time
 import json
+import time
 from collections import deque
 
 import tiktoken
+from pydantic import ValidationError
 
 from extensions.openai.errors import InvalidRequestError
-from extensions.openai.utils import debug_msg, getToolCallId, parseToolCall
 from extensions.openai.typing import ToolDefinition
-from pydantic import ValidationError
+from extensions.openai.utils import debug_msg, getToolCallId, parseToolCall
 from modules import shared
 from modules.chat import (
     generate_chat_prompt,
@@ -141,7 +141,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
 
     tools = None
     if 'tools' in body and body['tools'] is not None and isinstance(body['tools'], list) and len(body['tools']) > 0:
-        tools = validateTools(body['tools']) # raises InvalidRequestError if validation fails
+        tools = validateTools(body['tools'])  # raises InvalidRequestError if validation fails
 
     messages = body['messages']
     for m in messages:

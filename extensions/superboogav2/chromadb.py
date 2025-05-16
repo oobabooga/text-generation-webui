@@ -1,10 +1,11 @@
 import math
 import random
 import threading
-import torch
+
 import chromadb
 import numpy as np
 import posthog
+import torch
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 
