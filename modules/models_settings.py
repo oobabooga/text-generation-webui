@@ -421,11 +421,9 @@ def get_nvidia_free_vram():
         return total_free_vram_mib
 
     except FileNotFoundError:
-        raise
         # nvidia-smi not found (likely no NVIDIA drivers installed)
         return -1
     except Exception:
-        raise
         # Handle any other unexpected exceptions
         return -1
 
