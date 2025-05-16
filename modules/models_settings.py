@@ -58,7 +58,7 @@ def get_model_metadata(model):
         else:
             model_file = list(path.glob('*.gguf'))[0]
 
-        metadata = metadata_gguf.load_metadata(model_file)
+        metadata = load_gguf_metadata_with_cache(model_file)
 
         for k in metadata:
             if k.endswith('context_length'):
@@ -295,8 +295,8 @@ def save_instruction_template(model, template):
         yield (f"Instruction template for `{model}` saved to `{p}` as `{template}`.")
 
 
-@functools.lru_cache(maxsize=None)
-def get_gguf_metadata_cached(model_file):
+@functools.lru_cache(maxsize=1)
+def load_gguf_metadata_with_cache(model_file):
     return metadata_gguf.load_metadata(model_file)
 
 
@@ -320,7 +320,7 @@ def get_model_size_mb(model_file: Path) -> float:
 
 def estimate_vram(gguf_file, gpu_layers, ctx_size, cache_type):
     model_file = Path(f'{shared.args.model_dir}/{gguf_file}')
-    metadata = get_gguf_metadata_cached(model_file)
+    metadata = load_gguf_metadata_with_cache(model_file)
     size_in_mb = get_model_size_mb(model_file)
 
     # Extract values from metadata
