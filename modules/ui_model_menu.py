@@ -11,10 +11,10 @@ from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
 from modules.models_settings import (
     apply_model_settings_to_state,
-    estimate_vram,
     get_model_metadata,
     save_instruction_template,
     save_model_settings,
+    update_gpu_layers_and_vram,
     update_model_parameters
 )
 from modules.utils import gradio
@@ -45,7 +45,7 @@ def create_ui():
                             shared.gradio['hqq_backend'] = gr.Dropdown(label="hqq_backend", choices=["PYTORCH", "PYTORCH_COMPILE", "ATEN"], value=shared.args.hqq_backend)
 
                         with gr.Column():
-                            shared.gradio['vram_info'] = gr.HTML(value=lambda: estimate_vram_wrapper(shared.args.model, shared.args.gpu_layers, shared.args.ctx_size, shared.args.cache_type))
+                            shared.gradio['vram_info'] = gr.HTML(value=get_initial_vram_info())
                             shared.gradio['flash_attn'] = gr.Checkbox(label="flash-attn", value=shared.args.flash_attn, info='Use flash-attention.')
                             shared.gradio['streaming_llm'] = gr.Checkbox(label="streaming-llm", value=shared.args.streaming_llm, info='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
                             shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
@@ -150,10 +150,18 @@ def create_event_handlers():
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         save_model_settings, gradio('model_menu', 'interface_state'), gradio('model_status'), show_progress=False)
 
-    shared.gradio['model_menu'].change(estimate_vram_wrapper, gradio('model_menu', 'gpu_layers', 'ctx_size', 'cache_type'), gradio('vram_info'), show_progress=False)
-    shared.gradio['gpu_layers'].change(estimate_vram_wrapper, gradio('model_menu', 'gpu_layers', 'ctx_size', 'cache_type'), gradio('vram_info'), show_progress=False)
-    shared.gradio['ctx_size'].change(estimate_vram_wrapper, gradio('model_menu', 'gpu_layers', 'ctx_size', 'cache_type'), gradio('vram_info'), show_progress=False)
-    shared.gradio['cache_type'].change(estimate_vram_wrapper, gradio('model_menu', 'gpu_layers', 'ctx_size', 'cache_type'), gradio('vram_info'), show_progress=False)
+    # For ctx_size and cache_type - auto-adjust GPU layers
+    for param in ['ctx_size', 'cache_type']:
+        shared.gradio[param].change(
+            partial(update_gpu_layers_and_vram, auto_adjust=True),
+            gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type'),
+            gradio('vram_info', 'gpu_layers'), show_progress=False)
+
+    # For manual gpu_layers changes - only update VRAM
+    shared.gradio['gpu_layers'].change(
+        partial(update_gpu_layers_and_vram, auto_adjust=False),
+        gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type'),
+        gradio('vram_info'), show_progress=False)
 
     if not shared.args.portable:
         shared.gradio['lora_menu_apply'].click(load_lora_wrapper, gradio('lora_menu'), gradio('model_status'), show_progress=False)
@@ -282,14 +290,6 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
         yield traceback.format_exc().replace('\n', '\n\n')
 
 
-def estimate_vram_wrapper(model, gpu_layers, ctx_size, cache_type):
-    if model in ["None", None]:
-        return "<div id=\"vram-info\"'>Estimated VRAM to load the model:</span>"
-
-    result = estimate_vram(model, gpu_layers, ctx_size, cache_type)
-    return f"<div id=\"vram-info\"'>Estimated VRAM to load the model: <span class=\"value\">{result:.0f} MiB</span>"
-
-
 def update_truncation_length(current_length, state):
     if 'loader' in state:
         if state['loader'].lower().startswith('exllama') or state['loader'] == 'llama.cpp':
@@ -298,10 +298,26 @@ def update_truncation_length(current_length, state):
     return current_length
 
 
+def get_initial_vram_info():
+    if shared.model_name != 'None' and shared.args.loader == 'llama.cpp':
+        return update_gpu_layers_and_vram(
+            shared.args.loader,
+            shared.model_name,
+            shared.args.gpu_layers,
+            shared.args.ctx_size,
+            shared.args.cache_type,
+            auto_adjust=False,
+            for_ui=True
+        )
+
+    return "<div id=\"vram-info\"'>Estimated VRAM to load the model:</span>"
+
+
 def handle_load_model_event_initial(model, state):
     state = apply_model_settings_to_state(model, state)
     output = ui.apply_interface_values(state)
-    update_model_parameters(state)
+    update_model_parameters(state)  # This updates the command-line flags
+
     return output + [state]
 
 
