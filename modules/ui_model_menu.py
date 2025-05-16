@@ -11,6 +11,7 @@ from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
 from modules.models_settings import (
     apply_model_settings_to_state,
+    estimate_vram,
     get_model_metadata,
     save_instruction_template,
     save_model_settings,
@@ -44,6 +45,7 @@ def create_ui():
                             shared.gradio['hqq_backend'] = gr.Dropdown(label="hqq_backend", choices=["PYTORCH", "PYTORCH_COMPILE", "ATEN"], value=shared.args.hqq_backend)
 
                         with gr.Column():
+                            shared.gradio['vram_info'] = gr.HTML(value=lambda: estimate_vram_wrapper(shared.args.model, shared.args.gpu_layers, shared.args.ctx_size, shared.args.cache_type))
                             shared.gradio['flash_attn'] = gr.Checkbox(label="flash-attn", value=shared.args.flash_attn, info='Use flash-attention.')
                             shared.gradio['streaming_llm'] = gr.Checkbox(label="streaming-llm", value=shared.args.streaming_llm, info='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
                             shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
@@ -105,7 +107,6 @@ def create_ui():
                                     ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': utils.get_available_loras(), 'value': shared.lora_names}, 'refresh-button', interactive=not mu)
                                     shared.gradio['lora_menu_apply'] = gr.Button(value='Apply LoRAs', elem_classes='refresh-button', interactive=not mu)
 
-
             with gr.Column():
                 with gr.Tab("Download"):
                     shared.gradio['custom_model_menu'] = gr.Textbox(label="Download model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main. To download a single file, enter its name in the second box.", interactive=not mu)
@@ -147,6 +148,11 @@ def create_event_handlers():
     shared.gradio['save_model_settings'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         save_model_settings, gradio('model_menu', 'interface_state'), gradio('model_status'), show_progress=False)
+
+    shared.gradio['model_menu'].change(estimate_vram_wrapper, gradio('model_menu', 'gpu_layers', 'ctx_size', 'cache_type'), gradio('vram_info'), show_progress=False)
+    shared.gradio['gpu_layers'].change(estimate_vram_wrapper, gradio('model_menu', 'gpu_layers', 'ctx_size', 'cache_type'), gradio('vram_info'), show_progress=False)
+    shared.gradio['ctx_size'].change(estimate_vram_wrapper, gradio('model_menu', 'gpu_layers', 'ctx_size', 'cache_type'), gradio('vram_info'), show_progress=False)
+    shared.gradio['cache_type'].change(estimate_vram_wrapper, gradio('model_menu', 'gpu_layers', 'ctx_size', 'cache_type'), gradio('vram_info'), show_progress=False)
 
     if not shared.args.portable:
         shared.gradio['lora_menu_apply'].click(load_lora_wrapper, gradio('lora_menu'), gradio('model_status'), show_progress=False)
@@ -273,6 +279,14 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
     except:
         progress(1.0)
         yield traceback.format_exc().replace('\n', '\n\n')
+
+
+def estimate_vram_wrapper(model, gpu_layers, ctx_size, cache_type):
+    if model in ["None", None]:
+        return "<div id=\"vram-info\"'>Estimated VRAM to load the model:</span>"
+
+    result = estimate_vram(model, gpu_layers, ctx_size, cache_type)
+    return f"<div id=\"vram-info\"'>Estimated VRAM to load the model: <span class=\"value\">{result:.0f} MiB</span>"
 
 
 def update_truncation_length(current_length, state):

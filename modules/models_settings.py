@@ -1,7 +1,11 @@
+import functools
 import json
 import re
+import subprocess
+from math import exp
 from pathlib import Path
 
+import gradio as gr
 import yaml
 
 from modules import chat, loaders, metadata_gguf, shared, ui
@@ -216,7 +220,17 @@ def apply_model_settings_to_state(model, state):
 
     for k in model_settings:
         if k in state:
-            state[k] = model_settings[k]
+            if k == 'gpu_layers':
+                available_vram = get_nvidia_free_vram()
+                n_layers = model_settings[k]
+                if available_vram > 0:
+                    tolerance = 906
+                    while n_layers > 0 and estimate_vram(model, n_layers, state['ctx_size'], state['cache_type']) > available_vram - tolerance:
+                        n_layers -= 1
+
+                state[k] = gr.update(value=n_layers, maximum=model_settings[k])
+            else:
+                state[k] = model_settings[k]
 
     return state
 
@@ -277,3 +291,138 @@ def save_instruction_template(model, template):
         yield (f"Instruction template for `{model}` unset in `{p}`, as the value for template was `{template}`.")
     else:
         yield (f"Instruction template for `{model}` saved to `{p}` as `{template}`.")
+
+
+@functools.lru_cache(maxsize=None)
+def get_gguf_metadata_cached(model_file):
+    return metadata_gguf.load_metadata(model_file)
+
+
+def get_model_size_mb(model_file: Path) -> float:
+    filename = model_file.name
+
+    # Check for multipart pattern
+    match = re.match(r'(.+)-\d+-of-\d+\.gguf$', filename)
+
+    if match:
+        # It's a multipart file, find all matching parts
+        base_pattern = match.group(1)
+        part_files = sorted(model_file.parent.glob(f'{base_pattern}-*-of-*.gguf'))
+        total_size = sum(p.stat().st_size for p in part_files)
+    else:
+        # Single part
+        total_size = model_file.stat().st_size
+
+    return total_size / (1024 ** 2)  # Return size in MB
+
+
+def estimate_vram(gguf_file, gpu_layers, ctx_size, cache_type):
+    model_file = Path(f'{shared.args.model_dir}/{gguf_file}')
+    metadata = get_gguf_metadata_cached(model_file)
+    size_in_mb = get_model_size_mb(model_file)
+
+    # Extract values from metadata
+    n_layers = None
+    n_kv_heads = None
+    embedding_dim = None
+    context_length = None
+    feed_forward_dim = None
+
+    for key, value in metadata.items():
+        if key.endswith('.block_count'):
+            n_layers = value
+        elif key.endswith('.attention.head_count_kv'):
+            n_kv_heads = value
+        elif key.endswith('.embedding_length'):
+            embedding_dim = value
+        elif key.endswith('.context_length'):
+            context_length = value
+        elif key.endswith('.feed_forward_length'):
+            feed_forward_dim = value
+
+    if gpu_layers > n_layers:
+        gpu_layers = n_layers
+
+    # Convert cache_type to numeric
+    if cache_type == 'q4_0':
+        cache_type = 4
+    elif cache_type == 'q8_0':
+        cache_type = 8
+    else:
+        cache_type = 16
+
+    # Derived features
+    size_per_layer = size_in_mb / max(n_layers, 1e-6)
+    context_per_layer = context_length / max(n_layers, 1e-6)
+    ffn_per_embedding = feed_forward_dim / max(embedding_dim, 1e-6)
+    kv_cache_factor = n_kv_heads * cache_type * ctx_size
+
+    # Helper function for smaller
+    def smaller(x, y):
+        return 1 if x < y else 0
+
+    # Calculate VRAM using the model
+    # Details: https://oobabooga.github.io/blog/posts/gguf-vram-formula/
+    vram = (
+        (size_per_layer - 21.19195204848197)
+        * exp(0.0001047328491557063 * size_in_mb * smaller(ffn_per_embedding, 2.671096993407845))
+        + 0.0006621544775632052 * context_per_layer
+        + 3.34664386576376e-05 * kv_cache_factor
+    ) * (1.363306170123392 + gpu_layers) + 1255.163594536052
+
+    return vram
+
+
+def get_nvidia_free_vram():
+    """
+    Calculates the total free VRAM across all NVIDIA GPUs by parsing nvidia-smi output.
+
+    Returns:
+        int: The total free VRAM in MiB summed across all detected NVIDIA GPUs.
+             Returns -1 if nvidia-smi command fails (not found, error, etc.).
+             Returns 0 if nvidia-smi succeeds but no GPU memory info found.
+    """
+    try:
+        # Execute nvidia-smi command
+        result = subprocess.run(
+            ['nvidia-smi'],
+            capture_output=True,
+            text=True,
+            check=False
+        )
+
+        # Check if nvidia-smi returned an error
+        if result.returncode != 0:
+            return -1
+
+        # Parse the output for memory usage patterns
+        output = result.stdout
+
+        # Find memory usage like "XXXXMiB / YYYYMiB"
+        # Captures used and total memory for each GPU
+        matches = re.findall(r"(\d+)\s*MiB\s*/\s*(\d+)\s*MiB", output)
+
+        if not matches:
+            # No GPUs found in expected format
+            return 0
+
+        total_free_vram_mib = 0
+        for used_mem_str, total_mem_str in matches:
+            try:
+                used_mib = int(used_mem_str)
+                total_mib = int(total_mem_str)
+                total_free_vram_mib += (total_mib - used_mib)
+            except ValueError:
+                # Skip malformed entries
+                pass
+
+        return total_free_vram_mib
+
+    except FileNotFoundError:
+        raise
+        # nvidia-smi not found (likely no NVIDIA drivers installed)
+        return -1
+    except Exception:
+        raise
+        # Handle any other unexpected exceptions
+        return -1

@@ -282,8 +282,10 @@ class LlamaServer:
             cmd.append("--no-kv-offload")
         if shared.args.row_split:
             cmd += ["--split-mode", "row"]
+        cache_type = "fp16"
         if shared.args.cache_type != "fp16" and shared.args.cache_type in llamacpp_valid_cache_types:
             cmd += ["--cache-type-k", shared.args.cache_type, "--cache-type-v", shared.args.cache_type]
+            cache_type = shared.args.cache_type
         if shared.args.compress_pos_emb != 1:
             cmd += ["--rope-freq-scale", str(1.0 / shared.args.compress_pos_emb)]
         if shared.args.rope_freq_base > 0:
@@ -343,6 +345,7 @@ class LlamaServer:
             print(' '.join(str(item) for item in cmd[1:]))
             print()
 
+        logger.info(f"Using gpu_layers={shared.args.gpu_layers} | ctx_size={shared.args.ctx_size} | cache_type={cache_type}")
         # Start the server with pipes for output
         self.process = subprocess.Popen(
             cmd,

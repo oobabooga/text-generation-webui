@@ -569,7 +569,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .dark .message-body :not(pre) > code {
-    background-color: rgb(255 255 255 / 12.5%);
+    background-color: rgb(255 255 255 / 10%);
 }
 
 #chat-input {
@@ -1385,4 +1385,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 strong {
     font-weight: bold;
+}
+
+.min.svelte-1ybaih5 {
+    min-height: 0;
+}
+
+#vram-info .value {
+    color: #008d00;
+}
+
+.dark #vram-info .value {
+    color: #07ff07;
 }
