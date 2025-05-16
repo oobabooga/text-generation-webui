@@ -447,7 +447,7 @@ def run_server():
 
     # Start server
     logging.getLogger("uvicorn.error").propagate = False
-    uvicorn.run(app, host=server_addrs, port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
+    uvicorn.run(app, host=server_addrs, port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile, access_log=False)
 
 
 def setup():
