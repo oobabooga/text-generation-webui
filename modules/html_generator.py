@@ -430,7 +430,7 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
 
         selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
-            f'<div class="message{streaming_class}" '
+            f'<div class="message{selected_class}" '
             f'data-history-index="{i}" data-message-type="1" '
             f'data-raw="{html.escape(row_internal[1], quote=True)}">'
             f'<div class="circle-bot">{img_bot}</div>'
