@@ -72,6 +72,20 @@ def natural_keys(text):
     return [atoi(c) for c in re.split(r'(\d+)', text)]
 
 
+def check_model_loaded():
+    if shared.model_name == 'None' or shared.model is None:
+        if len(get_available_models()) <= 1:
+            error_msg = "No model is loaded.\n\nTo get started:\n1) Place a GGUF file in your user_data/models folder\n2) Go to the Model tab and select it"
+            logger.error(error_msg)
+            return False, error_msg
+        else:
+            error_msg = "No model is loaded. Please select one in the Model tab."
+            logger.error(error_msg)
+            return False, error_msg
+
+    return True, None
+
+
 def get_available_models():
     # Get all GGUF files
     gguf_files = get_available_ggufs()
@@ -123,7 +137,7 @@ def get_available_models():
 
     model_dirs = sorted(model_dirs, key=natural_keys)
 
-    return ['None'] + filtered_gguf_files + model_dirs
+    return filtered_gguf_files + model_dirs
 
 
 def get_available_ggufs():

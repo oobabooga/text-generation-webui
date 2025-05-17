@@ -347,7 +347,7 @@ remove_button = f'<button class="footer-button footer-remove-button" title="Remo
 
 
 def generate_instruct_html(history):
-    output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
+    output = f'<style>{instruct_css}</style><div class="chat" id="chat" data-mode="instruct"><div class="messages">'
 
     for i in range(len(history['visible'])):
         row_visible = history['visible'][i]
@@ -428,10 +428,9 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
                 f'</div>'
             )
 
-        streaming_class = " streaming" if i == len(history["visible"]) - 1 else ""
         selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
-            f'<div class="message{streaming_class}{selected_class}" '
+            f'<div class="message{streaming_class}" '
             f'data-history-index="{i}" data-message-type="1" '
             f'data-raw="{html.escape(row_internal[1], quote=True)}">'
             f'<div class="circle-bot">{img_bot}</div>'
@@ -476,10 +475,9 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
                 f'</div>'
             )
 
-        streaming_class = " streaming" if i == len(history["visible"]) - 1 else ""
         selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
-            f'<div class="message{streaming_class}{selected_class}" '
+            f'<div class="message{selected_class}" '
             f'data-history-index="{i}" data-message-type="1" '
             f'data-raw="{html.escape(row_internal[1], quote=True)}">'
             f'<div class="text-bot">'

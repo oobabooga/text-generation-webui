@@ -5,7 +5,7 @@ import gradio as gr
 
 loaders_and_params = OrderedDict({
     'llama.cpp': [
-        'n_gpu_layers',
+        'gpu_layers',
         'threads',
         'threads_batch',
         'batch_size',
@@ -28,6 +28,7 @@ loaders_and_params = OrderedDict({
         'device_draft',
         'ctx_size_draft',
         'speculative_decoding_accordion',
+        'vram_info',
     ],
     'Transformers': [
         'gpu_split',
@@ -84,7 +85,6 @@ loaders_and_params = OrderedDict({
         'no_flash_attn',
         'no_xformers',
         'no_sdpa',
-        'exllamav2_info',
         'model_draft',
         'draft_max',
         'ctx_size_draft',
@@ -299,7 +299,7 @@ loaders_samplers = {
         'typical_p',
         'xtc_threshold',
         'xtc_probability',
-        'tfs',
+        'top_n_sigma',
         'dry_multiplier',
         'dry_allowed_length',
         'dry_base',

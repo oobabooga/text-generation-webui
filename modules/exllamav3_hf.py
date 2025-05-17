@@ -119,7 +119,7 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
         reset = True
 
         # Maximum number of tokens to process in a single forward pass
-        max_chunk_size = 2048
+        max_chunk_size = 256
 
         # Make the forward call
         if labels is None:
