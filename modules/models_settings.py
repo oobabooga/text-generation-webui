@@ -457,17 +457,20 @@ def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type, 
         # Get model settings including user preferences
         model_settings = get_model_metadata(model)
 
-        # Check if the value is from user config-user.yaml
+        # Get the true maximum layers
+        max_layers = model_settings.get('max_gpu_layers', model_settings.get('gpu_layers', gpu_layers))
+
+        # Check if this is a user-saved setting
         user_config = shared.user_config
         model_regex = Path(model).name + '$'
         has_user_setting = model_regex in user_config and 'gpu_layers' in user_config[model_regex]
 
         if has_user_setting:
-            # Just return the current user value without adjustment
-            max_layers = model_settings.get('max_gpu_layers', 256)
+            # For user settings, just use the current value (which already has user pref)
+            # but ensure the slider maximum is correct
+            current_layers = gpu_layers  # Already has user setting
         else:
-            # No user setting, use model's max and auto-adjust
-            max_layers = model_settings.get('max_gpu_layers', model_settings.get('gpu_layers', gpu_layers))
+            # No user setting, auto-adjust from the maximum
             current_layers = max_layers  # Start from max
 
             # Auto-adjust based on available VRAM
