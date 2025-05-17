@@ -2,7 +2,7 @@ import functools
 import json
 import re
 import subprocess
-from math import exp
+from math import floor
 from pathlib import Path
 
 import gradio as gr
@@ -331,8 +331,6 @@ def estimate_vram(gguf_file, gpu_layers, ctx_size, cache_type):
     n_layers = None
     n_kv_heads = None
     embedding_dim = None
-    context_length = None
-    feed_forward_dim = None
 
     for key, value in metadata.items():
         if key.endswith('.block_count'):
@@ -341,10 +339,6 @@ def estimate_vram(gguf_file, gpu_layers, ctx_size, cache_type):
             n_kv_heads = value
         elif key.endswith('.embedding_length'):
             embedding_dim = value
-        elif key.endswith('.context_length'):
-            context_length = value
-        elif key.endswith('.feed_forward_length'):
-            feed_forward_dim = value
 
     if gpu_layers > n_layers:
         gpu_layers = n_layers
@@ -359,22 +353,16 @@ def estimate_vram(gguf_file, gpu_layers, ctx_size, cache_type):
 
     # Derived features
     size_per_layer = size_in_mb / max(n_layers, 1e-6)
-    context_per_layer = context_length / max(n_layers, 1e-6)
-    ffn_per_embedding = feed_forward_dim / max(embedding_dim, 1e-6)
     kv_cache_factor = n_kv_heads * cache_type * ctx_size
-
-    # Helper function for smaller
-    def smaller(x, y):
-        return 1 if x < y else 0
+    embedding_per_context = embedding_dim / ctx_size
 
     # Calculate VRAM using the model
     # Details: https://oobabooga.github.io/blog/posts/gguf-vram-formula/
     vram = (
-        (size_per_layer - 21.19195204848197)
-        * exp(0.0001047328491557063 * size_in_mb * smaller(ffn_per_embedding, 2.671096993407845))
-        + 0.0006621544775632052 * context_per_layer
-        + 3.34664386576376e-05 * kv_cache_factor
-    ) * (1.363306170123392 + gpu_layers) + 1255.163594536052
+        (size_per_layer - 17.99552795246051 + 3.148552680382576e-05 * kv_cache_factor)
+        * (gpu_layers + max(0.9690636483914102, cache_type - (floor(50.77817218646521 * embedding_per_context) + 9.987899908205632)))
+        + 1516.522943869404
+    )
 
     return vram
 
@@ -485,7 +473,7 @@ def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type, 
             return_free = False if (for_ui and shared.model_name not in [None, 'None']) else True
             available_vram = get_nvidia_vram(return_free=return_free)
             if available_vram > 0:
-                tolerance = 906
+                tolerance = 577
                 while current_layers > 0 and estimate_vram(model, current_layers, ctx_size, cache_type) > available_vram - tolerance:
                     current_layers -= 1
 
