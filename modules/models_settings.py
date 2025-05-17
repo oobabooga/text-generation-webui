@@ -154,10 +154,11 @@ def get_model_metadata(model):
     for pat in settings:
         if re.match(pat.lower(), Path(model).name.lower()):
             for k in settings[pat]:
+                new_k = k
                 if k == 'n_gpu_layers':
-                    k = 'gpu_layers'
+                    new_k = 'gpu_layers'
 
-                model_settings[k] = settings[pat][k]
+                model_settings[new_k] = settings[pat][k]
 
     # Load instruction template if defined by name rather than by value
     if model_settings['instruction_template'] != 'Custom (obtained from model metadata)':
