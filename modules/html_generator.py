@@ -347,7 +347,7 @@ remove_button = f'<button class="footer-button footer-remove-button" title="Remo
 
 
 def generate_instruct_html(history):
-    output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
+    output = f'<style>{instruct_css}</style><div class="chat" id="chat" data-mode="instruct"><div class="messages">'
 
     for i in range(len(history['visible'])):
         row_visible = history['visible'][i]
