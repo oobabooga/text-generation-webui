@@ -137,7 +137,7 @@ def get_available_models():
 
     model_dirs = sorted(model_dirs, key=natural_keys)
 
-    return ['None'] + filtered_gguf_files + model_dirs
+    return filtered_gguf_files + model_dirs
 
 
 def get_available_ggufs():
