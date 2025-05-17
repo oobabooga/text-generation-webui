@@ -152,7 +152,7 @@ const observer = new MutationObserver(function(mutations) {
   }
 
   const chatElement = document.getElementById("chat");
-  if (chatElement) {
+  if (chatElement && chatElement.getAttribute("data-mode") === "instruct") {
     const messagesContainer = chatElement.querySelector(".messages");
     const lastChild = messagesContainer?.lastElementChild;
     const prevSibling = lastChild?.previousElementSibling;

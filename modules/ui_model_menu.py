@@ -318,7 +318,7 @@ def get_initial_vram_info():
 def get_initial_gpu_layers_max():
     if shared.model_name != 'None' and shared.args.loader == 'llama.cpp':
         model_settings = get_model_metadata(shared.model_name)
-        return model_settings.get('gpu_layers', 256)
+        return model_settings.get('max_gpu_layers', model_settings.get('gpu_layers', 256))
 
     return 256
 

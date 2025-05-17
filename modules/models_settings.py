@@ -72,6 +72,7 @@ def get_model_metadata(model):
                 model_settings['compress_pos_emb'] = metadata[k]
             elif k.endswith('block_count'):
                 model_settings['gpu_layers'] = metadata[k] + 1
+                model_settings['max_gpu_layers'] = metadata[k] + 1
 
         if 'tokenizer.chat_template' in metadata:
             template = metadata['tokenizer.chat_template']
@@ -153,6 +154,9 @@ def get_model_metadata(model):
     for pat in settings:
         if re.match(pat.lower(), Path(model).name.lower()):
             for k in settings[pat]:
+                if k == 'n_gpu_layers':
+                    k = 'gpu_layers'
+
                 model_settings[k] = settings[pat][k]
 
     # Load instruction template if defined by name rather than by value
@@ -450,17 +454,31 @@ def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type, 
     max_layers = gpu_layers
 
     if auto_adjust:
-        # Get max layers from model metadata
+        # Get model settings including user preferences
         model_settings = get_model_metadata(model)
-        max_layers = model_settings.get('gpu_layers', gpu_layers)
 
-        # Auto-adjust based on available VRAM
-        available_vram = get_nvidia_free_vram()
-        if available_vram > 0:
-            tolerance = 906
-            current_layers = max_layers
-            while current_layers > 0 and estimate_vram(model, current_layers, ctx_size, cache_type) > available_vram - tolerance:
-                current_layers -= 1
+        # Get the true maximum layers
+        max_layers = model_settings.get('max_gpu_layers', model_settings.get('gpu_layers', gpu_layers))
+
+        # Check if this is a user-saved setting
+        user_config = shared.user_config
+        model_regex = Path(model).name + '$'
+        has_user_setting = model_regex in user_config and 'gpu_layers' in user_config[model_regex]
+
+        if has_user_setting:
+            # For user settings, just use the current value (which already has user pref)
+            # but ensure the slider maximum is correct
+            current_layers = gpu_layers  # Already has user setting
+        else:
+            # No user setting, auto-adjust from the maximum
+            current_layers = max_layers  # Start from max
+
+            # Auto-adjust based on available VRAM
+            available_vram = get_nvidia_free_vram()
+            if available_vram > 0:
+                tolerance = 906
+                while current_layers > 0 and estimate_vram(model, current_layers, ctx_size, cache_type) > available_vram - tolerance:
+                    current_layers -= 1
 
     # Calculate VRAM with current layers
     vram_usage = estimate_vram(model, current_layers, ctx_size, cache_type)

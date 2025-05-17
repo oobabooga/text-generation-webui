@@ -4,8 +4,8 @@
     display: grid;
     align-items: start;
     grid-template-columns: 60px minmax(0, 1fr);
-    padding-bottom: 14px;
-    padding-top: 14px;
+    padding-bottom: 21px;
+    padding-top: 7px;
     font-size: 18px;
     font-family: 'Noto Sans', Arial, sans-serif;
     line-height: 1.428571429;
