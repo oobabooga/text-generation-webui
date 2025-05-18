@@ -131,7 +131,7 @@ gradio-app > :first-child {
 }
 
 .header_bar {
-    box-shadow: 0 0 3px rgba(22 22 22 / 35%);
+    border-right: var(--input-border-width) solid var(--input-border-color);
     margin-bottom: 0;
     overflow-x: scroll;
     text-wrap: nowrap;
@@ -1171,11 +1171,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     background-color: var(--light-theme-gray);
 }
 
-#chat-controls {
+.dark #chat-controls {
     border-left: 1px solid #d9d9d0;
 }
 
-#past-chats-row {
+.dark #past-chats-row {
     border-right: 1px solid #d9d9d0;
 }
 
