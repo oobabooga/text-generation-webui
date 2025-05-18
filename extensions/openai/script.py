@@ -114,8 +114,8 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
 
     if request_data.stream:
         async def generator():
-            try:
-                async with streaming_semaphore:
+            async with streaming_semaphore:
+                try:
                     response = OAIcompletions.stream_completions(to_dict(request_data), is_legacy=is_legacy)
                     async for resp in iterate_in_threadpool(response):
                         disconnected = await request.is_disconnected()
@@ -123,8 +123,9 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
                             break
 
                         yield {"data": json.dumps(resp)}
-            finally:
-                return
+                finally:
+                    stop_everything_event()
+                    return
 
         return EventSourceResponse(generator())  # SSE streaming
 
@@ -145,8 +146,8 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
 
     if request_data.stream:
         async def generator():
-            try:
-                async with streaming_semaphore:
+            async with streaming_semaphore:
+                try:
                     response = OAIcompletions.stream_chat_completions(to_dict(request_data), is_legacy=is_legacy)
                     async for resp in iterate_in_threadpool(response):
                         disconnected = await request.is_disconnected()
@@ -154,8 +155,9 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
                             break
 
                         yield {"data": json.dumps(resp)}
-            finally:
-                return
+                finally:
+                    stop_everything_event()
+                    return
 
         return EventSourceResponse(generator())  # SSE streaming
 
