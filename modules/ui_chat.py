@@ -79,8 +79,8 @@ def create_ui():
                 shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
 
             with gr.Row():
-                shared.gradio['send-chat-to-default'] = gr.Button('Send to default')
-                shared.gradio['send-chat-to-notebook'] = gr.Button('Send to notebook')
+                shared.gradio['send-chat-to-default'] = gr.Button('Send to Default')
+                shared.gradio['send-chat-to-notebook'] = gr.Button('Send to Notebook')
 
         with gr.Row(elem_id='chat-controls', elem_classes=['pretty_scrollbar']):
             with gr.Column():
