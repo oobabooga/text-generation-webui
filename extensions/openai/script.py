@@ -114,14 +114,17 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
 
     if request_data.stream:
         async def generator():
-            async with streaming_semaphore:
-                response = OAIcompletions.stream_completions(to_dict(request_data), is_legacy=is_legacy)
-                async for resp in iterate_in_threadpool(response):
-                    disconnected = await request.is_disconnected()
-                    if disconnected:
-                        break
+            try:
+                async with streaming_semaphore:
+                    response = OAIcompletions.stream_completions(to_dict(request_data), is_legacy=is_legacy)
+                    async for resp in iterate_in_threadpool(response):
+                        disconnected = await request.is_disconnected()
+                        if disconnected:
+                            break
 
-                    yield {"data": json.dumps(resp)}
+                        yield {"data": json.dumps(resp)}
+            finally:
+                return
 
         return EventSourceResponse(generator())  # SSE streaming
 
@@ -142,14 +145,17 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
 
     if request_data.stream:
         async def generator():
-            async with streaming_semaphore:
-                response = OAIcompletions.stream_chat_completions(to_dict(request_data), is_legacy=is_legacy)
-                async for resp in iterate_in_threadpool(response):
-                    disconnected = await request.is_disconnected()
-                    if disconnected:
-                        break
+            try:
+                async with streaming_semaphore:
+                    response = OAIcompletions.stream_chat_completions(to_dict(request_data), is_legacy=is_legacy)
+                    async for resp in iterate_in_threadpool(response):
+                        disconnected = await request.is_disconnected()
+                        if disconnected:
+                            break
 
-                    yield {"data": json.dumps(resp)}
+                        yield {"data": json.dumps(resp)}
+            finally:
+                return
 
         return EventSourceResponse(generator())  # SSE streaming
 
