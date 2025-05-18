@@ -146,14 +146,14 @@ The `requirements*.txt` above contain various wheels precompiled through GitHub 
 For NVIDIA GPU:
 ln -s docker/{nvidia/Dockerfile,nvidia/docker-compose.yml,.dockerignore} .
 For AMD GPU: 
-ln -s docker/{amd/Dockerfile,intel/docker-compose.yml,.dockerignore} .
+ln -s docker/{amd/Dockerfile,amd/docker-compose.yml,.dockerignore} .
 For Intel GPU:
 ln -s docker/{intel/Dockerfile,amd/docker-compose.yml,.dockerignore} .
 For CPU only
 ln -s docker/{cpu/Dockerfile,cpu/docker-compose.yml,.dockerignore} .
 cp docker/.env.example .env
 #Create logs/cache dir : 
-mkdir -p logs cache
+mkdir -p user_data/logs user_data/cache
 # Edit .env and set: 
 #   TORCH_CUDA_ARCH_LIST based on your GPU model
 #   APP_RUNTIME_GID      your host user's group id (run `id -g` in a terminal)
