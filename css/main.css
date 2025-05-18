@@ -827,7 +827,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-col.bigchat {
-    padding-bottom: 80px !important;
+    padding-bottom: 15px !important;
 }
 
 .message-body ol, .message-body ul {
