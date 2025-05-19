@@ -90,11 +90,6 @@ loaders_and_params = OrderedDict({
         'ctx_size_draft',
         'speculative_decoding_accordion',
     ],
-    'HQQ': [
-        'hqq_backend',
-        'trust_remote_code',
-        'no_use_fast',
-    ],
     'TensorRT-LLM': [
         'ctx_size',
         'cpp_runner',
@@ -158,7 +153,6 @@ def transformers_samplers():
 
 loaders_samplers = {
     'Transformers': transformers_samplers(),
-    'HQQ': transformers_samplers(),
     'ExLlamav3_HF': {
         'temperature',
         'dynatemp_low',

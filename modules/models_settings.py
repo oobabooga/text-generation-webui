@@ -183,8 +183,6 @@ def infer_loader(model_name, model_settings, hf_quant_method=None):
         loader = 'ExLlamav3_HF'
     elif re.match(r'.*exl2', model_name.lower()):
         loader = 'ExLlamav2_HF'
-    elif re.match(r'.*-hqq', model_name.lower()):
-        return 'HQQ'
     else:
         loader = 'Transformers'
 
