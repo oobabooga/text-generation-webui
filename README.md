@@ -326,6 +326,18 @@ https://github.com/oobabooga/text-generation-webui/wiki
 
 ## Downloading models
 
+### Pointing to an existing AI model library
+
+Edit the file `text-generation-webui\user_data\CMD_FLAGS.txt` to include this line:
+
+```
+--model-dir 'D:\MyAIModels\'
+```
+
+Replace `D:\MyAIModels\` with the path to your model library folder. Sub-folders will be automatically parsed to enumerate all existing models.
+
+### Manual model download
+
 Models should be placed in the folder `text-generation-webui/user_data/models`. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads).
 
 * GGUF models are a single file and should be placed directly into `user_data/models`. Example:
