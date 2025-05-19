@@ -14,8 +14,8 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 - Supports multiple text generation backends in one UI/API, including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), and [ExLlamaV2](https://github.com/turboderp-org/exllamav2).
   - [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) is also supported via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile).
-  - Additional quantization libraries like [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [HQQ](https://github.com/mobiusml/hqq), and [AQLM](https://github.com/Vahe1994/AQLM) can be used with the Transformers loader if you install them manually.
-- Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for llama.cpp GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory that doesn't interfere with your system environment.
+  - Additional quantization libraries like [HQQ](https://github.com/mobiusml/hqq) and [AQLM](https://github.com/Vahe1994/AQLM) can be used with the Transformers loader if you install them manually.
+- Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory that doesn't interfere with your system environment.
 - UI that resembles the original ChatGPT style.
 - Automatic prompt formatting using Jinja2 templates. You don't need to ever worry about prompt formats.
 - Three chat modes: `instruct`, `chat-instruct`, and `chat`, with automatic prompt templates in `chat-instruct`.
