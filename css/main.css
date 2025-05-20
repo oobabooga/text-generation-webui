@@ -592,6 +592,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding: 0.65rem 2.5rem;
     border: 0;
     box-shadow: 0;
+    border-radius: 8px;
 }
 
 #chat-input textarea::placeholder {
@@ -609,6 +610,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #chat-input .progress-text {
     display: none;
+}
+
+#chat-input .submit-button {
+    display: none;
+}
+
+#chat-input .upload-button {
+    margin-right: 16px;
+    margin-bottom: 7px;
+    background: transparent;
 }
 
 .chat-input-positioned {
