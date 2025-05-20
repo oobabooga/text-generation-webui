@@ -13,6 +13,7 @@ peft==0.15.*
 Pillow>=9.5.0
 psutil
 pydantic==2.8.2
+PyPDF2==3.0.1
 pyyaml
 requests
 rich
