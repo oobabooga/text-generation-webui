@@ -405,6 +405,27 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         text, visible_text = output['internal'][-1][0], output['visible'][-1][0]
         if regenerate:
             row_idx = len(output['internal']) - 1
+
+            # Store the existing response as a version before regenerating
+            if output['internal'][-1][1].strip():  # If there's content in the assistant's message
+                key = f"assistant_{row_idx}"
+
+                # Initialize metadata entry if needed
+                if key not in output['metadata']:
+                    output['metadata'][key] = {"timestamp": get_current_timestamp()}
+
+                # Initialize versions array if needed
+                if "versions" not in output['metadata'][key]:
+                    output['metadata'][key]["versions"] = []
+
+                # Add the current response as a version
+                output['metadata'][key]["versions"].append({
+                    "content": output['internal'][-1][1],
+                    "visible_content": output['visible'][-1][1],
+                    "timestamp": get_current_timestamp()
+                })
+                output['metadata'][key]["current_version_index"] = len(output['metadata'][key]["versions"]) - 1
+
             if loading_message:
                 yield {
                     'visible': output['visible'][:-1] + [[visible_text, shared.processing_message]],
