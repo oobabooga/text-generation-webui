@@ -438,7 +438,7 @@ def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type, 
         - If for_ui=False: (vram_usage, adjusted_layers) or just vram_usage
     """
     if loader != 'llama.cpp' or model in ["None", None] or not model.endswith(".gguf"):
-        vram_info = "<div id=\"vram-info\"'>Estimated VRAM to load the model:</span>"
+        vram_info = "<div id=\"vram-info\"'>Estimated VRAM to load the model:</div>"
         if for_ui:
             return (vram_info, gr.update()) if auto_adjust else vram_info
         else:
@@ -480,7 +480,7 @@ def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type, 
     vram_usage = estimate_vram(model, current_layers, ctx_size, cache_type)
 
     if for_ui:
-        vram_info = f"<div id=\"vram-info\"'>Estimated VRAM to load the model: <span class=\"value\">{vram_usage:.0f} MiB</span>"
+        vram_info = f"<div id=\"vram-info\"'>Estimated VRAM to load the model: <span class=\"value\">{vram_usage:.0f} MiB</span></div>"
         if auto_adjust:
             return vram_info, gr.update(value=current_layers, maximum=max_layers)
         else:

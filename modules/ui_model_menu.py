@@ -310,7 +310,7 @@ def get_initial_vram_info():
             for_ui=True
         )
 
-    return "<div id=\"vram-info\"'>Estimated VRAM to load the model:</span>"
+    return "<div id=\"vram-info\"'>Estimated VRAM to load the model:</div>"
 
 
 def get_initial_gpu_layers_max():
