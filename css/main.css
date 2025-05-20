@@ -419,6 +419,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-right: 1rem;
 }
 
+.chat .message .timestamp {
+    font-size: 0.7em;
+    display: inline-block;
+    font-weight: normal;
+    opacity: 0.7;
+    margin-left: 5px;
+}
+
 .chat-parent.bigchat {
     flex: 1;
 }
@@ -1267,6 +1275,31 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .footer-button.footer-remove-button {
     bottom: -23px;
     left: 75px;
+}
+
+.footer-button.footer-info-button {
+    bottom: -23px;
+}
+
+.user-message .footer-button.footer-info-button {
+    left: 25px;
+}
+
+.assistant-message:not(:last-child) .footer-button.footer-info-button {
+    left: 25px;
+}
+
+.assistant-message:last-child .footer-button.footer-info-button {
+    left: 100px;
+}
+
+.message:not(:last-child) .text-bot .footer-button.footer-info-button,
+.message .text-you .footer-button.footer-info-button {
+    left: 25px;
+}
+
+.message:last-child .text-bot .footer-button.footer-info-button {
+    left: 100px;
 }
 
 .message:hover .footer-button,

@@ -37,6 +37,30 @@ def strftime_now(format):
     return datetime.now().strftime(format)
 
 
+def get_current_timestamp():
+    """Returns the current time in 24-hour format"""
+    return datetime.now().strftime('%b %d, %Y %H:%M')
+
+
+def update_message_metadata(metadata_dict, role, index, **fields):
+    """
+    Updates or adds metadata fields for a specific message.
+
+    Args:
+        metadata_dict: The metadata dictionary
+        role: The role (user, assistant, etc)
+        index: The message index
+        **fields: Arbitrary metadata fields to update/add
+    """
+    key = f"{role}_{index}"
+    if key not in metadata_dict:
+        metadata_dict[key] = {}
+
+    # Update with provided fields
+    for field_name, field_value in fields.items():
+        metadata_dict[key][field_name] = field_value
+
+
 jinja_env = ImmutableSandboxedEnvironment(
     trim_blocks=True,
     lstrip_blocks=True,
@@ -347,6 +371,10 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     output = apply_extensions('history', output)
     state = apply_extensions('state', state)
 
+    # Initialize metadata if not present
+    if 'metadata' not in output:
+        output['metadata'] = {}
+
     visible_text = None
     stopping_strings = get_stopping_strings(state)
     is_stream = state['stream']
@@ -359,39 +387,55 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
         text = apply_extensions('input', text, state, is_chat=True)
 
+        # Current row index
+        row_idx = len(output['internal'])
         output['internal'].append([text, ''])
         output['visible'].append([visible_text, ''])
+        # Add metadata with timestamp
+        update_message_metadata(output['metadata'], "user", row_idx, timestamp=get_current_timestamp())
 
         # *Is typing...*
         if loading_message:
             yield {
                 'visible': output['visible'][:-1] + [[output['visible'][-1][0], shared.processing_message]],
-                'internal': output['internal']
+                'internal': output['internal'],
+                'metadata': output['metadata']
             }
     else:
         text, visible_text = output['internal'][-1][0], output['visible'][-1][0]
         if regenerate:
+            row_idx = len(output['internal']) - 1
             if loading_message:
                 yield {
                     'visible': output['visible'][:-1] + [[visible_text, shared.processing_message]],
-                    'internal': output['internal'][:-1] + [[text, '']]
+                    'internal': output['internal'][:-1] + [[text, '']],
+                    'metadata': output['metadata']
                 }
         elif _continue:
             last_reply = [output['internal'][-1][1], output['visible'][-1][1]]
             if loading_message:
                 yield {
                     'visible': output['visible'][:-1] + [[visible_text, last_reply[1] + '...']],
-                    'internal': output['internal']
+                    'internal': output['internal'],
+                    'metadata': output['metadata']
                 }
 
     # Generate the prompt
     kwargs = {
         '_continue': _continue,
-        'history': output if _continue else {k: v[:-1] for k, v in output.items()}
+        'history': output if _continue else {
+            k: (v[:-1] if k in ['internal', 'visible'] else v)
+            for k, v in output.items()
+        }
     }
+
     prompt = apply_extensions('custom_generate_chat_prompt', text, state, **kwargs)
     if prompt is None:
         prompt = generate_chat_prompt(text, state, **kwargs)
+
+    # Add timestamp for assistant's response at the start of generation
+    row_idx = len(output['internal']) - 1
+    update_message_metadata(output['metadata'], "assistant", row_idx, timestamp=get_current_timestamp())
 
     # Generate
     reply = None
@@ -495,9 +539,19 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
 
 def remove_last_message(history):
+    if 'metadata' not in history:
+        history['metadata'] = {}
+
     if len(history['visible']) > 0 and history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
+        row_idx = len(history['internal']) - 1
         last = history['visible'].pop()
         history['internal'].pop()
+
+        # Remove metadata directly by known keys
+        if f"user_{row_idx}" in history['metadata']:
+            del history['metadata'][f"user_{row_idx}"]
+        if f"assistant_{row_idx}" in history['metadata']:
+            del history['metadata'][f"assistant_{row_idx}"]
     else:
         last = ['', '']
 
@@ -514,30 +568,54 @@ def send_last_reply_to_input(history):
 def replace_last_reply(text, state):
     history = state['history']
 
+    # Initialize metadata if not present
+    if 'metadata' not in history:
+        history['metadata'] = {}
+
     if len(text.strip()) == 0:
         return history
     elif len(history['visible']) > 0:
+        row_idx = len(history['internal']) - 1
         history['visible'][-1][1] = html.escape(text)
         history['internal'][-1][1] = apply_extensions('input', text, state, is_chat=True)
+        update_message_metadata(history['metadata'], "assistant", row_idx, timestamp=get_current_timestamp())
 
     return history
 
 
 def send_dummy_message(text, state):
     history = state['history']
+
+    # Initialize metadata if not present
+    if 'metadata' not in history:
+        history['metadata'] = {}
+
+    row_idx = len(history['internal'])
     history['visible'].append([html.escape(text), ''])
     history['internal'].append([apply_extensions('input', text, state, is_chat=True), ''])
+    update_message_metadata(history['metadata'], "user", row_idx, timestamp=get_current_timestamp())
+
     return history
 
 
 def send_dummy_reply(text, state):
     history = state['history']
+
+    # Initialize metadata if not present
+    if 'metadata' not in history:
+        history['metadata'] = {}
+
     if len(history['visible']) > 0 and not history['visible'][-1][1] == '':
+        row_idx = len(history['internal'])
         history['visible'].append(['', ''])
         history['internal'].append(['', ''])
+        # We don't need to add system metadata
 
+    row_idx = len(history['internal']) - 1
     history['visible'][-1][1] = html.escape(text)
     history['internal'][-1][1] = apply_extensions('input', text, state, is_chat=True)
+    update_message_metadata(history['metadata'], "assistant", row_idx, timestamp=get_current_timestamp())
+
     return history
 
 
@@ -547,13 +625,17 @@ def redraw_html(history, name1, name2, mode, style, character, reset_cache=False
 
 def start_new_chat(state):
     mode = state['mode']
-    history = {'internal': [], 'visible': []}
+    # Initialize with empty metadata dictionary
+    history = {'internal': [], 'visible': [], 'metadata': {}}
 
     if mode != 'instruct':
         greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
         if greeting != '':
             history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
             history['visible'] += [['', apply_extensions('output', html.escape(greeting), state, is_chat=True)]]
+
+            # Add timestamp for assistant's greeting
+            update_message_metadata(history['metadata'], "assistant", 0, timestamp=get_current_timestamp())
 
     unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
     save_history(history, unique_id, state['character_menu'], state['mode'])
@@ -735,6 +817,16 @@ def load_history(unique_id, character, mode):
             'visible': f['data_visible']
         }
 
+    # Add metadata if it doesn't exist
+    if 'metadata' not in history:
+        history['metadata'] = {}
+        # Add placeholder timestamps for existing messages
+        for i, (user_msg, asst_msg) in enumerate(history['internal']):
+            if user_msg and user_msg != '<|BEGIN-VISIBLE-CHAT|>':
+                update_message_metadata(history['metadata'], "user", i, timestamp="")
+            if asst_msg:
+                update_message_metadata(history['metadata'], "assistant", i, timestamp="")
+
     return history
 
 
@@ -749,6 +841,16 @@ def load_history_json(file, history):
                 'internal': f['data'],
                 'visible': f['data_visible']
             }
+
+        # Add metadata if it doesn't exist
+        if 'metadata' not in history:
+            history['metadata'] = {}
+            # Add placeholder timestamps
+            for i, (user_msg, asst_msg) in enumerate(history['internal']):
+                if user_msg and user_msg != '<|BEGIN-VISIBLE-CHAT|>':
+                    update_message_metadata(history['metadata'], "user", i, timestamp="")
+                if asst_msg:
+                    update_message_metadata(history['metadata'], "assistant", i, timestamp="")
 
         return history
     except:
@@ -1299,7 +1401,7 @@ def handle_your_picture_change(picture, state):
 
 def handle_send_instruction_click(state):
     state['mode'] = 'instruct'
-    state['history'] = {'internal': [], 'visible': []}
+    state['history'] = {'internal': [], 'visible': [], 'metadata': {}}
 
     output = generate_chat_prompt("Input", state)
 
