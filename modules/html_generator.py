@@ -360,10 +360,10 @@ def format_message_timestamp(history, role, index):
 def actions_html(history, i, info_message=""):
     return (f'<div class="message-actions">'
             f'{copy_button}'
-            f'{branch_button}'
             f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
             f'{continue_button if i == len(history["visible"]) - 1 else ""}'
             f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'{branch_button}'
             f'{info_message}'
             f'</div>')
 
