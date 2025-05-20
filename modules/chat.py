@@ -408,21 +408,50 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
     # Get file info using pathlib
     path = Path(file_path)
     filename = path.name
+    file_extension = path.suffix.lower()
 
     try:
-        with open(path, 'r', encoding='utf-8') as f:
-            content = f.read()
+        # Handle different file types
+        if file_extension == '.pdf':
+            # Process PDF file
+            content = extract_pdf_text(path)
+            file_type = "application/pdf"
+        else:
+            # Default handling for text files
+            with open(path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            file_type = "text/plain"
 
         # Add attachment
         attachment = {
             "name": filename,
-            "type": "text/plain",  # Assuming text files for now
+            "type": file_type,
             "content": content,
         }
 
         history['metadata'][key]["attachments"].append(attachment)
+        return content  # Return the content for reuse
     except Exception as e:
         logger.error(f"Error processing attachment {filename}: {e}")
+        return None
+
+
+def extract_pdf_text(pdf_path):
+    """Extract text from a PDF file"""
+    import PyPDF2
+
+    text = ""
+    try:
+        with open(pdf_path, 'rb') as file:
+            pdf_reader = PyPDF2.PdfReader(file)
+            for page_num in range(len(pdf_reader.pages)):
+                page = pdf_reader.pages[page_num]
+                text += page.extract_text() + "\n\n"
+
+        return text.strip()
+    except Exception as e:
+        logger.error(f"Error extracting text from PDF: {e}")
+        return f"[Error extracting PDF text: {str(e)}]"
 
 
 def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_message=True, for_ui=False):
@@ -451,35 +480,28 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
         # Process file attachments and gather content for prompt
         attachments_text = ""
-        for file_path in files:
-            try:
-                path = Path(file_path)
-                filename = path.name
-                with open(path, 'r', encoding='utf-8') as f:
-                    content = f.read()
+        row_idx = len(output['internal'])
 
+        # Add attachments to metadata and get content for prompt
+        for file_path in files:
+            content = add_message_attachment(output, row_idx, file_path, is_user=True)
+            if content:
+                filename = Path(file_path).name
                 attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
-            except Exception as e:
-                logger.error(f"Error reading file for prompt inclusion: {e}")
 
         # If we have attachments, modify text directly
         if attachments_text:
-            text = f"{text}\n\nATTACHMENTS:\n{attachments_text}"
+            text = f"{text}\n\nATTACHMENTS:{attachments_text}"
 
         # Apply extensions
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
         text = apply_extensions('input', text, state, is_chat=True)
 
         # Current row index
-        row_idx = len(output['internal'])
         output['internal'].append([text, ''])
         output['visible'].append([visible_text, ''])
         # Add metadata with timestamp
         update_message_metadata(output['metadata'], "user", row_idx, timestamp=get_current_timestamp())
-
-        # Also store the attachments in metadata for future reference
-        for file_path in files:
-            add_message_attachment(output, row_idx, file_path, is_user=True)
 
         # *Is typing...*
         if loading_message:
