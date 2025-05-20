@@ -38,8 +38,8 @@ def strftime_now(format):
 
 
 def get_current_timestamp():
-    """Returns the current time in a friendly readable format"""
-    return datetime.now().strftime('%b %d, %Y %I:%M %p')
+    """Returns the current time in 24-hour format"""
+    return datetime.now().strftime('%b %d, %Y %H:%M')
 
 
 def update_message_metadata(metadata_dict, role, index, **fields):
