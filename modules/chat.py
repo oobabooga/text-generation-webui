@@ -394,6 +394,12 @@ def add_message_version(history, row_idx, is_current=True):
 
 
 def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_message=True, for_ui=False):
+
+    # Here text is in the format
+    # {'text': 'Hi', 'files': []}
+    # {'text': 'Hi', 'files': ['/tmp/gradio/9a5a06f3fa0a0caacc7926feeb7013c3/input-file.txt']}
+    # What do we do with it?
+
     history = state['history']
     output = copy.deepcopy(history)
     output = apply_extensions('history', output)
