@@ -1296,7 +1296,7 @@ def handle_replace_last_reply_click(text, state):
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
-    return [history, html, ""]
+    return [history, html, {"text": "", "files": []}]
 
 
 def handle_send_dummy_message_click(text, state):
@@ -1304,7 +1304,7 @@ def handle_send_dummy_message_click(text, state):
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
-    return [history, html, ""]
+    return [history, html, {"text": "", "files": []}]
 
 
 def handle_send_dummy_reply_click(text, state):
@@ -1312,7 +1312,7 @@ def handle_send_dummy_reply_click(text, state):
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
-    return [history, html, ""]
+    return [history, html, {"text": "", "files": []}]
 
 
 def handle_remove_last_click(state):
@@ -1320,7 +1320,7 @@ def handle_remove_last_click(state):
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
-    return [history, html, last_input]
+    return [history, html, {"text": last_input, "files": []}]
 
 
 def handle_unique_id_select(state):
