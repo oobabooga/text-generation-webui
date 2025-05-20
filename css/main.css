@@ -1243,6 +1243,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .message, .user-message, .assistant-message {
     position: relative;
 }
+
 /* New container for the buttons */
 .message-actions {
     position: absolute;
@@ -1250,10 +1251,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     left: 0;
     display: flex;   
     gap: 5px;
-
     opacity: 0;
     transition: opacity 0.2s;
 }
+
 .footer-button {
     padding: 0;
     margin: 0;

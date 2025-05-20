@@ -42,7 +42,7 @@ function branchHere(element) {
   branchIndexInput.value = index;
 
   // Trigger any 'change' or 'input' events Gradio might be listening for
-  const event = new Event('input', { bubbles: true }); // 'change' might also work
+  const event = new Event("input", { bubbles: true }); // 'change' might also work
   branchIndexInput.dispatchEvent(event);
 
   branchButton.click(); // Gradio will now pick up the 'index'
