@@ -365,7 +365,7 @@ def format_message_attachments(history, role, index):
         attachments = history['metadata'][key]['attachments']
         if not attachments:
             return ""
-            
+
         attachments_html = '<div class="message-attachments">'
         for attachment in attachments:
             attachments_html += (
@@ -376,7 +376,7 @@ def format_message_attachments(history, role, index):
             )
         attachments_html += '</div>'
         return attachments_html
-        
+
     return ""
 
 

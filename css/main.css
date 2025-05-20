@@ -1413,22 +1413,25 @@ strong {
     gap: 8px;
     margin-top: 8px;
 }
+
 .attachment-box {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 8px;
-    background: rgba(0, 0, 0, 0.05);
+    background: rgb(0 0 0 / 5%);
     border-radius: 6px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid rgb(0 0 0 / 10%);
     min-width: 80px;
     max-width: 120px;
 }
+
 .attachment-icon {
     margin-bottom: 4px;
     color: #555;
 }
+
 .attachment-name {
     font-size: 0.8em;
     text-align: center;
@@ -1439,10 +1442,12 @@ strong {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
 }
+
 .dark .attachment-box {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgb(255 255 255 / 5%);
+    border: 1px solid rgb(255 255 255 / 10%);
 }
+
 .dark .attachment-icon {
     color: #ccc;
 }
