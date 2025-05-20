@@ -393,12 +393,44 @@ def add_message_version(history, row_idx, is_current=True):
         history['metadata'][key]["current_version_index"] = len(history['metadata'][key]["versions"]) - 1
 
 
-def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_message=True, for_ui=False):
+def add_message_attachment(history, row_idx, file_path, is_user=True):
+    """Add a file attachment to a message in history metadata"""
+    if 'metadata' not in history:
+        history['metadata'] = {}
 
-    # Here text is in the format
-    # {'text': 'Hi', 'files': []}
-    # {'text': 'Hi', 'files': ['/tmp/gradio/9a5a06f3fa0a0caacc7926feeb7013c3/input-file.txt']}
-    # What do we do with it?
+    key = f"{'user' if is_user else 'assistant'}_{row_idx}"
+
+    if key not in history['metadata']:
+        history['metadata'][key] = {"timestamp": get_current_timestamp()}
+    if "attachments" not in history['metadata'][key]:
+        history['metadata'][key]["attachments"] = []
+
+    # Get file info using pathlib
+    path = Path(file_path)
+    filename = path.name
+
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Add attachment
+        attachment = {
+            "name": filename,
+            "type": "text/plain",  # Assuming text files for now
+            "content": content,
+        }
+
+        history['metadata'][key]["attachments"].append(attachment)
+    except Exception as e:
+        logger.error(f"Error processing attachment {filename}: {e}")
+
+
+def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_message=True, for_ui=False):
+    # Handle dict format with text and files
+    files = []
+    if isinstance(text, dict):
+        files = text.get('files', [])
+        text = text.get('text', '')
 
     history = state['history']
     output = copy.deepcopy(history)
@@ -417,6 +449,23 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     if not (regenerate or _continue):
         visible_text = html.escape(text)
 
+        # Process file attachments and gather content for prompt
+        attachments_text = ""
+        for file_path in files:
+            try:
+                path = Path(file_path)
+                filename = path.name
+                with open(path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+
+                attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
+            except Exception as e:
+                logger.error(f"Error reading file for prompt inclusion: {e}")
+
+        # If we have attachments, modify text directly
+        if attachments_text:
+            text = f"{text}\n\nATTACHMENTS:\n{attachments_text}"
+
         # Apply extensions
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
         text = apply_extensions('input', text, state, is_chat=True)
@@ -427,6 +476,10 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         output['visible'].append([visible_text, ''])
         # Add metadata with timestamp
         update_message_metadata(output['metadata'], "user", row_idx, timestamp=get_current_timestamp())
+
+        # Also store the attachments in metadata for future reference
+        for file_path in files:
+            add_message_attachment(output, row_idx, file_path, is_user=True)
 
         # *Is typing...*
         if loading_message:
