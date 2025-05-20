@@ -38,8 +38,8 @@ def strftime_now(format):
 
 
 def get_current_timestamp():
-    """Returns the current time as an ISO 8601 formatted string"""
-    return datetime.now().isoformat()
+    """Returns the current time in a readable format"""
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
 def update_message_metadata(metadata_dict, role, index, **fields):
@@ -423,8 +423,12 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     # Generate the prompt
     kwargs = {
         '_continue': _continue,
-        'history': output if _continue else {k: v[:-1] for k, v in output.items()}
+        'history': output if _continue else {
+            k: (v[:-1] if k in ['internal', 'visible'] else v)
+            for k, v in output.items()
+        }
     }
+
     prompt = apply_extensions('custom_generate_chat_prompt', text, state, **kwargs)
     if prompt is None:
         prompt = generate_chat_prompt(text, state, **kwargs)

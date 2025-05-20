@@ -419,6 +419,13 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-right: 1rem;
 }
 
+.chat .message .timestamp {
+    font-size: 0.8em;
+    display: inline-block;
+    font-weight: normal;
+    opacity: 0.5;
+}
+
 .chat-parent.bigchat {
     flex: 1;
 }

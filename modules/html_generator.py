@@ -346,6 +346,15 @@ continue_button = f'<button class="footer-button footer-continue-button" title="
 remove_button = f'<button class="footer-button footer-remove-button" title="Remove last reply" onclick="removeLastClick()">{remove_svg}</button>'
 
 
+def format_message_timestamp(history, role, index):
+    """Get a formatted timestamp HTML span for a message if available"""
+    key = f"{role}_{index}"
+    if 'metadata' in history and key in history['metadata'] and history['metadata'][key].get('timestamp'):
+        timestamp = history['metadata'][key]['timestamp']
+        return f" <span class='timestamp'>{timestamp}</span>"
+    return ""
+
+
 def generate_instruct_html(history):
     output = f'<style>{instruct_css}</style><div class="chat" id="chat" data-mode="instruct"><div class="messages">'
 
@@ -401,13 +410,17 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
         row_internal = history['internal'][i]
         converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
+        # Get timestamps
+        user_timestamp = format_message_timestamp(history, "user", i)
+        assistant_timestamp = format_message_timestamp(history, "assistant", i)
+
         if converted_visible[0]:  # Don't display empty user messages
             output += (
                 f'<div class="message" '
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="circle-you">{img_me}</div>'
                 f'<div class="text">'
-                f'<div class="username">{name1}</div>'
+                f'<div class="username">{name1}{user_timestamp}</div>'
                 f'<div class="message-body">{converted_visible[0]}</div>'
                 f'{copy_button}'
                 f'</div>'
@@ -419,7 +432,7 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
             f'data-raw="{html.escape(row_internal[1], quote=True)}">'
             f'<div class="circle-bot">{img_bot}</div>'
             f'<div class="text">'
-            f'<div class="username">{name2}</div>'
+            f'<div class="username">{name2}{assistant_timestamp}</div>'
             f'<div class="message-body">{converted_visible[1]}</div>'
             f'{copy_button}'
             f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
