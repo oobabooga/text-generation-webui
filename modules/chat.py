@@ -365,6 +365,34 @@ def get_stopping_strings(state):
     return result
 
 
+def add_message_version(history, row_idx, is_current=True):
+    """Add the current message as a version in the history metadata"""
+    if 'metadata' not in history:
+        history['metadata'] = {}
+
+    if row_idx >= len(history['internal']) or not history['internal'][row_idx][1].strip():
+        return  # Skip if row doesn't exist or message is empty
+
+    key = f"assistant_{row_idx}"
+
+    # Initialize metadata structures if needed
+    if key not in history['metadata']:
+        history['metadata'][key] = {"timestamp": get_current_timestamp()}
+    if "versions" not in history['metadata'][key]:
+        history['metadata'][key]["versions"] = []
+
+    # Add current message as a version
+    history['metadata'][key]["versions"].append({
+        "content": history['internal'][row_idx][1],
+        "visible_content": history['visible'][row_idx][1],
+        "timestamp": get_current_timestamp()
+    })
+
+    # Update index if this is the current version
+    if is_current:
+        history['metadata'][key]["current_version_index"] = len(history['metadata'][key]["versions"]) - 1
+
+
 def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_message=True, for_ui=False):
     history = state['history']
     output = copy.deepcopy(history)
@@ -407,24 +435,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             row_idx = len(output['internal']) - 1
 
             # Store the existing response as a version before regenerating
-            if output['internal'][-1][1].strip():  # If there's content in the assistant's message
-                key = f"assistant_{row_idx}"
-
-                # Initialize metadata entry if needed
-                if key not in output['metadata']:
-                    output['metadata'][key] = {"timestamp": get_current_timestamp()}
-
-                # Initialize versions array if needed
-                if "versions" not in output['metadata'][key]:
-                    output['metadata'][key]["versions"] = []
-
-                # Add the current response as a version
-                output['metadata'][key]["versions"].append({
-                    "content": output['internal'][-1][1],
-                    "visible_content": output['visible'][-1][1],
-                    "timestamp": get_current_timestamp()
-                })
-                output['metadata'][key]["current_version_index"] = len(output['metadata'][key]["versions"]) - 1
+            add_message_version(output, row_idx, is_current=False)
 
             if loading_message:
                 yield {
@@ -485,6 +496,11 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
             if is_stream:
                 yield output
+
+    # Add the newly generated response as a version (only for regeneration)
+    if regenerate:
+        row_idx = len(output['internal']) - 1
+        add_message_version(output, row_idx, is_current=True)
 
     output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
     yield output
