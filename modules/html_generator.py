@@ -344,6 +344,7 @@ continue_button = f'<button class="footer-button footer-continue-button" title="
 remove_button = f'<button class="footer-button footer-remove-button" title="Remove last reply" onclick="removeLastClick()">{remove_svg}</button>'
 info_button = f'<button class="footer-button footer-info-button" title="message">{info_svg}</button>'
 
+
 def format_message_timestamp(history, role, index):
     """Get a formatted timestamp HTML span for a message if available"""
     key = f"{role}_{index}"
