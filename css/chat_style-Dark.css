@@ -1,7 +1,9 @@
 .message {
     display: grid;
+    align-items: start;
     grid-template-columns: 60px minmax(0, 1fr);
-    padding-bottom: 28px;
+    padding-bottom: 22px;
+    padding-top: 6px;
     font-size: 18px;
     font-family: Roboto, Arial, sans-serif; /* Modern font */
     line-height: 1.5;
@@ -102,6 +104,7 @@
 @media screen and (width <= 688px) {
     .message {
         display: grid;
+        align-items: start;
         grid-template-columns: 60px minmax(0, 1fr);
         padding-bottom: 25px;
         font-size: 15px;

@@ -2,7 +2,6 @@ from pathlib import Path
 
 import modules.shared as shared
 from modules.logging_colors import logger
-from modules.models import get_device
 
 
 def add_lora_to_model(lora_names):
@@ -47,8 +46,9 @@ def add_lora_exllamav2(lora_names):
 
 
 def add_lora_transformers(lora_names):
-
     from peft import PeftModel
+
+    from modules.torch_utils import get_device
 
     prior_set = set(shared.lora_names)
     added_set = set(lora_names) - prior_set

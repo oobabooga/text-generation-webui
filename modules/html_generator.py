@@ -1,3 +1,4 @@
+import datetime
 import functools
 import html
 import os
@@ -106,8 +107,83 @@ def replace_blockquote(m):
     return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
 
+def extract_thinking_block(string):
+    """Extract thinking blocks from the beginning of a string."""
+    if not string:
+        return None, string
+
+    THINK_START_TAG = "&lt;think&gt;"
+    THINK_END_TAG = "&lt;/think&gt;"
+
+    # Look for opening tag
+    start_pos = string.lstrip().find(THINK_START_TAG)
+    if start_pos == -1:
+        return None, string
+
+    # Adjust start position to account for any leading whitespace
+    start_pos = string.find(THINK_START_TAG)
+
+    # Find the content after the opening tag
+    content_start = start_pos + len(THINK_START_TAG)
+
+    # Look for closing tag
+    end_pos = string.find(THINK_END_TAG, content_start)
+
+    if end_pos != -1:
+        # Both tags found - extract content between them
+        thinking_content = string[content_start:end_pos]
+        remaining_content = string[end_pos + len(THINK_END_TAG):]
+        return thinking_content, remaining_content
+    else:
+        # Only opening tag found - everything else is thinking content
+        thinking_content = string[content_start:]
+        return thinking_content, ""
+
+
 @functools.lru_cache(maxsize=None)
-def convert_to_markdown(string):
+def convert_to_markdown(string, message_id=None):
+    if not string:
+        return ""
+
+    # Use a default message ID if none provided
+    if message_id is None:
+        message_id = "unknown"
+
+    # Extract thinking block if present
+    thinking_content, remaining_content = extract_thinking_block(string)
+
+    # Process the main content
+    html_output = process_markdown_content(remaining_content)
+
+    # If thinking content was found, process it using the same function
+    if thinking_content is not None:
+        thinking_html = process_markdown_content(thinking_content)
+
+        # Generate unique ID for the thinking block
+        block_id = f"thinking-{message_id}-0"
+
+        # Check if thinking is complete or still in progress
+        is_streaming = not remaining_content
+        title_text = "Thinking..." if is_streaming else "Thought"
+
+        thinking_block = f'''
+        <details class="thinking-block" data-block-id="{block_id}" data-streaming="{str(is_streaming).lower()}">
+            <summary class="thinking-header">
+                {info_svg_small}
+                <span class="thinking-title">{title_text}</span>
+            </summary>
+            <div class="thinking-content pretty_scrollbar">{thinking_html}</div>
+        </details>
+        '''
+
+        # Prepend the thinking block to the message HTML
+        html_output = thinking_block + html_output
+
+    return html_output
+
+
+def process_markdown_content(string):
+    """Process a string through the markdown conversion pipeline."""
     if not string:
         return ""
 
@@ -208,15 +284,15 @@ def convert_to_markdown(string):
     return html_output
 
 
-def convert_to_markdown_wrapped(string, use_cache=True):
+def convert_to_markdown_wrapped(string, message_id=None, use_cache=True):
     '''
     Used to avoid caching convert_to_markdown calls during streaming.
     '''
 
     if use_cache:
-        return convert_to_markdown(string)
+        return convert_to_markdown(string, message_id=message_id)
 
-    return convert_to_markdown.__wrapped__(string)
+    return convert_to_markdown.__wrapped__(string, message_id=message_id)
 
 
 def generate_basic_html(string):
@@ -260,31 +336,62 @@ refresh_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" 
 continue_svg = '''<svg  xmlns="http://www.w3.org/2000/svg"  width="20"  height="20"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-player-play"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 4v16l13 -8z" /></svg>'''
 remove_svg = '''<svg  xmlns="http://www.w3.org/2000/svg"  width="20"  height="20"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-trash"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>'''
 branch_svg = '''<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-git-branch"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 18m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M7 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M17 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M7 8l0 8" /><path d="M9 18h6a2 2 0 0 0 2 -2v-5" /><path d="M14 14l3 -3l3 3" /></svg>'''
+info_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="thinking-icon tabler-icon tabler-icon-info-circle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 2a10 10 0 0 1 0 20a10 10 0 0 1 0 -20z" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>'''
+info_svg_small = '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="thinking-icon tabler-icon tabler-icon-info-circle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 2a10 10 0 0 1 0 20a10 10 0 0 1 0 -20z" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>'''
 
 copy_button = f'<button class="footer-button footer-copy-button" title="Copy" onclick="copyToClipboard(this)">{copy_svg}</button>'
 branch_button = f'<button class="footer-button footer-branch-button" title="Branch here" onclick="branchHere(this)">{branch_svg}</button>'
 refresh_button = f'<button class="footer-button footer-refresh-button" title="Regenerate" onclick="regenerateClick()">{refresh_svg}</button>'
 continue_button = f'<button class="footer-button footer-continue-button" title="Continue" onclick="continueClick()">{continue_svg}</button>'
 remove_button = f'<button class="footer-button footer-remove-button" title="Remove last reply" onclick="removeLastClick()">{remove_svg}</button>'
+info_button = f'<button class="footer-button footer-info-button" title="message">{info_svg}</button>'
 
 
-def actions_html(history, i):
+def format_message_timestamp(history, role, index):
+    """Get a formatted timestamp HTML span for a message if available"""
+    key = f"{role}_{index}"
+    if 'metadata' in history and key in history['metadata'] and history['metadata'][key].get('timestamp'):
+        timestamp = history['metadata'][key]['timestamp']
+        return f"<span class='timestamp'>{timestamp}</span>"
+
+    return ""
+
+
+def actions_html(history, i, info_message=""):
     return (f'<div class="message-actions">'
             f'{copy_button}'
             f'{branch_button}'
             f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
             f'{continue_button if i == len(history["visible"]) - 1 else ""}'
             f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'{info_message}'
             f'</div>')
 
 
 def generate_instruct_html(history):
-    output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
+    output = f'<style>{instruct_css}</style><div class="chat" id="chat" data-mode="instruct"><div class="messages">'
 
     for i in range(len(history['visible'])):
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
-        converted_visible = [convert_to_markdown_wrapped(entry, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+        converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+
+        # Get timestamps
+        user_timestamp = format_message_timestamp(history, "user", i)
+        assistant_timestamp = format_message_timestamp(history, "assistant", i)
+
+        # Create info buttons for timestamps if they exist
+        info_message_user = ""
+        if user_timestamp != "":
+            # Extract the timestamp value from the span
+            user_timestamp_value = user_timestamp.split('>', 1)[1].split('<', 1)[0]
+            info_message_user = info_button.replace("message", user_timestamp_value)
+
+        info_message_assistant = ""
+        if assistant_timestamp != "":
+            # Extract the timestamp value from the span
+            assistant_timestamp_value = assistant_timestamp.split('>', 1)[1].split('<', 1)[0]
+            info_message_assistant = info_button.replace("message", assistant_timestamp_value)
 
         if converted_visible[0]:  # Don't display empty user messages
             output += (
@@ -292,7 +399,7 @@ def generate_instruct_html(history):
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
-                f'<div class="message-actions">{copy_button}</div>'
+                f'<div class="message-actions">{copy_button}{info_message_user}</div>'
                 f'</div>'
                 f'</div>'
             )
@@ -303,7 +410,7 @@ def generate_instruct_html(history):
             f'data-index={i}>'
             f'<div class="text">'
             f'<div class="message-body">{converted_visible[1]}</div>'
-            f'{actions_html(history, i)}'
+            f'{actions_html(history, i, info_message_assistant)}'
             f'</div>'
             f'</div>'
         )
@@ -317,19 +424,23 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
 
     # We use ?character and ?time.time() to force the browser to reset caches
     img_bot = (
-        f'<img src="file/cache/pfp_character_thumb.png?{character}" class="pfp_character">'
-        if Path("cache/pfp_character_thumb.png").exists() else ''
+        f'<img src="file/user_data/cache/pfp_character_thumb.png?{character}" class="pfp_character">'
+        if Path("user_data/cache/pfp_character_thumb.png").exists() else ''
     )
 
     img_me = (
-        f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
-        if Path("cache/pfp_me.png").exists() else ''
+        f'<img src="file/user_data/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
+        if Path("user_data/cache/pfp_me.png").exists() else ''
     )
 
     for i in range(len(history['visible'])):
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
-        converted_visible = [convert_to_markdown_wrapped(entry, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+        converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+
+        # Get timestamps
+        user_timestamp = format_message_timestamp(history, "user", i)
+        assistant_timestamp = format_message_timestamp(history, "assistant", i)
 
         if converted_visible[0]:  # Don't display empty user messages
             output += (
@@ -337,7 +448,7 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="circle-you">{img_me}</div>'
                 f'<div class="text">'
-                f'<div class="username">{name1}</div>'
+                f'<div class="username">{name1}{user_timestamp}</div>'
                 f'<div class="message-body">{converted_visible[0]}</div>'
                 f'<div class="message-actions">{copy_button}</div>'
                 f'</div>'
@@ -350,7 +461,7 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
             f'data-index={i}>'
             f'<div class="circle-bot">{img_bot}</div>'
             f'<div class="text">'
-            f'<div class="username">{name2}</div>'
+            f'<div class="username">{name2}{assistant_timestamp}</div>'
             f'<div class="message-body">{converted_visible[1]}</div>'
             f'{actions_html(history, i)}'
             f'</div>'
@@ -367,7 +478,24 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
     for i in range(len(history['visible'])):
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
-        converted_visible = [convert_to_markdown_wrapped(entry, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+        converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+
+        # Get timestamps
+        user_timestamp = format_message_timestamp(history, "user", i)
+        assistant_timestamp = format_message_timestamp(history, "assistant", i)
+
+        # Create info buttons for timestamps if they exist
+        info_message_user = ""
+        if user_timestamp != "":
+            # Extract the timestamp value from the span
+            user_timestamp_value = user_timestamp.split('>', 1)[1].split('<', 1)[0]
+            info_message_user = info_button.replace("message", user_timestamp_value)
+
+        info_message_assistant = ""
+        if assistant_timestamp != "":
+            # Extract the timestamp value from the span
+            assistant_timestamp_value = assistant_timestamp.split('>', 1)[1].split('<', 1)[0]
+            info_message_assistant = info_button.replace("message", assistant_timestamp_value)
 
         if converted_visible[0]:  # Don't display empty user messages
             output += (
@@ -375,7 +503,7 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text-you">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
-                f'<div class="message-actions">{copy_button}</div>'
+                f'<div class="message-actions">{copy_button}{info_message_user}</div>'
                 f'</div>'
                 f'</div>'
             )
@@ -386,7 +514,7 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
             f'data-index={i}>'
             f'<div class="text-bot">'
             f'<div class="message-body">{converted_visible[1]}</div>'
-            f'{actions_html(history, i)}'
+            f'{actions_html(history, i, info_message_assistant)}'
             f'</div>'
             f'</div>'
         )
@@ -395,10 +523,25 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
     return output
 
 
-def chat_html_wrapper(history, name1, name2, mode, style, character, reset_cache=False):
-    if mode == 'instruct':
-        return generate_instruct_html(history)
-    elif style == 'wpp':
-        return generate_chat_html(history, name1, name2)
+def time_greeting():
+    current_hour = datetime.datetime.now().hour
+    if 5 <= current_hour < 12:
+        return "Good morning!"
+    elif 12 <= current_hour < 18:
+        return "Good afternoon!"
     else:
-        return generate_cai_chat_html(history, name1, name2, style, character, reset_cache)
+        return "Good evening!"
+
+
+def chat_html_wrapper(history, name1, name2, mode, style, character, reset_cache=False):
+    if len(history['visible']) == 0:
+        greeting = f"<div class=\"welcome-greeting\">{time_greeting()} How can I help you today?</div>"
+        result = f'<div class="chat" id="chat">{greeting}</div>'
+    elif mode == 'instruct':
+        result = generate_instruct_html(history)
+    elif style == 'wpp':
+        result = generate_chat_html(history, name1, name2)
+    else:
+        result = generate_cai_chat_html(history, name1, name2, style, character, reset_cache)
+
+    return {'html': result}

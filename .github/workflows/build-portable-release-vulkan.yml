@@ -1,0 +1,171 @@
+name: Build Vulkan
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag of text-generation-webui to build: v3.0'
+        default: 'v3.0'
+        required: true
+        type: string
+      config:
+        description: 'Override configurations to build: key1:item1-1,item1-2;key2:item2-1,item2-2'
+        default: 'Default'
+        required: false
+        type: string
+      exclude:
+        description: 'Exclude build configurations: key1-1:item1-1,key1-2:item1-2;key2-1:item2-1,key2-2:item2-2'
+        default: 'None'
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version tag of text-generation-webui to build: v3.0'
+        default: 'v3.0'
+        required: true
+        type: string
+      config:
+        description: 'Configurations to build: key1:item1-1,item1-2;key2:item2-1,item2-2'
+        default: 'Default'
+        required: false
+        type: string
+      exclude:
+        description: 'Exclude build configurations: key1-1:item1-1,key1-2:item1-2;key2-1:item2-1,key2-2:item2-2'
+        default: 'None'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  define_matrix:
+    name: Define Build Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      CONFIGIN: ${{ inputs.config }}
+      EXCLUDEIN: ${{ inputs.exclude }}
+
+    steps:
+      - name: Define Job Output
+        id: set-matrix
+        run: |
+          $matrix = @{
+              'os' = @('ubuntu-22.04', 'windows-2019')
+              'pyver' = @("3.11")
+              'avx' = @("AVX2")
+          }
+
+          if ($env:CONFIGIN -ne 'Default') {$env:CONFIGIN.split(';').foreach({$matrix[$_.split(':')[0]] = $_.split(':')[1].split(',')})}
+
+          if ($env:EXCLUDEIN -ne 'None') {
+              $exclusions = @()
+              $exclusions += $env:EXCLUDEIN.split(';').replace(':','=').replace(',',"`n") | ConvertFrom-StringData
+              $matrix['exclude'] = $exclusions
+          }
+
+          $matrixOut = ConvertTo-Json $matrix -Compress
+          Write-Output ('matrix=' + $matrixOut) >> $env:GITHUB_OUTPUT
+
+  build_wheels:
+    name: ${{ matrix.os }} ${{ matrix.pyver }} CPU ${{ matrix.avx }}
+    needs: define_matrix
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix: ${{ fromJSON(needs.define_matrix.outputs.matrix) }}
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      AVXVER: ${{ matrix.avx }}
+      PCKGVER: ${{ inputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: 'oobabooga/text-generation-webui'
+          ref: ${{ inputs.version }}
+          submodules: 'recursive'
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.pyver }}
+
+      - name: Build Package
+        shell: bash
+        run: |
+            rm -rf .git cmd* update_wizard* Colab-TextGen-GPU.ipynb docker
+            allowed=("character_bias" "gallery" "openai" "sd_api_pictures")
+            find extensions/ -mindepth 1 -maxdepth 1 -type d | grep -v -E "$(printf '%s|' "${allowed[@]}" | sed 's/|$//')" | xargs rm -rf
+
+            # Define common variables
+            AVX_SUPPORT="${{ matrix.avx }}"
+            VERSION="${{ inputs.version }}"
+
+            # 1. Set platform-specific variables
+            if [[ "$RUNNER_OS" == "Windows" ]]; then
+                PLATFORM="windows"
+                PYTHON_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20250409/cpython-3.11.12+20250409-x86_64-pc-windows-msvc-install_only.tar.gz"
+                PIP_PATH="portable_env/python.exe -m pip"
+                PACKAGES_PATH="portable_env/Lib/site-packages"
+                ZIP_CMD="powershell -Command \"Compress-Archive -Path text-generation-webui -DestinationPath"
+                rm start_linux.sh start_macos.sh
+            else
+                PLATFORM="linux"
+                PYTHON_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20250409/cpython-3.11.12+20250409-x86_64-unknown-linux-gnu-install_only.tar.gz"
+                PIP_PATH="portable_env/bin/python -m pip"
+                PACKAGES_PATH="portable_env/lib/python3.11/site-packages"
+                ZIP_CMD="zip -r"
+                rm start_macos.sh start_windows.bat
+            fi
+
+            # 2. Download and extract Python
+            cd ..
+            echo "Downloading Python for $PLATFORM..."
+            curl -L -o python-build.tar.gz "$PYTHON_URL"
+            tar -xzf python-build.tar.gz
+            mv python text-generation-webui/portable_env
+
+            # 3. Prepare requirements file based on AVX
+            if [[ "$AVX_SUPPORT" == "AVX2" ]]; then
+                BASE_REQ_FILE="requirements/portable/requirements_vulkan.txt"
+            else
+                BASE_REQ_FILE="requirements/portable/requirements_vulkan_noavx2.txt"
+            fi
+            REQ_FILE="$BASE_REQ_FILE"
+
+            cd text-generation-webui
+
+            # 4. Install packages
+            echo "Installing Python packages from $REQ_FILE..."
+            $PIP_PATH install --target="./$PACKAGES_PATH" -r "$REQ_FILE"
+
+            # 6. Create ZIP file
+            cd ..
+            VERSION_CLEAN="${VERSION#v}"
+            ZIP_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}-vulkan.zip"
+            echo "Creating archive: $ZIP_NAME"
+
+            if [[ "$RUNNER_OS" == "Windows" ]]; then
+                powershell -Command "Compress-Archive -Path text-generation-webui -DestinationPath $ZIP_NAME"
+            else
+                zip -r "$ZIP_NAME" text-generation-webui
+            fi
+
+      - name: Upload files to a GitHub release
+        id: upload-release
+        uses: svenstaro/upload-release-action@2.7.0
+        continue-on-error: true
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ../textgen-portable-*.zip
+          tag: ${{ inputs.version }}
+          file_glob: true
+          make_latest: false
+          overwrite: true

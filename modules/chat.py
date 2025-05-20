@@ -5,6 +5,7 @@ import html
 import json
 import pprint
 import re
+import time
 from datetime import datetime
 from functools import partial
 from pathlib import Path
@@ -34,6 +35,30 @@ from modules.utils import delete_file, get_available_characters, save_file
 
 def strftime_now(format):
     return datetime.now().strftime(format)
+
+
+def get_current_timestamp():
+    """Returns the current time in 24-hour format"""
+    return datetime.now().strftime('%b %d, %Y %H:%M')
+
+
+def update_message_metadata(metadata_dict, role, index, **fields):
+    """
+    Updates or adds metadata fields for a specific message.
+
+    Args:
+        metadata_dict: The metadata dictionary
+        role: The role (user, assistant, etc)
+        index: The message index
+        **fields: Arbitrary metadata fields to update/add
+    """
+    key = f"{role}_{index}"
+    if key not in metadata_dict:
+        metadata_dict[key] = {}
+
+    # Update with provided fields
+    for field_name, field_value in fields.items():
+        metadata_dict[key][field_name] = field_value
 
 
 jinja_env = ImmutableSandboxedEnvironment(
@@ -90,6 +115,44 @@ def get_generation_prompt(renderer, impersonate=False, strip_trailing_spaces=Tru
     return prefix, suffix
 
 
+def get_thinking_suppression_string(template):
+    """
+    Determines what string needs to be added to suppress thinking mode
+    by comparing template renderings with thinking enabled vs disabled.
+    """
+
+    # Render with thinking enabled
+    with_thinking = template.render(
+        messages=[{'role': 'user', 'content': ''}],
+        builtin_tools=None,
+        tools=None,
+        tools_in_user_message=False,
+        add_generation_prompt=True,
+        enable_thinking=True
+    )
+
+    # Render with thinking disabled
+    without_thinking = template.render(
+        messages=[{'role': 'user', 'content': ''}],
+        builtin_tools=None,
+        tools=None,
+        tools_in_user_message=False,
+        add_generation_prompt=True,
+        enable_thinking=False
+    )
+
+    # Find the difference (what gets added to suppress thinking)
+    i = 0
+    while i < min(len(with_thinking), len(without_thinking)) and with_thinking[i] == without_thinking[i]:
+        i += 1
+
+    j = 0
+    while j < min(len(with_thinking), len(without_thinking)) - i and with_thinking[-1 - j] == without_thinking[-1 - j]:
+        j += 1
+
+    return without_thinking[i:len(without_thinking) - j if j else None]
+
+
 def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs.get('impersonate', False)
     _continue = kwargs.get('_continue', False)
@@ -107,7 +170,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     instruct_renderer = partial(
         instruction_template.render,
         builtin_tools=None,
-        tools=None,
+        tools=state['tools'] if 'tools' in state else None,
         tools_in_user_message=False,
         add_generation_prompt=False
     )
@@ -133,9 +196,13 @@ def generate_chat_prompt(user_input, state, **kwargs):
             messages.append({"role": "system", "content": context})
 
     insert_pos = len(messages)
-    for user_msg, assistant_msg in reversed(history):
-        user_msg = user_msg.strip()
-        assistant_msg = assistant_msg.strip()
+    for entry in reversed(history):
+        user_msg = entry[0].strip()
+        assistant_msg = entry[1].strip()
+        tool_msg = entry[2].strip() if len(entry) > 2 else ''
+
+        if tool_msg:
+            messages.insert(insert_pos, {"role": "tool", "content": tool_msg})
 
         if assistant_msg:
             messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
@@ -146,13 +213,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
     user_input = user_input.strip()
     if user_input and not impersonate and not _continue:
         messages.append({"role": "user", "content": user_input})
-
-    def remove_extra_bos(prompt):
-        for bos_token in ['<s>', '<|startoftext|>', '<BOS_TOKEN>', '<|endoftext|>']:
-            while prompt.startswith(bos_token):
-                prompt = prompt[len(bos_token):]
-
-        return prompt
 
     def make_prompt(messages):
         if state['mode'] == 'chat-instruct' and _continue:
@@ -165,7 +225,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
             if state['custom_system_message'].strip() != '':
                 outer_messages.append({"role": "system", "content": state['custom_system_message']})
 
-            prompt = remove_extra_bos(prompt)
             command = state['chat-instruct_command']
             command = command.replace('<|character|>', state['name2'] if not impersonate else state['name1'])
             command = command.replace('<|prompt|>', prompt)
@@ -182,11 +241,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
             outer_messages.append({"role": "user", "content": command})
             outer_messages.append({"role": "assistant", "content": prefix})
 
-            prompt = instruction_template.render(messages=outer_messages)
+            prompt = instruct_renderer(messages=outer_messages)
             suffix = get_generation_prompt(instruct_renderer, impersonate=False)[1]
             if len(suffix) > 0:
                 prompt = prompt[:-len(suffix)]
-
         else:
             if _continue:
                 suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
@@ -199,7 +257,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
                 prompt += prefix
 
-        prompt = remove_extra_bos(prompt)
+        if state['mode'] == 'instruct' and not any((_continue, impersonate, state['enable_thinking'])):
+            prompt += get_thinking_suppression_string(instruction_template)
+
         return prompt
 
     prompt = make_prompt(messages)
@@ -311,6 +371,10 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     output = apply_extensions('history', output)
     state = apply_extensions('state', state)
 
+    # Initialize metadata if not present
+    if 'metadata' not in output:
+        output['metadata'] = {}
+
     visible_text = None
     stopping_strings = get_stopping_strings(state)
     is_stream = state['stream']
@@ -323,39 +387,55 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
         text = apply_extensions('input', text, state, is_chat=True)
 
+        # Current row index
+        row_idx = len(output['internal'])
         output['internal'].append([text, ''])
         output['visible'].append([visible_text, ''])
+        # Add metadata with timestamp
+        update_message_metadata(output['metadata'], "user", row_idx, timestamp=get_current_timestamp())
 
         # *Is typing...*
         if loading_message:
             yield {
                 'visible': output['visible'][:-1] + [[output['visible'][-1][0], shared.processing_message]],
-                'internal': output['internal']
+                'internal': output['internal'],
+                'metadata': output['metadata']
             }
     else:
         text, visible_text = output['internal'][-1][0], output['visible'][-1][0]
         if regenerate:
+            row_idx = len(output['internal']) - 1
             if loading_message:
                 yield {
                     'visible': output['visible'][:-1] + [[visible_text, shared.processing_message]],
-                    'internal': output['internal'][:-1] + [[text, '']]
+                    'internal': output['internal'][:-1] + [[text, '']],
+                    'metadata': output['metadata']
                 }
         elif _continue:
             last_reply = [output['internal'][-1][1], output['visible'][-1][1]]
             if loading_message:
                 yield {
                     'visible': output['visible'][:-1] + [[visible_text, last_reply[1] + '...']],
-                    'internal': output['internal']
+                    'internal': output['internal'],
+                    'metadata': output['metadata']
                 }
 
     # Generate the prompt
     kwargs = {
         '_continue': _continue,
-        'history': output if _continue else {k: v[:-1] for k, v in output.items()}
+        'history': output if _continue else {
+            k: (v[:-1] if k in ['internal', 'visible'] else v)
+            for k, v in output.items()
+        }
     }
+
     prompt = apply_extensions('custom_generate_chat_prompt', text, state, **kwargs)
     if prompt is None:
         prompt = generate_chat_prompt(text, state, **kwargs)
+
+    # Add timestamp for assistant's response at the start of generation
+    row_idx = len(output['internal']) - 1
+    update_message_metadata(output['metadata'], "assistant", row_idx, timestamp=get_current_timestamp())
 
     # Generate
     reply = None
@@ -363,16 +443,13 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
         # Extract the reply
         if state['mode'] in ['chat', 'chat-instruct']:
-            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply + '▍')
+            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
         else:
-            visible_reply = reply + '▍'
+            visible_reply = reply
 
         visible_reply = html.escape(visible_reply)
 
         if shared.stop_everything:
-            if output['visible'][-1][1].endswith('▍'):
-                output['visible'][-1][1] = output['visible'][-1][1][:-1]
-
             output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
             yield output
             return
@@ -387,9 +464,6 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
             if is_stream:
                 yield output
-
-    if output['visible'][-1][1].endswith('▍'):
-        output['visible'][-1][1] = output['visible'][-1][1][:-1]
 
     output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
     yield output
@@ -417,16 +491,8 @@ def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_
             yield history
             return
 
-    show_after = html.escape(state.get("show_after")) if state.get("show_after") else None
     for history in chatbot_wrapper(text, state, regenerate=regenerate, _continue=_continue, loading_message=loading_message, for_ui=for_ui):
-        if show_after:
-            after = history["visible"][-1][1].partition(show_after)[2] or "*Is thinking...*"
-            yield {
-                'internal': history['internal'],
-                'visible': history['visible'][:-1] + [[history['visible'][-1][0], after]]
-            }
-        else:
-            yield history
+        yield history
 
 
 def character_is_loaded(state, raise_exception=False):
@@ -458,16 +524,34 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         send_dummy_reply(state['start_with'], state)
 
     history = state['history']
+    last_save_time = time.monotonic()
+    save_interval = 8
     for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True, for_ui=True)):
         yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
+
+        current_time = time.monotonic()
+        # Save on first iteration or if save_interval seconds have passed
+        if i == 0 or (current_time - last_save_time) >= save_interval:
+            save_history(history, state['unique_id'], state['character_menu'], state['mode'])
+            last_save_time = current_time
 
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 
 
 def remove_last_message(history):
+    if 'metadata' not in history:
+        history['metadata'] = {}
+
     if len(history['visible']) > 0 and history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
+        row_idx = len(history['internal']) - 1
         last = history['visible'].pop()
         history['internal'].pop()
+
+        # Remove metadata directly by known keys
+        if f"user_{row_idx}" in history['metadata']:
+            del history['metadata'][f"user_{row_idx}"]
+        if f"assistant_{row_idx}" in history['metadata']:
+            del history['metadata'][f"assistant_{row_idx}"]
     else:
         last = ['', '']
 
@@ -484,30 +568,54 @@ def send_last_reply_to_input(history):
 def replace_last_reply(text, state):
     history = state['history']
 
+    # Initialize metadata if not present
+    if 'metadata' not in history:
+        history['metadata'] = {}
+
     if len(text.strip()) == 0:
         return history
     elif len(history['visible']) > 0:
+        row_idx = len(history['internal']) - 1
         history['visible'][-1][1] = html.escape(text)
         history['internal'][-1][1] = apply_extensions('input', text, state, is_chat=True)
+        update_message_metadata(history['metadata'], "assistant", row_idx, timestamp=get_current_timestamp())
 
     return history
 
 
 def send_dummy_message(text, state):
     history = state['history']
+
+    # Initialize metadata if not present
+    if 'metadata' not in history:
+        history['metadata'] = {}
+
+    row_idx = len(history['internal'])
     history['visible'].append([html.escape(text), ''])
     history['internal'].append([apply_extensions('input', text, state, is_chat=True), ''])
+    update_message_metadata(history['metadata'], "user", row_idx, timestamp=get_current_timestamp())
+
     return history
 
 
 def send_dummy_reply(text, state):
     history = state['history']
+
+    # Initialize metadata if not present
+    if 'metadata' not in history:
+        history['metadata'] = {}
+
     if len(history['visible']) > 0 and not history['visible'][-1][1] == '':
+        row_idx = len(history['internal'])
         history['visible'].append(['', ''])
         history['internal'].append(['', ''])
+        # We don't need to add system metadata
 
+    row_idx = len(history['internal']) - 1
     history['visible'][-1][1] = html.escape(text)
     history['internal'][-1][1] = apply_extensions('input', text, state, is_chat=True)
+    update_message_metadata(history['metadata'], "assistant", row_idx, timestamp=get_current_timestamp())
+
     return history
 
 
@@ -517,13 +625,17 @@ def redraw_html(history, name1, name2, mode, style, character, reset_cache=False
 
 def start_new_chat(state):
     mode = state['mode']
-    history = {'internal': [], 'visible': []}
+    # Initialize with empty metadata dictionary
+    history = {'internal': [], 'visible': [], 'metadata': {}}
 
     if mode != 'instruct':
         greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
         if greeting != '':
             history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
             history['visible'] += [['', apply_extensions('output', html.escape(greeting), state, is_chat=True)]]
+
+            # Add timestamp for assistant's greeting
+            update_message_metadata(history['metadata'], "assistant", 0, timestamp=get_current_timestamp())
 
     unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
     save_history(history, unique_id, state['character_menu'], state['mode'])
@@ -533,9 +645,9 @@ def start_new_chat(state):
 
 def get_history_file_path(unique_id, character, mode):
     if mode == 'instruct':
-        p = Path(f'logs/instruct/{unique_id}.json')
+        p = Path(f'user_data/logs/instruct/{unique_id}.json')
     else:
-        p = Path(f'logs/chat/{character}/{unique_id}.json')
+        p = Path(f'user_data/logs/chat/{character}/{unique_id}.json')
 
     return p
 
@@ -571,13 +683,13 @@ def rename_history(old_id, new_id, character, mode):
 
 def get_paths(state):
     if state['mode'] == 'instruct':
-        return Path('logs/instruct').glob('*.json')
+        return Path('user_data/logs/instruct').glob('*.json')
     else:
         character = state['character_menu']
 
         # Handle obsolete filenames and paths
-        old_p = Path(f'logs/{character}_persistent.json')
-        new_p = Path(f'logs/persistent_{character}.json')
+        old_p = Path(f'user_data/logs/{character}_persistent.json')
+        new_p = Path(f'user_data/logs/persistent_{character}.json')
         if old_p.exists():
             logger.warning(f"Renaming \"{old_p}\" to \"{new_p}\"")
             old_p.rename(new_p)
@@ -589,7 +701,7 @@ def get_paths(state):
             p.parent.mkdir(exist_ok=True)
             new_p.rename(p)
 
-        return Path(f'logs/chat/{character}').glob('*.json')
+        return Path(f'user_data/logs/chat/{character}').glob('*.json')
 
 
 def find_all_histories(state):
@@ -705,6 +817,16 @@ def load_history(unique_id, character, mode):
             'visible': f['data_visible']
         }
 
+    # Add metadata if it doesn't exist
+    if 'metadata' not in history:
+        history['metadata'] = {}
+        # Add placeholder timestamps for existing messages
+        for i, (user_msg, asst_msg) in enumerate(history['internal']):
+            if user_msg and user_msg != '<|BEGIN-VISIBLE-CHAT|>':
+                update_message_metadata(history['metadata'], "user", i, timestamp="")
+            if asst_msg:
+                update_message_metadata(history['metadata'], "assistant", i, timestamp="")
+
     return history
 
 
@@ -719,6 +841,16 @@ def load_history_json(file, history):
                 'internal': f['data'],
                 'visible': f['data_visible']
             }
+
+        # Add metadata if it doesn't exist
+        if 'metadata' not in history:
+            history['metadata'] = {}
+            # Add placeholder timestamps
+            for i, (user_msg, asst_msg) in enumerate(history['internal']):
+                if user_msg and user_msg != '<|BEGIN-VISIBLE-CHAT|>':
+                    update_message_metadata(history['metadata'], "user", i, timestamp="")
+                if asst_msg:
+                    update_message_metadata(history['metadata'], "assistant", i, timestamp="")
 
         return history
     except:
@@ -740,7 +872,7 @@ def generate_pfp_cache(character):
     if not cache_folder.exists():
         cache_folder.mkdir()
 
-    for path in [Path(f"characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
+    for path in [Path(f"user_data/characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
         if path.exists():
             original_img = Image.open(path)
             original_img.save(Path(f'{cache_folder}/pfp_character.png'), format='PNG')
@@ -760,12 +892,12 @@ def load_character(character, name1, name2):
 
     filepath = None
     for extension in ["yml", "yaml", "json"]:
-        filepath = Path(f'characters/{character}.{extension}')
+        filepath = Path(f'user_data/characters/{character}.{extension}')
         if filepath.exists():
             break
 
     if filepath is None or not filepath.exists():
-        logger.error(f"Could not find the character \"{character}\" inside characters/. No character has been loaded.")
+        logger.error(f"Could not find the character \"{character}\" inside user_data/characters. No character has been loaded.")
         raise ValueError
 
     file_contents = open(filepath, 'r', encoding='utf-8').read()
@@ -804,7 +936,7 @@ def load_instruction_template(template):
     if template == 'None':
         return ''
 
-    for filepath in [Path(f'instruction-templates/{template}.yaml'), Path('instruction-templates/Alpaca.yaml')]:
+    for filepath in [Path(f'user_data/instruction-templates/{template}.yaml'), Path('user_data/instruction-templates/Alpaca.yaml')]:
         if filepath.exists():
             break
     else:
@@ -846,17 +978,17 @@ def upload_character(file, img, tavern=False):
 
     outfile_name = name
     i = 1
-    while Path(f'characters/{outfile_name}.yaml').exists():
+    while Path(f'user_data/characters/{outfile_name}.yaml').exists():
         outfile_name = f'{name}_{i:03d}'
         i += 1
 
-    with open(Path(f'characters/{outfile_name}.yaml'), 'w', encoding='utf-8') as f:
+    with open(Path(f'user_data/characters/{outfile_name}.yaml'), 'w', encoding='utf-8') as f:
         f.write(yaml_data)
 
     if img is not None:
-        img.save(Path(f'characters/{outfile_name}.png'))
+        img.save(Path(f'user_data/characters/{outfile_name}.png'))
 
-    logger.info(f'New character saved to "characters/{outfile_name}.yaml".')
+    logger.info(f'New character saved to "user_data/characters/{outfile_name}.yaml".')
     return gr.update(value=outfile_name, choices=get_available_characters())
 
 
@@ -931,9 +1063,9 @@ def save_character(name, greeting, context, picture, filename):
         return
 
     data = generate_character_yaml(name, greeting, context)
-    filepath = Path(f'characters/{filename}.yaml')
+    filepath = Path(f'user_data/characters/{filename}.yaml')
     save_file(filepath, data)
-    path_to_img = Path(f'characters/{filename}.png')
+    path_to_img = Path(f'user_data/characters/{filename}.png')
     if picture is not None:
         picture.save(path_to_img)
         logger.info(f'Saved {path_to_img}.')
@@ -941,9 +1073,9 @@ def save_character(name, greeting, context, picture, filename):
 
 def delete_character(name, instruct=False):
     for extension in ["yml", "yaml", "json"]:
-        delete_file(Path(f'characters/{name}.{extension}'))
+        delete_file(Path(f'user_data/characters/{name}.{extension}'))
 
-    delete_file(Path(f'characters/{name}.png'))
+    delete_file(Path(f'user_data/characters/{name}.png'))
 
 
 def jinja_template_from_old_format(params, verbose=False):
@@ -1252,7 +1384,7 @@ def handle_save_template_click(instruction_template_str):
     contents = generate_instruction_template_yaml(instruction_template_str)
     return [
         "My Template.yaml",
-        "instruction-templates/",
+        "user_data/instruction-templates/",
         contents,
         gr.update(visible=True)
     ]
@@ -1261,7 +1393,7 @@ def handle_save_template_click(instruction_template_str):
 def handle_delete_template_click(template):
     return [
         f"{template}.yaml",
-        "instruction-templates/",
+        "user_data/instruction-templates/",
         gr.update(visible=False)
     ]
 
@@ -1275,7 +1407,7 @@ def handle_your_picture_change(picture, state):
 
 def handle_send_instruction_click(state):
     state['mode'] = 'instruct'
-    state['history'] = {'internal': [], 'visible': []}
+    state['history'] = {'internal': [], 'visible': [], 'metadata': {}}
 
     output = generate_chat_prompt("Input", state)
 

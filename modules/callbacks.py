@@ -2,33 +2,11 @@ import traceback
 from queue import Queue
 from threading import Thread
 
-import torch
-import transformers
-
 import modules.shared as shared
 
 
 class StopNowException(Exception):
     pass
-
-
-class _StopEverythingStoppingCriteria(transformers.StoppingCriteria):
-    def __init__(self):
-        transformers.StoppingCriteria.__init__(self)
-
-    def __call__(self, input_ids: torch.LongTensor, _scores: torch.FloatTensor) -> bool:
-        return shared.stop_everything
-
-
-class Stream(transformers.StoppingCriteria):
-    def __init__(self, callback_func=None):
-        self.callback_func = callback_func
-
-    def __call__(self, input_ids, scores) -> bool:
-        if self.callback_func is not None:
-            self.callback_func(input_ids[0])
-
-        return False
 
 
 class Iteratorize:

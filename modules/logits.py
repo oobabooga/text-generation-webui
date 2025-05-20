@@ -1,12 +1,13 @@
 import time
 import traceback
 
-import torch
+import numpy as np
 
-from modules import models, sampler_hijack, shared
+from modules import models, shared
 from modules.logging_colors import logger
-from modules.models import get_device, load_model
+from modules.models import load_model
 from modules.text_generation import generate_reply
+from modules.utils import check_model_loaded
 
 global_scores = None
 
@@ -33,75 +34,101 @@ def get_next_logits(*args, **kwargs):
 
 
 def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, return_dict=False):
-    if shared.model is None:
-        logger.error("No model is loaded! Select one in the Model tab.")
-        return 'Error: No model is loaded1 Select one in the Model tab.', previous
+    model_is_loaded, error_message = check_model_loaded()
+    if not model_is_loaded:
+        return error_message, previous
 
-    is_non_hf_exllamav2 = shared.model.__class__.__name__ == 'Exllamav2Model'
-    is_non_hf_llamacpp = shared.model.__class__.__name__ == 'LlamaCppModel'
+    # llama.cpp case
+    if shared.model.__class__.__name__ == 'LlamaServer':
+        logprobs = shared.model.get_logits(prompt, state, n_probs=top_logits, use_samplers=use_samplers)
 
-    if use_samplers:
-        if any([is_non_hf_exllamav2, is_non_hf_llamacpp]):
-            logger.error("Sampler hijacking is not supported non-Huggingface loaders.")
-            # sampling is all done in c for exllama, so it is really hard to hijack
-            # it should be possible to hijack llamacpp sampler by hijacking all their sampling methods,
-            # but it is not implemented yet
-            return 'Error: Sampler hijacking is not supported non-Huggingface loaders. Please disable the "Use samplers" option.', previous
+        if return_dict:
+            output = {}
+            for entry in logprobs:
+                token = repr(entry['token'])
+                if len(token) > 2 and token.startswith("'") and token.endswith("'"):
+                    token = token[1:-1]
 
-        state['max_new_tokens'] = 1
-        state['auto_max_new_tokens'] = False
-        for _ in generate_reply(prompt, state):
-            pass
-
-        scores = sampler_hijack.global_scores[-1]
-    else:
-        if is_non_hf_exllamav2:
-            device = get_device()
-            tokens = shared.tokenizer.encode(prompt)
-            if device:
-                tokens = tokens.to(device)
-
-            scores = shared.model.get_logits(tokens)[-1][-1]
-        elif is_non_hf_llamacpp:
-            tokens = shared.tokenizer.encode(prompt)
-            scores = shared.model.get_logits(tokens)[-1][-1]
+                prob = entry['prob'] if use_samplers else np.exp(entry['logprob'])
+                output[token] = prob
+            return output
         else:
-            device = get_device()
-            tokens = shared.tokenizer.encode(prompt, return_tensors='pt')
-            if device:
-                tokens = tokens.to(device)
+            output = ''
+            for entry in logprobs:
+                token = repr(entry['token'])
+                if len(token) > 2 and token.startswith("'") and token.endswith("'"):
+                    token = token[1:-1]
 
-            output = shared.model(input_ids=tokens)
-            scores = output['logits'][-1][-1]
+                prob = entry['prob'] if use_samplers else np.exp(entry['logprob'])
+                output += f"{prob:.5f}  -  {token}\n"
+            return output, previous
 
-    probs = torch.softmax(scores, dim=-1, dtype=torch.float)
-    topk_values, topk_indices = torch.topk(probs, k=top_logits, largest=True, sorted=True)
-    if is_non_hf_llamacpp:
-        topk_indices = [i.expand((1, 1)) for i in topk_indices]
-
-    if hasattr(shared.tokenizer, 'convert_ids_to_tokens'):
-        tokens = [shared.tokenizer.convert_ids_to_tokens(int(i)) for i in topk_indices]
+    # All other model types
     else:
-        tokens = [shared.tokenizer.decode(i) for i in topk_indices]
+        import torch
 
-    if return_dict:
-        topk_values = [float(i) for i in topk_values]
-        output = {}
-        for row in list(zip(topk_values, tokens)):
-            key = row[1]
-            if isinstance(key, bytes):
-                try:
-                    key = key.decode()
-                except:
-                    key = key.decode('latin')
+        from modules import sampler_hijack
+        from modules.torch_utils import get_device
 
-            output[key] = row[0]
+        is_non_hf_exllamav2 = shared.model.__class__.__name__ == 'Exllamav2Model'
 
-        return output
-    else:
-        topk_values = [f"{float(i):.5f}" for i in topk_values]
-        output = ''
-        for row in list(zip(topk_values, tokens)):
-            output += f"{row[0]}  -  {repr(row[1])}\n"
+        if not use_samplers:
+            state = {'stream': True}
 
-        return output, previous
+        if use_samplers:
+            if is_non_hf_exllamav2:
+                # sampling is all done in C++ for exllama, so it is really hard to hijack
+                logger.error("Sampler hijacking is not supported non-Huggingface loaders.")
+                return 'Error: Sampler hijacking is not supported non-Huggingface loaders. Please disable the "Use samplers" option.', previous
+
+            state['max_new_tokens'] = 1
+            state['auto_max_new_tokens'] = False
+            for _ in generate_reply(prompt, state):
+                pass
+
+            scores = sampler_hijack.global_scores[-1]
+        else:
+            if is_non_hf_exllamav2:
+                device = get_device()
+                tokens = shared.tokenizer.encode(prompt)
+                if device:
+                    tokens = tokens.to(device)
+
+                scores = shared.model.get_logits(tokens)[-1][-1]
+            else:
+                device = get_device()
+                tokens = shared.tokenizer.encode(prompt, return_tensors='pt')
+                if device:
+                    tokens = tokens.to(device)
+
+                output = shared.model(input_ids=tokens)
+                scores = output['logits'][-1][-1]
+
+        probs = torch.softmax(scores, dim=-1, dtype=torch.float)
+        topk_values, topk_indices = torch.topk(probs, k=top_logits, largest=True, sorted=True)
+        if hasattr(shared.tokenizer, 'convert_ids_to_tokens'):
+            tokens = [shared.tokenizer.convert_ids_to_tokens(int(i)) for i in topk_indices]
+        else:
+            tokens = [shared.tokenizer.decode(i) for i in topk_indices]
+
+        if return_dict:
+            topk_values = [float(i) for i in topk_values]
+            output = {}
+            for row in list(zip(topk_values, tokens)):
+                key = row[1]
+                if isinstance(key, bytes):
+                    try:
+                        key = key.decode()
+                    except:
+                        key = key.decode('latin')
+
+                output[key] = row[0]
+
+            return output
+        else:
+            topk_values = [f"{float(i):.5f}" for i in topk_values]
+            output = ''
+            for row in list(zip(topk_values, tokens)):
+                output += f"{row[0]}  -  {repr(row[1])}\n"
+
+            return output, previous

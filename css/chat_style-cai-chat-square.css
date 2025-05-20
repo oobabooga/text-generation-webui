@@ -16,6 +16,7 @@
 }
 
 .message {
-    padding-bottom: 2em;
+    padding-bottom: 1.5em;
+    padding-top: 0.5em;
     grid-template-columns: 70px minmax(0, 1fr);
 }

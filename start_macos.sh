@@ -1,6 +1,17 @@
 #!/bin/bash
 
+# environment isolation
+export PYTHONNOUSERSITE=1
+unset PYTHONPATH
+unset PYTHONHOME
+
 cd "$(dirname "${BASH_SOURCE[0]}")"
+
+# Portable install case
+if [ -d "portable_env" ]; then
+    ./portable_env/bin/python3 server.py --portable --api --auto-launch --api-port 5005 "$@"
+    exit $?
+fi
 
 if [[ "$(pwd)" =~ " " ]]; then echo This script relies on Miniconda which can not be silently installed under a path with spaces. && exit; fi
 
@@ -55,10 +66,6 @@ if [ ! -e "$INSTALL_ENV_DIR/bin/python" ]; then
     exit
 fi
 
-# environment isolation
-export PYTHONNOUSERSITE=1
-unset PYTHONPATH
-unset PYTHONHOME
 export CUDA_PATH="$INSTALL_ENV_DIR"
 export CUDA_HOME="$CUDA_PATH"
 

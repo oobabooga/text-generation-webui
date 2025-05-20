@@ -35,7 +35,7 @@ class TensorRTLLMModel:
             logger.info("TensorRT-LLM: Using \"ModelRunnerCpp\"")
             runner_kwargs.update(
                 max_batch_size=1,
-                max_input_len=shared.args.max_seq_len - 512,
+                max_input_len=shared.args.ctx_size - 512,
                 max_output_len=512,
                 max_beam_width=1,
                 max_attention_window_size=None,

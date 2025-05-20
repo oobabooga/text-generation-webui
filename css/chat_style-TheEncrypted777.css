@@ -2,8 +2,10 @@
 
 .message {
     display: grid;
+    align-items: start;
     grid-template-columns: 60px minmax(0, 1fr);
-    padding-bottom: 28px;
+    padding-bottom: 21px;
+    padding-top: 7px;
     font-size: 18px;
     font-family: 'Noto Sans', Arial, sans-serif;
     line-height: 1.428571429;
@@ -100,6 +102,7 @@
 @media screen and (width <= 688px) {
     .message {
         display: grid;
+        align-items: start;
         grid-template-columns: 60px minmax(0, 1fr);
         padding-bottom: 25px;
         font-size: 15px;

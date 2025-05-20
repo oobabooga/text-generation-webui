@@ -1,5 +1,5 @@
 '''
-Downloads models from Hugging Face to models/username_modelname.
+Downloads models from Hugging Face to user_data/models/username_modelname.
 
 Example:
 python download-model.py facebook/opt-1.3b
@@ -175,7 +175,7 @@ class ModelDownloader:
         if model_dir:
             base_folder = model_dir
         else:
-            base_folder = 'models' if not is_lora else 'loras'
+            base_folder = 'user_data/models' if not is_lora else 'user_data/loras'
 
         # If the model is of type GGUF, save directly in the base_folder
         if is_llamacpp:
@@ -356,7 +356,7 @@ if __name__ == '__main__':
     parser.add_argument('--specific-file', type=str, default=None, help='Name of the specific file to download (if not provided, downloads all).')
     parser.add_argument('--exclude-pattern', type=str, default=None, help='Regex pattern to exclude files from download.')
     parser.add_argument('--output', type=str, default=None, help='Save the model files to this folder.')
-    parser.add_argument('--model-dir', type=str, default=None, help='Save the model files to a subfolder of this folder instead of the default one (text-generation-webui/models).')
+    parser.add_argument('--model-dir', type=str, default=None, help='Save the model files to a subfolder of this folder instead of the default one (text-generation-webui/user_data/models).')
     parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
     parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
     parser.add_argument('--max-retries', type=int, default=7, help='Max retries count when get error in download time.')

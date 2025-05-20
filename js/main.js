@@ -132,8 +132,6 @@ targetElement.addEventListener("scroll", function() {
 
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
-  updateCssProperties();
-
   if (targetElement.classList.contains("_generating")) {
     typing.parentNode.classList.add("visible-dots");
     document.getElementById("stop").style.display = "flex";
@@ -149,6 +147,16 @@ const observer = new MutationObserver(function(mutations) {
 
   if (!isScrolled && targetElement.scrollTop !== targetElement.scrollHeight) {
     targetElement.scrollTop = targetElement.scrollHeight;
+  }
+
+  const chatElement = document.getElementById("chat");
+  if (chatElement && chatElement.getAttribute("data-mode") === "instruct") {
+    const messagesContainer = chatElement.querySelector(".messages");
+    const lastChild = messagesContainer?.lastElementChild;
+    const prevSibling = lastChild?.previousElementSibling;
+    if (lastChild && prevSibling) {
+      lastChild.style.minHeight = `calc(max(70vh, 100vh - ${prevSibling.offsetHeight}px - 102px))`;
+    }
   }
 });
 
@@ -395,7 +403,7 @@ let bigPictureVisible = false;
 function addBigPicture() {
   var imgElement = document.createElement("img");
   var timestamp = new Date().getTime();
-  imgElement.src = "/file/cache/pfp_character.png?time=" + timestamp;
+  imgElement.src = "/file/user_data/cache/pfp_character.png?time=" + timestamp;
   imgElement.classList.add("bigProfilePicture");
   imgElement.addEventListener("load", function () {
     this.style.visibility = "visible";
@@ -435,38 +443,6 @@ const chatInput = document.querySelector("#chat-input textarea");
 
 // Variables to store current dimensions
 let currentChatInputHeight = chatInput.clientHeight;
-
-// Update chat layout based on chat and input dimensions
-function updateCssProperties() {
-  const chatInputHeight = chatInput.clientHeight;
-
-  // Check if the chat container is visible
-  if (chatContainer.clientHeight > 0) {
-    const chatContainerParentHeight = chatContainer.parentNode.clientHeight;
-    const newChatHeight = `${chatContainerParentHeight - chatInputHeight - 80}px`;
-
-    document.documentElement.style.setProperty("--chat-height", newChatHeight);
-    document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
-
-    // Adjust scrollTop based on input height change
-    if (chatInputHeight !== currentChatInputHeight) {
-      const deltaHeight = chatInputHeight - currentChatInputHeight;
-      if (!isScrolled && deltaHeight < 0) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-      } else {
-        chatContainer.scrollTop += deltaHeight;
-      }
-
-      currentChatInputHeight = chatInputHeight;
-    }
-  }
-}
-
-// Observe textarea size changes and call update function
-new ResizeObserver(updateCssProperties).observe(document.querySelector("#chat-input textarea"));
-
-// Handle changes in window size
-window.addEventListener("resize", updateCssProperties);
 
 //------------------------------------------------
 // Focus on the rename text area when it becomes visible
@@ -720,7 +696,7 @@ function isMobile() {
 // Function to initialize sidebars
 function initializeSidebars() {
   const isOnMobile = isMobile();
-  
+
   if (isOnMobile) {
     // Mobile state: Hide sidebars and set closed states
     [pastChatsRow, chatControlsRow, headerBar].forEach(el => {

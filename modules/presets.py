@@ -11,7 +11,7 @@ from modules.logging_colors import logger
 
 
 def default_preset():
-    return {
+    result = {
         'temperature': 1,
         'dynatemp_low': 1,
         'dynatemp_high': 1,
@@ -46,9 +46,16 @@ def default_preset():
         'do_sample': True,
         'dynamic_temperature': False,
         'temperature_last': False,
-        'sampler_priority': 'repetition_penalty\npresence_penalty\nfrequency_penalty\ndry\ntemperature\ndynamic_temperature\nquadratic_sampling\ntop_n_sigma\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nmirostat\nxtc\nencoder_repetition_penalty\nno_repeat_ngram',
+        'sampler_priority': 'repetition_penalty\npresence_penalty\nfrequency_penalty\ndry\ntop_n_sigma\ntemperature\ndynamic_temperature\nquadratic_sampling\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nmirostat\nxtc\nencoder_repetition_penalty\nno_repeat_ngram',
         'dry_sequence_breakers': '"\\n", ":", "\\"", "*"',
     }
+
+    if shared.args.portable:
+        samplers = result['sampler_priority'].split('\n')
+        samplers = [sampler for sampler in samplers if sampler in ["dry", "top_k", "top_p", "top_n_sigma", "min_p", "temperature", "xtc", "typical_p", "repetition_penalty"]]
+        result['sampler_priority'] = '\n'.join(samplers)
+
+    return result
 
 
 def presets_params():
@@ -58,7 +65,7 @@ def presets_params():
 def load_preset(name, verbose=False):
     generate_params = default_preset()
     if name not in ['None', None, '']:
-        path = Path(f'presets/{name}.yaml')
+        path = Path(f'user_data/presets/{name}.yaml')
         if path.exists():
             with open(path, 'r') as infile:
                 preset = yaml.safe_load(infile)

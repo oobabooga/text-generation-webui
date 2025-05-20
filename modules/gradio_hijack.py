@@ -1,5 +1,6 @@
 '''
-Copied from: https://github.com/AUTOMATIC1111/stable-diffusion-webui/pull/14184
+Most of the code here was adapted from:
+https://github.com/AUTOMATIC1111/stable-diffusion-webui/pull/14184
 '''
 
 import inspect
@@ -7,6 +8,30 @@ import warnings
 from functools import wraps
 
 import gradio as gr
+import gradio.routes
+import gradio.utils
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+
+from modules import shared
+
+orig_create_app = gradio.routes.App.create_app
+
+
+# Be strict about only approving access to localhost by default
+def create_app_with_trustedhost(*args, **kwargs):
+    app = orig_create_app(*args, **kwargs)
+
+    if not (shared.args.listen or shared.args.share):
+        app.add_middleware(
+            TrustedHostMiddleware,
+            allowed_hosts=["localhost", "127.0.0.1"]
+        )
+
+    return app
+
+
+gradio.routes.App.create_app = create_app_with_trustedhost
+gradio.utils.launch_counter = lambda: None
 
 
 class GradioDeprecationWarning(DeprecationWarning):
