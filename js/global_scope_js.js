@@ -18,6 +18,37 @@ function copyToClipboard(element) {
   });
 }
 
+function branchHere(element) {
+  if (!element) return;
+
+  const messageElement = element.closest(".message, .user-message, .assistant-message");
+  if (!messageElement) return;
+
+  const index = messageElement.getAttribute("data-index");
+  if (!index) return;
+
+  const branchIndexInput = document.getElementById("Branch-index").querySelector("input");
+  if (!branchIndexInput) {
+    console.error("Element with ID 'Branch-index' not found.");
+    return;
+  }
+  const branchButton = document.getElementById("Branch");
+
+  if (!branchButton) {
+    console.error("Required element 'Branch' not found.");
+    return;
+  }
+
+  branchIndexInput.value = index;
+
+  // Trigger any 'change' or 'input' events Gradio might be listening for
+  const event = new Event("input", { bubbles: true }); // 'change' might also work
+  branchIndexInput.dispatchEvent(event);
+
+  branchButton.click(); // Gradio will now pick up the 'index'
+
+}
+
 function regenerateClick() {
   document.getElementById("Regenerate").click();
 }
