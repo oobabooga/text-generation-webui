@@ -351,7 +351,8 @@ def format_message_timestamp(history, role, index):
     key = f"{role}_{index}"
     if 'metadata' in history and key in history['metadata'] and history['metadata'][key].get('timestamp'):
         timestamp = history['metadata'][key]['timestamp']
-        return f" <span class='timestamp'>{timestamp}</span>"
+        return f"<span class='timestamp'>{timestamp}</span>"
+
     return ""
 
 

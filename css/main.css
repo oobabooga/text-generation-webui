@@ -420,10 +420,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat .message .timestamp {
-    font-size: 0.8em;
+    font-size: 0.7em;
     display: inline-block;
     font-weight: normal;
-    opacity: 0.5;
+    opacity: 0.7;
+    margin-left: 5px;
 }
 
 .chat-parent.bigchat {
