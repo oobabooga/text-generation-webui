@@ -169,11 +169,7 @@ def convert_to_markdown(string, message_id=None):
         thinking_block = f'''
         <details class="thinking-block" data-block-id="{block_id}" data-streaming="{str(is_streaming).lower()}">
             <summary class="thinking-header">
-                <svg class="thinking-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 1.33334C4.31868 1.33334 1.33334 4.31868 1.33334 8.00001C1.33334 11.6813 4.31868 14.6667 8 14.6667C11.6813 14.6667 14.6667 11.6813 14.6667 8.00001C14.6667 4.31868 11.6813 1.33334 8 1.33334Z" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M8 10.6667V8.00001" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M8 5.33334H8.00667" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                {info_svg_small}
                 <span class="thinking-title">{title_text}</span>
             </summary>
             <div class="thinking-content pretty_scrollbar">{thinking_html}</div>
@@ -339,11 +335,59 @@ copy_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" vie
 refresh_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-repeat"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg>'''
 continue_svg = '''<svg  xmlns="http://www.w3.org/2000/svg"  width="20"  height="20"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-player-play"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 4v16l13 -8z" /></svg>'''
 remove_svg = '''<svg  xmlns="http://www.w3.org/2000/svg"  width="20"  height="20"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-trash"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>'''
+branch_svg = '''<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-git-branch"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 18m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M7 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M17 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M7 8l0 8" /><path d="M9 18h6a2 2 0 0 0 2 -2v-5" /><path d="M14 14l3 -3l3 3" /></svg>'''
+info_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="thinking-icon tabler-icon tabler-icon-info-circle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 2a10 10 0 0 1 0 20a10 10 0 0 1 0 -20z" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>'''
+info_svg_small = '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="thinking-icon tabler-icon tabler-icon-info-circle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 2a10 10 0 0 1 0 20a10 10 0 0 1 0 -20z" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>'''
+attachment_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.48-8.48l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>'''
 
 copy_button = f'<button class="footer-button footer-copy-button" title="Copy" onclick="copyToClipboard(this)">{copy_svg}</button>'
+branch_button = f'<button class="footer-button footer-branch-button" title="Branch here" onclick="branchHere(this)">{branch_svg}</button>'
 refresh_button = f'<button class="footer-button footer-refresh-button" title="Regenerate" onclick="regenerateClick()">{refresh_svg}</button>'
 continue_button = f'<button class="footer-button footer-continue-button" title="Continue" onclick="continueClick()">{continue_svg}</button>'
 remove_button = f'<button class="footer-button footer-remove-button" title="Remove last reply" onclick="removeLastClick()">{remove_svg}</button>'
+info_button = f'<button class="footer-button footer-info-button" title="message">{info_svg}</button>'
+
+
+def format_message_timestamp(history, role, index):
+    """Get a formatted timestamp HTML span for a message if available"""
+    key = f"{role}_{index}"
+    if 'metadata' in history and key in history['metadata'] and history['metadata'][key].get('timestamp'):
+        timestamp = history['metadata'][key]['timestamp']
+        return f"<span class='timestamp'>{timestamp}</span>"
+
+    return ""
+
+
+def format_message_attachments(history, role, index):
+    """Get formatted HTML for message attachments if available"""
+    key = f"{role}_{index}"
+    if 'metadata' in history and key in history['metadata'] and 'attachments' in history['metadata'][key]:
+        attachments = history['metadata'][key]['attachments']
+        if not attachments:
+            return ""
+
+        attachments_html = '<div class="message-attachments">'
+        for attachment in attachments:
+            attachments_html += (
+                f'<div class="attachment-box">'
+                f'<div class="attachment-icon">{attachment_svg}</div>'
+                f'<div class="attachment-name">{html.escape(attachment["name"])}</div>'
+                f'</div>'
+            )
+        attachments_html += '</div>'
+        return attachments_html
+
+    return ""
+
+def actions_html(history, i, info_message=""):
+    return (f'<div class="message-actions">'
+            f'{copy_button}'
+            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
+            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
+            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'{branch_button}'
+            f'{info_message}'
+            f'</div>')
 
 
 def generate_instruct_html(history):
@@ -356,6 +400,27 @@ def generate_instruct_html(history):
         versioning_nav_user = message_versioning.get_message_version_nav_elements(i, 0)
         versioning_nav_bot = message_versioning.get_message_version_nav_elements(i, 1)
 
+        # Get timestamps
+        user_timestamp = format_message_timestamp(history, "user", i)
+        assistant_timestamp = format_message_timestamp(history, "assistant", i)
+
+        # Get attachments
+        user_attachments = format_message_attachments(history, "user", i)
+        assistant_attachments = format_message_attachments(history, "assistant", i)
+
+        # Create info buttons for timestamps if they exist
+        info_message_user = ""
+        if user_timestamp != "":
+            # Extract the timestamp value from the span
+            user_timestamp_value = user_timestamp.split('>', 1)[1].split('<', 1)[0]
+            info_message_user = info_button.replace("message", user_timestamp_value)
+
+        info_message_assistant = ""
+        if assistant_timestamp != "":
+            # Extract the timestamp value from the span
+            assistant_timestamp_value = assistant_timestamp.split('>', 1)[1].split('<', 1)[0]
+            info_message_assistant = info_button.replace("message", assistant_timestamp_value)
+
         if converted_visible[0]:  # Don't display empty user messages
             selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
             output += (
@@ -364,8 +429,8 @@ def generate_instruct_html(history):
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
-                f'{copy_button}'
-                f'{versioning_nav_user}'
+                f'{user_attachments}'
+                f'<div class="message-actions">{copy_button}{info_message_user}</div>'
                 f'</div>'
                 f'</div>'
             )
@@ -373,15 +438,12 @@ def generate_instruct_html(history):
         selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
             f'<div class="assistant-message{selected_class}" '
-            f'data-history-index="{i}" '
-            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
+            f'data-raw="{html.escape(row_internal[1], quote=True)}"'
+            f'data-index={i}>'
             f'<div class="text">'
             f'<div class="message-body">{converted_visible[1]}</div>'
-            f'{copy_button}'
-            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
-            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
-            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
-            f'{versioning_nav_bot}'
+            f'{assistant_attachments}'
+            f'{actions_html(history, i, info_message_assistant)}'
             f'</div>'
             f'</div>'
         )
@@ -408,9 +470,16 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
         converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
-
         versioning_nav_user = message_versioning.get_message_version_nav_elements(i, 0)
         versioning_nav_bot = message_versioning.get_message_version_nav_elements(i, 1)
+
+        # Get timestamps
+        user_timestamp = format_message_timestamp(history, "user", i)
+        assistant_timestamp = format_message_timestamp(history, "assistant", i)
+
+        # Get attachments
+        user_attachments = format_message_attachments(history, "user", i)
+        assistant_attachments = format_message_attachments(history, "assistant", i)
 
         if converted_visible[0]:  # Don't display empty user messages
             selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
@@ -420,28 +489,25 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="circle-you">{img_me}</div>'
                 f'<div class="text">'
-                f'<div class="username">{name1}</div>'
+                f'<div class="username">{name1}{user_timestamp}</div>'
                 f'<div class="message-body">{converted_visible[0]}</div>'
-                f'{copy_button}'
-                f'{versioning_nav_user}'
+                f'{user_attachments}'
+                f'<div class="message-actions">{copy_button}</div>'
                 f'</div>'
                 f'</div>'
             )
 
         selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
-            f'<div class="message{selected_class}" '
-            f'data-history-index="{i}" data-message-type="1" '
-            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
+            f'<div class="message"{selected_class}'
+            f'data-raw="{html.escape(row_internal[1], quote=True)}"'
+            f'data-index={i}>'
             f'<div class="circle-bot">{img_bot}</div>'
             f'<div class="text">'
-            f'<div class="username">{name2}</div>'
+            f'<div class="username">{name2}{assistant_timestamp}</div>'
             f'<div class="message-body">{converted_visible[1]}</div>'
-            f'{copy_button}'
-            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
-            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
-            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
-            f'{versioning_nav_bot}'
+            f'{assistant_attachments}'
+            f'{actions_html(history, i)}'
             f'</div>'
             f'</div>'
         )
@@ -457,20 +523,40 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
         converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
-
         versioning_nav_user = message_versioning.get_message_version_nav_elements(i, 0)
         versioning_nav_bot = message_versioning.get_message_version_nav_elements(i, 1)
+
+        # Get timestamps
+        user_timestamp = format_message_timestamp(history, "user", i)
+        assistant_timestamp = format_message_timestamp(history, "assistant", i)
+
+        # Get attachments
+        user_attachments = format_message_attachments(history, "user", i)
+        assistant_attachments = format_message_attachments(history, "assistant", i)
+
+        # Create info buttons for timestamps if they exist
+        info_message_user = ""
+        if user_timestamp != "":
+            # Extract the timestamp value from the span
+            user_timestamp_value = user_timestamp.split('>', 1)[1].split('<', 1)[0]
+            info_message_user = info_button.replace("message", user_timestamp_value)
+
+        info_message_assistant = ""
+        if assistant_timestamp != "":
+            # Extract the timestamp value from the span
+            assistant_timestamp_value = assistant_timestamp.split('>', 1)[1].split('<', 1)[0]
+            info_message_assistant = info_button.replace("message", assistant_timestamp_value)
 
         if converted_visible[0]:  # Don't display empty user messages
             selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
             output += (
                 f'<div class="message{selected_class}" '
-                f'data-history-index="{i}" data-message-type="0" '
+                f'data-history-index="{i}"'
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text-you">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
-                f'{copy_button}'
-                f'{versioning_nav_user}'
+                f'{user_attachments}'
+                f'<div class="message-actions">{copy_button}{info_message_user}</div>'
                 f'</div>'
                 f'</div>'
             )
@@ -478,15 +564,12 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
         selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
             f'<div class="message{selected_class}" '
-            f'data-history-index="{i}" data-message-type="1" '
-            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
+            f'data-raw="{html.escape(row_internal[1], quote=True)}"'
+            f'data-index={i}>'
             f'<div class="text-bot">'
             f'<div class="message-body">{converted_visible[1]}</div>'
-            f'{copy_button}'
-            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
-            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
-            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
-            f'{versioning_nav_bot}'
+            f'{assistant_attachments}'
+            f'{actions_html(history, i, info_message_assistant)}'
             f'</div>'
             f'</div>'
         )

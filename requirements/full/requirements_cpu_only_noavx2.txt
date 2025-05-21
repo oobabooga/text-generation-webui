@@ -12,6 +12,7 @@ peft==0.15.*
 Pillow>=9.5.0
 psutil
 pydantic==2.8.2
+PyPDF2==3.0.1
 pyyaml
 requests
 rich
@@ -29,5 +30,5 @@ sse-starlette==1.6.5
 tiktoken
 
 # llama.cpp (CPU only, no AVX2)
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.12.0/llama_cpp_binaries-0.12.0+cpuavx-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.12.0/llama_cpp_binaries-0.12.0+cpuavx-py3-none-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.14.0/llama_cpp_binaries-0.14.0+cpuavx-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.14.0/llama_cpp_binaries-0.14.0+cpuavx-py3-none-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"

@@ -132,8 +132,6 @@ targetElement.addEventListener("scroll", function() {
 
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
-  updateCssProperties();
-
   if (targetElement.classList.contains("_generating")) {
     typing.parentNode.classList.add("visible-dots");
     document.getElementById("stop").style.display = "flex";
@@ -445,32 +443,6 @@ const chatInput = document.querySelector("#chat-input textarea");
 
 // Variables to store current dimensions
 let currentChatInputHeight = chatInput.clientHeight;
-
-// Update chat layout based on chat and input dimensions
-function updateCssProperties() {
-  const chatInputHeight = chatInput.clientHeight;
-
-  // Check if the chat container is visible
-  if (chatContainer.clientHeight > 0) {
-    // Adjust scrollTop based on input height change
-    if (chatInputHeight !== currentChatInputHeight) {
-      const deltaHeight = chatInputHeight - currentChatInputHeight;
-      if (!isScrolled && deltaHeight < 0) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-      } else {
-        chatContainer.scrollTop += deltaHeight;
-      }
-
-      currentChatInputHeight = chatInputHeight;
-    }
-  }
-}
-
-// Observe textarea size changes and call update function
-new ResizeObserver(updateCssProperties).observe(document.querySelector("#chat-input textarea"));
-
-// Handle changes in window size
-window.addEventListener("resize", updateCssProperties);
 
 //------------------------------------------------
 // Focus on the rename text area when it becomes visible
