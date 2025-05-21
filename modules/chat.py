@@ -157,7 +157,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs.get('impersonate', False)
     _continue = kwargs.get('_continue', False)
     also_return_rows = kwargs.get('also_return_rows', False)
-    history = kwargs.get('history', state['history'])['internal']
+    history_data = kwargs.get('history', state['history'])
+    history = history_data['internal']
+    metadata = history_data.get('metadata', {})
 
     # Templates
     chat_template_str = state['chat_template_str']
@@ -196,10 +198,12 @@ def generate_chat_prompt(user_input, state, **kwargs):
             messages.append({"role": "system", "content": context})
 
     insert_pos = len(messages)
-    for entry in reversed(history):
+    for i, entry in enumerate(reversed(history)):
         user_msg = entry[0].strip()
         assistant_msg = entry[1].strip()
         tool_msg = entry[2].strip() if len(entry) > 2 else ''
+
+        row_idx = len(history) - i - 1
 
         if tool_msg:
             messages.insert(insert_pos, {"role": "tool", "content": tool_msg})
@@ -208,10 +212,40 @@ def generate_chat_prompt(user_input, state, **kwargs):
             messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
 
         if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
-            messages.insert(insert_pos, {"role": "user", "content": user_msg})
+            # Check for user message attachments in metadata
+            user_key = f"user_{row_idx}"
+            enhanced_user_msg = user_msg
+
+            # Add attachment content if present
+            if user_key in metadata and "attachments" in metadata[user_key]:
+                attachments_text = ""
+                for attachment in metadata[user_key]["attachments"]:
+                    filename = attachment.get("name", "file")
+                    content = attachment.get("content", "")
+                    attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
+
+                if attachments_text:
+                    enhanced_user_msg = f"{user_msg}\n\nATTACHMENTS:{attachments_text}"
+
+            messages.insert(insert_pos, {"role": "user", "content": enhanced_user_msg})
 
     user_input = user_input.strip()
     if user_input and not impersonate and not _continue:
+        # For the current user input being processed, check if we need to add attachments
+        if not impersonate and not _continue and len(history_data.get('metadata', {})) > 0:
+            current_row_idx = len(history)
+            user_key = f"user_{current_row_idx}"
+
+            if user_key in metadata and "attachments" in metadata[user_key]:
+                attachments_text = ""
+                for attachment in metadata[user_key]["attachments"]:
+                    filename = attachment.get("name", "file")
+                    content = attachment.get("content", "")
+                    attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
+
+                if attachments_text:
+                    user_input = f"{user_input}\n\nATTACHMENTS:{attachments_text}"
+
         messages.append({"role": "user", "content": user_input})
 
     def make_prompt(messages):
@@ -280,7 +314,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
             # Resort to truncating the user input
             else:
-
                 user_message = messages[-1]['content']
 
                 # Bisect the truncation point
@@ -478,20 +511,12 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     if not (regenerate or _continue):
         visible_text = html.escape(text)
 
-        # Process file attachments and gather content for prompt
-        attachments_text = ""
+        # Process file attachments and store in metadata
         row_idx = len(output['internal'])
 
-        # Add attachments to metadata and get content for prompt
+        # Add attachments to metadata only, not modifying the message text
         for file_path in files:
-            content = add_message_attachment(output, row_idx, file_path, is_user=True)
-            if content:
-                filename = Path(file_path).name
-                attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
-
-        # If we have attachments, modify text directly
-        if attachments_text:
-            text = f"{text}\n\nATTACHMENTS:{attachments_text}"
+            add_message_attachment(output, row_idx, file_path, is_user=True)
 
         # Apply extensions
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
