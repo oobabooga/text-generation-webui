@@ -1370,6 +1370,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     contain: layout;
 }
 
+.chat .message-body .thinking-content p,
+.chat .message-body .thinking-content li {
+    font-size: 14px !important;
+}
+
 /* Animation for opening thinking blocks */
 @keyframes fadeIn {
     from { opacity: 0; }
