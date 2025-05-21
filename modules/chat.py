@@ -225,7 +225,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                     attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
                 if attachments_text:
-                    enhanced_user_msg = f"{user_msg}\n\nATTACHMENTS:{attachments_text}"
+                    enhanced_user_msg = f"{user_msg}\n\nATTACHMENTS:\n{attachments_text}"
 
             messages.insert(insert_pos, {"role": "user", "content": enhanced_user_msg})
 
@@ -244,7 +244,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                     attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
                 if attachments_text:
-                    user_input = f"{user_input}\n\nATTACHMENTS:{attachments_text}"
+                    user_input = f"{user_input}\n\nATTACHMENTS:\n{attachments_text}"
 
         messages.append({"role": "user", "content": user_input})
 
