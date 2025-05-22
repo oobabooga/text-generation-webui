@@ -1,9 +1,6 @@
-from typing import Dict, List, Optional, Iterable
+from typing import Dict, List, Iterable
 from functools import reduce
 from operator import getitem
-from modules import shared
-from pathlib import Path
-import json
 import logging as logger
 
 last_state = {
@@ -23,7 +20,6 @@ def get_versioning_display_mode():
     """Gets the current display mode from the loaded history."""
     current_mode = last_state.get('display_mode', 'html')
     return current_mode
-
 
 
 # --- Core Logic ---
@@ -64,6 +60,7 @@ def get_message_metadata(history: dict, history_index: int, msg_type: int) -> di
 
 # --- Core Functions ---
 
+
 def get_message_positions(history: dict, history_index: int, msg_type: int):
     """
     Get the message position and total message versions for a specific message from the currently loaded history data.
@@ -71,15 +68,15 @@ def get_message_positions(history: dict, history_index: int, msg_type: int):
     """
     msg_data = get_message_metadata(history, history_index, msg_type)
 
-    if msg_data is None:
+    if msg_data is None or msg_data['versions'] is None:
         return 0, 0
 
-    pos = msg_data.get('current_message_index', 0)
-    total = length(msg_data.get('versions', []))
+    pos = msg_data.get('current_version_index', 0)
+    total = length(msg_data['versions'])
     return pos, total
 
 
-def navigate_message_version(history_index: float, msg_type: float, direction: str, history: Dict, character: str, unique_id: str, mode: str):
+def navigate_message_version(history_index: float, msg_type: float, direction: str, history: Dict):
     """
     Handles navigation (left/right swipe) for a message version.
     Updates the history dictionary directly and returns the modified history.
@@ -111,7 +108,6 @@ def navigate_message_version(history_index: float, msg_type: float, direction: s
             logger.warning(f"Invalid navigation direction: {direction}")
             return history
 
-        
         history_metadata = history['metadata']
         msg_metadata = get_message_metadata(history, i, m_type)
         if msg_metadata is None:
@@ -122,11 +118,11 @@ def navigate_message_version(history_index: float, msg_type: float, direction: s
         if new_ver is None:
             logger.error(f"Message version not found for metadata index {i}, type {m_type}, version index {new_pos}. Data: {history_metadata}")
             return history
-        
-        ver_content = new_ver['content']
-        visible_ver_content = new_ver['visible_content']
 
-        if ver_content is None or visible_ver_content is None:
+        ver_content = new_ver['content']
+        ver_visible_content = new_ver['visible_content']
+
+        if ver_content is None or ver_visible_content is None:
             logger.error(f"Loaded version data structure invalid during navigation for index {i}, type {m_type}. Data: {history_metadata}")
             return history
 
@@ -135,7 +131,10 @@ def navigate_message_version(history_index: float, msg_type: float, direction: s
             logger.error(f"Navigation error: new_pos {new_pos} out of bounds for history text list (len {len(versions)})")
             return history
 
-        msg_metadata['current_message_index'] = new_pos  # Updates history object
+        history['internal'][i][m_type] = ver_content
+        history['visible'][i][m_type] = ver_visible_content
+        msg_metadata['timestamp'] = new_ver['timestamp']
+        msg_metadata['current_version_index'] = new_pos  # Updates history object
 
         last_history_index = i
         last_msg_type = m_type
@@ -165,15 +164,15 @@ def get_message_version_nav_elements(history: dict, history_index: int, msg_type
         if total_pos <= 1:
             return ""
 
-        left_activated_attr = f' activated="true"' if current_pos > 0 else ''
-        right_activated_attr = f' activated="true"' if current_pos < total_pos - 1 else ''
+        left_activated_attr = ' activated="true"' if current_pos > 0 else ''
+        right_activated_attr = ' activated="true"' if current_pos < total_pos - 1 else ''
 
         left_arrow_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>'''
         right_arrow_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>'''
 
-        nav_left = f'<button class="message-versioning-nav-arrow message-versioning-nav-left footer-button"{left_activated_attr}>{left_arrow_svg}</button>'
+        nav_left = f'<button class="footer-button message-versioning-nav-arrow message-versioning-nav-left"{left_activated_attr}>{left_arrow_svg}</button>'
         nav_pos = f'<div class="message-versioning-nav-pos">{current_pos + 1}/{total_pos}</div>'
-        nav_right = f'<button class="message-versioning-nav-arrow message-versioning-nav-right footer-button"{right_activated_attr}>{right_arrow_svg}</button>'
+        nav_right = f'<button class="footer-button message-versioning-nav-arrow message-versioning-nav-right"{right_activated_attr}>{right_arrow_svg}</button>'
 
         nav_container = (
             f'<div class="message-versioning-nav-container">'
@@ -188,6 +187,7 @@ def get_message_version_nav_elements(history: dict, history_index: int, msg_type
             f'{nav_container}'
             f'</div>'
         )
+
         return versioning_container
 
     except Exception as e:
@@ -216,9 +216,10 @@ def handle_navigate_click(history_index: float, msg_type: float, direction: str,
     Handles clicks on the navigation buttons generated by get_message_version_nav_elements.
     Calls navigate_message_version and returns the updated history and potentially the regenerated HTML.
     """
-    updated_history = navigate_message_version(history_index, msg_type, direction, history, character, unique_id, mode)
+    updated_history = navigate_message_version(history_index, msg_type, direction, history)
 
     import modules.chat as chat
-    new_html = chat.redraw_html(updated_history, name1, name2, mode, chat_style, character)
+    html = chat.redraw_html(updated_history, name1, name2, mode, chat_style, character)
+    chat.save_history(history, unique_id, character, mode)
 
-    return updated_history, new_html
+    return updated_history, html

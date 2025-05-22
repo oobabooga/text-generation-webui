@@ -810,19 +810,18 @@ function gradioApp() {
 }
 
 // Helper to update Gradio text/number inputs (if needed for backend communication)
-function updateVersioningGradioInput(element, value) {
+function updateGradioInput(element, value) {
     if (element) {
-        element.value = value;
-        element.dispatchEvent(new Event('input', { bubbles: true }));
+      element.value = value;
+      element.dispatchEvent(new Event('input', { bubbles: true }));
     } else {
-        console.warn("Attempted to update a null Gradio input element.");
+      console.warn("Attempted to update a null Gradio input element.");
     }
 }
 
 // --- Message Versioning Core Functions ---
 
 function triggerVersionNavigateBackend(historyIndex, messageType, direction) {
-  console.log(`DEBUG: Triggering version navigate backend with historyIndex: ${historyIndex}, messageType: ${messageType}, direction: ${direction}`);
   const gradio = gradioApp();
   const historyIndexInput = gradio.querySelector('#message-versioning-history-index-hidden input[type="number"]');
   const messageTypeInput = gradio.querySelector('#message-versioning-message-type-hidden input[type="number"]');
@@ -830,14 +829,13 @@ function triggerVersionNavigateBackend(historyIndex, messageType, direction) {
   const navigateButton = gradio.querySelector('#message-versioning-navigate-hidden');
 
   if (historyIndexInput && messageTypeInput && directionInput && navigateButton) {
-    console.log("DEBUG: Found hidden Gradio elements for navigation.");
-    updateVersioningGradioInput(historyIndexInput, historyIndex);
-    updateVersioningGradioInput(messageTypeInput, messageType);
-    updateVersioningGradioInput(directionInput, direction);
+    console.debug("Found hidden Gradio elements for navigation.", navigateButton);
+    updateGradioInput(historyIndexInput, historyIndex);
+    updateGradioInput(messageTypeInput, messageType);
+    updateGradioInput(directionInput, direction);
     navigateButton.click();
   } else {
     console.error("Message Versioning: Could not find hidden Gradio elements for navigation. Backend communication needs setup.");
-    // Fallback or error handling: Log a warning?
   }
 }
 
@@ -885,12 +883,12 @@ document.addEventListener('click', function(e) {
   
   const msg = target.closest('.message, .user-message, .assistant-message')
   if (msg) {
-    const historyIndex = msg.getAttribute('data-history-index');
-    const msgType = msg.getAttribute('data-message-type') ?? (msg.classList.contains('assistant-message') ? 1 : 0);
+    const historyIndex = msg.getAttribute('data-index');
+    const msgType = (msg.classList.contains('assistant-message') || msg.querySelector('.circle-bot, .text-bot')) ? 1 : 0;
     if (target.closest('button')) {
       const button = target.closest('.message-versioning-nav-arrow');
       if (button && button.hasAttribute('activated')) {
-        const direction = button.getAttribute('data-direction');
+        const direction = button.closest('.message-versioning-nav-left') ? 'left' : 'right';
         versioningNavigateClick(button, parseFloat(historyIndex), parseFloat(msgType), direction);
       }
     } else if (msg.classList.contains('selected-message') && !e.ctrlKey) {
