@@ -397,8 +397,8 @@ def generate_instruct_html(history):
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
         converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
-        versioning_nav_user = message_versioning.get_message_version_nav_elements(i, 0)
-        versioning_nav_bot = message_versioning.get_message_version_nav_elements(i, 1)
+        versioning_nav_user = message_versioning.get_message_version_nav_elements(history, i, 0)
+        versioning_nav_bot = message_versioning.get_message_version_nav_elements(history, i, 1)
 
         # Get timestamps
         user_timestamp = format_message_timestamp(history, "user", i)
@@ -470,8 +470,8 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
         converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
-        versioning_nav_user = message_versioning.get_message_version_nav_elements(i, 0)
-        versioning_nav_bot = message_versioning.get_message_version_nav_elements(i, 1)
+        versioning_nav_user = message_versioning.get_message_version_nav_elements(history, i, 0)
+        versioning_nav_bot = message_versioning.get_message_version_nav_elements(history, i, 1)
 
         # Get timestamps
         user_timestamp = format_message_timestamp(history, "user", i)
@@ -523,8 +523,8 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
         converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
-        versioning_nav_user = message_versioning.get_message_version_nav_elements(i, 0)
-        versioning_nav_bot = message_versioning.get_message_version_nav_elements(i, 1)
+        versioning_nav_user = message_versioning.get_message_version_nav_elements(history, i, 0)
+        versioning_nav_bot = message_versioning.get_message_version_nav_elements(history, i, 1)
 
         # Get timestamps
         user_timestamp = format_message_timestamp(history, "user", i)

@@ -17,7 +17,7 @@ from jinja2.sandbox import ImmutableSandboxedEnvironment
 from PIL import Image
 
 import modules.shared as shared
-from modules import utils, message_versioning
+from modules import utils
 from modules.extensions import apply_extensions
 from modules.html_generator import (
     chat_html_wrapper,
@@ -667,13 +667,6 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         send_dummy_reply(state['start_with'], state)
 
     history = state['history']
-    initial_history_len = len(history['internal'])
-    if not regenerate and not _continue and text.strip():
-        temp_history = copy.deepcopy(history)
-        visible_text = html.escape(text)
-        temp_history['internal'].append([text, ''])
-        temp_history['visible'].append([visible_text, ''])
-        message_versioning.append_message_version(temp_history, state, is_bot=False)
 
     last_save_time = time.monotonic()
     save_interval = 8
@@ -685,9 +678,6 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         if i == 0 or (current_time - last_save_time) >= save_interval:
             save_history(history, state['unique_id'], state['character_menu'], state['mode'])
             last_save_time = current_time
-            
-    if len(history['internal']) > initial_history_len or regenerate or _continue:
-        message_versioning.append_message_version(history, state, is_bot=True)
 
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 
@@ -721,8 +711,9 @@ def send_last_reply_to_input(history):
         return ''
 
 
-def replace_last_reply(text, state):
+def replace_last_reply(textbox, state):
     history = state['history']
+    text = textbox['text']
 
     # Initialize metadata if not present
     if 'metadata' not in history:
@@ -835,7 +826,6 @@ def rename_history(old_id, new_id, character, mode):
     else:
         logger.info(f"Renaming \"{old_p}\" to \"{new_p}\"")
         old_p.rename(new_p)
-        message_versioning.rename_history_data(old_id, new_id, character, mode)
 
 
 def get_paths(state):
@@ -1334,8 +1324,6 @@ def handle_replace_last_reply_click(text, state):
     last_reply = state['history']['internal'][-1][1] if len(state['history']['internal']) > 0 else None
     history = replace_last_reply(text, state)
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
-    if len(history['internal']) > 0 and history['internal'][-1][1] != last_reply:  # Differs from last reply
-        message_versioning.append_message_version(history, state, is_bot=True)
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     return [history, html, {"text": "", "files": []}]
@@ -1344,7 +1332,6 @@ def handle_replace_last_reply_click(text, state):
 def handle_send_dummy_message_click(text, state):
     history = send_dummy_message(text, state)
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
-    message_versioning.append_message_version(history, state, is_bot=False)
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     return [history, html, {"text": "", "files": []}]
@@ -1353,7 +1340,6 @@ def handle_send_dummy_message_click(text, state):
 def handle_send_dummy_reply_click(text, state):
     history = send_dummy_reply(text, state)
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
-    message_versioning.append_message_version(history, state, is_bot=True)
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     return [history, html, {"text": "", "files": []}]
@@ -1401,7 +1387,6 @@ def handle_delete_chat_confirm_click(state):
         index = str(all_histories.index(unique_id_to_delete))
 
     delete_history(unique_id_to_delete, character_to_delete, mode_to_delete)
-    message_versioning.clear_history_data(unique_id_to_delete, character_to_delete, mode_to_delete)
 
     # Load the next appropriate history
     history, unique_id = load_history_after_deletion(state, index)

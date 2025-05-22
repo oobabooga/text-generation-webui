@@ -256,9 +256,6 @@ def create_event_handlers():
         shared.gradio['unique_id'].select(
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
             chat.handle_unique_id_select, gradio('interface_state'), gradio('history', 'display'), show_progress=False)
-        shared.gradio['unique_id'].change(
-            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            message_versioning.handle_unique_id_change, gradio('history', 'unique_id', 'name1', 'name2', 'mode', 'chat_style', 'character_menu'), gradio('display'), show_progress=False)
 
     shared.gradio['Start new chat'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
