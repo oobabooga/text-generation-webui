@@ -17,6 +17,7 @@ import sys
 
 # Define the required versions
 TORCH_VERSION = "2.6.0"
+TORCH_VERSION_BLACKWELL = "2.7.0"
 TORCHVISION_VERSION = "0.21.0"
 TORCHAUDIO_VERSION = "2.6.0"
 PYTHON_VERSION = "3.11"
@@ -207,7 +208,7 @@ def get_user_choice(question, options_dict):
     return choice
 
 
-def update_pytorch_and_python():
+def update_pytorch_and_python(selected_gpu=""):
     print_big_message("Checking for PyTorch updates.")
 
     # Update the Python version. Left here for future reference in case this becomes necessary.
@@ -219,8 +220,13 @@ def update_pytorch_and_python():
     torver = torch_version()
     base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION}"
 
+    if selected_gpu == "NVIDIA_BLACKWELL":
+        base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION_BLACKWELL} torchvision torchaudio"
+
     if "+cu" in torver:
         install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cu124"
+    elif "+cu" in torver and selected_gpu == "NVIDIA_BLACKWELL":
+        install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cu128"
     elif "+rocm" in torver:
         install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.2.4"
     elif "+cpu" in torver:
@@ -276,6 +282,7 @@ def install_webui():
                 'B': 'AMD - Linux/macOS only, requires ROCm 6.2.4',
                 'C': 'Apple M Series',
                 'D': 'Intel Arc (beta)',
+                'E': 'NVIDIA - CUDA 12.8 - RTX 50XX BLACKWELL',
                 'N': 'CPU mode'
             },
         )
@@ -286,6 +293,7 @@ def install_webui():
         "B": "AMD",
         "C": "APPLE",
         "D": "INTEL",
+        "E": "NVIDIA_BLACKWELL",
         "N": "NONE"
     }
 
@@ -302,6 +310,9 @@ def install_webui():
     # Handle CUDA version display
     elif any((is_windows(), is_linux())) and selected_gpu == "NVIDIA":
         print("CUDA: 12.4")
+    
+    elif any((is_windows(), is_linux())) and selected_gpu == "NVIDIA_BLACKWELL":
+        print("CUDA: 12.8")
 
     # No PyTorch for AMD on Windows (?)
     elif is_windows() and selected_gpu == "AMD":
@@ -311,8 +322,13 @@ def install_webui():
     # Find the Pytorch installation command
     install_pytorch = f"python -m pip install torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION} "
 
+    if selected_gpu == "NVIDIA_BLACKWELL":
+        install_pytorch = f"python -m pip install torch=={TORCH_VERSION_BLACKWELL} torchvision torchaudio "
+
     if selected_gpu == "NVIDIA":
         install_pytorch += "--index-url https://download.pytorch.org/whl/cu124"
+    elif selected_gpu == "NVIDIA_BLACKWELL":
+        install_pytorch += "--index-url https://download.pytorch.org/whl/cu128"
     elif selected_gpu == "AMD":
         install_pytorch += "--index-url https://download.pytorch.org/whl/rocm6.2.4"
     elif selected_gpu in ["APPLE", "NONE"]:
@@ -335,10 +351,10 @@ def install_webui():
         run_cmd("conda install -y libuv", environment=True)
 
     # Install the webui requirements
-    update_requirements(initial_installation=True, pull=False)
+    update_requirements(initial_installation=True, pull=False, selected_gpu=selected_gpu)
 
 
-def update_requirements(initial_installation=False, pull=True):
+def update_requirements(initial_installation=False, pull=True, selected_gpu=""):
     # Create .git directory if missing
     if not os.path.exists(os.path.join(script_dir, ".git")):
         run_cmd(
@@ -358,6 +374,8 @@ def update_requirements(initial_installation=False, pull=True):
         file_name = f"requirements_cpu_only{'_noavx2' if not cpu_has_avx2() else ''}.txt"
     elif is_macos():
         file_name = f"requirements_apple_{'intel' if is_x86_64() else 'silicon'}.txt"
+    elif selected_gpu == "NVIDIA_BLACKWELL":
+        file_name = f"requirements_blackwell.txt"
     else:
         file_name = f"requirements{'_noavx2' if not cpu_has_avx2() else ''}.txt"
 
@@ -431,7 +449,7 @@ def update_requirements(initial_installation=False, pull=True):
 
     # Update PyTorch
     if not initial_installation:
-        update_pytorch_and_python()
+        update_pytorch_and_python(selected_gpu=selected_gpu)
         torver = torch_version()
         clean_outdated_pytorch_cuda_dependencies()
 
@@ -455,8 +473,11 @@ def update_requirements(initial_installation=False, pull=True):
         run_cmd(f"python -m pip uninstall -y {package_name}", environment=True)
         print(f"Uninstalled {package_name}")
 
-    # Install/update the project requirements
-    run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
+    if selected_gpu == "NVIDIA_BLACKWELL":
+        # Install/update the project requirements
+        run_cmd(f"python -m pip install -r {requirements_file} --upgrade", assert_success=True, environment=True)
+    else:
+        run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
 
     # Clean up
     os.remove('temp_requirements.txt')
@@ -492,6 +513,7 @@ if __name__ == "__main__":
                     'A': 'Update the web UI',
                     'B': 'Install/update extensions requirements',
                     'C': 'Revert local changes to repository files with \"git reset --hard\"',
+                    'D': 'Upgrade to NVIDIA BLACKWELL',
                     'N': 'Nothing (exit)'
                 },
             )
@@ -515,6 +537,8 @@ if __name__ == "__main__":
                 update_requirements(pull=False)
             elif choice == 'C':
                 run_cmd("git reset --hard", assert_success=True, environment=True)
+            elif choice == 'D':
+                update_requirements(selected_gpu='NVIDIA_BLACKWELL')
             elif choice == 'N':
                 sys.exit()
     else:
