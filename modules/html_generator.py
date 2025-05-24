@@ -9,7 +9,7 @@ from pathlib import Path
 import markdown
 from PIL import Image, ImageOps
 
-from modules import shared
+from modules import shared, message_versioning
 from modules.sane_markdown_lists import SaneListExtension
 from modules.utils import get_available_chat_styles
 
@@ -388,7 +388,8 @@ def actions_html(history, i, info_message=""):
             f'{remove_button if i == len(history["visible"]) - 1 else ""}'
             f'{branch_button}'
             f'{info_message}'
-            f'</div>')
+            f'</div>'
+            f'{message_versioning.get_message_version_nav_elements(history, i, 1)}')
 
 
 def generate_instruct_html(history):
@@ -421,8 +422,9 @@ def generate_instruct_html(history):
             info_message_assistant = info_button.replace("message", assistant_timestamp_value)
 
         if converted_visible[0]:  # Don't display empty user messages
+            selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
             output += (
-                f'<div class="user-message" '
+                f'<div class="user-message{selected_class}" '
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
@@ -432,8 +434,9 @@ def generate_instruct_html(history):
                 f'</div>'
             )
 
+        selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
-            f'<div class="assistant-message" '
+            f'<div class="assistant-message{selected_class}" '
             f'data-raw="{html.escape(row_internal[1], quote=True)}"'
             f'data-index={i}>'
             f'<div class="text">'
@@ -476,8 +479,9 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
         assistant_attachments = format_message_attachments(history, "assistant", i)
 
         if converted_visible[0]:  # Don't display empty user messages
+            selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
             output += (
-                f'<div class="message" '
+                f'<div class="message{selected_class}" '
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="circle-you">{img_me}</div>'
                 f'<div class="text">'
@@ -489,8 +493,9 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
                 f'</div>'
             )
 
+        selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
-            f'<div class="message" '
+            f'<div class="message{selected_class}"'
             f'data-raw="{html.escape(row_internal[1], quote=True)}"'
             f'data-index={i}>'
             f'<div class="circle-bot">{img_bot}</div>'
@@ -537,8 +542,9 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
             info_message_assistant = info_button.replace("message", assistant_timestamp_value)
 
         if converted_visible[0]:  # Don't display empty user messages
+            selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
             output += (
-                f'<div class="message" '
+                f'<div class="message{selected_class}" '
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text-you">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
@@ -548,8 +554,9 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
                 f'</div>'
             )
 
+        selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
-            f'<div class="message" '
+            f'<div class="message{selected_class}" '
             f'data-raw="{html.escape(row_internal[1], quote=True)}"'
             f'data-index={i}>'
             f'<div class="text-bot">'

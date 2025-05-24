@@ -5,7 +5,7 @@ from pathlib import Path
 import gradio as gr
 from PIL import Image
 
-from modules import chat, shared, ui, utils
+from modules import chat, shared, ui, utils, message_versioning
 from modules.html_generator import chat_html_wrapper
 from modules.text_generation import stop_everything_event
 from modules.utils import gradio
@@ -94,8 +94,18 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
 
+                with gr.Row(visible=True):
+                    shared.gradio['message_versioning_display_mode'] = gr.Radio(choices=['html', 'off'], value='html', label="Message Versioning Display", info="Controls how message version navigation is displayed.", elem_id="message-versioning-display-mode", elem_classes=['slim-dropdown'])
+
                 with gr.Row():
                     shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=12, label='Command for chat-instruct mode', info='<|character|> and <|prompt|> get replaced with the bot name and the regular chat prompt respectively.', visible=shared.settings['mode'] == 'chat-instruct', elem_classes=['add_scrollbar'])
+
+        # Hidden elements for message versioning JS communication
+        with gr.Row(visible=False, elem_id="message-versioning-hidden-row"):
+            shared.gradio['message_versioning_history_index_hidden'] = gr.Number(value=0, elem_id="message-versioning-history-index-hidden")
+            shared.gradio['message_versioning_message_type_hidden'] = gr.Number(value=0, elem_id="message-versioning-message-type-hidden")
+            shared.gradio['message_versioning_direction_hidden'] = gr.Textbox(value="", elem_id="message-versioning-direction-hidden")
+            shared.gradio['message_versioning_navigate_hidden'] = gr.Button(elem_id="message-versioning-navigate-hidden")
 
 
 def create_chat_settings_ui():
@@ -292,6 +302,19 @@ def create_event_handlers():
 
     shared.gradio['chat_style'].change(chat.redraw_html, gradio(reload_arr), gradio('display'), show_progress=False)
     shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, gradio('history'), gradio('textbox'), show_progress=False)
+
+    # Message Versioning event handlers
+    shared.gradio['message_versioning_display_mode'].change(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        message_versioning.handle_display_mode_change, gradio('message_versioning_display_mode'), None).then(
+        chat.redraw_html, gradio(reload_arr), gradio('display'), show_progress=False)
+
+    shared.gradio['message_versioning_navigate_hidden'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        message_versioning.handle_navigate_click,
+        gradio('message_versioning_history_index_hidden', 'message_versioning_message_type_hidden', 'message_versioning_direction_hidden', 'history', 'character_menu', 'unique_id', 'mode', 'name1', 'name2', 'chat_style'),
+        gradio('history', 'display'),
+        show_progress=False)
 
     # Save/delete a character
     shared.gradio['save_character'].click(chat.handle_save_character_click, gradio('name2'), gradio('save_character_filename', 'character_saver'), show_progress=False)

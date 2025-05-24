@@ -680,6 +680,8 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 
+    yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
+
 
 def remove_last_message(history):
     if 'metadata' not in history:

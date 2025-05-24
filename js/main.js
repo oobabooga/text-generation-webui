@@ -789,3 +789,143 @@ function createMobileTopBar() {
 }
 
 createMobileTopBar();
+
+
+//------------------------------------------------
+// Message Versioning Integration
+//------------------------------------------------
+
+// --- Message Versioning Variables ---
+let selectedMessageHistoryIndex = null;
+let selectedMessageType = null;
+
+// --- Message Versioning Helper Functions ---
+
+// Helper function to get Gradio app root (if needed, otherwise use document)
+function gradioApp() {
+  const elems = document.querySelectorAll('gradio-app');
+  const gradioShadowRoot = elems.length > 0 ? elems[0].shadowRoot : null;
+  return gradioShadowRoot || document;
+}
+
+// Helper to update Gradio text/number inputs (if needed for backend communication)
+function updateGradioInput(element, value) {
+    if (element) {
+      element.value = value;
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    } else {
+      console.warn("Attempted to update a null Gradio input element.");
+    }
+}
+
+// --- Message Versioning Core Functions ---
+
+function triggerVersionNavigateBackend(historyIndex, messageType, direction) {
+  const gradio = gradioApp();
+  const historyIndexInput = gradio.querySelector('#message-versioning-history-index-hidden input[type="number"]');
+  const messageTypeInput = gradio.querySelector('#message-versioning-message-type-hidden input[type="number"]');
+  const directionInput = gradio.querySelector('#message-versioning-direction-hidden textarea');
+  const navigateButton = gradio.querySelector('#message-versioning-navigate-hidden');
+
+  if (historyIndexInput && messageTypeInput && directionInput && navigateButton) {
+    console.debug("Found hidden Gradio elements for navigation.", navigateButton);
+    updateGradioInput(historyIndexInput, historyIndex);
+    updateGradioInput(messageTypeInput, messageType);
+    updateGradioInput(directionInput, direction);
+    navigateButton.click();
+  } else {
+    console.error("Message Versioning: Could not find hidden Gradio elements for navigation. Backend communication needs setup.");
+  }
+}
+
+// Function called by the nav arrow's onclick attribute
+function versioningNavigateClick(arrowButton, historyIndex, messageType, direction) {
+  // Keep the message selected
+  const messageElement = arrowButton.closest('.message, .user-message, .assistant-message');
+  if (messageElement) {
+    versioningSelectMessage(messageElement, historyIndex, messageType);
+  }
+
+  triggerVersionNavigateBackend(historyIndex, messageType, direction);
+}
+
+
+function versioningSelectMessage(element, historyIndex, messageType) {
+  // Remove previous selection
+  versioningDeselectMessages();
+
+  if (element) {
+    selectedMessageHistoryIndex = historyIndex;
+    selectedMessageType = messageType;
+    element.classList.add('selected-message');
+  }
+}
+
+function versioningDeselectMessages() {
+  const selectedMessageElement = gradioApp().querySelector('#chat .selected-message');
+  if (selectedMessageElement) {
+    selectedMessageElement.classList.remove('selected-message');
+  }
+  selectedMessageHistoryIndex = null;
+  selectedMessageType = null;
+}
+
+// --- Message Versioning Global Listeners ---
+
+// Global click listener for buttons and (de)selecting messages
+document.addEventListener('click', function(e) {
+  const target = e.target;
+  
+  const msg = target.closest('.message, .user-message, .assistant-message')
+  if (msg) {
+    const historyIndex = msg.getAttribute('data-index');
+    const msgType = (msg.classList.contains('assistant-message') || msg.querySelector('.circle-bot, .text-bot')) ? 1 : 0;
+    if (target.closest('button')) {
+      const button = target.closest('.message-versioning-nav-arrow');
+      if (button && button.hasAttribute('activated')) {
+        const direction = button.closest('.message-versioning-nav-left') ? 'left' : 'right';
+        versioningNavigateClick(button, parseFloat(historyIndex), parseFloat(msgType), direction);
+      }
+    } else if (msg.classList.contains('selected-message') && !e.ctrlKey) {
+      versioningDeselectMessages();
+    } else {
+      versioningSelectMessage(msg, parseInt(historyIndex), parseInt(msgType));
+    }
+  } else if (target.closest('#chat') && !target.closest('#message-versioning-navigate-hidden')) { // Deselect if the click is in-chat, outside a message
+    versioningDeselectMessages();
+  }
+});
+
+// Global keydown listener for keyboard navigation
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    return;
+  }
+
+  // Use Ctrl + Left/Right Arrow Keys for navigation, Ctrl + Up/Down Arrow Keys for selection
+  if (e.ctrlKey && !e.shiftKey) {
+    if (e.key === 'ArrowLeft') {
+      triggerVersionNavigateBackend(selectedMessageHistoryIndex, selectedMessageType, 'left');
+      e.preventDefault();
+    } else if (e.key === 'ArrowRight') {
+      triggerVersionNavigateBackend(selectedMessageHistoryIndex, selectedMessageType, 'right');
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      selectRelativeMessage(-1)
+      e.preventDefault();
+    } else if (e.key === 'ArrowDown') {
+      selectRelativeMessage(1)
+      e.preventDefault();
+    }
+
+    function selectRelativeMessage(offset) {
+      const chat = gradioApp().querySelector('#chat');
+      if (!chat) return;
+      const messages = Array.from(chat.querySelectorAll('.message, .user-message, .assistant-message'));
+      if (messages.length === 0) return;
+      const selectedMessageChatIndex = messages.findIndex(msg => msg.classList.contains('selected-message')); // Could be saved in a variable rather than run each time
+      const index = selectedMessageChatIndex + offset;
+      if (index >= 0 && index < messages.length) messages[index]?.click();
+    }
+  }
+});
