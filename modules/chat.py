@@ -667,7 +667,6 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         send_dummy_reply(state['start_with'], state)
 
     history = state['history']
-
     last_save_time = time.monotonic()
     save_interval = 8
     for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True, for_ui=True)):
@@ -711,9 +710,8 @@ def send_last_reply_to_input(history):
         return ''
 
 
-def replace_last_reply(textbox, state):
+def replace_last_reply(text, state):
     history = state['history']
-    text = textbox['text']
 
     # Initialize metadata if not present
     if 'metadata' not in history:
@@ -1321,7 +1319,6 @@ def my_yaml_output(data):
 
 
 def handle_replace_last_reply_click(text, state):
-    last_reply = state['history']['internal'][-1][1] if len(state['history']['internal']) > 0 else None
     history = replace_last_reply(text, state)
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
@@ -1378,17 +1375,8 @@ def handle_start_new_chat_click(state):
 
 
 def handle_delete_chat_confirm_click(state):
-    unique_id_to_delete = state['unique_id']
-    character_to_delete = state['character_menu']
-    mode_to_delete = state['mode']
-    all_histories = find_all_histories(state)
-    index = '0'
-    if unique_id_to_delete in all_histories:
-        index = str(all_histories.index(unique_id_to_delete))
-
-    delete_history(unique_id_to_delete, character_to_delete, mode_to_delete)
-
-    # Load the next appropriate history
+    index = str(find_all_histories(state).index(state['unique_id']))
+    delete_history(state['unique_id'], state['character_menu'], state['mode'])
     history, unique_id = load_history_after_deletion(state, index)
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 

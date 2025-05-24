@@ -425,7 +425,6 @@ def generate_instruct_html(history):
             selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
             output += (
                 f'<div class="user-message{selected_class}" '
-                f'data-history-index="{i}" '
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
@@ -483,7 +482,6 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
             selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
             output += (
                 f'<div class="message{selected_class}" '
-                f'data-history-index="{i}" '
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="circle-you">{img_me}</div>'
                 f'<div class="text">'
@@ -547,7 +545,6 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
             selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
             output += (
                 f'<div class="message{selected_class}" '
-                f'data-history-index="{i}"'
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text-you">'
                 f'<div class="message-body">{converted_visible[0]}</div>'

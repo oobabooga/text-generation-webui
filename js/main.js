@@ -796,7 +796,6 @@ createMobileTopBar();
 //------------------------------------------------
 
 // --- Message Versioning Variables ---
-// let versioningSelectedMessageElement = null; // Deprecated due to persistent selection state
 let selectedMessageHistoryIndex = null;
 let selectedMessageType = null;
 
@@ -856,7 +855,6 @@ function versioningSelectMessage(element, historyIndex, messageType) {
   versioningDeselectMessages();
 
   if (element) {
-    // versioningSelectedMessageElement = element;
     selectedMessageHistoryIndex = historyIndex;
     selectedMessageType = messageType;
     element.classList.add('selected-message');
@@ -865,12 +863,9 @@ function versioningSelectMessage(element, historyIndex, messageType) {
 
 function versioningDeselectMessages() {
   const selectedMessageElement = gradioApp().querySelector('#chat .selected-message');
-  // if (versioningSelectedMessageElement) {
-  //   versioningSelectedMessageElement.classList.remove('selected-message');
   if (selectedMessageElement) {
     selectedMessageElement.classList.remove('selected-message');
   }
-  // versioningSelectedMessageElement = null;
   selectedMessageHistoryIndex = null;
   selectedMessageType = null;
 }
