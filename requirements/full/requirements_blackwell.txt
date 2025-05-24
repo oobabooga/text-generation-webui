@@ -1,0 +1,42 @@
+accelerate==1.5.*
+bitsandbytes==0.45.*
+colorama
+datasets
+einops
+fastapi==0.112.4
+gradio==4.37.*
+jinja2==3.1.6
+markdown
+numpy
+pandas
+peft==0.15.*
+Pillow>=9.5.0
+psutil
+pydantic==2.8.2
+pyyaml
+requests
+rich
+safetensors==0.5.*
+scipy
+sentencepiece
+tensorboard
+transformers
+tqdm
+wandb
+triton-windows
+
+# API
+flask_cloudflared==0.0.14
+sse-starlette==1.6.5
+tiktoken
+
+# CUDA wheels
+https://github.com/abetlen/llama-cpp-python/releases/download/v0.3.4-cu124/llama_cpp_python-0.3.4-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://github.com/abetlen/llama-cpp-python/releases/download/v0.3.4-cu124/llama_cpp_python-0.3.4-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/turboderp-org/exllamav3/releases/download/v0.0.2/exllamav3-0.0.2+cu128.torch2.7.0-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://github.com/turboderp-org/exllamav3/releases/download/v0.0.2/exllamav3-0.0.2+cu128.torch2.7.0-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/turboderp-org/exllamav2/releases/download/v0.3.0/exllamav2-0.3.0+cu128.torch2.7.0-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://github.com/turboderp-org/exllamav2/releases/download/v0.3.0/exllamav2-0.3.0+cu128.torch2.7.0-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/turboderp-org/exllamav2/releases/download/v0.3.0/exllamav2-0.3.0-py3-none-any.whl; platform_system == "Linux" and platform_machine != "x86_64"
+https://github.com/kingbri1/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu128torch2.7.0cxx11abiFALSE-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://github.com/kingbri1/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu128torch2.7.0cxx11abiFALSE-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
