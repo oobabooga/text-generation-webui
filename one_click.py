@@ -223,10 +223,10 @@ def update_pytorch_and_python(selected_gpu=""):
     if selected_gpu == "NVIDIA_BLACKWELL":
         base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION_BLACKWELL} torchvision torchaudio"
 
-    if "+cu" in torver:
-        install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cu124"
-    elif "+cu" in torver and selected_gpu == "NVIDIA_BLACKWELL":
+    if "+cu" in torver and selected_gpu == "NVIDIA_BLACKWELL":
         install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cu128"
+    elif "+cu" in torver:
+        install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cu124" 
     elif "+rocm" in torver:
         install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.2.4"
     elif "+cpu" in torver:
