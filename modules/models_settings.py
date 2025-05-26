@@ -335,7 +335,7 @@ def estimate_vram(gguf_file, gpu_layers, ctx_size, cache_type):
         if key.endswith('.block_count'):
             n_layers = value
         elif key.endswith('.attention.head_count_kv'):
-            n_kv_heads = value
+            n_kv_heads = max(value) if isinstance(value, list) else value
         elif key.endswith('.embedding_length'):
             embedding_dim = value
 
