@@ -41,6 +41,20 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
 //------------------------------------------------
 let previousTabId = "chat-tab-button";
 document.addEventListener("keydown", function(event) {
+  // --- Helper functions --- //
+  function isModifiedKeyboardEvent() {
+    return (event instanceof KeyboardEvent &&
+        event.shiftKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        event.metaKey);
+  }
+
+  function isFocusedOnEditableTextbox() {
+    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+      return !!event.target.value;
+    }
+  }
 
   // Stop generation on Esc pressed
   if (event.key === "Escape") {
@@ -49,10 +63,15 @@ document.addEventListener("keydown", function(event) {
     if (stopButton) {
       stopButton.click();
     }
+    return;
+  }
+
+  if (!document.querySelector("#chat-tab").checkVisibility() ) {
+    return;
   }
 
   // Show chat controls on Ctrl + S
-  else if (event.ctrlKey && event.key == "s") {
+  if (event.ctrlKey && event.key == "s") {
     event.preventDefault();
 
     var showControlsElement = document.getElementById("show-controls");
@@ -101,14 +120,14 @@ document.addEventListener("keydown", function(event) {
   }
 
   // --- Non-textbox controls --- //
-  else if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
+  if (!isFocusedOnEditableTextbox()) {
     // Version navigation on Ctrl + Arrow (horizontal)
-    if (!event.shiftKey && event.key === 'ArrowLeft') {
+    if (!isModifiedKeyboardEvent() && event.key === 'ArrowLeft') {
       event.preventDefault();
       triggerVersionNavigateBackend(selectedMessageHistoryIndex, selectedMessageType, 'left');
     }
 
-    else if (!event.shiftKey && event.key === 'ArrowRight') {
+    else if (!isModifiedKeyboardEvent() && event.key === 'ArrowRight') {
       event.preventDefault();
       let regenerateConditionMet = false;
 
@@ -137,12 +156,12 @@ document.addEventListener("keydown", function(event) {
     }
     
     // Select relative message on Ctrl + Arrow (vertical)
-    else if (!event.shiftKey && event.key === 'ArrowUp') {
+    else if (!isModifiedKeyboardEvent() && event.key === 'ArrowUp') {
       event.preventDefault();
       selectRelativeMessage(-1)
     }
 
-    else if (!event.shiftKey && event.key === 'ArrowDown') {
+    else if (!isModifiedKeyboardEvent() && event.key === 'ArrowDown') {
       event.preventDefault();
       selectRelativeMessage(1)
     }
