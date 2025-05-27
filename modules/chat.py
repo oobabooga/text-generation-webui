@@ -540,8 +540,9 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         if regenerate:
             row_idx = len(output['internal']) - 1
 
-            # Store the existing response as a version before regenerating
-            add_message_version(output, row_idx, is_current=False)
+            # Store the first response as a version before regenerating
+            if not output['metadata'].get(f"assistant_{row_idx}", {}).get('versions'):
+                add_message_version(output, row_idx, is_current=False)
 
             if loading_message:
                 yield {
