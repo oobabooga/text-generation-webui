@@ -125,6 +125,7 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
                         yield {"data": json.dumps(resp)}
                 finally:
                     stop_everything_event()
+                    response.close()
                     return
 
         return EventSourceResponse(generator())  # SSE streaming
@@ -157,6 +158,7 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
                         yield {"data": json.dumps(resp)}
                 finally:
                     stop_everything_event()
+                    response.close()
                     return
 
         return EventSourceResponse(generator())  # SSE streaming
