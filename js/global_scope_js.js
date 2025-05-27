@@ -106,15 +106,13 @@ function editHere(buttonElement) {
   }
 
   const rawText = messageElement.getAttribute("data-raw") || messageBody.textContent;
-  const originalHTML = messageBody.innerHTML; // Keep original HTML for cancellation if needed, though data-raw is better for text.
+  const originalHTML = messageBody.innerHTML;
 
   const gradio = gradioApp();
 
   const textarea = document.createElement("textarea");
   textarea.value = rawText;
   textarea.classList.add("editing-textarea");
-  textarea.style.width = "100%"; // Basic styling
-  textarea.style.minHeight = "50px"; // Basic styling
   textarea.rows = Math.max(3, rawText.split('\n').length); // Adjust rows based on content
 
   // Replace messageBody with textarea
@@ -122,26 +120,32 @@ function editHere(buttonElement) {
   textarea.focus();
   textarea.selectionStart = textarea.selectionEnd = textarea.value.length; // Move cursor to end
 
-  // Add a checkbox for "branch before edit"
-  const branchCheckboxContainer = document.createElement('div');
-  branchCheckboxContainer.style.marginTop = '5px';
-  branchCheckboxContainer.style.marginBottom = '5px';
-  const branchCheckbox = document.createElement('input');
-  branchCheckbox.type = 'checkbox';
-  branchCheckbox.id = 'do-branch-checkbox-' + messageElement.getAttribute("data-index") + '-' + Date.now(); // Unique ID
-  branchCheckbox.style.marginRight = '5px';
-  const branchLabel = document.createElement('label');
-  branchLabel.htmlFor = branchCheckbox.id;
-  branchLabel.textContent = 'Branch and edit';
-  branchCheckboxContainer.appendChild(branchCheckbox);
-  branchCheckboxContainer.appendChild(branchLabel);
-  // Insert checkbox after the textarea
-  textarea.parentNode.insertBefore(branchCheckboxContainer, textarea.nextSibling);
+  // Create a container for the buttons
+  const editControlsContainer = document.createElement('div');
+  editControlsContainer.classList.add('edit-controls-container');
 
-  const submitEdit = () => {
+  // Create "Branch and Edit" button
+  const branchAndEditButton = document.createElement('button');
+  branchAndEditButton.textContent = 'Branch & Edit';
+  branchAndEditButton.classList.add('edit-control-button');
+  branchAndEditButton.onclick = () => submitEdit(true);
+
+  // Create "Cancel" button
+  const cancelButton = document.createElement('button');
+  cancelButton.textContent = 'Cancel';
+  cancelButton.classList.add('edit-control-button', 'edit-cancel-button');
+  cancelButton.onclick = cancelEdit;
+
+  editControlsContainer.appendChild(branchAndEditButton);
+  editControlsContainer.appendChild(cancelButton);
+
+  // Insert button container after the textarea
+  textarea.parentNode.insertBefore(editControlsContainer, textarea.nextSibling);
+
+  function submitEdit(doBranch = false) {
     try {
       const newText = textarea.value;
-      const doBranch = branchCheckbox.checked;
+      // const doBranch = branchCheckbox.checked; // This is now passed as a parameter and used directly in the payload
 
       const indexStr = messageElement.getAttribute("data-index");
       if (indexStr === null) {
@@ -188,7 +192,7 @@ function editHere(buttonElement) {
     }
   };
 
-  const cancelEdit = () => {
+  function cancelEdit() {
     const originalBody = document.createElement("div");
     originalBody.classList.add("message-body");
     originalBody.innerHTML = originalHTML;
@@ -198,10 +202,10 @@ function editHere(buttonElement) {
   };
 
 
-  const eventListener = (event) => {
+  function eventListener(event) {
     if (event.type === 'blur') {
       // Delay slightly to allow click on potential submit/cancel buttons if they were part_of the textarea
-      setTimeout(submitEdit, 100);
+      setTimeout(() => submitEdit(), 100);
     } else if (event.type === 'keydown') {
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
@@ -219,8 +223,8 @@ function editHere(buttonElement) {
   function cleanup() {
     textarea.removeEventListener("blur", eventListener);
     textarea.removeEventListener("keydown", eventListener);
-    if (branchCheckboxContainer && branchCheckboxContainer.parentNode) {
-        branchCheckboxContainer.parentNode.removeChild(branchCheckboxContainer);
+    if (editControlsContainer && editControlsContainer.parentNode) {
+        editControlsContainer.parentNode.removeChild(editControlsContainer);
     }
   }
 }

@@ -1326,7 +1326,6 @@ def handle_edit_submit_click(json_str, state):
     """
     history = state['history']
     try:
-        print(f"Received JSON string for edit --- {json_str}")
         data = json.loads(json_str)
         action = data.get("action")
         payload = data.get("payload")
@@ -1369,7 +1368,6 @@ def handle_edit_submit_click(json_str, state):
         save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 
         # --- Prepare UI Updates ---
-        print(f"Updating history after edit: {state['unique_id']} || {state['name1']}, {state['name2']}, {state['mode']}, {state['chat_style']}, {state['character_menu']}\n\n{json.dumps(history)}")
         new_html = chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
         return history, new_html, branch_unique_id_dropdown_update, ""
