@@ -94,6 +94,12 @@ document.addEventListener("keydown", function(event) {
     document.getElementById("Replace-last").click();
   }
 
+  // Replace last message on Ctrl + Alt + L
+  else if (event.ctrlKey && event.altKey && event.key.toUpperCase() === "L") {
+    event.preventDefault();
+    document.getElementById("Replace-last-user").click();
+  }
+
   // Impersonate on Ctrl + Shift + M
   else if (event.ctrlKey && event.shiftKey && event.key === "M") {
     event.preventDefault();

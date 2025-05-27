@@ -10,6 +10,7 @@ The following buttons can be found. Note that the hover menu can be replaced wit
 * **Regenerate**: similar to Generate, but your last message is used as input instead of the text in the input field. Note that if the temperature/top_p/top_k parameters are low in the "Parameters" tab of the UI, the new reply may end up identical to the previous one.
 * **Remove last reply**: removes the last input/output pair from the history and sends your last message back into the input field.
 * **Replace last reply**: replaces the last reply with whatever you typed into the input field. Useful in conjunction with "Copy last reply" if you want to edit the bot response.
+* **Replace last message**: replaces your last message with whatever you typed into the input field. Useful for editing messages without deleting the latest reply's data.
 * **Copy last reply**: sends the contents of the bot's last reply to the input field.
 * **Impersonate**: makes the model generate a new message on your behalf in the input field, taking into consideration the existing chat history.
 * **Send dummy message**: adds a new message to the chat history without causing the model to generate a reply.

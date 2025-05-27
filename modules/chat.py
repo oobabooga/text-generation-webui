@@ -727,6 +727,25 @@ def replace_last_reply(textbox, state):
     return history
 
 
+def replace_last_message(textbox, state):
+    history = state['history']
+    text = textbox['text']
+
+    # Initialize metadata if not present
+    if 'metadata' not in history:
+        history['metadata'] = {}
+
+    if len(text.strip()) == 0:
+        return history
+    elif len(history['visible']) > 0:
+        row_idx = len(history['internal']) - 1
+        history['visible'][-1][0] = html.escape(text)
+        history['internal'][-1][0] = apply_extensions('input', text, state, is_chat=True)
+        update_message_metadata(history['metadata'], "user", row_idx, timestamp=get_current_timestamp())
+
+    return history
+
+
 def send_dummy_message(textbox, state):
     history = state['history']
     text = textbox['text']
@@ -1321,6 +1340,13 @@ def my_yaml_output(data):
 
 def handle_replace_last_reply_click(text, state):
     history = replace_last_reply(text, state)
+    save_history(history, state['unique_id'], state['character_menu'], state['mode'])
+    html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+
+    return [history, html, {"text": "", "files": []}]
+
+def handle_replace_last_message_click(text, state):
+    history = replace_last_message(text, state)
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 

@@ -72,6 +72,7 @@ def create_ui():
 
             with gr.Row():
                 shared.gradio['Replace last reply'] = gr.Button('Replace last reply (Ctrl + Shift + L)', elem_id='Replace-last')
+                shared.gradio['Replace last message'] = gr.Button('Replace last message (Ctrl + Alt + L)', elem_id='Replace-last-user')
                 shared.gradio['Copy last reply'] = gr.Button('Copy last reply (Ctrl + Shift + K)', elem_id='Copy-last')
                 shared.gradio['Impersonate'] = gr.Button('Impersonate (Ctrl + Shift + M)', elem_id='Impersonate')
 
@@ -225,6 +226,10 @@ def create_event_handlers():
     shared.gradio['Replace last reply'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.handle_replace_last_reply_click, gradio('textbox', 'interface_state'), gradio('history', 'display', 'textbox'), show_progress=False)
+    
+    shared.gradio['Replace last message'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.handle_replace_last_message_click, gradio('textbox', 'interface_state'), gradio('history', 'display', 'textbox'), show_progress=False)
 
     shared.gradio['Send dummy message'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
