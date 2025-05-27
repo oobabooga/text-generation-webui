@@ -74,19 +74,18 @@ function branchHere(element) {
   const index = messageElement.getAttribute("data-index");
   if (!index) return;
 
-  const jsonStrInput = document.getElementById("temporary-json-str").querySelector("input");
+  const jsonStrInput = document.querySelector("#temporary-json-str textarea");
   if (!jsonStrInput) {
     console.error("Element with ID 'Temporary-index' not found.");
     return;
   }
-  const branchButton = document.getElementById("Branch");
+  const branchButton = document.querySelector("#Branch");
 
   if (!branchButton) {
     console.error("Required element 'Branch' not found.");
     return;
   }
 
-  console.log(`Branching at message index: ${index} || ${preparePayload("branch_message", { messageIndex: parseInt(index) })}`);
   updateGradioInput(jsonStrInput, preparePayload("branch_message", { messageIndex: parseInt(index) }));
   branchButton.click();
 }
@@ -141,7 +140,6 @@ function editHere(buttonElement) {
 
   const submitEdit = () => {
     try {
-      console.log("Submitting edit...");
       const newText = textarea.value;
       const doBranch = branchCheckbox.checked;
 
@@ -153,7 +151,7 @@ function editHere(buttonElement) {
       }
       const index = parseInt(indexStr);
       const type = isBotMessage(messageElement) ? 1 : 0;
-      console.log(`Editing message at index: ${index}, type: ${type}, doBranch: ${doBranch}`);
+      console.debug(`Editing message at index: ${index}, type: ${type}, doBranch: ${doBranch}`);
 
       if (!isNaN(index)) {
         const jsonStrInput = gradio.querySelector("#temporary-json-str textarea");
@@ -170,18 +168,15 @@ function editHere(buttonElement) {
             return;
         }
 
-        console.log("Preparing payload for edit...");
         const payload = preparePayload("edit_message", {
           messageIndex: index,
           newText: newText,
           messageType: type,
           doBranch: doBranch
         });
-        console.log("Payload prepared:", payload);
 
         updateGradioInput(jsonStrInput, payload);
         
-        console.log(`Submitting edit with payload: ${payload}`);
         submitEditButton.click();
       } else {
         console.error("Invalid message index for edit:", indexStr);
