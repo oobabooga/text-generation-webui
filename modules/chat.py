@@ -416,7 +416,6 @@ def add_message_version(history, row_idx, is_current=True):
 
     index = None
     for index, version in enumerate(history['metadata'][key]["versions"]):
-        print(index, version['content'] == history['internal'][row_idx][1], version['visible_content'] == history['visible'][row_idx][1])
         if version['content'] == history['internal'][row_idx][1] and version['visible_content'] == history['visible'][row_idx][1]:
             break
 
@@ -730,9 +729,12 @@ def replace_last_reply(textbox, state):
         return history
     elif len(history['visible']) > 0:
         row_idx = len(history['internal']) - 1
+        if not history['metadata'].get(f"assistant_{row_idx}", {}).get('versions'):
+            add_message_version(history, row_idx, is_current=False)
         history['visible'][-1][1] = html.escape(text)
         history['internal'][-1][1] = apply_extensions('input', text, state, is_chat=True)
         update_message_metadata(history['metadata'], "assistant", row_idx, timestamp=get_current_timestamp())
+        add_message_version(history, row_idx, is_current=True)
 
     return history
 
