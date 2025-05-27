@@ -414,16 +414,23 @@ def add_message_version(history, row_idx, is_current=True):
     if "versions" not in history['metadata'][key]:
         history['metadata'][key]["versions"] = []
 
-    # Add current message as a version
-    history['metadata'][key]["versions"].append({
-        "content": history['internal'][row_idx][1],
-        "visible_content": history['visible'][row_idx][1],
-        "timestamp": get_current_timestamp()
-    })
+    index = None
+    for index, version in enumerate(history['metadata'][key]["versions"]):
+        print(index, version['content'] == history['internal'][row_idx][1], version['visible_content'] == history['visible'][row_idx][1])
+        if version['content'] == history['internal'][row_idx][1] and version['visible_content'] == history['visible'][row_idx][1]:
+            break
+
+    if index is None:
+        # Add current message as a version
+        history['metadata'][key]["versions"].append({
+            "content": history['internal'][row_idx][1],
+            "visible_content": history['visible'][row_idx][1],
+            "timestamp": get_current_timestamp()
+        })
 
     # Update index if this is the current version
     if is_current:
-        history['metadata'][key]["current_version_index"] = len(history['metadata'][key]["versions"]) - 1
+        history['metadata'][key]["current_version_index"] = index if index is not None else len(history['metadata'][key]["versions"]) - 1
 
 
 def add_message_attachment(history, row_idx, file_path, is_user=True):
