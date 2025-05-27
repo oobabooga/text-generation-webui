@@ -711,8 +711,9 @@ def send_last_reply_to_input(history):
         return ''
 
 
-def replace_last_reply(text, state):
+def replace_last_reply(textbox, state):
     history = state['history']
+    text = textbox['text']
 
     # Initialize metadata if not present
     if 'metadata' not in history:
@@ -729,8 +730,9 @@ def replace_last_reply(text, state):
     return history
 
 
-def send_dummy_message(text, state):
+def send_dummy_message(textbox, state):
     history = state['history']
+    text = textbox['text']
 
     # Initialize metadata if not present
     if 'metadata' not in history:
@@ -744,8 +746,9 @@ def send_dummy_message(text, state):
     return history
 
 
-def send_dummy_reply(text, state):
+def send_dummy_reply(textbox, state):
     history = state['history']
+    text = textbox['text']
 
     # Initialize metadata if not present
     if 'metadata' not in history:
