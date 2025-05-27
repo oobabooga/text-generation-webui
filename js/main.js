@@ -100,6 +100,54 @@ document.addEventListener("keydown", function(event) {
     document.getElementById("Impersonate").click();
   }
 
+  // --- Non-textbox controls --- //
+  else if (event.target.tagName !== 'INPUT' && event.target.tagName !== 'TEXTAREA') {
+    // Version navigation on Ctrl + Arrow (horizontal)
+    if (!event.shiftKey && event.key === 'ArrowLeft') {
+      event.preventDefault();
+      triggerVersionNavigateBackend(selectedMessageHistoryIndex, selectedMessageType, 'left');
+    }
+
+    else if (!event.shiftKey && event.key === 'ArrowRight') {
+      event.preventDefault();
+      let regenerateConditionMet = false;
+
+      const chatContainer = gradioApp().querySelector('#chat');
+      const selectedMessageElement = chat.querySelector('.selected-message');
+
+      if (selectedMessageElement) {
+        const rightNavArrow = selectedMessageElement.querySelector('.message-versioning-nav-right');
+        const isRightArrowDisabled = !rightNavArrow?.hasAttribute('activated');
+
+        // Selected message is the last element in #chat
+        if (chatContainer) {
+            const allMessages = Array.from(chatContainer.querySelectorAll('.message, .user-message, .assistant-message'));
+            const isLastMessage = allMessages.length > 0 && selectedMessageElement === allMessages[allMessages.length - 1];
+
+            if (isRightArrowDisabled && isLastMessage) {
+              document.getElementById("Regenerate").click();
+              regenerateConditionMet = true;
+            }
+        }
+      }
+
+      if (!regenerateConditionMet) {
+        triggerVersionNavigateBackend(selectedMessageHistoryIndex, selectedMessageType, 'right');
+      }
+    }
+    
+    // Select relative message on Ctrl + Arrow (vertical)
+    else if (!event.shiftKey && event.key === 'ArrowUp') {
+      event.preventDefault();
+      selectRelativeMessage(-1)
+    }
+
+    else if (!event.shiftKey && event.key === 'ArrowDown') {
+      event.preventDefault();
+      selectRelativeMessage(1)
+    }
+  }
+
 });
 
 //------------------------------------------------
@@ -843,16 +891,16 @@ function versioningNavigateClick(arrowButton, historyIndex, messageType, directi
   // Keep the message selected
   const messageElement = arrowButton.closest('.message, .user-message, .assistant-message');
   if (messageElement) {
-    versioningSelectMessage(messageElement, historyIndex, messageType);
+    selectMessage(messageElement, historyIndex, messageType);
   }
 
   triggerVersionNavigateBackend(historyIndex, messageType, direction);
 }
 
 
-function versioningSelectMessage(element, historyIndex, messageType) {
+function selectMessage(element, historyIndex, messageType) {
   // Remove previous selection
-  versioningDeselectMessages();
+  deselectMessages();
 
   if (element) {
     selectedMessageHistoryIndex = historyIndex;
@@ -861,13 +909,23 @@ function versioningSelectMessage(element, historyIndex, messageType) {
   }
 }
 
-function versioningDeselectMessages() {
+function deselectMessages() {
   const selectedMessageElement = gradioApp().querySelector('#chat .selected-message');
   if (selectedMessageElement) {
     selectedMessageElement.classList.remove('selected-message');
   }
   selectedMessageHistoryIndex = null;
   selectedMessageType = null;
+}
+
+function selectRelativeMessage(offset) {
+  const chat = gradioApp().querySelector('#chat');
+  if (!chat) return;
+  const messages = Array.from(chat.querySelectorAll('.message, .user-message, .assistant-message'));
+  if (messages.length === 0) return;
+  const selectedMessageChatIndex = messages.findIndex(msg => msg.classList.contains('selected-message')); // Could be saved in a variable rather than run each time
+  const index = selectedMessageChatIndex + offset;
+  if (index >= 0 && index < messages.length) messages[index]?.click();
 }
 
 // --- Message Versioning Global Listeners ---
@@ -887,45 +945,11 @@ document.addEventListener('click', function(e) {
         versioningNavigateClick(button, parseFloat(historyIndex), parseFloat(msgType), direction);
       }
     } else if (msg.classList.contains('selected-message') && !e.ctrlKey) {
-      versioningDeselectMessages();
+      deselectMessages();
     } else {
-      versioningSelectMessage(msg, parseInt(historyIndex), parseInt(msgType));
+      selectMessage(msg, parseInt(historyIndex), parseInt(msgType));
     }
   } else if (target.closest('#chat') && !target.closest('#message-versioning-navigate-hidden')) { // Deselect if the click is in-chat, outside a message
-    versioningDeselectMessages();
-  }
-});
-
-// Global keydown listener for keyboard navigation
-document.addEventListener('keydown', function(e) {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-    return;
-  }
-
-  // Use Ctrl + Left/Right Arrow Keys for navigation, Ctrl + Up/Down Arrow Keys for selection
-  if (e.ctrlKey && !e.shiftKey) {
-    if (e.key === 'ArrowLeft') {
-      triggerVersionNavigateBackend(selectedMessageHistoryIndex, selectedMessageType, 'left');
-      e.preventDefault();
-    } else if (e.key === 'ArrowRight') {
-      triggerVersionNavigateBackend(selectedMessageHistoryIndex, selectedMessageType, 'right');
-      e.preventDefault();
-    } else if (e.key === 'ArrowUp') {
-      selectRelativeMessage(-1)
-      e.preventDefault();
-    } else if (e.key === 'ArrowDown') {
-      selectRelativeMessage(1)
-      e.preventDefault();
-    }
-
-    function selectRelativeMessage(offset) {
-      const chat = gradioApp().querySelector('#chat');
-      if (!chat) return;
-      const messages = Array.from(chat.querySelectorAll('.message, .user-message, .assistant-message'));
-      if (messages.length === 0) return;
-      const selectedMessageChatIndex = messages.findIndex(msg => msg.classList.contains('selected-message')); // Could be saved in a variable rather than run each time
-      const index = selectedMessageChatIndex + offset;
-      if (index >= 0 && index < messages.length) messages[index]?.click();
-    }
+    deselectMessages();
   }
 });
