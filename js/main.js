@@ -1,3 +1,53 @@
+// ------------------------------------------------
+// Helper functions
+// ------------------------------------------------
+
+// Get Gradio app root (if available, otherwise use document)
+function gradioApp() {
+  const elems = document.querySelectorAll('gradio-app');
+  const gradioShadowRoot = elems.length > 0 ? elems[0].shadowRoot : null;
+  return gradioShadowRoot || document;
+}
+
+// Update Gradio element value
+function updateGradioInput(element, value) {
+    if (element) {
+      if (!element.getAttribute("data-client-handled") === "true") {
+        element.value = value;
+        element.setAttribute("data-client-handled", "true");
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    } else {
+      console.warn("Attempted to update a null Gradio input element.");
+    }
+}
+
+// Check message classes and children to determine if it's a bot message
+function isBotMessage(messageElement) {
+  if (!messageElement) return null;
+
+  if (messageElement.classList.contains('assistant-message')) return true;
+  if (messageElement.querySelector('.circle-bot, .text-bot')) return true;
+
+  return false;
+}
+
+// Prepare and stringify payload for sending to the backend
+function preparePayload(action, payload) {
+  if (typeof payload === 'object') {
+    return JSON.stringify({ action: action, payload: payload });
+  } else if (typeof payload === 'string') {
+    return JSON.stringify({ action: action, payload: { text: payload } });
+  } else {
+    console.error("Invalid payload type:", typeof payload);
+    return null;
+  }
+}
+
+// ------------------------------------------------
+// Main
+// ------------------------------------------------
+
 let main_parent = document.getElementById("chat-tab").parentNode;
 let extensions = document.getElementById("extensions");
 
@@ -348,6 +398,16 @@ document.addEventListener("click", function (event) {
     ) {
       handleIndividualSidebarClose(event);
     }
+  }
+});
+
+document.addEventListener("dblclick", (event) => {
+  const messageElement = event.target.closest(".message, .user-message, .assistant-message");
+  if (!messageElement) return;
+
+  const editButton = messageElement.querySelector(".footer-edit-button");
+  if (editButton) {
+    editButton.click();
   }
 });
 

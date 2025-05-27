@@ -118,8 +118,8 @@ def create_interface():
         # Floating menus for saving/deleting files
         ui_file_saving.create_ui()
 
-        # Temporary clipboard for saving files
-        shared.gradio['temporary_text'] = gr.Textbox(visible=False)
+        shared.gradio['temporary_text'] = gr.Textbox(visible=False)  # Temporary clipboard for saving files
+        shared.gradio['temporary_json_str'] = gr.Textbox(visible=False, elem_id="temporary-json-str", interactive=True)  # Temporary JSON string for simple communication with the frontend
 
         # Text Generation tab
         ui_chat.create_ui()

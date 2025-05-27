@@ -1,3 +1,50 @@
+// ------------------------------------------------
+// Helper functions
+// ------------------------------------------------
+
+// Get Gradio app root (if available, otherwise use document)
+function gradioApp() {
+  const elems = document.querySelectorAll('gradio-app');
+  const gradioShadowRoot = elems.length > 0 ? elems[0].shadowRoot : null;
+  return gradioShadowRoot || document;
+}
+
+// Update Gradio element value
+function updateGradioInput(element, value) {
+    if (element) {
+      element.value = value;
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    } else {
+      console.warn("Attempted to update a null Gradio input element.");
+    }
+}
+
+// Check message classes and children to determine if it's a bot message
+function isBotMessage(messageElement) {
+  if (!messageElement) return null;
+
+  if (messageElement.classList.contains('assistant-message')) return true;
+  if (messageElement.querySelector('.circle-bot, .text-bot')) return true;
+
+  return false;
+}
+
+// Prepare and stringify payload for sending to the backend
+function preparePayload(action, payload) {
+  if (typeof payload === 'object') {
+    return JSON.stringify({ action: action, payload: payload });
+  } else if (typeof payload === 'string') {
+    return JSON.stringify({ action: action, payload: { text: payload } });
+  } else {
+    console.error("Invalid payload type:", typeof payload);
+    return null;
+  }
+}
+
+// -------------------------------------------------
+// Event handlers
+// -------------------------------------------------
+
 function copyToClipboard(element) {
   if (!element) return;
 
@@ -27,9 +74,9 @@ function branchHere(element) {
   const index = messageElement.getAttribute("data-index");
   if (!index) return;
 
-  const branchIndexInput = document.getElementById("Branch-index").querySelector("input");
-  if (!branchIndexInput) {
-    console.error("Element with ID 'Branch-index' not found.");
+  const jsonStrInput = document.getElementById("temporary-json-str").querySelector("input");
+  if (!jsonStrInput) {
+    console.error("Element with ID 'Temporary-index' not found.");
     return;
   }
   const branchButton = document.getElementById("Branch");
@@ -39,14 +86,148 @@ function branchHere(element) {
     return;
   }
 
-  branchIndexInput.value = index;
+  console.log(`Branching at message index: ${index} || ${preparePayload("branch_message", { messageIndex: parseInt(index) })}`);
+  updateGradioInput(jsonStrInput, preparePayload("branch_message", { messageIndex: parseInt(index) }));
+  branchButton.click();
+}
 
-  // Trigger any 'change' or 'input' events Gradio might be listening for
-  const event = new Event("input", { bubbles: true }); // 'change' might also work
-  branchIndexInput.dispatchEvent(event);
+function editHere(buttonElement) {
+  if (!buttonElement) return;
 
-  branchButton.click(); // Gradio will now pick up the 'index'
+  const messageElement = buttonElement.closest(".message, .user-message, .assistant-message");
+  if (!messageElement) return;
 
+  let messageBody = messageElement.querySelector(".message-body");
+  if (!messageBody) return;
+
+  // If already editing, do nothing (or perhaps focus the textarea)
+  if (messageBody.tagName === 'TEXTAREA' && messageBody.classList.contains('editing-textarea')) {
+    messageBody.focus();
+    return;
+  }
+
+  const rawText = messageElement.getAttribute("data-raw") || messageBody.textContent;
+  const originalHTML = messageBody.innerHTML; // Keep original HTML for cancellation if needed, though data-raw is better for text.
+
+  const gradio = gradioApp();
+
+  const textarea = document.createElement("textarea");
+  textarea.value = rawText;
+  textarea.classList.add("editing-textarea");
+  textarea.style.width = "100%"; // Basic styling
+  textarea.style.minHeight = "50px"; // Basic styling
+  textarea.rows = Math.max(3, rawText.split('\n').length); // Adjust rows based on content
+
+  // Replace messageBody with textarea
+  messageBody.parentNode.replaceChild(textarea, messageBody);
+  textarea.focus();
+  textarea.selectionStart = textarea.selectionEnd = textarea.value.length; // Move cursor to end
+
+  // Add a checkbox for "branch before edit"
+  const branchCheckboxContainer = document.createElement('div');
+  branchCheckboxContainer.style.marginTop = '5px';
+  branchCheckboxContainer.style.marginBottom = '5px';
+  const branchCheckbox = document.createElement('input');
+  branchCheckbox.type = 'checkbox';
+  branchCheckbox.id = 'do-branch-checkbox-' + messageElement.getAttribute("data-index") + '-' + Date.now(); // Unique ID
+  branchCheckbox.style.marginRight = '5px';
+  const branchLabel = document.createElement('label');
+  branchLabel.htmlFor = branchCheckbox.id;
+  branchLabel.textContent = 'Branch and edit';
+  branchCheckboxContainer.appendChild(branchCheckbox);
+  branchCheckboxContainer.appendChild(branchLabel);
+  // Insert checkbox after the textarea
+  textarea.parentNode.insertBefore(branchCheckboxContainer, textarea.nextSibling);
+
+  const submitEdit = () => {
+    try {
+      console.log("Submitting edit...");
+      const newText = textarea.value;
+      const doBranch = branchCheckbox.checked;
+
+      const indexStr = messageElement.getAttribute("data-index");
+      if (indexStr === null) {
+        console.error("Message index (data-index) not found.");
+        cleanup();
+        return;
+      }
+      const index = parseInt(indexStr);
+      const type = isBotMessage(messageElement) ? 1 : 0;
+      console.log(`Editing message at index: ${index}, type: ${type}, doBranch: ${doBranch}`);
+
+      if (!isNaN(index)) {
+        const jsonStrInput = gradio.querySelector("#temporary-json-str textarea");
+        if (!jsonStrInput) {
+            console.error("Element with ID 'temporary-json-str textarea' not found.");
+            cleanup();
+            return;
+        }
+        
+        const submitEditButton = gradio.querySelector("#edit");
+        if (!submitEditButton) {
+            console.error("Hidden submit button for edits (i.e., #edit) not found.");
+            cleanup();
+            return;
+        }
+
+        console.log("Preparing payload for edit...");
+        const payload = preparePayload("edit_message", {
+          messageIndex: index,
+          newText: newText,
+          messageType: type,
+          doBranch: doBranch
+        });
+        console.log("Payload prepared:", payload);
+
+        updateGradioInput(jsonStrInput, payload);
+        
+        console.log(`Submitting edit with payload: ${payload}`);
+        submitEditButton.click();
+      } else {
+        console.error("Invalid message index for edit:", indexStr);
+      }
+    } catch (error) {
+        console.error("Error during submitEdit:", error);
+    } finally {
+      cleanup(); // Ensure cleanup happens, submitEditButton.click() is async from Gradio's perspective
+    }
+  };
+
+  const cancelEdit = () => {
+    const originalBody = document.createElement("div");
+    originalBody.classList.add("message-body");
+    originalBody.innerHTML = originalHTML;
+
+    textarea.parentNode.replaceChild(originalBody, textarea);
+    cleanup();
+  };
+
+
+  const eventListener = (event) => {
+    if (event.type === 'blur') {
+      // Delay slightly to allow click on potential submit/cancel buttons if they were part_of the textarea
+      setTimeout(submitEdit, 100);
+    } else if (event.type === 'keydown') {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        submitEdit();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        cancelEdit();
+      }
+    }
+  };
+
+  textarea.addEventListener("blur", eventListener);
+  textarea.addEventListener("keydown", eventListener);
+
+  function cleanup() {
+    textarea.removeEventListener("blur", eventListener);
+    textarea.removeEventListener("keydown", eventListener);
+    if (branchCheckboxContainer && branchCheckboxContainer.parentNode) {
+        branchCheckboxContainer.parentNode.removeChild(branchCheckboxContainer);
+    }
+  }
 }
 
 function regenerateClick() {

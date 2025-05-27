@@ -25,7 +25,6 @@ def create_ui():
             with gr.Column():
                 with gr.Row(elem_id='past-chats-buttons'):
                     shared.gradio['branch_chat'] = gr.Button('Branch', elem_classes='refresh-button', elem_id='Branch', interactive=not mu)
-                    shared.gradio['branch_index'] = gr.Number(value=-1, precision=0, visible=False, elem_id="Branch-index", interactive=True)
                     shared.gradio['rename_chat'] = gr.Button('Rename', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['delete_chat'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['Start new chat'] = gr.Button('New chat', elem_classes=['refresh-button', 'focus-on-chat-input'])
@@ -65,6 +64,8 @@ def create_ui():
 
         # Hover menu buttons
         with gr.Column(elem_id='chat-buttons'):
+            shared.gradio['Edit'] = gr.Button('Edit', elem_id='edit', visible=False)
+
             with gr.Row():
                 shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')
                 shared.gradio['Continue'] = gr.Button('Continue (Alt + Enter)', elem_id='Continue')
@@ -222,6 +223,10 @@ def create_event_handlers():
         None, None, None, js='() => document.getElementById("chat").parentNode.parentNode.parentNode.classList.remove("_generating")').then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
+    shared.gradio['Edit'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.handle_edit_submit_click, gradio('temporary_json_str', 'interface_state'), gradio('history', 'display', 'unique_id', 'temporary_json_str'), show_progress=False)
+
     shared.gradio['Replace last reply'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.handle_replace_last_reply_click, gradio('textbox', 'interface_state'), gradio('history', 'display', 'textbox'), show_progress=False)
@@ -259,7 +264,7 @@ def create_event_handlers():
 
     shared.gradio['branch_chat'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_branch_chat_click, gradio('interface_state'), gradio('history', 'display', 'unique_id', 'branch_index'), show_progress=False)
+        chat.handle_branch_chat_click, gradio('interface_state'), gradio('history', 'display', 'unique_id', 'temporary_json_str'), show_progress=False)
 
     shared.gradio['rename_chat'].click(chat.handle_rename_chat_click, None, gradio('rename_to', 'rename-row'), show_progress=False)
     shared.gradio['rename_to-cancel'].click(lambda: gr.update(visible=False), None, gradio('rename-row'), show_progress=False)
