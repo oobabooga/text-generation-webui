@@ -23,7 +23,8 @@ tensorboard
 transformers
 tqdm
 wandb
-triton-windows
+triton-windows; platform_system == "Windows"
+triton; platform_system == "Linux"
 
 # API
 flask_cloudflared==0.0.14
