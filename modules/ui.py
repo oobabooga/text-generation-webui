@@ -209,14 +209,14 @@ def list_interface_input_elements():
         'sampler_priority',
         'custom_stopping_strings',
         'custom_token_bans',
+        'negative_prompt',
+        'dry_sequence_breakers',
+        'grammar_string',
         'navigate_message_index',
         'navigate_direction',
         'edit_message_index',
         'edit_message_text',
         'edit_message_role',
-        'negative_prompt',
-        'dry_sequence_breakers',
-        'grammar_string',
         'branch_index',
     ]
 
