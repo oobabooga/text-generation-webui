@@ -19,7 +19,7 @@ def generate_search_query(user_message, state):
 
     # Use a minimal state for search query generation
     search_state = state.copy()
-    search_state['max_new_tokens'] = 50
+    search_state['max_new_tokens'] = 64
     search_state['temperature'] = 0.1
 
     query = ""
@@ -49,10 +49,6 @@ def download_web_page(url, timeout=10):
         lines = (line.strip() for line in text.splitlines())
         chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
         text = ' '.join(chunk for chunk in chunks if chunk)
-
-        # Limit text length to prevent overwhelming the context
-        if len(text) > 5000:
-            text = text[:5000] + "... [content truncated]"
 
         return text
     except Exception as e:
