@@ -1417,6 +1417,7 @@ strong {
     flex-wrap: wrap;
     gap: 8px;
     margin-top: 8px;
+    padding-bottom: 6px;
 }
 
 .attachment-box {
