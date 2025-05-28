@@ -1536,7 +1536,7 @@ strong {
 
 .version-position {
     font-size: 11px;
-    color: currentColor;
+    color: currentcolor;
     font-family: monospace;
     min-width: 35px;
     text-align: center;
