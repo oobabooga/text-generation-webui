@@ -9,7 +9,7 @@ from pathlib import Path
 import markdown
 from PIL import Image, ImageOps
 
-from modules import shared, message_versioning
+from modules import shared
 from modules.sane_markdown_lists import SaneListExtension
 from modules.utils import get_available_chat_styles
 
@@ -380,6 +380,30 @@ def format_message_attachments(history, role, index):
     return ""
 
 
+def get_version_navigation_html(history, i):
+    """Generate simple navigation arrows for message versions"""
+    key = f"assistant_{i}"
+    metadata = history.get('metadata', {})
+
+    if key not in metadata or 'versions' not in metadata[key]:
+        return ""
+
+    versions = metadata[key]['versions']
+    current_idx = metadata[key].get('current_version_index', 0)
+
+    if len(versions) <= 1:
+        return ""
+
+    left_disabled = ' disabled' if current_idx == 0 else ''
+    right_disabled = ' disabled' if current_idx >= len(versions) - 1 else ''
+
+    left_arrow = f'<button class="footer-button version-nav-button"{left_disabled} onclick="navigateVersion(this, \'left\')" title="Previous version">&lt;</button>'
+    right_arrow = f'<button class="footer-button version-nav-button"{right_disabled} onclick="navigateVersion(this, \'right\')" title="Next version">&gt;</button>'
+    position = f'<span class="version-position">{current_idx + 1}/{len(versions)}</span>'
+
+    return f'<div class="version-navigation">{left_arrow}{position}{right_arrow}</div>'
+
+
 def actions_html(history, i, info_message=""):
     return (f'<div class="message-actions">'
             f'{copy_button}'
@@ -389,7 +413,7 @@ def actions_html(history, i, info_message=""):
             f'{branch_button}'
             f'{info_message}'
             f'</div>'
-            f'{message_versioning.get_message_version_nav_elements(history, i, 1)}')
+            f'{get_version_navigation_html(history, i)}')
 
 
 def generate_instruct_html(history):
@@ -422,9 +446,8 @@ def generate_instruct_html(history):
             info_message_assistant = info_button.replace("message", assistant_timestamp_value)
 
         if converted_visible[0]:  # Don't display empty user messages
-            selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
             output += (
-                f'<div class="user-message{selected_class}" '
+                f'<div class="user-message" '
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
@@ -434,9 +457,8 @@ def generate_instruct_html(history):
                 f'</div>'
             )
 
-        selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
-            f'<div class="assistant-message{selected_class}" '
+            f'<div class="assistant-message" '
             f'data-raw="{html.escape(row_internal[1], quote=True)}"'
             f'data-index={i}>'
             f'<div class="text">'
@@ -479,9 +501,8 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
         assistant_attachments = format_message_attachments(history, "assistant", i)
 
         if converted_visible[0]:  # Don't display empty user messages
-            selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
             output += (
-                f'<div class="message{selected_class}" '
+                f'<div class="message" '
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="circle-you">{img_me}</div>'
                 f'<div class="text">'
@@ -493,9 +514,8 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
                 f'</div>'
             )
 
-        selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
-            f'<div class="message{selected_class}"'
+            f'<div class="message" '
             f'data-raw="{html.escape(row_internal[1], quote=True)}"'
             f'data-index={i}>'
             f'<div class="circle-bot">{img_bot}</div>'
@@ -542,9 +562,8 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
             info_message_assistant = info_button.replace("message", assistant_timestamp_value)
 
         if converted_visible[0]:  # Don't display empty user messages
-            selected_class = " selected-message" if message_versioning.is_message_selected(i, 0) else ""
             output += (
-                f'<div class="message{selected_class}" '
+                f'<div class="message" '
                 f'data-raw="{html.escape(row_internal[0], quote=True)}">'
                 f'<div class="text-you">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
@@ -554,9 +573,8 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
                 f'</div>'
             )
 
-        selected_class = " selected-message" if message_versioning.is_message_selected(i, 1) else ""
         output += (
-            f'<div class="message{selected_class}" '
+            f'<div class="message" '
             f'data-raw="{html.escape(row_internal[1], quote=True)}"'
             f'data-index={i}>'
             f'<div class="text-bot">'

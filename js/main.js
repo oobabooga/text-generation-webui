@@ -39,23 +39,24 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
 //------------------------------------------------
 // Keyboard shortcuts
 //------------------------------------------------
+
+// --- Helper functions --- //
+function isModifiedKeyboardEvent() {
+  return (event instanceof KeyboardEvent &&
+    event.shiftKey ||
+    event.ctrlKey ||
+    event.altKey ||
+    event.metaKey);
+}
+
+function isFocusedOnEditableTextbox() {
+  if (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA") {
+    return !!event.target.value;
+  }
+}
+
 let previousTabId = "chat-tab-button";
 document.addEventListener("keydown", function(event) {
-  // --- Helper functions --- //
-  function isModifiedKeyboardEvent() {
-    return (event instanceof KeyboardEvent &&
-        event.shiftKey ||
-        event.ctrlKey ||
-        event.altKey ||
-        event.metaKey);
-  }
-
-  function isFocusedOnEditableTextbox() {
-    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-      return !!event.target.value;
-    }
-  }
-
   // Stop generation on Esc pressed
   if (event.key === "Escape") {
     // Find the element with id 'stop' and click it
@@ -119,51 +120,20 @@ document.addEventListener("keydown", function(event) {
     document.getElementById("Impersonate").click();
   }
 
-  // --- Non-textbox controls --- //
+  // --- Simple version navigation --- //
   if (!isFocusedOnEditableTextbox()) {
-    // Version navigation on Ctrl + Arrow (horizontal)
-    if (!isModifiedKeyboardEvent() && event.key === 'ArrowLeft') {
+    // Version navigation on Arrow keys (horizontal)
+    if (!isModifiedKeyboardEvent() && event.key === "ArrowLeft") {
       event.preventDefault();
-      triggerVersionNavigateBackend(selectedMessageHistoryIndex, selectedMessageType, 'left');
+      navigateLastAssistantMessage("left");
     }
 
-    else if (!isModifiedKeyboardEvent() && event.key === 'ArrowRight') {
+    else if (!isModifiedKeyboardEvent() && event.key === "ArrowRight") {
       event.preventDefault();
-      let regenerateConditionMet = false;
-
-      const chatContainer = gradioApp().querySelector('#chat');
-      const selectedMessageElement = chat.querySelector('.selected-message');
-
-      if (selectedMessageElement) {
-        const rightNavArrow = selectedMessageElement.querySelector('.message-versioning-nav-right');
-        const isRightArrowDisabled = !rightNavArrow?.hasAttribute('activated');
-
-        // Selected message is the last element in #chat
-        if (chatContainer) {
-            const allMessages = Array.from(chatContainer.querySelectorAll('.message, .user-message, .assistant-message'));
-            const isLastMessage = allMessages.length > 0 && selectedMessageElement === allMessages[allMessages.length - 1];
-
-            if (isRightArrowDisabled && isLastMessage) {
-              document.getElementById("Regenerate").click();
-              regenerateConditionMet = true;
-            }
-        }
+      if (!navigateLastAssistantMessage("right")) {
+        // If can't navigate right (last version), regenerate
+        document.getElementById("Regenerate").click();
       }
-
-      if (!regenerateConditionMet) {
-        triggerVersionNavigateBackend(selectedMessageHistoryIndex, selectedMessageType, 'right');
-      }
-    }
-    
-    // Select relative message on Ctrl + Arrow (vertical)
-    else if (!isModifiedKeyboardEvent() && event.key === 'ArrowUp') {
-      event.preventDefault();
-      selectRelativeMessage(-1)
-    }
-
-    else if (!isModifiedKeyboardEvent() && event.key === 'ArrowDown') {
-      event.preventDefault();
-      selectRelativeMessage(1)
     }
   }
 
@@ -857,118 +827,54 @@ function createMobileTopBar() {
 
 createMobileTopBar();
 
-
 //------------------------------------------------
-// Message Versioning Integration
+// Simple Navigation Functions
 //------------------------------------------------
 
-// --- Message Versioning Variables ---
-let selectedMessageHistoryIndex = null;
-let selectedMessageType = null;
+function navigateLastAssistantMessage(direction) {
+  const chat = document.querySelector("#chat");
+  if (!chat) return false;
 
-// --- Message Versioning Helper Functions ---
+  const messages = chat.querySelectorAll("[data-index]");
+  if (messages.length === 0) return false;
 
-// Helper function to get Gradio app root (if needed, otherwise use document)
-function gradioApp() {
-  const elems = document.querySelectorAll('gradio-app');
-  const gradioShadowRoot = elems.length > 0 ? elems[0].shadowRoot : null;
-  return gradioShadowRoot || document;
-}
-
-// Helper to update Gradio text/number inputs (if needed for backend communication)
-function updateGradioInput(element, value) {
-    if (element) {
-      element.value = value;
-      element.dispatchEvent(new Event('input', { bubbles: true }));
-    } else {
-      console.warn("Attempted to update a null Gradio input element.");
+  // Find the last assistant message (starting from the end)
+  let lastAssistantMessage = null;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (
+      msg.classList.contains("assistant-message") ||
+      msg.querySelector(".circle-bot") ||
+      msg.querySelector(".text-bot")
+    ) {
+      lastAssistantMessage = msg;
+      break;
     }
-}
-
-// --- Message Versioning Core Functions ---
-
-function triggerVersionNavigateBackend(historyIndex, messageType, direction) {
-  const gradio = gradioApp();
-  const historyIndexInput = gradio.querySelector('#message-versioning-history-index-hidden input[type="number"]');
-  const messageTypeInput = gradio.querySelector('#message-versioning-message-type-hidden input[type="number"]');
-  const directionInput = gradio.querySelector('#message-versioning-direction-hidden textarea');
-  const navigateButton = gradio.querySelector('#message-versioning-navigate-hidden');
-
-  if (historyIndexInput && messageTypeInput && directionInput && navigateButton) {
-    console.debug("Found hidden Gradio elements for navigation.", navigateButton);
-    updateGradioInput(historyIndexInput, historyIndex);
-    updateGradioInput(messageTypeInput, messageType);
-    updateGradioInput(directionInput, direction);
-    navigateButton.click();
-  } else {
-    console.error("Message Versioning: Could not find hidden Gradio elements for navigation. Backend communication needs setup.");
-  }
-}
-
-// Function called by the nav arrow's onclick attribute
-function versioningNavigateClick(arrowButton, historyIndex, messageType, direction) {
-  // Keep the message selected
-  const messageElement = arrowButton.closest('.message, .user-message, .assistant-message');
-  if (messageElement) {
-    selectMessage(messageElement, historyIndex, messageType);
   }
 
-  triggerVersionNavigateBackend(historyIndex, messageType, direction);
-}
+  if (!lastAssistantMessage) return false;
 
+  const buttons = lastAssistantMessage.querySelectorAll(".version-nav-button");
 
-function selectMessage(element, historyIndex, messageType) {
-  // Remove previous selection
-  deselectMessages();
+  for (let i = 0; i < buttons.length; i++) {
+    const button = buttons[i];
+    const onclick = button.getAttribute("onclick");
+    const disabled = button.hasAttribute("disabled");
 
-  if (element) {
-    selectedMessageHistoryIndex = historyIndex;
-    selectedMessageType = messageType;
-    element.classList.add('selected-message');
-  }
-}
+    const isLeft = onclick && onclick.includes("'left'");
+    const isRight = onclick && onclick.includes("'right'");
 
-function deselectMessages() {
-  const selectedMessageElement = gradioApp().querySelector('#chat .selected-message');
-  if (selectedMessageElement) {
-    selectedMessageElement.classList.remove('selected-message');
-  }
-  selectedMessageHistoryIndex = null;
-  selectedMessageType = null;
-}
-
-function selectRelativeMessage(offset) {
-  const chat = gradioApp().querySelector('#chat');
-  if (!chat) return;
-  const messages = Array.from(chat.querySelectorAll('.message, .user-message, .assistant-message'));
-  if (messages.length === 0) return;
-  const selectedMessageChatIndex = messages.findIndex(msg => msg.classList.contains('selected-message')); // Could be saved in a variable rather than run each time
-  const index = selectedMessageChatIndex + offset;
-  if (index >= 0 && index < messages.length) messages[index]?.click();
-}
-
-// --- Message Versioning Global Listeners ---
-
-// Global click listener for buttons and (de)selecting messages
-document.addEventListener('click', function(e) {
-  const target = e.target;
-  
-  const msg = target.closest('.message, .user-message, .assistant-message')
-  if (msg) {
-    const historyIndex = msg.getAttribute('data-index');
-    const msgType = (msg.classList.contains('assistant-message') || msg.querySelector('.circle-bot, .text-bot')) ? 1 : 0;
-    if (target.closest('button')) {
-      const button = target.closest('.message-versioning-nav-arrow');
-      if (button && button.hasAttribute('activated')) {
-        const direction = button.closest('.message-versioning-nav-left') ? 'left' : 'right';
-        versioningNavigateClick(button, parseFloat(historyIndex), parseFloat(msgType), direction);
+    if (!disabled) {
+      if (direction === "left" && isLeft) {
+        navigateVersion(button, direction);
+        return true;
       }
-    } else if (msg.classList.contains('selected-message') && !e.ctrlKey) {
-      deselectMessages();
-    } else {
-      selectMessage(msg, parseInt(historyIndex), parseInt(msgType));
+      if (direction === "right" && isRight) {
+        navigateVersion(button, direction);
+        return true;
+      }
     }
-  } else if (target.closest('#chat') && !target.closest('#message-versioning-navigate-hidden')) { // Deselect if the click is in-chat, outside a message
-    deselectMessages();
   }
-});
+
+  return false;
+}
