@@ -1,7 +1,9 @@
 accelerate==1.5.*
+beautifulsoup4==4.13.4
 bitsandbytes==0.45.*
 colorama
 datasets
+duckduckgo_search==8.0.2
 einops
 fastapi==0.112.4
 gradio==4.37.*
@@ -13,6 +15,7 @@ peft==0.15.*
 Pillow>=9.5.0
 psutil
 pydantic==2.8.2
+PyPDF2==3.0.1
 pyyaml
 requests
 rich
@@ -25,8 +28,6 @@ tqdm
 wandb
 triton-windows; platform_system == "Windows"
 triton; platform_system == "Linux"
-beautifulsoup4==4.13.4
-duckduckgo_search==8.0.2
 
 # API
 flask_cloudflared==0.0.14
