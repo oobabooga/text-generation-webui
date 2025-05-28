@@ -399,40 +399,26 @@ def get_stopping_strings(state):
 
 
 def add_message_version(history, row_idx, is_current=True):
-    """Add the current message as a version in the history metadata"""
-    if 'metadata' not in history:
-        history['metadata'] = {}
-
-    if row_idx >= len(history['internal']) or not history['internal'][row_idx][1].strip():
-        return  # Skip if row doesn't exist or message is empty
-
     key = f"assistant_{row_idx}"
-
-    # Initialize metadata structures if needed
     if key not in history['metadata']:
-        history['metadata'][key] = {"timestamp": get_current_timestamp()}
+        history['metadata'][key] = {}
+
     if "versions" not in history['metadata'][key]:
         history['metadata'][key]["versions"] = []
 
-    # Check if this version already exists
     current_content = history['internal'][row_idx][1]
     current_visible = history['visible'][row_idx][1]
 
-    for i, version in enumerate(history['metadata'][key]["versions"]):
-        if version['content'] == current_content and version['visible_content'] == current_visible:
-            if is_current:
-                history['metadata'][key]["current_version_index"] = i
-            return
-
-    # Add current message as a version
+    # Always add the current message as a new version entry.
+    # The timestamp will differentiate it even if content is identical to a previous version.
     history['metadata'][key]["versions"].append({
         "content": current_content,
         "visible_content": current_visible,
         "timestamp": get_current_timestamp()
     })
 
-    # Update index if this is the current version
     if is_current:
+        # Set the current_version_index to the newly added version (which is now the last one).
         history['metadata'][key]["current_version_index"] = len(history['metadata'][key]["versions"]) - 1
 
 
