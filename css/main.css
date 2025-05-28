@@ -1457,79 +1457,52 @@ strong {
     color: #ccc;
 }
 
-/* Styling for the editing textarea */
+/* Message Editing Styles */
 .editing-textarea {
     width: 100%;
     min-height: 50px;
-    padding: 10px 10px 0;
+    padding: 10px;
     border-radius: 5px;
-    border: 1px solid var(--border-color-dark);
-    background-color: color-mix(in srgb, var(--dark-gray) 90%, black);
-    color: var(--light-gray);
+    border: 1px solid #ccc;
+    background-color: var(--light-gray);
+    color: #efefef;
     font-family: inherit;
     font-size: inherit;
     resize: vertical;
-    transition: background-color 0.1s ease;
 }
 
 .dark .editing-textarea {
     border: 1px solid var(--border-color-dark);
-    background-color: color-mix(in srgb, var(--darker-gray) 90%, black);
-    color: #efefef;
+    background-color: var(--darker-gray);
 }
 
 .editing-textarea:focus {
     outline: none;
     border-color: var(--selected-item-color-dark);
-    box-shadow: 0 0 5px color-mix(in srgb, var(--selected-item-color-dark) 50%, transparent);
 }
 
-/* Edit controls styling */
 .edit-controls-container {
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
+    margin-top: 0;
+    display: flex;
+    gap: 8px;
+    padding-bottom: 8px;
 }
 
 .edit-control-button {
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  cursor: pointer;
-  background-color: #e9ecef;
-  color: #212529;
-}
-
-.edit-control-button:hover {
-  background-color: #dee2e6;
-}
-
-.edit-cancel-button {
-  background-color: #f8f9fa;
-  border-color: #ced4da;
-}
-
-.edit-cancel-button:hover {
-  background-color: #e2e6ea;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #f8f9fa;
+    color: #212529;
+    font-size: 12px;
+    margin: 0;
 }
 
 .dark .edit-control-button {
-  border: 1px solid var(--border-color-dark);
-  background-color: var(--light-gray);
-  color: #efefef;
-}
-
-.dark .edit-control-button:hover {
-  background-color: var(--selected-item-color-dark);
-}
-
-.dark .edit-cancel-button {
-  background-color: var(--dark-gray);
-  border-color: var(--border-color-dark);
-}
-
-.dark .edit-cancel-button:hover {
-  background-color: color-mix(in srgb, var(--dark-gray) 85%, white);
+    border: 1px solid var(--border-color-dark);
+    background-color: var(--light-gray);
+    color: #efefef;
 }
 
 /* --- Simple Version Navigation --- */
@@ -1563,7 +1536,7 @@ strong {
 
 .version-position {
     font-size: 11px;
-    color: currentColor;
+    color: currentcolor;
     font-family: monospace;
     min-width: 35px;
     text-align: center;

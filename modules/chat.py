@@ -719,24 +719,6 @@ def send_last_reply_to_input(history):
         return ''
 
 
-def replace_message(state, textbox, row_idx, role_idx):
-    history = state['history']
-    text = textbox if isinstance(textbox, str) else textbox['text']
-
-    # Initialize metadata if not present
-    if 'metadata' not in history:
-        history['metadata'] = {}
-
-    if len(text.strip()) == 0:
-        return history
-    elif len(history['visible']) > 0:
-        history['visible'][row_idx][role_idx] = html.escape(text)
-        history['internal'][row_idx][role_idx] = apply_extensions('input', text, state, is_chat=True)
-        update_message_metadata(history['metadata'], "assistant" if role_idx == 1 else "user", row_idx, timestamp=get_current_timestamp())
-
-    return history
-
-
 def send_dummy_message(textbox, state):
     history = state['history']
     text = textbox['text']
@@ -1329,81 +1311,22 @@ def my_yaml_output(data):
     return result
 
 
-def handle_edit_submit_click(json_str, state):
-    """
-    Handles the submission of an edited message.
-    Parses data from temporary_json_str, updates the history,
-    optionally branches, and returns UI updates.
-    """
-    history = state['history']
-    try:
-        data = json.loads(json_str)
-        action = data.get("action")
-        payload = data.get("payload")
-
-        if action != "edit_message" or not payload:
-            logger.error("Invalid action or payload for edit_message.")
-            return history, gr.update(), gr.update(), gr.update()
-
-        row_idx = payload.get("messageIndex")
-        new_text = payload.get("newText")
-        message_type = payload.get("messageType")  # 0 for user, 1 for bot
-        do_branch = payload.get("doBranch", False)
-
-        if row_idx is None or new_text is None or message_type is None:
-            logger.error(f"Missing data in edit payload: index={row_idx}, text={new_text is None}, type={message_type}")
-            return history, gr.update(), gr.update(), gr.update()
-
-        if not (0 <= row_idx < len(history['internal'])):
-            logger.error(f"Invalid row_idx {row_idx} for history length {len(history['internal'])}")
-            return history, gr.update(), gr.update(), gr.update()
-
-        # --- Branching Logic ---
-        branch_unique_id_dropdown_update = gr.update()  # For the history dropdown
-
-        if do_branch:
-            branch_outputs = handle_branch_chat_click(state)
-            history = branch_outputs[0]
-            state['history'] = history
-            branch_unique_id_dropdown_update = branch_outputs[2]
-            state['unique_id'] = branch_unique_id_dropdown_update['value']
-
-        # --- Apply Edit ---
-        if not history.get('metadata', {}).get('versions') and message_type == 1:
-            add_message_version(history, row_idx, is_current=False)
-        replace_message(state, new_text, row_idx, message_type)
-        if message_type == 1:
-            add_message_version(history, row_idx, is_current=True)
-
-        # --- Save History ---
-        save_history(history, state['unique_id'], state['character_menu'], state['mode'])
-
-        # --- Prepare UI Updates ---
-        new_html = chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
-
-        return history, new_html, branch_unique_id_dropdown_update, ""
-
-    except json.JSONDecodeError:
-        logger.error("Failed to decode JSON from temporary_json_str for edit.")
-        return history, gr.update(), gr.update(), gr.update()
-    except Exception as e:
-        logger.error(f"Error in handle_edit_submit_click: {e}", exc_info=True)
-        return history, gr.update(), gr.update(), gr.update()
-
-
 def handle_replace_last_reply_click(text, state):
-    history, html, _, _ = handle_edit_submit_click(
-        json.dumps({
-            "action": "edit_message",
-            "payload": {
-                "messageIndex": len(state['history']['internal']) - 1,
-                "newText": text,
-                "messageType": 1,
-                "doBranch": False
-            }
-        }),
-        state
-    )
+    # Just use the old simple logic for replace last reply
+    history = state['history']
+    text_content = text['text']
+
+    if 'metadata' not in history:
+        history['metadata'] = {}
+
+    if len(text_content.strip()) > 0 and len(history['visible']) > 0:
+        row_idx = len(history['internal']) - 1
+        history['visible'][-1][1] = html.escape(text_content)
+        history['internal'][-1][1] = apply_extensions('input', text_content, state, is_chat=True)
+        update_message_metadata(history['metadata'], "assistant", row_idx, timestamp=get_current_timestamp())
+
+    save_history(history, state['unique_id'], state['character_menu'], state['mode'])
+    html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     return [history, html, {"text": "", "files": []}]
 
@@ -1475,7 +1398,7 @@ def handle_delete_chat_confirm_click(state):
 
 
 def handle_branch_chat_click(state):
-    branch_from_index = json.loads(state.get('temporary_json_str', {})).get('payload', {}).get('messageIndex', -1)
+    branch_from_index = state['branch_index']
     if branch_from_index == -1:
         history = state['history']
     else:
@@ -1492,7 +1415,49 @@ def handle_branch_chat_click(state):
 
     past_chats_update = gr.update(choices=histories, value=new_unique_id)
 
-    return [history, html, past_chats_update, ""]
+    return [history, html, past_chats_update, -1]
+
+
+def handle_edit_message_click(state):
+    history = state['history']
+    message_index = int(state['edit_message_index'])
+    new_text = state['edit_message_text']
+    role = state['edit_message_role']  # "user" or "assistant"
+
+    if message_index >= len(history['internal']):
+        html_output = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+        return [history, html_output, gr.update()]
+
+    # Use the role passed from frontend
+    is_user_msg = (role == "user")
+    role_idx = 0 if is_user_msg else 1
+
+    history['internal'][message_index][role_idx] = apply_extensions('input', new_text, state, is_chat=True)
+    history['visible'][message_index][role_idx] = html.escape(new_text)
+
+    # Branch if editing user message, add version if editing assistant message
+    if is_user_msg:
+        # Branch like branch-here
+        history['visible'] = history['visible'][:message_index + 1]
+        history['internal'] = history['internal'][:message_index + 1]
+        new_unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
+        save_history(history, new_unique_id, state['character_menu'], state['mode'])
+        histories = find_all_histories_with_first_prompts(state)
+        past_chats_update = gr.update(choices=histories, value=new_unique_id)
+        state['unique_id'] = new_unique_id
+    elif not is_user_msg:
+        # Add version like regenerate
+        if not history['metadata'].get(f"assistant_{message_index}", {}).get('versions'):
+            add_message_version(history, message_index, is_current=False)
+        add_message_version(history, message_index, is_current=True)
+        past_chats_update = gr.update()
+    else:
+        past_chats_update = gr.update()
+
+    save_history(history, state['unique_id'], state['character_menu'], state['mode'])
+    html_output = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+
+    return [history, html_output, past_chats_update]
 
 
 def handle_navigate_version_click(state):

@@ -386,23 +386,23 @@ def get_version_navigation_html(history, i):
     """Generate simple navigation arrows for message versions"""
     key = f"assistant_{i}"
     metadata = history.get('metadata', {})
-    
+
     if key not in metadata or 'versions' not in metadata[key]:
         return ""
-    
+
     versions = metadata[key]['versions']
     current_idx = metadata[key].get('current_version_index', 0)
-    
+
     if len(versions) <= 1:
         return ""
-    
+
     left_disabled = ' disabled' if current_idx == 0 else ''
     right_disabled = ' disabled' if current_idx >= len(versions) - 1 else ''
-    
+
     left_arrow = f'<button class="footer-button version-nav-button"{left_disabled} onclick="navigateVersion(this, \'left\')" title="Previous version">&lt;</button>'
     right_arrow = f'<button class="footer-button version-nav-button"{right_disabled} onclick="navigateVersion(this, \'right\')" title="Next version">&gt;</button>'
     position = f'<span class="version-position">{current_idx + 1}/{len(versions)}</span>'
-    
+
     return f'<div class="version-navigation">{left_arrow}{position}{right_arrow}</div>'
 
 

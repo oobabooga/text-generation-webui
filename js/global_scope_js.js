@@ -1,46 +1,3 @@
-// ------------------------------------------------
-// Helper functions
-// ------------------------------------------------
-
-// Get Gradio app root (if available, otherwise use document)
-function gradioApp() {
-  const elems = document.querySelectorAll('gradio-app');
-  const gradioShadowRoot = elems.length > 0 ? elems[0].shadowRoot : null;
-  return gradioShadowRoot || document;
-}
-
-// Update Gradio element value
-function updateGradioInput(element, value) {
-    if (element) {
-      element.value = value;
-      element.dispatchEvent(new Event('input', { bubbles: true }));
-    } else {
-      console.warn("Attempted to update a null Gradio input element.");
-    }
-}
-
-// Check message classes and children to determine if it's a bot message
-function isBotMessage(messageElement) {
-  if (!messageElement) return null;
-
-  if (messageElement.classList.contains('assistant-message')) return true;
-  if (messageElement.querySelector('.circle-bot, .text-bot')) return true;
-
-  return false;
-}
-
-// Prepare and stringify payload for sending to the backend
-function preparePayload(action, payload) {
-  if (typeof payload === 'object') {
-    return JSON.stringify({ action: action, payload: payload });
-  } else if (typeof payload === 'string') {
-    return JSON.stringify({ action: action, payload: { text: payload } });
-  } else {
-    console.error("Invalid payload type:", typeof payload);
-    return null;
-  }
-}
-
 // -------------------------------------------------
 // Event handlers
 // -------------------------------------------------
@@ -74,21 +31,30 @@ function branchHere(element) {
   const index = messageElement.getAttribute("data-index");
   if (!index) return;
 
-  const jsonStrInput = document.querySelector("#temporary-json-str textarea");
-  if (!jsonStrInput) {
-    console.error("Element with ID 'Temporary-index' not found.");
+  const branchIndexInput = document.getElementById("Branch-index").querySelector("input");
+  if (!branchIndexInput) {
+    console.error("Element with ID 'Branch-index' not found.");
     return;
   }
-  const branchButton = document.querySelector("#Branch");
+  const branchButton = document.getElementById("Branch");
 
   if (!branchButton) {
     console.error("Required element 'Branch' not found.");
     return;
   }
 
-  updateGradioInput(jsonStrInput, preparePayload("branch_message", { messageIndex: parseInt(index) }));
+  branchIndexInput.value = index;
+
+  // Trigger any 'change' or 'input' events Gradio might be listening for
+  const event = new Event("input", { bubbles: true });
+  branchIndexInput.dispatchEvent(event);
+
   branchButton.click();
 }
+
+// -------------------------------------------------
+// Message Editing Functions
+// -------------------------------------------------
 
 function editHere(buttonElement) {
   if (!buttonElement) return;
@@ -96,137 +62,118 @@ function editHere(buttonElement) {
   const messageElement = buttonElement.closest(".message, .user-message, .assistant-message");
   if (!messageElement) return;
 
-  let messageBody = messageElement.querySelector(".message-body");
+  const messageBody = messageElement.querySelector(".message-body");
   if (!messageBody) return;
 
-  // If already editing, do nothing (or perhaps focus the textarea)
-  if (messageBody.tagName === 'TEXTAREA' && messageBody.classList.contains('editing-textarea')) {
-    messageBody.focus();
+  // If already editing, focus the textarea
+  const existingTextarea = messageBody.querySelector(".editing-textarea");
+  if (existingTextarea) {
+    existingTextarea.focus();
     return;
   }
 
+  // Determine role based on message element
+  const isUserMessage = messageElement.classList.contains("user-message") ||
+                       messageElement.querySelector(".text-you") !== null;
+
+  startEditing(messageElement, messageBody, isUserMessage);
+}
+
+function startEditing(messageElement, messageBody, isUserMessage) {
   const rawText = messageElement.getAttribute("data-raw") || messageBody.textContent;
   const originalHTML = messageBody.innerHTML;
 
-  const gradio = gradioApp();
+  // Create editing interface
+  const editingInterface = createEditingInterface(rawText);
 
+  // Replace message content
+  messageBody.innerHTML = "";
+  messageBody.appendChild(editingInterface.textarea);
+  messageBody.appendChild(editingInterface.controls);
+
+  editingInterface.textarea.focus();
+  editingInterface.textarea.setSelectionRange(rawText.length, rawText.length);
+
+  // Setup event handlers
+  setupEditingHandlers(editingInterface.textarea, messageElement, originalHTML, messageBody, isUserMessage);
+}
+
+function createEditingInterface(text) {
   const textarea = document.createElement("textarea");
-  textarea.value = rawText;
-  textarea.classList.add("editing-textarea");
-  textarea.rows = Math.max(3, rawText.split('\n').length); // Adjust rows based on content
+  textarea.value = text;
+  textarea.className = "editing-textarea";
+  textarea.rows = Math.max(3, text.split("\n").length);
 
-  // Replace messageBody with textarea
-  messageBody.parentNode.replaceChild(textarea, messageBody);
-  textarea.focus();
-  textarea.selectionStart = textarea.selectionEnd = textarea.value.length; // Move cursor to end
+  const controls = document.createElement("div");
+  controls.className = "edit-controls-container";
 
-  // Create a container for the buttons
-  const editControlsContainer = document.createElement('div');
-  editControlsContainer.classList.add('edit-controls-container');
+  const saveButton = document.createElement("button");
+  saveButton.textContent = "Save";
+  saveButton.className = "edit-control-button";
+  saveButton.type = "button";
 
-  // Create "Branch and Edit" button
-  const branchAndEditButton = document.createElement('button');
-  branchAndEditButton.textContent = 'Branch & Edit';
-  branchAndEditButton.classList.add('edit-control-button');
-  branchAndEditButton.onclick = () => submitEdit(true);
+  const cancelButton = document.createElement("button");
+  cancelButton.textContent = "Cancel";
+  cancelButton.className = "edit-control-button edit-cancel-button";
+  cancelButton.type = "button";
 
-  // Create "Cancel" button
-  const cancelButton = document.createElement('button');
-  cancelButton.textContent = 'Cancel';
-  cancelButton.classList.add('edit-control-button', 'edit-cancel-button');
+  controls.appendChild(saveButton);
+  controls.appendChild(cancelButton);
+
+  return { textarea, controls, saveButton, cancelButton };
+}
+
+function setupEditingHandlers(textarea, messageElement, originalHTML, messageBody, isUserMessage) {
+  const saveButton = messageBody.querySelector(".edit-control-button:not(.edit-cancel-button)");
+  const cancelButton = messageBody.querySelector(".edit-cancel-button");
+
+  const submitEdit = () => {
+    const index = messageElement.getAttribute("data-index");
+    if (!index || !submitMessageEdit(index, textarea.value, isUserMessage)) {
+      cancelEdit();
+    }
+  };
+
+  const cancelEdit = () => {
+    messageBody.innerHTML = originalHTML;
+  };
+
+  // Event handlers
+  saveButton.onclick = submitEdit;
   cancelButton.onclick = cancelEdit;
 
-  editControlsContainer.appendChild(branchAndEditButton);
-  editControlsContainer.appendChild(cancelButton);
-
-  // Insert button container after the textarea
-  textarea.parentNode.insertBefore(editControlsContainer, textarea.nextSibling);
-
-  function submitEdit(doBranch = false) {
-    try {
-      const newText = textarea.value;
-      // const doBranch = branchCheckbox.checked; // This is now passed as a parameter and used directly in the payload
-
-      const indexStr = messageElement.getAttribute("data-index");
-      if (indexStr === null) {
-        console.error("Message index (data-index) not found.");
-        cleanup();
-        return;
-      }
-      const index = parseInt(indexStr);
-      const type = isBotMessage(messageElement) ? 1 : 0;
-      console.debug(`Editing message at index: ${index}, type: ${type}, doBranch: ${doBranch}`);
-
-      if (!isNaN(index)) {
-        const jsonStrInput = gradio.querySelector("#temporary-json-str textarea");
-        if (!jsonStrInput) {
-            console.error("Element with ID 'temporary-json-str textarea' not found.");
-            cleanup();
-            return;
-        }
-        
-        const submitEditButton = gradio.querySelector("#edit");
-        if (!submitEditButton) {
-            console.error("Hidden submit button for edits (i.e., #edit) not found.");
-            cleanup();
-            return;
-        }
-
-        const payload = preparePayload("edit_message", {
-          messageIndex: index,
-          newText: newText,
-          messageType: type,
-          doBranch: doBranch
-        });
-
-        updateGradioInput(jsonStrInput, payload);
-        
-        submitEditButton.click();
-      } else {
-        console.error("Invalid message index for edit:", indexStr);
-      }
-    } catch (error) {
-        console.error("Error during submitEdit:", error);
-    } finally {
-      cleanup(); // Ensure cleanup happens, submitEditButton.click() is async from Gradio's perspective
+  textarea.onkeydown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      submitEdit();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancelEdit();
     }
   };
+}
 
-  function cancelEdit() {
-    const originalBody = document.createElement("div");
-    originalBody.classList.add("message-body");
-    originalBody.innerHTML = originalHTML;
+function submitMessageEdit(index, newText, isUserMessage) {
+  const editIndexInput = document.getElementById("Edit-message-index")?.querySelector("input");
+  const editTextInput = document.getElementById("Edit-message-text")?.querySelector("textarea");
+  const editRoleInput = document.getElementById("Edit-message-role")?.querySelector("textarea");
+  const editButton = document.getElementById("Edit-message");
 
-    textarea.parentNode.replaceChild(originalBody, textarea);
-    cleanup();
-  };
-
-
-  function eventListener(event) {
-    if (event.type === 'blur') {
-      // Delay slightly to allow click on potential submit/cancel buttons if they were part_of the textarea
-      setTimeout(() => submitEdit(), 100);
-    } else if (event.type === 'keydown') {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        submitEdit();
-      } else if (event.key === "Escape") {
-        event.preventDefault();
-        cancelEdit();
-      }
-    }
-  };
-
-  textarea.addEventListener("blur", eventListener);
-  textarea.addEventListener("keydown", eventListener);
-
-  function cleanup() {
-    textarea.removeEventListener("blur", eventListener);
-    textarea.removeEventListener("keydown", eventListener);
-    if (editControlsContainer && editControlsContainer.parentNode) {
-        editControlsContainer.parentNode.removeChild(editControlsContainer);
-    }
+  if (!editIndexInput || !editTextInput || !editRoleInput || !editButton) {
+    console.error("Edit elements not found");
+    return false;
   }
+
+  editIndexInput.value = index;
+  editTextInput.value = newText;
+  editRoleInput.value = isUserMessage ? "user" : "assistant";
+
+  editIndexInput.dispatchEvent(new Event("input", { bubbles: true }));
+  editTextInput.dispatchEvent(new Event("input", { bubbles: true }));
+  editRoleInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+  editButton.click();
+  return true;
 }
 
 function navigateVersion(element, direction) {
