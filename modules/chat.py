@@ -712,13 +712,6 @@ def remove_last_message(history):
     return html.unescape(last[0]), history
 
 
-def send_last_reply_to_input(history):
-    if len(history['visible']) > 0:
-        return html.unescape(history['visible'][-1][1])
-    else:
-        return ''
-
-
 def send_dummy_message(textbox, state):
     history = state['history']
     text = textbox['text']
@@ -1309,26 +1302,6 @@ def my_yaml_output(data):
             result += "  " + line.rstrip(' ') + "\n"
 
     return result
-
-
-def handle_replace_last_reply_click(text, state):
-    # Just use the old simple logic for replace last reply
-    history = state['history']
-    text_content = text['text']
-
-    if 'metadata' not in history:
-        history['metadata'] = {}
-
-    if len(text_content.strip()) > 0 and len(history['visible']) > 0:
-        row_idx = len(history['internal']) - 1
-        history['visible'][-1][1] = html.escape(text_content)
-        history['internal'][-1][1] = apply_extensions('input', text_content, state, is_chat=True)
-        update_message_metadata(history['metadata'], "assistant", row_idx, timestamp=get_current_timestamp())
-
-    save_history(history, state['unique_id'], state['character_menu'], state['mode'])
-    html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
-
-    return [history, html, {"text": "", "files": []}]
 
 
 def handle_send_dummy_message_click(text, state):
