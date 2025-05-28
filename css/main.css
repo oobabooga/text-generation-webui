@@ -1457,6 +1457,53 @@ strong {
     color: #ccc;
 }
 
+/* Message Editing Styles */
+.editing-textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: var(--light-theme-gray);
+    font-family: inherit;
+    font-size: inherit;
+    resize: vertical;
+}
+
+.dark .editing-textarea {
+    border: 1px solid var(--border-color-dark);
+    background-color: var(--darker-gray);
+}
+
+.editing-textarea:focus {
+    outline: none;
+    border-color: var(--selected-item-color-dark);
+}
+
+.edit-controls-container {
+    margin-top: 0;
+    display: flex;
+    gap: 8px;
+    padding-bottom: 8px;
+}
+
+.edit-control-button {
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #f8f9fa;
+    color: #212529;
+    font-size: 12px;
+    margin: 0;
+}
+
+.dark .edit-control-button {
+    border: 1px solid var(--border-color-dark);
+    background-color: var(--light-gray);
+    color: #efefef;
+}
+
 /* --- Simple Version Navigation --- */
 .version-navigation {
     position: absolute;
@@ -1488,7 +1535,7 @@ strong {
 
 .version-position {
     font-size: 11px;
-    color: currentColor;
+    color: currentcolor;
     font-family: monospace;
     min-width: 35px;
     text-align: center;

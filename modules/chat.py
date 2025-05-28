@@ -712,32 +712,6 @@ def remove_last_message(history):
     return html.unescape(last[0]), history
 
 
-def send_last_reply_to_input(history):
-    if len(history['visible']) > 0:
-        return html.unescape(history['visible'][-1][1])
-    else:
-        return ''
-
-
-def replace_last_reply(textbox, state):
-    history = state['history']
-    text = textbox['text']
-
-    # Initialize metadata if not present
-    if 'metadata' not in history:
-        history['metadata'] = {}
-
-    if len(text.strip()) == 0:
-        return history
-    elif len(history['visible']) > 0:
-        row_idx = len(history['internal']) - 1
-        history['visible'][-1][1] = html.escape(text)
-        history['internal'][-1][1] = apply_extensions('input', text, state, is_chat=True)
-        update_message_metadata(history['metadata'], "assistant", row_idx, timestamp=get_current_timestamp())
-
-    return history
-
-
 def send_dummy_message(textbox, state):
     history = state['history']
     text = textbox['text']
@@ -1330,14 +1304,6 @@ def my_yaml_output(data):
     return result
 
 
-def handle_replace_last_reply_click(text, state):
-    history = replace_last_reply(text, state)
-    save_history(history, state['unique_id'], state['character_menu'], state['mode'])
-    html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
-
-    return [history, html, {"text": "", "files": []}]
-
-
 def handle_send_dummy_message_click(text, state):
     history = send_dummy_message(text, state)
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
@@ -1423,6 +1389,52 @@ def handle_branch_chat_click(state):
     past_chats_update = gr.update(choices=histories, value=new_unique_id)
 
     return [history, html, past_chats_update, -1]
+
+
+def handle_edit_message_click(state):
+    history = state['history']
+    message_index = int(state['edit_message_index'])
+    new_text = state['edit_message_text']
+    role = state['edit_message_role']  # "user" or "assistant"
+
+    if message_index >= len(history['internal']):
+        html_output = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+        return [history, html_output, gr.update()]
+
+    # Use the role passed from frontend
+    is_user_msg = (role == "user")
+    role_idx = 0 if is_user_msg else 1
+
+    # For assistant messages, save the original version BEFORE updating content
+    if not is_user_msg:
+        if not history['metadata'].get(f"assistant_{message_index}", {}).get('versions'):
+            add_message_version(history, message_index, is_current=False)
+
+    # NOW update the message content
+    history['internal'][message_index][role_idx] = apply_extensions('input', new_text, state, is_chat=True)
+    history['visible'][message_index][role_idx] = html.escape(new_text)
+
+    # Branch if editing user message, add version if editing assistant message
+    if is_user_msg:
+        # Branch like branch-here
+        history['visible'] = history['visible'][:message_index + 1]
+        history['internal'] = history['internal'][:message_index + 1]
+        new_unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
+        save_history(history, new_unique_id, state['character_menu'], state['mode'])
+        histories = find_all_histories_with_first_prompts(state)
+        past_chats_update = gr.update(choices=histories, value=new_unique_id)
+        state['unique_id'] = new_unique_id
+    elif not is_user_msg:
+        # Add the new version as current
+        add_message_version(history, message_index, is_current=True)
+        past_chats_update = gr.update()
+    else:
+        past_chats_update = gr.update()
+
+    save_history(history, state['unique_id'], state['character_menu'], state['mode'])
+    html_output = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+
+    return [history, html_output, past_chats_update]
 
 
 def handle_navigate_version_click(state):

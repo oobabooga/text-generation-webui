@@ -1,3 +1,7 @@
+// ------------------------------------------------
+// Main
+// ------------------------------------------------
+
 let main_parent = document.getElementById("chat-tab").parentNode;
 let extensions = document.getElementById("extensions");
 
@@ -100,18 +104,6 @@ document.addEventListener("keydown", function(event) {
   else if (event.ctrlKey && event.shiftKey && event.key === "Backspace") {
     event.preventDefault();
     document.getElementById("Remove-last").click();
-  }
-
-  // Copy last on Ctrl + Shift + K
-  else if (event.ctrlKey && event.shiftKey && event.key === "K") {
-    event.preventDefault();
-    document.getElementById("Copy-last").click();
-  }
-
-  // Replace last on Ctrl + Shift + L
-  else if (event.ctrlKey && event.shiftKey && event.key === "L") {
-    event.preventDefault();
-    document.getElementById("Replace-last").click();
   }
 
   // Impersonate on Ctrl + Shift + M
@@ -385,6 +377,16 @@ document.addEventListener("click", function (event) {
     ) {
       handleIndividualSidebarClose(event);
     }
+  }
+});
+
+document.addEventListener("dblclick", (event) => {
+  const messageElement = event.target.closest(".message, .user-message, .assistant-message");
+  if (!messageElement) return;
+
+  const editButton = messageElement.querySelector(".footer-edit-button");
+  if (editButton) {
+    editButton.click();
   }
 });
 

@@ -71,8 +71,6 @@ def create_ui():
                 shared.gradio['Remove last'] = gr.Button('Remove last reply (Ctrl + Shift + Backspace)', elem_id='Remove-last')
 
             with gr.Row():
-                shared.gradio['Replace last reply'] = gr.Button('Replace last reply (Ctrl + Shift + L)', elem_id='Replace-last')
-                shared.gradio['Copy last reply'] = gr.Button('Copy last reply (Ctrl + Shift + K)', elem_id='Copy-last')
                 shared.gradio['Impersonate'] = gr.Button('Impersonate (Ctrl + Shift + M)', elem_id='Impersonate')
 
             with gr.Row():
@@ -97,11 +95,15 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=12, label='Command for chat-instruct mode', info='<|character|> and <|prompt|> get replaced with the bot name and the regular chat prompt respectively.', visible=shared.settings['mode'] == 'chat-instruct', elem_classes=['add_scrollbar'])
 
-        # Hidden elements for version navigation (similar to branch)
+        # Hidden elements for version navigation and editing
         with gr.Row(visible=False):
             shared.gradio['navigate_message_index'] = gr.Number(value=-1, precision=0, elem_id="Navigate-message-index")
             shared.gradio['navigate_direction'] = gr.Textbox(value="", elem_id="Navigate-direction")
             shared.gradio['navigate_version'] = gr.Button(elem_id="Navigate-version")
+            shared.gradio['edit_message_index'] = gr.Number(value=-1, precision=0, elem_id="Edit-message-index")
+            shared.gradio['edit_message_text'] = gr.Textbox(value="", elem_id="Edit-message-text")
+            shared.gradio['edit_message_role'] = gr.Textbox(value="", elem_id="Edit-message-role")
+            shared.gradio['edit_message'] = gr.Button(elem_id="Edit-message")
 
 
 def create_chat_settings_ui():
@@ -228,10 +230,6 @@ def create_event_handlers():
         None, None, None, js='() => document.getElementById("chat").parentNode.parentNode.parentNode.classList.remove("_generating")').then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
-    shared.gradio['Replace last reply'].click(
-        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_replace_last_reply_click, gradio('textbox', 'interface_state'), gradio('history', 'display', 'textbox'), show_progress=False)
-
     shared.gradio['Send dummy message'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.handle_send_dummy_message_click, gradio('textbox', 'interface_state'), gradio('history', 'display', 'textbox'), show_progress=False)
@@ -297,11 +295,15 @@ def create_event_handlers():
         None, gradio('mode'), None, js="(mode) => {mode === 'instruct' ? document.getElementById('character-menu').parentNode.parentNode.style.display = 'none' : document.getElementById('character-menu').parentNode.parentNode.style.display = ''}")
 
     shared.gradio['chat_style'].change(chat.redraw_html, gradio(reload_arr), gradio('display'), show_progress=False)
-    shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, gradio('history'), gradio('textbox'), show_progress=False)
 
     shared.gradio['navigate_version'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.handle_navigate_version_click, gradio('interface_state'), gradio('history', 'display'), show_progress=False)
+
+    shared.gradio['edit_message'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.handle_edit_message_click, gradio('interface_state'), gradio('history', 'display', 'unique_id'), show_progress=False).then(
+        lambda: None, None, None, js='() => { const role = document.getElementById("Edit-message-role").querySelector("textarea").value; if (role === "user") document.getElementById("Regenerate").click(); }')
 
     # Save/delete a character
     shared.gradio['save_character'].click(chat.handle_save_character_click, gradio('name2'), gradio('save_character_filename', 'character_saver'), show_progress=False)
