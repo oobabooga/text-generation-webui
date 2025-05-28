@@ -1432,6 +1432,12 @@ def handle_edit_message_click(state):
     is_user_msg = (role == "user")
     role_idx = 0 if is_user_msg else 1
 
+    # For assistant messages, save the original version BEFORE updating content
+    if not is_user_msg:
+        if not history['metadata'].get(f"assistant_{message_index}", {}).get('versions'):
+            add_message_version(history, message_index, is_current=False)
+
+    # NOW update the message content
     history['internal'][message_index][role_idx] = apply_extensions('input', new_text, state, is_chat=True)
     history['visible'][message_index][role_idx] = html.escape(new_text)
 
@@ -1446,9 +1452,7 @@ def handle_edit_message_click(state):
         past_chats_update = gr.update(choices=histories, value=new_unique_id)
         state['unique_id'] = new_unique_id
     elif not is_user_msg:
-        # Add version like regenerate
-        if not history['metadata'].get(f"assistant_{message_index}", {}).get('versions'):
-            add_message_version(history, message_index, is_current=False)
+        # Add the new version as current
         add_message_version(history, message_index, is_current=True)
         past_chats_update = gr.update()
     else:
