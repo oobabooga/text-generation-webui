@@ -380,16 +380,6 @@ document.addEventListener("click", function (event) {
   }
 });
 
-document.addEventListener("dblclick", (event) => {
-  const messageElement = event.target.closest(".message, .user-message, .assistant-message");
-  if (!messageElement) return;
-
-  const editButton = messageElement.querySelector(".footer-edit-button");
-  if (editButton) {
-    editButton.click();
-  }
-});
-
 //------------------------------------------------
 // Relocate the "Show controls" checkbox
 //------------------------------------------------
