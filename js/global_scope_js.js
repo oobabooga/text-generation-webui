@@ -229,6 +229,44 @@ function editHere(buttonElement) {
   }
 }
 
+function navigateVersion(element, direction) {
+  if (!element) return;
+
+  const messageElement = element.closest(".message, .user-message, .assistant-message");
+  if (!messageElement) return;
+
+  const index = messageElement.getAttribute("data-index");
+  if (!index) return;
+
+  const indexInput = document.getElementById("Navigate-message-index").querySelector("input");
+  if (!indexInput) {
+    console.error("Element with ID 'Navigate-message-index' not found.");
+    return;
+  }
+
+  const directionInput = document.getElementById("Navigate-direction").querySelector("textarea");
+  if (!directionInput) {
+    console.error("Element with ID 'Navigate-direction' not found.");
+    return;
+  }
+
+  const navigateButton = document.getElementById("Navigate-version");
+  if (!navigateButton) {
+    console.error("Required element 'Navigate-version' not found.");
+    return;
+  }
+
+  indexInput.value = index;
+  directionInput.value = direction;
+
+  // Trigger any 'change' or 'input' events Gradio might be listening for
+  const event = new Event("input", { bubbles: true });
+  indexInput.dispatchEvent(event);
+  directionInput.dispatchEvent(event);
+
+  navigateButton.click();
+}
+
 function regenerateClick() {
   document.getElementById("Regenerate").click();
 }

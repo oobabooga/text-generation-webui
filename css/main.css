@@ -1260,7 +1260,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: absolute;
     bottom: -23px;
     left: 0;
-    display: flex;   
+    display: flex;
     gap: 5px;
     opacity: 0;
     transition: opacity 0.2s;
@@ -1530,4 +1530,43 @@ strong {
 
 .dark .edit-cancel-button:hover {
   background-color: color-mix(in srgb, var(--dark-gray) 85%, white);
+}
+
+/* --- Simple Version Navigation --- */
+.version-navigation {
+    position: absolute;
+    bottom: -23px;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.message:hover .version-navigation,
+.user-message:hover .version-navigation,
+.assistant-message:hover .version-navigation {
+    opacity: 1;
+}
+
+.version-nav-button {
+    padding: 2px 6px;
+    font-size: 12px;
+    min-width: auto;
+}
+
+.version-nav-button[disabled] {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.version-position {
+    font-size: 11px;
+    color: currentColor;
+    font-family: monospace;
+    min-width: 35px;
+    text-align: center;
+    opacity: 0.8;
+    user-select: none;
 }

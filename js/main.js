@@ -89,9 +89,24 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
 //------------------------------------------------
 // Keyboard shortcuts
 //------------------------------------------------
+
+// --- Helper functions --- //
+function isModifiedKeyboardEvent() {
+  return (event instanceof KeyboardEvent &&
+    event.shiftKey ||
+    event.ctrlKey ||
+    event.altKey ||
+    event.metaKey);
+}
+
+function isFocusedOnEditableTextbox() {
+  if (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA") {
+    return !!event.target.value;
+  }
+}
+
 let previousTabId = "chat-tab-button";
 document.addEventListener("keydown", function(event) {
-
   // Stop generation on Esc pressed
   if (event.key === "Escape") {
     // Find the element with id 'stop' and click it
@@ -99,10 +114,15 @@ document.addEventListener("keydown", function(event) {
     if (stopButton) {
       stopButton.click();
     }
+    return;
+  }
+
+  if (!document.querySelector("#chat-tab").checkVisibility() ) {
+    return;
   }
 
   // Show chat controls on Ctrl + S
-  else if (event.ctrlKey && event.key == "s") {
+  if (event.ctrlKey && event.key == "s") {
     event.preventDefault();
 
     var showControlsElement = document.getElementById("show-controls");
@@ -148,6 +168,23 @@ document.addEventListener("keydown", function(event) {
   else if (event.ctrlKey && event.shiftKey && event.key === "M") {
     event.preventDefault();
     document.getElementById("Impersonate").click();
+  }
+
+  // --- Simple version navigation --- //
+  if (!isFocusedOnEditableTextbox()) {
+    // Version navigation on Arrow keys (horizontal)
+    if (!isModifiedKeyboardEvent() && event.key === "ArrowLeft") {
+      event.preventDefault();
+      navigateLastAssistantMessage("left");
+    }
+
+    else if (!isModifiedKeyboardEvent() && event.key === "ArrowRight") {
+      event.preventDefault();
+      if (!navigateLastAssistantMessage("right")) {
+        // If can't navigate right (last version), regenerate
+        document.getElementById("Regenerate").click();
+      }
+    }
   }
 
 });
@@ -849,3 +886,55 @@ function createMobileTopBar() {
 }
 
 createMobileTopBar();
+
+//------------------------------------------------
+// Simple Navigation Functions
+//------------------------------------------------
+
+function navigateLastAssistantMessage(direction) {
+  const chat = document.querySelector("#chat");
+  if (!chat) return false;
+
+  const messages = chat.querySelectorAll("[data-index]");
+  if (messages.length === 0) return false;
+
+  // Find the last assistant message (starting from the end)
+  let lastAssistantMessage = null;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (
+      msg.classList.contains("assistant-message") ||
+      msg.querySelector(".circle-bot") ||
+      msg.querySelector(".text-bot")
+    ) {
+      lastAssistantMessage = msg;
+      break;
+    }
+  }
+
+  if (!lastAssistantMessage) return false;
+
+  const buttons = lastAssistantMessage.querySelectorAll(".version-nav-button");
+
+  for (let i = 0; i < buttons.length; i++) {
+    const button = buttons[i];
+    const onclick = button.getAttribute("onclick");
+    const disabled = button.hasAttribute("disabled");
+
+    const isLeft = onclick && onclick.includes("'left'");
+    const isRight = onclick && onclick.includes("'right'");
+
+    if (!disabled) {
+      if (direction === "left" && isLeft) {
+        navigateVersion(button, direction);
+        return true;
+      }
+      if (direction === "right" && isRight) {
+        navigateVersion(button, direction);
+        return true;
+      }
+    }
+  }
+
+  return false;
+}

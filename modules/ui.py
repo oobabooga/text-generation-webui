@@ -157,6 +157,8 @@ def list_model_elements():
 
 def list_interface_input_elements():
     elements = [
+        'navigate_message_index',
+        'navigate_direction',
         'temperature',
         'dynatemp_low',
         'dynatemp_high',

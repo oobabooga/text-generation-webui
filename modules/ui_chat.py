@@ -98,6 +98,12 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=12, label='Command for chat-instruct mode', info='<|character|> and <|prompt|> get replaced with the bot name and the regular chat prompt respectively.', visible=shared.settings['mode'] == 'chat-instruct', elem_classes=['add_scrollbar'])
 
+        # Hidden elements for version navigation (similar to branch)
+        with gr.Row(visible=False):
+            shared.gradio['navigate_message_index'] = gr.Number(value=-1, precision=0, elem_id="Navigate-message-index")
+            shared.gradio['navigate_direction'] = gr.Textbox(value="", elem_id="Navigate-direction")
+            shared.gradio['navigate_version'] = gr.Button(elem_id="Navigate-version")
+
 
 def create_chat_settings_ui():
     mu = shared.args.multi_user
@@ -297,6 +303,10 @@ def create_event_handlers():
 
     shared.gradio['chat_style'].change(chat.redraw_html, gradio(reload_arr), gradio('display'), show_progress=False)
     shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, gradio('history'), gradio('textbox'), show_progress=False)
+
+    shared.gradio['navigate_version'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.handle_navigate_version_click, gradio('interface_state'), gradio('history', 'display'), show_progress=False)
 
     # Save/delete a character
     shared.gradio['save_character'].click(chat.handle_save_character_click, gradio('name2'), gradio('save_character_filename', 'character_saver'), show_progress=False)
