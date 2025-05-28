@@ -72,9 +72,10 @@ function editHere(buttonElement) {
     return;
   }
 
-  // Determine role based on message element
+  // Determine role based on message element - handle different chat modes
   const isUserMessage = messageElement.classList.contains("user-message") ||
-                       messageElement.querySelector(".text-you") !== null;
+                       messageElement.querySelector(".text-you") !== null ||
+                       messageElement.querySelector(".circle-you") !== null;
 
   startEditing(messageElement, messageBody, isUserMessage);
 }
