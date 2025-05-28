@@ -1464,8 +1464,7 @@ strong {
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #ccc;
-    background-color: var(--light-gray);
-    color: #efefef;
+    background-color: var(--light-theme-gray);
     font-family: inherit;
     font-size: inherit;
     resize: vertical;
