@@ -113,9 +113,10 @@ def add_web_search_attachments(history, row_idx, user_message, state):
 
         for result in search_results:
             attachment = {
-                "name": f"{result['title']}",
+                "name": result['title'],
                 "type": "text/html",
-                "content": f"URL: {result['url']}\n\n{result['content']}"
+                "url": result['url'],
+                "content": result['content']
             }
             history['metadata'][key]["attachments"].append(attachment)
 
