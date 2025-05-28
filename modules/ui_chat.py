@@ -95,6 +95,11 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=12, label='Command for chat-instruct mode', info='<|character|> and <|prompt|> get replaced with the bot name and the regular chat prompt respectively.', visible=shared.settings['mode'] == 'chat-instruct', elem_classes=['add_scrollbar'])
 
+                with gr.Row():
+                    shared.gradio['count_tokens'] = gr.Button('Count tokens', size='sm')
+
+                shared.gradio['token_display'] = gr.HTML(value='', elem_classes='token-display')
+
         # Hidden elements for version navigation and editing
         with gr.Row(visible=False):
             shared.gradio['navigate_message_index'] = gr.Number(value=-1, precision=0, elem_id="Navigate-message-index")
@@ -360,3 +365,7 @@ def create_event_handlers():
         None, None, None, js=f'() => {{{ui.switch_tabs_js}; switch_to_notebook()}}')
 
     shared.gradio['show_controls'].change(None, gradio('show_controls'), None, js=f'(x) => {{{ui.show_controls_js}; toggle_controls(x)}}')
+
+    shared.gradio['count_tokens'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.count_prompt_tokens, gradio('textbox', 'interface_state'), gradio('token_display'), show_progress=False)

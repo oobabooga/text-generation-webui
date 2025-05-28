@@ -1542,3 +1542,10 @@ strong {
     opacity: 0.8;
     user-select: none;
 }
+
+.token-display {
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--body-text-color-subdued);
+    margin-top: 4px;
+}

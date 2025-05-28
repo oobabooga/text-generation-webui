@@ -230,7 +230,15 @@ def generate_chat_prompt(user_input, state, **kwargs):
             messages.insert(insert_pos, {"role": "user", "content": enhanced_user_msg})
 
     user_input = user_input.strip()
-    if user_input and not impersonate and not _continue:
+
+    # Check if we have attachments even with empty input
+    has_attachments = False
+    if not impersonate and not _continue and len(history_data.get('metadata', {})) > 0:
+        current_row_idx = len(history)
+        user_key = f"user_{current_row_idx}"
+        has_attachments = user_key in metadata and "attachments" in metadata[user_key]
+
+    if (user_input or has_attachments) and not impersonate and not _continue:
         # For the current user input being processed, check if we need to add attachments
         if not impersonate and not _continue and len(history_data.get('metadata', {})) > 0:
             current_row_idx = len(history)
@@ -348,6 +356,50 @@ def generate_chat_prompt(user_input, state, **kwargs):
         return prompt, [message['content'] for message in messages]
     else:
         return prompt
+
+
+def count_prompt_tokens(text_input, state):
+    """Count tokens for current history + input including attachments"""
+    if shared.tokenizer is None:
+        return "Tokenizer not available"
+
+    try:
+        # Handle dict format with text and files
+        files = []
+        if isinstance(text_input, dict):
+            files = text_input.get('files', [])
+            text = text_input.get('text', '')
+        else:
+            text = text_input
+            files = []
+
+        # Create temporary history copy to add attachments
+        temp_history = copy.deepcopy(state['history'])
+        if 'metadata' not in temp_history:
+            temp_history['metadata'] = {}
+
+        # Process attachments if any
+        if files:
+            row_idx = len(temp_history['internal'])
+            for file_path in files:
+                add_message_attachment(temp_history, row_idx, file_path, is_user=True)
+
+        # Create temp state with modified history
+        temp_state = copy.deepcopy(state)
+        temp_state['history'] = temp_history
+
+        # Build prompt using existing logic
+        prompt = generate_chat_prompt(text, temp_state)
+        current_tokens = get_encoded_length(prompt)
+        max_tokens = temp_state['truncation_length']
+
+        percentage = (current_tokens / max_tokens) * 100 if max_tokens > 0 else 0
+
+        return f"History + Input:<br/>{current_tokens:,} / {max_tokens:,} tokens ({percentage:.1f}%)"
+
+    except Exception as e:
+        logger.error(f"Error counting tokens: {e}")
+        return f"Error: {str(e)}"
 
 
 def get_stopping_strings(state):
