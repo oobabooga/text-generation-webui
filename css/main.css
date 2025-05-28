@@ -1460,7 +1460,7 @@ strong {
 /* Message Editing Styles */
 .editing-textarea {
     width: 100%;
-    min-height: 50px;
+    min-height: 200px;
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #ccc;
