@@ -157,9 +157,6 @@ def list_model_elements():
 
 def list_interface_input_elements():
     elements = [
-        'enable_web_search', 'web_search_pages',
-        'navigate_message_index',
-        'navigate_direction',
         'temperature',
         'dynatemp_low',
         'dynatemp_high',
@@ -219,6 +216,10 @@ def list_interface_input_elements():
         'edit_message_text',
         'edit_message_role',
         'branch_index',
+        'enable_web_search',
+        'web_search_pages',
+        'navigate_message_index',
+        'navigate_direction',
     ]
 
     # Chat elements
