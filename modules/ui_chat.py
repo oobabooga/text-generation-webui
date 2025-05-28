@@ -377,7 +377,7 @@ def create_event_handlers():
         chat.count_prompt_tokens, gradio('textbox', 'interface_state'), gradio('token_display'), show_progress=False)
 
     shared.gradio['enable_web_search'].change(
-        lambda x: gr.update(visible=x), 
-        gradio('enable_web_search'), 
+        lambda x: gr.update(visible=x),
+        gradio('enable_web_search'),
         gradio('web_search_row')
     )

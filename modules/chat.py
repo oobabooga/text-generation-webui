@@ -3,10 +3,8 @@ import copy
 import functools
 import html
 import json
-import os
 import pprint
 import re
-import tempfile
 import time
 from datetime import datetime
 from functools import partial

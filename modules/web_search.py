@@ -1,10 +1,11 @@
-import requests
-from duckduckgo_search import DDGS
-from bs4 import BeautifulSoup
 from datetime import datetime
 
-from modules.text_generation import generate_reply
+import requests
+from bs4 import BeautifulSoup
+from duckduckgo_search import DDGS
+
 from modules.logging_colors import logger
+from modules.text_generation import generate_reply
 
 
 def get_current_timestamp():
