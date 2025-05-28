@@ -157,6 +157,7 @@ def list_model_elements():
 
 def list_interface_input_elements():
     elements = [
+        'enable_web_search', 'web_search_pages',
         'navigate_message_index',
         'navigate_direction',
         'temperature',
