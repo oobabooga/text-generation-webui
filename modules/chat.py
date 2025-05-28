@@ -414,10 +414,20 @@ def add_message_version(history, row_idx, is_current=True):
     if "versions" not in history['metadata'][key]:
         history['metadata'][key]["versions"] = []
 
+    # Check if this version already exists
+    current_content = history['internal'][row_idx][1]
+    current_visible = history['visible'][row_idx][1]
+
+    for i, version in enumerate(history['metadata'][key]["versions"]):
+        if version['content'] == current_content and version['visible_content'] == current_visible:
+            if is_current:
+                history['metadata'][key]["current_version_index"] = i
+            return
+
     # Add current message as a version
     history['metadata'][key]["versions"].append({
-        "content": history['internal'][row_idx][1],
-        "visible_content": history['visible'][row_idx][1],
+        "content": current_content,
+        "visible_content": current_visible,
         "timestamp": get_current_timestamp()
     })
 
@@ -540,8 +550,9 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         if regenerate:
             row_idx = len(output['internal']) - 1
 
-            # Store the existing response as a version before regenerating
-            add_message_version(output, row_idx, is_current=False)
+            # Store the first response as a version before regenerating
+            if not output['metadata'].get(f"assistant_{row_idx}", {}).get('versions'):
+                add_message_version(output, row_idx, is_current=False)
 
             if loading_message:
                 yield {
@@ -1412,6 +1423,46 @@ def handle_branch_chat_click(state):
     past_chats_update = gr.update(choices=histories, value=new_unique_id)
 
     return [history, html, past_chats_update, -1]
+
+
+def handle_navigate_version_click(state):
+    history = state['history']
+    message_index = int(state['navigate_message_index'])
+    direction = state['navigate_direction']
+
+    # Get assistant message metadata
+    key = f"assistant_{message_index}"
+    if key not in history['metadata'] or 'versions' not in history['metadata'][key]:
+        # No versions to navigate
+        html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+        return [history, html]
+
+    metadata = history['metadata'][key]
+    current_idx = metadata.get('current_version_index', 0)
+    versions = metadata['versions']
+
+    # Calculate new index
+    if direction == 'left':
+        new_idx = max(0, current_idx - 1)
+    else:  # right
+        new_idx = min(len(versions) - 1, current_idx + 1)
+
+    if new_idx == current_idx:
+        # No change needed
+        html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+        return [history, html]
+
+    # Update history with new version
+    version = versions[new_idx]
+    history['internal'][message_index][1] = version['content']
+    history['visible'][message_index][1] = version['visible_content']
+    metadata['current_version_index'] = new_idx
+
+    # Redraw and save
+    html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+    save_history(history, state['unique_id'], state['character_menu'], state['mode'])
+
+    return [history, html]
 
 
 def handle_rename_chat_click():
