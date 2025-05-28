@@ -106,18 +106,6 @@ document.addEventListener("keydown", function(event) {
     document.getElementById("Remove-last").click();
   }
 
-  // Copy last on Ctrl + Shift + K
-  else if (event.ctrlKey && event.shiftKey && event.key === "K") {
-    event.preventDefault();
-    document.getElementById("Copy-last").click();
-  }
-
-  // Replace last on Ctrl + Shift + L
-  else if (event.ctrlKey && event.shiftKey && event.key === "L") {
-    event.preventDefault();
-    document.getElementById("Replace-last").click();
-  }
-
   // Impersonate on Ctrl + Shift + M
   else if (event.ctrlKey && event.shiftKey && event.key === "M") {
     event.preventDefault();
