@@ -321,3 +321,142 @@ function handleMorphdomUpdate(text) {
     }
   });
 }
+
+// -------------------------------------------------
+// Impersonation Cache & Navigation
+// -------------------------------------------------
+let impersonationCache = [];
+let currentImpersonationIndex = -1;
+
+function cacheImpersonation(text) {
+  if (text === null || typeof text === 'undefined') {
+    console.warn("Attempted to cache null or undefined impersonation text.");
+    return;
+  }
+  // If the new text is the same as the last cached one, don't add it again.
+  // This can happen if the user clicks "Impersonate" multiple times without changing input.
+  if (impersonationCache.length > 0 && impersonationCache[impersonationCache.length - 1] === text) {
+    currentImpersonationIndex = impersonationCache.length - 1;
+  } else {
+    impersonationCache.push(text);
+    currentImpersonationIndex = impersonationCache.length - 1;
+  }
+
+  // Update the chat input with the latest impersonation
+  const chatInputTextarea = document.querySelector("#chat-input textarea");
+  if (chatInputTextarea) {
+    chatInputTextarea.value = text;
+    // Dispatch input event to ensure Gradio recognizes the change
+    chatInputTextarea.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+
+  updateImpersonationNavButtons();
+}
+
+function navigateImpersonation(direction) {
+  if (impersonationCache.length === 0) return false;
+
+  const oldIndex = currentImpersonationIndex;
+
+  if (direction === "left") {
+    if (currentImpersonationIndex > 0) {
+      currentImpersonationIndex--;
+    }
+  } else if (direction === "right") {
+    if (currentImpersonationIndex < impersonationCache.length - 1) {
+      currentImpersonationIndex++;
+    }
+  }
+
+  if (oldIndex !== currentImpersonationIndex) {
+    const chatInputTextarea = document.querySelector("#chat-input textarea");
+    if (chatInputTextarea && impersonationCache[currentImpersonationIndex] !== undefined) {
+      chatInputTextarea.value = impersonationCache[currentImpersonationIndex];
+      chatInputTextarea.dispatchEvent(new Event("input", { bubbles: true }));
+      chatInputTextarea.focus();
+    }
+    updateImpersonationNavButtons();
+  }
+}
+
+function updateImpersonationNavButtons() {
+  let navControlsContainer = document.getElementById("impersonation-nav-controls");
+  const chatInputTextarea = document.querySelector("#chat-input textarea");
+
+  if (!chatInputTextarea) {
+    console.error("Chat input textarea not found for impersonation controls.");
+    return;
+  }
+
+  const chatInputParent = chatInputTextarea.parentNode;
+
+  if (!navControlsContainer) {
+    navControlsContainer = document.createElement("div");  // Could be done via gr.HTML? It's purely clientside so I went with this
+    navControlsContainer.id = "impersonation-nav-controls";
+    navControlsContainer.style.position = "absolute";
+    navControlsContainer.style.bottom = "8px";
+    navControlsContainer.style.right = "8px";
+    navControlsContainer.style.zIndex = "10";
+    navControlsContainer.style.display = "flex";
+    navControlsContainer.style.alignItems = "center";
+
+    if (chatInputParent) {
+        // Ensure the parent can contain absolutely positioned children
+        if (getComputedStyle(chatInputParent).position === 'static') {
+            chatInputParent.style.position = 'relative';
+        }
+        chatInputParent.appendChild(navControlsContainer);
+    } else {
+        console.error("Chat input parent not found for impersonation controls.");
+        return;
+    }
+  }
+
+  navControlsContainer.innerHTML = ""; // Clear existing controls
+
+  if (typeof impersonationCache === 'undefined' || impersonationCache.length === 0) {
+    navControlsContainer.style.display = "none";
+    return;
+  }
+
+  navControlsContainer.style.display = "flex";
+
+  const leftButton = document.createElement("button");
+  leftButton.innerHTML = "<";
+  leftButton.className = "footer-button impersonation-nav-button";
+  leftButton.style.fontSize = "0.8em";
+  leftButton.style.padding = "2px 6px";
+  leftButton.onclick = () => navigateImpersonation("left");
+  if (typeof currentImpersonationIndex === 'undefined' || currentImpersonationIndex <= 0) {
+    leftButton.disabled = true;
+    leftButton.style.opacity = "0.5";
+    leftButton.style.cursor = "default";
+  }
+
+  const rightButton = document.createElement("button");
+  rightButton.innerHTML = ">";
+  rightButton.className = "footer-button impersonation-nav-button";
+  rightButton.style.fontSize = "0.8em";
+  rightButton.style.padding = "2px 6px";
+  rightButton.onclick = () => navigateImpersonation("right");
+  if (typeof currentImpersonationIndex === 'undefined' || currentImpersonationIndex >= impersonationCache.length - 1) {
+    rightButton.disabled = true;
+    rightButton.style.opacity = "0.5";
+    rightButton.style.cursor = "default";
+  }
+
+  const countDisplay = document.createElement("span");
+  countDisplay.className = "version-position";
+  if (typeof currentImpersonationIndex !== 'undefined' && typeof impersonationCache !== 'undefined') {
+    countDisplay.textContent = `${currentImpersonationIndex + 1}/${impersonationCache.length}`;
+  } else {
+    countDisplay.textContent = "-/-";
+  }
+  countDisplay.style.margin = "0 5px";
+  countDisplay.style.fontSize = "0.8em";
+  countDisplay.style.lineHeight = "1.5";
+
+  navControlsContainer.appendChild(leftButton);
+  navControlsContainer.appendChild(countDisplay);
+  navControlsContainer.appendChild(rightButton);
+}

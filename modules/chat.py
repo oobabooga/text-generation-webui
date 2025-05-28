@@ -665,16 +665,19 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     yield output
 
 
-def impersonate_wrapper(text, state):
+def impersonate_wrapper(textbox, state):
+    text = textbox['text']
     static_output = chat_html_wrapper(state['history'], state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     prompt = generate_chat_prompt('', state, impersonate=True)
     stopping_strings = get_stopping_strings(state)
 
-    yield text + '...', static_output
+    textbox['text'] = text + '...'
+    yield textbox, static_output
     reply = None
     for reply in generate_reply(prompt + text, state, stopping_strings=stopping_strings, is_chat=True):
-        yield (text + reply).lstrip(' '), static_output
+        textbox['text'] = (text + reply).lstrip(' ')
+        yield textbox, static_output
         if shared.stop_everything:
             return
 
