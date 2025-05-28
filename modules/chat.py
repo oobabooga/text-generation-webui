@@ -31,6 +31,7 @@ from modules.text_generation import (
     get_max_prompt_length
 )
 from modules.utils import delete_file, get_available_characters, save_file
+from modules.web_search import add_web_search_attachments
 
 
 def strftime_now(format):
@@ -565,6 +566,9 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         # Add attachments to metadata only, not modifying the message text
         for file_path in files:
             add_message_attachment(output, row_idx, file_path, is_user=True)
+
+        # Add web search results as attachments if enabled
+        add_web_search_attachments(output, row_idx, text, state)
 
         # Apply extensions
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
