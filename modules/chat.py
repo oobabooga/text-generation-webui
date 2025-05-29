@@ -1493,7 +1493,7 @@ def handle_edit_message_click(state):
 
     if message_index >= len(history['internal']):
         html_output = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
-        return [history, html_output, gr.update()]  # No unique_id change
+        return [history, html_output]
 
     role_idx = 0 if role == "user" else 1
 
@@ -1521,13 +1521,10 @@ def handle_edit_message_click(state):
 
     add_message_version(history, role, message_index, is_current=True)
 
-    # Since we are not branching, unique_id does not change.
-    past_chats_update = gr.update()
-
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
     html_output = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
-    return [history, html_output, past_chats_update]
+    return [history, html_output]
 
 
 def handle_navigate_version_click(state):

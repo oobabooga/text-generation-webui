@@ -314,7 +314,7 @@ def create_event_handlers():
 
     shared.gradio['edit_message'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_edit_message_click, gradio('interface_state'), gradio('history', 'display', 'unique_id'), show_progress=False)
+        chat.handle_edit_message_click, gradio('interface_state'), gradio('history', 'display'), show_progress=False)
 
     # Save/delete a character
     shared.gradio['save_character'].click(chat.handle_save_character_click, gradio('name2'), gradio('save_character_filename', 'character_saver'), show_progress=False)
