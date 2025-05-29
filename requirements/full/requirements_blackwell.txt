@@ -35,7 +35,7 @@ sse-starlette==1.6.5
 tiktoken
 
 # CUDA wheels
-https://github.com/abetlen/llama-cpp-python/releases/download/v0.3.4-cu124/llama_cpp_python-0.3.4-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://github.com/boneylizard/llama-cpp-python-cu128-gemma3/releases/download/0.3.8%2Bcu128.gemma3/llama_cpp_python-0.3.8+cu128.gemma3-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
 https://github.com/abetlen/llama-cpp-python/releases/download/v0.3.4-cu124/llama_cpp_python-0.3.4-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
 https://github.com/turboderp-org/exllamav3/releases/download/v0.0.2/exllamav3-0.0.2+cu128.torch2.7.0-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
 https://github.com/turboderp-org/exllamav3/releases/download/v0.0.2/exllamav3-0.0.2+cu128.torch2.7.0-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
