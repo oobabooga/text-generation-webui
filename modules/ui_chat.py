@@ -110,6 +110,7 @@ def create_ui():
         with gr.Row(visible=False):
             shared.gradio['navigate_message_index'] = gr.Number(value=-1, precision=0, elem_id="Navigate-message-index")
             shared.gradio['navigate_direction'] = gr.Textbox(value="", elem_id="Navigate-direction")
+            shared.gradio['navigate_message_role'] = gr.Textbox(value="", elem_id="Navigate-message-role")
             shared.gradio['navigate_version'] = gr.Button(elem_id="Navigate-version")
             shared.gradio['edit_message_index'] = gr.Number(value=-1, precision=0, elem_id="Edit-message-index")
             shared.gradio['edit_message_text'] = gr.Textbox(value="", elem_id="Edit-message-text")
@@ -313,8 +314,7 @@ def create_event_handlers():
 
     shared.gradio['edit_message'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_edit_message_click, gradio('interface_state'), gradio('history', 'display', 'unique_id'), show_progress=False).then(
-        lambda: None, None, None, js='() => { const role = document.getElementById("Edit-message-role").querySelector("textarea").value; if (role === "user") document.getElementById("Regenerate").click(); }')
+        chat.handle_edit_message_click, gradio('interface_state'), gradio('history', 'display', 'unique_id'), show_progress=False)
 
     # Save/delete a character
     shared.gradio['save_character'].click(chat.handle_save_character_click, gradio('name2'), gradio('save_character_filename', 'character_saver'), show_progress=False)

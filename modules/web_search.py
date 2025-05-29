@@ -1,3 +1,5 @@
+import concurrent.futures
+from concurrent.futures import as_completed
 from datetime import datetime
 
 import requests
@@ -5,7 +7,6 @@ from bs4 import BeautifulSoup
 from duckduckgo_search import DDGS
 
 from modules.logging_colors import logger
-from modules.text_generation import generate_reply
 
 
 def get_current_timestamp():
@@ -13,23 +14,7 @@ def get_current_timestamp():
     return datetime.now().strftime('%b %d, %Y %H:%M')
 
 
-def generate_search_query(user_message, state):
-    """Generate a search query from user message using the LLM"""
-    search_prompt = f"{user_message}\n\n=====\n\nPlease turn the message above into a short web search query in the same language as the message. Respond with only the search query, nothing else."
-
-    # Use a minimal state for search query generation
-    search_state = state.copy()
-    search_state['max_new_tokens'] = 64
-    search_state['temperature'] = 0.1
-
-    query = ""
-    for reply in generate_reply(search_prompt, search_state, stopping_strings=[], is_chat=False):
-        query = reply.strip()
-
-    return query
-
-
-def download_web_page(url, timeout=10):
+def download_web_page(url, timeout=5):
     """Download and extract text from a web page"""
     try:
         headers = {
@@ -56,45 +41,63 @@ def download_web_page(url, timeout=10):
         return f"[Error downloading content from {url}: {str(e)}]"
 
 
-def perform_web_search(query, num_pages=3):
+def perform_web_search(query, num_pages=3, max_workers=5):
     """Perform web search and return results with content"""
     try:
         with DDGS() as ddgs:
             results = list(ddgs.text(query, max_results=num_pages))
 
-        search_results = []
+        # Prepare download tasks
+        download_tasks = []
         for i, result in enumerate(results):
             url = result.get('href', '')
             title = result.get('title', f'Search Result {i+1}')
+            download_tasks.append((url, title, i))
 
-            # Download page content
-            content = download_web_page(url)
+        search_results = [None] * len(download_tasks)  # Pre-allocate to maintain order
 
-            search_results.append({
-                'title': title,
-                'url': url,
-                'content': content
-            })
+        # Download pages in parallel
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all download tasks
+            future_to_task = {
+                executor.submit(download_web_page, task[0]): task
+                for task in download_tasks
+            }
+
+            # Collect results as they complete
+            for future in as_completed(future_to_task):
+                url, title, index = future_to_task[future]
+                try:
+                    content = future.result()
+                    search_results[index] = {
+                        'title': title,
+                        'url': url,
+                        'content': content
+                    }
+                except Exception as e:
+                    logger.error(f"Error downloading {url}: {e}")
+                    # Include failed downloads with empty content
+                    search_results[index] = {
+                        'title': title,
+                        'url': url,
+                        'content': ''
+                    }
 
         return search_results
+
     except Exception as e:
         logger.error(f"Error performing web search: {e}")
         return []
 
 
-def add_web_search_attachments(history, row_idx, user_message, state):
+def add_web_search_attachments(history, row_idx, user_message, search_query, state):
     """Perform web search and add results as attachments"""
-    if not state.get('enable_web_search', False):
+    if not search_query:
+        logger.warning("No search query provided")
         return
 
     try:
-        # Generate search query
-        search_query = generate_search_query(user_message, state)
-        if not search_query:
-            logger.warning("Failed to generate search query")
-            return
-
-        logger.info(f"Generated search query: {search_query}")
+        logger.info(f"Using search query: {search_query}")
 
         # Perform web search
         num_pages = int(state.get('web_search_pages', 3))

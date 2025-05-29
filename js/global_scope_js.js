@@ -186,31 +186,33 @@ function navigateVersion(element, direction) {
   const index = messageElement.getAttribute("data-index");
   if (!index) return;
 
-  const indexInput = document.getElementById("Navigate-message-index").querySelector("input");
-  if (!indexInput) {
-    console.error("Element with ID 'Navigate-message-index' not found.");
-    return;
+  // Determine role based on message element classes
+  let role = "assistant"; // Default role
+  if (messageElement.classList.contains("user-message") ||
+      messageElement.querySelector(".text-you") ||
+      messageElement.querySelector(".circle-you")) {
+    role = "user";
   }
 
-  const directionInput = document.getElementById("Navigate-direction").querySelector("textarea");
-  if (!directionInput) {
-    console.error("Element with ID 'Navigate-direction' not found.");
-    return;
-  }
-
+  const indexInput = document.getElementById("Navigate-message-index")?.querySelector("input");
+  const directionInput = document.getElementById("Navigate-direction")?.querySelector("textarea");
+  const roleInput = document.getElementById("Navigate-message-role")?.querySelector("textarea");
   const navigateButton = document.getElementById("Navigate-version");
-  if (!navigateButton) {
-    console.error("Required element 'Navigate-version' not found.");
+
+  if (!indexInput || !directionInput || !roleInput || !navigateButton) {
+    console.error("Navigation control elements (index, direction, role, or button) not found.");
     return;
   }
 
   indexInput.value = index;
   directionInput.value = direction;
+  roleInput.value = role;
 
-  // Trigger any 'change' or 'input' events Gradio might be listening for
+  // Trigger 'input' events for Gradio to pick up changes
   const event = new Event("input", { bubbles: true });
   indexInput.dispatchEvent(event);
   directionInput.dispatchEvent(event);
+  roleInput.dispatchEvent(event);
 
   navigateButton.click();
 }
