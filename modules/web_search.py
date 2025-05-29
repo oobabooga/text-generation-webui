@@ -13,7 +13,7 @@ def get_current_timestamp():
     return datetime.now().strftime('%b %d, %Y %H:%M')
 
 
-def download_web_page(url, timeout=10):
+def download_web_page(url, timeout=5):
     """Download and extract text from a web page"""
     try:
         headers = {
