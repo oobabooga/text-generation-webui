@@ -65,39 +65,41 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             all_stop_strings += st
 
     shared.stop_everything = False
+    last_update = -1
     reply = ''
     is_stream = state['stream']
     if len(all_stop_strings) > 0 and not state['stream']:
         state = copy.deepcopy(state)
         state['stream'] = True
 
+    min_update_interval = 0
+    if state.get('max_updates_second', 0) > 0:
+        min_update_interval = 1 / state['max_updates_second']
+
     # Generate
-    last_update = -1
-    latency_threshold = 1 / 1000
     for reply in generate_func(question, original_question, state, stopping_strings, is_chat=is_chat):
-        cur_time = time.monotonic()
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
         if escape_html:
             reply = html.escape(reply)
 
         if is_stream:
+            cur_time = time.time()
+
             # Limit number of tokens/second to make text readable in real time
             if state['max_tokens_second'] > 0:
                 diff = 1 / state['max_tokens_second'] - (cur_time - last_update)
                 if diff > 0:
                     time.sleep(diff)
 
-                last_update = time.monotonic()
+                last_update = time.time()
                 yield reply
 
             # Limit updates to avoid lag in the Gradio UI
             # API updates are not limited
             else:
-                # If 'generate_func' takes less than 0.001 seconds to yield the next token
-                # (equivalent to more than 1000 tok/s), assume that the UI is lagging behind and skip yielding
-                if (cur_time - last_update) > latency_threshold:
+                if cur_time - last_update > min_update_interval:
+                    last_update = cur_time
                     yield reply
-                last_update = time.monotonic()
 
         if stop_found or (state['max_tokens_second'] > 0 and shared.stop_everything):
             break
@@ -503,11 +505,11 @@ def generate_reply_custom(question, original_question, state, stopping_strings=N
         return
 
 
-def print_prompt(prompt, max_chars=2000):
+def print_prompt(prompt, max_chars=-1):
     DARK_YELLOW = "\033[38;5;3m"
     RESET = "\033[0m"
 
-    if len(prompt) > max_chars:
+    if max_chars > 0 and len(prompt) > max_chars:
         half_chars = max_chars // 2
         hidden_len = len(prompt[half_chars:-half_chars])
         hidden_msg = f"{DARK_YELLOW}[...{hidden_len} characters hidden...]{RESET}"

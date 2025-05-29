@@ -109,7 +109,6 @@ def list_model_elements():
         'threads',
         'threads_batch',
         'batch_size',
-        'hqq_backend',
         'ctx_size',
         'cache_type',
         'tensor_split',
@@ -192,6 +191,7 @@ def list_interface_input_elements():
         'max_new_tokens',
         'prompt_lookup_num_tokens',
         'max_tokens_second',
+        'max_updates_second',
         'do_sample',
         'dynamic_temperature',
         'temperature_last',
@@ -210,6 +210,15 @@ def list_interface_input_elements():
         'negative_prompt',
         'dry_sequence_breakers',
         'grammar_string',
+        'navigate_message_index',
+        'navigate_direction',
+        'navigate_message_role',
+        'edit_message_index',
+        'edit_message_text',
+        'edit_message_role',
+        'branch_index',
+        'enable_web_search',
+        'web_search_pages',
     ]
 
     # Chat elements

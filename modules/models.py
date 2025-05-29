@@ -21,7 +21,6 @@ def load_model(model_name, loader=None):
         'ExLlamav3_HF': ExLlamav3_HF_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ExLlamav2': ExLlamav2_loader,
-        'HQQ': HQQ_loader,
         'TensorRT-LLM': TensorRT_LLM_loader,
     }
 
@@ -100,21 +99,6 @@ def ExLlamav2_loader(model_name):
 
     model, tokenizer = Exllamav2Model.from_pretrained(model_name)
     return model, tokenizer
-
-
-def HQQ_loader(model_name):
-    try:
-        from hqq.core.quantize import HQQBackend, HQQLinear
-        from hqq.models.hf.base import AutoHQQHFModel
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError("Failed to import 'hqq'. Please install it manually following the instructions in the HQQ GitHub repository.")
-
-    logger.info(f"Loading HQQ model with backend: \"{shared.args.hqq_backend}\"")
-
-    model_dir = Path(f'{shared.args.model_dir}/{model_name}')
-    model = AutoHQQHFModel.from_quantized(str(model_dir))
-    HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
-    return model
 
 
 def TensorRT_LLM_loader(model_name):

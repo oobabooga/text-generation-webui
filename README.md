@@ -12,18 +12,20 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Features
 
-- Supports multiple text generation backends in one UI/API, including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), and [ExLlamaV2](https://github.com/turboderp-org/exllamav2).
-  - [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) is also supported via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile).
-  - Additional quantization libraries like [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [HQQ](https://github.com/mobiusml/hqq), and [AQLM](https://github.com/Vahe1994/AQLM) can be used with the Transformers loader if you install them manually.
-- Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for llama.cpp GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory that doesn't interfere with your system environment.
-- UI that resembles the original ChatGPT style.
+- Supports multiple text generation backends in one UI/API, including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), [ExLlamaV2](https://github.com/turboderp-org/exllamav2), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) (the latter via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile)).
+- Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory.
+- **File attachments**: Upload text files and PDF documents directly in conversations to talk about their contents.
+- **Web search**: Optionally search the internet with LLM-generated queries based on your input to add context to the conversation.
+- Advanced chat management: Edit messages, navigate between message versions, and branch conversations at any point.
 - Automatic prompt formatting using Jinja2 templates. You don't need to ever worry about prompt formats.
+- Automatic GPU layers for GGUF models (on NVIDIA GPUs).
+- UI that resembles the original ChatGPT style.
 - Three chat modes: `instruct`, `chat-instruct`, and `chat`, with automatic prompt templates in `chat-instruct`.
 - Free-form text generation in the Default/Notebook tabs without being limited to chat turns. You can send formatted conversations from the Chat tab to these.
 - Multiple sampling parameters and generation options for sophisticated text generation control.
 - Switch between different models easily in the UI without restarting, with fine control over settings.
 - OpenAI-compatible API with Chat and Completions endpoints, including tool-calling support – see [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
-- 100% offline and private, with zero telemetry, external resources, or remote update requests.
+- 100% offline and private, with zero telemetry, external resources, or remote update requests. Web search is optional and user-controlled.
 - Extension support, with numerous built-in and user-contributed extensions available. See the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
 
 ## How to install
@@ -146,14 +148,14 @@ The `requirements*.txt` above contain various wheels precompiled through GitHub 
 For NVIDIA GPU:
 ln -s docker/{nvidia/Dockerfile,nvidia/docker-compose.yml,.dockerignore} .
 For AMD GPU: 
-ln -s docker/{amd/Dockerfile,intel/docker-compose.yml,.dockerignore} .
+ln -s docker/{amd/Dockerfile,amd/docker-compose.yml,.dockerignore} .
 For Intel GPU:
 ln -s docker/{intel/Dockerfile,amd/docker-compose.yml,.dockerignore} .
 For CPU only
 ln -s docker/{cpu/Dockerfile,cpu/docker-compose.yml,.dockerignore} .
 cp docker/.env.example .env
 #Create logs/cache dir : 
-mkdir -p logs cache
+mkdir -p user_data/logs user_data/cache
 # Edit .env and set: 
 #   TORCH_CUDA_ARCH_LIST based on your GPU model
 #   APP_RUNTIME_GID      your host user's group id (run `id -g` in a terminal)
@@ -187,13 +189,13 @@ usage: server.py [-h] [--multi-user] [--character CHARACTER] [--model MODEL] [--
                  [--extensions EXTENSIONS [EXTENSIONS ...]] [--verbose] [--idle-timeout IDLE_TIMEOUT] [--loader LOADER] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR]
                  [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast] [--use_flash_attention_2] [--use_eager_attention] [--torch-compile] [--load-in-4bit]
                  [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE] [--flash-attn] [--threads THREADS] [--threads-batch THREADS_BATCH] [--batch-size BATCH_SIZE] [--no-mmap]
-                 [--mlock] [--n-gpu-layers N_GPU_LAYERS] [--tensor-split TENSOR_SPLIT] [--numa] [--no-kv-offload] [--row-split] [--extra-flags EXTRA_FLAGS] [--streaming-llm] [--ctx-size N]
+                 [--mlock] [--gpu-layers N] [--tensor-split TENSOR_SPLIT] [--numa] [--no-kv-offload] [--row-split] [--extra-flags EXTRA_FLAGS] [--streaming-llm] [--ctx-size N] [--cache-type N]
                  [--model-draft MODEL_DRAFT] [--draft-max DRAFT_MAX] [--gpu-layers-draft GPU_LAYERS_DRAFT] [--device-draft DEVICE_DRAFT] [--ctx-size-draft CTX_SIZE_DRAFT] [--gpu-split GPU_SPLIT]
-                 [--autosplit] [--cfg-cache] [--no_flash_attn] [--no_xformers] [--no_sdpa] [--num_experts_per_token N] [--enable_tp] [--hqq-backend HQQ_BACKEND] [--cpp-runner]
-                 [--cache_type CACHE_TYPE] [--deepspeed] [--nvme-offload-dir NVME_OFFLOAD_DIR] [--local_rank LOCAL_RANK] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE]
-                 [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH]
-                 [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE] [--subpath SUBPATH] [--old-colors] [--api] [--public-api]
-                 [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6] [--api-disable-ipv4] [--nowebui]
+                 [--autosplit] [--cfg-cache] [--no_flash_attn] [--no_xformers] [--no_sdpa] [--num_experts_per_token N] [--enable_tp] [--cpp-runner] [--deepspeed] [--nvme-offload-dir NVME_OFFLOAD_DIR]
+                 [--local_rank LOCAL_RANK] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE] [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT]
+                 [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE]
+                 [--subpath SUBPATH] [--old-colors] [--portable] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY]
+                 [--api-enable-ipv6] [--api-disable-ipv4] [--nowebui]
 
 Text generation web UI
 
@@ -215,7 +217,7 @@ Basic settings:
   --idle-timeout IDLE_TIMEOUT               Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.
 
 Model loader:
-  --loader LOADER                           Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav2_HF, ExLlamav2, HQQ,
+  --loader LOADER                           Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav2_HF, ExLlamav2,
                                             TensorRT-LLM.
 
 Transformers/Accelerate:
@@ -246,16 +248,18 @@ llama.cpp:
   --batch-size BATCH_SIZE                   Maximum number of prompt tokens to batch together when calling llama_eval.
   --no-mmap                                 Prevent mmap from being used.
   --mlock                                   Force the system to keep the model in RAM.
-  --n-gpu-layers N_GPU_LAYERS               Number of layers to offload to the GPU.
+  --gpu-layers N, --n-gpu-layers N          Number of layers to offload to the GPU.
   --tensor-split TENSOR_SPLIT               Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.
   --numa                                    Activate NUMA task allocation for llama.cpp.
   --no-kv-offload                           Do not offload the K, Q, V to the GPU. This saves VRAM but reduces the performance.
   --row-split                               Split the model by rows across GPUs. This may improve multi-gpu performance.
-  --extra-flags EXTRA_FLAGS                 Extra flags to pass to llama-server. Format: "flag1=value1;flag2;flag3=value3". Example: "override-tensor=exps=CPU"
+  --extra-flags EXTRA_FLAGS                 Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"
   --streaming-llm                           Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.
 
-Context and cache management:
+Context and cache:
   --ctx-size N, --n_ctx N, --max_seq_len N  Context size in tokens.
+  --cache-type N, --cache_type N            KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits
+                                            separately, e.g. q4_q8).
 
 Speculative decoding:
   --model-draft MODEL_DRAFT                 Path to the draft model for speculative decoding.
@@ -274,14 +278,8 @@ ExLlamaV2:
   --num_experts_per_token N                 Number of experts to use for generation. Applies to MoE models like Mixtral.
   --enable_tp                               Enable Tensor Parallelism (TP) in ExLlamaV2.
 
-HQQ:
-  --hqq-backend HQQ_BACKEND                 Backend for the HQQ loader. Valid options: PYTORCH, PYTORCH_COMPILE, ATEN.
-
 TensorRT-LLM:
   --cpp-runner                              Use the ModelRunnerCpp runner, which is faster than the default ModelRunner but doesn't support streaming yet.
-
-Cache:
-  --cache_type CACHE_TYPE                   KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4.
 
 DeepSpeed:
   --deepspeed                               Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.
@@ -305,6 +303,7 @@ Gradio:
   --ssl-certfile SSL_CERTFILE               The path to the SSL certificate cert file.
   --subpath SUBPATH                         Customize the subpath for gradio, use with reverse proxy
   --old-colors                              Use the legacy Gradio colors, before the December/2024 update.
+  --portable                                Hide features not available in portable mode like training.
 
 API:
   --api                                     Enable the API extension.

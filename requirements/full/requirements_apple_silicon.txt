@@ -1,6 +1,8 @@
 accelerate==1.5.*
+beautifulsoup4==4.13.4
 colorama
 datasets
+duckduckgo_search==8.0.2
 einops
 fastapi==0.112.4
 gradio==4.37.*
@@ -12,6 +14,7 @@ peft==0.15.*
 Pillow>=9.5.0
 psutil
 pydantic==2.8.2
+PyPDF2==3.0.1
 pyyaml
 requests
 rich
@@ -29,8 +32,8 @@ sse-starlette==1.6.5
 tiktoken
 
 # Mac wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.12.0/llama_cpp_binaries-0.12.0-py3-none-macosx_15_0_arm64.whl; platform_system == "Darwin" and platform_release >= "24.0.0" and platform_release < "25.0.0" and python_version == "3.11"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.12.0/llama_cpp_binaries-0.12.0-py3-none-macosx_14_0_arm64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0" and python_version == "3.11"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.12.0/llama_cpp_binaries-0.12.0-py3-none-macosx_13_0_arm64.whl; platform_system == "Darwin" and platform_release >= "22.0.0" and platform_release < "23.0.0" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.14.0/llama_cpp_binaries-0.14.0-py3-none-macosx_15_0_arm64.whl; platform_system == "Darwin" and platform_release >= "24.0.0" and platform_release < "25.0.0" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.14.0/llama_cpp_binaries-0.14.0-py3-none-macosx_14_0_arm64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.14.0/llama_cpp_binaries-0.14.0-py3-none-macosx_13_0_arm64.whl; platform_system == "Darwin" and platform_release >= "22.0.0" and platform_release < "23.0.0" and python_version == "3.11"
 https://github.com/oobabooga/exllamav3/releases/download/v0.0.1a9/exllamav3-0.0.1a9-py3-none-any.whl
 https://github.com/turboderp-org/exllamav2/releases/download/v0.2.9/exllamav2-0.2.9-py3-none-any.whl

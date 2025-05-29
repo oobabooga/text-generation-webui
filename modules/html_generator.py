@@ -169,11 +169,7 @@ def convert_to_markdown(string, message_id=None):
         thinking_block = f'''
         <details class="thinking-block" data-block-id="{block_id}" data-streaming="{str(is_streaming).lower()}">
             <summary class="thinking-header">
-                <svg class="thinking-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 1.33334C4.31868 1.33334 1.33334 4.31868 1.33334 8.00001C1.33334 11.6813 4.31868 14.6667 8 14.6667C11.6813 14.6667 14.6667 11.6813 14.6667 8.00001C14.6667 4.31868 11.6813 1.33334 8 1.33334Z" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M8 10.6667V8.00001" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M8 5.33334H8.00667" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                {info_svg_small}
                 <span class="thinking-title">{title_text}</span>
             </summary>
             <div class="thinking-content pretty_scrollbar">{thinking_html}</div>
@@ -339,11 +335,112 @@ copy_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" vie
 refresh_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-repeat"><path d="M4 12v-3a3 3 0 0 1 3 -3h13m-3 -3l3 3l-3 3"></path><path d="M20 12v3a3 3 0 0 1 -3 3h-13m3 3l-3 -3l3 -3"></path></svg>'''
 continue_svg = '''<svg  xmlns="http://www.w3.org/2000/svg"  width="20"  height="20"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-player-play"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 4v16l13 -8z" /></svg>'''
 remove_svg = '''<svg  xmlns="http://www.w3.org/2000/svg"  width="20"  height="20"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-trash"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>'''
+branch_svg = '''<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-git-branch"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 18m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M7 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M17 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M7 8l0 8" /><path d="M9 18h6a2 2 0 0 0 2 -2v-5" /><path d="M14 14l3 -3l3 3" /></svg>'''
+edit_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-pencil"><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"></path><path d="M13.5 6.5l4 4"></path></svg>'''
+info_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="thinking-icon tabler-icon tabler-icon-info-circle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 2a10 10 0 0 1 0 20a10 10 0 0 1 0 -20z" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>'''
+info_svg_small = '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="thinking-icon tabler-icon tabler-icon-info-circle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 2a10 10 0 0 1 0 20a10 10 0 0 1 0 -20z" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>'''
+attachment_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.48-8.48l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>'''
 
 copy_button = f'<button class="footer-button footer-copy-button" title="Copy" onclick="copyToClipboard(this)">{copy_svg}</button>'
+branch_button = f'<button class="footer-button footer-branch-button" title="Branch here" onclick="branchHere(this)">{branch_svg}</button>'
+edit_button = f'<button class="footer-button footer-edit-button" title="Edit" onclick="editHere(this)">{edit_svg}</button>'
 refresh_button = f'<button class="footer-button footer-refresh-button" title="Regenerate" onclick="regenerateClick()">{refresh_svg}</button>'
 continue_button = f'<button class="footer-button footer-continue-button" title="Continue" onclick="continueClick()">{continue_svg}</button>'
 remove_button = f'<button class="footer-button footer-remove-button" title="Remove last reply" onclick="removeLastClick()">{remove_svg}</button>'
+info_button = f'<button class="footer-button footer-info-button" title="message">{info_svg}</button>'
+
+
+def format_message_timestamp(history, role, index):
+    """Get a formatted timestamp HTML span for a message if available"""
+    key = f"{role}_{index}"
+    if 'metadata' in history and key in history['metadata'] and history['metadata'][key].get('timestamp'):
+        timestamp = history['metadata'][key]['timestamp']
+        return f"<span class='timestamp'>{timestamp}</span>"
+
+    return ""
+
+
+def format_message_attachments(history, role, index):
+    """Get formatted HTML for message attachments if available"""
+    key = f"{role}_{index}"
+    if 'metadata' in history and key in history['metadata'] and 'attachments' in history['metadata'][key]:
+        attachments = history['metadata'][key]['attachments']
+        if not attachments:
+            return ""
+
+        attachments_html = '<div class="message-attachments">'
+        for attachment in attachments:
+            name = html.escape(attachment["name"])
+
+            # Make clickable if URL exists
+            if "url" in attachment:
+                name = f'<a href="{html.escape(attachment["url"])}" target="_blank" rel="noopener noreferrer">{name}</a>'
+
+            attachments_html += (
+                f'<div class="attachment-box">'
+                f'<div class="attachment-icon">{attachment_svg}</div>'
+                f'<div class="attachment-name">{name}</div>'
+                f'</div>'
+            )
+        attachments_html += '</div>'
+        return attachments_html
+
+    return ""
+
+
+def get_version_navigation_html(history, i, role):
+    """Generate simple navigation arrows for message versions"""
+    key = f"{role}_{i}"
+    metadata = history.get('metadata', {})
+
+    if key not in metadata or 'versions' not in metadata[key]:
+        return ""
+
+    versions = metadata[key]['versions']
+    # Default to the last version if current_version_index isn't set in metadata
+    current_idx = metadata[key].get('current_version_index', len(versions) - 1 if versions else 0)
+
+    if len(versions) <= 1:
+        return ""
+
+    left_disabled = ' disabled' if current_idx == 0 else ''
+    right_disabled = ' disabled' if current_idx >= len(versions) - 1 else ''
+
+    left_arrow = f'<button class="footer-button version-nav-button"{left_disabled} onclick="navigateVersion(this, \'left\')" title="Previous version">&lt;</button>'
+    right_arrow = f'<button class="footer-button version-nav-button"{right_disabled} onclick="navigateVersion(this, \'right\')" title="Next version">&gt;</button>'
+    position = f'<span class="version-position">{current_idx + 1}/{len(versions)}</span>'
+
+    return f'<div class="version-navigation">{left_arrow}{position}{right_arrow}</div>'
+
+
+def actions_html(history, i, role, info_message=""):
+    action_buttons = ""
+    version_nav_html = ""
+
+    if role == "assistant":
+        action_buttons = (
+            f'{copy_button}'
+            f'{edit_button}'
+            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
+            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
+            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'{branch_button}'
+        )
+
+        version_nav_html = get_version_navigation_html(history, i, "assistant")
+    elif role == "user":
+        action_buttons = (
+            f'{copy_button}'
+            f'{edit_button}'
+        )
+
+        version_nav_html = get_version_navigation_html(history, i, "user")
+
+    return (f'<div class="message-actions">'
+            f'{action_buttons}'
+            f'{info_message}'
+            f'</div>'
+            f'{version_nav_html}')
 
 
 def generate_instruct_html(history):
@@ -354,26 +451,48 @@ def generate_instruct_html(history):
         row_internal = history['internal'][i]
         converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
+        # Get timestamps
+        user_timestamp = format_message_timestamp(history, "user", i)
+        assistant_timestamp = format_message_timestamp(history, "assistant", i)
+
+        # Get attachments
+        user_attachments = format_message_attachments(history, "user", i)
+        assistant_attachments = format_message_attachments(history, "assistant", i)
+
+        # Create info buttons for timestamps if they exist
+        info_message_user = ""
+        if user_timestamp != "":
+            # Extract the timestamp value from the span
+            user_timestamp_value = user_timestamp.split('>', 1)[1].split('<', 1)[0]
+            info_message_user = info_button.replace("message", user_timestamp_value)
+
+        info_message_assistant = ""
+        if assistant_timestamp != "":
+            # Extract the timestamp value from the span
+            assistant_timestamp_value = assistant_timestamp.split('>', 1)[1].split('<', 1)[0]
+            info_message_assistant = info_button.replace("message", assistant_timestamp_value)
+
         if converted_visible[0]:  # Don't display empty user messages
             output += (
                 f'<div class="user-message" '
-                f'data-raw="{html.escape(row_internal[0], quote=True)}">'
+                f'data-raw="{html.escape(row_internal[0], quote=True)}"'
+                f'data-index={i}>'
                 f'<div class="text">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
-                f'{copy_button}'
+                f'{user_attachments}'
+                f'{actions_html(history, i, "user", info_message_user)}'
                 f'</div>'
                 f'</div>'
             )
 
         output += (
             f'<div class="assistant-message" '
-            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
+            f'data-raw="{html.escape(row_internal[1], quote=True)}"'
+            f'data-index={i}>'
             f'<div class="text">'
             f'<div class="message-body">{converted_visible[1]}</div>'
-            f'{copy_button}'
-            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
-            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
-            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'{assistant_attachments}'
+            f'{actions_html(history, i, "assistant", info_message_assistant)}'
             f'</div>'
             f'</div>'
         )
@@ -401,30 +520,39 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
         row_internal = history['internal'][i]
         converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
+        # Get timestamps
+        user_timestamp = format_message_timestamp(history, "user", i)
+        assistant_timestamp = format_message_timestamp(history, "assistant", i)
+
+        # Get attachments
+        user_attachments = format_message_attachments(history, "user", i)
+        assistant_attachments = format_message_attachments(history, "assistant", i)
+
         if converted_visible[0]:  # Don't display empty user messages
             output += (
                 f'<div class="message" '
-                f'data-raw="{html.escape(row_internal[0], quote=True)}">'
+                f'data-raw="{html.escape(row_internal[0], quote=True)}"'
+                f'data-index={i}>'
                 f'<div class="circle-you">{img_me}</div>'
                 f'<div class="text">'
-                f'<div class="username">{name1}</div>'
+                f'<div class="username">{name1}{user_timestamp}</div>'
                 f'<div class="message-body">{converted_visible[0]}</div>'
-                f'{copy_button}'
+                f'{user_attachments}'
+                f'{actions_html(history, i, "user")}'
                 f'</div>'
                 f'</div>'
             )
 
         output += (
             f'<div class="message" '
-            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
+            f'data-raw="{html.escape(row_internal[1], quote=True)}"'
+            f'data-index={i}>'
             f'<div class="circle-bot">{img_bot}</div>'
             f'<div class="text">'
-            f'<div class="username">{name2}</div>'
+            f'<div class="username">{name2}{assistant_timestamp}</div>'
             f'<div class="message-body">{converted_visible[1]}</div>'
-            f'{copy_button}'
-            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
-            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
-            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'{assistant_attachments}'
+            f'{actions_html(history, i, "assistant")}'
             f'</div>'
             f'</div>'
         )
@@ -441,26 +569,48 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
         row_internal = history['internal'][i]
         converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
+        # Get timestamps
+        user_timestamp = format_message_timestamp(history, "user", i)
+        assistant_timestamp = format_message_timestamp(history, "assistant", i)
+
+        # Get attachments
+        user_attachments = format_message_attachments(history, "user", i)
+        assistant_attachments = format_message_attachments(history, "assistant", i)
+
+        # Create info buttons for timestamps if they exist
+        info_message_user = ""
+        if user_timestamp != "":
+            # Extract the timestamp value from the span
+            user_timestamp_value = user_timestamp.split('>', 1)[1].split('<', 1)[0]
+            info_message_user = info_button.replace("message", user_timestamp_value)
+
+        info_message_assistant = ""
+        if assistant_timestamp != "":
+            # Extract the timestamp value from the span
+            assistant_timestamp_value = assistant_timestamp.split('>', 1)[1].split('<', 1)[0]
+            info_message_assistant = info_button.replace("message", assistant_timestamp_value)
+
         if converted_visible[0]:  # Don't display empty user messages
             output += (
                 f'<div class="message" '
-                f'data-raw="{html.escape(row_internal[0], quote=True)}">'
+                f'data-raw="{html.escape(row_internal[0], quote=True)}"'
+                f'data-index={i}>'
                 f'<div class="text-you">'
                 f'<div class="message-body">{converted_visible[0]}</div>'
-                f'{copy_button}'
+                f'{user_attachments}'
+                f'{actions_html(history, i, "user", info_message_user)}'
                 f'</div>'
                 f'</div>'
             )
 
         output += (
             f'<div class="message" '
-            f'data-raw="{html.escape(row_internal[1], quote=True)}">'
+            f'data-raw="{html.escape(row_internal[1], quote=True)}"'
+            f'data-index={i}>'
             f'<div class="text-bot">'
             f'<div class="message-body">{converted_visible[1]}</div>'
-            f'{copy_button}'
-            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
-            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
-            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'{assistant_attachments}'
+            f'{actions_html(history, i, "assistant", info_message_assistant)}'
             f'</div>'
             f'</div>'
         )
