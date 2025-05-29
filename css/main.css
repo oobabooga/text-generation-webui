@@ -1462,6 +1462,7 @@ strong {
 .editing-textarea {
     width: 100%;
     min-height: 200px;
+    max-height: 65vh;
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #ccc;
