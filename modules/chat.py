@@ -617,9 +617,18 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         if regenerate:
             row_idx = len(output['internal']) - 1
 
-            # Store the first response as a version before regenerating
+            # Store the old response as a version before regenerating
             if not output['metadata'].get(f"assistant_{row_idx}", {}).get('versions'):
                 add_message_version(output, "assistant", row_idx, is_current=False)
+
+            # Add new empty version (will be filled during streaming)
+            key = f"assistant_{row_idx}"
+            output['metadata'][key]["versions"].append({
+                "content": "",
+                "visible_content": "",
+                "timestamp": get_current_timestamp()
+            })
+            output['metadata'][key]["current_version_index"] = len(output['metadata'][key]["versions"]) - 1
 
             if loading_message:
                 yield {
@@ -673,20 +682,34 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         if _continue:
             output['internal'][-1] = [text, last_reply[0] + reply]
             output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
-            if is_stream:
-                yield output
         elif not (j == 0 and visible_reply.strip() == ''):
             output['internal'][-1] = [text, reply.lstrip(' ')]
             output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
-            if is_stream:
-                yield output
+
+        # Keep version metadata in sync during streaming (for regeneration)
+        if regenerate:
+            row_idx = len(output['internal']) - 1
+            key = f"assistant_{row_idx}"
+            current_idx = output['metadata'][key]['current_version_index']
+            output['metadata'][key]['versions'][current_idx].update({
+                'content': output['internal'][row_idx][1],
+                'visible_content': output['visible'][row_idx][1]
+            })
+
+        if is_stream:
+            yield output
 
     output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
 
-    # Add the newly generated response as a version (only for regeneration)
+    # Final sync for version metadata (in case streaming was disabled)
     if regenerate:
         row_idx = len(output['internal']) - 1
-        add_message_version(output, "assistant", row_idx, is_current=True)
+        key = f"assistant_{row_idx}"
+        current_idx = output['metadata'][key]['current_version_index']
+        output['metadata'][key]['versions'][current_idx].update({
+            'content': output['internal'][row_idx][1],
+            'visible_content': output['visible'][row_idx][1]
+        })
 
     yield output
 
