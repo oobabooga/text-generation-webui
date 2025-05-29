@@ -183,7 +183,10 @@ const observer = new MutationObserver(function(mutations) {
     const lastChild = messagesContainer?.lastElementChild;
     const prevSibling = lastChild?.previousElementSibling;
     if (lastChild && prevSibling) {
-      lastChild.style.setProperty("margin-bottom", `calc(max(70vh, 100vh - ${prevSibling.offsetHeight}px - 102px) - ${lastChild.offsetHeight}px)`, "important");
+      lastChild.style.setProperty("margin-bottom",
+        `max(0px, calc(max(70vh, 100vh - ${prevSibling.offsetHeight}px - 102px) - ${lastChild.offsetHeight}px))`,
+        "important"
+      );
     }
   }
 });
