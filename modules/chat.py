@@ -538,6 +538,27 @@ def extract_pdf_text(pdf_path):
         return f"[Error extracting PDF text: {str(e)}]"
 
 
+def generate_search_query(user_message, state):
+    """Generate a search query from user message using the LLM"""
+    # Augment the user message with search instruction
+    augmented_message = f"{user_message}\n\n=====\n\nPlease turn the message above into a short web search query in the same language as the message. Respond with only the search query, nothing else."
+
+    # Use a minimal state for search query generation but keep the full history
+    search_state = state.copy()
+    search_state['max_new_tokens'] = 64
+    search_state['auto_max_new_tokens'] = False
+    search_state['enable_thinking'] = False
+
+    # Generate the full prompt using existing history + augmented message
+    formatted_prompt = generate_chat_prompt(augmented_message, search_state)
+
+    query = ""
+    for reply in generate_reply(formatted_prompt, search_state, stopping_strings=[], is_chat=True):
+        query = reply.strip()
+
+    return query
+
+
 def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_message=True, for_ui=False):
     # Handle dict format with text and files
     files = []
@@ -570,7 +591,9 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             add_message_attachment(output, row_idx, file_path, is_user=True)
 
         # Add web search results as attachments if enabled
-        add_web_search_attachments(output, row_idx, text, state)
+        if state.get('enable_web_search', False):
+            search_query = generate_search_query(text, state)
+            add_web_search_attachments(output, row_idx, text, search_query, state)
 
         # Apply extensions
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
