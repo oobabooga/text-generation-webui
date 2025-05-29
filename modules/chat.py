@@ -451,19 +451,21 @@ def get_stopping_strings(state):
     return result
 
 
-def add_message_version(history, row_idx, is_current=True):
-    key = f"assistant_{row_idx}"
+def add_message_version(history, role, row_idx, is_current=True):
+    key = f"{role}_{row_idx}"
+    if 'metadata' not in history:
+        history['metadata'] = {}
     if key not in history['metadata']:
         history['metadata'][key] = {}
 
     if "versions" not in history['metadata'][key]:
         history['metadata'][key]["versions"] = []
 
-    current_content = history['internal'][row_idx][1]
-    current_visible = history['visible'][row_idx][1]
+    # Determine which index to use for content based on role
+    content_idx = 0 if role == 'user' else 1
+    current_content = history['internal'][row_idx][content_idx]
+    current_visible = history['visible'][row_idx][content_idx]
 
-    # Always add the current message as a new version entry.
-    # The timestamp will differentiate it even if content is identical to a previous version.
     history['metadata'][key]["versions"].append({
         "content": current_content,
         "visible_content": current_visible,
@@ -594,7 +596,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
             # Store the first response as a version before regenerating
             if not output['metadata'].get(f"assistant_{row_idx}", {}).get('versions'):
-                add_message_version(output, row_idx, is_current=False)
+                add_message_version(output, "assistant", row_idx, is_current=False)
 
             if loading_message:
                 yield {
@@ -656,12 +658,13 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             if is_stream:
                 yield output
 
+    output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+
     # Add the newly generated response as a version (only for regeneration)
     if regenerate:
         row_idx = len(output['internal']) - 1
-        add_message_version(output, row_idx, is_current=True)
+        add_message_version(output, "assistant", row_idx, is_current=True)
 
-    output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
     yield output
 
 
@@ -1441,37 +1444,35 @@ def handle_edit_message_click(state):
 
     if message_index >= len(history['internal']):
         html_output = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
-        return [history, html_output, gr.update()]
+        return [history, html_output, gr.update()]  # No unique_id change
 
-    # Use the role passed from frontend
-    is_user_msg = (role == "user")
-    role_idx = 0 if is_user_msg else 1
+    role_idx = 0 if role == "user" else 1
 
-    # For assistant messages, save the original version BEFORE updating content
-    if not is_user_msg:
-        if not history['metadata'].get(f"assistant_{message_index}", {}).get('versions'):
-            add_message_version(history, message_index, is_current=False)
+    if 'metadata' not in history:
+        history['metadata'] = {}
 
-    # NOW update the message content
+    key = f"{role}_{message_index}"
+    if key not in history['metadata']:
+        history['metadata'][key] = {}
+
+    # If no versions exist yet for this message, store the current (pre-edit) content as the first version.
+    if "versions" not in history['metadata'][key] or not history['metadata'][key]["versions"]:
+        original_content = history['internal'][message_index][role_idx]
+        original_visible = history['visible'][message_index][role_idx]
+
+        history['metadata'][key]["versions"] = [{
+            "content": original_content,
+            "visible_content": original_visible,
+            "timestamp": get_current_timestamp()
+        }]
+
     history['internal'][message_index][role_idx] = apply_extensions('input', new_text, state, is_chat=True)
     history['visible'][message_index][role_idx] = html.escape(new_text)
 
-    # Branch if editing user message, add version if editing assistant message
-    if is_user_msg:
-        # Branch like branch-here
-        history['visible'] = history['visible'][:message_index + 1]
-        history['internal'] = history['internal'][:message_index + 1]
-        new_unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
-        save_history(history, new_unique_id, state['character_menu'], state['mode'])
-        histories = find_all_histories_with_first_prompts(state)
-        past_chats_update = gr.update(choices=histories, value=new_unique_id)
-        state['unique_id'] = new_unique_id
-    elif not is_user_msg:
-        # Add the new version as current
-        add_message_version(history, message_index, is_current=True)
-        past_chats_update = gr.update()
-    else:
-        past_chats_update = gr.update()
+    add_message_version(history, role, message_index, is_current=True)
+
+    # Since we are not branching, unique_id does not change.
+    past_chats_update = gr.update()
 
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
     html_output = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
@@ -1483,33 +1484,36 @@ def handle_navigate_version_click(state):
     history = state['history']
     message_index = int(state['navigate_message_index'])
     direction = state['navigate_direction']
+    role = state['navigate_message_role']
 
-    # Get assistant message metadata
-    key = f"assistant_{message_index}"
-    if key not in history['metadata'] or 'versions' not in history['metadata'][key]:
-        # No versions to navigate
+    if not role:
+        logger.error("Role not provided for version navigation.")
+        html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+        return [history, html]
+
+    key = f"{role}_{message_index}"
+    if 'metadata' not in history or key not in history['metadata'] or 'versions' not in history['metadata'][key]:
         html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
         return [history, html]
 
     metadata = history['metadata'][key]
-    current_idx = metadata.get('current_version_index', 0)
     versions = metadata['versions']
+    # Default to the last version if current_version_index is not set
+    current_idx = metadata.get('current_version_index', len(versions) - 1 if versions else 0)
 
-    # Calculate new index
     if direction == 'left':
         new_idx = max(0, current_idx - 1)
     else:  # right
         new_idx = min(len(versions) - 1, current_idx + 1)
 
     if new_idx == current_idx:
-        # No change needed
         html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
         return [history, html]
 
-    # Update history with new version
-    version = versions[new_idx]
-    history['internal'][message_index][1] = version['content']
-    history['visible'][message_index][1] = version['visible_content']
+    msg_content_idx = 0 if role == 'user' else 1  # 0 for user content, 1 for assistant content in the pair
+    version_to_load = versions[new_idx]
+    history['internal'][message_index][msg_content_idx] = version_to_load['content']
+    history['visible'][message_index][msg_content_idx] = version_to_load['visible_content']
     metadata['current_version_index'] = new_idx
 
     # Redraw and save

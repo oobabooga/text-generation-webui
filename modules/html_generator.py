@@ -388,16 +388,17 @@ def format_message_attachments(history, role, index):
     return ""
 
 
-def get_version_navigation_html(history, i):
+def get_version_navigation_html(history, i, role):
     """Generate simple navigation arrows for message versions"""
-    key = f"assistant_{i}"
+    key = f"{role}_{i}"
     metadata = history.get('metadata', {})
 
     if key not in metadata or 'versions' not in metadata[key]:
         return ""
 
     versions = metadata[key]['versions']
-    current_idx = metadata[key].get('current_version_index', 0)
+    # Default to the last version if current_version_index isn't set in metadata
+    current_idx = metadata[key].get('current_version_index', len(versions) - 1 if versions else 0)
 
     if len(versions) <= 1:
         return ""
@@ -413,22 +414,33 @@ def get_version_navigation_html(history, i):
 
 
 def actions_html(history, i, role, info_message=""):
+    action_buttons = ""
+    version_nav_html = ""
+
     if role == "assistant":
-        return (f'<div class="message-actions">'
-                f'{copy_button}'
-                f'{edit_button}'
-                f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
-                f'{continue_button if i == len(history["visible"]) - 1 else ""}'
-                f'{remove_button if i == len(history["visible"]) - 1 else ""}'
-                f'{branch_button}'
-                f'{info_message}'
-                f'</div>'
-                f'{get_version_navigation_html(history, i)}')
-    return (f'<div class="message-actions">'
+        action_buttons = (
             f'{copy_button}'
             f'{edit_button}'
+            f'{refresh_button if i == len(history["visible"]) - 1 else ""}'
+            f'{continue_button if i == len(history["visible"]) - 1 else ""}'
+            f'{remove_button if i == len(history["visible"]) - 1 else ""}'
+            f'{branch_button}'
+        )
+
+        version_nav_html = get_version_navigation_html(history, i, "assistant")
+    elif role == "user":
+        action_buttons = (
+            f'{copy_button}'
+            f'{edit_button}'
+        )
+
+        version_nav_html = get_version_navigation_html(history, i, "user")
+
+    return (f'<div class="message-actions">'
+            f'{action_buttons}'
             f'{info_message}'
-            f'</div>')
+            f'</div>'
+            f'{version_nav_html}')
 
 
 def generate_instruct_html(history):
