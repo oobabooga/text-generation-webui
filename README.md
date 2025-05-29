@@ -16,8 +16,8 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 - Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory that doesn't interfere with your system environment.
 - **File attachments**: Upload text files and PDF documents directly in conversations to talk about their contents.
 - **Web search**: Optionally search the internet with LLM-generated queries based on your input to add context to the conversation.
-- **Advanced chat management**: Edit messages, navigate between message versions (like "swipes"), and branch conversations at any point.
-- **Automatic prompt formatting** using Jinja2 templates. You don't need to ever worry about prompt formats.
+- Advanced chat management: Edit messages, navigate between message versions (like "swipes"), and branch conversations at any point.
+- Automatic prompt formatting using Jinja2 templates. You don't need to ever worry about prompt formats.
 - UI that resembles the original ChatGPT style.
 - Three chat modes: `instruct`, `chat-instruct`, and `chat`, with automatic prompt templates in `chat-instruct`.
 - Free-form text generation in the Default/Notebook tabs without being limited to chat turns. You can send formatted conversations from the Chat tab to these.
