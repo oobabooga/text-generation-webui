@@ -18,6 +18,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 - **Web search**: Optionally search the internet with LLM-generated queries based on your input to add context to the conversation.
 - Advanced chat management: Edit messages, navigate between message versions, and branch conversations at any point.
 - Automatic prompt formatting using Jinja2 templates. You don't need to ever worry about prompt formats.
+- Automatic GPU layers for GGUF models (on NVIDIA GPUs).
 - UI that resembles the original ChatGPT style.
 - Three chat modes: `instruct`, `chat-instruct`, and `chat`, with automatic prompt templates in `chat-instruct`.
 - Free-form text generation in the Default/Notebook tabs without being limited to chat turns. You can send formatted conversations from the Chat tab to these.
