@@ -239,7 +239,7 @@ def create_event_handlers():
         lambda x: x, gradio('textbox'), gradio('Chat input'), show_progress=False).then(
         lambda: None, None, None, js='() => document.getElementById("chat").parentNode.parentNode.parentNode.classList.add("_generating")').then(
         chat.impersonate_wrapper, gradio(inputs), gradio('textbox', 'display'), show_progress=False).then(
-        None, gradio('textbox'), None, js='(textboxState) => { document.getElementById("chat").parentNode.parentNode.parentNode.classList.remove("_generating"); if (textboxState && typeof textboxState.text === "string") { cacheImpersonation(textboxState.text); } }').then(
+        None, None, None, js='() => document.getElementById("chat").parentNode.parentNode.parentNode.classList.remove("_generating")').then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
     shared.gradio['Send dummy message'].click(

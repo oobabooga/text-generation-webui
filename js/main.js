@@ -112,17 +112,6 @@ document.addEventListener("keydown", function(event) {
     document.getElementById("Impersonate").click();
   }
 
-  // Impersonate navigation on Alt + Shift + Arrow keys (horizontal)
-  else if (event.altKey && event.shiftKey && event.key === "ArrowLeft") {
-    event.preventDefault();
-    navigateImpersonation("left");
-  }
-
-  else if (event.altKey && event.shiftKey && event.key === "ArrowRight") {
-    event.preventDefault();
-    navigateImpersonation("right");
-  }
-
   // --- Simple version navigation --- //
   if (!isFocusedOnEditableTextbox()) {
     // Version navigation on Arrow keys (horizontal)
