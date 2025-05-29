@@ -505,11 +505,11 @@ def generate_reply_custom(question, original_question, state, stopping_strings=N
         return
 
 
-def print_prompt(prompt, max_chars=2000):
+def print_prompt(prompt, max_chars=-1):
     DARK_YELLOW = "\033[38;5;3m"
     RESET = "\033[0m"
 
-    if len(prompt) > max_chars:
+    if max_chars > 0 and len(prompt) > max_chars:
         half_chars = max_chars // 2
         hidden_len = len(prompt[half_chars:-half_chars])
         hidden_msg = f"{DARK_YELLOW}[...{hidden_len} characters hidden...]{RESET}"
