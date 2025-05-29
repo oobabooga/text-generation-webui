@@ -372,16 +372,27 @@ def format_message_attachments(history, role, index):
         for attachment in attachments:
             name = html.escape(attachment["name"])
 
-            # Make clickable if URL exists
-            if "url" in attachment:
-                name = f'<a href="{html.escape(attachment["url"])}" target="_blank" rel="noopener noreferrer">{name}</a>'
+            if attachment.get("type") == "image":
+                # Show image preview
+                file_path = attachment.get("file_path", "")
+                attachments_html += (
+                    f'<div class="attachment-box image-attachment">'
+                    f'<img src="file/{file_path}" alt="{name}" class="attachment-image" />'
+                    f'<div class="attachment-name">{name}</div>'
+                    f'</div>'
+                )
+            else:
+                # Make clickable if URL exists (web search)
+                if "url" in attachment:
+                    name = f'<a href="{html.escape(attachment["url"])}" target="_blank" rel="noopener noreferrer">{name}</a>'
 
-            attachments_html += (
-                f'<div class="attachment-box">'
-                f'<div class="attachment-icon">{attachment_svg}</div>'
-                f'<div class="attachment-name">{name}</div>'
-                f'</div>'
-            )
+                attachments_html += (
+                    f'<div class="attachment-box">'
+                    f'<div class="attachment-icon">{attachment_svg}</div>'
+                    f'<div class="attachment-name">{name}</div>'
+                    f'</div>'
+                )
+
         attachments_html += '</div>'
         return attachments_html
 

@@ -1551,3 +1551,16 @@ strong {
     color: var(--body-text-color-subdued);
     margin-top: 4px;
 }
+
+.image-attachment {
+    flex-direction: column;
+}
+
+.attachment-image {
+    border-radius: 16px;
+    margin-bottom: 5px;
+    object-fit: cover;
+    object-position: center;
+    border: 2px solid var(--border-color-primary);
+    aspect-ratio: 1 / 1;
+}

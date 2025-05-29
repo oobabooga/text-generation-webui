@@ -1,8 +1,10 @@
+import base64
 import copy
 import json
 import time
 from collections import deque
 
+import requests
 import tiktoken
 from pydantic import ValidationError
 
@@ -16,6 +18,7 @@ from modules.chat import (
     load_character_memoized,
     load_instruction_template_memoized
 )
+from modules.logging_colors import logger
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
 
@@ -82,6 +85,50 @@ def process_parameters(body, is_legacy=False):
     return generate_params
 
 
+def process_image_url(url, image_id):
+    """Process an image URL and return attachment data for llama.cpp"""
+    try:
+        if url.startswith("data:"):
+            if "base64," in url:
+                image_data = url.split("base64,", 1)[1]
+            else:
+                raise ValueError("Unsupported data URL format")
+        else:
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
+            response = requests.get(url, timeout=10, headers=headers)
+            response.raise_for_status()
+            image_data = base64.b64encode(response.content).decode('utf-8')
+
+        return {"image_data": image_data, "image_id": image_id}
+    except Exception as e:
+        logger.error(f"Error processing image URL {url}: {e}")
+        return None
+
+
+def process_multimodal_content(content):
+    """Extract text and images from OpenAI multimodal format"""
+    if isinstance(content, str):
+        return content, []
+
+    if isinstance(content, list):
+        text_content = ""
+        images = []
+
+        for item in content:
+            if item.get("type") == "text":
+                text_content += item.get("text", "")
+            elif item.get("type") == "image_url":
+                image_url = item.get("image_url", {}).get("url", "")
+                if image_url:
+                    image = process_image_url(image_url, len(images) + 1)
+                    if image:
+                        images.append(image)
+
+        return text_content, images
+
+    return str(content), []
+
+
 def convert_history(history):
     '''
     Chat histories in this program are in the format [message, reply].
@@ -93,19 +140,29 @@ def convert_history(history):
     user_input = ""
     user_input_last = True
     system_message = ""
+    all_images = []  # Simple list to collect all images
 
     for entry in history:
         content = entry["content"]
         role = entry["role"]
 
         if role == "user":
-            user_input = content
+            # Process multimodal content
+            processed_content, images = process_multimodal_content(content)
+            if images:
+                image_refs = "".join(f"[img-{img['image_id']}]" for img in images)
+                processed_content = f"{processed_content} {image_refs}"
+
+            user_input = processed_content
             user_input_last = True
+            all_images.extend(images)  # Add any images to our collection
+
             if current_message:
                 chat_dialogue.append([current_message, '', ''])
                 current_message = ""
 
-            current_message = content
+            current_message = processed_content
+
         elif role == "assistant":
             if "tool_calls" in entry and isinstance(entry["tool_calls"], list) and len(entry["tool_calls"]) > 0 and content.strip() == "":
                 continue  # skip tool calls
@@ -126,7 +183,11 @@ def convert_history(history):
     if not user_input_last:
         user_input = ""
 
-    return user_input, system_message, {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
+    return user_input, system_message, {
+        'internal': chat_dialogue,
+        'visible': copy.deepcopy(chat_dialogue),
+        'images': all_images  # Simple list of all images from the conversation
+    }
 
 
 def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, prompt_only=False) -> dict:
@@ -150,8 +211,22 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         elif m['role'] == 'function':
             raise InvalidRequestError(message="role: function is not supported.", param='messages')
 
-        if 'content' not in m and "image_url" not in m:
+        # Handle multimodal content validation
+        content = m.get('content')
+        if content is None:
             raise InvalidRequestError(message="messages: missing content", param='messages')
+
+        # Validate multimodal content structure
+        if isinstance(content, list):
+            for item in content:
+                if not isinstance(item, dict) or 'type' not in item:
+                    raise InvalidRequestError(message="messages: invalid content item format", param='messages')
+                if item['type'] not in ['text', 'image_url']:
+                    raise InvalidRequestError(message="messages: unsupported content type", param='messages')
+                if item['type'] == 'text' and 'text' not in item:
+                    raise InvalidRequestError(message="messages: missing text in content item", param='messages')
+                if item['type'] == 'image_url' and ('image_url' not in item or 'url' not in item['image_url']):
+                    raise InvalidRequestError(message="messages: missing image_url in content item", param='messages')
 
     # Chat Completions
     object_type = 'chat.completion' if not stream else 'chat.completion.chunk'
@@ -204,6 +279,10 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         'history': history,
         'stream': stream
     })
+
+    # Add images to state for llama.cpp multimodal support
+    if history.get('images'):
+        generate_params['image_attachments'] = history['images']
 
     max_tokens = generate_params['max_new_tokens']
     if max_tokens in [None, 0]:
