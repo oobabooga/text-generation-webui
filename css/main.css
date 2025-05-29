@@ -1,11 +1,11 @@
 :root {
     --darker-gray: #202123;
-    --dark-gray: #343541;
-    --light-gray: #444654;
+    --dark-gray: #2A2B32;
+    --light-gray: #373943;
     --light-theme-gray: #f9fbff;
     --border-color-dark: #525252;
     --header-width: 112px;
-    --selected-item-color-dark: #32333e;
+    --selected-item-color-dark: #2E2F38;
 }
 
 @font-face {
