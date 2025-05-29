@@ -1508,11 +1508,12 @@ def handle_edit_message_click(state):
     if "versions" not in history['metadata'][key] or not history['metadata'][key]["versions"]:
         original_content = history['internal'][message_index][role_idx]
         original_visible = history['visible'][message_index][role_idx]
+        original_timestamp = history['metadata'][key].get('timestamp', get_current_timestamp())
 
         history['metadata'][key]["versions"] = [{
             "content": original_content,
             "visible_content": original_visible,
-            "timestamp": get_current_timestamp()
+            "timestamp": original_timestamp
         }]
 
     history['internal'][message_index][role_idx] = apply_extensions('input', new_text, state, is_chat=True)
@@ -1564,6 +1565,7 @@ def handle_navigate_version_click(state):
     history['internal'][message_index][msg_content_idx] = version_to_load['content']
     history['visible'][message_index][msg_content_idx] = version_to_load['visible_content']
     metadata['current_version_index'] = new_idx
+    update_message_metadata(history['metadata'], role, message_index, timestamp=version_to_load['timestamp'])
 
     # Redraw and save
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
