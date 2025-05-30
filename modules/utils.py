@@ -74,7 +74,7 @@ def natural_keys(text):
 
 def check_model_loaded():
     if shared.model_name == 'None' or shared.model is None:
-        if len(get_available_models()) <= 1:
+        if len(get_available_models()) == 0:
             error_msg = "No model is loaded.\n\nTo get started:\n1) Place a GGUF file in your user_data/models folder\n2) Go to the Model tab and select it"
             logger.error(error_msg)
             return False, error_msg

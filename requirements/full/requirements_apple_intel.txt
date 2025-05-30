@@ -1,6 +1,8 @@
 accelerate==1.5.*
+beautifulsoup4==4.13.4
 colorama
 datasets
+duckduckgo_search==8.0.2
 einops
 fastapi==0.112.4
 gradio==4.37.*

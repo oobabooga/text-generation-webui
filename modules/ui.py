@@ -210,7 +210,15 @@ def list_interface_input_elements():
         'negative_prompt',
         'dry_sequence_breakers',
         'grammar_string',
-        'branch_index'
+        'navigate_message_index',
+        'navigate_direction',
+        'navigate_message_role',
+        'edit_message_index',
+        'edit_message_text',
+        'edit_message_role',
+        'branch_index',
+        'enable_web_search',
+        'web_search_pages',
     ]
 
     # Chat elements

@@ -71,8 +71,6 @@ def create_ui():
                 shared.gradio['Remove last'] = gr.Button('Remove last reply (Ctrl + Shift + Backspace)', elem_id='Remove-last')
 
             with gr.Row():
-                shared.gradio['Replace last reply'] = gr.Button('Replace last reply (Ctrl + Shift + L)', elem_id='Replace-last')
-                shared.gradio['Copy last reply'] = gr.Button('Copy last reply (Ctrl + Shift + K)', elem_id='Copy-last')
                 shared.gradio['Impersonate'] = gr.Button('Impersonate (Ctrl + Shift + M)', elem_id='Impersonate')
 
             with gr.Row():
@@ -89,6 +87,12 @@ def create_ui():
                     shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'], elem_classes=['add_scrollbar'])
 
                 with gr.Row():
+                    shared.gradio['enable_web_search'] = gr.Checkbox(value=shared.settings.get('enable_web_search', False), label='Activate web search')
+
+                with gr.Row(visible=shared.settings.get('enable_web_search', False)) as shared.gradio['web_search_row']:
+                    shared.gradio['web_search_pages'] = gr.Number(value=shared.settings.get('web_search_pages', 3), precision=0, label='Number of pages to download', minimum=1, maximum=10)
+
+                with gr.Row():
                     shared.gradio['mode'] = gr.Radio(choices=['instruct', 'chat-instruct', 'chat'], value=shared.settings['mode'] if shared.settings['mode'] in ['chat', 'chat-instruct'] else None, label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template Parameters > Instruction template is used.', elem_id='chat-mode')
 
                 with gr.Row():
@@ -96,6 +100,22 @@ def create_ui():
 
                 with gr.Row():
                     shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=12, label='Command for chat-instruct mode', info='<|character|> and <|prompt|> get replaced with the bot name and the regular chat prompt respectively.', visible=shared.settings['mode'] == 'chat-instruct', elem_classes=['add_scrollbar'])
+
+                with gr.Row():
+                    shared.gradio['count_tokens'] = gr.Button('Count tokens', size='sm')
+
+                shared.gradio['token_display'] = gr.HTML(value='', elem_classes='token-display')
+
+        # Hidden elements for version navigation and editing
+        with gr.Row(visible=False):
+            shared.gradio['navigate_message_index'] = gr.Number(value=-1, precision=0, elem_id="Navigate-message-index")
+            shared.gradio['navigate_direction'] = gr.Textbox(value="", elem_id="Navigate-direction")
+            shared.gradio['navigate_message_role'] = gr.Textbox(value="", elem_id="Navigate-message-role")
+            shared.gradio['navigate_version'] = gr.Button(elem_id="Navigate-version")
+            shared.gradio['edit_message_index'] = gr.Number(value=-1, precision=0, elem_id="Edit-message-index")
+            shared.gradio['edit_message_text'] = gr.Textbox(value="", elem_id="Edit-message-text")
+            shared.gradio['edit_message_role'] = gr.Textbox(value="", elem_id="Edit-message-role")
+            shared.gradio['edit_message'] = gr.Button(elem_id="Edit-message")
 
 
 def create_chat_settings_ui():
@@ -222,10 +242,6 @@ def create_event_handlers():
         None, None, None, js='() => document.getElementById("chat").parentNode.parentNode.parentNode.classList.remove("_generating")').then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
 
-    shared.gradio['Replace last reply'].click(
-        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_replace_last_reply_click, gradio('textbox', 'interface_state'), gradio('history', 'display', 'textbox'), show_progress=False)
-
     shared.gradio['Send dummy message'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.handle_send_dummy_message_click, gradio('textbox', 'interface_state'), gradio('history', 'display', 'textbox'), show_progress=False)
@@ -291,7 +307,14 @@ def create_event_handlers():
         None, gradio('mode'), None, js="(mode) => {mode === 'instruct' ? document.getElementById('character-menu').parentNode.parentNode.style.display = 'none' : document.getElementById('character-menu').parentNode.parentNode.style.display = ''}")
 
     shared.gradio['chat_style'].change(chat.redraw_html, gradio(reload_arr), gradio('display'), show_progress=False)
-    shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, gradio('history'), gradio('textbox'), show_progress=False)
+
+    shared.gradio['navigate_version'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.handle_navigate_version_click, gradio('interface_state'), gradio('history', 'display'), show_progress=False)
+
+    shared.gradio['edit_message'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.handle_edit_message_click, gradio('interface_state'), gradio('history', 'display'), show_progress=False)
 
     # Save/delete a character
     shared.gradio['save_character'].click(chat.handle_save_character_click, gradio('name2'), gradio('save_character_filename', 'character_saver'), show_progress=False)
@@ -348,3 +371,13 @@ def create_event_handlers():
         None, None, None, js=f'() => {{{ui.switch_tabs_js}; switch_to_notebook()}}')
 
     shared.gradio['show_controls'].change(None, gradio('show_controls'), None, js=f'(x) => {{{ui.show_controls_js}; toggle_controls(x)}}')
+
+    shared.gradio['count_tokens'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.count_prompt_tokens, gradio('textbox', 'interface_state'), gradio('token_display'), show_progress=False)
+
+    shared.gradio['enable_web_search'].change(
+        lambda x: gr.update(visible=x),
+        gradio('enable_web_search'),
+        gradio('web_search_row')
+    )
