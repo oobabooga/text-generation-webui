@@ -1551,3 +1551,7 @@ strong {
     color: var(--body-text-color-subdued);
     margin-top: 4px;
 }
+
+button:focus {
+    outline: none;
+}

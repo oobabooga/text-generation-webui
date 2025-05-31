@@ -806,9 +806,12 @@ def remove_last_message(history):
     return html.unescape(last[0]), history
 
 
-def send_dummy_message(textbox, state):
+def send_dummy_message(text, state):
     history = state['history']
-    text = textbox['text']
+
+    # Handle both dict and string inputs
+    if isinstance(text, dict):
+        text = text['text']
 
     # Initialize metadata if not present
     if 'metadata' not in history:
@@ -822,9 +825,12 @@ def send_dummy_message(textbox, state):
     return history
 
 
-def send_dummy_reply(textbox, state):
+def send_dummy_reply(text, state):
     history = state['history']
-    text = textbox['text']
+
+    # Handle both dict and string inputs
+    if isinstance(text, dict):
+        text = text['text']
 
     # Initialize metadata if not present
     if 'metadata' not in history:
