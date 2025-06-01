@@ -710,7 +710,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
     # Add timestamp for assistant's response at the start of generation
     row_idx = len(output['internal']) - 1
-    update_message_metadata(output['metadata'], "assistant", row_idx, timestamp=get_current_timestamp())
+    update_message_metadata(output['metadata'], "assistant", row_idx, timestamp=get_current_timestamp(), model_name=shared.model_name)
 
     # Generate
     reply = None

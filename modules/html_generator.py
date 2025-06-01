@@ -350,12 +350,14 @@ remove_button = f'<button class="footer-button footer-remove-button" title="Remo
 info_button = f'<button class="footer-button footer-info-button" title="message">{info_svg}</button>'
 
 
-def format_message_timestamp(history, role, index):
+def format_message_timestamp(history, role, index, tooltip_include_timestamp=True):
     """Get a formatted timestamp HTML span for a message if available"""
     key = f"{role}_{index}"
     if 'metadata' in history and key in history['metadata'] and history['metadata'][key].get('timestamp'):
         timestamp = history['metadata'][key]['timestamp']
-        return f"<span class='timestamp'>{timestamp}</span>"
+        tooltip_text = get_message_tooltip(history, role, index, include_timestamp=tooltip_include_timestamp)
+        title_attr = f' title="{html.escape(tooltip_text)}"' if tooltip_text else ''
+        return f"<span class='timestamp'{title_attr}>{timestamp}</span>"
 
     return ""
 
@@ -386,6 +388,23 @@ def format_message_attachments(history, role, index):
         return attachments_html
 
     return ""
+
+
+def get_message_tooltip(history, role, index, include_timestamp=True):
+    """Get tooltip text combining timestamp and model name for a message"""
+    key = f"{role}_{index}"
+    if 'metadata' not in history or key not in history['metadata']:
+        return ""
+
+    meta = history['metadata'][key]
+    tooltip_parts = []
+
+    if include_timestamp and meta.get('timestamp'):
+        tooltip_parts.append(meta['timestamp'])
+    if meta.get('model_name'):
+        tooltip_parts.append(f"Model: {meta['model_name']}")
+
+    return " | ".join(tooltip_parts)
 
 
 def get_version_navigation_html(history, i, role):
@@ -462,15 +481,13 @@ def generate_instruct_html(history):
         # Create info buttons for timestamps if they exist
         info_message_user = ""
         if user_timestamp != "":
-            # Extract the timestamp value from the span
-            user_timestamp_value = user_timestamp.split('>', 1)[1].split('<', 1)[0]
-            info_message_user = info_button.replace("message", user_timestamp_value)
+            tooltip_text = get_message_tooltip(history, "user", i)
+            info_message_user = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
 
         info_message_assistant = ""
         if assistant_timestamp != "":
-            # Extract the timestamp value from the span
-            assistant_timestamp_value = assistant_timestamp.split('>', 1)[1].split('<', 1)[0]
-            info_message_assistant = info_button.replace("message", assistant_timestamp_value)
+            tooltip_text = get_message_tooltip(history, "assistant", i)
+            info_message_assistant = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
 
         if converted_visible[0]:  # Don't display empty user messages
             output += (
@@ -521,8 +538,8 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
         converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
         # Get timestamps
-        user_timestamp = format_message_timestamp(history, "user", i)
-        assistant_timestamp = format_message_timestamp(history, "assistant", i)
+        user_timestamp = format_message_timestamp(history, "user", i, tooltip_include_timestamp=False)
+        assistant_timestamp = format_message_timestamp(history, "assistant", i, tooltip_include_timestamp=False)
 
         # Get attachments
         user_attachments = format_message_attachments(history, "user", i)
@@ -580,15 +597,13 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
         # Create info buttons for timestamps if they exist
         info_message_user = ""
         if user_timestamp != "":
-            # Extract the timestamp value from the span
-            user_timestamp_value = user_timestamp.split('>', 1)[1].split('<', 1)[0]
-            info_message_user = info_button.replace("message", user_timestamp_value)
+            tooltip_text = get_message_tooltip(history, "user", i)
+            info_message_user = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
 
         info_message_assistant = ""
         if assistant_timestamp != "":
-            # Extract the timestamp value from the span
-            assistant_timestamp_value = assistant_timestamp.split('>', 1)[1].split('<', 1)[0]
-            info_message_assistant = info_button.replace("message", assistant_timestamp_value)
+            tooltip_text = get_message_tooltip(history, "assistant", i)
+            info_message_assistant = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
 
         if converted_visible[0]:  # Don't display empty user messages
             output += (
