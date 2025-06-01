@@ -872,3 +872,10 @@ function navigateLastAssistantMessage(direction) {
 
   return false;
 }
+
+//------------------------------------------------
+// Tooltips
+//------------------------------------------------
+
+// File upload button
+document.querySelector("#chat-input .upload-button").title = "Upload text files, PDFs, and DOCX documents";
