@@ -299,11 +299,11 @@ if (buttonsInChat.length > 0) {
     menu.appendChild(thisButton);
 
     // Only apply transformations to button elements
-    if (thisButton.tagName.toLowerCase() === 'button') {
+    if (thisButton.tagName.toLowerCase() === "button") {
       thisButton.addEventListener("click", () => {
         hideMenu();
       });
-      
+
       const buttonText = thisButton.textContent;
       const matches = buttonText.match(/(\(.*?\))/);
 
