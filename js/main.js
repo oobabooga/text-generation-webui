@@ -879,3 +879,6 @@ function navigateLastAssistantMessage(direction) {
 
 // File upload button
 document.querySelector("#chat-input .upload-button").title = "Upload text files, PDFs, and DOCX documents";
+
+// Activate web search
+document.getElementById("web-search").title = "Search the internet with DuckDuckGo";
