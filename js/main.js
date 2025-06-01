@@ -184,7 +184,7 @@ const observer = new MutationObserver(function(mutations) {
     const prevSibling = lastChild?.previousElementSibling;
     if (lastChild && prevSibling) {
       lastChild.style.setProperty("margin-bottom",
-        `max(0px, calc(max(70vh, 100vh - ${prevSibling.offsetHeight}px - 102px) - ${lastChild.offsetHeight}px))`,
+        `max(0px, calc(max(70vh, 100vh - ${prevSibling.offsetHeight}px - 84px) - ${lastChild.offsetHeight}px))`,
         "important"
       );
     }
