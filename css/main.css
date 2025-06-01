@@ -1555,3 +1555,8 @@ strong {
 button:focus {
     outline: none;
 }
+
+/* Fix extra gaps for hidden elements on the right sidebar */
+.svelte-sa48pu.stretch:has(> .hidden:only-child) {
+    display: none;
+}
