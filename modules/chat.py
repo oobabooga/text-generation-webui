@@ -500,6 +500,9 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
             # Process PDF file
             content = extract_pdf_text(path)
             file_type = "application/pdf"
+        elif file_extension == '.docx':
+            content = extract_docx_text(path)
+            file_type = "application/docx"
         else:
             # Default handling for text files
             with open(path, 'r', encoding='utf-8') as f:
@@ -536,6 +539,53 @@ def extract_pdf_text(pdf_path):
     except Exception as e:
         logger.error(f"Error extracting text from PDF: {e}")
         return f"[Error extracting PDF text: {str(e)}]"
+
+
+def extract_docx_text(docx_path):
+    """
+    Extract text from a .docx file, including headers,
+    body (paragraphs and tables), and footers.
+    """
+    try:
+        import docx
+
+        doc = docx.Document(docx_path)
+        parts = []
+
+        # 1) Extract non-empty header paragraphs from each section
+        for section in doc.sections:
+            for para in section.header.paragraphs:
+                text = para.text.strip()
+                if text:
+                    parts.append(text)
+
+        # 2) Extract body blocks (paragraphs and tables) in document order
+        parent_elm = doc.element.body
+        for child in parent_elm.iterchildren():
+            if isinstance(child, docx.oxml.text.paragraph.CT_P):
+                para = docx.text.paragraph.Paragraph(child, doc)
+                text = para.text.strip()
+                if text:
+                    parts.append(text)
+
+            elif isinstance(child, docx.oxml.table.CT_Tbl):
+                table = docx.table.Table(child, doc)
+                for row in table.rows:
+                    cells = [cell.text.strip() for cell in row.cells]
+                    parts.append("\t".join(cells))
+
+        # 3) Extract non-empty footer paragraphs from each section
+        for section in doc.sections:
+            for para in section.footer.paragraphs:
+                text = para.text.strip()
+                if text:
+                    parts.append(text)
+
+        return "\n".join(parts)
+
+    except Exception as e:
+        logger.error(f"Error extracting text from DOCX: {e}")
+        return f"[Error extracting DOCX text: {str(e)}]"
 
 
 def generate_search_query(user_message, state):

@@ -16,7 +16,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 - Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory.
 - 100% offline and private, with zero telemetry, external resources, or remote update requests.
 - Automatic prompt formatting using Jinja2 templates. You don't need to ever worry about prompt formats.
-- **File attachments**: Upload text files and PDF documents to talk about their contents.
+- **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
 - **Web search**: Optionally search the internet with LLM-generated queries to add context to the conversation.
 - Aesthetic UI with dark and light themes.
 - `instruct` mode for instruction-following (like ChatGPT), and `chat-instruct`/`chat` modes for talking to custom characters.
