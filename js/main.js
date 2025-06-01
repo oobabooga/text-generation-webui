@@ -277,7 +277,7 @@ for (i = 0; i < slimDropdownElements.length; i++) {
 // The show/hide events were adapted from:
 // https://github.com/SillyTavern/SillyTavern/blob/6c8bd06308c69d51e2eb174541792a870a83d2d6/public/script.js
 //------------------------------------------------
-var buttonsInChat = document.querySelectorAll("#chat-tab #chat-buttons button");
+var buttonsInChat = document.querySelectorAll("#chat-tab #chat-buttons button, #chat-tab #chat-buttons #show-controls");
 var button = document.getElementById("hover-element-button");
 var menu = document.getElementById("hover-menu");
 var istouchscreen = (navigator.maxTouchPoints > 0) || "ontouchstart" in document.documentElement;
@@ -298,18 +298,21 @@ if (buttonsInChat.length > 0) {
     const thisButton = buttonsInChat[i];
     menu.appendChild(thisButton);
 
-    thisButton.addEventListener("click", () => {
-      hideMenu();
-    });
+    // Only apply transformations to button elements
+    if (thisButton.tagName.toLowerCase() === 'button') {
+      thisButton.addEventListener("click", () => {
+        hideMenu();
+      });
+      
+      const buttonText = thisButton.textContent;
+      const matches = buttonText.match(/(\(.*?\))/);
 
-    const buttonText = thisButton.textContent;
-    const matches = buttonText.match(/(\(.*?\))/);
-
-    if (matches && matches.length > 1) {
-      // Apply the transparent-substring class to the matched substring
-      const substring = matches[1];
-      const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring.slice(1, -1)}</span>`);
-      thisButton.innerHTML = newText;
+      if (matches && matches.length > 1) {
+        // Apply the transparent-substring class to the matched substring
+        const substring = matches[1];
+        const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring.slice(1, -1)}</span>`);
+        thisButton.innerHTML = newText;
+      }
     }
   }
 }
@@ -383,20 +386,9 @@ document.addEventListener("click", function (event) {
 });
 
 //------------------------------------------------
-// Relocate the "Show controls" checkbox
-//------------------------------------------------
-var elementToMove = document.getElementById("show-controls");
-var parent = elementToMove.parentNode;
-for (var i = 0; i < 2; i++) {
-  parent = parent.parentNode;
-}
-
-parent.insertBefore(elementToMove, parent.firstChild);
-
-//------------------------------------------------
 // Position the chat input
 //------------------------------------------------
-document.getElementById("show-controls").parentNode.classList.add("chat-input-positioned");
+document.getElementById("chat-input-row").classList.add("chat-input-positioned");
 
 //------------------------------------------------
 // Focus on the chat input
