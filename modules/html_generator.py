@@ -526,7 +526,7 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
     else:
         output = ""
 
-    # Profile images
+    # We use ?character and ?time.time() to force the browser to reset caches
     img_bot = (
         f'<img src="file/user_data/cache/pfp_character_thumb.png?{character}" class="pfp_character">'
         if Path("user_data/cache/pfp_character_thumb.png").exists() else ''
