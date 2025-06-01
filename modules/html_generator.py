@@ -462,66 +462,39 @@ def actions_html(history, i, role, info_message=""):
             f'{version_nav_html}')
 
 
-def generate_instruct_message_html(role, converted_content, row_internal, i, attachments, actions_html_content):
-    """Generate HTML for a single message in instruct style."""
-    class_name = "user-message" if role == "user" else "assistant-message"
-
-    return (
-        f'<div class="{class_name}" '
-        f'data-raw="{html.escape(row_internal, quote=True)}"'
-        f'data-index={i}>'
-        f'<div class="text">'
-        f'<div class="message-body">{converted_content}</div>'
-        f'{attachments}'
-        f'{actions_html_content}'
-        f'</div>'
-        f'</div>'
-    )
-
-
-def generate_cai_message_html(role, converted_content, row_internal, i, attachments, actions_html_content, name, timestamp, img):
-    """Generate HTML for a single message in CAI style."""
-    circle_class = "circle-you" if role == "user" else "circle-bot"
-
-    return (
-        f'<div class="message" '
-        f'data-raw="{html.escape(row_internal, quote=True)}"'
-        f'data-index={i}>'
-        f'<div class="{circle_class}">{img}</div>'
-        f'<div class="text">'
-        f'<div class="username">{name}{timestamp}</div>'
-        f'<div class="message-body">{converted_content}</div>'
-        f'{attachments}'
-        f'{actions_html_content}'
-        f'</div>'
-        f'</div>'
-    )
-
-
-def generate_wpp_message_html(role, converted_content, row_internal, i, attachments, actions_html_content):
-    """Generate HTML for a single message in WPP style."""
-    text_class = "text-you" if role == "user" else "text-bot"
-
-    return (
-        f'<div class="message" '
-        f'data-raw="{html.escape(row_internal, quote=True)}"'
-        f'data-index={i}>'
-        f'<div class="{text_class}">'
-        f'<div class="message-body">{converted_content}</div>'
-        f'{attachments}'
-        f'{actions_html_content}'
-        f'</div>'
-        f'</div>'
-    )
-
-
 def generate_instruct_html(history, last_message_only=False):
     if not last_message_only:
         output = f'<style>{instruct_css}</style><div class="chat" id="chat" data-mode="instruct"><div class="messages">'
     else:
         output = ""
 
-    # Determine range - either last message only or all messages
+    def create_message(role, content, raw_content):
+        """Inner function that captures variables from outer scope."""
+        class_name = "user-message" if role == "user" else "assistant-message"
+
+        # Get role-specific data
+        timestamp = format_message_timestamp(history, role, i)
+        attachments = format_message_attachments(history, role, i)
+
+        # Create info button if timestamp exists
+        info_message = ""
+        if timestamp:
+            tooltip_text = get_message_tooltip(history, role, i)
+            info_message = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
+
+        return (
+            f'<div class="{class_name}" '
+            f'data-raw="{html.escape(raw_content, quote=True)}"'
+            f'data-index={i}>'
+            f'<div class="text">'
+            f'<div class="message-body">{content}</div>'
+            f'{attachments}'
+            f'{actions_html(history, i, role, info_message)}'
+            f'</div>'
+            f'</div>'
+        )
+
+    # Determine range
     start_idx = len(history['visible']) - 1 if last_message_only else 0
     end_idx = len(history['visible'])
 
@@ -529,44 +502,17 @@ def generate_instruct_html(history, last_message_only=False):
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
 
-        # Only convert what we need
+        # Convert content
         if last_message_only:
             converted_visible = [None, convert_to_markdown_wrapped(row_visible[1], message_id=i, use_cache=i != len(history['visible']) - 1)]
         else:
             converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
-        # Get assistant timestamps and attachments (always needed)
-        assistant_timestamp = format_message_timestamp(history, "assistant", i)
-        assistant_attachments = format_message_attachments(history, "assistant", i)
-
-        # Only compute user-related variables and generate user message when needed
+        # Generate messages
         if not last_message_only and converted_visible[0]:
-            user_timestamp = format_message_timestamp(history, "user", i)
-            user_attachments = format_message_attachments(history, "user", i)
+            output += create_message("user", converted_visible[0], row_internal[0])
 
-            # Create info button for user timestamp if it exists
-            info_message_user = ""
-            if user_timestamp:
-                tooltip_text = get_message_tooltip(history, "user", i)
-                info_message_user = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
-
-            # Generate user message
-            output += generate_instruct_message_html(
-                "user", converted_visible[0], row_internal[0], i,
-                user_attachments, actions_html(history, i, "user", info_message_user)
-            )
-
-        # Create info button for assistant timestamp if it exists
-        info_message_assistant = ""
-        if assistant_timestamp:
-            tooltip_text = get_message_tooltip(history, "assistant", i)
-            info_message_assistant = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
-
-        # Generate assistant message
-        output += generate_instruct_message_html(
-            "assistant", converted_visible[1], row_internal[1], i,
-            assistant_attachments, actions_html(history, i, "assistant", info_message_assistant)
-        )
+        output += create_message("assistant", converted_visible[1], row_internal[1])
 
     if not last_message_only:
         output += "</div></div>"
@@ -586,7 +532,37 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
         if Path("user_data/cache/pfp_character_thumb.png").exists() else ''
     )
 
-    # Determine range - either last message only or all messages
+    def create_message(role, content, raw_content):
+        """Inner function for CAI-style messages."""
+        circle_class = "circle-you" if role == "user" else "circle-bot"
+        name = name1 if role == "user" else name2
+
+        # Get role-specific data
+        timestamp = format_message_timestamp(history, role, i, tooltip_include_timestamp=False)
+        attachments = format_message_attachments(history, role, i)
+
+        # Get appropriate image
+        if role == "user":
+            img = (f'<img src="file/user_data/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
+                   if Path("user_data/cache/pfp_me.png").exists() else '')
+        else:
+            img = img_bot
+
+        return (
+            f'<div class="message" '
+            f'data-raw="{html.escape(raw_content, quote=True)}"'
+            f'data-index={i}>'
+            f'<div class="{circle_class}">{img}</div>'
+            f'<div class="text">'
+            f'<div class="username">{name}{timestamp}</div>'
+            f'<div class="message-body">{content}</div>'
+            f'{attachments}'
+            f'{actions_html(history, i, role)}'
+            f'</div>'
+            f'</div>'
+        )
+
+    # Determine range
     start_idx = len(history['visible']) - 1 if last_message_only else 0
     end_idx = len(history['visible'])
 
@@ -594,39 +570,17 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
 
-        # Only convert what we need
+        # Convert content
         if last_message_only:
             converted_visible = [None, convert_to_markdown_wrapped(row_visible[1], message_id=i, use_cache=i != len(history['visible']) - 1)]
         else:
             converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
-        # Get assistant timestamps and attachments (always needed)
-        assistant_timestamp = format_message_timestamp(history, "assistant", i, tooltip_include_timestamp=False)
-        assistant_attachments = format_message_attachments(history, "assistant", i)
-
-        # Only compute user-related variables and generate user message when needed
+        # Generate messages
         if not last_message_only and converted_visible[0]:
-            img_me = (
-                f'<img src="file/user_data/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
-                if Path("user_data/cache/pfp_me.png").exists() else ''
-            )
+            output += create_message("user", converted_visible[0], row_internal[0])
 
-            user_timestamp = format_message_timestamp(history, "user", i, tooltip_include_timestamp=False)
-            user_attachments = format_message_attachments(history, "user", i)
-
-            # Generate user message
-            output += generate_cai_message_html(
-                "user", converted_visible[0], row_internal[0], i,
-                user_attachments, actions_html(history, i, "user"),
-                name1, user_timestamp, img_me
-            )
-
-        # Generate assistant message
-        output += generate_cai_message_html(
-            "assistant", converted_visible[1], row_internal[1], i,
-            assistant_attachments, actions_html(history, i, "assistant"),
-            name2, assistant_timestamp, img_bot
-        )
+        output += create_message("assistant", converted_visible[1], row_internal[1])
 
     if not last_message_only:
         output += "</div></div>"
@@ -640,7 +594,33 @@ def generate_chat_html(history, name1, name2, reset_cache=False, last_message_on
     else:
         output = ""
 
-    # Determine range - either last message only or all messages
+    def create_message(role, content, raw_content):
+        """Inner function for WPP-style messages."""
+        text_class = "text-you" if role == "user" else "text-bot"
+
+        # Get role-specific data
+        timestamp = format_message_timestamp(history, role, i)
+        attachments = format_message_attachments(history, role, i)
+
+        # Create info button if timestamp exists
+        info_message = ""
+        if timestamp:
+            tooltip_text = get_message_tooltip(history, role, i)
+            info_message = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
+
+        return (
+            f'<div class="message" '
+            f'data-raw="{html.escape(raw_content, quote=True)}"'
+            f'data-index={i}>'
+            f'<div class="{text_class}">'
+            f'<div class="message-body">{content}</div>'
+            f'{attachments}'
+            f'{actions_html(history, i, role, info_message)}'
+            f'</div>'
+            f'</div>'
+        )
+
+    # Determine range
     start_idx = len(history['visible']) - 1 if last_message_only else 0
     end_idx = len(history['visible'])
 
@@ -648,44 +628,17 @@ def generate_chat_html(history, name1, name2, reset_cache=False, last_message_on
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
 
-        # Only convert what we need
+        # Convert content
         if last_message_only:
             converted_visible = [None, convert_to_markdown_wrapped(row_visible[1], message_id=i, use_cache=i != len(history['visible']) - 1)]
         else:
             converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
-        # Get assistant timestamps and attachments (always needed)
-        assistant_timestamp = format_message_timestamp(history, "assistant", i)
-        assistant_attachments = format_message_attachments(history, "assistant", i)
-
-        # Only compute user-related variables and generate user message when needed
+        # Generate messages
         if not last_message_only and converted_visible[0]:
-            user_timestamp = format_message_timestamp(history, "user", i)
-            user_attachments = format_message_attachments(history, "user", i)
+            output += create_message("user", converted_visible[0], row_internal[0])
 
-            # Create info button for user timestamp if it exists
-            info_message_user = ""
-            if user_timestamp:
-                tooltip_text = get_message_tooltip(history, "user", i)
-                info_message_user = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
-
-            # Generate user message
-            output += generate_wpp_message_html(
-                "user", converted_visible[0], row_internal[0], i,
-                user_attachments, actions_html(history, i, "user", info_message_user)
-            )
-
-        # Create info button for assistant timestamp if it exists
-        info_message_assistant = ""
-        if assistant_timestamp:
-            tooltip_text = get_message_tooltip(history, "assistant", i)
-            info_message_assistant = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
-
-        # Generate assistant message
-        output += generate_wpp_message_html(
-            "assistant", converted_visible[1], row_internal[1], i,
-            assistant_attachments, actions_html(history, i, "assistant", info_message_assistant)
-        )
+        output += create_message("assistant", converted_visible[1], row_internal[1])
 
     if not last_message_only:
         output += "</div></div>"
