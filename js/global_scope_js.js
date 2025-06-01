@@ -230,9 +230,22 @@ function removeLastClick() {
 }
 
 function handleMorphdomUpdate(data) {
+  // Determine target element and use it as query scope
+  var target_element, target_html;
+  if (data.last_message_only) {
+    const childNodes = document.getElementsByClassName("messages")[0].childNodes;
+    target_element = childNodes[childNodes.length - 1];
+    target_html = data.html;
+  } else {
+    target_element = document.getElementById("chat").parentNode;
+    target_html =  "<div class=\"prose svelte-1ybaih5\">" + data.html + "</div>";
+  }
+
+  const queryScope = target_element;
+
   // Track open blocks
   const openBlocks = new Set();
-  document.querySelectorAll(".thinking-block").forEach(block => {
+  queryScope.querySelectorAll(".thinking-block").forEach(block => {
     const blockId = block.getAttribute("data-block-id");
     // If block exists and is open, add to open set
     if (blockId && block.hasAttribute("open")) {
@@ -242,7 +255,7 @@ function handleMorphdomUpdate(data) {
 
   // Store scroll positions for any open blocks
   const scrollPositions = {};
-  document.querySelectorAll(".thinking-block[open]").forEach(block => {
+  queryScope.querySelectorAll(".thinking-block[open]").forEach(block => {
     const content = block.querySelector(".thinking-content");
     const blockId = block.getAttribute("data-block-id");
     if (content && blockId) {
@@ -253,16 +266,6 @@ function handleMorphdomUpdate(data) {
       };
     }
   });
-
-  var target_element, target_html;
-  if (data.last_message_only) {
-    const childNodes = document.getElementsByClassName("messages")[0].childNodes;
-    target_element = childNodes[childNodes.length - 1];
-    target_html = data.html;
-  } else {
-    target_element = document.getElementById("chat").parentNode;
-    target_html =  "<div class=\"prose svelte-1ybaih5\">" + data.html + "</div>";
-  }
 
   morphdom(
     target_element,
@@ -317,7 +320,7 @@ function handleMorphdomUpdate(data) {
   );
 
   // Add toggle listeners for new blocks
-  document.querySelectorAll(".thinking-block").forEach(block => {
+  queryScope.querySelectorAll(".thinking-block").forEach(block => {
     if (!block._hasToggleListener) {
       block.addEventListener("toggle", function(e) {
         if (this.open) {
