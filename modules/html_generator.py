@@ -528,31 +528,39 @@ def generate_instruct_html(history, last_message_only=False):
     for i in range(start_idx, end_idx):
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
-        converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
-        # Get timestamps and attachments
-        user_timestamp = format_message_timestamp(history, "user", i)
+        # Only convert what we need
+        if last_message_only:
+            converted_visible = [None, convert_to_markdown_wrapped(row_visible[1], message_id=i, use_cache=i != len(history['visible']) - 1)]
+        else:
+            converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+
+        # Get assistant timestamps and attachments (always needed)
         assistant_timestamp = format_message_timestamp(history, "assistant", i)
-        user_attachments = format_message_attachments(history, "user", i)
         assistant_attachments = format_message_attachments(history, "assistant", i)
 
-        # Create info buttons for timestamps if they exist
-        info_message_user = ""
-        if user_timestamp:
-            tooltip_text = get_message_tooltip(history, "user", i)
-            info_message_user = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
+        # Only compute user-related variables and generate user message when needed
+        if not last_message_only and converted_visible[0]:
+            user_timestamp = format_message_timestamp(history, "user", i)
+            user_attachments = format_message_attachments(history, "user", i)
 
-        info_message_assistant = ""
-        if assistant_timestamp:
-            tooltip_text = get_message_tooltip(history, "assistant", i)
-            info_message_assistant = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
+            # Create info button for user timestamp if it exists
+            info_message_user = ""
+            if user_timestamp:
+                tooltip_text = get_message_tooltip(history, "user", i)
+                info_message_user = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
 
-        # Generate user message if not empty
-        if converted_visible[0] and not last_message_only:
+            # Generate user message
             output += generate_instruct_message_html(
                 "user", converted_visible[0], row_internal[0], i,
                 user_attachments, actions_html(history, i, "user", info_message_user)
             )
+
+        # Create info button for assistant timestamp if it exists
+        info_message_assistant = ""
+        if assistant_timestamp:
+            tooltip_text = get_message_tooltip(history, "assistant", i)
+            info_message_assistant = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
 
         # Generate assistant message
         output += generate_instruct_message_html(
@@ -577,10 +585,6 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
         f'<img src="file/user_data/cache/pfp_character_thumb.png?{character}" class="pfp_character">'
         if Path("user_data/cache/pfp_character_thumb.png").exists() else ''
     )
-    img_me = (
-        f'<img src="file/user_data/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
-        if Path("user_data/cache/pfp_me.png").exists() else ''
-    )
 
     # Determine range - either last message only or all messages
     start_idx = len(history['visible']) - 1 if last_message_only else 0
@@ -589,16 +593,28 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
     for i in range(start_idx, end_idx):
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
-        converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
-        # Get timestamps and attachments
-        user_timestamp = format_message_timestamp(history, "user", i, tooltip_include_timestamp=False)
+        # Only convert what we need
+        if last_message_only:
+            converted_visible = [None, convert_to_markdown_wrapped(row_visible[1], message_id=i, use_cache=i != len(history['visible']) - 1)]
+        else:
+            converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+
+        # Get assistant timestamps and attachments (always needed)
         assistant_timestamp = format_message_timestamp(history, "assistant", i, tooltip_include_timestamp=False)
-        user_attachments = format_message_attachments(history, "user", i)
         assistant_attachments = format_message_attachments(history, "assistant", i)
 
-        # Generate user message if not empty
-        if converted_visible[0] and not last_message_only:
+        # Only compute user-related variables and generate user message when needed
+        if not last_message_only and converted_visible[0]:
+            img_me = (
+                f'<img src="file/user_data/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
+                if Path("user_data/cache/pfp_me.png").exists() else ''
+            )
+
+            user_timestamp = format_message_timestamp(history, "user", i, tooltip_include_timestamp=False)
+            user_attachments = format_message_attachments(history, "user", i)
+
+            # Generate user message
             output += generate_cai_message_html(
                 "user", converted_visible[0], row_internal[0], i,
                 user_attachments, actions_html(history, i, "user"),
@@ -631,31 +647,39 @@ def generate_chat_html(history, name1, name2, reset_cache=False, last_message_on
     for i in range(start_idx, end_idx):
         row_visible = history['visible'][i]
         row_internal = history['internal'][i]
-        converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
 
-        # Get timestamps and attachments
-        user_timestamp = format_message_timestamp(history, "user", i)
+        # Only convert what we need
+        if last_message_only:
+            converted_visible = [None, convert_to_markdown_wrapped(row_visible[1], message_id=i, use_cache=i != len(history['visible']) - 1)]
+        else:
+            converted_visible = [convert_to_markdown_wrapped(entry, message_id=i, use_cache=i != len(history['visible']) - 1) for entry in row_visible]
+
+        # Get assistant timestamps and attachments (always needed)
         assistant_timestamp = format_message_timestamp(history, "assistant", i)
-        user_attachments = format_message_attachments(history, "user", i)
         assistant_attachments = format_message_attachments(history, "assistant", i)
 
-        # Create info buttons for timestamps if they exist
-        info_message_user = ""
-        if user_timestamp:
-            tooltip_text = get_message_tooltip(history, "user", i)
-            info_message_user = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
+        # Only compute user-related variables and generate user message when needed
+        if not last_message_only and converted_visible[0]:
+            user_timestamp = format_message_timestamp(history, "user", i)
+            user_attachments = format_message_attachments(history, "user", i)
 
-        info_message_assistant = ""
-        if assistant_timestamp:
-            tooltip_text = get_message_tooltip(history, "assistant", i)
-            info_message_assistant = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
+            # Create info button for user timestamp if it exists
+            info_message_user = ""
+            if user_timestamp:
+                tooltip_text = get_message_tooltip(history, "user", i)
+                info_message_user = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
 
-        # Generate user message if not empty
-        if converted_visible[0] and not last_message_only:
+            # Generate user message
             output += generate_wpp_message_html(
                 "user", converted_visible[0], row_internal[0], i,
                 user_attachments, actions_html(history, i, "user", info_message_user)
             )
+
+        # Create info button for assistant timestamp if it exists
+        info_message_assistant = ""
+        if assistant_timestamp:
+            tooltip_text = get_message_tooltip(history, "assistant", i)
+            info_message_assistant = info_button.replace('title="message"', f'title="{html.escape(tooltip_text)}"')
 
         # Generate assistant message
         output += generate_wpp_message_html(
