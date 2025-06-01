@@ -1327,6 +1327,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     overflow: hidden;
 }
 
+.thinking-content:focus, .thinking-header:focus {
+    outline: 0 !important;
+}
+
 .dark .thinking-block {
     background-color: var(--darker-gray);
 }
