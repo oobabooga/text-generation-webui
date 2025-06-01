@@ -776,9 +776,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     display: flex;
     flex-direction: row-reverse;
     font-weight: bold;
-    justify-content: space-between;
+    justify-content: start;
     width: 100%;
     padding-right: 12px;
+    gap: 10px;
 }
 
 #show-controls label input {
