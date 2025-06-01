@@ -229,7 +229,7 @@ function removeLastClick() {
   document.getElementById("Remove-last").click();
 }
 
-function handleMorphdomUpdate(text) {
+function handleMorphdomUpdate(data) {
   // Track open blocks
   const openBlocks = new Set();
   document.querySelectorAll(".thinking-block").forEach(block => {
@@ -254,9 +254,19 @@ function handleMorphdomUpdate(text) {
     }
   });
 
+  var target_element, target_html;
+  if (data.last_message_only) {
+    const childNodes = document.getElementsByClassName("messages")[0].childNodes;
+    target_element = childNodes[childNodes.length - 1];
+    target_html = data.html;
+  } else {
+    target_element = document.getElementById("chat").parentNode;
+    target_html =  "<div class=\"prose svelte-1ybaih5\">" + data.html + "</div>";
+  }
+
   morphdom(
-    document.getElementById("chat").parentNode,
-    "<div class=\"prose svelte-1ybaih5\">" + text + "</div>",
+    target_element,
+    target_html,
     {
       onBeforeElUpdated: function(fromEl, toEl) {
         // Preserve code highlighting

@@ -47,7 +47,7 @@ def create_ui():
 
         with gr.Row():
             with gr.Column(elem_id='chat-col'):
-                shared.gradio['display'] = gr.JSON(value={}, visible=False)  # Hidden buffer
+                shared.gradio['display'] = gr.JSON(value={}, visible=True)  # Hidden buffer
                 shared.gradio['html_display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': [], 'metadata': {}}, '', '', 'chat', 'cai-chat', '')['html'], visible=True)
                 with gr.Row(elem_id="chat-input-row"):
                     with gr.Column(scale=1, elem_id='gr-hover-container'):
@@ -195,7 +195,7 @@ def create_event_handlers():
     shared.reload_inputs = gradio(reload_arr)
 
     # Morph HTML updates instead of updating everything
-    shared.gradio['display'].change(None, gradio('display'), None, js="(data) => handleMorphdomUpdate(data.html)")
+    shared.gradio['display'].change(None, gradio('display'), None, js="(data) => handleMorphdomUpdate(data)")
 
     shared.gradio['Generate'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
