@@ -70,12 +70,8 @@ def is_installed():
 def cpu_has_avx2():
     try:
         import cpuinfo
-
         info = cpuinfo.get_cpu_info()
-        if 'avx2' in info['flags']:
-            return True
-        else:
-            return False
+        return 'avx2' in info['flags']
     except:
         return True
 
@@ -83,30 +79,112 @@ def cpu_has_avx2():
 def cpu_has_amx():
     try:
         import cpuinfo
-
         info = cpuinfo.get_cpu_info()
-        if 'amx' in info['flags']:
-            return True
-        else:
-            return False
+        return 'amx' in info['flags']
     except:
         return True
 
 
-def torch_version():
-    site_packages_path = None
-    for sitedir in site.getsitepackages():
-        if "site-packages" in sitedir and conda_env_path in sitedir:
-            site_packages_path = sitedir
-            break
+def load_state():
+    """Load installer state from JSON file"""
+    if os.path.exists(state_file):
+        try:
+            with open(state_file, 'r') as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
 
-    if site_packages_path:
-        torch_version_file = open(os.path.join(site_packages_path, 'torch', 'version.py')).read().splitlines()
-        torver = [line for line in torch_version_file if line.startswith('__version__')][0].split('__version__ = ')[1].strip("'")
+
+def save_state(state):
+    """Save installer state to JSON file"""
+    with open(state_file, 'w') as f:
+        json.dump(state, f)
+
+
+def get_gpu_choice():
+    """Get GPU choice from state file or ask user"""
+    state = load_state()
+    gpu_choice = state.get('gpu_choice')
+
+    if not gpu_choice:
+        if "GPU_CHOICE" in os.environ:
+            choice = os.environ["GPU_CHOICE"].upper()
+            print_big_message(f"Selected GPU choice \"{choice}\" based on the GPU_CHOICE environment variable.")
+        else:
+            choice = get_user_choice(
+                "What is your GPU?",
+                {
+                    'A': 'NVIDIA - CUDA 12.4',
+                    'B': 'AMD - Linux/macOS only, requires ROCm 6.2.4',
+                    'C': 'Apple M Series',
+                    'D': 'Intel Arc (beta)',
+                    'N': 'CPU mode'
+                },
+            )
+
+        # Convert choice to GPU name
+        gpu_choice = {"A": "NVIDIA", "B": "AMD", "C": "APPLE", "D": "INTEL", "N": "NONE"}[choice]
+
+        # Save choice to state
+        state['gpu_choice'] = gpu_choice
+        save_state(state)
+
+    return gpu_choice
+
+
+def get_pytorch_install_command(gpu_choice):
+    """Get PyTorch installation command based on GPU choice"""
+    base_cmd = f"python -m pip install torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION} "
+
+    if gpu_choice == "NVIDIA":
+        return base_cmd + "--index-url https://download.pytorch.org/whl/cu124"
+    elif gpu_choice == "AMD":
+        return base_cmd + "--index-url https://download.pytorch.org/whl/rocm6.2.4"
+    elif gpu_choice in ["APPLE", "NONE"]:
+        return base_cmd + "--index-url https://download.pytorch.org/whl/cpu"
+    elif gpu_choice == "INTEL":
+        if is_linux():
+            return "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
+        else:
+            return "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10 --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
     else:
-        from torch import __version__ as torver
+        return base_cmd
 
-    return torver
+
+def get_pytorch_update_command(gpu_choice):
+    """Get PyTorch update command based on GPU choice"""
+    base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION}"
+
+    if gpu_choice == "NVIDIA":
+        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cu124"
+    elif gpu_choice == "AMD":
+        return f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.2.4"
+    elif gpu_choice in ["APPLE", "NONE"]:
+        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cpu"
+    elif gpu_choice == "INTEL":
+        intel_extension = "intel-extension-for-pytorch==2.1.10+xpu" if is_linux() else "intel-extension-for-pytorch==2.1.10"
+        return f"{base_cmd} {intel_extension} --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
+    else:
+        return base_cmd
+
+
+def get_requirements_file(gpu_choice):
+    """Get requirements file path based on GPU choice"""
+    requirements_base = os.path.join("requirements", "full")
+
+    if gpu_choice == "AMD":
+        file_name = f"requirements_amd{'_noavx2' if not cpu_has_avx2() else ''}.txt"
+    elif gpu_choice == "APPLE":
+        file_name = f"requirements_apple_{'intel' if is_x86_64() else 'silicon'}.txt"
+    elif gpu_choice in ["INTEL", "NONE"]:
+        file_name = f"requirements_cpu_only{'_noavx2' if not cpu_has_avx2() else ''}.txt"
+    elif gpu_choice == "NVIDIA":
+        file_name = f"requirements{'_noavx2' if not cpu_has_avx2() else ''}.txt"
+    else:
+        raise ValueError(f"Unknown GPU choice: {gpu_choice}")
+
+    return os.path.join(requirements_base, file_name)
 
 
 def get_current_commit():
@@ -209,28 +287,8 @@ def get_user_choice(question, options_dict):
 
 def update_pytorch_and_python():
     print_big_message("Checking for PyTorch updates.")
-
-    # Update the Python version. Left here for future reference in case this becomes necessary.
-    # print_big_message("Checking for PyTorch and Python updates.")
-    # current_python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
-    # if current_python_version != PYTHON_VERSION:
-    #     run_cmd(f"conda install -y python={PYTHON_VERSION}", assert_success=True, environment=True)
-
-    torver = torch_version()
-    base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION}"
-
-    if "+cu" in torver:
-        install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cu124"
-    elif "+rocm" in torver:
-        install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.2.4"
-    elif "+cpu" in torver:
-        install_cmd = f"{base_cmd} --index-url https://download.pytorch.org/whl/cpu"
-    elif "+cxx11" in torver:
-        intel_extension = "intel-extension-for-pytorch==2.1.10+xpu" if is_linux() else "intel-extension-for-pytorch==2.1.10"
-        install_cmd = f"{base_cmd} {intel_extension} --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
-    else:
-        install_cmd = base_cmd
-
+    gpu_choice = get_gpu_choice()
+    install_cmd = get_pytorch_update_command(gpu_choice)
     run_cmd(install_cmd, assert_success=True, environment=True)
 
 
@@ -256,43 +314,11 @@ def install_webui():
     if os.path.isfile(state_file):
         os.remove(state_file)
 
-    # Ask the user for the GPU vendor
-    if "GPU_CHOICE" in os.environ:
-        choice = os.environ["GPU_CHOICE"].upper()
-        print_big_message(f"Selected GPU choice \"{choice}\" based on the GPU_CHOICE environment variable.")
-
-        # Warn about changed meanings and handle old choices
-        if choice == "B":
-            print_big_message("Warning: GPU_CHOICE='B' now means 'AMD' in the new version.")
-        elif choice == "C":
-            print_big_message("Warning: GPU_CHOICE='C' now means 'Apple M Series' in the new version.")
-        elif choice == "D":
-            print_big_message("Warning: GPU_CHOICE='D' now means 'Intel Arc' in the new version.")
-    else:
-        choice = get_user_choice(
-            "What is your GPU?",
-            {
-                'A': 'NVIDIA - CUDA 12.4',
-                'B': 'AMD - Linux/macOS only, requires ROCm 6.2.4',
-                'C': 'Apple M Series',
-                'D': 'Intel Arc (beta)',
-                'N': 'CPU mode'
-            },
-        )
-
-    # Convert choices to GPU names for compatibility
-    gpu_choice_to_name = {
-        "A": "NVIDIA",
-        "B": "AMD",
-        "C": "APPLE",
-        "D": "INTEL",
-        "N": "NONE"
-    }
-
-    selected_gpu = gpu_choice_to_name[choice]
+    # Get GPU choice and save it to state
+    gpu_choice = get_gpu_choice()
 
     # Write a flag to CMD_FLAGS.txt for CPU mode
-    if selected_gpu == "NONE":
+    if gpu_choice == "NONE":
         cmd_flags_path = os.path.join(script_dir, "user_data", "CMD_FLAGS.txt")
         with open(cmd_flags_path, 'r+') as cmd_flags_file:
             if "--cpu" not in cmd_flags_file.read():
@@ -300,34 +326,20 @@ def install_webui():
                 cmd_flags_file.write("\n--cpu\n")
 
     # Handle CUDA version display
-    elif any((is_windows(), is_linux())) and selected_gpu == "NVIDIA":
+    elif any((is_windows(), is_linux())) and gpu_choice == "NVIDIA":
         print("CUDA: 12.4")
 
     # No PyTorch for AMD on Windows (?)
-    elif is_windows() and selected_gpu == "AMD":
+    elif is_windows() and gpu_choice == "AMD":
         print("PyTorch setup on Windows is not implemented yet. Exiting...")
         sys.exit(1)
 
-    # Find the Pytorch installation command
-    install_pytorch = f"python -m pip install torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION} "
-
-    if selected_gpu == "NVIDIA":
-        install_pytorch += "--index-url https://download.pytorch.org/whl/cu124"
-    elif selected_gpu == "AMD":
-        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm6.2.4"
-    elif selected_gpu in ["APPLE", "NONE"]:
-        install_pytorch += "--index-url https://download.pytorch.org/whl/cpu"
-    elif selected_gpu == "INTEL":
-        if is_linux():
-            install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
-        else:
-            install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10 --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
-
     # Install Git and then Pytorch
     print_big_message("Installing PyTorch.")
+    install_pytorch = get_pytorch_install_command(gpu_choice)
     run_cmd(f"conda install -y ninja git && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
 
-    if selected_gpu == "INTEL":
+    if gpu_choice == "INTEL":
         # Install oneAPI dependencies via conda
         print_big_message("Installing Intel oneAPI runtime libraries.")
         run_cmd("conda install -y -c https://software.repos.intel.com/python/conda/ -c conda-forge dpcpp-cpp-rt=2024.0 mkl-dpcpp=2024.0", environment=True)
@@ -349,31 +361,15 @@ def update_requirements(initial_installation=False, pull=True):
             assert_success=True
         )
 
-    torver = torch_version()
-    requirements_base = os.path.join("requirements", "full")
-
-    if "+rocm" in torver:
-        file_name = f"requirements_amd{'_noavx2' if not cpu_has_avx2() else ''}.txt"
-    elif "+cpu" in torver or "+cxx11" in torver:
-        file_name = f"requirements_cpu_only{'_noavx2' if not cpu_has_avx2() else ''}.txt"
-    elif is_macos():
-        file_name = f"requirements_apple_{'intel' if is_x86_64() else 'silicon'}.txt"
-    else:
-        file_name = f"requirements{'_noavx2' if not cpu_has_avx2() else ''}.txt"
-
-    requirements_file = os.path.join(requirements_base, file_name)
-
-    # Load state from JSON file
     current_commit = get_current_commit()
-    wheels_changed = False
-    if os.path.exists(state_file):
-        with open(state_file, 'r') as f:
-            last_state = json.load(f)
-
-        if 'wheels_changed' in last_state or last_state.get('last_installed_commit') != current_commit:
+    wheels_changed = not os.path.exists(state_file)
+    if not wheels_changed:
+        state = load_state()
+        if 'wheels_changed' in state or state.get('last_installed_commit') != current_commit:
             wheels_changed = True
-    else:
-        wheels_changed = True
+
+    gpu_choice = get_gpu_choice()
+    requirements_file = get_requirements_file(gpu_choice)
 
     if pull:
         # Read .whl lines before pulling
@@ -409,19 +405,17 @@ def update_requirements(initial_installation=False, pull=True):
                 print_big_message(f"File '{file}' was updated during 'git pull'. Please run the script again.")
 
                 # Save state before exiting
-                current_state = {}
+                state = load_state()
                 if wheels_changed:
-                    current_state['wheels_changed'] = True
-
-                with open(state_file, 'w') as f:
-                    json.dump(current_state, f)
-
+                    state['wheels_changed'] = True
+                save_state(state)
                 sys.exit(1)
 
     # Save current state
-    current_state = {'last_installed_commit': current_commit}
-    with open(state_file, 'w') as f:
-        json.dump(current_state, f)
+    state = load_state()
+    state['last_installed_commit'] = current_commit
+    state.pop('wheels_changed', None)  # Remove wheels_changed flag
+    save_state(state)
 
     if os.environ.get("INSTALL_EXTENSIONS", "").lower() in ("yes", "y", "true", "1", "t", "on"):
         install_extensions_requirements()
@@ -432,11 +426,10 @@ def update_requirements(initial_installation=False, pull=True):
     # Update PyTorch
     if not initial_installation:
         update_pytorch_and_python()
-        torver = torch_version()
         clean_outdated_pytorch_cuda_dependencies()
 
     print_big_message(f"Installing webui requirements from file: {requirements_file}")
-    print(f"TORCH: {torver}\n")
+    print(f"GPU Choice: {gpu_choice}\n")
 
     # Prepare the requirements file
     textgen_requirements = open(requirements_file).read().splitlines()
