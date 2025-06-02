@@ -272,7 +272,6 @@ def gather_interface_values(*args):
 
     # Prevent history loss if backend is restarted but UI is not refreshed
     if output['history'] is None and output['unique_id'] is not None:
-        print(output['unique_id'], output['character_menu'], output['mode'])
         output['history'] = load_history(output['unique_id'], output['character_menu'], output['mode'])
 
     return output
