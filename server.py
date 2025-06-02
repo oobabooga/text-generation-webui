@@ -60,6 +60,13 @@ from modules.utils import gradio
 
 def signal_handler(sig, frame):
     logger.info("Received Ctrl+C. Shutting down Text generation web UI gracefully.")
+
+    # Try to stop the model if loaded
+    try:
+        shared.model.stop()
+    except:
+        pass
+
     sys.exit(0)
 
 
