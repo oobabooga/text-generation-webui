@@ -866,6 +866,46 @@ function navigateLastAssistantMessage(direction) {
 }
 
 //------------------------------------------------
+// Paste Handler for Long Text
+//------------------------------------------------
+
+const MAX_PLAIN_TEXT_LENGTH = 2500;
+
+function setupPasteHandler() {
+  const textbox = document.querySelector("#chat-input textarea[data-testid=\"textbox\"]");
+  const fileInput = document.querySelector("#chat-input input[data-testid=\"file-upload\"]");
+
+  if (!textbox || !fileInput) {
+    setTimeout(setupPasteHandler, 500);
+    return;
+  }
+
+  textbox.addEventListener("paste", async (event) => {
+    const text = event.clipboardData?.getData("text");
+
+    if (text && text.length > MAX_PLAIN_TEXT_LENGTH) {
+      event.preventDefault();
+
+      const file = new File([text], "pasted_text.txt", {
+        type: "text/plain",
+        lastModified: Date.now()
+      });
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInput.files = dataTransfer.files;
+      fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  });
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", setupPasteHandler);
+} else {
+  setupPasteHandler();
+}
+
+//------------------------------------------------
 // Tooltips
 //------------------------------------------------
 
