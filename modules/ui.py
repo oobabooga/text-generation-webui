@@ -6,6 +6,7 @@ import yaml
 
 import extensions
 from modules import shared
+from modules.chat import load_history
 
 with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r') as f:
     css = f.read()
@@ -268,6 +269,11 @@ def gather_interface_values(*args):
 
     if not shared.args.multi_user:
         shared.persistent_interface_state = output
+
+    # Prevent history loss if backend is restarted but UI is not refreshed
+    if output['history'] is None and output['unique_id'] is not None:
+        print(output['unique_id'], output['character_menu'], output['mode'])
+        output['history'] = load_history(output['unique_id'], output['character_menu'], output['mode'])
 
     return output
 
