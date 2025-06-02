@@ -21,7 +21,7 @@ lora_names = []
 # Generation variables
 stop_everything = False
 generation_lock = None
-processing_message = '*Is typing...*'
+processing_message = ''
 
 # UI variables
 gradio = {}
