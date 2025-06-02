@@ -18,7 +18,7 @@ def create_ui():
     mu = shared.args.multi_user
 
     shared.gradio['Chat input'] = gr.State()
-    shared.gradio['history'] = gr.JSON(visible=False)
+    shared.gradio['history'] = gr.State({'internal': [], 'visible': [], 'metadata': {}})
 
     with gr.Tab('Chat', id='Chat', elem_id='chat-tab'):
         with gr.Row(elem_id='past-chats-row', elem_classes=['pretty_scrollbar']):
@@ -195,7 +195,7 @@ def create_event_handlers():
     shared.reload_inputs = gradio(reload_arr)
 
     # Morph HTML updates instead of updating everything
-    shared.gradio['display'].change(None, gradio('display'), None, js="(data) => handleMorphdomUpdate(data.html)")
+    shared.gradio['display'].change(None, gradio('display'), None, js="(data) => handleMorphdomUpdate(data)")
 
     shared.gradio['Generate'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
