@@ -18,7 +18,7 @@ def create_ui():
     mu = shared.args.multi_user
 
     shared.gradio['Chat input'] = gr.State()
-    shared.gradio['history'] = gr.State()
+    shared.gradio['history'] = gr.State({'internal': [], 'visible': [], 'metadata': {}})
 
     with gr.Tab('Chat', id='Chat', elem_id='chat-tab'):
         with gr.Row(elem_id='past-chats-row', elem_classes=['pretty_scrollbar']):
