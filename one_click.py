@@ -183,12 +183,14 @@ def get_requirements_file(gpu_choice):
 
     if gpu_choice == "AMD":
         file_name = f"requirements_amd{'_noavx2' if not cpu_has_avx2() else ''}.txt"
+    elif gpu_choice == "APPLE":
+        file_name = f"requirements_apple_{'intel' if is_x86_64() else 'silicon'}.txt"
     elif gpu_choice in ["INTEL", "NONE"]:
         file_name = f"requirements_cpu_only{'_noavx2' if not cpu_has_avx2() else ''}.txt"
-    elif is_macos():
-        file_name = f"requirements_apple_{'intel' if is_x86_64() else 'silicon'}.txt"
-    else:  # NVIDIA
+    elif gpu_choice == "NVIDIA":
         file_name = f"requirements{'_noavx2' if not cpu_has_avx2() else ''}.txt"
+    else:
+        raise ValueError(f"Unknown GPU choice: {gpu_choice}")
 
     return os.path.join(requirements_base, file_name)
 
