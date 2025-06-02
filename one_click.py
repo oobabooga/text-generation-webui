@@ -361,18 +361,15 @@ def update_requirements(initial_installation=False, pull=True):
             assert_success=True
         )
 
+    current_commit = get_current_commit()
+    wheels_changed = not os.path.exists(state_file)
+    if not wheels_changed:
+        state = load_state()
+        if 'wheels_changed' in state or state.get('last_installed_commit') != current_commit:
+            wheels_changed = True
+
     gpu_choice = get_gpu_choice()
     requirements_file = get_requirements_file(gpu_choice)
-
-    # Load state from JSON file
-    state = load_state()
-    current_commit = get_current_commit()
-    if not state:  # No state file exists
-        wheels_changed = True
-    elif 'wheels_changed' in state or state.get('last_installed_commit') != current_commit:
-        wheels_changed = True
-    else:
-        wheels_changed = False
 
     if pull:
         # Read .whl lines before pulling
