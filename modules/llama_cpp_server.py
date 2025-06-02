@@ -409,14 +409,31 @@ class LlamaServer:
 
 def filter_stderr_with_progress(process_stderr):
     progress_pattern = re.compile(r'slot update_slots: id.*progress = (\d+\.\d+)')
+    last_was_progress = False
+
     try:
         for line in iter(process_stderr.readline, ''):
+            line = line.rstrip('\n\r')  # Remove existing newlines
             progress_match = progress_pattern.search(line)
+
             if progress_match:
-                sys.stderr.write(line)
+                if last_was_progress:
+                    # Overwrite the previous progress line using carriage return
+                    sys.stderr.write(f'\r{line}')
+                else:
+                    # First progress line - print normally
+                    sys.stderr.write(line)
                 sys.stderr.flush()
+                last_was_progress = True
             elif not line.startswith(('srv ', 'slot ')) and 'log_server_r: request: GET /health' not in line:
-                sys.stderr.write(line)
+                if last_was_progress:
+                    # Finish the progress line with a newline, then print the new line
+                    sys.stderr.write(f'\n{line}\n')
+                else:
+                    # Normal line - print with newline
+                    sys.stderr.write(f'{line}\n')
                 sys.stderr.flush()
+                last_was_progress = False
+            # For filtered lines, don't change last_was_progress state
     except (ValueError, IOError):
         pass
