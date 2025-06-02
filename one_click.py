@@ -111,14 +111,6 @@ def get_gpu_choice():
         if "GPU_CHOICE" in os.environ:
             choice = os.environ["GPU_CHOICE"].upper()
             print_big_message(f"Selected GPU choice \"{choice}\" based on the GPU_CHOICE environment variable.")
-
-            # Warn about changed meanings and handle old choices
-            if choice == "B":
-                print_big_message("Warning: GPU_CHOICE='B' now means 'AMD' in the new version.")
-            elif choice == "C":
-                print_big_message("Warning: GPU_CHOICE='C' now means 'Apple M Series' in the new version.")
-            elif choice == "D":
-                print_big_message("Warning: GPU_CHOICE='D' now means 'Intel Arc' in the new version.")
         else:
             choice = get_user_choice(
                 "What is your GPU?",
