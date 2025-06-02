@@ -367,7 +367,12 @@ def update_requirements(initial_installation=False, pull=True):
     # Load state from JSON file
     state = load_state()
     current_commit = get_current_commit()
-    wheels_changed = state.get('wheels_changed', False) or state.get('last_installed_commit') != current_commit
+    if not state:  # No state file exists
+        wheels_changed = True
+    elif 'wheels_changed' in state or state.get('last_installed_commit') != current_commit:
+        wheels_changed = True
+    else:
+        wheels_changed = False
 
     if pull:
         # Read .whl lines before pulling
