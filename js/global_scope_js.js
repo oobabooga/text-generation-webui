@@ -95,6 +95,12 @@ function startEditing(messageElement, messageBody, isUserMessage) {
   editingInterface.textarea.focus();
   editingInterface.textarea.setSelectionRange(rawText.length, rawText.length);
 
+  // Scroll the textarea into view
+  editingInterface.textarea.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+
   // Setup event handlers
   setupEditingHandlers(editingInterface.textarea, messageElement, originalHTML, messageBody, isUserMessage);
 }
