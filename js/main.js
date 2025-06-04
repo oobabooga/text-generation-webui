@@ -229,6 +229,7 @@ function doSyntaxHighlighting() {
         codeBlocks.forEach((codeBlock) => {
           hljs.highlightElement(codeBlock);
           codeBlock.setAttribute("data-highlighted", "true");
+          codeBlock.classList.add("pretty_scrollbar");
         });
 
         renderMathInElement(messageBody, {
