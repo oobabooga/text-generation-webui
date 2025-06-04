@@ -656,7 +656,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         update_message_metadata(output['metadata'], "user", row_idx, timestamp=get_current_timestamp())
 
         # *Is typing...*
-        if loading_message and shared.processing_message:
+        if loading_message:
             yield {
                 'visible': output['visible'][:-1] + [[output['visible'][-1][0], shared.processing_message]],
                 'internal': output['internal'],
@@ -680,7 +680,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             })
             output['metadata'][key]["current_version_index"] = len(output['metadata'][key]["versions"]) - 1
 
-            if loading_message and shared.processing_message:
+            if loading_message:
                 yield {
                     'visible': output['visible'][:-1] + [[visible_text, shared.processing_message]],
                     'internal': output['internal'][:-1] + [[text, '']],
