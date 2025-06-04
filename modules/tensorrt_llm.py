@@ -1,15 +1,15 @@
 from pathlib import Path
 
-import torch
-
 import tensorrt_llm
+import torch
+from tensorrt_llm.runtime import ModelRunner, ModelRunnerCpp
+
 from modules import shared
 from modules.logging_colors import logger
 from modules.text_generation import (
     get_max_prompt_length,
     get_reply_from_output_ids
 )
-from tensorrt_llm.runtime import ModelRunner, ModelRunnerCpp
 
 
 class TensorRTLLMModel:

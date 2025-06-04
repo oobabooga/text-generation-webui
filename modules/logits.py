@@ -7,6 +7,7 @@ from modules import models, shared
 from modules.logging_colors import logger
 from modules.models import load_model
 from modules.text_generation import generate_reply
+from modules.utils import check_model_loaded
 
 global_scores = None
 
@@ -33,9 +34,9 @@ def get_next_logits(*args, **kwargs):
 
 
 def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, return_dict=False):
-    if shared.model is None:
-        logger.error("No model is loaded! Select one in the Model tab.")
-        return 'Error: No model is loaded1 Select one in the Model tab.', previous
+    model_is_loaded, error_message = check_model_loaded()
+    if not model_is_loaded:
+        return error_message, previous
 
     # llama.cpp case
     if shared.model.__class__.__name__ == 'LlamaServer':

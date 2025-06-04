@@ -51,6 +51,7 @@ from modules.models import load_model, unload_model_if_idle
 from modules.models_settings import (
     get_fallback_settings,
     get_model_metadata,
+    update_gpu_layers_and_vram,
     update_model_parameters
 )
 from modules.shared import do_cmd_flags_warnings
@@ -90,7 +91,7 @@ def create_interface():
         'instruction_template_str': shared.settings['instruction_template_str'],
         'prompt_menu-default': shared.settings['prompt-default'],
         'prompt_menu-notebook': shared.settings['prompt-notebook'],
-        'filter_by_loader': shared.args.loader or 'All'
+        'filter_by_loader': (shared.args.loader or 'All') if not shared.args.portable else 'llama.cpp'
     })
 
     if Path("user_data/cache/pfp_character.png").exists():
@@ -127,7 +128,8 @@ def create_interface():
 
         ui_parameters.create_ui(shared.settings['preset'])  # Parameters tab
         ui_model_menu.create_ui()  # Model tab
-        training.create_ui()  # Training tab
+        if not shared.args.portable:
+            training.create_ui()  # Training tab
         ui_session.create_ui()  # Session tab
 
         # Generation events
@@ -246,6 +248,20 @@ if __name__ == "__main__":
 
         model_settings = get_model_metadata(model_name)
         update_model_parameters(model_settings, initial=True)  # hijack the command-line arguments
+
+        # Auto-adjust GPU layers if not provided by user and it's a llama.cpp model
+        if 'gpu_layers' not in shared.provided_arguments and shared.args.loader == 'llama.cpp' and 'gpu_layers' in model_settings:
+            vram_usage, adjusted_layers = update_gpu_layers_and_vram(
+                shared.args.loader,
+                model_name,
+                model_settings['gpu_layers'],
+                shared.args.ctx_size,
+                shared.args.cache_type,
+                auto_adjust=True,
+                for_ui=False
+            )
+
+            shared.args.gpu_layers = adjusted_layers
 
         # Load the model
         shared.model, shared.tokenizer = load_model(model_name)

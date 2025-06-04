@@ -1,3 +1,7 @@
+// -------------------------------------------------
+// Event handlers
+// -------------------------------------------------
+
 function copyToClipboard(element) {
   if (!element) return;
 
@@ -16,6 +20,201 @@ function copyToClipboard(element) {
   }).catch(function(err) {
     console.error("Failed to copy text: ", err);
   });
+}
+
+function branchHere(element) {
+  if (!element) return;
+
+  const messageElement = element.closest(".message, .user-message, .assistant-message");
+  if (!messageElement) return;
+
+  const index = messageElement.getAttribute("data-index");
+  if (!index) return;
+
+  const branchIndexInput = document.getElementById("Branch-index").querySelector("input");
+  if (!branchIndexInput) {
+    console.error("Element with ID 'Branch-index' not found.");
+    return;
+  }
+  const branchButton = document.getElementById("Branch");
+
+  if (!branchButton) {
+    console.error("Required element 'Branch' not found.");
+    return;
+  }
+
+  branchIndexInput.value = index;
+
+  // Trigger any 'change' or 'input' events Gradio might be listening for
+  const event = new Event("input", { bubbles: true });
+  branchIndexInput.dispatchEvent(event);
+
+  branchButton.click();
+}
+
+// -------------------------------------------------
+// Message Editing Functions
+// -------------------------------------------------
+
+function editHere(buttonElement) {
+  if (!buttonElement) return;
+
+  const messageElement = buttonElement.closest(".message, .user-message, .assistant-message");
+  if (!messageElement) return;
+
+  const messageBody = messageElement.querySelector(".message-body");
+  if (!messageBody) return;
+
+  // If already editing, focus the textarea
+  const existingTextarea = messageBody.querySelector(".editing-textarea");
+  if (existingTextarea) {
+    existingTextarea.focus();
+    return;
+  }
+
+  // Determine role based on message element - handle different chat modes
+  const isUserMessage = messageElement.classList.contains("user-message") ||
+                       messageElement.querySelector(".text-you") !== null ||
+                       messageElement.querySelector(".circle-you") !== null;
+
+  startEditing(messageElement, messageBody, isUserMessage);
+}
+
+function startEditing(messageElement, messageBody, isUserMessage) {
+  const rawText = messageElement.getAttribute("data-raw") || messageBody.textContent;
+  const originalHTML = messageBody.innerHTML;
+
+  // Create editing interface
+  const editingInterface = createEditingInterface(rawText);
+
+  // Replace message content
+  messageBody.innerHTML = "";
+  messageBody.appendChild(editingInterface.textarea);
+  messageBody.appendChild(editingInterface.controls);
+
+  editingInterface.textarea.focus();
+  editingInterface.textarea.setSelectionRange(rawText.length, rawText.length);
+
+  // Setup event handlers
+  setupEditingHandlers(editingInterface.textarea, messageElement, originalHTML, messageBody, isUserMessage);
+}
+
+function createEditingInterface(text) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.className = "editing-textarea";
+  textarea.rows = Math.max(3, text.split("\n").length);
+
+  const controls = document.createElement("div");
+  controls.className = "edit-controls-container";
+
+  const saveButton = document.createElement("button");
+  saveButton.textContent = "Save";
+  saveButton.className = "edit-control-button";
+  saveButton.type = "button";
+
+  const cancelButton = document.createElement("button");
+  cancelButton.textContent = "Cancel";
+  cancelButton.className = "edit-control-button edit-cancel-button";
+  cancelButton.type = "button";
+
+  controls.appendChild(saveButton);
+  controls.appendChild(cancelButton);
+
+  return { textarea, controls, saveButton, cancelButton };
+}
+
+function setupEditingHandlers(textarea, messageElement, originalHTML, messageBody, isUserMessage) {
+  const saveButton = messageBody.querySelector(".edit-control-button:not(.edit-cancel-button)");
+  const cancelButton = messageBody.querySelector(".edit-cancel-button");
+
+  const submitEdit = () => {
+    const index = messageElement.getAttribute("data-index");
+    if (!index || !submitMessageEdit(index, textarea.value, isUserMessage)) {
+      cancelEdit();
+    }
+  };
+
+  const cancelEdit = () => {
+    messageBody.innerHTML = originalHTML;
+  };
+
+  // Event handlers
+  saveButton.onclick = submitEdit;
+  cancelButton.onclick = cancelEdit;
+
+  textarea.onkeydown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      submitEdit();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      cancelEdit();
+    }
+  };
+}
+
+function submitMessageEdit(index, newText, isUserMessage) {
+  const editIndexInput = document.getElementById("Edit-message-index")?.querySelector("input");
+  const editTextInput = document.getElementById("Edit-message-text")?.querySelector("textarea");
+  const editRoleInput = document.getElementById("Edit-message-role")?.querySelector("textarea");
+  const editButton = document.getElementById("Edit-message");
+
+  if (!editIndexInput || !editTextInput || !editRoleInput || !editButton) {
+    console.error("Edit elements not found");
+    return false;
+  }
+
+  editIndexInput.value = index;
+  editTextInput.value = newText;
+  editRoleInput.value = isUserMessage ? "user" : "assistant";
+
+  editIndexInput.dispatchEvent(new Event("input", { bubbles: true }));
+  editTextInput.dispatchEvent(new Event("input", { bubbles: true }));
+  editRoleInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+  editButton.click();
+  return true;
+}
+
+function navigateVersion(element, direction) {
+  if (!element) return;
+
+  const messageElement = element.closest(".message, .user-message, .assistant-message");
+  if (!messageElement) return;
+
+  const index = messageElement.getAttribute("data-index");
+  if (!index) return;
+
+  // Determine role based on message element classes
+  let role = "assistant"; // Default role
+  if (messageElement.classList.contains("user-message") ||
+      messageElement.querySelector(".text-you") ||
+      messageElement.querySelector(".circle-you")) {
+    role = "user";
+  }
+
+  const indexInput = document.getElementById("Navigate-message-index")?.querySelector("input");
+  const directionInput = document.getElementById("Navigate-direction")?.querySelector("textarea");
+  const roleInput = document.getElementById("Navigate-message-role")?.querySelector("textarea");
+  const navigateButton = document.getElementById("Navigate-version");
+
+  if (!indexInput || !directionInput || !roleInput || !navigateButton) {
+    console.error("Navigation control elements (index, direction, role, or button) not found.");
+    return;
+  }
+
+  indexInput.value = index;
+  directionInput.value = direction;
+  roleInput.value = role;
+
+  // Trigger 'input' events for Gradio to pick up changes
+  const event = new Event("input", { bubbles: true });
+  indexInput.dispatchEvent(event);
+  directionInput.dispatchEvent(event);
+  roleInput.dispatchEvent(event);
+
+  navigateButton.click();
 }
 
 function regenerateClick() {

@@ -21,7 +21,6 @@ def load_model(model_name, loader=None):
         'ExLlamav3_HF': ExLlamav3_HF_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ExLlamav2': ExLlamav2_loader,
-        'HQQ': HQQ_loader,
         'TensorRT-LLM': TensorRT_LLM_loader,
     }
 
@@ -71,7 +70,6 @@ def llama_cpp_server_loader(model_name):
     else:
         model_file = sorted(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0]
 
-    logger.info(f"llama.cpp weights detected: \"{model_file}\"")
     try:
         model = LlamaServer(model_file)
         return model, model
@@ -103,21 +101,6 @@ def ExLlamav2_loader(model_name):
     return model, tokenizer
 
 
-def HQQ_loader(model_name):
-    try:
-        from hqq.core.quantize import HQQBackend, HQQLinear
-        from hqq.models.hf.base import AutoHQQHFModel
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError("Failed to import 'hqq'. Please install it manually following the instructions in the HQQ GitHub repository.")
-
-    logger.info(f"Loading HQQ model with backend: \"{shared.args.hqq_backend}\"")
-
-    model_dir = Path(f'{shared.args.model_dir}/{model_name}')
-    model = AutoHQQHFModel.from_quantized(str(model_dir))
-    HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
-    return model
-
-
 def TensorRT_LLM_loader(model_name):
     try:
         from modules.tensorrt_llm import TensorRTLLMModel
@@ -133,10 +116,13 @@ def unload_model(keep_model_name=False):
         return
 
     is_llamacpp = (shared.model.__class__.__name__ == 'LlamaServer')
+    if shared.args.loader == 'ExLlamav3_HF':
+        shared.model.unload()
 
     shared.model = shared.tokenizer = None
     shared.lora_names = []
     shared.model_dirty_from_training = False
+
     if not is_llamacpp:
         from modules.torch_utils import clear_torch_cache
         clear_torch_cache()

@@ -14,7 +14,7 @@ WORKDIR /home/app/
 RUN git clone https://github.com/oobabooga/text-generation-webui.git 
 WORKDIR /home/app/text-generation-webui
 RUN GPU_CHOICE=A LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh --verbose
-COPY CMD_FLAGS.txt /home/app/text-generation-webui/
+COPY /user_data/CMD_FLAGS.txt /home/app/text-generation-webui/user_data
 EXPOSE ${CONTAINER_PORT:-7860} ${CONTAINER_API_PORT:-5000} ${CONTAINER_API_STREAM_PORT:-5005}
 WORKDIR /home/app/text-generation-webui
 # set umask to ensure group read / write at runtime

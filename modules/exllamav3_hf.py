@@ -119,7 +119,7 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
         reset = True
 
         # Maximum number of tokens to process in a single forward pass
-        max_chunk_size = 2048
+        max_chunk_size = 256
 
         # Make the forward call
         if labels is None:
@@ -245,3 +245,20 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
         pretrained_model_name_or_path = Path(f'{shared.args.model_dir}') / Path(pretrained_model_name_or_path)
 
         return Exllamav3HF(pretrained_model_name_or_path)
+
+    def unload(self):
+        """Properly unload the ExllamaV3 model and free GPU memory."""
+        if hasattr(self, 'ex_model') and self.ex_model is not None:
+            self.ex_model.unload()
+            self.ex_model = None
+
+        if hasattr(self, 'ex_cache') and self.ex_cache is not None:
+            self.ex_cache = None
+
+        # Clean up any additional ExllamaV3 resources
+        if hasattr(self, 'past_seq'):
+            self.past_seq = None
+        if hasattr(self, 'past_seq_negative'):
+            self.past_seq_negative = None
+        if hasattr(self, 'ex_cache_negative'):
+            self.ex_cache_negative = None

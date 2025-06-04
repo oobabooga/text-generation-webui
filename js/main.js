@@ -1,3 +1,7 @@
+// ------------------------------------------------
+// Main
+// ------------------------------------------------
+
 let main_parent = document.getElementById("chat-tab").parentNode;
 let extensions = document.getElementById("extensions");
 
@@ -39,9 +43,24 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
 //------------------------------------------------
 // Keyboard shortcuts
 //------------------------------------------------
+
+// --- Helper functions --- //
+function isModifiedKeyboardEvent() {
+  return (event instanceof KeyboardEvent &&
+    event.shiftKey ||
+    event.ctrlKey ||
+    event.altKey ||
+    event.metaKey);
+}
+
+function isFocusedOnEditableTextbox() {
+  if (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA") {
+    return !!event.target.value;
+  }
+}
+
 let previousTabId = "chat-tab-button";
 document.addEventListener("keydown", function(event) {
-
   // Stop generation on Esc pressed
   if (event.key === "Escape") {
     // Find the element with id 'stop' and click it
@@ -49,10 +68,15 @@ document.addEventListener("keydown", function(event) {
     if (stopButton) {
       stopButton.click();
     }
+    return;
+  }
+
+  if (!document.querySelector("#chat-tab").checkVisibility() ) {
+    return;
   }
 
   // Show chat controls on Ctrl + S
-  else if (event.ctrlKey && event.key == "s") {
+  if (event.ctrlKey && event.key == "s") {
     event.preventDefault();
 
     var showControlsElement = document.getElementById("show-controls");
@@ -82,22 +106,27 @@ document.addEventListener("keydown", function(event) {
     document.getElementById("Remove-last").click();
   }
 
-  // Copy last on Ctrl + Shift + K
-  else if (event.ctrlKey && event.shiftKey && event.key === "K") {
-    event.preventDefault();
-    document.getElementById("Copy-last").click();
-  }
-
-  // Replace last on Ctrl + Shift + L
-  else if (event.ctrlKey && event.shiftKey && event.key === "L") {
-    event.preventDefault();
-    document.getElementById("Replace-last").click();
-  }
-
   // Impersonate on Ctrl + Shift + M
   else if (event.ctrlKey && event.shiftKey && event.key === "M") {
     event.preventDefault();
     document.getElementById("Impersonate").click();
+  }
+
+  // --- Simple version navigation --- //
+  if (!isFocusedOnEditableTextbox()) {
+    // Version navigation on Arrow keys (horizontal)
+    if (!isModifiedKeyboardEvent() && event.key === "ArrowLeft") {
+      event.preventDefault();
+      navigateLastAssistantMessage("left");
+    }
+
+    else if (!isModifiedKeyboardEvent() && event.key === "ArrowRight") {
+      event.preventDefault();
+      if (!navigateLastAssistantMessage("right")) {
+        // If can't navigate right (last version), regenerate
+        document.getElementById("Regenerate").click();
+      }
+    }
   }
 
 });
@@ -132,8 +161,6 @@ targetElement.addEventListener("scroll", function() {
 
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
-  updateCssProperties();
-
   if (targetElement.classList.contains("_generating")) {
     typing.parentNode.classList.add("visible-dots");
     document.getElementById("stop").style.display = "flex";
@@ -144,11 +171,23 @@ const observer = new MutationObserver(function(mutations) {
     document.getElementById("Generate").style.display = "flex";
   }
 
-
   doSyntaxHighlighting();
 
   if (!isScrolled && targetElement.scrollTop !== targetElement.scrollHeight) {
     targetElement.scrollTop = targetElement.scrollHeight;
+  }
+
+  const chatElement = document.getElementById("chat");
+  if (chatElement && chatElement.getAttribute("data-mode") === "instruct") {
+    const messagesContainer = chatElement.querySelector(".messages");
+    const lastChild = messagesContainer?.lastElementChild;
+    const prevSibling = lastChild?.previousElementSibling;
+    if (lastChild && prevSibling) {
+      lastChild.style.setProperty("margin-bottom",
+        `max(0px, calc(max(70vh, 100vh - ${prevSibling.offsetHeight}px - 102px) - ${lastChild.offsetHeight}px))`,
+        "important"
+      );
+    }
   }
 });
 
@@ -436,38 +475,6 @@ const chatInput = document.querySelector("#chat-input textarea");
 // Variables to store current dimensions
 let currentChatInputHeight = chatInput.clientHeight;
 
-// Update chat layout based on chat and input dimensions
-function updateCssProperties() {
-  const chatInputHeight = chatInput.clientHeight;
-
-  // Check if the chat container is visible
-  if (chatContainer.clientHeight > 0) {
-    const chatContainerParentHeight = chatContainer.parentNode.clientHeight;
-    const newChatHeight = `${chatContainerParentHeight - chatInputHeight - 80}px`;
-
-    document.documentElement.style.setProperty("--chat-height", newChatHeight);
-    document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
-
-    // Adjust scrollTop based on input height change
-    if (chatInputHeight !== currentChatInputHeight) {
-      const deltaHeight = chatInputHeight - currentChatInputHeight;
-      if (!isScrolled && deltaHeight < 0) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-      } else {
-        chatContainer.scrollTop += deltaHeight;
-      }
-
-      currentChatInputHeight = chatInputHeight;
-    }
-  }
-}
-
-// Observe textarea size changes and call update function
-new ResizeObserver(updateCssProperties).observe(document.querySelector("#chat-input textarea"));
-
-// Handle changes in window size
-window.addEventListener("resize", updateCssProperties);
-
 //------------------------------------------------
 // Focus on the rename text area when it becomes visible
 //------------------------------------------------
@@ -720,7 +727,7 @@ function isMobile() {
 // Function to initialize sidebars
 function initializeSidebars() {
   const isOnMobile = isMobile();
-  
+
   if (isOnMobile) {
     // Mobile state: Hide sidebars and set closed states
     [pastChatsRow, chatControlsRow, headerBar].forEach(el => {
@@ -813,3 +820,55 @@ function createMobileTopBar() {
 }
 
 createMobileTopBar();
+
+//------------------------------------------------
+// Simple Navigation Functions
+//------------------------------------------------
+
+function navigateLastAssistantMessage(direction) {
+  const chat = document.querySelector("#chat");
+  if (!chat) return false;
+
+  const messages = chat.querySelectorAll("[data-index]");
+  if (messages.length === 0) return false;
+
+  // Find the last assistant message (starting from the end)
+  let lastAssistantMessage = null;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (
+      msg.classList.contains("assistant-message") ||
+      msg.querySelector(".circle-bot") ||
+      msg.querySelector(".text-bot")
+    ) {
+      lastAssistantMessage = msg;
+      break;
+    }
+  }
+
+  if (!lastAssistantMessage) return false;
+
+  const buttons = lastAssistantMessage.querySelectorAll(".version-nav-button");
+
+  for (let i = 0; i < buttons.length; i++) {
+    const button = buttons[i];
+    const onclick = button.getAttribute("onclick");
+    const disabled = button.hasAttribute("disabled");
+
+    const isLeft = onclick && onclick.includes("'left'");
+    const isRight = onclick && onclick.includes("'right'");
+
+    if (!disabled) {
+      if (direction === "left" && isLeft) {
+        navigateVersion(button, direction);
+        return true;
+      }
+      if (direction === "right" && isRight) {
+        navigateVersion(button, direction);
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
