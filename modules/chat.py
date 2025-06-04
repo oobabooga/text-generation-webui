@@ -337,56 +337,102 @@ def get_stopping_strings(state):
 
 
 def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_message=True, for_ui=False):
+    # Handle dict format with text and files
+    files = []
+    if isinstance(text, dict):
+        files = text.get('files', [])
+        text = text.get('text', '')
+
     history = state['history']
     output = copy.deepcopy(history)
     output = apply_extensions('history', output)
     state = apply_extensions('state', state)
 
+    # Initialize metadata if not present
+    if 'metadata' not in output:
+        output['metadata'] = {}
+
     visible_text = None
     stopping_strings = get_stopping_strings(state)
     is_stream = state['stream']
-
     # Prepare the input
     if not (regenerate or _continue):
         visible_text = html.escape(text)
 
+        # Process file attachments and store in metadata
+        row_idx = len(output['internal'])
+
+        # Add attachments to metadata only, not modifying the message text
+        for file_path in files:
+            add_message_attachment(output, row_idx, file_path, is_user=True)
+
+        # Add web search results as attachments if enabled
+        if state.get('enable_web_search', False):
+            search_query = generate_search_query(text, state)
+            add_web_search_attachments(output, row_idx, text, search_query, state)
+
         # Apply extensions
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
         text = apply_extensions('input', text, state, is_chat=True)
-
         output['internal'].append([text, ''])
         output['visible'].append([visible_text, ''])
+        # Add metadata with timestamp
+        update_message_metadata(output['metadata'], "user", row_idx, timestamp=get_current_timestamp())
 
         # *Is typing...*
         if loading_message:
             yield {
                 'visible': output['visible'][:-1] + [[output['visible'][-1][0], shared.processing_message]],
-                'internal': output['internal']
+                'internal': output['internal'],
+                'metadata': output['metadata']
             }
     else:
         text, visible_text = output['internal'][-1][0], output['visible'][-1][0]
         if regenerate:
+            row_idx = len(output['internal']) - 1
+
+            # Store the old response as a version before regenerating
+            if not output['metadata'].get(f"assistant_{row_idx}", {}).get('versions'):
+                add_message_version(output, "assistant", row_idx, is_current=False)
+
+            # Add new empty version (will be filled during streaming)
+            key = f"assistant_{row_idx}"
+            output['metadata'][key]["versions"].append({
+                "content": "",
+                "visible_content": "",
+                "timestamp": get_current_timestamp()
+            })
+            output['metadata'][key]["current_version_index"] = len(output['metadata'][key]["versions"]) - 1
+
             if loading_message:
                 yield {
                     'visible': output['visible'][:-1] + [[visible_text, shared.processing_message]],
-                    'internal': output['internal'][:-1] + [[text, '']]
+                    'internal': output['internal'][:-1] + [[text, '']],
+                    'metadata': output['metadata']
                 }
         elif _continue:
             last_reply = [output['internal'][-1][1], output['visible'][-1][1]]
             if loading_message:
                 yield {
                     'visible': output['visible'][:-1] + [[visible_text, last_reply[1] + '...']],
-                    'internal': output['internal']
+                    'internal': output['internal'],
+                    'metadata': output['metadata']
                 }
-
     # Generate the prompt
     kwargs = {
         '_continue': _continue,
-        'history': output if _continue else {k: v[:-1] for k, v in output.items()}
+        'history': output if _continue else {
+            k: (v[:-1] if k in ['internal', 'visible'] else v)
+            for k, v in output.items()
+    }
     }
     prompt = apply_extensions('custom_generate_chat_prompt', text, state, **kwargs)
     if prompt is None:
         prompt = generate_chat_prompt(text, state, **kwargs)
+
+    # Add timestamp for assistant's response at the start of generation
+    row_idx = len(output['internal']) - 1
+    update_message_metadata(output['metadata'], "assistant", row_idx, timestamp=get_current_timestamp())
 
     # Generate
     reply = None
@@ -402,16 +448,11 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
         # Extract the reply
         if state['mode'] in ['chat', 'chat-instruct']:
-            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply + '▍')
+            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
         else:
-            visible_reply = reply + '▍'
-
+            visible_reply = reply
         visible_reply = html.escape(visible_reply)
-
         if shared.stop_everything:
-            if output['visible'][-1][1].endswith('▍'):
-                output['visible'][-1][1] = output['visible'][-1][1][:-1]
-
             output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
             yield output
             return
@@ -420,21 +461,21 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             # Separate already existing content from new content
             original_internal = output['internal'][-1][1]
             original_visible = output['visible'][-1][1]
-            
+
             # Get only the new generated part
             new_content = reply[len(original_internal):] if reply.startswith(original_internal) else reply
             new_content = new_content.lstrip()
-            
+
             # Translate only the new part
             translated_new = apply_extensions('output', new_content, state, is_chat=True)
-            
+
             # Update both internal and visible versions
             updated_internal = original_internal + " " + new_content
             updated_visible = original_visible + " " + translated_new
-            
+
             output['internal'][-1] = [text, updated_internal]
             output['visible'][-1] = [visible_text, updated_visible]
-            
+
             if is_stream:
                 yield output
         elif not (j == 0 and visible_reply.strip() == ''):
@@ -442,12 +483,29 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             translated_reply = apply_extensions('output', visible_reply.lstrip(' '), state, is_chat=True)
             output['internal'][-1] = [text, reply.lstrip(' ')]
             output['visible'][-1] = [visible_text, translated_reply]
+            
+        # Keep version metadata in sync during streaming (for regeneration)
+        if regenerate:
+            row_idx = len(output['internal']) - 1
+            key = f"assistant_{row_idx}"
+            current_idx = output['metadata'][key]['current_version_index']
+            output['metadata'][key]['versions'][current_idx].update({
+                'content': output['internal'][row_idx][1],
+                'visible_content': output['visible'][row_idx][1]
+            })
             if is_stream:
                 yield output
 
-    if output['visible'][-1][1].endswith('▍'):
-        output['visible'][-1][1] = output['visible'][-1][1][:-1]
-    
+    # Final sync for version metadata (in case streaming was disabled)
+    if regenerate:
+        row_idx = len(output['internal']) - 1
+        key = f"assistant_{row_idx}"
+        current_idx = output['metadata'][key]['current_version_index']
+        output['metadata'][key]['versions'][current_idx].update({
+            'content': output['internal'][row_idx][1],
+            'visible_content': output['visible'][row_idx][1]
+        })
+
     yield output
 
 
