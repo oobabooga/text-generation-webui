@@ -398,7 +398,6 @@ class LlamaServer:
     def stop(self):
         """Stop the server process."""
         if self.process:
-            logger.info("Terminating llama-server...")
             self.process.terminate()
             try:
                 self.process.wait(timeout=5)
