@@ -698,6 +698,14 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
             output['internal'][-1] = [text, updated_internal]
             output['visible'][-1] = [visible_text, updated_visible]
+            
+            row_idx = len(output['internal']) - 1
+            key = f"assistant_{row_idx}"
+            current_idx = output['metadata'][key]['current_version_index']
+            output['metadata'][key]['versions'][current_idx].update({
+                'content': output['internal'][row_idx][1],
+                'visible_content': output['visible'][row_idx][1]
+            })
 
             if is_stream:
                 yield output
