@@ -217,7 +217,7 @@ function isElementVisibleOnScreen(element) {
 }
 
 function doSyntaxHighlighting() {
-  const messageBodies = document.querySelectorAll(".message-body");
+  const messageBodies = document.getElementById("chat").querySelectorAll(".message-body");
 
   if (messageBodies.length > 0) {
     observer.disconnect();
