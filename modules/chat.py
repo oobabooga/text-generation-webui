@@ -604,7 +604,12 @@ def generate_search_query(user_message, state):
 
     query = ""
     for reply in generate_reply(formatted_prompt, search_state, stopping_strings=[], is_chat=True):
-        query = reply.strip()
+        query = reply
+
+    # Strip and remove surrounding quotes if present
+    query = query.strip()
+    if len(query) >= 2 and query.startswith('"') and query.endswith('"'):
+        query = query[1:-1]
 
     return query
 
