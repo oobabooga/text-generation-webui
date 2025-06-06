@@ -299,7 +299,7 @@ def get_user_choice(question, options_dict):
     return choice
 
 
-def update_pytorch_and_python(selected_gpu=""):
+def update_pytorch_and_python():
     print_big_message("Checking for PyTorch updates.")
     gpu_choice = get_gpu_choice()
     install_cmd = get_pytorch_update_command(gpu_choice)
