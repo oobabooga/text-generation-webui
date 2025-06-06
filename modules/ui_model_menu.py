@@ -1,4 +1,6 @@
 import importlib
+import queue
+import threading
 import traceback
 from functools import partial
 from pathlib import Path
@@ -205,40 +207,44 @@ def load_lora_wrapper(selected_loras):
 
 
 def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False, check=False):
+    downloader_module = importlib.import_module("download-model")
+    downloader = downloader_module.ModelDownloader()
+    update_queue = queue.Queue()
+
     try:
         # Handle direct GGUF URLs
         if repo_id.startswith("https://") and ("huggingface.co" in repo_id) and (repo_id.endswith(".gguf") or repo_id.endswith(".gguf?download=true")):
             try:
                 path = repo_id.split("huggingface.co/")[1]
-
-                # Extract the repository ID (first two parts of the path)
                 parts = path.split("/")
                 if len(parts) >= 2:
                     extracted_repo_id = f"{parts[0]}/{parts[1]}"
-
-                    # Extract the filename (last part of the path)
-                    filename = repo_id.split("/")[-1]
-                    if "?download=true" in filename:
-                        filename = filename.replace("?download=true", "")
-
+                    filename = repo_id.split("/")[-1].replace("?download=true", "")
                     repo_id = extracted_repo_id
                     specific_file = filename
-            except:
-                pass
+            except Exception as e:
+                yield f"Error parsing GGUF URL: {e}"
+                progress(0.0)
+                return
 
-        if repo_id == "":
-            yield ("Please enter a model path")
+        if not repo_id:
+            yield "Please enter a model path."
+            progress(0.0)
             return
 
         repo_id = repo_id.strip()
         specific_file = specific_file.strip()
-        downloader = importlib.import_module("download-model").ModelDownloader()
 
-        progress(0.0)
+        progress(0.0, "Preparing download...")
+
         model, branch = downloader.sanitize_model_and_branch_names(repo_id, None)
-
-        yield ("Getting the download links from Hugging Face")
+        yield "Getting download links from Hugging Face..."
         links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=False, specific_file=specific_file)
+
+        if not links:
+            yield "No files found to download for the given model/criteria."
+            progress(0.0)
+            return
 
         # Check for multiple GGUF files
         gguf_files = [link for link in links if link.lower().endswith('.gguf')]
@@ -246,7 +252,6 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
             output = "Multiple GGUF files found. Please copy one of the following filenames to the 'File name' field:\n\n```\n"
             for link in gguf_files:
                 output += f"{Path(link).name}\n"
-
             output += "```"
             yield output
             return
@@ -255,17 +260,13 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
             output = "```\n"
             for link in links:
                 output += f"{Path(link).name}" + "\n"
-
             output += "```"
             yield output
             return
 
-        yield ("Getting the output folder")
+        yield "Determining output folder..."
         output_folder = downloader.get_output_folder(
-            model,
-            branch,
-            is_lora,
-            is_llamacpp=is_llamacpp,
+            model, branch, is_lora, is_llamacpp=is_llamacpp,
             model_dir=shared.args.model_dir if shared.args.model_dir != shared.args_defaults.model_dir else None
         )
 
@@ -275,19 +276,65 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
             output_folder = Path(shared.args.lora_dir)
 
         if check:
-            progress(0.5)
-
-            yield ("Checking previously downloaded files")
+            yield "Checking previously downloaded files..."
+            progress(0.5, "Verifying files...")
             downloader.check_model_files(model, branch, links, sha256, output_folder)
-            progress(1.0)
-        else:
-            yield (f"Downloading file{'s' if len(links) > 1 else ''} to `{output_folder}/`")
-            downloader.download_model_files(model, branch, links, sha256, output_folder, progress_bar=progress, threads=4, is_llamacpp=is_llamacpp)
+            progress(1.0, "Verification complete.")
+            yield "File check complete."
+            return
 
-            yield (f"Model successfully saved to `{output_folder}/`.")
-    except:
-        progress(1.0)
-        yield traceback.format_exc().replace('\n', '\n\n')
+        yield ""
+        progress(0.0, "Download starting...")
+
+        def downloader_thread_target():
+            try:
+                downloader.download_model_files(
+                    model, branch, links, sha256, output_folder,
+                    progress_queue=update_queue,
+                    threads=4,
+                    is_llamacpp=is_llamacpp,
+                    specific_file=specific_file
+                )
+                update_queue.put(("COMPLETED", f"Model successfully saved to `{output_folder}/`."))
+            except Exception as e:
+                tb_str = traceback.format_exc().replace('\n', '\n\n')
+                update_queue.put(("ERROR", tb_str))
+
+        download_thread = threading.Thread(target=downloader_thread_target)
+        download_thread.start()
+
+        while True:
+            try:
+                message = update_queue.get(timeout=0.2)
+                if not isinstance(message, tuple) or len(message) != 2:
+                    continue
+
+                msg_identifier, data = message
+
+                if msg_identifier == "COMPLETED":
+                    progress(1.0, "Download complete!")
+                    yield data
+                    break
+                elif msg_identifier == "ERROR":
+                    progress(0.0, "Error occurred")
+                    yield data
+                    break
+                elif isinstance(msg_identifier, float):
+                    progress_value = msg_identifier
+                    description_str = data
+                    progress(progress_value, f"Downloading: {description_str}")
+
+            except queue.Empty:
+                if not download_thread.is_alive():
+                    yield "Download process finished."
+                    break
+
+        download_thread.join()
+
+    except Exception as e:
+        progress(0.0)
+        tb_str = traceback.format_exc().replace('\n', '\n\n')
+        yield tb_str
 
 
 def update_truncation_length(current_length, state):

@@ -7,6 +7,7 @@ markdown
 numpy==1.26.*
 pydantic==2.8.2
 PyPDF2==3.0.1
+python-docx==1.1.2
 pyyaml
 requests
 rich
@@ -18,5 +19,5 @@ sse-starlette==1.6.5
 tiktoken
 
 # CUDA wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.14.0/llama_cpp_binaries-0.14.0+cu124avx-py3-none-win_amd64.whl; platform_system == "Windows"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.14.0/llama_cpp_binaries-0.14.0+cu124avx-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.16.0/llama_cpp_binaries-0.16.0+cu124avx-py3-none-win_amd64.whl; platform_system == "Windows"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.16.0/llama_cpp_binaries-0.16.0+cu124avx-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"

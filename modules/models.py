@@ -116,10 +116,13 @@ def unload_model(keep_model_name=False):
         return
 
     is_llamacpp = (shared.model.__class__.__name__ == 'LlamaServer')
+    if shared.model.__class__.__name__ == 'Exllamav3HF':
+        shared.model.unload()
 
     shared.model = shared.tokenizer = None
     shared.lora_names = []
     shared.model_dirty_from_training = False
+
     if not is_llamacpp:
         from modules.torch_utils import clear_torch_cache
         clear_torch_cache()

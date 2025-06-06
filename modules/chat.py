@@ -500,6 +500,9 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
             # Process PDF file
             content = extract_pdf_text(path)
             file_type = "application/pdf"
+        elif file_extension == '.docx':
+            content = extract_docx_text(path)
+            file_type = "application/docx"
         else:
             # Default handling for text files
             with open(path, 'r', encoding='utf-8') as f:
@@ -538,6 +541,53 @@ def extract_pdf_text(pdf_path):
         return f"[Error extracting PDF text: {str(e)}]"
 
 
+def extract_docx_text(docx_path):
+    """
+    Extract text from a .docx file, including headers,
+    body (paragraphs and tables), and footers.
+    """
+    try:
+        import docx
+
+        doc = docx.Document(docx_path)
+        parts = []
+
+        # 1) Extract non-empty header paragraphs from each section
+        for section in doc.sections:
+            for para in section.header.paragraphs:
+                text = para.text.strip()
+                if text:
+                    parts.append(text)
+
+        # 2) Extract body blocks (paragraphs and tables) in document order
+        parent_elm = doc.element.body
+        for child in parent_elm.iterchildren():
+            if isinstance(child, docx.oxml.text.paragraph.CT_P):
+                para = docx.text.paragraph.Paragraph(child, doc)
+                text = para.text.strip()
+                if text:
+                    parts.append(text)
+
+            elif isinstance(child, docx.oxml.table.CT_Tbl):
+                table = docx.table.Table(child, doc)
+                for row in table.rows:
+                    cells = [cell.text.strip() for cell in row.cells]
+                    parts.append("\t".join(cells))
+
+        # 3) Extract non-empty footer paragraphs from each section
+        for section in doc.sections:
+            for para in section.footer.paragraphs:
+                text = para.text.strip()
+                if text:
+                    parts.append(text)
+
+        return "\n".join(parts)
+
+    except Exception as e:
+        logger.error(f"Error extracting text from DOCX: {e}")
+        return f"[Error extracting DOCX text: {str(e)}]"
+
+
 def generate_search_query(user_message, state):
     """Generate a search query from user message using the LLM"""
     # Augment the user message with search instruction
@@ -554,7 +604,12 @@ def generate_search_query(user_message, state):
 
     query = ""
     for reply in generate_reply(formatted_prompt, search_state, stopping_strings=[], is_chat=True):
-        query = reply.strip()
+        query = reply
+
+    # Strip and remove surrounding quotes if present
+    query = query.strip()
+    if len(query) >= 2 and query.startswith('"') and query.endswith('"'):
+        query = query[1:-1]
 
     return query
 
@@ -660,7 +715,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
     # Add timestamp for assistant's response at the start of generation
     row_idx = len(output['internal']) - 1
-    update_message_metadata(output['metadata'], "assistant", row_idx, timestamp=get_current_timestamp())
+    update_message_metadata(output['metadata'], "assistant", row_idx, timestamp=get_current_timestamp(), model_name=shared.model_name)
 
     # Generate
     reply = None
@@ -775,7 +830,9 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     last_save_time = time.monotonic()
     save_interval = 8
     for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True, for_ui=True)):
-        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
+        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'], last_message_only=(i > 0)), history
+        if i == 0:
+            time.sleep(0.125)  # We need this to make sure the first update goes through
 
         current_time = time.monotonic()
         # Save on first iteration or if save_interval seconds have passed
@@ -806,9 +863,12 @@ def remove_last_message(history):
     return html.unescape(last[0]), history
 
 
-def send_dummy_message(textbox, state):
+def send_dummy_message(text, state):
     history = state['history']
-    text = textbox['text']
+
+    # Handle both dict and string inputs
+    if isinstance(text, dict):
+        text = text['text']
 
     # Initialize metadata if not present
     if 'metadata' not in history:
@@ -822,9 +882,12 @@ def send_dummy_message(textbox, state):
     return history
 
 
-def send_dummy_reply(textbox, state):
+def send_dummy_reply(text, state):
     history = state['history']
-    text = textbox['text']
+
+    # Handle both dict and string inputs
+    if isinstance(text, dict):
+        text = text['text']
 
     # Initialize metadata if not present
     if 'metadata' not in history:

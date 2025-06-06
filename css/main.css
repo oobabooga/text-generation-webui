@@ -582,7 +582,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #chat-input {
     padding: 0;
-    padding-top: 18px;
     background: transparent;
     border: none;
 }
@@ -661,37 +660,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 }
 
-#show-controls {
-    position: absolute;
-    background-color: transparent;
-    border: 0 !important;
-    border-radius: 0;
-}
-
-#show-controls label {
-    z-index: 1000;
-    position: absolute;
-    right: 30px;
-    top: 10px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.dark #show-controls span {
-    color: var(--neutral-400);
-}
-
-#show-controls span {
-    color: var(--neutral-600);
-}
-
 #typing-container {
     display: none;
     position: absolute;
     background-color: transparent;
     left: -2px;
-    top: 4px;
+    top: -5px;
     padding: var(--block-padding);
 }
 
@@ -783,6 +757,33 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 .dark .hover-menu button:hover {
     background: var(--selected-item-color-dark) !important;
+}
+
+#show-controls {
+    height: 36px;
+    border-top: 1px solid var(--border-color-dark) !important;
+    border-left: 1px solid var(--border-color-dark) !important;
+    border-right: 1px solid var(--border-color-dark) !important;
+    border-radius: 0;
+    border-bottom: 0 !important;
+    background-color: var(--darker-gray);
+    padding-top: 3px;
+    padding-left: 4px;
+    display: flex;
+}
+
+#show-controls label {
+    display: flex;
+    flex-direction: row-reverse;
+    font-weight: bold;
+    justify-content: start;
+    width: 100%;
+    padding-right: 12px;
+    gap: 10px;
+}
+
+#show-controls label input {
+    margin-top: 4px;
 }
 
 .transparent-substring {
@@ -1326,6 +1327,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     overflow: hidden;
 }
 
+.thinking-content:focus, .thinking-header:focus {
+    outline: 0 !important;
+}
+
 .dark .thinking-block {
     background-color: var(--darker-gray);
 }
@@ -1550,4 +1555,13 @@ strong {
     font-size: 13px;
     color: var(--body-text-color-subdued);
     margin-top: 4px;
+}
+
+button:focus {
+    outline: none;
+}
+
+/* Fix extra gaps for hidden elements on the right sidebar */
+.svelte-sa48pu.stretch:has(> .hidden:only-child) {
+    display: none;
 }

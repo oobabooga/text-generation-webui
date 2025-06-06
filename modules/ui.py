@@ -6,6 +6,7 @@ import yaml
 
 import extensions
 from modules import shared
+from modules.chat import load_history
 
 with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r') as f:
     css = f.read()
@@ -71,6 +72,7 @@ if not shared.args.old_colors:
         block_background_fill_dark='transparent',
         block_border_color_dark='transparent',
         input_border_color_dark='var(--border-color-dark)',
+        input_border_color_focus_dark='var(--border-color-dark)',
         checkbox_border_color_dark='var(--border-color-dark)',
         border_color_primary_dark='var(--border-color-dark)',
         button_secondary_border_color_dark='var(--border-color-dark)',
@@ -89,6 +91,8 @@ if not shared.args.old_colors:
         checkbox_label_shadow='none',
         block_shadow='none',
         block_shadow_dark='none',
+        input_shadow_focus='none',
+        input_shadow_focus_dark='none',
         button_large_radius='0.375rem',
         button_large_padding='6px 12px',
         input_radius='0.375rem',
@@ -191,7 +195,6 @@ def list_interface_input_elements():
         'max_new_tokens',
         'prompt_lookup_num_tokens',
         'max_tokens_second',
-        'max_updates_second',
         'do_sample',
         'dynamic_temperature',
         'temperature_last',
@@ -266,6 +269,10 @@ def gather_interface_values(*args):
 
     if not shared.args.multi_user:
         shared.persistent_interface_state = output
+
+    # Prevent history loss if backend is restarted but UI is not refreshed
+    if output['history'] is None and output['unique_id'] is not None:
+        output['history'] = load_history(output['unique_id'], output['character_menu'], output['mode'])
 
     return output
 

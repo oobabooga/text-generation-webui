@@ -60,6 +60,14 @@ from modules.utils import gradio
 
 def signal_handler(sig, frame):
     logger.info("Received Ctrl+C. Shutting down Text generation web UI gracefully.")
+
+    # Explicitly stop LlamaServer to avoid __del__ cleanup issues during shutdown
+    if shared.model and shared.model.__class__.__name__ == 'LlamaServer':
+        try:
+            shared.model.stop()
+        except:
+            pass
+
     sys.exit(0)
 
 

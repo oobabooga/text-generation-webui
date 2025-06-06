@@ -18,7 +18,7 @@ def create_ui():
     mu = shared.args.multi_user
 
     shared.gradio['Chat input'] = gr.State()
-    shared.gradio['history'] = gr.JSON(visible=False)
+    shared.gradio['history'] = gr.State({'internal': [], 'visible': [], 'metadata': {}})
 
     with gr.Tab('Chat', id='Chat', elem_id='chat-tab'):
         with gr.Row(elem_id='past-chats-row', elem_classes=['pretty_scrollbar']):
@@ -55,7 +55,6 @@ def create_ui():
 
                     with gr.Column(scale=10, elem_id='chat-input-container'):
                         shared.gradio['textbox'] = gr.MultimodalTextbox(label='', placeholder='Send a message', file_types=['text', '.pdf'], file_count="multiple", elem_id='chat-input', elem_classes=['add_scrollbar'])
-                        shared.gradio['show_controls'] = gr.Checkbox(value=shared.settings['show_controls'], label='Show controls (Ctrl+S)', elem_id='show-controls')
                         shared.gradio['typing-dots'] = gr.HTML(value='<div class="typing"><span></span><span class="dot1"></span><span class="dot2"></span></div>', label='typing', elem_id='typing-container')
 
                     with gr.Column(scale=1, elem_id='generate-stop-container'):
@@ -65,21 +64,15 @@ def create_ui():
 
         # Hover menu buttons
         with gr.Column(elem_id='chat-buttons'):
-            with gr.Row():
-                shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')
-                shared.gradio['Continue'] = gr.Button('Continue (Alt + Enter)', elem_id='Continue')
-                shared.gradio['Remove last'] = gr.Button('Remove last reply (Ctrl + Shift + Backspace)', elem_id='Remove-last')
-
-            with gr.Row():
-                shared.gradio['Impersonate'] = gr.Button('Impersonate (Ctrl + Shift + M)', elem_id='Impersonate')
-
-            with gr.Row():
-                shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
-                shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
-
-            with gr.Row():
-                shared.gradio['send-chat-to-default'] = gr.Button('Send to Default')
-                shared.gradio['send-chat-to-notebook'] = gr.Button('Send to Notebook')
+            shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')
+            shared.gradio['Continue'] = gr.Button('Continue (Alt + Enter)', elem_id='Continue')
+            shared.gradio['Remove last'] = gr.Button('Remove last reply (Ctrl + Shift + Backspace)', elem_id='Remove-last')
+            shared.gradio['Impersonate'] = gr.Button('Impersonate (Ctrl + Shift + M)', elem_id='Impersonate')
+            shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
+            shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
+            shared.gradio['send-chat-to-default'] = gr.Button('Send to Default')
+            shared.gradio['send-chat-to-notebook'] = gr.Button('Send to Notebook')
+            shared.gradio['show_controls'] = gr.Checkbox(value=shared.settings['show_controls'], label='Show controls (Ctrl+S)', elem_id='show-controls')
 
         with gr.Row(elem_id='chat-controls', elem_classes=['pretty_scrollbar']):
             with gr.Column():
@@ -87,7 +80,7 @@ def create_ui():
                     shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'], elem_classes=['add_scrollbar'])
 
                 with gr.Row():
-                    shared.gradio['enable_web_search'] = gr.Checkbox(value=shared.settings.get('enable_web_search', False), label='Activate web search')
+                    shared.gradio['enable_web_search'] = gr.Checkbox(value=shared.settings.get('enable_web_search', False), label='Activate web search', elem_id='web-search')
 
                 with gr.Row(visible=shared.settings.get('enable_web_search', False)) as shared.gradio['web_search_row']:
                     shared.gradio['web_search_pages'] = gr.Number(value=shared.settings.get('web_search_pages', 3), precision=0, label='Number of pages to download', minimum=1, maximum=10)
@@ -202,7 +195,7 @@ def create_event_handlers():
     shared.reload_inputs = gradio(reload_arr)
 
     # Morph HTML updates instead of updating everything
-    shared.gradio['display'].change(None, gradio('display'), None, js="(data) => handleMorphdomUpdate(data.html)")
+    shared.gradio['display'].change(None, gradio('display'), None, js="(data) => handleMorphdomUpdate(data)")
 
     shared.gradio['Generate'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(

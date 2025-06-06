@@ -7,6 +7,7 @@ markdown
 numpy==1.26.*
 pydantic==2.8.2
 PyPDF2==3.0.1
+python-docx==1.1.2
 pyyaml
 requests
 rich

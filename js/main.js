@@ -184,7 +184,7 @@ const observer = new MutationObserver(function(mutations) {
     const prevSibling = lastChild?.previousElementSibling;
     if (lastChild && prevSibling) {
       lastChild.style.setProperty("margin-bottom",
-        `max(0px, calc(max(70vh, 100vh - ${prevSibling.offsetHeight}px - 102px) - ${lastChild.offsetHeight}px))`,
+        `max(0px, calc(max(70vh, 100vh - ${prevSibling.offsetHeight}px - 84px) - ${lastChild.offsetHeight}px))`,
         "important"
       );
     }
@@ -217,7 +217,7 @@ function isElementVisibleOnScreen(element) {
 }
 
 function doSyntaxHighlighting() {
-  const messageBodies = document.querySelectorAll(".message-body");
+  const messageBodies = document.getElementById("chat").querySelectorAll(".message-body");
 
   if (messageBodies.length > 0) {
     observer.disconnect();
@@ -229,6 +229,7 @@ function doSyntaxHighlighting() {
         codeBlocks.forEach((codeBlock) => {
           hljs.highlightElement(codeBlock);
           codeBlock.setAttribute("data-highlighted", "true");
+          codeBlock.classList.add("pretty_scrollbar");
         });
 
         renderMathInElement(messageBody, {
@@ -277,7 +278,7 @@ for (i = 0; i < slimDropdownElements.length; i++) {
 // The show/hide events were adapted from:
 // https://github.com/SillyTavern/SillyTavern/blob/6c8bd06308c69d51e2eb174541792a870a83d2d6/public/script.js
 //------------------------------------------------
-var buttonsInChat = document.querySelectorAll("#chat-tab #chat-buttons button");
+var buttonsInChat = document.querySelectorAll("#chat-tab #chat-buttons button, #chat-tab #chat-buttons #show-controls");
 var button = document.getElementById("hover-element-button");
 var menu = document.getElementById("hover-menu");
 var istouchscreen = (navigator.maxTouchPoints > 0) || "ontouchstart" in document.documentElement;
@@ -298,18 +299,21 @@ if (buttonsInChat.length > 0) {
     const thisButton = buttonsInChat[i];
     menu.appendChild(thisButton);
 
-    thisButton.addEventListener("click", () => {
-      hideMenu();
-    });
+    // Only apply transformations to button elements
+    if (thisButton.tagName.toLowerCase() === "button") {
+      thisButton.addEventListener("click", () => {
+        hideMenu();
+      });
 
-    const buttonText = thisButton.textContent;
-    const matches = buttonText.match(/(\(.*?\))/);
+      const buttonText = thisButton.textContent;
+      const matches = buttonText.match(/(\(.*?\))/);
 
-    if (matches && matches.length > 1) {
-      // Apply the transparent-substring class to the matched substring
-      const substring = matches[1];
-      const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring.slice(1, -1)}</span>`);
-      thisButton.innerHTML = newText;
+      if (matches && matches.length > 1) {
+        // Apply the transparent-substring class to the matched substring
+        const substring = matches[1];
+        const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring.slice(1, -1)}</span>`);
+        thisButton.innerHTML = newText;
+      }
     }
   }
 }
@@ -383,20 +387,9 @@ document.addEventListener("click", function (event) {
 });
 
 //------------------------------------------------
-// Relocate the "Show controls" checkbox
-//------------------------------------------------
-var elementToMove = document.getElementById("show-controls");
-var parent = elementToMove.parentNode;
-for (var i = 0; i < 2; i++) {
-  parent = parent.parentNode;
-}
-
-parent.insertBefore(elementToMove, parent.firstChild);
-
-//------------------------------------------------
 // Position the chat input
 //------------------------------------------------
-document.getElementById("show-controls").parentNode.classList.add("chat-input-positioned");
+document.getElementById("chat-input-row").classList.add("chat-input-positioned");
 
 //------------------------------------------------
 // Focus on the chat input
@@ -872,3 +865,53 @@ function navigateLastAssistantMessage(direction) {
 
   return false;
 }
+
+//------------------------------------------------
+// Paste Handler for Long Text
+//------------------------------------------------
+
+const MAX_PLAIN_TEXT_LENGTH = 2500;
+
+function setupPasteHandler() {
+  const textbox = document.querySelector("#chat-input textarea[data-testid=\"textbox\"]");
+  const fileInput = document.querySelector("#chat-input input[data-testid=\"file-upload\"]");
+
+  if (!textbox || !fileInput) {
+    setTimeout(setupPasteHandler, 500);
+    return;
+  }
+
+  textbox.addEventListener("paste", async (event) => {
+    const text = event.clipboardData?.getData("text");
+
+    if (text && text.length > MAX_PLAIN_TEXT_LENGTH) {
+      event.preventDefault();
+
+      const file = new File([text], "pasted_text.txt", {
+        type: "text/plain",
+        lastModified: Date.now()
+      });
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInput.files = dataTransfer.files;
+      fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  });
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", setupPasteHandler);
+} else {
+  setupPasteHandler();
+}
+
+//------------------------------------------------
+// Tooltips
+//------------------------------------------------
+
+// File upload button
+document.querySelector("#chat-input .upload-button").title = "Upload text files, PDFs, and DOCX documents";
+
+// Activate web search
+document.getElementById("web-search").title = "Search the internet with DuckDuckGo";
