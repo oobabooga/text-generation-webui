@@ -270,6 +270,9 @@ def gather_interface_values(*args):
     if not shared.args.multi_user:
         shared.persistent_interface_state = output
 
+        # Remove the chat input, as it gets cleared after this function call
+        shared.persistent_interface_state.pop('textbox')
+
     # Prevent history loss if backend is restarted but UI is not refreshed
     if output['history'] is None and output['unique_id'] is not None:
         output['history'] = load_history(output['unique_id'], output['character_menu'], output['mode'])

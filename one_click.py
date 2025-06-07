@@ -17,7 +17,6 @@ import sys
 
 # Define the required versions
 TORCH_VERSION = "2.6.0"
-TORCH_VERSION_BLACKWELL = "2.7.0"
 TORCHVISION_VERSION = "0.21.0"
 TORCHAUDIO_VERSION = "2.6.0"
 PYTHON_VERSION = "3.11"
@@ -120,13 +119,12 @@ def get_gpu_choice():
                     'B': 'AMD - Linux/macOS only, requires ROCm 6.2.4',
                     'C': 'Apple M Series',
                     'D': 'Intel Arc (beta)',
-                    'E': 'NVIDIA - CUDA 12.8 - RTX 50XX BLACKWELL',
                     'N': 'CPU mode'
                 },
             )
 
         # Convert choice to GPU name
-        gpu_choice = {"A": "NVIDIA", "B": "AMD", "C": "APPLE", "D": "INTEL", "E": "NVIDIA_BLACKWELL", "N": "NONE"}[choice]
+        gpu_choice = {"A": "NVIDIA", "B": "AMD", "C": "APPLE", "D": "INTEL", "N": "NONE"}[choice]
 
         # Save choice to state
         state['gpu_choice'] = gpu_choice
@@ -139,13 +137,8 @@ def get_pytorch_install_command(gpu_choice):
     """Get PyTorch installation command based on GPU choice"""
     base_cmd = f"python -m pip install torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION} "
 
-    if gpu_choice == "NVIDIA_BLACKWELL":
-        base_cmd = f"python -m pip install torch=={TORCH_VERSION_BLACKWELL} torchvision torchaudio "
-
     if gpu_choice == "NVIDIA":
         return base_cmd + "--index-url https://download.pytorch.org/whl/cu124"
-    elif gpu_choice == "NVIDIA_BLACKWELL":
-        return base_cmd + "--index-url https://download.pytorch.org/whl/cu128"
     elif gpu_choice == "AMD":
         return base_cmd + "--index-url https://download.pytorch.org/whl/rocm6.2.4"
     elif gpu_choice in ["APPLE", "NONE"]:
@@ -163,13 +156,8 @@ def get_pytorch_update_command(gpu_choice):
     """Get PyTorch update command based on GPU choice"""
     base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION}"
 
-    if gpu_choice == "NVIDIA_BLACKWELL":
-        base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION_BLACKWELL} torchvision torchaudio"
-    
     if gpu_choice == "NVIDIA":
         return f"{base_cmd} --index-url https://download.pytorch.org/whl/cu124"
-    elif gpu_choice == "NVIDIA_BLACKWELL":
-        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cu128"
     elif gpu_choice == "AMD":
         return f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.2.4"
     elif gpu_choice in ["APPLE", "NONE"]:
@@ -193,8 +181,6 @@ def get_requirements_file(gpu_choice):
         file_name = f"requirements_cpu_only{'_noavx2' if not cpu_has_avx2() else ''}.txt"
     elif gpu_choice == "NVIDIA":
         file_name = f"requirements{'_noavx2' if not cpu_has_avx2() else ''}.txt"
-    elif gpu_choice == "NVIDIA_BLACKWELL":
-        file_name = f"requirements_blackwell.txt"
     else:
         raise ValueError(f"Unknown GPU choice: {gpu_choice}")
 
@@ -342,9 +328,6 @@ def install_webui():
     # Handle CUDA version display
     elif any((is_windows(), is_linux())) and gpu_choice == "NVIDIA":
         print("CUDA: 12.4")
-    
-    elif any((is_windows(), is_linux())) and gpu_choice == "NVIDIA_BLACKWELL":
-        print("CUDA: 12.8")
 
     # No PyTorch for AMD on Windows (?)
     elif is_windows() and gpu_choice == "AMD":
@@ -367,7 +350,7 @@ def install_webui():
     update_requirements(initial_installation=True, pull=False)
 
 
-def update_requirements(initial_installation=False, pull=True, isUpgradeBlackwell=False):
+def update_requirements(initial_installation=False, pull=True):
     # Create .git directory if missing
     if not os.path.exists(os.path.join(script_dir, ".git")):
         run_cmd(
@@ -386,8 +369,6 @@ def update_requirements(initial_installation=False, pull=True, isUpgradeBlackwel
             wheels_changed = True
 
     gpu_choice = get_gpu_choice()
-    if isUpgradeBlackwell:
-        gpu_choice = "NVIDIA_BLACKWELL"
     requirements_file = get_requirements_file(gpu_choice)
 
     if pull:
@@ -467,11 +448,8 @@ def update_requirements(initial_installation=False, pull=True, isUpgradeBlackwel
         run_cmd(f"python -m pip uninstall -y {package_name}", environment=True)
         print(f"Uninstalled {package_name}")
 
-    if gpu_choice == "NVIDIA_BLACKWELL":
-        # Install/update the project requirements
-        run_cmd(f"python -m pip install -r {requirements_file} --upgrade", assert_success=True, environment=True)
-    else:
-        run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
+    # Install/update the project requirements
+    run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
 
     # Clean up
     os.remove('temp_requirements.txt')
@@ -507,7 +485,6 @@ if __name__ == "__main__":
                     'A': 'Update the web UI',
                     'B': 'Install/update extensions requirements',
                     'C': 'Revert local changes to repository files with \"git reset --hard\"',
-                    'D': 'Upgrade to NVIDIA BLACKWELL',
                     'N': 'Nothing (exit)'
                 },
             )
@@ -531,8 +508,6 @@ if __name__ == "__main__":
                 update_requirements(pull=False)
             elif choice == 'C':
                 run_cmd("git reset --hard", assert_success=True, environment=True)
-            elif choice == 'D':
-                update_requirements(isUpgradeBlackwell=True)
             elif choice == 'N':
                 sys.exit()
     else:

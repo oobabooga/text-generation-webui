@@ -408,32 +408,34 @@ class LlamaServer:
 
 
 def filter_stderr_with_progress(process_stderr):
-    progress_pattern = re.compile(r'slot update_slots: id.*progress = (\d+\.\d+)')
+    """
+    Reads stderr lines from a process, filters out noise, and displays progress updates
+    inline (overwriting the same line) until completion.
+    """
+    progress_re = re.compile(r'slot update_slots: id.*progress = (\d+\.\d+)')
     last_was_progress = False
 
     try:
-        for line in iter(process_stderr.readline, ''):
-            line = line.rstrip('\n\r')  # Remove existing newlines
-            progress_match = progress_pattern.search(line)
+        for raw in iter(process_stderr.readline, ''):
+            line = raw.rstrip('\r\n')
+            match = progress_re.search(line)
 
-            if progress_match:
+            if match:
+                progress = float(match.group(1))
+                # choose carriage return for in-progress or newline at completion
+                end_char = '\r' if progress < 1.0 else '\n'
+                print(line, end=end_char, file=sys.stderr, flush=True)
+                last_was_progress = (progress < 1.0)
+
+            # skip noise lines
+            elif not (line.startswith(('srv ', 'slot ')) or 'log_server_r: request: GET /health' in line):
+                # if we were in progress, finish that line first
                 if last_was_progress:
-                    # Overwrite the previous progress line using carriage return
-                    sys.stderr.write(f'\r{line}')
-                else:
-                    # First progress line - print normally
-                    sys.stderr.write(line)
-                sys.stderr.flush()
-                last_was_progress = True
-            elif not line.startswith(('srv ', 'slot ')) and 'log_server_r: request: GET /health' not in line:
-                if last_was_progress:
-                    # Finish the progress line with a newline, then print the new line
-                    sys.stderr.write(f'\n{line}\n')
-                else:
-                    # Normal line - print with newline
-                    sys.stderr.write(f'{line}\n')
-                sys.stderr.flush()
+                    print(file=sys.stderr)
+
+                print(line, file=sys.stderr, flush=True)
                 last_was_progress = False
-            # For filtered lines, don't change last_was_progress state
+
     except (ValueError, IOError):
+        # silently ignore broken output or IO errors
         pass

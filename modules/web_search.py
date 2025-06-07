@@ -107,6 +107,13 @@ def add_web_search_attachments(history, row_idx, user_message, search_query, sta
             logger.warning("No search results found")
             return
 
+        # Filter out failed downloads before adding attachments
+        successful_results = [result for result in search_results if result['content'] and result['content'].strip()]
+
+        if not successful_results:
+            logger.warning("No successful downloads to add as attachments")
+            return
+
         # Add search results as attachments
         key = f"user_{row_idx}"
         if key not in history['metadata']:
@@ -114,7 +121,7 @@ def add_web_search_attachments(history, row_idx, user_message, search_query, sta
         if "attachments" not in history['metadata'][key]:
             history['metadata'][key]["attachments"] = []
 
-        for result in search_results:
+        for result in successful_results:
             attachment = {
                 "name": result['title'],
                 "type": "text/html",
@@ -123,7 +130,7 @@ def add_web_search_attachments(history, row_idx, user_message, search_query, sta
             }
             history['metadata'][key]["attachments"].append(attachment)
 
-        logger.info(f"Added {len(search_results)} web search results as attachments")
+        logger.info(f"Added {len(successful_results)} successful web search results as attachments")
 
     except Exception as e:
         logger.error(f"Error in web search: {e}")
