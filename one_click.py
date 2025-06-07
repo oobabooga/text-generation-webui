@@ -113,7 +113,7 @@ def get_gpu_choice():
             choice = get_user_choice(
                 "What is your GPU?",
                 {
-                    'A': 'NVIDIA - CUDA 12.8.1',
+                    'A': 'NVIDIA - CUDA 12.8',
                     'B': 'AMD - Linux/macOS only, requires ROCm 6.2.4',
                     'C': 'Apple M Series',
                     'D': 'Intel Arc (beta)',
