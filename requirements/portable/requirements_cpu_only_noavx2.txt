@@ -4,7 +4,7 @@ fastapi==0.112.4
 gradio==4.37.*
 jinja2==3.1.6
 markdown
-numpy==1.26.*
+numpy==2.2.*
 pydantic==2.8.2
 PyPDF2==3.0.1
 python-docx==1.1.2
