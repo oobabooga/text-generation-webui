@@ -417,14 +417,23 @@ def filter_stderr_with_progress(process_stderr):
             progress_match = progress_pattern.search(line)
 
             if progress_match:
+                progress_value = float(progress_match.group(1))
+
                 if last_was_progress:
                     # Overwrite the previous progress line using carriage return
                     sys.stderr.write(f'\r{line}')
                 else:
                     # First progress line - print normally
                     sys.stderr.write(line)
+
+                # Check if progress is 100% (1.0)
+                if progress_value >= 1.0:
+                    sys.stderr.write('\n')  # Add newline for completed progress
+                    last_was_progress = False
+                else:
+                    last_was_progress = True
+
                 sys.stderr.flush()
-                last_was_progress = True
             elif not line.startswith(('srv ', 'slot ')) and 'log_server_r: request: GET /health' not in line:
                 if last_was_progress:
                     # Finish the progress line with a newline, then print the new line
