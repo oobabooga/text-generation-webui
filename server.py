@@ -105,6 +105,9 @@ def create_interface():
     if Path("user_data/cache/pfp_character.png").exists():
         Path("user_data/cache/pfp_character.png").unlink()
 
+    if Path("user_data/cache/pfp_character_thumb.png").exists():
+        Path("user_data/cache/pfp_character_thumb.png").unlink()
+
     # css/js strings
     css = ui.css
     js = ui.js
