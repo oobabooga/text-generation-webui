@@ -18,6 +18,8 @@ def create_ui():
                         shared.gradio['save_preset'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
                         shared.gradio['delete_preset'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
                         shared.gradio['random_preset'] = gr.Button('🎲', elem_classes='refresh-button')
+                        shared.gradio['reset_preset'] = gr.Button('Reload preset', elem_classes='refresh-button', interactive=True)
+                        shared.gradio['neutralize_samplers'] = gr.Button('Neutralize samplers', elem_classes='refresh-button', interactive=True)
 
                 with gr.Column():
                     shared.gradio['filter_by_loader'] = gr.Dropdown(label="Filter by loader", choices=["All"] + list(loaders.loaders_and_params.keys()) if not shared.args.portable else ['llama.cpp'], value="All", elem_classes='slim-dropdown')
@@ -113,6 +115,14 @@ def create_event_handlers():
     shared.gradio['random_preset'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         presets.random_preset, gradio('interface_state'), gradio('interface_state') + gradio(presets.presets_params()), show_progress=False)
+
+    shared.gradio['reset_preset'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        presets.reset_preset_for_ui, gradio('preset_menu', 'interface_state'), gradio('interface_state') + gradio(presets.presets_params()), show_progress=False)
+
+    shared.gradio['neutralize_samplers'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        presets.neutralize_samplers_for_ui, gradio('interface_state'), gradio('interface_state') + gradio(presets.presets_params()), show_progress=False)
 
     shared.gradio['grammar_file'].change(load_grammar, gradio('grammar_file'), gradio('grammar_string'), show_progress=False)
     shared.gradio['dynamic_temperature'].change(lambda x: [gr.update(visible=x)] * 3, gradio('dynamic_temperature'), gradio('dynatemp_low', 'dynatemp_high', 'dynatemp_exponent'), show_progress=False)

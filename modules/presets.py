@@ -93,6 +93,20 @@ def load_preset_for_ui(name, state):
     return state, *[generate_params[k] for k in presets_params()]
 
 
+def reset_preset_for_ui(name, state):
+    """Reset current preset to its saved values from file"""
+    generate_params = load_preset(name, verbose=True)
+    state.update(generate_params)
+    return state, *[generate_params[k] for k in presets_params()]
+
+
+def neutralize_samplers_for_ui(state):
+    """Set all samplers to their default/neutral values"""
+    generate_params = default_preset()
+    state.update(generate_params)
+    return state, *[generate_params[k] for k in presets_params()]
+
+
 def random_preset(state):
     params_and_values = {
         'remove_tail_tokens': {
