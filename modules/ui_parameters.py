@@ -17,7 +17,6 @@ def create_ui():
                         ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button', interactive=not mu)
                         shared.gradio['save_preset'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
                         shared.gradio['delete_preset'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
-                        shared.gradio['random_preset'] = gr.Button('🎲', elem_classes='refresh-button')
                         shared.gradio['reset_preset'] = gr.Button('Reload preset', elem_classes='refresh-button', interactive=True)
                         shared.gradio['neutralize_samplers'] = gr.Button('Neutralize samplers', elem_classes='refresh-button', interactive=True)
 
@@ -111,10 +110,6 @@ def create_event_handlers():
     shared.gradio['preset_menu'].change(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         presets.load_preset_for_ui, gradio('preset_menu', 'interface_state'), gradio('interface_state') + gradio(presets.presets_params()), show_progress=False)
-
-    shared.gradio['random_preset'].click(
-        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        presets.random_preset, gradio('interface_state'), gradio('interface_state') + gradio(presets.presets_params()), show_progress=False)
 
     shared.gradio['reset_preset'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
