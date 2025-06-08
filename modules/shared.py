@@ -127,7 +127,6 @@ parser = argparse.ArgumentParser(description="Text generation web UI", conflict_
 # Basic settings
 group = parser.add_argument_group('Basic settings')
 group.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.')
-group.add_argument('--character', type=str, help='The name of the character to load in chat mode by default.')
 group.add_argument('--model', type=str, help='Name of the model to load by default.')
 group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
 group.add_argument('--model-dir', type=str, default='user_data/models', help='Path to directory with all the models.')
