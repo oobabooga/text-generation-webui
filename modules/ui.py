@@ -455,6 +455,7 @@ def setup_auto_save():
         'skip_special_tokens',
         'stream',
         'static_cache',
+        'truncation_length',
         'seed',
         'sampler_priority',
         'custom_stopping_strings',
