@@ -296,6 +296,8 @@ def create_event_handlers():
         chat.handle_character_menu_change, gradio('interface_state'), gradio('history', 'display', 'name1', 'name2', 'character_picture', 'greeting', 'context', 'unique_id'), show_progress=False).then(
         None, None, None, js=f'() => {{{ui.update_big_picture_js}; updateBigPicture()}}')
 
+    shared.gradio['character_picture'].change(chat.handle_character_picture_upload, gradio('character_picture'), None, show_progress=False)
+
     shared.gradio['mode'].change(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.handle_mode_change, gradio('interface_state'), gradio('history', 'display', 'chat_style', 'chat-instruct_command', 'unique_id'), show_progress=False).then(
@@ -321,7 +323,7 @@ def create_event_handlers():
 
     shared.gradio['reset_character'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.reset_character_for_ui, gradio('interface_state'), gradio('interface_state', 'name2', 'context', 'greeting'), show_progress=False)
+        chat.reset_character_for_ui, gradio('interface_state'), gradio('interface_state', 'name2', 'context', 'greeting', 'character_picture'), show_progress=False)
 
     shared.gradio['delete_template'].click(chat.handle_delete_template_click, gradio('instruction_template'), gradio('delete_filename', 'delete_root', 'file_deleter'), show_progress=False)
     shared.gradio['save_chat_history'].click(
