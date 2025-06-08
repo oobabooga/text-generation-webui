@@ -45,6 +45,7 @@ from modules import (
     ui_session,
     utils
 )
+from modules.chat import generate_pfp_cache
 from modules.extensions import apply_extensions
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model_if_idle
@@ -98,11 +99,15 @@ def create_interface():
         'filter_by_loader': (shared.args.loader or 'All') if not shared.args.portable else 'llama.cpp'
     })
 
-    if Path("user_data/cache/pfp_character.png").exists():
-        Path("user_data/cache/pfp_character.png").unlink()
+    # Clear existing cache files
+    for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
+        cache_path = Path(f"user_data/cache/{cache_file}")
+        if cache_path.exists():
+            cache_path.unlink()
 
-    if Path("user_data/cache/pfp_character_thumb.png").exists():
-        Path("user_data/cache/pfp_character_thumb.png").unlink()
+    # Regenerate for default character
+    if shared.settings['mode'] != 'instruct':
+        generate_pfp_cache(shared.settings['character'])
 
     # css/js strings
     css = ui.css
