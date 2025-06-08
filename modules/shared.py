@@ -35,6 +35,8 @@ settings = {
     'mode': 'instruct',
     'chat_style': 'cai-chat',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
+    'enable_web_search': False,
+    'web_search_pages': 3,
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
     'character': 'Assistant',
