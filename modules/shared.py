@@ -65,6 +65,53 @@ settings = {
     'default_extensions': [],
     'instruction_template_str': "{%- set ns = namespace(found=false) -%}\n{%- for message in messages -%}\n    {%- if message['role'] == 'system' -%}\n        {%- set ns.found = true -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if not ns.found -%}\n    {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\\n\\n' -}}\n{%- endif %}\n{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- '' + message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{-'### Instruction:\\n' + message['content'] + '\\n\\n'-}}\n        {%- else -%}\n            {{-'### Response:\\n' + message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{-'### Response:\\n'-}}\n{%- endif -%}",
     'chat_template_str': "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {%- if message['content'] -%}\n            {{- message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n        {%- if user_bio -%}\n            {{- user_bio + '\\n\\n' -}}\n        {%- endif -%}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}",
+
+    # Generation parameters - Curve shape
+    'temperature': 1.0,
+    'dynatemp_low': 1.0,
+    'dynatemp_high': 1.0,
+    'dynatemp_exponent': 1.0,
+    'smoothing_factor': 0.0,
+    'smoothing_curve': 1.0,
+
+    # Generation parameters - Curve cutoff
+    'min_p': 0.0,
+    'top_p': 1.0,
+    'top_k': 0,
+    'typical_p': 1.0,
+    'xtc_threshold': 0.1,
+    'xtc_probability': 0.0,
+    'epsilon_cutoff': 0.0,
+    'eta_cutoff': 0.0,
+    'tfs': 1.0,
+    'top_a': 0.0,
+    'top_n_sigma': 0.0,
+
+    # Generation parameters - Repetition suppression
+    'dry_multiplier': 0.0,
+    'dry_allowed_length': 2,
+    'dry_base': 1.75,
+    'repetition_penalty': 1.0,
+    'frequency_penalty': 0.0,
+    'presence_penalty': 0.0,
+    'encoder_repetition_penalty': 1.0,
+    'no_repeat_ngram_size': 0,
+    'repetition_penalty_range': 0,
+
+    # Generation parameters - Alternative sampling methods
+    'penalty_alpha': 0.0,
+    'guidance_scale': 1.0,
+    'mirostat_mode': 0,
+    'mirostat_tau': 5.0,
+    'mirostat_eta': 0.1,
+
+    # Generation parameters - Other options
+    'do_sample': True,
+    'dynamic_temperature': False,
+    'temperature_last': False,
+    'sampler_priority': 'temperature\ntop_k\ntop_p\nmin_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nrepetition_penalty\nfrequency_penalty\npresence_penalty',
+    'dry_sequence_breakers': '["\\n", ":", "\\"", "*"]',
+    'grammar_string': '',
 }
 
 default_settings = copy.deepcopy(settings)

@@ -310,7 +310,7 @@ def apply_interface_values(state, use_persistent=False):
 
 def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output = copy.deepcopy(shared.settings)
-    exclude = ['name2', 'greeting', 'context', 'truncation_length', 'instruction_template_str']
+    exclude = ['name2', 'greeting', 'context']
     for k in state:
         if k in shared.settings and k not in exclude:
             output[k] = state[k]
@@ -405,11 +405,45 @@ def setup_auto_save():
         'custom_system_message',
         'chat_template_str',
 
-        # Parameters tab (ui_parameters.py)
+        # Parameters tab (ui_parameters.py) - Generation parameters
         'preset_menu',
+        'temperature',
+        'dynatemp_low',
+        'dynatemp_high',
+        'dynatemp_exponent',
+        'smoothing_factor',
+        'smoothing_curve',
+        'min_p',
+        'top_p',
+        'top_k',
+        'typical_p',
+        'xtc_threshold',
+        'xtc_probability',
+        'epsilon_cutoff',
+        'eta_cutoff',
+        'tfs',
+        'top_a',
+        'top_n_sigma',
+        'dry_multiplier',
+        'dry_allowed_length',
+        'dry_base',
+        'repetition_penalty',
+        'frequency_penalty',
+        'presence_penalty',
+        'encoder_repetition_penalty',
+        'no_repeat_ngram_size',
+        'repetition_penalty_range',
+        'penalty_alpha',
+        'guidance_scale',
+        'mirostat_mode',
+        'mirostat_tau',
+        'mirostat_eta',
         'max_new_tokens',
         'prompt_lookup_num_tokens',
         'max_tokens_second',
+        'do_sample',
+        'dynamic_temperature',
+        'temperature_last',
         'auto_max_new_tokens',
         'ban_eos_token',
         'add_bos_token',
@@ -418,9 +452,12 @@ def setup_auto_save():
         'stream',
         'static_cache',
         'seed',
+        'sampler_priority',
         'custom_stopping_strings',
         'custom_token_bans',
         'negative_prompt',
+        'dry_sequence_breakers',
+        'grammar_string',
 
         # Default tab (ui_default.py)
         'prompt_menu-default',

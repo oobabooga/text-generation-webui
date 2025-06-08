@@ -134,7 +134,7 @@ def create_interface():
         ui_default.create_ui()
         ui_notebook.create_ui()
 
-        ui_parameters.create_ui(shared.settings['preset'])  # Parameters tab
+        ui_parameters.create_ui()  # Parameters tab
         ui_model_menu.create_ui()  # Model tab
         if not shared.args.portable:
             training.create_ui()  # Training tab
