@@ -1220,6 +1220,45 @@ def load_character(character, name1, name2):
     return name1, name2, picture, greeting, context
 
 
+def reset_character_for_ui(state):
+    """Reset character fields to the currently loaded character's saved values"""
+    if state['character_menu'] and state['character_menu'] != 'None':
+        try:
+            # Reload character from file using existing function
+            name1, name2, picture, greeting, context = load_character(state['character_menu'], state['name1'], state['name2'])
+
+            # Update state
+            state['name2'] = name2
+            state['greeting'] = greeting
+            state['context'] = context
+            state['character_picture'] = picture
+
+            logger.info(f"Reset character '{state['character_menu']}' to saved values")
+
+            return state, name2, context, greeting
+
+        except Exception as e:
+            logger.error(f"Failed to reset character '{state['character_menu']}': {e}")
+            # Fall back to defaults on error
+            return clear_character_for_ui(state)
+    else:
+        # No character selected, clear to defaults
+        return clear_character_for_ui(state)
+
+
+def clear_character_for_ui(state):
+    """Clear all character fields to default empty values"""
+    # Set to default values from shared.settings
+    state['name2'] = shared.settings['name2']
+    state['context'] = shared.settings['context']
+    state['greeting'] = shared.settings['greeting']
+    state['character_picture'] = None
+
+    logger.info("Cleared character fields to defaults")
+
+    return state, state['name2'], state['context'], state['greeting']
+
+
 def load_instruction_template(template):
     if template == 'None':
         return ''

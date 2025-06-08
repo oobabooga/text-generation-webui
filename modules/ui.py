@@ -310,7 +310,7 @@ def apply_interface_values(state, use_persistent=False):
 
 def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output = copy.deepcopy(shared.settings)
-    exclude = ['name2', 'greeting', 'context']
+    exclude = []
     for k in state:
         if k in shared.settings and k not in exclude:
             output[k] = state[k]
@@ -401,8 +401,12 @@ def setup_auto_save():
         'chat-instruct_command',
         'character_menu',
         'name1',
+        'name2',
+        'context',
+        'greeting',
         'user_bio',
         'custom_system_message',
+        'instruction_template_str',
         'chat_template_str',
 
         # Parameters tab (ui_parameters.py) - Generation parameters
