@@ -1,7 +1,6 @@
 import gradio as gr
 
 from modules import shared, ui, utils
-from modules.github import clone_or_pull_repository
 from modules.utils import gradio
 
 
@@ -10,10 +9,12 @@ def create_ui():
     with gr.Tab("Session", elem_id="session-tab"):
         with gr.Row():
             with gr.Column():
-                with gr.Row():
-                    shared.gradio['toggle_dark_mode'] = gr.Button('Toggle 💡')
-                    shared.gradio['save_settings'] = gr.Button('Save UI defaults to user_data/settings.yaml', interactive=not mu)
+                gr.Markdown("## Settings")
+                shared.gradio['save_settings'] = gr.Button('Save settings to user_data/settings.yaml', elem_classes='refresh-button', interactive=not mu)
+                shared.gradio['toggle_dark_mode'] = gr.Button('Toggle light/dark theme 💡', elem_classes='refresh-button')
 
+            with gr.Column():
+                gr.Markdown("## Extensions & flags")
                 shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions and restart", interactive=not mu)
                 with gr.Row():
                     with gr.Column():
@@ -22,17 +23,7 @@ def create_ui():
                     with gr.Column():
                         shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=get_boolean_arguments(), value=get_boolean_arguments(active=True), label="Boolean command-line flags", elem_classes='checkboxgroup-table')
 
-            with gr.Column():
-                if not shared.args.portable:
-                    extension_name = gr.Textbox(lines=1, label='Install or update an extension', info='Enter the GitHub URL below and press Enter. For a list of extensions, see: https://github.com/oobabooga/text-generation-webui-extensions ⚠️  WARNING ⚠️ : extensions can execute arbitrary code. Make sure to inspect their source code before activating them.', interactive=not mu)
-                    extension_status = gr.Markdown()
-                else:
-                    pass
-
         shared.gradio['theme_state'] = gr.Textbox(visible=False, value='dark' if shared.settings['dark_theme'] else 'light')
-        if not shared.args.portable:
-            extension_name.submit(clone_or_pull_repository, extension_name, extension_status, show_progress=False)
-
         shared.gradio['save_settings'].click(
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
             handle_save_settings, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls', 'theme_state'), gradio('save_contents', 'save_filename', 'save_root', 'file_saver'), show_progress=False)
