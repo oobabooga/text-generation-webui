@@ -1,6 +1,5 @@
 import functools
 import pprint
-import random
 from pathlib import Path
 
 import yaml
