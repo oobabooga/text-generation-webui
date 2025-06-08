@@ -391,7 +391,10 @@ def setup_auto_save():
         return
 
     change_elements = [
-        'show_controls',
+        # Chat tab (ui_chat.py)
+        'start_with',
+        'enable_web_search',
+        'web_search_pages',
         'mode',
         'chat_style',
         'chat-instruct_command',
@@ -399,6 +402,9 @@ def setup_auto_save():
         'name1',
         'user_bio',
         'custom_system_message',
+        'chat_template_str',
+
+        # Parameters tab (ui_parameters.py)
         'preset_menu',
         'max_new_tokens',
         'prompt_lookup_num_tokens',
@@ -414,12 +420,16 @@ def setup_auto_save():
         'custom_stopping_strings',
         'custom_token_bans',
         'negative_prompt',
-        'theme_state',
-        'chat_template_str',
+
+        # Default tab (ui_default.py)
         'prompt_menu-default',
+
+        # Notebook tab (ui_notebook.py)
         'prompt_menu-notebook',
-        'enable_web_search',
-        'web_search_pages',
+
+        # Session tab (ui_session.py)
+        'show_controls',
+        'theme_state',
     ]
 
     for element_name in change_elements:
