@@ -269,7 +269,7 @@ button {
 
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb,
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgb(255 255 255 / 10%);
+    background: rgb(255 255 255 / 6.25%);
     border-radius: 10px;
 }
 
