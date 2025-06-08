@@ -204,7 +204,7 @@ settings = {
     'web_search_pages': 3,
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
-    'preset': 'min_p',
+    'preset': 'Qwen3 - Thinking' if Path('user_data/presets/Qwen3 - Thinking.yaml').exists() else '',
     'max_new_tokens': 512,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
@@ -237,7 +237,7 @@ settings = {
     'chat_template_str': "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {%- if message['content'] -%}\n            {{- message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n        {%- if user_bio -%}\n            {{- user_bio + '\\n\\n' -}}\n        {%- endif -%}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}",
 
     # Generation parameters - Curve shape
-    'temperature': neutral_samplers['temperature'],
+    'temperature': 0.6,
     'dynatemp_low': neutral_samplers['dynatemp_low'],
     'dynatemp_high': neutral_samplers['dynatemp_high'],
     'dynatemp_exponent': neutral_samplers['dynatemp_exponent'],
@@ -246,8 +246,8 @@ settings = {
 
     # Generation parameters - Curve cutoff
     'min_p': neutral_samplers['min_p'],
-    'top_p': neutral_samplers['top_p'],
-    'top_k': neutral_samplers['top_k'],
+    'top_p': 0.95,
+    'top_k': 20,
     'typical_p': neutral_samplers['typical_p'],
     'xtc_threshold': neutral_samplers['xtc_threshold'],
     'xtc_probability': neutral_samplers['xtc_probability'],
