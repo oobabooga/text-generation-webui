@@ -122,8 +122,7 @@ def create_chat_settings_ui():
                         ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button', interactive=not mu)
                         shared.gradio['save_character'] = gr.Button('💾', elem_classes='refresh-button', elem_id="save-character", interactive=not mu)
                         shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
-                        shared.gradio['reset_character'] = gr.Button('↺', elem_classes='refresh-button', interactive=True)
-                        shared.gradio['clear_character'] = gr.Button('⚪', elem_classes='refresh-button', interactive=True)
+                        shared.gradio['reset_character'] = gr.Button('Restore character', elem_classes='refresh-button', interactive=True)
 
                     shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
                     shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=10, label='Context', elem_classes=['add_scrollbar'])

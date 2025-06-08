@@ -17,7 +17,7 @@ def create_ui():
                         ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button', interactive=not mu)
                         shared.gradio['save_preset'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
                         shared.gradio['delete_preset'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
-                        shared.gradio['reset_preset'] = gr.Button('Reload preset', elem_classes='refresh-button', interactive=True)
+                        shared.gradio['reset_preset'] = gr.Button('Restore preset', elem_classes='refresh-button', interactive=True)
                         shared.gradio['neutralize_samplers'] = gr.Button('Neutralize samplers', elem_classes='refresh-button', interactive=True)
 
                 with gr.Column():

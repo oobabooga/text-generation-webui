@@ -53,7 +53,7 @@ div.svelte-iyf88w {
 }
 
 .refresh-button {
-    max-width: 4.4em;
+    max-width: none;
     min-width: 2.2em !important;
     height: 39.594px;
     align-self: end;
