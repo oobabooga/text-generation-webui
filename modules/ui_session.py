@@ -31,7 +31,7 @@ def create_ui():
 
         shared.gradio['toggle_dark_mode'].click(
             lambda x: 'dark' if x == 'light' else 'light', gradio('theme_state'), gradio('theme_state')).then(
-            None, None, None, js=f'() => {{{ui.dark_theme_js}; toggleDarkMode()}}')
+            None, None, None, js=f'() => {{{ui.dark_theme_js}; toggleDarkMode(); localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light")}}')
 
         # Reset interface event
         shared.gradio['reset_interface'].click(
