@@ -1,12 +1,26 @@
 import os
+import shutil
 import warnings
+from pathlib import Path
 
 from modules import shared
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
 
-os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
-os.environ['BITSANDBYTES_NOWELCOME'] = '1'
+# Set up Gradio temp directory path
+gradio_temp_path = Path('user_data') / 'cache' / 'gradio'
+
+# Set environment variables
+os.environ.update({
+    'GRADIO_ANALYTICS_ENABLED': 'False',
+    'BITSANDBYTES_NOWELCOME': '1',
+    'GRADIO_TEMP_DIR': str(gradio_temp_path)
+})
+
+# Clear and recreate gradio temp directory
+shutil.rmtree(gradio_temp_path, ignore_errors=True)
+gradio_temp_path.mkdir(parents=True, exist_ok=True)
+
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
 warnings.filterwarnings('ignore', category=UserWarning, message='Using the update method is deprecated')
 warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_name" has conflict')
@@ -27,7 +41,6 @@ import signal
 import sys
 import time
 from functools import partial
-from pathlib import Path
 from threading import Lock, Thread
 
 import yaml
