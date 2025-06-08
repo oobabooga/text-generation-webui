@@ -268,6 +268,11 @@ def list_interface_input_elements():
     # Model elements
     elements += list_model_elements()
 
+    # Other elements
+    elements += [
+        'paste_to_attachment'
+    ]
+
     return elements
 
 
@@ -473,6 +478,7 @@ def setup_auto_save():
         # Session tab (ui_session.py)
         'show_controls',
         'theme_state',
+        'paste_to_attachment'
     ]
 
     for element_name in change_elements:

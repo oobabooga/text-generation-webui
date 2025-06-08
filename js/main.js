@@ -884,7 +884,7 @@ function setupPasteHandler() {
   textbox.addEventListener("paste", async (event) => {
     const text = event.clipboardData?.getData("text");
 
-    if (text && text.length > MAX_PLAIN_TEXT_LENGTH) {
+    if (text && text.length > MAX_PLAIN_TEXT_LENGTH && document.querySelector("#paste_to_attachment input[data-testid=\"checkbox\"]")?.checked) {
       event.preventDefault();
 
       const file = new File([text], "pasted_text.txt", {
