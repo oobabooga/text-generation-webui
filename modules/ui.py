@@ -365,7 +365,7 @@ def store_current_state_and_debounce(interface_state, preset, extensions, show_c
         if _auto_save_timer is not None:
             _auto_save_timer.cancel()
 
-        _auto_save_timer = threading.Timer(2.0, _perform_debounced_save)
+        _auto_save_timer = threading.Timer(1.0, _perform_debounced_save)
         _auto_save_timer.start()
 
 
