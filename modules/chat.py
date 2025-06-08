@@ -1749,19 +1749,26 @@ def handle_character_menu_change(state):
     ]
 
 
-def handle_character_picture_upload(picture):
-    """Update cache when character picture is uploaded"""
-    if picture is not None:
-        cache_folder = Path(shared.args.disk_cache_dir)
-        if not cache_folder.exists():
-            cache_folder.mkdir()
+def handle_character_picture_change(picture):
+    """Update or clear cache when character picture changes"""
+    cache_folder = Path(shared.args.disk_cache_dir)
+    if not cache_folder.exists():
+        cache_folder.mkdir()
 
+    if picture is not None:
         # Save to cache
         picture.save(Path(f'{cache_folder}/pfp_character.png'), format='PNG')
         thumb = make_thumbnail(picture)
         thumb.save(Path(f'{cache_folder}/pfp_character_thumb.png'), format='PNG')
-
         logger.info("Updated character picture cache")
+    else:
+        # Remove cache files when picture is cleared
+        for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
+            cache_path = Path(f'{cache_folder}/{cache_file}')
+            if cache_path.exists():
+                cache_path.unlink()
+
+        logger.info("Cleared character picture cache")
 
 
 def handle_mode_change(state):
