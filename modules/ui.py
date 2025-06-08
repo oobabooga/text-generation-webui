@@ -310,7 +310,7 @@ def apply_interface_values(state, use_persistent=False):
 
 def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output = copy.deepcopy(shared.settings)
-    exclude = ['instruction_template_str']
+    exclude = []
     for k in state:
         if k in shared.settings and k not in exclude:
             output[k] = state[k]
@@ -323,6 +323,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output['seed'] = int(output['seed'])
     output['show_controls'] = show_controls
     output['dark_theme'] = True if theme_state == 'dark' else False
+    output.pop('instruction_template_str')
 
     # Save extension values in the UI
     for extension_name in extensions_list:
@@ -406,7 +407,6 @@ def setup_auto_save():
         'greeting',
         'user_bio',
         'custom_system_message',
-        'instruction_template_str',
         'chat_template_str',
 
         # Parameters tab (ui_parameters.py) - Generation parameters
