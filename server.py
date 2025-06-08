@@ -9,6 +9,8 @@ from modules.logging_colors import logger
 
 # Set up Gradio temp directory path
 gradio_temp_path = Path('user_data') / 'cache' / 'gradio'
+shutil.rmtree(gradio_temp_path, ignore_errors=True)
+gradio_temp_path.mkdir(parents=True, exist_ok=True)
 
 # Set environment variables
 os.environ.update({
@@ -16,10 +18,6 @@ os.environ.update({
     'BITSANDBYTES_NOWELCOME': '1',
     'GRADIO_TEMP_DIR': str(gradio_temp_path)
 })
-
-# Clear and recreate gradio temp directory
-shutil.rmtree(gradio_temp_path, ignore_errors=True)
-gradio_temp_path.mkdir(parents=True, exist_ok=True)
 
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
 warnings.filterwarnings('ignore', category=UserWarning, message='Using the update method is deprecated')
