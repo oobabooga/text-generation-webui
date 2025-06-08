@@ -1220,7 +1220,7 @@ def load_character(character, name1, name2):
     return name1, name2, picture, greeting, context
 
 
-def reset_character_for_ui(state):
+def restore_character_for_ui(state):
     """Reset character fields to the currently loaded character's saved values"""
     if state['character_menu'] and state['character_menu'] != 'None':
         try:

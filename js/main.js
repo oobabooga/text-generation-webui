@@ -555,6 +555,7 @@ function moveToChatTab() {
 
   newParent.insertBefore(grandParent, newParent.children[newPosition]);
   document.getElementById("save-character").style.display = "none";
+  document.getElementById("restore-character").style.display = "none";
 }
 
 function restoreOriginalPosition() {
@@ -566,6 +567,7 @@ function restoreOriginalPosition() {
     }
 
     document.getElementById("save-character").style.display = "";
+    document.getElementById("restore-character").style.display = "";
     movedElement.style.display = "";
     movedElement.children[0].style.minWidth = "";
   }
