@@ -150,6 +150,9 @@ def create_interface():
         ui_parameters.create_event_handlers()
         ui_model_menu.create_event_handlers()
 
+        # UI persistence events
+        ui.setup_auto_save()
+
         # Interface launch events
         shared.gradio['interface'].load(
             None,

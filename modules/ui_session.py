@@ -13,7 +13,6 @@ def create_ui():
                 shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions and restart", interactive=not mu)
                 with gr.Row():
                     shared.gradio['toggle_dark_mode'] = gr.Button('Toggle 💡')
-                    shared.gradio['save_settings'] = gr.Button('Save UI defaults to user_data/settings.yaml', interactive=not mu)
 
                 with gr.Row():
                     with gr.Column():
@@ -41,20 +40,6 @@ def create_ui():
         shared.gradio['toggle_dark_mode'].click(
             lambda x: 'dark' if x == 'light' else 'light', gradio('theme_state'), gradio('theme_state')).then(
             None, None, None, js=f'() => {{{ui.dark_theme_js}; toggleDarkMode()}}')
-
-        shared.gradio['save_settings'].click(
-            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            handle_save_settings, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls', 'theme_state'), gradio('save_contents', 'save_filename', 'save_root', 'file_saver'), show_progress=False)
-
-
-def handle_save_settings(state, preset, extensions, show_controls, theme):
-    contents = ui.save_settings(state, preset, extensions, show_controls, theme)
-    return [
-        contents,
-        "settings.yaml",
-        "user_data/",
-        gr.update(visible=True)
-    ]
 
 
 def set_interface_arguments(extensions, bool_active):

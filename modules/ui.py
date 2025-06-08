@@ -1,4 +1,5 @@
 import copy
+import threading
 from pathlib import Path
 
 import gradio as gr
@@ -7,6 +8,16 @@ import yaml
 import extensions
 from modules import shared
 from modules.chat import load_history
+from modules.utils import gradio
+
+# Global state for auto-saving UI settings with debouncing
+_auto_save_timer = None
+_auto_save_lock = threading.Lock()
+_last_interface_state = None
+_last_preset = None
+_last_extensions = None
+_last_show_controls = None
+_last_theme_state = None
 
 with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r') as f:
     css = f.read()
@@ -332,6 +343,163 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
             output.pop(key)
 
     return yaml.dump(output, sort_keys=False, width=float("inf"), allow_unicode=True)
+
+
+def store_current_state_and_debounce(interface_state, preset, extensions, show_controls, theme_state):
+    """Store current state and trigger debounced save"""
+    global _auto_save_timer, _last_interface_state, _last_preset, _last_extensions, _last_show_controls, _last_theme_state
+
+    if shared.args.multi_user:
+        return
+
+    # Store the current state in global variables
+    _last_interface_state = interface_state
+    _last_preset = preset
+    _last_extensions = extensions
+    _last_show_controls = show_controls
+    _last_theme_state = theme_state
+
+    # Reset the debounce timer
+    with _auto_save_lock:
+        if _auto_save_timer is not None:
+            _auto_save_timer.cancel()
+
+        _auto_save_timer = threading.Timer(2.0, _perform_debounced_save)
+        _auto_save_timer.start()
+
+
+def _perform_debounced_save():
+    """Actually perform the save using the stored state"""
+    global _auto_save_timer
+
+    try:
+        if _last_interface_state is not None:
+            contents = save_settings(_last_interface_state, _last_preset, _last_extensions, _last_show_controls, _last_theme_state)
+            Path('user_data').mkdir(exist_ok=True)
+            with open('user_data/settings.yaml', 'w', encoding='utf-8') as f:
+                f.write(contents)
+
+    except Exception as e:
+        print(f"Auto-save failed: {e}")
+    finally:
+        with _auto_save_lock:
+            _auto_save_timer = None
+
+
+def setup_auto_save():
+    """Attach auto-save to key UI elements"""
+    if shared.args.multi_user:
+        return
+
+    # Elements that should trigger auto-save on .change()
+    change_elements = [
+        'mode',
+        'chat_style',
+        'character_menu',
+        'show_controls',
+        'theme_state',
+        'name1',
+        'name2',
+        'context',
+        'greeting',
+        'user_bio',
+        'custom_system_message',
+        'instruction_template',
+        'chat_template_str',
+        'instruction_template_str',
+        'enable_web_search',
+        'web_search_pages',
+        'prompt_menu-default',
+        'prompt_menu-notebook',
+        'use_samplers-default',
+        'use_samplers-notebook',
+        'preset_menu',
+        'temperature',
+        'dynatemp_low',
+        'dynatemp_high',
+        'dynatemp_exponent',
+        'smoothing_factor',
+        'smoothing_curve',
+        'min_p',
+        'top_n_sigma',
+        'top_p',
+        'top_k',
+        'typical_p',
+        'xtc_threshold',
+        'xtc_probability',
+        'epsilon_cutoff',
+        'eta_cutoff',
+        'tfs',
+        'top_a',
+        'dry_multiplier',
+        'dry_allowed_length',
+        'dry_base',
+        'repetition_penalty',
+        'frequency_penalty',
+        'presence_penalty',
+        'encoder_repetition_penalty',
+        'no_repeat_ngram_size',
+        'repetition_penalty_range',
+        'penalty_alpha',
+        'guidance_scale',
+        'mirostat_mode',
+        'mirostat_tau',
+        'mirostat_eta',
+        'max_new_tokens',
+        'prompt_lookup_num_tokens',
+        'max_tokens_second',
+        'truncation_length',
+        'seed',
+        'do_sample',
+        'dynamic_temperature',
+        'temperature_last',
+        'auto_max_new_tokens',
+        'ban_eos_token',
+        'add_bos_token',
+        'enable_thinking',
+        'skip_special_tokens',
+        'stream',
+        'static_cache',
+        'sampler_priority',
+        'custom_stopping_strings',
+        'custom_token_bans',
+        'negative_prompt',
+        'dry_sequence_breakers',
+        'grammar_file',
+        'grammar_string',
+        'filter_by_loader',
+    ]
+
+    # Elements that should trigger auto-save on .select()
+    select_elements = [
+        'unique_id',
+    ]
+
+    # Elements that should trigger auto-save on .submit()
+    submit_elements = [
+        'rename_to',
+    ]
+
+    # Attach change handlers
+    for element_name in change_elements:
+        if element_name in shared.gradio:
+            shared.gradio[element_name].change(
+                gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+                store_current_state_and_debounce, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls', 'theme_state'), None, show_progress=False)
+
+    # Attach select handlers
+    for element_name in select_elements:
+        if element_name in shared.gradio:
+            shared.gradio[element_name].select(
+                gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+                store_current_state_and_debounce, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls', 'theme_state'), None, show_progress=False)
+
+    # Attach submit handlers
+    for element_name in submit_elements:
+        if element_name in shared.gradio:
+            shared.gradio[element_name].submit(
+                gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+                store_current_state_and_debounce, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls', 'theme_state'), None, show_progress=False)
 
 
 def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_class, interactive=True):
