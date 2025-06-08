@@ -16,7 +16,7 @@ import sys
 # os.environ["HCC_AMDGPU_TARGET"] = 'gfx1030'
 
 # Define the required versions
-TORCH_VERSION = "2.7.1"
+TORCH_VERSION = "2.6.0"
 PYTHON_VERSION = "3.11"
 LIBSTDCXX_VERSION_LINUX = "12.1.0"
 
