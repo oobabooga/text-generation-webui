@@ -9,6 +9,7 @@ from pathlib import Path
 import yaml
 
 from modules.logging_colors import logger
+from modules.presets import default_preset
 
 # Model variables
 model = None
@@ -27,99 +28,6 @@ processing_message = ''
 gradio = {}
 persistent_interface_state = {}
 need_restart = False
-
-# UI defaults
-settings = {
-    'show_controls': True,
-    'start_with': '',
-    'mode': 'instruct',
-    'chat_style': 'cai-chat',
-    'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
-    'enable_web_search': False,
-    'web_search_pages': 3,
-    'prompt-default': 'QA',
-    'prompt-notebook': 'QA',
-    'preset': 'min_p',
-    'max_new_tokens': 512,
-    'max_new_tokens_min': 1,
-    'max_new_tokens_max': 4096,
-    'prompt_lookup_num_tokens': 0,
-    'max_tokens_second': 0,
-    'auto_max_new_tokens': True,
-    'ban_eos_token': False,
-    'add_bos_token': True,
-    'enable_thinking': True,
-    'skip_special_tokens': True,
-    'stream': True,
-    'static_cache': False,
-    'truncation_length': 8192,
-    'seed': -1,
-    'custom_stopping_strings': '',
-    'custom_token_bans': '',
-    'negative_prompt': '',
-    'dark_theme': True,
-    'default_extensions': [],
-
-    # Character settings
-    'character': 'Assistant',
-    'name1': 'You',
-    'name2': 'AI',
-    'user_bio': '',
-    'context': 'The following is a conversation with an AI Large Language Model. The AI has been trained to answer questions, provide recommendations, and help with decision making. The AI follows user requests. The AI thinks outside the box.',
-    'greeting': 'How can I help you today?',
-    'custom_system_message': '',
-    'instruction_template_str': "{%- set ns = namespace(found=false) -%}\n{%- for message in messages -%}\n    {%- if message['role'] == 'system' -%}\n        {%- set ns.found = true -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if not ns.found -%}\n    {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\\n\\n' -}}\n{%- endif %}\n{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- '' + message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{-'### Instruction:\\n' + message['content'] + '\\n\\n'-}}\n        {%- else -%}\n            {{-'### Response:\\n' + message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{-'### Response:\\n'-}}\n{%- endif -%}",
-    'chat_template_str': "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {%- if message['content'] -%}\n            {{- message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n        {%- if user_bio -%}\n            {{- user_bio + '\\n\\n' -}}\n        {%- endif -%}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}",
-
-    # Generation parameters - Curve shape
-    'temperature': 1.0,
-    'dynatemp_low': 1.0,
-    'dynatemp_high': 1.0,
-    'dynatemp_exponent': 1.0,
-    'smoothing_factor': 0.0,
-    'smoothing_curve': 1.0,
-
-    # Generation parameters - Curve cutoff
-    'min_p': 0.0,
-    'top_p': 1.0,
-    'top_k': 0,
-    'typical_p': 1.0,
-    'xtc_threshold': 0.1,
-    'xtc_probability': 0.0,
-    'epsilon_cutoff': 0.0,
-    'eta_cutoff': 0.0,
-    'tfs': 1.0,
-    'top_a': 0.0,
-    'top_n_sigma': 0.0,
-
-    # Generation parameters - Repetition suppression
-    'dry_multiplier': 0.0,
-    'dry_allowed_length': 2,
-    'dry_base': 1.75,
-    'repetition_penalty': 1.0,
-    'frequency_penalty': 0.0,
-    'presence_penalty': 0.0,
-    'encoder_repetition_penalty': 1.0,
-    'no_repeat_ngram_size': 0,
-    'repetition_penalty_range': 1024,
-
-    # Generation parameters - Alternative sampling methods
-    'penalty_alpha': 0.0,
-    'guidance_scale': 1.0,
-    'mirostat_mode': 0,
-    'mirostat_tau': 5.0,
-    'mirostat_eta': 0.1,
-
-    # Generation parameters - Other options
-    'do_sample': True,
-    'dynamic_temperature': False,
-    'temperature_last': False,
-    'sampler_priority': 'repetition_penalty\npresence_penalty\nfrequency_penalty\ndry\ntop_n_sigma\ntemperature\ndynamic_temperature\nquadratic_sampling\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nmirostat\nxtc\nencoder_repetition_penalty\nno_repeat_ngram',
-    'dry_sequence_breakers': '"\\n", ":", "\\"", "*"',
-    'grammar_string': '',
-}
-
-default_settings = copy.deepcopy(settings)
 
 # Parser copied from https://github.com/vladmandic/automatic
 parser = argparse.ArgumentParser(description="Text generation web UI", conflict_handler='resolve', add_help=True, formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=55, indent_increment=2, width=200))
@@ -281,6 +189,102 @@ for arg in sys.argv[1:]:
         provided_arguments.append(alias_to_dest[arg])
     elif hasattr(args, arg):
         provided_arguments.append(arg)
+
+# Default generation parameters
+neutral_samplers = default_preset()
+
+# UI defaults
+settings = {
+    'show_controls': True,
+    'start_with': '',
+    'mode': 'instruct',
+    'chat_style': 'cai-chat',
+    'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
+    'enable_web_search': False,
+    'web_search_pages': 3,
+    'prompt-default': 'QA',
+    'prompt-notebook': 'QA',
+    'preset': 'min_p',
+    'max_new_tokens': 512,
+    'max_new_tokens_min': 1,
+    'max_new_tokens_max': 4096,
+    'prompt_lookup_num_tokens': 0,
+    'max_tokens_second': 0,
+    'auto_max_new_tokens': True,
+    'ban_eos_token': False,
+    'add_bos_token': True,
+    'enable_thinking': True,
+    'skip_special_tokens': True,
+    'stream': True,
+    'static_cache': False,
+    'truncation_length': 8192,
+    'seed': -1,
+    'custom_stopping_strings': '',
+    'custom_token_bans': '',
+    'negative_prompt': '',
+    'dark_theme': True,
+    'default_extensions': [],
+
+    # Character settings
+    'character': 'Assistant',
+    'name1': 'You',
+    'name2': 'AI',
+    'user_bio': '',
+    'context': 'The following is a conversation with an AI Large Language Model. The AI has been trained to answer questions, provide recommendations, and help with decision making. The AI follows user requests. The AI thinks outside the box.',
+    'greeting': 'How can I help you today?',
+    'custom_system_message': '',
+    'instruction_template_str': "{%- set ns = namespace(found=false) -%}\n{%- for message in messages -%}\n    {%- if message['role'] == 'system' -%}\n        {%- set ns.found = true -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if not ns.found -%}\n    {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\\n\\n' -}}\n{%- endif %}\n{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- '' + message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{-'### Instruction:\\n' + message['content'] + '\\n\\n'-}}\n        {%- else -%}\n            {{-'### Response:\\n' + message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{-'### Response:\\n'-}}\n{%- endif -%}",
+    'chat_template_str': "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {%- if message['content'] -%}\n            {{- message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n        {%- if user_bio -%}\n            {{- user_bio + '\\n\\n' -}}\n        {%- endif -%}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}",
+
+    # Generation parameters - Curve shape
+    'temperature': neutral_samplers['temperature'],
+    'dynatemp_low': neutral_samplers['dynatemp_low'],
+    'dynatemp_high': neutral_samplers['dynatemp_high'],
+    'dynatemp_exponent': neutral_samplers['dynatemp_exponent'],
+    'smoothing_factor': neutral_samplers['smoothing_factor'],
+    'smoothing_curve': neutral_samplers['smoothing_curve'],
+
+    # Generation parameters - Curve cutoff
+    'min_p': neutral_samplers['min_p'],
+    'top_p': neutral_samplers['top_p'],
+    'top_k': neutral_samplers['top_k'],
+    'typical_p': neutral_samplers['typical_p'],
+    'xtc_threshold': neutral_samplers['xtc_threshold'],
+    'xtc_probability': neutral_samplers['xtc_probability'],
+    'epsilon_cutoff': neutral_samplers['epsilon_cutoff'],
+    'eta_cutoff': neutral_samplers['eta_cutoff'],
+    'tfs': neutral_samplers['tfs'],
+    'top_a': neutral_samplers['top_a'],
+    'top_n_sigma': neutral_samplers['top_n_sigma'],
+
+    # Generation parameters - Repetition suppression
+    'dry_multiplier': neutral_samplers['dry_multiplier'],
+    'dry_allowed_length': neutral_samplers['dry_allowed_length'],
+    'dry_base': neutral_samplers['dry_base'],
+    'repetition_penalty': neutral_samplers['repetition_penalty'],
+    'frequency_penalty': neutral_samplers['frequency_penalty'],
+    'presence_penalty': neutral_samplers['presence_penalty'],
+    'encoder_repetition_penalty': neutral_samplers['encoder_repetition_penalty'],
+    'no_repeat_ngram_size': neutral_samplers['no_repeat_ngram_size'],
+    'repetition_penalty_range': neutral_samplers['repetition_penalty_range'],
+
+    # Generation parameters - Alternative sampling methods
+    'penalty_alpha': neutral_samplers['penalty_alpha'],
+    'guidance_scale': neutral_samplers['guidance_scale'],
+    'mirostat_mode': neutral_samplers['mirostat_mode'],
+    'mirostat_tau': neutral_samplers['mirostat_tau'],
+    'mirostat_eta': neutral_samplers['mirostat_eta'],
+
+    # Generation parameters - Other options
+    'do_sample': neutral_samplers['do_sample'],
+    'dynamic_temperature': neutral_samplers['dynamic_temperature'],
+    'temperature_last': neutral_samplers['temperature_last'],
+    'sampler_priority': neutral_samplers['sampler_priority'],
+    'dry_sequence_breakers': neutral_samplers['dry_sequence_breakers'],
+    'grammar_string': '',
+}
+
+default_settings = copy.deepcopy(settings)
 
 
 def do_cmd_flags_warnings():
