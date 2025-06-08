@@ -113,7 +113,7 @@ def get_gpu_choice():
             choice = get_user_choice(
                 "What is your GPU?",
                 {
-                    'A': 'NVIDIA - CUDA 12.8',
+                    'A': 'NVIDIA - CUDA 12.4',
                     'B': 'AMD - Linux/macOS only, requires ROCm 6.2.4',
                     'C': 'Apple M Series',
                     'D': 'Intel Arc (beta)',
@@ -136,7 +136,7 @@ def get_pytorch_install_command(gpu_choice):
     base_cmd = f"python -m pip install torch=={TORCH_VERSION} "
 
     if gpu_choice == "NVIDIA":
-        return base_cmd + "--index-url https://download.pytorch.org/whl/cu128"
+        return base_cmd + "--index-url https://download.pytorch.org/whl/cu124"
     elif gpu_choice == "AMD":
         return base_cmd + "--index-url https://download.pytorch.org/whl/rocm6.2.4"
     elif gpu_choice in ["APPLE", "NONE"]:
@@ -155,7 +155,7 @@ def get_pytorch_update_command(gpu_choice):
     base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} "
 
     if gpu_choice == "NVIDIA":
-        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cu128"
+        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cu124"
     elif gpu_choice == "AMD":
         return f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.2.4"
     elif gpu_choice in ["APPLE", "NONE"]:
@@ -325,7 +325,7 @@ def install_webui():
 
     # Handle CUDA version display
     elif any((is_windows(), is_linux())) and gpu_choice == "NVIDIA":
-        print("CUDA: 12.8.1")
+        print("CUDA: 12.4")
 
     # No PyTorch for AMD on Windows (?)
     elif is_windows() and gpu_choice == "AMD":
