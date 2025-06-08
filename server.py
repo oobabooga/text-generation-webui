@@ -93,6 +93,7 @@ def create_interface():
 
     # Force some events to be triggered on page load
     shared.persistent_interface_state.update({
+        'mode': shared.settings['mode'],
         'loader': shared.args.loader or 'llama.cpp',
         'filter_by_loader': (shared.args.loader or 'All') if not shared.args.portable else 'llama.cpp'
     })
