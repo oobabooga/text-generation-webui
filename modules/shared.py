@@ -39,10 +39,6 @@ settings = {
     'web_search_pages': 3,
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
-    'character': 'Assistant',
-    'name1': 'You',
-    'user_bio': '',
-    'custom_system_message': '',
     'preset': 'min_p',
     'max_new_tokens': 512,
     'max_new_tokens_min': 1,
@@ -63,8 +59,64 @@ settings = {
     'negative_prompt': '',
     'dark_theme': True,
     'default_extensions': [],
+
+    # Character settings
+    'character': 'Assistant',
+    'name1': 'You',
+    'name2': 'AI',
+    'user_bio': '',
+    'context': 'The following is a conversation with an AI Large Language Model. The AI has been trained to answer questions, provide recommendations, and help with decision making. The AI follows user requests. The AI thinks outside the box.',
+    'greeting': 'How can I help you today?',
+    'custom_system_message': '',
     'instruction_template_str': "{%- set ns = namespace(found=false) -%}\n{%- for message in messages -%}\n    {%- if message['role'] == 'system' -%}\n        {%- set ns.found = true -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if not ns.found -%}\n    {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\\n\\n' -}}\n{%- endif %}\n{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- '' + message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{-'### Instruction:\\n' + message['content'] + '\\n\\n'-}}\n        {%- else -%}\n            {{-'### Response:\\n' + message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{-'### Response:\\n'-}}\n{%- endif -%}",
     'chat_template_str': "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {%- if message['content'] -%}\n            {{- message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n        {%- if user_bio -%}\n            {{- user_bio + '\\n\\n' -}}\n        {%- endif -%}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}",
+
+    # Generation parameters - Curve shape
+    'temperature': 1.0,
+    'dynatemp_low': 1.0,
+    'dynatemp_high': 1.0,
+    'dynatemp_exponent': 1.0,
+    'smoothing_factor': 0.0,
+    'smoothing_curve': 1.0,
+
+    # Generation parameters - Curve cutoff
+    'min_p': 0.0,
+    'top_p': 1.0,
+    'top_k': 0,
+    'typical_p': 1.0,
+    'xtc_threshold': 0.1,
+    'xtc_probability': 0.0,
+    'epsilon_cutoff': 0.0,
+    'eta_cutoff': 0.0,
+    'tfs': 1.0,
+    'top_a': 0.0,
+    'top_n_sigma': 0.0,
+
+    # Generation parameters - Repetition suppression
+    'dry_multiplier': 0.0,
+    'dry_allowed_length': 2,
+    'dry_base': 1.75,
+    'repetition_penalty': 1.0,
+    'frequency_penalty': 0.0,
+    'presence_penalty': 0.0,
+    'encoder_repetition_penalty': 1.0,
+    'no_repeat_ngram_size': 0,
+    'repetition_penalty_range': 1024,
+
+    # Generation parameters - Alternative sampling methods
+    'penalty_alpha': 0.0,
+    'guidance_scale': 1.0,
+    'mirostat_mode': 0,
+    'mirostat_tau': 5.0,
+    'mirostat_eta': 0.1,
+
+    # Generation parameters - Other options
+    'do_sample': True,
+    'dynamic_temperature': False,
+    'temperature_last': False,
+    'sampler_priority': 'repetition_penalty\npresence_penalty\nfrequency_penalty\ndry\ntop_n_sigma\ntemperature\ndynamic_temperature\nquadratic_sampling\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nmirostat\nxtc\nencoder_repetition_penalty\nno_repeat_ngram',
+    'dry_sequence_breakers': '"\\n", ":", "\\"", "*"',
+    'grammar_string': '',
 }
 
 default_settings = copy.deepcopy(settings)
@@ -75,7 +127,6 @@ parser = argparse.ArgumentParser(description="Text generation web UI", conflict_
 # Basic settings
 group = parser.add_argument_group('Basic settings')
 group.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.')
-group.add_argument('--character', type=str, help='The name of the character to load in chat mode by default.')
 group.add_argument('--model', type=str, help='Name of the model to load by default.')
 group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
 group.add_argument('--model-dir', type=str, default='user_data/models', help='Path to directory with all the models.')

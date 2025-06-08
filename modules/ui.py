@@ -310,7 +310,7 @@ def apply_interface_values(state, use_persistent=False):
 
 def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output = copy.deepcopy(shared.settings)
-    exclude = ['name2', 'greeting', 'context', 'truncation_length', 'instruction_template_str']
+    exclude = []
     for k in state:
         if k in shared.settings and k not in exclude:
             output[k] = state[k]
@@ -323,6 +323,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output['seed'] = int(output['seed'])
     output['show_controls'] = show_controls
     output['dark_theme'] = True if theme_state == 'dark' else False
+    output.pop('instruction_template_str')
 
     # Save extension values in the UI
     for extension_name in extensions_list:
@@ -364,7 +365,7 @@ def store_current_state_and_debounce(interface_state, preset, extensions, show_c
         if _auto_save_timer is not None:
             _auto_save_timer.cancel()
 
-        _auto_save_timer = threading.Timer(2.0, _perform_debounced_save)
+        _auto_save_timer = threading.Timer(1.0, _perform_debounced_save)
         _auto_save_timer.start()
 
 
@@ -401,15 +402,52 @@ def setup_auto_save():
         'chat-instruct_command',
         'character_menu',
         'name1',
+        'name2',
+        'context',
+        'greeting',
         'user_bio',
         'custom_system_message',
         'chat_template_str',
 
-        # Parameters tab (ui_parameters.py)
+        # Parameters tab (ui_parameters.py) - Generation parameters
         'preset_menu',
+        'temperature',
+        'dynatemp_low',
+        'dynatemp_high',
+        'dynatemp_exponent',
+        'smoothing_factor',
+        'smoothing_curve',
+        'min_p',
+        'top_p',
+        'top_k',
+        'typical_p',
+        'xtc_threshold',
+        'xtc_probability',
+        'epsilon_cutoff',
+        'eta_cutoff',
+        'tfs',
+        'top_a',
+        'top_n_sigma',
+        'dry_multiplier',
+        'dry_allowed_length',
+        'dry_base',
+        'repetition_penalty',
+        'frequency_penalty',
+        'presence_penalty',
+        'encoder_repetition_penalty',
+        'no_repeat_ngram_size',
+        'repetition_penalty_range',
+        'penalty_alpha',
+        'guidance_scale',
+        'mirostat_mode',
+        'mirostat_tau',
+        'mirostat_eta',
         'max_new_tokens',
         'prompt_lookup_num_tokens',
         'max_tokens_second',
+        'do_sample',
+        'dynamic_temperature',
+        'temperature_last',
         'auto_max_new_tokens',
         'ban_eos_token',
         'add_bos_token',
@@ -417,10 +455,14 @@ def setup_auto_save():
         'skip_special_tokens',
         'stream',
         'static_cache',
+        'truncation_length',
         'seed',
+        'sampler_priority',
         'custom_stopping_strings',
         'custom_token_bans',
         'negative_prompt',
+        'dry_sequence_breakers',
+        'grammar_string',
 
         # Default tab (ui_default.py)
         'prompt_menu-default',

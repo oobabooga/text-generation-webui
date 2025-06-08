@@ -45,6 +45,7 @@ from modules import (
     ui_session,
     utils
 )
+from modules.chat import generate_pfp_cache
 from modules.extensions import apply_extensions
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model_if_idle
@@ -93,17 +94,20 @@ def create_interface():
 
     # Force some events to be triggered on page load
     shared.persistent_interface_state.update({
+        'mode': shared.settings['mode'],
         'loader': shared.args.loader or 'llama.cpp',
-        'mode': shared.settings['mode'] if shared.settings['mode'] == 'instruct' else gr.update(),
-        'character_menu': shared.args.character or shared.settings['character'],
-        'instruction_template_str': shared.settings['instruction_template_str'],
-        'prompt_menu-default': shared.settings['prompt-default'],
-        'prompt_menu-notebook': shared.settings['prompt-notebook'],
         'filter_by_loader': (shared.args.loader or 'All') if not shared.args.portable else 'llama.cpp'
     })
 
-    if Path("user_data/cache/pfp_character.png").exists():
-        Path("user_data/cache/pfp_character.png").unlink()
+    # Clear existing cache files
+    for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
+        cache_path = Path(f"user_data/cache/{cache_file}")
+        if cache_path.exists():
+            cache_path.unlink()
+
+    # Regenerate for default character
+    if shared.settings['mode'] != 'instruct':
+        generate_pfp_cache(shared.settings['character'])
 
     # css/js strings
     css = ui.css
@@ -134,7 +138,7 @@ def create_interface():
         ui_default.create_ui()
         ui_notebook.create_ui()
 
-        ui_parameters.create_ui(shared.settings['preset'])  # Parameters tab
+        ui_parameters.create_ui()  # Parameters tab
         ui_model_menu.create_ui()  # Model tab
         if not shared.args.portable:
             training.create_ui()  # Training tab
