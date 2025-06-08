@@ -62,6 +62,10 @@ div.svelte-iyf88w {
     flex: none;
 }
 
+.refresh-button-medium {
+    max-width: 4.4em;
+}
+
 .refresh-button-small {
     max-width: 2.2em;
 }
