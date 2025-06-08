@@ -378,7 +378,6 @@ def _perform_debounced_save():
             Path('user_data').mkdir(exist_ok=True)
             with open('user_data/settings.yaml', 'w', encoding='utf-8') as f:
                 f.write(contents)
-
     except Exception as e:
         print(f"Auto-save failed: {e}")
     finally:
@@ -391,68 +390,19 @@ def setup_auto_save():
     if shared.args.multi_user:
         return
 
-    # Elements that should trigger auto-save on .change()
     change_elements = [
+        'show_controls',
         'mode',
         'chat_style',
+        'chat-instruct_command',
         'character_menu',
-        'show_controls',
-        'theme_state',
         'name1',
-        'name2',
-        'context',
-        'greeting',
         'user_bio',
         'custom_system_message',
-        'instruction_template',
-        'chat_template_str',
-        'instruction_template_str',
-        'enable_web_search',
-        'web_search_pages',
-        'prompt_menu-default',
-        'prompt_menu-notebook',
-        'use_samplers-default',
-        'use_samplers-notebook',
         'preset_menu',
-        'temperature',
-        'dynatemp_low',
-        'dynatemp_high',
-        'dynatemp_exponent',
-        'smoothing_factor',
-        'smoothing_curve',
-        'min_p',
-        'top_n_sigma',
-        'top_p',
-        'top_k',
-        'typical_p',
-        'xtc_threshold',
-        'xtc_probability',
-        'epsilon_cutoff',
-        'eta_cutoff',
-        'tfs',
-        'top_a',
-        'dry_multiplier',
-        'dry_allowed_length',
-        'dry_base',
-        'repetition_penalty',
-        'frequency_penalty',
-        'presence_penalty',
-        'encoder_repetition_penalty',
-        'no_repeat_ngram_size',
-        'repetition_penalty_range',
-        'penalty_alpha',
-        'guidance_scale',
-        'mirostat_mode',
-        'mirostat_tau',
-        'mirostat_eta',
         'max_new_tokens',
         'prompt_lookup_num_tokens',
         'max_tokens_second',
-        'truncation_length',
-        'seed',
-        'do_sample',
-        'dynamic_temperature',
-        'temperature_last',
         'auto_max_new_tokens',
         'ban_eos_token',
         'add_bos_token',
@@ -460,44 +410,21 @@ def setup_auto_save():
         'skip_special_tokens',
         'stream',
         'static_cache',
-        'sampler_priority',
+        'seed',
         'custom_stopping_strings',
         'custom_token_bans',
         'negative_prompt',
-        'dry_sequence_breakers',
-        'grammar_file',
-        'grammar_string',
-        'filter_by_loader',
+        'theme_state',
+        'chat_template_str',
+        'prompt_menu-default',
+        'prompt_menu-notebook',
+        'enable_web_search',
+        'web_search_pages',
     ]
 
-    # Elements that should trigger auto-save on .select()
-    select_elements = [
-        'unique_id',
-    ]
-
-    # Elements that should trigger auto-save on .submit()
-    submit_elements = [
-        'rename_to',
-    ]
-
-    # Attach change handlers
     for element_name in change_elements:
         if element_name in shared.gradio:
             shared.gradio[element_name].change(
-                gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-                store_current_state_and_debounce, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls', 'theme_state'), None, show_progress=False)
-
-    # Attach select handlers
-    for element_name in select_elements:
-        if element_name in shared.gradio:
-            shared.gradio[element_name].select(
-                gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-                store_current_state_and_debounce, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls', 'theme_state'), None, show_progress=False)
-
-    # Attach submit handlers
-    for element_name in submit_elements:
-        if element_name in shared.gradio:
-            shared.gradio[element_name].submit(
                 gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
                 store_current_state_and_debounce, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls', 'theme_state'), None, show_progress=False)
 
