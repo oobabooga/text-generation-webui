@@ -375,8 +375,9 @@ def _perform_debounced_save():
     try:
         if _last_interface_state is not None:
             contents = save_settings(_last_interface_state, _last_preset, _last_extensions, _last_show_controls, _last_theme_state)
-            Path('user_data').mkdir(exist_ok=True)
-            with open('user_data/settings.yaml', 'w', encoding='utf-8') as f:
+            settings_path = Path('user_data') / 'settings.yaml'
+            settings_path.parent.mkdir(exist_ok=True)
+            with open(settings_path, 'w', encoding='utf-8') as f:
                 f.write(contents)
     except Exception as e:
         print(f"Auto-save failed: {e}")
