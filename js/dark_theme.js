@@ -6,4 +6,11 @@ function toggleDarkMode() {
   } else {
     currentCSS.setAttribute("href", "file/css/highlightjs/github-dark.min.css");
   }
+
+  // Re-highlight all code blocks once stylesheet loads
+  currentCSS.onload = function() {
+    document.querySelectorAll("pre code").forEach(block => {
+      hljs.highlightElement(block);
+    });
+  };
 }
