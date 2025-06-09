@@ -285,7 +285,10 @@ if __name__ == "__main__":
 
     if shared.args.nowebui:
         # Start the API in standalone mode
-        shared.args.extensions = [x for x in shared.args.extensions if x != 'gallery']
+        if shared.args.extensions is not None:
+            shared.args.extensions = [x for x in shared.args.extensions if x != 'gallery']
+        else:
+            shared.args.extensions = []
         if shared.args.extensions is not None and len(shared.args.extensions) > 0:
             extensions_module.load_extensions()
     else:
