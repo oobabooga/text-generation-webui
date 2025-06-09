@@ -745,14 +745,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     justify-content: space-between;
     margin: 0 !important;
     height: 36px;
+    border-color: transparent !important;
 }
 
 .hover-menu button:not(#clear-history-confirm) {
     border-bottom: 0 !important;
-}
-
-.hover-menu button:not(#clear-history-confirm):last-child {
-    border-bottom: var(--button-border-width) solid var(--border-color-primary) !important;
 }
 
 .hover-menu button:hover {
@@ -764,26 +761,30 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #show-controls {
+    background-color: white;
+    border-color: transparent !important;
     height: 36px;
-    border-top: 1px solid var(--border-color-dark) !important;
-    border-left: 1px solid var(--border-color-dark) !important;
-    border-right: 1px solid var(--border-color-dark) !important;
     border-radius: 0;
     border-bottom: 0 !important;
-    background-color: var(--darker-gray);
     padding-top: 3px;
     padding-left: 4px;
     display: flex;
+    font-weight: normal;
+}
+
+.dark #show-controls {
+    background-color: var(--darker-gray);
 }
 
 #show-controls label {
     display: flex;
     flex-direction: row-reverse;
-    font-weight: bold;
     justify-content: start;
     width: 100%;
     padding-right: 12px;
     gap: 10px;
+    font-weight: 600;
+    color: var(--button-secondary-text-color);
 }
 
 #show-controls label input {
