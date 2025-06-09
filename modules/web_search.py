@@ -38,7 +38,7 @@ def download_web_page(url, timeout=5):
         return text
     except Exception as e:
         logger.error(f"Error downloading {url}: {e}")
-        return f"[Error downloading content from {url}: {str(e)}]"
+        return ""
 
 
 def perform_web_search(query, num_pages=3, max_workers=5):
@@ -74,9 +74,7 @@ def perform_web_search(query, num_pages=3, max_workers=5):
                         'url': url,
                         'content': content
                     }
-                except Exception as e:
-                    logger.error(f"Error downloading {url}: {e}")
-                    # Include failed downloads with empty content
+                except Exception:
                     search_results[index] = {
                         'title': title,
                         'url': url,
@@ -108,7 +106,7 @@ def add_web_search_attachments(history, row_idx, user_message, search_query, sta
             return
 
         # Filter out failed downloads before adding attachments
-        successful_results = [result for result in search_results if result['content'] and result['content'].strip()]
+        successful_results = [result for result in search_results if result['content'].strip()]
 
         if not successful_results:
             logger.warning("No successful downloads to add as attachments")
@@ -130,7 +128,7 @@ def add_web_search_attachments(history, row_idx, user_message, search_query, sta
             }
             history['metadata'][key]["attachments"].append(attachment)
 
-        logger.info(f"Added {len(successful_results)} successful web search results as attachments")
+        logger.info(f"Added {len(successful_results)} successful web search results as attachments.")
 
     except Exception as e:
         logger.error(f"Error in web search: {e}")
