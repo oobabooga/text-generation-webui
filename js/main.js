@@ -146,8 +146,12 @@ const targetElement = document.getElementById("chat").parentNode.parentNode.pare
 targetElement.classList.add("pretty_scrollbar");
 targetElement.classList.add("chat-parent");
 let isScrolled = false;
+let scrollTimeout;
 
 targetElement.addEventListener("scroll", function() {
+  // Add scrolling class to disable hover effects
+  targetElement.classList.add("scrolling");
+
   let diff = targetElement.scrollHeight - targetElement.clientHeight;
   if(Math.abs(targetElement.scrollTop - diff) <= 10 || diff == 0) {
     isScrolled = false;
@@ -155,7 +159,12 @@ targetElement.addEventListener("scroll", function() {
     isScrolled = true;
   }
 
-  doSyntaxHighlighting();
+  // Clear previous timeout and set new one
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    targetElement.classList.remove("scrolling");
+    doSyntaxHighlighting(); // Only run after scrolling stops
+  }, 150);
 
 });
 

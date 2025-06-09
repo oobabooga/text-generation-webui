@@ -1624,3 +1624,8 @@ button:focus {
     justify-content: center;
     display: none;
 }
+
+/* Disable hover effects while scrolling */
+.chat-parent.scrolling * {
+    pointer-events: none !important;
+}
