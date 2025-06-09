@@ -668,7 +668,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     display: none;
     position: absolute;
     background-color: transparent;
-    left: -2px;
+    left: 23px;
     top: -5px;
     padding: var(--block-padding);
 }
