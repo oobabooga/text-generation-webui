@@ -1549,7 +1549,10 @@ def handle_start_new_chat_click(state):
 
 
 def handle_delete_chat_confirm_click(state):
-    index = str(find_all_histories(state).index(state['unique_id']))
+    filtered_histories = find_all_histories_with_first_prompts(state)
+    filtered_ids = [h[1] for h in filtered_histories]
+    index = str(filtered_ids.index(state['unique_id']))
+
     delete_history(state['unique_id'], state['character_menu'], state['mode'])
     history, unique_id = load_history_after_deletion(state, index)
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
