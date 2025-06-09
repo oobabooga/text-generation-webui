@@ -332,6 +332,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output['show_controls'] = show_controls
     output['dark_theme'] = True if theme_state == 'dark' else False
     output.pop('instruction_template_str')
+    output.pop('truncation_length')
 
     # Save extension values in the UI
     for extension_name in extensions_list:
