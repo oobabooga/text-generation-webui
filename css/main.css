@@ -1570,3 +1570,56 @@ button:focus {
 .svelte-sa48pu.stretch:has(> .hidden:only-child) {
     display: none;
 }
+
+.delete-container {
+    position: absolute;
+    right: 8px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    margin-left: 0;
+}
+
+.chat-label-with-delete {
+    position: relative;
+    padding-right: 60px;
+}
+
+.trash-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 2px;
+    opacity: 0.7;
+}
+
+.cancel-btn {
+    border: none;
+    background: #ef4444;
+    color: white;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    border-radius: 2px;
+    font-family: monospace;
+    font-size: 12px;
+    align-items: center;
+    justify-content: center;
+    display: none;
+}
+
+.confirm-btn {
+    border: none;
+    background: #22c55e;
+    color: white;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    border-radius: 2px;
+    font-family: monospace;
+    font-size: 12px;
+    align-items: center;
+    justify-content: center;
+    display: none;
+}

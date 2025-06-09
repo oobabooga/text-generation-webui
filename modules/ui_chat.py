@@ -26,15 +26,15 @@ def create_ui():
                 with gr.Row(elem_id='past-chats-buttons'):
                     shared.gradio['branch_chat'] = gr.Button('Branch', elem_classes=['refresh-button', 'refresh-button-medium'], elem_id='Branch', interactive=not mu)
                     shared.gradio['rename_chat'] = gr.Button('Rename', elem_classes=['refresh-button', 'refresh-button-medium'], interactive=not mu)
-                    shared.gradio['delete_chat'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['delete_chat'] = gr.Button('🗑️', visible=False, elem_classes='refresh-button', interactive=not mu, elem_id='delete_chat')
                     shared.gradio['Start new chat'] = gr.Button('New chat', elem_classes=['refresh-button', 'refresh-button-medium', 'focus-on-chat-input'])
                     shared.gradio['branch_index'] = gr.Number(value=-1, precision=0, visible=False, elem_id="Branch-index", interactive=True)
 
                 shared.gradio['search_chat'] = gr.Textbox(placeholder='Search chats...', max_lines=1, elem_id='search_chat')
 
                 with gr.Row(elem_id='delete-chat-row', visible=False) as shared.gradio['delete-chat-row']:
-                    shared.gradio['delete_chat-cancel'] = gr.Button('Cancel', elem_classes=['refresh-button', 'focus-on-chat-input'])
-                    shared.gradio['delete_chat-confirm'] = gr.Button('Confirm', variant='stop', elem_classes=['refresh-button', 'focus-on-chat-input'])
+                    shared.gradio['delete_chat-cancel'] = gr.Button('Cancel', elem_classes=['refresh-button', 'focus-on-chat-input'], elem_id='delete_chat-cancel')
+                    shared.gradio['delete_chat-confirm'] = gr.Button('Confirm', variant='stop', elem_classes=['refresh-button', 'focus-on-chat-input'], elem_id='delete_chat-confirm')
 
                 with gr.Row(elem_id='rename-row', visible=False) as shared.gradio['rename-row']:
                     shared.gradio['rename_to'] = gr.Textbox(label='Rename to:', placeholder='New name', elem_classes=['no-background'])
@@ -261,11 +261,9 @@ def create_event_handlers():
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.handle_start_new_chat_click, gradio('interface_state'), gradio('history', 'display', 'unique_id'), show_progress=False)
 
-    shared.gradio['delete_chat'].click(lambda: gr.update(visible=True), None, gradio('delete-chat-row'))
-    shared.gradio['delete_chat-cancel'].click(lambda: gr.update(visible=False), None, gradio('delete-chat-row'))
     shared.gradio['delete_chat-confirm'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_delete_chat_confirm_click, gradio('interface_state'), gradio('history', 'display', 'unique_id', 'delete-chat-row'), show_progress=False)
+        chat.handle_delete_chat_confirm_click, gradio('interface_state'), gradio('history', 'display', 'unique_id'), show_progress=False)
 
     shared.gradio['branch_chat'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
