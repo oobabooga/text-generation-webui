@@ -1337,7 +1337,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .dark .thinking-block {
-    background-color: var(--darker-gray);
+    background-color: transparent;
+    border: 1px solid var(--input-border-color);
 }
 
 .thinking-header {
