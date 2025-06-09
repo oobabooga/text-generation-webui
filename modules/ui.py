@@ -109,6 +109,7 @@ if not shared.args.old_colors:
         button_large_radius='0.375rem',
         button_large_padding='6px 12px',
         input_radius='0.375rem',
+        block_radius='0',
     )
 
 if Path("user_data/notification.mp3").exists():
