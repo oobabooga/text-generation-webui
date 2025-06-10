@@ -116,7 +116,7 @@ def unload_model(keep_model_name=False):
         return
 
     is_llamacpp = (shared.model.__class__.__name__ == 'LlamaServer')
-    if shared.args.loader == 'ExLlamav3_HF':
+    if shared.model.__class__.__name__ == 'Exllamav3HF':
         shared.model.unload()
 
     shared.model = shared.tokenizer = None

@@ -9,6 +9,7 @@ from pathlib import Path
 import yaml
 
 from modules.logging_colors import logger
+from modules.presets import default_preset
 
 # Model variables
 model = None
@@ -21,52 +22,12 @@ lora_names = []
 # Generation variables
 stop_everything = False
 generation_lock = None
-processing_message = '*Is typing...*'
+processing_message = ''
 
 # UI variables
 gradio = {}
 persistent_interface_state = {}
 need_restart = False
-
-# UI defaults
-settings = {
-    'show_controls': True,
-    'start_with': '',
-    'mode': 'instruct',
-    'chat_style': 'cai-chat',
-    'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
-    'prompt-default': 'QA',
-    'prompt-notebook': 'QA',
-    'character': 'Assistant',
-    'name1': 'You',
-    'user_bio': '',
-    'custom_system_message': '',
-    'preset': 'min_p',
-    'max_new_tokens': 512,
-    'max_new_tokens_min': 1,
-    'max_new_tokens_max': 4096,
-    'prompt_lookup_num_tokens': 0,
-    'max_tokens_second': 0,
-    'max_updates_second': 12,
-    'auto_max_new_tokens': True,
-    'ban_eos_token': False,
-    'add_bos_token': True,
-    'enable_thinking': True,
-    'skip_special_tokens': True,
-    'stream': True,
-    'static_cache': False,
-    'truncation_length': 8192,
-    'seed': -1,
-    'custom_stopping_strings': '',
-    'custom_token_bans': '',
-    'negative_prompt': '',
-    'dark_theme': True,
-    'default_extensions': [],
-    'instruction_template_str': "{%- set ns = namespace(found=false) -%}\n{%- for message in messages -%}\n    {%- if message['role'] == 'system' -%}\n        {%- set ns.found = true -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if not ns.found -%}\n    {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\\n\\n' -}}\n{%- endif %}\n{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- '' + message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{-'### Instruction:\\n' + message['content'] + '\\n\\n'-}}\n        {%- else -%}\n            {{-'### Response:\\n' + message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{-'### Response:\\n'-}}\n{%- endif -%}",
-    'chat_template_str': "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {%- if message['content'] -%}\n            {{- message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n        {%- if user_bio -%}\n            {{- user_bio + '\\n\\n' -}}\n        {%- endif -%}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}",
-}
-
-default_settings = copy.deepcopy(settings)
 
 # Parser copied from https://github.com/vladmandic/automatic
 parser = argparse.ArgumentParser(description="Text generation web UI", conflict_handler='resolve', add_help=True, formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=55, indent_increment=2, width=200))
@@ -74,7 +35,6 @@ parser = argparse.ArgumentParser(description="Text generation web UI", conflict_
 # Basic settings
 group = parser.add_argument_group('Basic settings')
 group.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.')
-group.add_argument('--character', type=str, help='The name of the character to load in chat mode by default.')
 group.add_argument('--model', type=str, help='Name of the model to load by default.')
 group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
 group.add_argument('--model-dir', type=str, default='user_data/models', help='Path to directory with all the models.')
@@ -229,6 +189,103 @@ for arg in sys.argv[1:]:
         provided_arguments.append(alias_to_dest[arg])
     elif hasattr(args, arg):
         provided_arguments.append(arg)
+
+# Default generation parameters
+neutral_samplers = default_preset()
+
+# UI defaults
+settings = {
+    'show_controls': True,
+    'start_with': '',
+    'mode': 'instruct',
+    'chat_style': 'cai-chat',
+    'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
+    'enable_web_search': False,
+    'web_search_pages': 3,
+    'prompt-default': 'QA',
+    'prompt-notebook': 'QA',
+    'preset': 'Qwen3 - Thinking' if Path('user_data/presets/Qwen3 - Thinking.yaml').exists() else '',
+    'max_new_tokens': 512,
+    'max_new_tokens_min': 1,
+    'max_new_tokens_max': 4096,
+    'prompt_lookup_num_tokens': 0,
+    'max_tokens_second': 0,
+    'auto_max_new_tokens': True,
+    'ban_eos_token': False,
+    'add_bos_token': True,
+    'enable_thinking': True,
+    'skip_special_tokens': True,
+    'stream': True,
+    'static_cache': False,
+    'truncation_length': 8192,
+    'seed': -1,
+    'custom_stopping_strings': '',
+    'custom_token_bans': '',
+    'negative_prompt': '',
+    'dark_theme': True,
+    'paste_to_attachment': False,
+    'default_extensions': [],
+
+    # Character settings
+    'character': 'Assistant',
+    'name1': 'You',
+    'name2': 'AI',
+    'user_bio': '',
+    'context': 'The following is a conversation with an AI Large Language Model. The AI has been trained to answer questions, provide recommendations, and help with decision making. The AI follows user requests. The AI thinks outside the box.',
+    'greeting': 'How can I help you today?',
+    'custom_system_message': '',
+    'instruction_template_str': "{%- set ns = namespace(found=false) -%}\n{%- for message in messages -%}\n    {%- if message['role'] == 'system' -%}\n        {%- set ns.found = true -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if not ns.found -%}\n    {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\\n\\n' -}}\n{%- endif %}\n{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- '' + message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{-'### Instruction:\\n' + message['content'] + '\\n\\n'-}}\n        {%- else -%}\n            {{-'### Response:\\n' + message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{-'### Response:\\n'-}}\n{%- endif -%}",
+    'chat_template_str': "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {%- if message['content'] -%}\n            {{- message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n        {%- if user_bio -%}\n            {{- user_bio + '\\n\\n' -}}\n        {%- endif -%}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}",
+
+    # Generation parameters - Curve shape
+    'temperature': 0.6,
+    'dynatemp_low': neutral_samplers['dynatemp_low'],
+    'dynatemp_high': neutral_samplers['dynatemp_high'],
+    'dynatemp_exponent': neutral_samplers['dynatemp_exponent'],
+    'smoothing_factor': neutral_samplers['smoothing_factor'],
+    'smoothing_curve': neutral_samplers['smoothing_curve'],
+
+    # Generation parameters - Curve cutoff
+    'min_p': neutral_samplers['min_p'],
+    'top_p': 0.95,
+    'top_k': 20,
+    'typical_p': neutral_samplers['typical_p'],
+    'xtc_threshold': neutral_samplers['xtc_threshold'],
+    'xtc_probability': neutral_samplers['xtc_probability'],
+    'epsilon_cutoff': neutral_samplers['epsilon_cutoff'],
+    'eta_cutoff': neutral_samplers['eta_cutoff'],
+    'tfs': neutral_samplers['tfs'],
+    'top_a': neutral_samplers['top_a'],
+    'top_n_sigma': neutral_samplers['top_n_sigma'],
+
+    # Generation parameters - Repetition suppression
+    'dry_multiplier': neutral_samplers['dry_multiplier'],
+    'dry_allowed_length': neutral_samplers['dry_allowed_length'],
+    'dry_base': neutral_samplers['dry_base'],
+    'repetition_penalty': neutral_samplers['repetition_penalty'],
+    'frequency_penalty': neutral_samplers['frequency_penalty'],
+    'presence_penalty': neutral_samplers['presence_penalty'],
+    'encoder_repetition_penalty': neutral_samplers['encoder_repetition_penalty'],
+    'no_repeat_ngram_size': neutral_samplers['no_repeat_ngram_size'],
+    'repetition_penalty_range': neutral_samplers['repetition_penalty_range'],
+
+    # Generation parameters - Alternative sampling methods
+    'penalty_alpha': neutral_samplers['penalty_alpha'],
+    'guidance_scale': neutral_samplers['guidance_scale'],
+    'mirostat_mode': neutral_samplers['mirostat_mode'],
+    'mirostat_tau': neutral_samplers['mirostat_tau'],
+    'mirostat_eta': neutral_samplers['mirostat_eta'],
+
+    # Generation parameters - Other options
+    'do_sample': neutral_samplers['do_sample'],
+    'dynamic_temperature': neutral_samplers['dynamic_temperature'],
+    'temperature_last': neutral_samplers['temperature_last'],
+    'sampler_priority': neutral_samplers['sampler_priority'],
+    'dry_sequence_breakers': neutral_samplers['dry_sequence_breakers'],
+    'grammar_string': '',
+}
+
+default_settings = copy.deepcopy(settings)
 
 
 def do_cmd_flags_warnings():

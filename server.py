@@ -1,12 +1,24 @@
 import os
+import shutil
 import warnings
+from pathlib import Path
 
 from modules import shared
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
 
-os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
-os.environ['BITSANDBYTES_NOWELCOME'] = '1'
+# Set up Gradio temp directory path
+gradio_temp_path = Path('user_data') / 'cache' / 'gradio'
+shutil.rmtree(gradio_temp_path, ignore_errors=True)
+gradio_temp_path.mkdir(parents=True, exist_ok=True)
+
+# Set environment variables
+os.environ.update({
+    'GRADIO_ANALYTICS_ENABLED': 'False',
+    'BITSANDBYTES_NOWELCOME': '1',
+    'GRADIO_TEMP_DIR': str(gradio_temp_path)
+})
+
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
 warnings.filterwarnings('ignore', category=UserWarning, message='Using the update method is deprecated')
 warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_name" has conflict')
@@ -27,7 +39,6 @@ import signal
 import sys
 import time
 from functools import partial
-from pathlib import Path
 from threading import Lock, Thread
 
 import yaml
@@ -45,6 +56,7 @@ from modules import (
     ui_session,
     utils
 )
+from modules.chat import generate_pfp_cache
 from modules.extensions import apply_extensions
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model_if_idle
@@ -60,6 +72,14 @@ from modules.utils import gradio
 
 def signal_handler(sig, frame):
     logger.info("Received Ctrl+C. Shutting down Text generation web UI gracefully.")
+
+    # Explicitly stop LlamaServer to avoid __del__ cleanup issues during shutdown
+    if shared.model and shared.model.__class__.__name__ == 'LlamaServer':
+        try:
+            shared.model.stop()
+        except:
+            pass
+
     sys.exit(0)
 
 
@@ -85,17 +105,20 @@ def create_interface():
 
     # Force some events to be triggered on page load
     shared.persistent_interface_state.update({
+        'mode': shared.settings['mode'],
         'loader': shared.args.loader or 'llama.cpp',
-        'mode': shared.settings['mode'] if shared.settings['mode'] == 'instruct' else gr.update(),
-        'character_menu': shared.args.character or shared.settings['character'],
-        'instruction_template_str': shared.settings['instruction_template_str'],
-        'prompt_menu-default': shared.settings['prompt-default'],
-        'prompt_menu-notebook': shared.settings['prompt-notebook'],
         'filter_by_loader': (shared.args.loader or 'All') if not shared.args.portable else 'llama.cpp'
     })
 
-    if Path("user_data/cache/pfp_character.png").exists():
-        Path("user_data/cache/pfp_character.png").unlink()
+    # Clear existing cache files
+    for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
+        cache_path = Path(f"user_data/cache/{cache_file}")
+        if cache_path.exists():
+            cache_path.unlink()
+
+    # Regenerate for default character
+    if shared.settings['mode'] != 'instruct':
+        generate_pfp_cache(shared.settings['character'])
 
     # css/js strings
     css = ui.css
@@ -126,7 +149,7 @@ def create_interface():
         ui_default.create_ui()
         ui_notebook.create_ui()
 
-        ui_parameters.create_ui(shared.settings['preset'])  # Parameters tab
+        ui_parameters.create_ui()  # Parameters tab
         ui_model_menu.create_ui()  # Model tab
         if not shared.args.portable:
             training.create_ui()  # Training tab
@@ -142,17 +165,35 @@ def create_interface():
         ui_parameters.create_event_handlers()
         ui_model_menu.create_event_handlers()
 
+        # UI persistence events
+        ui.setup_auto_save()
+
         # Interface launch events
         shared.gradio['interface'].load(
             None,
             gradio('show_controls'),
             None,
             js=f"""(x) => {{
-                if ({str(shared.settings['dark_theme']).lower()}) {{
-                    document.getElementsByTagName('body')[0].classList.add('dark');
-                }}
-                else {{
-                    document.getElementsByTagName('body')[0].classList.remove('dark');
+                // Check if this is first visit or if localStorage is out of sync
+                const savedTheme = localStorage.getItem('theme');
+                const serverTheme = {str(shared.settings['dark_theme']).lower()} ? 'dark' : 'light';
+
+                // If no saved theme or mismatch with server on first load, use server setting
+                if (!savedTheme || !sessionStorage.getItem('theme_synced')) {{
+                    localStorage.setItem('theme', serverTheme);
+                    sessionStorage.setItem('theme_synced', 'true');
+                    if (serverTheme === 'dark') {{
+                        document.getElementsByTagName('body')[0].classList.add('dark');
+                    }} else {{
+                        document.getElementsByTagName('body')[0].classList.remove('dark');
+                    }}
+                }} else {{
+                    // Use localStorage for subsequent reloads
+                    if (savedTheme === 'dark') {{
+                        document.getElementsByTagName('body')[0].classList.add('dark');
+                    }} else {{
+                        document.getElementsByTagName('body')[0].classList.remove('dark');
+                    }}
                 }}
                 {js}
                 {ui.show_controls_js}

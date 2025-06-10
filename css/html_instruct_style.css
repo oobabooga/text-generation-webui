@@ -17,6 +17,14 @@
     color: #d1d5db !important;
 }
 
+.chat .message-body :is(th, td) {
+    border-color: #40404096 !important;
+}
+
+.dark .chat .message-body :is(th, td) {
+    border-color: #ffffff75 !important;
+}
+
 .chat .message-body :is(p, ul, ol) {
     margin: 1.25em 0 !important;
 }

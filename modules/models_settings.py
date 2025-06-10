@@ -329,6 +329,7 @@ def estimate_vram(gguf_file, gpu_layers, ctx_size, cache_type):
     # Extract values from metadata
     n_layers = None
     n_kv_heads = None
+    n_attention_heads = None  # Fallback for models without separate KV heads
     embedding_dim = None
 
     for key, value in metadata.items():
@@ -336,8 +337,13 @@ def estimate_vram(gguf_file, gpu_layers, ctx_size, cache_type):
             n_layers = value
         elif key.endswith('.attention.head_count_kv'):
             n_kv_heads = max(value) if isinstance(value, list) else value
+        elif key.endswith('.attention.head_count'):
+            n_attention_heads = max(value) if isinstance(value, list) else value
         elif key.endswith('.embedding_length'):
             embedding_dim = value
+
+    if n_kv_heads is None:
+        n_kv_heads = n_attention_heads
 
     if gpu_layers > n_layers:
         gpu_layers = n_layers
