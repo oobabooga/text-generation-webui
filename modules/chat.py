@@ -760,7 +760,18 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         if is_stream:
             yield output
 
-    output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+    if _continue:
+        # Reprocess the entire internal text for extensions (like translation)
+        full_internal = output['internal'][-1][1]
+        if state['mode'] in ['chat', 'chat-instruct']:
+            full_visible = re.sub("(<USER>|<user>|{{user}})", state['name1'], full_internal)
+        else:
+            full_visible = full_internal
+
+        full_visible = html.escape(full_visible)
+        output['visible'][-1][1] = apply_extensions('output', full_visible, state, is_chat=True)
+    else:
+        output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
 
     # Final sync for version metadata (in case streaming was disabled)
     if regenerate:
