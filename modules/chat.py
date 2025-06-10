@@ -223,7 +223,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 for attachment in metadata[user_key]["attachments"]:
                     filename = attachment.get("name", "file")
                     content = attachment.get("content", "")
-                    attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
+                    if attachment.get("type") == "text/html" and attachment.get("url"):
+                        attachments_text += f"\nName: {filename}\nURL: {attachment['url']}\nContents:\n\n=====\n{content}\n=====\n\n"
+                    else:
+                        attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
                 if attachments_text:
                     enhanced_user_msg = f"{user_msg}\n\nATTACHMENTS:\n{attachments_text}"
@@ -250,7 +253,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 for attachment in metadata[user_key]["attachments"]:
                     filename = attachment.get("name", "file")
                     content = attachment.get("content", "")
-                    attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
+                    if attachment.get("type") == "text/html" and attachment.get("url"):
+                        attachments_text += f"\nName: {filename}\nURL: {attachment['url']}\nContents:\n\n=====\n{content}\n=====\n\n"
+                    else:
+                        attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
                 if attachments_text:
                     user_input = f"{user_input}\n\nATTACHMENTS:\n{attachments_text}"
