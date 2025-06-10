@@ -9,8 +9,12 @@ function toggleDarkMode() {
 
   // Re-highlight all code blocks once stylesheet loads
   currentCSS.onload = function() {
-    document.querySelectorAll("pre code").forEach(block => {
-      hljs.highlightElement(block);
+    const messageBodies = document.getElementById("chat").querySelectorAll(".message-body");
+    messageBodies.forEach((messageBody) => {
+      const codeBlocks = messageBody.querySelectorAll("pre code");
+      codeBlocks.forEach((codeBlock) => {
+        hljs.highlightElement(codeBlock);
+      });
     });
   };
 }
