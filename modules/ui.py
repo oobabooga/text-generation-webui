@@ -27,9 +27,9 @@ with open(Path(__file__).resolve().parent / '../css/katex/katex.min.css', 'r') a
     css += f.read()
 with open(Path(__file__).resolve().parent / '../css/highlightjs/highlightjs-copy.min.css', 'r') as f:
     css += f.read()
-with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/main.js', 'r', encoding='utf-8') as f:
     js = f.read()
-with open(Path(__file__).resolve().parent / '../js/global_scope_js.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/global_scope_js.js', 'r', encoding='utf-8') as f:
     global_scope_js = f.read()
 with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
     save_files_js = f.read()
