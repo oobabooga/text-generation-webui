@@ -224,7 +224,6 @@ settings = {
     'negative_prompt': '',
     'dark_theme': True,
     'paste_to_attachment': False,
-    'default_extensions': [],
 
     # Character settings
     'character': 'Assistant',

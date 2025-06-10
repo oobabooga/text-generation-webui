@@ -249,13 +249,7 @@ if __name__ == "__main__":
     shared.model_config['.*'] = get_fallback_settings()
     shared.model_config.move_to_end('.*', last=False)  # Move to the beginning
 
-    # Activate the extensions listed on settings.yaml
     extensions_module.available_extensions = utils.get_available_extensions()
-    for extension in shared.settings['default_extensions']:
-        shared.args.extensions = shared.args.extensions or []
-        if extension not in shared.args.extensions:
-            shared.args.extensions.append(extension)
-
     available_models = utils.get_available_models()
 
     # Model defined through --model
