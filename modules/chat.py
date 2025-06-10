@@ -639,6 +639,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     visible_text = None
     stopping_strings = get_stopping_strings(state)
     is_stream = state['stream']
+
     # Prepare the input
     if not (regenerate or _continue):
         visible_text = html.escape(text)
@@ -658,6 +659,8 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         # Apply extensions
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
         text = apply_extensions('input', text, state, is_chat=True)
+
+        # Current row index
         output['internal'].append([text, ''])
         output['visible'].append([visible_text, ''])
         # Add metadata with timestamp
@@ -702,14 +705,16 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
                     'internal': output['internal'],
                     'metadata': output['metadata']
                 }
+
     # Generate the prompt
     kwargs = {
         '_continue': _continue,
         'history': output if _continue else {
             k: (v[:-1] if k in ['internal', 'visible'] else v)
             for k, v in output.items()
+        }
     }
-    }
+
     prompt = apply_extensions('custom_generate_chat_prompt', text, state, **kwargs)
     if prompt is None:
         prompt = generate_chat_prompt(text, state, **kwargs)
@@ -721,61 +726,27 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     # Generate
     reply = None
     for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True, for_ui=for_ui)):
-        # Handle start_with text (add to both internal and visible)
-        if state.get('start_with', '') and j == 0 and not _continue and not regenerate:
-            start_text = state['start_with']
-            # Add to internal (English) version
-            reply = start_text + " " + reply
-            # Add to visible (translated) version
-            translated_start = apply_extensions('output', start_text, state, is_chat=True)
-            state['start_with'] = ''  # Clear it after using
 
         # Extract the reply
         if state['mode'] in ['chat', 'chat-instruct']:
             visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
         else:
             visible_reply = reply
+
         visible_reply = html.escape(visible_reply)
+
         if shared.stop_everything:
             output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
             yield output
             return
 
         if _continue:
-            # Separate already existing content from new content
-            original_internal = output['internal'][-1][1]
-            original_visible = output['visible'][-1][1]
-
-            # Get only the new generated part
-            new_content = reply[len(original_internal):] if reply.startswith(original_internal) else reply
-            new_content = new_content.lstrip()
-
-            # Translate only the new part
-            translated_new = apply_extensions('output', new_content, state, is_chat=True)
-
-            # Update both internal and visible versions
-            updated_internal = original_internal + " " + new_content
-            updated_visible = original_visible + " " + translated_new
-
-            output['internal'][-1] = [text, updated_internal]
-            output['visible'][-1] = [visible_text, updated_visible]
-            
-            row_idx = len(output['internal']) - 1
-            key = f"assistant_{row_idx}"
-            current_idx = output['metadata'][key]['current_version_index']
-            output['metadata'][key]['versions'][current_idx].update({
-                'content': output['internal'][row_idx][1],
-                'visible_content': output['visible'][row_idx][1]
-            })
-
-            if is_stream:
-                yield output
+            output['internal'][-1] = [text, last_reply[0] + reply]
+            output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
         elif not (j == 0 and visible_reply.strip() == ''):
-            # For normal generation, translate the whole reply
-            translated_reply = apply_extensions('output', visible_reply.lstrip(' '), state, is_chat=True)
             output['internal'][-1] = [text, reply.lstrip(' ')]
-            output['visible'][-1] = [visible_text, translated_reply]
-            
+            output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
+
         # Keep version metadata in sync during streaming (for regeneration)
         if regenerate:
             row_idx = len(output['internal']) - 1
@@ -785,8 +756,11 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
                 'content': output['internal'][row_idx][1],
                 'visible_content': output['visible'][row_idx][1]
             })
-            if is_stream:
-                yield output
+
+        if is_stream:
+            yield output
+
+    output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
 
     # Final sync for version metadata (in case streaming was disabled)
     if regenerate:
