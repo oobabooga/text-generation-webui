@@ -422,9 +422,17 @@ def filter_stderr_with_progress(process_stderr):
 
             if match:
                 progress = float(match.group(1))
+
+                # Extract just the part from "prompt processing" onwards
+                prompt_processing_idx = line.find('prompt processing')
+                if prompt_processing_idx != -1:
+                    display_line = line[prompt_processing_idx:]
+                else:
+                    display_line = line  # fallback to full line
+
                 # choose carriage return for in-progress or newline at completion
                 end_char = '\r' if progress < 1.0 else '\n'
-                print(line, end=end_char, file=sys.stderr, flush=True)
+                print(display_line, end=end_char, file=sys.stderr, flush=True)
                 last_was_progress = (progress < 1.0)
 
             # skip noise lines
