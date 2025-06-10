@@ -260,6 +260,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
             output = "```\n"
             for link in links:
                 output += f"{Path(link).name}" + "\n"
+
             output += "```"
             yield output
             return
