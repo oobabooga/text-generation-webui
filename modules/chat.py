@@ -1271,8 +1271,6 @@ def clear_character_for_ui(state):
         if cache_path.exists():
             cache_path.unlink()
 
-    logger.info("Cleared character fields and picture cache")
-
     return state, state['name2'], state['context'], state['greeting'], None
 
 
@@ -1779,15 +1777,12 @@ def handle_character_picture_change(picture):
         picture.save(Path(f'{cache_folder}/pfp_character.png'), format='PNG')
         thumb = make_thumbnail(picture)
         thumb.save(Path(f'{cache_folder}/pfp_character_thumb.png'), format='PNG')
-        logger.info("Updated character picture cache")
     else:
         # Remove cache files when picture is cleared
         for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
             cache_path = Path(f'{cache_folder}/{cache_file}')
             if cache_path.exists():
                 cache_path.unlink()
-
-        logger.info("Cleared character picture cache")
 
 
 def handle_mode_change(state):
