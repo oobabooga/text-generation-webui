@@ -1,5 +1,4 @@
 accelerate==1.5.*
-beautifulsoup4==4.13.4
 bitsandbytes==0.45.*
 colorama
 datasets
@@ -7,6 +6,7 @@ duckduckgo_search==8.0.2
 einops
 fastapi==0.112.4
 gradio==4.37.*
+html2text==2025.4.15
 jinja2==3.1.6
 markdown
 numpy==1.26.*

@@ -223,7 +223,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 for attachment in metadata[user_key]["attachments"]:
                     filename = attachment.get("name", "file")
                     content = attachment.get("content", "")
-                    attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
+                    if attachment.get("type") == "text/html" and attachment.get("url"):
+                        attachments_text += f"\nName: {filename}\nURL: {attachment['url']}\nContents:\n\n=====\n{content}\n=====\n\n"
+                    else:
+                        attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
                 if attachments_text:
                     enhanced_user_msg = f"{user_msg}\n\nATTACHMENTS:\n{attachments_text}"
@@ -250,7 +253,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 for attachment in metadata[user_key]["attachments"]:
                     filename = attachment.get("name", "file")
                     content = attachment.get("content", "")
-                    attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
+                    if attachment.get("type") == "text/html" and attachment.get("url"):
+                        attachments_text += f"\nName: {filename}\nURL: {attachment['url']}\nContents:\n\n=====\n{content}\n=====\n\n"
+                    else:
+                        attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
                 if attachments_text:
                     user_input = f"{user_input}\n\nATTACHMENTS:\n{attachments_text}"
@@ -1220,6 +1226,45 @@ def load_character(character, name1, name2):
     return name1, name2, picture, greeting, context
 
 
+def restore_character_for_ui(state):
+    """Reset character fields to the currently loaded character's saved values"""
+    if state['character_menu'] and state['character_menu'] != 'None':
+        try:
+            name1, name2, picture, greeting, context = load_character(state['character_menu'], state['name1'], state['name2'])
+
+            state['name2'] = name2
+            state['greeting'] = greeting
+            state['context'] = context
+            state['character_picture'] = picture  # This triggers cache update via generate_pfp_cache
+
+            return state, name2, context, greeting, picture
+
+        except Exception as e:
+            logger.error(f"Failed to reset character '{state['character_menu']}': {e}")
+            return clear_character_for_ui(state)
+    else:
+        return clear_character_for_ui(state)
+
+
+def clear_character_for_ui(state):
+    """Clear all character fields and picture cache"""
+    state['name2'] = shared.settings['name2']
+    state['context'] = shared.settings['context']
+    state['greeting'] = shared.settings['greeting']
+    state['character_picture'] = None
+
+    # Clear the cache files
+    cache_folder = Path(shared.args.disk_cache_dir)
+    for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
+        cache_path = Path(f'{cache_folder}/{cache_file}')
+        if cache_path.exists():
+            cache_path.unlink()
+
+    logger.info("Cleared character fields and picture cache")
+
+    return state, state['name2'], state['context'], state['greeting'], None
+
+
 def load_instruction_template(template):
     if template == 'None':
         return ''
@@ -1510,7 +1555,10 @@ def handle_start_new_chat_click(state):
 
 
 def handle_delete_chat_confirm_click(state):
-    index = str(find_all_histories(state).index(state['unique_id']))
+    filtered_histories = find_all_histories_with_first_prompts(state)
+    filtered_ids = [h[1] for h in filtered_histories]
+    index = str(filtered_ids.index(state['unique_id']))
+
     delete_history(state['unique_id'], state['character_menu'], state['mode'])
     history, unique_id = load_history_after_deletion(state, index)
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
@@ -1523,7 +1571,6 @@ def handle_delete_chat_confirm_click(state):
         unique_id,
         gr.update(visible=False),
         gr.update(visible=True),
-        gr.update(visible=False)
     ]
 
 
@@ -1708,6 +1755,28 @@ def handle_character_menu_change(state):
         context,
         past_chats_update,
     ]
+
+
+def handle_character_picture_change(picture):
+    """Update or clear cache when character picture changes"""
+    cache_folder = Path(shared.args.disk_cache_dir)
+    if not cache_folder.exists():
+        cache_folder.mkdir()
+
+    if picture is not None:
+        # Save to cache
+        picture.save(Path(f'{cache_folder}/pfp_character.png'), format='PNG')
+        thumb = make_thumbnail(picture)
+        thumb.save(Path(f'{cache_folder}/pfp_character_thumb.png'), format='PNG')
+        logger.info("Updated character picture cache")
+    else:
+        # Remove cache files when picture is cleared
+        for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
+            cache_path = Path(f'{cache_folder}/{cache_file}')
+            if cache_path.exists():
+                cache_path.unlink()
+
+        logger.info("Cleared character picture cache")
 
 
 def handle_mode_change(state):

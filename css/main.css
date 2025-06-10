@@ -1,11 +1,11 @@
 :root {
-    --darker-gray: #202123;
-    --dark-gray: #2A2B32;
-    --light-gray: #373943;
+    --darker-gray: #1C1C1D;
+    --dark-gray: #212125;
+    --light-gray: #2C2E34;
     --light-theme-gray: #f9fbff;
     --border-color-dark: #525252;
     --header-width: 112px;
-    --selected-item-color-dark: #2E2F38;
+    --selected-item-color-dark: #282930;
 }
 
 @font-face {
@@ -53,13 +53,17 @@ div.svelte-iyf88w {
 }
 
 .refresh-button {
-    max-width: 4.4em;
+    max-width: none;
     min-width: 2.2em !important;
     height: 39.594px;
     align-self: end;
     line-height: 1em;
     border-radius: 0.375rem;
     flex: none;
+}
+
+.refresh-button-medium {
+    max-width: 4.4em;
 }
 
 .refresh-button-small {
@@ -265,7 +269,7 @@ button {
 
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb,
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgb(255 255 255 / 10%);
+    background: rgb(255 255 255 / 6.25%);
     border-radius: 10px;
 }
 
@@ -664,7 +668,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     display: none;
     position: absolute;
     background-color: transparent;
-    left: -2px;
+    left: 23px;
     top: -5px;
     padding: var(--block-padding);
 }
@@ -741,14 +745,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     justify-content: space-between;
     margin: 0 !important;
     height: 36px;
+    border-color: transparent !important;
 }
 
 .hover-menu button:not(#clear-history-confirm) {
     border-bottom: 0 !important;
-}
-
-.hover-menu button:not(#clear-history-confirm):last-child {
-    border-bottom: var(--button-border-width) solid var(--border-color-primary) !important;
 }
 
 .hover-menu button:hover {
@@ -760,26 +761,30 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #show-controls {
+    background-color: white;
+    border-color: transparent !important;
     height: 36px;
-    border-top: 1px solid var(--border-color-dark) !important;
-    border-left: 1px solid var(--border-color-dark) !important;
-    border-right: 1px solid var(--border-color-dark) !important;
     border-radius: 0;
     border-bottom: 0 !important;
-    background-color: var(--darker-gray);
     padding-top: 3px;
     padding-left: 4px;
     display: flex;
+    font-weight: normal;
+}
+
+.dark #show-controls {
+    background-color: var(--darker-gray);
 }
 
 #show-controls label {
     display: flex;
     flex-direction: row-reverse;
-    font-weight: bold;
     justify-content: start;
     width: 100%;
     padding-right: 12px;
     gap: 10px;
+    font-weight: 600;
+    color: var(--button-secondary-text-color);
 }
 
 #show-controls label input {
@@ -1332,7 +1337,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .dark .thinking-block {
-    background-color: var(--darker-gray);
+    background-color: transparent;
+    border: 1px solid var(--input-border-color);
 }
 
 .thinking-header {
@@ -1564,4 +1570,62 @@ button:focus {
 /* Fix extra gaps for hidden elements on the right sidebar */
 .svelte-sa48pu.stretch:has(> .hidden:only-child) {
     display: none;
+}
+
+.delete-container {
+    position: absolute;
+    right: 8px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    margin-left: 0;
+}
+
+.chat-label-with-delete {
+    position: relative;
+    padding-right: 60px;
+}
+
+.trash-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 2px;
+    opacity: 0.7;
+}
+
+.cancel-btn {
+    border: none;
+    background: #ef4444;
+    color: white;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    border-radius: 2px;
+    font-family: monospace;
+    font-size: 12px;
+    align-items: center;
+    justify-content: center;
+    display: none;
+}
+
+.confirm-btn {
+    border: none;
+    background: #22c55e;
+    color: white;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    border-radius: 2px;
+    font-family: monospace;
+    font-size: 12px;
+    align-items: center;
+    justify-content: center;
+    display: none;
+}
+
+/* Disable hover effects while scrolling */
+.chat-parent.scrolling * {
+    pointer-events: none !important;
 }
