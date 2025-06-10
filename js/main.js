@@ -146,8 +146,12 @@ const targetElement = document.getElementById("chat").parentNode.parentNode.pare
 targetElement.classList.add("pretty_scrollbar");
 targetElement.classList.add("chat-parent");
 let isScrolled = false;
+let scrollTimeout;
 
 targetElement.addEventListener("scroll", function() {
+  // Add scrolling class to disable hover effects
+  targetElement.classList.add("scrolling");
+
   let diff = targetElement.scrollHeight - targetElement.clientHeight;
   if(Math.abs(targetElement.scrollTop - diff) <= 10 || diff == 0) {
     isScrolled = false;
@@ -155,7 +159,12 @@ targetElement.addEventListener("scroll", function() {
     isScrolled = true;
   }
 
-  doSyntaxHighlighting();
+  // Clear previous timeout and set new one
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    targetElement.classList.remove("scrolling");
+    doSyntaxHighlighting(); // Only run after scrolling stops
+  }, 150);
 
 });
 
@@ -555,6 +564,7 @@ function moveToChatTab() {
 
   newParent.insertBefore(grandParent, newParent.children[newPosition]);
   document.getElementById("save-character").style.display = "none";
+  document.getElementById("restore-character").style.display = "none";
 }
 
 function restoreOriginalPosition() {
@@ -566,6 +576,7 @@ function restoreOriginalPosition() {
     }
 
     document.getElementById("save-character").style.display = "";
+    document.getElementById("restore-character").style.display = "";
     movedElement.style.display = "";
     movedElement.children[0].style.minWidth = "";
   }
@@ -884,7 +895,7 @@ function setupPasteHandler() {
   textbox.addEventListener("paste", async (event) => {
     const text = event.clipboardData?.getData("text");
 
-    if (text && text.length > MAX_PLAIN_TEXT_LENGTH) {
+    if (text && text.length > MAX_PLAIN_TEXT_LENGTH && document.querySelector("#paste_to_attachment input[data-testid=\"checkbox\"]")?.checked) {
       event.preventDefault();
 
       const file = new File([text], "pasted_text.txt", {
@@ -915,3 +926,73 @@ document.querySelector("#chat-input .upload-button").title = "Upload text files,
 
 // Activate web search
 document.getElementById("web-search").title = "Search the internet with DuckDuckGo";
+
+//------------------------------------------------
+// Inline icons for deleting past chats
+//------------------------------------------------
+
+function addMiniDeletes() {
+  document.querySelectorAll("#past-chats label:not(.has-delete)").forEach(label => {
+    const container = document.createElement("span");
+    container.className = "delete-container";
+
+    label.classList.add("chat-label-with-delete");
+
+    const trashBtn = document.createElement("button");
+    trashBtn.innerHTML = "🗑️";
+    trashBtn.className = "trash-btn";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.innerHTML = "✕";
+    cancelBtn.className = "cancel-btn";
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.innerHTML = "✓";
+    confirmBtn.className = "confirm-btn";
+
+    label.addEventListener("mouseenter", () => {
+      container.style.opacity = "1";
+    });
+
+    label.addEventListener("mouseleave", () => {
+      container.style.opacity = "0";
+    });
+
+    trashBtn.onclick = (e) => {
+      e.stopPropagation();
+      label.querySelector("input").click();
+      document.querySelector("#delete_chat").click();
+      trashBtn.style.display = "none";
+      cancelBtn.style.display = "flex";
+      confirmBtn.style.display = "flex";
+    };
+
+    cancelBtn.onclick = (e) => {
+      e.stopPropagation();
+      document.querySelector("#delete_chat-cancel").click();
+      resetButtons();
+    };
+
+    confirmBtn.onclick = (e) => {
+      e.stopPropagation();
+      document.querySelector("#delete_chat-confirm").click();
+      resetButtons();
+    };
+
+    function resetButtons() {
+      trashBtn.style.display = "inline";
+      cancelBtn.style.display = "none";
+      confirmBtn.style.display = "none";
+    }
+
+    container.append(trashBtn, cancelBtn, confirmBtn);
+    label.appendChild(container);
+    label.classList.add("has-delete");
+  });
+}
+
+new MutationObserver(() => addMiniDeletes()).observe(
+  document.querySelector("#past-chats"),
+  {childList: true, subtree: true}
+);
+addMiniDeletes();

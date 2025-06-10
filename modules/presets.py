@@ -1,6 +1,5 @@
 import functools
 import pprint
-import random
 from pathlib import Path
 
 import yaml
@@ -93,68 +92,17 @@ def load_preset_for_ui(name, state):
     return state, *[generate_params[k] for k in presets_params()]
 
 
-def random_preset(state):
-    params_and_values = {
-        'remove_tail_tokens': {
-            'top_p': [0.5, 0.8, 0.9, 0.95, 0.99],
-            'min_p': [0.5, 0.2, 0.1, 0.05, 0.01],
-            'top_k': [3, 5, 10, 20, 30, 40],
-            'typical_p': [0.2, 0.575, 0.95],
-            'tfs': [0.5, 0.8, 0.9, 0.95, 0.99],
-            'top_a': [0.5, 0.2, 0.1, 0.05, 0.01],
-            'epsilon_cutoff': [1, 3, 5, 7, 9],
-            'eta_cutoff': [3, 6, 9, 12, 15, 18],
-        },
-        'flatten_distribution': {
-            'temperature': [0.1, 0.5, 0.7, 0.8, 1, 1.2, 1.5, 2.0, 5.0],
-            'dynamic_temperature': [
-                [0.1, 1],
-                [0.1, 1.5],
-                [0.1, 2],
-                [0.1, 5],
-                [0.5, 1],
-                [0.5, 1.5],
-                [0.5, 2],
-                [0.5, 5],
-                [0.8, 1],
-                [0.8, 1.5],
-                [0.8, 2],
-                [0.8, 5],
-                [1, 1.5],
-                [1, 2],
-                [1, 5]
-            ],
-            'smoothing_factor': [0.2, 0.3, 0.6, 1.2],
-        },
-        'repetition': {
-            'repetition_penalty': [1, 1.05, 1.1, 1.15, 1.20, 1.25],
-            'presence_penalty': [0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 2.0],
-            'frequency_penalty': [0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 2.0],
-        },
-        'other': {
-            'temperature_last': [True, False],
-        }
-    }
-
-    generate_params = default_preset()
-    for cat in params_and_values:
-        choices = list(params_and_values[cat].keys())
-        if shared.args.loader is not None:
-            choices = [x for x in choices if loader_contains(x)]
-
-        if len(choices) > 0:
-            choice = random.choice(choices)
-            value = random.choice(params_and_values[cat][choice])
-            if choice == 'dynamic_temperature':
-                generate_params['dynamic_temperature'] = True
-                generate_params['dynatemp_low'] = value[0]
-                generate_params['dynatemp_high'] = value[1]
-            else:
-                generate_params[choice] = value
-
+def reset_preset_for_ui(name, state):
+    """Reset current preset to its saved values from file"""
+    generate_params = load_preset(name, verbose=True)
     state.update(generate_params)
-    logger.info("GENERATED_PRESET=")
-    pprint.PrettyPrinter(indent=4, width=1, sort_dicts=False).pprint(remove_defaults(state))
+    return state, *[generate_params[k] for k in presets_params()]
+
+
+def neutralize_samplers_for_ui(state):
+    """Set all samplers to their default/neutral values"""
+    generate_params = default_preset()
+    state.update(generate_params)
     return state, *[generate_params[k] for k in presets_params()]
 
 

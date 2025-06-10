@@ -520,17 +520,23 @@ def generate_instruct_html(history, last_message_only=False):
     return output
 
 
+def get_character_image_with_cache_buster():
+    """Get character image URL with cache busting based on file modification time"""
+    cache_path = Path("user_data/cache/pfp_character_thumb.png")
+    if cache_path.exists():
+        mtime = int(cache_path.stat().st_mtime)
+        return f'<img src="file/user_data/cache/pfp_character_thumb.png?{mtime}" class="pfp_character">'
+
+    return ''
+
+
 def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=False, last_message_only=False):
     if not last_message_only:
         output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat"><div class="messages">'
     else:
         output = ""
 
-    # We use ?character and ?time.time() to force the browser to reset caches
-    img_bot = (
-        f'<img src="file/user_data/cache/pfp_character_thumb.png?{character}" class="pfp_character">'
-        if Path("user_data/cache/pfp_character_thumb.png").exists() else ''
-    )
+    img_bot = get_character_image_with_cache_buster()
 
     def create_message(role, content, raw_content):
         """Inner function for CAI-style messages."""

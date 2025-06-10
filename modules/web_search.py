@@ -3,8 +3,6 @@ from concurrent.futures import as_completed
 from datetime import datetime
 
 import requests
-from bs4 import BeautifulSoup
-from duckduckgo_search import DDGS
 
 from modules.logging_colors import logger
 
@@ -14,35 +12,39 @@ def get_current_timestamp():
     return datetime.now().strftime('%b %d, %Y %H:%M')
 
 
-def download_web_page(url, timeout=5):
-    """Download and extract text from a web page"""
+def download_web_page(url, timeout=10):
+    """
+    Download a web page and convert its HTML content to structured Markdown text.
+    """
+    import html2text
+
     try:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
         response = requests.get(url, headers=headers, timeout=timeout)
-        response.raise_for_status()
+        response.raise_for_status()  # Raise an exception for bad status codes
 
-        soup = BeautifulSoup(response.content, 'html.parser')
+        # Initialize the HTML to Markdown converter
+        h = html2text.HTML2Text()
+        h.body_width = 0
 
-        # Remove script and style elements
-        for script in soup(["script", "style"]):
-            script.decompose()
+        # Convert the HTML to Markdown
+        markdown_text = h.handle(response.text)
 
-        # Get text and clean it up
-        text = soup.get_text()
-        lines = (line.strip() for line in text.splitlines())
-        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-        text = ' '.join(chunk for chunk in chunks if chunk)
-
-        return text
-    except Exception as e:
+        return markdown_text
+    except requests.exceptions.RequestException as e:
         logger.error(f"Error downloading {url}: {e}")
-        return f"[Error downloading content from {url}: {str(e)}]"
+        return ""
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+        return ""
 
 
 def perform_web_search(query, num_pages=3, max_workers=5):
     """Perform web search and return results with content"""
+    from duckduckgo_search import DDGS
+
     try:
         with DDGS() as ddgs:
             results = list(ddgs.text(query, max_results=num_pages))
@@ -74,9 +76,7 @@ def perform_web_search(query, num_pages=3, max_workers=5):
                         'url': url,
                         'content': content
                     }
-                except Exception as e:
-                    logger.error(f"Error downloading {url}: {e}")
-                    # Include failed downloads with empty content
+                except Exception:
                     search_results[index] = {
                         'title': title,
                         'url': url,
@@ -108,7 +108,7 @@ def add_web_search_attachments(history, row_idx, user_message, search_query, sta
             return
 
         # Filter out failed downloads before adding attachments
-        successful_results = [result for result in search_results if result['content'] and result['content'].strip()]
+        successful_results = [result for result in search_results if result['content'].strip()]
 
         if not successful_results:
             logger.warning("No successful downloads to add as attachments")
@@ -130,7 +130,7 @@ def add_web_search_attachments(history, row_idx, user_message, search_query, sta
             }
             history['metadata'][key]["attachments"].append(attachment)
 
-        logger.info(f"Added {len(successful_results)} successful web search results as attachments")
+        logger.info(f"Added {len(successful_results)} successful web search results as attachments.")
 
     except Exception as e:
         logger.error(f"Error in web search: {e}")
