@@ -145,7 +145,7 @@ typingSibling.insertBefore(typing, typingSibling.childNodes[2]);
 const targetElement = document.getElementById("chat").parentNode.parentNode.parentNode;
 targetElement.classList.add("pretty_scrollbar");
 targetElement.classList.add("chat-parent");
-let isScrolled = false;
+window.isScrolled = false;
 let scrollTimeout;
 
 targetElement.addEventListener("scroll", function() {
@@ -154,9 +154,9 @@ targetElement.addEventListener("scroll", function() {
 
   let diff = targetElement.scrollHeight - targetElement.clientHeight;
   if(Math.abs(targetElement.scrollTop - diff) <= 10 || diff == 0) {
-    isScrolled = false;
+    window.isScrolled = false;
   } else {
-    isScrolled = true;
+    window.isScrolled = true;
   }
 
   // Clear previous timeout and set new one
@@ -182,7 +182,7 @@ const observer = new MutationObserver(function(mutations) {
 
   doSyntaxHighlighting();
 
-  if (!isScrolled && targetElement.scrollTop !== targetElement.scrollHeight) {
+  if (!window.isScrolled && targetElement.scrollTop !== targetElement.scrollHeight) {
     targetElement.scrollTop = targetElement.scrollHeight;
   }
 

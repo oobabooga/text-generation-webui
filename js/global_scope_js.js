@@ -95,11 +95,20 @@ function startEditing(messageElement, messageBody, isUserMessage) {
   editingInterface.textarea.focus();
   editingInterface.textarea.setSelectionRange(rawText.length, rawText.length);
 
+  // Temporarily mark as scrolled to prevent auto-scroll
+  const wasScrolled = window.isScrolled;
+  window.isScrolled = true;
+
   // Scroll the textarea into view
   editingInterface.textarea.scrollIntoView({
     behavior: "smooth",
     block: "center"
   });
+
+  // Restore the original scroll state after animation
+  setTimeout(() => {
+    window.isScrolled = wasScrolled;
+  }, 500);
 
   // Setup event handlers
   setupEditingHandlers(editingInterface.textarea, messageElement, originalHTML, messageBody, isUserMessage);
