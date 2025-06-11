@@ -173,7 +173,12 @@ jobs:
             # 5. Move up and rename folder to include version
             cd ..
             VERSION_CLEAN="${VERSION#v}"
-            mv text-generation-webui text-generation-webui-${VERSION_CLEAN}
+            if [[ "$RUNNER_OS" == "Windows" ]]; then
+                sleep 3  # Give time for any lingering file handles to close
+                powershell -Command "Move-Item -Path text-generation-webui -Destination text-generation-webui-${VERSION_CLEAN} -Force"
+            else
+                mv text-generation-webui text-generation-webui-${VERSION_CLEAN}
+            fi
 
             # 6. Create ZIP file
             ZIP_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}.zip"
