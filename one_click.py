@@ -298,7 +298,7 @@ def update_pytorch_and_python():
 
 
 def clean_outdated_pytorch_cuda_dependencies():
-    patterns = ["cu121", "cu122", "torch2.4"]
+    patterns = ["cu121", "cu122", "torch2.4", "torchvision", "torchaudio"]
     result = run_cmd("python -m pip list --format=freeze", capture_output=True, environment=True)
     matching_packages = []
 
