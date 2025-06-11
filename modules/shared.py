@@ -204,7 +204,7 @@ settings = {
     'web_search_pages': 3,
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
-    'preset': 'Qwen3 - Thinking' if Path('user_data/presets/Qwen3 - Thinking.yaml').exists() else '',
+    'preset': 'Qwen3 - Thinking' if Path('user_data/presets/Qwen3 - Thinking.yaml').exists() else None,
     'max_new_tokens': 512,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
