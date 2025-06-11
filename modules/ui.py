@@ -343,6 +343,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
             try:
                 with open(settings_path, 'r', encoding='utf-8') as f:
                     existing_settings = yaml.safe_load(f.read()) or {}
+
                 if 'default_extensions' in existing_settings:
                     output['default_extensions'] = existing_settings['default_extensions']
             except Exception:
