@@ -175,6 +175,9 @@ jobs:
                 zip -r "$ZIP_NAME" text-generation-webui-${VERSION_CLEAN}
             fi
 
+            # Rename back after creating the zip (the next step assumes this folder exists)
+            mv text-generation-webui-${VERSION_CLEAN} text-generation-webui
+
       - name: Upload files to a GitHub release
         id: upload-release
         uses: svenstaro/upload-release-action@2.7.0
