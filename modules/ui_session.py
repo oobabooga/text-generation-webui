@@ -40,7 +40,7 @@ def create_ui():
 
 
 def handle_save_settings(state, preset, extensions, show_controls, theme):
-    contents = ui.save_settings(state, preset, extensions, show_controls, theme)
+    contents = ui.save_settings(state, preset, extensions, show_controls, theme, manual_save=True)
     return [
         contents,
         "settings.yaml",

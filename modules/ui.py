@@ -316,7 +316,7 @@ def apply_interface_values(state, use_persistent=False):
         return [state[k] if k in state else gr.update() for k in elements]
 
 
-def save_settings(state, preset, extensions_list, show_controls, theme_state):
+def save_settings(state, preset, extensions_list, show_controls, theme_state, manual_save=False):
     output = copy.deepcopy(shared.settings)
     exclude = []
     for k in state:
@@ -327,12 +327,26 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output['prompt-default'] = state['prompt_menu-default']
     output['prompt-notebook'] = state['prompt_menu-notebook']
     output['character'] = state['character_menu']
-    output['default_extensions'] = extensions_list
     output['seed'] = int(output['seed'])
     output['show_controls'] = show_controls
     output['dark_theme'] = True if theme_state == 'dark' else False
     output.pop('instruction_template_str')
     output.pop('truncation_length')
+
+    # Only save extensions on manual save
+    if manual_save:
+        output['default_extensions'] = extensions_list
+    else:
+        # Preserve existing extensions from settings file during autosave
+        settings_path = Path('user_data') / 'settings.yaml'
+        if settings_path.exists():
+            try:
+                with open(settings_path, 'r', encoding='utf-8') as f:
+                    existing_settings = yaml.safe_load(f.read()) or {}
+                if 'default_extensions' in existing_settings:
+                    output['default_extensions'] = existing_settings['default_extensions']
+            except Exception:
+                pass  # If we can't read the file, just don't modify extensions
 
     # Save extension values in the UI
     for extension_name in extensions_list:
@@ -384,7 +398,7 @@ def _perform_debounced_save():
 
     try:
         if _last_interface_state is not None:
-            contents = save_settings(_last_interface_state, _last_preset, _last_extensions, _last_show_controls, _last_theme_state)
+            contents = save_settings(_last_interface_state, _last_preset, _last_extensions, _last_show_controls, _last_theme_state, manual_save=False)
             settings_path = Path('user_data') / 'settings.yaml'
             settings_path.parent.mkdir(exist_ok=True)
             with open(settings_path, 'w', encoding='utf-8') as f:
