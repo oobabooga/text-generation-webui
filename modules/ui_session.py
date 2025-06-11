@@ -10,12 +10,12 @@ def create_ui():
         with gr.Row():
             with gr.Column():
                 gr.Markdown("## Settings")
-                shared.gradio['save_settings'] = gr.Button('Save settings to user_data/settings.yaml', elem_classes='refresh-button', interactive=not mu)
                 shared.gradio['toggle_dark_mode'] = gr.Button('Toggle light/dark theme 💡', elem_classes='refresh-button')
                 shared.gradio['paste_to_attachment'] = gr.Checkbox(label='Turn long pasted text into attachments in the Chat tab', value=shared.settings['paste_to_attachment'], elem_id='paste_to_attachment')
 
             with gr.Column():
                 gr.Markdown("## Extensions & flags")
+                shared.gradio['save_settings'] = gr.Button('Save settings to user_data/settings.yaml', elem_classes='refresh-button', interactive=not mu)
                 shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions and restart", interactive=not mu)
                 with gr.Row():
                     with gr.Column():
@@ -40,7 +40,7 @@ def create_ui():
 
 
 def handle_save_settings(state, preset, extensions, show_controls, theme):
-    contents = ui.save_settings(state, preset, extensions, show_controls, theme)
+    contents = ui.save_settings(state, preset, extensions, show_controls, theme, manual_save=True)
     return [
         contents,
         "settings.yaml",

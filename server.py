@@ -236,20 +236,26 @@ if __name__ == "__main__":
         settings_file = Path(shared.args.settings)
     elif Path('user_data/settings.yaml').exists():
         settings_file = Path('user_data/settings.yaml')
-    elif Path('user_data/settings.json').exists():
-        settings_file = Path('user_data/settings.json')
 
     if settings_file is not None:
         logger.info(f"Loading settings from \"{settings_file}\"")
-        file_contents = open(settings_file, 'r', encoding='utf-8').read()
-        new_settings = json.loads(file_contents) if settings_file.suffix == "json" else yaml.safe_load(file_contents)
-        shared.settings.update(new_settings)
+        with open(settings_file, 'r', encoding='utf-8') as f:
+            new_settings = yaml.safe_load(f.read())
+
+        if new_settings:
+            shared.settings.update(new_settings)
 
     # Fallback settings for models
     shared.model_config['.*'] = get_fallback_settings()
     shared.model_config.move_to_end('.*', last=False)  # Move to the beginning
 
+    # Activate the extensions listed on settings.yaml
     extensions_module.available_extensions = utils.get_available_extensions()
+    for extension in shared.settings['default_extensions']:
+        shared.args.extensions = shared.args.extensions or []
+        if extension not in shared.args.extensions:
+            shared.args.extensions.append(extension)
+
     available_models = utils.get_available_models()
 
     # Model defined through --model
