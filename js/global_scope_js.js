@@ -95,6 +95,21 @@ function startEditing(messageElement, messageBody, isUserMessage) {
   editingInterface.textarea.focus();
   editingInterface.textarea.setSelectionRange(rawText.length, rawText.length);
 
+  // Temporarily mark as scrolled to prevent auto-scroll
+  const wasScrolled = window.isScrolled;
+  window.isScrolled = true;
+
+  // Scroll the textarea into view
+  editingInterface.textarea.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+
+  // Restore the original scroll state after animation
+  setTimeout(() => {
+    window.isScrolled = wasScrolled;
+  }, 500);
+
   // Setup event handlers
   setupEditingHandlers(editingInterface.textarea, messageElement, originalHTML, messageBody, isUserMessage);
 }
@@ -229,10 +244,23 @@ function removeLastClick() {
   document.getElementById("Remove-last").click();
 }
 
-function handleMorphdomUpdate(text) {
+function handleMorphdomUpdate(data) {
+  // Determine target element and use it as query scope
+  var target_element, target_html;
+  if (data.last_message_only) {
+    const childNodes = document.getElementsByClassName("messages")[0].childNodes;
+    target_element = childNodes[childNodes.length - 1];
+    target_html = data.html;
+  } else {
+    target_element = document.getElementById("chat").parentNode;
+    target_html =  "<div class=\"prose svelte-1ybaih5\">" + data.html + "</div>";
+  }
+
+  const queryScope = target_element;
+
   // Track open blocks
   const openBlocks = new Set();
-  document.querySelectorAll(".thinking-block").forEach(block => {
+  queryScope.querySelectorAll(".thinking-block").forEach(block => {
     const blockId = block.getAttribute("data-block-id");
     // If block exists and is open, add to open set
     if (blockId && block.hasAttribute("open")) {
@@ -242,7 +270,7 @@ function handleMorphdomUpdate(text) {
 
   // Store scroll positions for any open blocks
   const scrollPositions = {};
-  document.querySelectorAll(".thinking-block[open]").forEach(block => {
+  queryScope.querySelectorAll(".thinking-block[open]").forEach(block => {
     const content = block.querySelector(".thinking-content");
     const blockId = block.getAttribute("data-block-id");
     if (content && blockId) {
@@ -255,8 +283,8 @@ function handleMorphdomUpdate(text) {
   });
 
   morphdom(
-    document.getElementById("chat").parentNode,
-    "<div class=\"prose svelte-1ybaih5\">" + text + "</div>",
+    target_element,
+    target_html,
     {
       onBeforeElUpdated: function(fromEl, toEl) {
         // Preserve code highlighting
@@ -307,7 +335,7 @@ function handleMorphdomUpdate(text) {
   );
 
   // Add toggle listeners for new blocks
-  document.querySelectorAll(".thinking-block").forEach(block => {
+  queryScope.querySelectorAll(".thinking-block").forEach(block => {
     if (!block._hasToggleListener) {
       block.addEventListener("toggle", function(e) {
         if (this.open) {

@@ -1,4 +1,5 @@
 import copy
+import threading
 from pathlib import Path
 
 import gradio as gr
@@ -6,28 +7,39 @@ import yaml
 
 import extensions
 from modules import shared
+from modules.chat import load_history
+from modules.utils import gradio
 
-with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r') as f:
+# Global state for auto-saving UI settings with debouncing
+_auto_save_timer = None
+_auto_save_lock = threading.Lock()
+_last_interface_state = None
+_last_preset = None
+_last_extensions = None
+_last_show_controls = None
+_last_theme_state = None
+
+with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r', encoding='utf-8') as f:
     css = f.read()
-with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
+with open(Path(__file__).resolve().parent / '../css/main.css', 'r', encoding='utf-8') as f:
     css += f.read()
-with open(Path(__file__).resolve().parent / '../css/katex/katex.min.css', 'r') as f:
+with open(Path(__file__).resolve().parent / '../css/katex/katex.min.css', 'r', encoding='utf-8') as f:
     css += f.read()
-with open(Path(__file__).resolve().parent / '../css/highlightjs/highlightjs-copy.min.css', 'r') as f:
+with open(Path(__file__).resolve().parent / '../css/highlightjs/highlightjs-copy.min.css', 'r', encoding='utf-8') as f:
     css += f.read()
-with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/main.js', 'r', encoding='utf-8') as f:
     js = f.read()
-with open(Path(__file__).resolve().parent / '../js/global_scope_js.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/global_scope_js.js', 'r', encoding='utf-8') as f:
     global_scope_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r', encoding='utf-8') as f:
     save_files_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/switch_tabs.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/switch_tabs.js', 'r', encoding='utf-8') as f:
     switch_tabs_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/show_controls.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/show_controls.js', 'r', encoding='utf-8') as f:
     show_controls_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/update_big_picture.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/update_big_picture.js', 'r', encoding='utf-8') as f:
     update_big_picture_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/dark_theme.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/dark_theme.js', 'r', encoding='utf-8') as f:
     dark_theme_js = f.read()
 
 refresh_symbol = '🔄'
@@ -62,8 +74,10 @@ if not shared.args.old_colors:
         body_background_fill="white",
         block_background_fill="transparent",
         body_text_color='rgb(64, 64, 64)',
-        button_secondary_background_fill="#f4f4f4",
+        button_secondary_background_fill="white",
         button_secondary_border_color="var(--border-color-primary)",
+        input_shadow="none",
+        button_shadow_hover="none",
 
         # Dark Mode Colors
         input_background_fill_dark='var(--darker-gray)',
@@ -95,6 +109,7 @@ if not shared.args.old_colors:
         button_large_radius='0.375rem',
         button_large_padding='6px 12px',
         input_radius='0.375rem',
+        block_radius='0',
     )
 
 if Path("user_data/notification.mp3").exists():
@@ -194,7 +209,6 @@ def list_interface_input_elements():
         'max_new_tokens',
         'prompt_lookup_num_tokens',
         'max_tokens_second',
-        'max_updates_second',
         'do_sample',
         'dynamic_temperature',
         'temperature_last',
@@ -257,6 +271,11 @@ def list_interface_input_elements():
     # Model elements
     elements += list_model_elements()
 
+    # Other elements
+    elements += [
+        'paste_to_attachment'
+    ]
+
     return elements
 
 
@@ -269,6 +288,13 @@ def gather_interface_values(*args):
 
     if not shared.args.multi_user:
         shared.persistent_interface_state = output
+
+        # Remove the chat input, as it gets cleared after this function call
+        shared.persistent_interface_state.pop('textbox')
+
+    # Prevent history loss if backend is restarted but UI is not refreshed
+    if output['history'] is None and output['unique_id'] is not None:
+        output['history'] = load_history(output['unique_id'], output['character_menu'], output['mode'])
 
     return output
 
@@ -292,7 +318,7 @@ def apply_interface_values(state, use_persistent=False):
 
 def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output = copy.deepcopy(shared.settings)
-    exclude = ['name2', 'greeting', 'context', 'truncation_length', 'instruction_template_str']
+    exclude = []
     for k in state:
         if k in shared.settings and k not in exclude:
             output[k] = state[k]
@@ -301,10 +327,11 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output['prompt-default'] = state['prompt_menu-default']
     output['prompt-notebook'] = state['prompt_menu-notebook']
     output['character'] = state['character_menu']
-    output['default_extensions'] = extensions_list
     output['seed'] = int(output['seed'])
     output['show_controls'] = show_controls
     output['dark_theme'] = True if theme_state == 'dark' else False
+    output.pop('instruction_template_str')
+    output.pop('truncation_length')
 
     # Save extension values in the UI
     for extension_name in extensions_list:
@@ -325,6 +352,143 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
             output.pop(key)
 
     return yaml.dump(output, sort_keys=False, width=float("inf"), allow_unicode=True)
+
+
+def store_current_state_and_debounce(interface_state, preset, extensions, show_controls, theme_state):
+    """Store current state and trigger debounced save"""
+    global _auto_save_timer, _last_interface_state, _last_preset, _last_extensions, _last_show_controls, _last_theme_state
+
+    if shared.args.multi_user:
+        return
+
+    # Store the current state in global variables
+    _last_interface_state = interface_state
+    _last_preset = preset
+    _last_extensions = extensions
+    _last_show_controls = show_controls
+    _last_theme_state = theme_state
+
+    # Reset the debounce timer
+    with _auto_save_lock:
+        if _auto_save_timer is not None:
+            _auto_save_timer.cancel()
+
+        _auto_save_timer = threading.Timer(1.0, _perform_debounced_save)
+        _auto_save_timer.start()
+
+
+def _perform_debounced_save():
+    """Actually perform the save using the stored state"""
+    global _auto_save_timer
+
+    try:
+        if _last_interface_state is not None:
+            contents = save_settings(_last_interface_state, _last_preset, _last_extensions, _last_show_controls, _last_theme_state)
+            settings_path = Path('user_data') / 'settings.yaml'
+            settings_path.parent.mkdir(exist_ok=True)
+            with open(settings_path, 'w', encoding='utf-8') as f:
+                f.write(contents)
+    except Exception as e:
+        print(f"Auto-save failed: {e}")
+    finally:
+        with _auto_save_lock:
+            _auto_save_timer = None
+
+
+def setup_auto_save():
+    """Attach auto-save to key UI elements"""
+    if shared.args.multi_user:
+        return
+
+    change_elements = [
+        # Chat tab (ui_chat.py)
+        'start_with',
+        'enable_web_search',
+        'web_search_pages',
+        'mode',
+        'chat_style',
+        'chat-instruct_command',
+        'character_menu',
+        'name1',
+        'name2',
+        'context',
+        'greeting',
+        'user_bio',
+        'custom_system_message',
+        'chat_template_str',
+
+        # Parameters tab (ui_parameters.py) - Generation parameters
+        'preset_menu',
+        'temperature',
+        'dynatemp_low',
+        'dynatemp_high',
+        'dynatemp_exponent',
+        'smoothing_factor',
+        'smoothing_curve',
+        'min_p',
+        'top_p',
+        'top_k',
+        'typical_p',
+        'xtc_threshold',
+        'xtc_probability',
+        'epsilon_cutoff',
+        'eta_cutoff',
+        'tfs',
+        'top_a',
+        'top_n_sigma',
+        'dry_multiplier',
+        'dry_allowed_length',
+        'dry_base',
+        'repetition_penalty',
+        'frequency_penalty',
+        'presence_penalty',
+        'encoder_repetition_penalty',
+        'no_repeat_ngram_size',
+        'repetition_penalty_range',
+        'penalty_alpha',
+        'guidance_scale',
+        'mirostat_mode',
+        'mirostat_tau',
+        'mirostat_eta',
+        'max_new_tokens',
+        'prompt_lookup_num_tokens',
+        'max_tokens_second',
+        'do_sample',
+        'dynamic_temperature',
+        'temperature_last',
+        'auto_max_new_tokens',
+        'ban_eos_token',
+        'add_bos_token',
+        'enable_thinking',
+        'skip_special_tokens',
+        'stream',
+        'static_cache',
+        'truncation_length',
+        'seed',
+        'sampler_priority',
+        'custom_stopping_strings',
+        'custom_token_bans',
+        'negative_prompt',
+        'dry_sequence_breakers',
+        'grammar_string',
+
+        # Default tab (ui_default.py)
+        'prompt_menu-default',
+
+        # Notebook tab (ui_notebook.py)
+        'prompt_menu-notebook',
+
+        # Session tab (ui_session.py)
+        'show_controls',
+        'theme_state',
+        'paste_to_attachment'
+    ]
+
+    for element_name in change_elements:
+        if element_name in shared.gradio:
+            shared.gradio[element_name].change(
+                gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+                store_current_state_and_debounce, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls', 'theme_state'), None, show_progress=False)
 
 
 def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_class, interactive=True):

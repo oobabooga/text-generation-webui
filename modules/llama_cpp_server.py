@@ -408,15 +408,42 @@ class LlamaServer:
 
 
 def filter_stderr_with_progress(process_stderr):
-    progress_pattern = re.compile(r'slot update_slots: id.*progress = (\d+\.\d+)')
+    """
+    Reads stderr lines from a process, filters out noise, and displays progress updates
+    inline (overwriting the same line) until completion.
+    """
+    progress_re = re.compile(r'slot update_slots: id.*progress = (\d+\.\d+)')
+    last_was_progress = False
+
     try:
-        for line in iter(process_stderr.readline, ''):
-            progress_match = progress_pattern.search(line)
-            if progress_match:
-                sys.stderr.write(line)
-                sys.stderr.flush()
-            elif not line.startswith(('srv ', 'slot ')) and 'log_server_r: request: GET /health' not in line:
-                sys.stderr.write(line)
-                sys.stderr.flush()
+        for raw in iter(process_stderr.readline, ''):
+            line = raw.rstrip('\r\n')
+            match = progress_re.search(line)
+
+            if match:
+                progress = float(match.group(1))
+
+                # Extract just the part from "prompt processing" onwards
+                prompt_processing_idx = line.find('prompt processing')
+                if prompt_processing_idx != -1:
+                    display_line = line[prompt_processing_idx:]
+                else:
+                    display_line = line  # fallback to full line
+
+                # choose carriage return for in-progress or newline at completion
+                end_char = '\r' if progress < 1.0 else '\n'
+                print(display_line, end=end_char, file=sys.stderr, flush=True)
+                last_was_progress = (progress < 1.0)
+
+            # skip noise lines
+            elif not (line.startswith(('srv ', 'slot ')) or 'log_server_r: request: GET /health' in line):
+                # if we were in progress, finish that line first
+                if last_was_progress:
+                    print(file=sys.stderr)
+
+                print(line, file=sys.stderr, flush=True)
+                last_was_progress = False
+
     except (ValueError, IOError):
+        # silently ignore broken output or IO errors
         pass
