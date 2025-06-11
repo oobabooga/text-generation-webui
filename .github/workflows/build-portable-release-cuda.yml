@@ -160,31 +160,16 @@ jobs:
                 rm requirements_cuda_temp.txt
             fi
 
-            # 6. Move up and rename folder to include version
+            # 6. Create ZIP file
             cd ..
             VERSION_CLEAN="${VERSION#v}"
-            if [[ "$RUNNER_OS" == "Windows" ]]; then
-                sleep 3
-                powershell -Command "Move-Item -Path text-generation-webui -Destination text-generation-webui-${VERSION_CLEAN} -Force"
-            else
-                mv text-generation-webui text-generation-webui-${VERSION_CLEAN}
-            fi
-
-            # 7. Create ZIP file
             ZIP_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}-cuda${CUDA_VERSION}.zip"
             echo "Creating archive: $ZIP_NAME"
 
             if [[ "$RUNNER_OS" == "Windows" ]]; then
-                powershell -Command "Compress-Archive -Path text-generation-webui-${VERSION_CLEAN} -DestinationPath $ZIP_NAME"
+                powershell -Command "Compress-Archive -Path text-generation-webui -DestinationPath $ZIP_NAME"
             else
-                zip -r "$ZIP_NAME" text-generation-webui-${VERSION_CLEAN}
-            fi
-
-            # Rename back after creating the zip (the next step assumes this folder exists)
-            if [[ "$RUNNER_OS" == "Windows" ]]; then
-                powershell -Command "Move-Item -Path text-generation-webui-${VERSION_CLEAN} -Destination text-generation-webui -Force"
-            else
-                mv text-generation-webui-${VERSION_CLEAN} text-generation-webui
+                zip -r "$ZIP_NAME" text-generation-webui
             fi
 
       - name: Upload files to a GitHub release
