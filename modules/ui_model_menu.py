@@ -135,7 +135,7 @@ def create_event_handlers():
     # with the model defaults (if any), and then the model is loaded
     shared.gradio['model_menu'].change(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        handle_load_model_event_initial, gradio('model_menu', 'interface_state'), gradio(ui.list_interface_input_elements()) + gradio('interface_state'), show_progress=False).then(
+        handle_load_model_event_initial, gradio('model_menu', 'interface_state'), gradio('vram_info') + gradio(ui.list_interface_input_elements()) + gradio('interface_state'), show_progress=False).then(
         partial(load_model_wrapper, autoload=False), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=True).success(
         handle_load_model_event_final, gradio('truncation_length', 'loader', 'interface_state'), gradio('truncation_length', 'filter_by_loader'), show_progress=False)
 
@@ -374,7 +374,7 @@ def handle_load_model_event_initial(model, state):
     output = ui.apply_interface_values(state)
     update_model_parameters(state)  # This updates the command-line flags
 
-    return output + [state]
+    return [state['vram_info']] + output + [state]
 
 
 def handle_load_model_event_final(truncation_length, loader, state):
