@@ -1289,6 +1289,20 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     opacity: 1;
 }
 
+/* Disable message action hover effects during generation */
+._generating .message:hover .message-actions,
+._generating .user-message:hover .message-actions,
+._generating .assistant-message:hover .message-actions {
+    opacity: 0 !important;
+}
+
+/* Disable message action hover effects during scrolling */
+.scrolling .message:hover .message-actions,
+.scrolling .user-message:hover .message-actions,
+.scrolling .assistant-message:hover .message-actions {
+    opacity: 0 !important;
+}
+
 .footer-button svg {
     stroke: rgb(156 163 175);
     transition: stroke 0.2s;
@@ -1623,9 +1637,4 @@ button:focus {
     align-items: center;
     justify-content: center;
     display: none;
-}
-
-/* Disable hover effects while scrolling */
-.chat-parent.scrolling * {
-    pointer-events: none !important;
 }
