@@ -39,25 +39,18 @@ Download from: https://github.com/oobabooga/text-generation-webui/releases
 #### Option 2: One-click installer
 
 1. Clone the repository, or [download its source code](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) and extract it.
-2. Run the script for your operating system:
-
-   * `start_windows.bat`
-   * `start_linux.sh`
-   * `start_macos.sh`
+2. Run the startup script for your OS: `start_windows.bat`, `start_linux.sh`, or `start_macos.sh`.
 3. When prompted, select your GPU vendor.
-4. Once setup is complete, open your browser and go to: `http://127.0.0.1:7860`
+4. After installation, open your browser to `http://127.0.0.1:7860`.
 
-To **restart** the web UI later, run the same `start_` script.
+To restart the web UI later, run the same `start_` script.
 
-To **reinstall**, delete the `installer_files` folder created during setup and run the script again.
+To reinstall, delete the `installer_files` folder and run the script again.
 
-You can pass **command-line flags** directly (e.g., `./start_linux.sh --help`), or add them to `user_data/CMD_FLAGS.txt` (e.g., `--api` to enable the API).
+You can pass command-line flags directly (e.g., `./start_linux.sh --help`), or add them to `user_data/CMD_FLAGS.txt` (e.g., `--api` to enable the API).
 
-To **update** the project, run the appropriate update script:
-
-* `update_wizard_windows.bat`
-* `update_wizard_linux.sh`
-* `update_wizard_macos.sh`
+To update, run one of the following scripts, depending on your OS:
+`update_wizard_windows.bat`, `update_wizard_linux.sh`, or `update_wizard_macos.sh`.
 
 ### One-click-installer
 
