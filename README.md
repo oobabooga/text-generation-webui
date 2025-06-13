@@ -49,8 +49,12 @@ To reinstall, delete the `installer_files` folder and run the script again.
 
 You can pass command-line flags directly (e.g., `./start_linux.sh --help`), or add them to `user_data/CMD_FLAGS.txt` (e.g., `--api` to enable the API).
 
-To update, run one of the following scripts, depending on your OS:
-`update_wizard_windows.bat`, `update_wizard_linux.sh`, or `update_wizard_macos.sh`.
+To update, run the update script for your OS: `update_wizard_windows.bat`, `update_wizard_linux.sh`, or `update_wizard_macos.sh`.
+
+<details>
+<summary>
+Setup details and information about installing manually
+</summary>
 
 ### One-click-installer
 
