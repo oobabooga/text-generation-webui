@@ -374,7 +374,8 @@ def handle_load_model_event_initial(model, state):
     output = ui.apply_interface_values(state)
     update_model_parameters(state)  # This updates the command-line flags
 
-    return output + [state] + [state['vram_info']]
+    vram_info = state.get('vram_info', "<div id=\"vram-info\"'>Estimated VRAM to load the model:</div>")
+    return output + [state] + [vram_info]
 
 
 def handle_load_model_event_final(truncation_length, loader, state):
