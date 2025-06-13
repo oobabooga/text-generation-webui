@@ -41,7 +41,7 @@ Download from: https://github.com/oobabooga/text-generation-webui/releases
 1. Clone the repository, or [download its source code](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) and extract it.
 2. Run the startup script for your OS: `start_windows.bat`, `start_linux.sh`, or `start_macos.sh`.
 3. When prompted, select your GPU vendor.
-4. After installation, open your browser to `http://127.0.0.1:7860`.
+4. After installation, open `http://127.0.0.1:7860` in your browser.
 
 To restart the web UI later, run the same `start_` script.
 
