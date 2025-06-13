@@ -353,7 +353,17 @@ def generate_chat_prompt(user_input, state, **kwargs):
                     logger.error(f"Failed to build the chat prompt. The input is too long for the available context length.\n\nTruncation length: {state['truncation_length']}\nmax_new_tokens: {state['max_new_tokens']} (is it too high?)\nAvailable context length: {max_length}\n")
                     raise ValueError
                 else:
-                    logger.warning(f"The input has been truncated. Context length: {state['truncation_length']}, max_new_tokens: {state['max_new_tokens']}, available context length: {max_length}.")
+                    # Calculate token counts for the log message
+                    original_user_tokens = get_encoded_length(user_message)
+                    truncated_user_tokens = get_encoded_length(user_message[:left])
+                    total_context = max_length + state['max_new_tokens']
+
+                    logger.warning(
+                        f"User message truncated from {original_user_tokens} to {truncated_user_tokens} tokens. "
+                        f"Context full: {max_length} input tokens ({total_context} total, {state['max_new_tokens']} for output). "
+                        f"Increase ctx-size while loading the model to avoid truncation."
+                    )
+
                     break
 
             prompt = make_prompt(messages)
