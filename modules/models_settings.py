@@ -9,6 +9,7 @@ import gradio as gr
 import yaml
 
 from modules import chat, loaders, metadata_gguf, shared, ui
+from modules.logging_colors import logger
 
 
 def get_fallback_settings():
@@ -56,7 +57,13 @@ def get_model_metadata(model):
         if path.is_file():
             model_file = path
         else:
-            model_file = list(path.glob('*.gguf'))[0]
+            gguf_files = list(path.glob('*.gguf'))
+            if not gguf_files:
+                error_msg = f"No .gguf files found in directory: {path}"
+                logger.error(error_msg)
+                raise FileNotFoundError(error_msg)
+
+            model_file = gguf_files[0]
 
         metadata = load_gguf_metadata_with_cache(model_file)
 
@@ -171,6 +178,8 @@ def infer_loader(model_name, model_settings, hf_quant_method=None):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     if not path_to_model.exists():
         loader = None
+    elif shared.args.portable:
+        loader = 'llama.cpp'
     elif len(list(path_to_model.glob('*.gguf'))) > 0:
         loader = 'llama.cpp'
     elif re.match(r'.*\.gguf', model_name.lower()):

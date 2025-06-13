@@ -224,6 +224,7 @@ settings = {
     'negative_prompt': '',
     'dark_theme': True,
     'paste_to_attachment': False,
+    'include_past_attachments': True,
 
     # Generation parameters - Curve shape
     'temperature': 0.6,

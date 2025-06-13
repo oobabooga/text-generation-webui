@@ -174,7 +174,12 @@ def create_event_handlers():
 
 
 def load_model_wrapper(selected_model, loader, autoload=False):
-    settings = get_model_metadata(selected_model)
+    try:
+        settings = get_model_metadata(selected_model)
+    except FileNotFoundError:
+        exc = traceback.format_exc()
+        yield exc.replace('\n', '\n\n')
+        return
 
     if not autoload:
         yield "### {}\n\n- Settings updated: Click \"Load\" to load the model\n- Max sequence length: {}".format(selected_model, settings['truncation_length_info'])

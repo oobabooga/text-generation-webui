@@ -217,8 +217,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
             user_key = f"user_{row_idx}"
             enhanced_user_msg = user_msg
 
-            # Add attachment content if present
-            if user_key in metadata and "attachments" in metadata[user_key]:
+            # Add attachment content if present AND if past attachments are enabled
+            if (state.get('include_past_attachments', True) and user_key in metadata and "attachments" in metadata[user_key]):
                 attachments_text = ""
                 for attachment in metadata[user_key]["attachments"]:
                     filename = attachment.get("name", "file")
