@@ -322,10 +322,6 @@ API:
 
 </details>
 
-## Documentation
-
-https://github.com/oobabooga/text-generation-webui/wiki
-
 ## Downloading models
 
 Models should be placed in the folder `text-generation-webui/user_data/models`. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=gguf).
@@ -372,6 +368,10 @@ python download-model.py organization/model
 ```
 
 Run `python download-model.py --help` to see all the options.
+
+## Documentation
+
+https://github.com/oobabooga/text-generation-webui/wiki
 
 ## Google Colab notebook
 
