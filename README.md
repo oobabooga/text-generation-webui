@@ -12,7 +12,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Features
 
-- Supports multiple text generation backends in one UI/API, including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), [ExLlamaV2](https://github.com/turboderp-org/exllamav2), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) (the latter via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile)).
+- Supports multiple local text generation backends, including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), [ExLlamaV2](https://github.com/turboderp-org/exllamav2), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) (the latter via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile)).
 - Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory.
 - 100% offline and private, with zero telemetry, external resources, or remote update requests.
 - Automatic prompt formatting using Jinja2 templates. You don't need to ever worry about prompt formats.
@@ -38,15 +38,18 @@ Download from: https://github.com/oobabooga/text-generation-webui/releases
 
 #### Option 2: One-click installer
 
-1) Clone or [download the repository](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip).
-2) Run the script that matches your OS: `start_linux.sh`, `start_windows.bat`, or `start_macos.sh`.
-3) Select your GPU vendor when asked.
-4) After installation completes, browse to `http://localhost:7860`.
-5) Have fun!
+1. Clone the repository, or [download its source code](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) and extract it.
+2. Run the startup script for your OS: `start_windows.bat`, `start_linux.sh`, or `start_macos.sh`.
+3. When prompted, select your GPU vendor.
+4. After installation, open `http://127.0.0.1:7860` in your browser.
 
-To restart the web UI later, just run the same `start_` script. If you need to reinstall, delete the `installer_files` folder created during setup and run the script again.
+To restart the web UI later, run the same `start_` script.
 
-You can use command-line flags, like `./start_linux.sh --help`, or add them to `user_data/CMD_FLAGS.txt` (such as `--api` to enable API use). To update the project, run `update_wizard_linux.sh`, `update_wizard_windows.bat`, or `update_wizard_macos.sh`.
+To reinstall with a fresh Python environment, delete the `installer_files` folder and run the `start_` script again.
+
+You can pass command-line flags directly (e.g., `./start_linux.sh --help`), or add them to `user_data/CMD_FLAGS.txt` (e.g., `--api` to enable the API).
+
+To update, run the update script for your OS: `update_wizard_windows.bat`, `update_wizard_linux.sh`, or `update_wizard_macos.sh`.
 
 <details>
 <summary>
@@ -319,13 +322,13 @@ API:
 
 </details>
 
-## Documentation
-
-https://github.com/oobabooga/text-generation-webui/wiki
-
 ## Downloading models
 
-Models should be placed in the folder `text-generation-webui/user_data/models`. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads).
+Models should be placed in the folder `text-generation-webui/user_data/models`. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=gguf).
+
+To check if a GGUF model will fit in your hardware before downloading it, you can use this tool I created:
+
+[Accurate GGUF VRAM Calculator](https://huggingface.co/spaces/oobabooga/accurate-gguf-vram-calculator)
 
 * GGUF models are a single file and should be placed directly into `user_data/models`. Example:
 
@@ -365,6 +368,10 @@ python download-model.py organization/model
 ```
 
 Run `python download-model.py --help` to see all the options.
+
+## Documentation
+
+https://github.com/oobabooga/text-generation-webui/wiki
 
 ## Google Colab notebook
 
