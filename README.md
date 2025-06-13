@@ -45,7 +45,7 @@ Download from: https://github.com/oobabooga/text-generation-webui/releases
 
 To restart the web UI later, run the same `start_` script.
 
-To reinstall, delete the `installer_files` folder and run the script again.
+To reinstall with a fresh Python environment, delete the `installer_files` folder and run the `start_` script again.
 
 You can pass command-line flags directly (e.g., `./start_linux.sh --help`), or add them to `user_data/CMD_FLAGS.txt` (e.g., `--api` to enable the API).
 
@@ -328,7 +328,11 @@ https://github.com/oobabooga/text-generation-webui/wiki
 
 ## Downloading models
 
-Models should be placed in the folder `text-generation-webui/user_data/models`. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads).
+Models should be placed in the folder `text-generation-webui/user_data/models`. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=gguf).
+
+To check if a GGUF model will fit in your hardware before downloading it, you can use this tool I created:
+
+[Accurate GGUF VRAM Calculator](https://huggingface.co/spaces/oobabooga/accurate-gguf-vram-calculator)
 
 * GGUF models are a single file and should be placed directly into `user_data/models`. Example:
 
