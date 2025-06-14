@@ -160,8 +160,13 @@ group.add_argument('--nowebui', action='store_true', help='Do not launch the Gra
 # Deprecated parameters
 group = parser.add_argument_group('Deprecated')
 
+# Preliminary parse to get user_data_dir for CMD_FLAGS.txt
+temp_parser = argparse.ArgumentParser(add_help=False)
+temp_parser.add_argument('--user-data-dir', type=str, default='user_data')
+temp_args, _ = temp_parser.parse_known_args()
+
 # Handle CMD_FLAGS.txt
-cmd_flags_path = Path(__file__).parent.parent / shared.args.user_data_dir / "CMD_FLAGS.txt"
+cmd_flags_path = Path(__file__).parent.parent / temp_args.user_data_dir / "CMD_FLAGS.txt"
 if cmd_flags_path.exists():
     with cmd_flags_path.open('r', encoding='utf-8') as f:
         cmd_flags = ' '.join(
