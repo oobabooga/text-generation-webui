@@ -2,6 +2,7 @@ import argparse
 import copy
 import os
 import shlex
+import shutil
 import sys
 from collections import OrderedDict
 from pathlib import Path
@@ -185,6 +186,12 @@ if args.lora_dir is None:
 if args.disk_cache_dir is None:
     args.disk_cache_dir = f'{args.user_data_dir}/cache'
 
+# Set up Gradio temp directory path
+gradio_temp_path = Path(args.user_data_dir) / 'cache' / 'gradio'
+shutil.rmtree(gradio_temp_path, ignore_errors=True)
+gradio_temp_path.mkdir(parents=True, exist_ok=True)
+os.environ['GRADIO_TEMP_DIR'] = str(gradio_temp_path)
+
 # Create a mapping of all argument aliases to their canonical names
 alias_to_dest = {}
 for action in parser._actions:
@@ -213,7 +220,7 @@ settings = {
     'web_search_pages': 3,
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
-    'preset': 'Qwen3 - Thinking' if Path(f'{shared.args.user_data_dir}/presets/Qwen3 - Thinking.yaml').exists() else None,
+    'preset': 'Qwen3 - Thinking' if Path(f'{args.user_data_dir}/presets/Qwen3 - Thinking.yaml').exists() else None,
     'max_new_tokens': 512,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,

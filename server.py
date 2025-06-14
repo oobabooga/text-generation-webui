@@ -1,5 +1,4 @@
 import os
-import shutil
 import warnings
 from pathlib import Path
 
@@ -7,16 +6,10 @@ from modules import shared
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
 
-# Set up Gradio temp directory path
-gradio_temp_path = Path(shared.args.user_data_dir) / 'cache' / 'gradio'
-shutil.rmtree(gradio_temp_path, ignore_errors=True)
-gradio_temp_path.mkdir(parents=True, exist_ok=True)
-
 # Set environment variables
 os.environ.update({
     'GRADIO_ANALYTICS_ENABLED': 'False',
     'BITSANDBYTES_NOWELCOME': '1',
-    'GRADIO_TEMP_DIR': str(gradio_temp_path)
 })
 
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
@@ -33,7 +26,6 @@ import matplotlib
 
 matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
 
-import json
 import os
 import signal
 import sys
