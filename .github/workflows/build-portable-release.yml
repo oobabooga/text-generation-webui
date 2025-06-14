@@ -100,7 +100,13 @@ jobs:
       - name: Build Package
         shell: bash
         run: |
-            rm -rf .git cmd* update_wizard* Colab-TextGen-GPU.ipynb docker
+            VERSION_CLEAN="${{ inputs.version }}"
+            VERSION_CLEAN="${VERSION_CLEAN#v}"
+            cd ..
+            cp -r text-generation-webui "text-generation-webui-${VERSION_CLEAN}"
+            cd "text-generation-webui-${VERSION_CLEAN}"
+
+            rm -rf .git cmd* update_wizard* Colab-TextGen-GPU.ipynb docker setup.cfg
             allowed=("character_bias" "gallery" "openai" "sd_api_pictures")
             find extensions/ -mindepth 1 -maxdepth 1 -type d | grep -v -E "$(printf '%s|' "${allowed[@]}" | sed 's/|$//')" | xargs rm -rf
 
@@ -143,10 +149,10 @@ jobs:
             cd ..
             curl -L -o python-build.tar.gz "$PYTHON_URL"
             tar -xzf python-build.tar.gz
-            mv python text-generation-webui/portable_env
+            mv python "text-generation-webui-${VERSION_CLEAN}/portable_env"
 
             # 3. Prepare requirements file based on platform and AVX
-            cd text-generation-webui
+            cd "text-generation-webui-${VERSION_CLEAN}"
 
             # Select requirements file based on platform
             if [[ "$RUNNER_OS" == "macOS" ]]; then
@@ -172,14 +178,13 @@ jobs:
 
             # 5. Create ZIP file
             cd ..
-            VERSION_CLEAN="${VERSION#v}"
             ZIP_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}.zip"
             echo "Creating archive: $ZIP_NAME"
 
             if [[ "$RUNNER_OS" == "Windows" ]]; then
-                powershell -Command "Compress-Archive -Path text-generation-webui -DestinationPath $ZIP_NAME"
+                powershell -Command "Compress-Archive -Path text-generation-webui-${VERSION_CLEAN} -DestinationPath $ZIP_NAME"
             else
-                zip -r "$ZIP_NAME" text-generation-webui
+                zip -r "$ZIP_NAME" "text-generation-webui-${VERSION_CLEAN}"
             fi
 
       - name: Upload files to a GitHub release
