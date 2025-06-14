@@ -4,6 +4,8 @@ const belowChatInput = document.querySelectorAll(
 const chatParent = document.querySelector(".chat-parent");
 
 function toggle_controls(value) {
+  const headerBar = document.querySelector(".header_bar");
+
   if (value) {
     belowChatInput.forEach(element => {
       element.style.display = "inherit";
@@ -19,6 +21,11 @@ function toggle_controls(value) {
       gallery_element.style.display = "block";
     }
 
+    // Show header bar
+    if (headerBar) {
+      headerBar.style.removeProperty("display");
+    }
+
   } else {
     belowChatInput.forEach(element => {
       element.style.display = "none";
@@ -28,5 +35,10 @@ function toggle_controls(value) {
     document.getElementById("chat-input-row").classList.add("bigchat");
     document.getElementById("chat-col").classList.add("bigchat");
     document.getElementById("chat-tab").style.paddingBottom = "0px";
+
+    // Hide header bar
+    if (headerBar) {
+      headerBar.style.setProperty("display", "none", "important");
+    }
   }
 }
