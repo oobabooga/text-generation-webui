@@ -33,9 +33,12 @@ need_restart = False
 # Parser copied from https://github.com/vladmandic/automatic
 parser = argparse.ArgumentParser(description="Text generation web UI", conflict_handler='resolve', add_help=True, formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=55, indent_increment=2, width=200))
 
+# Check for ../user_data and use it as default if it exists
+default_user_data_dir = str(Path('../user_data').resolve()) if Path('../user_data').exists() else 'user_data'
+
 # Basic settings
 group = parser.add_argument_group('Basic settings')
-group.add_argument('--user-data-dir', type=str, default='user_data', help='Path to the user_data directory containing models, characters, presets, etc.')
+group.add_argument('--user-data-dir', type=str, default=default_user_data_dir, help='Path to the user_data directory containing models, characters, presets, etc.')
 group.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.')
 group.add_argument('--model', type=str, help='Name of the model to load by default.')
 group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
@@ -162,7 +165,7 @@ group = parser.add_argument_group('Deprecated')
 
 # Preliminary parse to get user_data_dir for CMD_FLAGS.txt
 temp_parser = argparse.ArgumentParser(add_help=False)
-temp_parser.add_argument('--user-data-dir', type=str, default='user_data')
+temp_parser.add_argument('--user-data-dir', type=str, default=default_user_data_dir)
 temp_args, _ = temp_parser.parse_known_args()
 
 # Handle CMD_FLAGS.txt
