@@ -2,7 +2,6 @@ import os
 from modules import shared, utils
 from pathlib import Path
 import requests
-import tqdm
 import json
 
 '''

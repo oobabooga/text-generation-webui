@@ -4,6 +4,8 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field, validator
 
+from modules import shared
+
 
 class GenerationOptions(BaseModel):
     preset: str | None = Field(default=None, description=f"The name of a file under text-generation-webui/{shared.args.user_data_dir}/presets (without the .yaml extension). The sampling parameters that get overwritten by this option are the keys in the default_preset() function in modules/presets.py.")

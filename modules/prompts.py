@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from modules import shared
 from modules.text_generation import get_encoded_length
 
 
