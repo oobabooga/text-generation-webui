@@ -109,12 +109,12 @@ def ui():
                             copy_from = gr.Dropdown(label='Copy parameters from', value='None', choices=get_available_loras_local(non_serialized_params['Lora_sortedByTime']), elem_classes=['slim-dropdown'])
                             create_refresh_button(copy_from, lambda: None, lambda: {'choices': get_available_loras_local(non_serialized_params['Lora_sortedByTime'])}, 'refresh-button')
                     with gr.Column():
-                        sort_byTime = gr.Checkbox(label='Sort list by Date', value=False, info='Sorts Loras by date created.', elem_classes=['no-background'])                        
+                        sort_byTime = gr.Checkbox(label='Sort list by Date', value=False, info='Sorts Loras by date created.', elem_classes=['no-background'])
 
                 with gr.Row():
                     with gr.Column(scale=5):
                         lora_name = gr.Textbox(label='Name', info='The name of your new LoRA file')
-    
+
                     with gr.Column():
                         always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
 
@@ -132,14 +132,14 @@ def ui():
                         epochs = gr.Number(label='Epochs', value=3, info='Number of times every entry in the dataset should be fed into training. So 1 means feed each item in once, 5 means feed it in five times, etc.')
                         learning_rate = gr.Textbox(label='Learning Rate', value='3e-4', info='In scientific notation. 3e-4 is a good starting base point. 1e-2 is extremely high, 1e-6 is extremely low.')
                         lr_scheduler_type = gr.Dropdown(label='LR Scheduler', value='linear', choices=['linear', 'constant', 'constant_with_warmup', 'cosine', 'cosine_with_restarts', 'polynomial', 'inverse_sqrt', 'FP_low_epoch_annealing', 'FP_half_time_annealing','FP_raise_fall_creative'], info='Learning rate scheduler - defines how the learning rate changes over time. Custom schedulers: FP_low_epoch_annealing, FP_half_time_annealing, FP_raise_fall_creative (see README)', elem_classes=['slim-dropdown'])
-                        
+
                 with gr.Accordion(label='Checkpoints', open=True):
                     with gr.Row():
                         with gr.Column():
                             save_steps = gr.Number(label='Save every n steps', value=0, info='A checkpoint will be saved every n steps and at each Epoch boundary. (0 = OFF)')
-                        with gr.Column():    
-                            save_steps_under_loss = gr.Slider(label='Save at 10% Loss change', value=1.8, minimum=0.0, maximum=3.0, step=0.1, info="Saves checkpoints at (or bellow) this loss and then each time loss falls by at least 10% This works independently from 'Save every n steps'")    
-                    with gr.Row():        
+                        with gr.Column():
+                            save_steps_under_loss = gr.Slider(label='Save at 10% Loss change', value=1.8, minimum=0.0, maximum=3.0, step=0.1, info="Saves checkpoints at (or bellow) this loss and then each time loss falls by at least 10% This works independently from 'Save every n steps'")
+                    with gr.Row():
                         save_chackpoint_now = gr.Button('Queue Checkpoint Now')
 
                 with gr.Accordion(label='Advanced Options', open=True):
@@ -148,7 +148,7 @@ def ui():
                             warmup_steps = gr.Number(label='Warmup Steps', value=100, info='Number of max steps used for a linear warmup. Reduces early over-fitting by the first training blocks. Value has precedent over Warmup Ratio. Aligns to the closest multiple of graddient accumulation')
                             warmup_ratio = gr.Slider(label='Warmup Ratio', minimum=0.0, maximum=0.2, step=0.025, value=0.0, info='Ratio of total training steps that will be used for a linear warmup. It applies only if Warmup Step is 0.')
                             neft_noise_alpha = gr.Slider(label='NEFtune noise scale', minimum=0.0, maximum=15, step=1, value=0.0, info='Add noise to the training to improve generalization. [0 - OFF, Starting value to experiment: 5]')
-                            training_projection = gr.Radio(value = train_choices[4], label='LLaMA Target Projections', info='Change the targets (LORA is typically q-v)', choices=train_choices)    
+                            training_projection = gr.Radio(value = train_choices[4], label='LLaMA Target Projections', info='Change the targets (LORA is typically q-v)', choices=train_choices)
                             lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.')
                             optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.', elem_classes=['slim-dropdown'])
 
@@ -157,10 +157,10 @@ def ui():
                             add_bos_token = gr.Checkbox(label='Add BOS token', value=True, info="Adds BOS token for each dataset item")
                             add_eos_token = gr.Checkbox(label='Add EOS token', value=False, info="Adds EOS token for each dataset item")
                             add_eos_token_type = gr.Dropdown(label='EOS placement (Text file)', choices=['Every Block', 'Hard Cut Blocks Only'], value='Every Block', info='', allow_custom_value = False)
-                            
+
                             higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
                             report_to = gr.Radio(label="Save detailed logs with", value="None", choices=["None", "wandb", "tensorboard"], interactive=True)
-                # for future            
+                # for future
                 #with gr.Accordion(label='Dynamic Scheduler', open = False):
                 #    ds_min_epochs = gr.Number(label='Minimum Epochs', value='1', info='Minimum epochs that will be always performed before ramp down can be triggered')
                 #    ds_max_epochs = gr.Number(label='Maximum Epochs (fallback)', value='50', info='Maximum Epochs before the training will bail out completely (should be a large number)')
@@ -168,30 +168,30 @@ def ui():
                 #    ds_loss_rolling_window = gr.Number(label='Loss rolling average', value='4', info='Calculate loss by averaging last x numbers to avoid jumps and noise')
                 #    ds_epochs_to_ramp = gr.Slider(label='Ramp down ratio', minimum=0.0, maximum=2.0, step=0.1, value=1.00, info='How long the ramp down will last relative to ellapsed steps (before trigger)')
                 #    gr.Markdown('These are settings for FP_dynamic_loss_trigger scheduler. The scheduler will do warm up, then hold constant untill a loss falls under Trigger Loss, then it will commence linear ramp down schedule and stop. The length of ramp down is set by Ramp down ratio where (ramp down steps) = ratio * (elapsed steps). (The time to completition shown will be very high untill ramp down is triggered.)')
-                        
+
 
             with gr.Column():
                 with gr.Tab(label='Formatted Dataset'):
                     with gr.Row():
                         with gr.Column():
                             with gr.Row():
-                                dataset = gr.Dropdown(choices=get_datasets('user_data/training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.', elem_classes=['slim-dropdown'])
-                                create_refresh_button(dataset, lambda: None, lambda: {'choices': get_datasets('user_data/training/datasets', 'json')}, 'refresh-button')
+                                dataset = gr.Dropdown(choices=get_datasets(f'{shared.args.user_data_dir}/training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.', elem_classes=['slim-dropdown'])
+                                create_refresh_button(dataset, lambda: None, lambda: {'choices': get_datasets(f'{shared.args.user_data_dir}/training/datasets', 'json')}, 'refresh-button')
                             with gr.Row():
-                                eval_dataset = gr.Dropdown(choices=get_datasets('user_data/training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'])
-                                create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': get_datasets('user_data/training/datasets', 'json')}, 'refresh-button')
+                                eval_dataset = gr.Dropdown(choices=get_datasets(f'{shared.args.user_data_dir}/training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'])
+                                create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': get_datasets(f'{shared.args.user_data_dir}/training/datasets', 'json')}, 'refresh-button')
 
                         with gr.Column():
                             with gr.Row():
-                                format = gr.Dropdown(choices=get_datasets('user_data/training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.', elem_classes=['slim-dropdown'])
-                                create_refresh_button(format, lambda: None, lambda: {'choices': get_datasets('user_data/training/formats', 'json')}, 'refresh-button')
+                                format = gr.Dropdown(choices=get_datasets(f'{shared.args.user_data_dir}/training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.', elem_classes=['slim-dropdown'])
+                                create_refresh_button(format, lambda: None, lambda: {'choices': get_datasets(f'{shared.args.user_data_dir}/training/formats', 'json')}, 'refresh-button')
                             with gr.Row():
                                 eval_steps = gr.Number(label='Evaluate every n steps', value=100, info='If an evaluation dataset is given, test it every time this many steps pass.')
 
                 with gr.Tab(label="Text file"):
                     with gr.Row():
-                        raw_text_file = gr.Dropdown(choices=get_datasets('user_data/training/datasets', 'txt'), value='None', label='Text file', info='The text file to use for training.', elem_classes=['slim-dropdown'])
-                        create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': get_datasets('user_data/training/datasets', 'txt')}, 'refresh-button')
+                        raw_text_file = gr.Dropdown(choices=get_datasets(f'{shared.args.user_data_dir}/training/datasets', 'txt'), value='None', label='Text file', info='The text file to use for training.', elem_classes=['slim-dropdown'])
+                        create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': get_datasets(f'{shared.args.user_data_dir}/training/datasets', 'txt')}, 'refresh-button')
 
                     with gr.Row():
                         with gr.Column():
@@ -208,7 +208,7 @@ def ui():
                             download_file_url = gr.Textbox(label='Download JSON or txt file to datasets (or formats) folder', value='',info='The URL of a file to download. If on github, make sure you get url of the raw file (https://raw.githubusercontent.com/...). If huggin face, make sure the url has /resolve/ in it not /blob/')
                             with gr.Row():
                                 download_check_overwrite = gr.Checkbox(label='Overwrite', value=False, info='Overwrite if file exist')
-                                download_folder = gr.Radio(label="Destination", value='user_data/training/datasets', choices=['user_data/training/datasets', 'user_data/training/formats'], interactive=True)
+                                download_folder = gr.Radio(label="Destination", value=f'{shared.args.user_data_dir}/training/datasets', choices=[f'{shared.args.user_data_dir}/training/datasets', f'{shared.args.user_data_dir}/training/formats'], interactive=True)
                             download_button = gr.Button('Download')
                             download_status = gr.Textbox(label='Download Status', value='', interactive=False)
                 with gr.Row():
@@ -217,7 +217,7 @@ def ui():
                             cutoff_len = gr.Slider(label='Chunk Length (Cutoff Length)', minimum=32, maximum=2048, value=256, step=32, info='The maximum length of a chunk (in tokens). Applies to both JSON dataset and text files. Higher values require much more VRAM.')
                 with gr.Row():
                     with gr.Column():
-                        check_dataset_btn = gr.Button('Verify Dataset/Text File and suggest data entries')    
+                        check_dataset_btn = gr.Button('Verify Dataset/Text File and suggest data entries')
                         check_dataset_txt = gr.Textbox(label='Dataset info', value='')
 
                 with gr.Row():
@@ -227,15 +227,15 @@ def ui():
                 with gr.Accordion(label="Graph", open=True):
                     with gr.Row():
                         # show_actions_button = False - we use old gradio
-                        plot_graph = gr.LinePlot(x="epoch", y="value", title="Loss Metrics", overlay_point=True, tooltip=["epoch", "value"], x_lim=[0, 1], y_lim=[0, 3.5], width=500, height=250) 
- 
+                        plot_graph = gr.LinePlot(x="epoch", y="value", title="Loss Metrics", overlay_point=True, tooltip=["epoch", "value"], x_lim=[0, 1], y_lim=[0, 3.5], width=500, height=250)
+
                 output = gr.Markdown(value="Ready")
 
     with gr.Tab('Perplexity evaluation', elem_id='evaluate-tab'):
         with gr.Row():
             with gr.Column():
                 models = gr.Dropdown(utils.get_available_models(), label='Models', multiselect=True)
-                evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + get_datasets('user_data/training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under user_data/training/datasets.')
+                evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + get_datasets(f'{shared.args.user_data_dir}/training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info=f'The text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under {shared.args.user_data_dir}/training/datasets.')
                 with gr.Row():
                     with gr.Column():
                         stride_length = gr.Slider(label='Stride', minimum=1, maximum=2048, value=512, step=1, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
@@ -267,7 +267,7 @@ def ui():
 
         return grad_accumulation_val
 
-    
+
     copy_from.change(partial(do_copy_params, all_params= all_params), copy_from, all_params).then(fix_old_version,[batch_size,micro_batch_size, grad_accumulation],grad_accumulation)
     start_button.click(do_train, all_params, [output,plot_graph])
     stop_button.click(do_interrupt, None, None, queue=False)
@@ -306,11 +306,11 @@ def ui():
         if shared.tokenizer is None:
             yield "Tokenizer is not available. Please Load some Model first."
             return
-        
-        
+
+
         if raw_text_file not in ['None', '']:
             logger.info("Loading Text file...")
-            fullpath = clean_path('user_data/training/datasets', f'{raw_text_file}')
+            fullpath = clean_path(f'{shared.args.user_data_dir}/training/datasets', f'{raw_text_file}')
             fullpath = Path(fullpath)
             if fullpath.is_dir():
                 logger.info('Training path directory {}'.format(raw_text_file))
@@ -324,13 +324,13 @@ def ui():
                         logger.info(f"Loaded training file: {file_path.name}")
             else:
                 try:
-                    with open(clean_path('user_data/training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
+                    with open(clean_path(f'{shared.args.user_data_dir}/training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
                         raw_text = file.read().replace('\r', '')
                 except:
-                    yield f"{raw_text_file}.txt doesn't seem to exsist anymore... check your user_data/training/datasets folder"
+                    yield f"{raw_text_file}.txt doesn't seem to exsist anymore... check your {shared.args.user_data_dir}/training/datasets folder"
                     return
-            
- 
+
+
             if min_chars<0:
                 min_chars = 0
 
@@ -343,17 +343,17 @@ def ui():
             total_blocks = len(text_chunks)
             result = f"Text: ({raw_text_file}.txt) has {total_blocks} blocks (Block Size {cutoff_len} tokens)"
             del text_chunks
-       
+
         else:
             if dataset in ['None', '']:
                 yield "Select dataset or text file."
-                return 
+                return
 
             if format in ['None', '']:
                 yield "Select format choice for dataset."
                 return
 
-            with open(clean_path('user_data/training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
+            with open(clean_path(f'{shared.args.user_data_dir}/training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
                 format_data: dict[str, str] = json.load(formatFile)
 
             def generate_prompt(data_point: dict[str, str]):
@@ -381,9 +381,9 @@ def ui():
                 return tokenize_dummy(prompt)
 
             logger.info("Loading JSON datasets...")
-            data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{dataset}.json'))
-            
-            data_keys = [] 
+            data = load_dataset("json", data_files=clean_path(f'{shared.args.user_data_dir}/training/datasets', f'{dataset}.json'))
+
+            data_keys = []
 
             if data:
                 if 'train' in data:  # Check if the 'train' split exists in the dataset
@@ -400,11 +400,11 @@ def ui():
             #for options, data in format_data.items():
             #    format_keys = options.split(',')
             #    result += f"{format_keys}, "
-            #result = result.rstrip()    
-            #result = result.rstrip(',')  
+            #result = result.rstrip()
+            #result = result.rstrip(',')
 
         if total_blocks>0:
-            number_ofSteps = int(math.ceil(total_blocks / micro_batch_size) * epochs) 
+            number_ofSteps = int(math.ceil(total_blocks / micro_batch_size) * epochs)
             num_stepsPer_epoch = int(math.ceil(number_ofSteps/epochs))
             min_warm = math.ceil(100 / grad_accumulation)
 
@@ -415,20 +415,20 @@ def ui():
             save_each_n_max = int(math.ceil(number_ofSteps/5))
             gradient_accumulation_max = int(total_blocks)//micro_batch_size
 
- 
+
             result += f"\n[Batch Size: {micro_batch_size}, Epochs: {epochs}, Gradient Accumulation: {grad_accumulation}]\n"
             result += f"Total number of steps: {number_ofSteps}\n"
             result += f"Steps per each Epoch: {num_stepsPer_epoch}\n"
             result += f"Suggestions:\n"
             result += f"Checkpoints: Save every {save_each_n_min} - {save_each_n_max} steps (Current: {int(save_steps)})\n"
             result += f"Warmup steps: {warmup_steps_suggest} (Current: {int(warmup_steps)})"
-            if gradient_accumulation_max < grad_accumulation: 
+            if gradient_accumulation_max < grad_accumulation:
                 result += f"\n\nWARNING: Gradient Accumulation {grad_accumulation} is too high: It should be below {gradient_accumulation_max}"
 
 
         yield result
         return
-    
+
     check_dataset_btn.click(check_dataset, dataset_calc_params ,check_dataset_txt)
 
     # Evaluation events. For some reason, the interrupt event
@@ -449,14 +449,14 @@ def ui():
 
     def reload_lora():
         return gr.Dropdown.update(choices=get_available_loras_local(non_serialized_params['Lora_sortedByTime']))
- 
+
     # nonserialized items
 
-    sort_byTime.change(lambda x: non_serialized_params.update({"Lora_sortedByTime": x}), sort_byTime, None).then(reload_lora,None,copy_from) 
+    sort_byTime.change(lambda x: non_serialized_params.update({"Lora_sortedByTime": x}), sort_byTime, None).then(reload_lora,None,copy_from)
     #debug_slicer.change(lambda x: non_serialized_params.update({"debug_slicer": x}), debug_slicer, None)
 
     def update_dataset():
-        return gr.update(choices=get_datasets('user_data/training/datasets', 'json')), gr.update(choices=get_datasets('user_data/training/datasets', 'txt'))
+        return gr.update(choices=get_datasets(f'{shared.args.user_data_dir}/training/datasets', 'json')), gr.update(choices=get_datasets(f'{shared.args.user_data_dir}/training/datasets', 'txt'))
 
     download_button.click(download_file_from_url, [download_file_url,download_check_overwrite,download_folder] , download_status).then(update_dataset,None,[dataset , raw_text_file])
 
@@ -482,7 +482,7 @@ def do_copy_params(lora_name: str, all_params):
         else:
             params = {}
     else:
-        params = {}        
+        params = {}
 
     result = list()
     for i in range(0, len(PARAMETERS)):
@@ -607,7 +607,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     shared.tokenizer.padding_side = "left"
 
     def encode(text, prepend_bos_token):
-       
+
         result = shared.tokenizer.encode(text, truncation=True, max_length=cutoff_len)
         # Check if the first two tokens are BOS
         if len(result) >= 2 and result[:2] == [shared.tokenizer.bos_token_id, shared.tokenizer.bos_token_id]:
@@ -626,7 +626,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 input_ids.append(shared.tokenizer.eos_token_id)
 
             input_ids = [shared.tokenizer.pad_token_id] * (cutoff_len - len(input_ids)) + input_ids
-            
+
             labels = [1] * len(input_ids)
         else:
             ind = prompt.index(train_only_after) + len(train_only_after)
@@ -653,7 +653,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         }
 
     train_template.clear()
-            
+
     #reset stuff
     print(f"*** LoRA: {lora_name} ***")
     non_serialized_params.update({"stop_at_loss": stop_at_loss})
@@ -665,12 +665,12 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     non_serialized_params.update({"checkpoint_offset": 0})
     non_serialized_params.update({"epoch_offset": 0})
     train_log_graph.clear()
-  
+
      # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
         train_template["template_type"] = "raw_text"
         logger.info("Loading text file...")
-        fullpath = clean_path('user_data/training/datasets', f'{raw_text_file}')
+        fullpath = clean_path(f'{shared.args.user_data_dir}/training/datasets', f'{raw_text_file}')
         fullpath = Path(fullpath)
         if fullpath.is_dir():
             logger.info('Training path directory {}'.format(raw_text_file))
@@ -683,10 +683,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
                     logger.info(f"Loaded training file: {file_path.name}")
         else:
-            with open(clean_path('user_data/training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
+            with open(clean_path(f'{shared.args.user_data_dir}/training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
                 raw_text = file.read().replace('\r', '')
-        
-        # FPHAM PRECISE SLICING        
+
+        # FPHAM PRECISE SLICING
         if min_chars<0:
             min_chars = 0
 
@@ -703,7 +703,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         train_data = Dataset.from_list([tokenize(x, add_EOS_to_all, add_bos_token) for x in text_chunks])
         if add_EOS_to_all:
-            print(f"Added EOS to {len(text_chunks)} blocks") 
+            print(f"Added EOS to {len(text_chunks)} blocks")
 
         print(f"All Data Blocks: {len(text_chunks)}")
 
@@ -720,7 +720,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         train_template["template_type"] = "dataset"
 
-        with open(clean_path('user_data/training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
+        with open(clean_path(f'{shared.args.user_data_dir}/training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
             format_data: dict[str, str] = json.load(formatFile)
 
         # == store training prompt ==
@@ -742,16 +742,16 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             return tokenize(prompt, add_eos_token, add_bos_token)
 
         logger.info("Loading JSON datasets...")
-        data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{dataset}.json'))
+        data = load_dataset("json", data_files=clean_path(f'{shared.args.user_data_dir}/training/datasets', f'{dataset}.json'))
         train_data = data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
 
-        print(f"BOS: {add_bos_token} EOS: {add_eos_token}") 
+        print(f"BOS: {add_bos_token} EOS: {add_eos_token}")
         print(f"Data Blocks: {train_data.num_rows}")
 
         if eval_dataset == 'None':
             eval_data = None
         else:
-            eval_data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{eval_dataset}.json'))
+            eval_data = load_dataset("json", data_files=clean_path(f'{shared.args.user_data_dir}/training/datasets', f'{eval_dataset}.json'))
             eval_data = eval_data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
 
     # == We MUST reload model if it went through any previous training, even failed one ==
@@ -783,7 +783,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             print(f"Method: {RED}QLORA{RESET}")
             prepare_model_for_kbit_training(shared.model)
         else:
-            print(f"Method: {RED}LoRA{RESET}")    
+            print(f"Method: {RED}LoRA{RESET}")
 
     # base model is now frozen and should not be reused for any other LoRA training than this one
     shared.model_dirty_from_training = True
@@ -796,7 +796,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     elif training_projection==train_choices[2]:
         model_to_lora_modules[model_id] = ["q_proj","k_proj", "v_proj"]
     elif training_projection==train_choices[3]:
-        model_to_lora_modules[model_id] = ["k_proj", "v_proj", "down_proj"]        
+        model_to_lora_modules[model_id] = ["k_proj", "v_proj", "down_proj"]
     else:
         model_to_lora_modules[model_id] = ["q_proj", "v_proj"]
 
@@ -827,9 +827,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             set_peft_model_state_dict(lora_model, state_dict_peft)
 
             print(f" + Continue Training on {RED}{lora_file_path}/adapter_model.bin{RESET}")
-            
+
             #load training_log.json if exist
-           
+
             if Path(f"{lora_file_path}/training_log.json").is_file():
                 with open(f"{lora_file_path}/training_log.json", 'r') as json_file:
                     json_ilog = json.load(json_file)
@@ -840,13 +840,13 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                         if key=='epoch':
                             non_serialized_params.update({"epoch_offset": value})
                             print(f" + Epoch offset: {RED}{non_serialized_params['epoch_offset']}{RESET}")
-           
+
 
             if Path(f"{lora_file_path}/training_graph.json").is_file():
                 try:
                     with open(f"{lora_file_path}/training_graph.json", 'r') as json_file:
                         train_log_graph = json.load(json_file)
-                        print(" + Training Graph loaded")   
+                        print(" + Training Graph loaded")
                 except:
                     print(f"Can't read training_graph")
 
@@ -876,72 +876,72 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             else:
                 current_loss = float(train_log.get('loss', 0.0))
                 current_epoch_int = int(float(train_log.get('epoch', 0.0)))
-              
+
                 force_save = False
 
                 current_steps_offset = tracked.current_steps + non_serialized_params['checkpoint_offset']
 
-                folder_save = f"checkpoint-{current_steps_offset}"    
+                folder_save = f"checkpoint-{current_steps_offset}"
 
                 # save if triggered by user
                 if non_serialized_params['save_checkpoint_now']:
                     force_save = True
                     non_serialized_params.update({"save_checkpoint_now": False})
                     print(f"\033[1;31;1mSave Checkpoint manually trigerred.\033[0;37;0m")
-                    folder_save = f"checkpoint-{current_steps_offset}-user"  
+                    folder_save = f"checkpoint-{current_steps_offset}-user"
 
                 patience = 3     # Set the number of consecutive steps for tracking stability
-                
+
                 if gradient_accumulation_steps==1:
                     patience = 4
 
                 min_steps = ssteps10
 
-                # Save each time the loss is below the threshold 
+                # Save each time the loss is below the threshold
                 if current_loss < non_serialized_params['save_steps_under_loss'] and current_loss > 0 and state.global_step > min_steps:
                     current_stability = non_serialized_params['current_stability']
                     current_stability += 1
-                    non_serialized_params.update({"current_stability": current_stability}) 
+                    non_serialized_params.update({"current_stability": current_stability})
 
                     if current_stability >= patience:
                         current_stability = 0
-                        non_serialized_params.update({"current_stability": current_stability})     
+                        non_serialized_params.update({"current_stability": current_stability})
                         current_loss_dec = round(current_loss, 2)
                         loss_str = f"{current_loss_dec:.2f}"
                         loss_str = loss_str.replace('.', '_')
                         new_save = (current_loss_dec-0.1) + 0.01
                         non_serialized_params.update({"save_steps_under_loss": new_save})
 
-                        folder_save = f"checkpoint-{current_steps_offset}-loss-{loss_str}" 
-                        force_save = True   
+                        folder_save = f"checkpoint-{current_steps_offset}-loss-{loss_str}"
+                        force_save = True
 
-                   
+
                 else:
                     # Reset stability if the loss goes above the threshold
-                    non_serialized_params.update({"current_stability": 0})   
+                    non_serialized_params.update({"current_stability": 0})
 
                 # Save full epochs
-                if actual_save_steps>0 and current_epoch_int > non_serialized_params['save_epochs'] and state.global_step > min_steps: 
+                if actual_save_steps>0 and current_epoch_int > non_serialized_params['save_epochs'] and state.global_step > min_steps:
 
-                    
+
                     current_epoch_offset = current_epoch_int
-                    
+
                     if non_serialized_params['epoch_offset'] > 0:
                         current_epoch_offset = current_epoch_int + round(non_serialized_params['epoch_offset'], 2)
-                    
+
                     ep_off_str = f"{current_epoch_offset}"
                     ep_off_str = ep_off_str.replace('.', '_')
-                    folder_save = f"checkpoint-{current_steps_offset}-epoch-{ep_off_str}" 
+                    folder_save = f"checkpoint-{current_steps_offset}-epoch-{ep_off_str}"
 
                     non_serialized_params.update({"save_epochs": current_epoch_int})
                     force_save = True
 
                 # save each actual_save_steps
                 if state.global_step > 0 and actual_save_steps > 0 and state.global_step % actual_save_steps == 0:
-                    folder_save = f"checkpoint-{current_steps_offset}"  
-                    force_save = True   
+                    folder_save = f"checkpoint-{current_steps_offset}"
+                    force_save = True
 
-                if force_save:       
+                if force_save:
                     lora_model.save_pretrained(f"{lora_file_path}/{folder_save}/", safe_serialization = non_serialized_params['safe_serialization'])
                     print(f"\033[1;30;40mStep: {tracked.current_steps:6} \033[0;37;0m Saved: [{folder_save}]")
                     # Save log
@@ -950,7 +950,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                     # == Save training prompt ==
                     with open(f"{lora_file_path}/{folder_save}/training_prompt.json", 'w', encoding='utf-8') as file:
                         json.dump(train_template, file, indent=2)
-                
+
 
         def on_substep_end(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
             tracked.current_steps += 1
@@ -975,7 +975,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 print(f"\033[1;30;40mStep: {tracked.current_steps:6} [+{non_serialized_params['checkpoint_offset']}] \033[0;37;0m", end='')
             else:
                 print(f"\033[1;30;40mStep: {tracked.current_steps:6} \033[0;37;0m", end='')
-            
+
             graphentry = {
                 'current_steps': int(train_log.get('current_steps_adjusted',0)),
                 'loss': float(train_log.get('loss', 0.0)),
@@ -986,7 +986,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             cur_loss = float(train_log.get('loss', 0.0))
             cur_lr = float(train_log.get('learning_rate', 0.0))
             cur_epoch = float(train_log.get('epoch', 0.0))
-            
+
             if len(statistics['loss']) == 1:
                 first_epoch = statistics['loss'][0]['epoch']
                 first_value = statistics['loss'][0]['value']
@@ -1013,7 +1013,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     # FPHAM SAMPLE REQ Transformers error handling
     gradient_accumulation_max = int(train_data.num_rows)//micro_batch_size
-    
+
     if gradient_accumulation_max < gradient_accumulation_steps:
         print(f"{RED}WARNING:{RESET} Current gradient accumulation is {RED}too high{RESET} for the amount of training data.")
         print(f"Gradient accumulation: {gradient_accumulation_steps} should be less than: {gradient_accumulation_max}. {RED}This could crash Accelerate/Transformers{RESET}")
@@ -1041,9 +1041,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     elif lr_scheduler_type =='FP_raise_fall_creative':
         custom_scheduller = True
         lr_scheduler_type_arg = 'constant_with_warmup'
-    
+
     #gradient_checkpointing=True
-    
+
     args=transformers.TrainingArguments(
             report_to=report_to if report_to != "None" else None,
             per_device_train_batch_size=micro_batch_size,
@@ -1095,7 +1095,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
             callbacks=list([Callbacks()])
         )
-    
+
     # END OF FPHAM CUSTOM SCHEDULER
 
     lora_model.config.use_cache = False
@@ -1141,7 +1141,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     if stop_at_loss > 0:
         print(f"Monitoring loss {RED}(Auto-Stop at: {stop_at_loss}){RESET}")
 
-    
+
 
     if WANT_INTERRUPT:
         yield "Interrupted before start.", zero_pd
@@ -1157,11 +1157,11 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 decoded_entries.append({"value": decoded_text})
 
             # Write the log file
-            Path('user_data/logs').mkdir(exist_ok=True)
-            with open(Path('user_data/logs/train_dataset_sample.json'), 'w') as json_file:
+            Path(f'{shared.args.user_data_dir}/logs').mkdir(exist_ok=True)
+            with open(Path(f'{shared.args.user_data_dir}/logs/train_dataset_sample.json'), 'w') as json_file:
                 json.dump(decoded_entries, json_file, indent=4)
 
-            logger.info("Log file 'train_dataset_sample.json' created in the 'user_data/logs' directory.")
+            logger.info(f"Log file 'train_dataset_sample.json' created in the '{shared.args.user_data_dir}/logs' directory.")
         except Exception as e:
             logger.error(f"Failed to create log file due to error: {e}")
 
@@ -1191,7 +1191,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         else:
             max_value = 3.5
             last_epoch = 0
-            first_epoch = 0           
+            first_epoch = 0
 
         if WANT_INTERRUPT:
 
@@ -1210,7 +1210,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             time_elapsed = time.perf_counter() - start_time
             lastloss = float(train_log.get('loss', 0.0))
 
-            non_serialized_params.update({"training_loop": True})               
+            non_serialized_params.update({"training_loop": True})
 
             if lastloss > 0:
                 lastloss_str = f", ... Current Loss: `{lastloss:.2f}`"
@@ -1232,7 +1232,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             if stop_at_loss != non_serialized_params['stop_at_loss']:
                 stop_at_loss = non_serialized_params['stop_at_loss']
                 print(f"Stop at loss changed {RED}(Auto-Stop at: {stop_at_loss}){RESET}")
-            
+
             losses = gr.LinePlot.update(
 				value = pd.DataFrame(statistics['loss']),
                 x="epoch", y="value",
@@ -1240,7 +1240,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 overlay_point=True, tooltip=["epoch", "value"],
 				x_lim=[first_epoch,last_epoch], y_lim=[0,max_value],
                 width=500, height=250 )
-				
+
 
             yield f"Running... **{tracked.current_steps}** / **{tracked.max_steps}** ... {timer_info}, {format_time(time_elapsed)} / {format_time(total_time_estimate)} ... {format_time(total_time_estimate - time_elapsed)} remaining {lastloss_str}", losses
 
@@ -1256,7 +1256,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     else:
         max_value = 3.5
         last_epoch = 0
-        first_epoch = 0 
+        first_epoch = 0
 
     return_pd = gr.LinePlot.update(
         value = pd.DataFrame(statistics['loss']),
