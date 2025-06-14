@@ -523,10 +523,10 @@ def generate_instruct_html(history, last_message_only=False):
 
 def get_character_image_with_cache_buster():
     """Get character image URL with cache busting based on file modification time"""
-    cache_path = Path("user_data/cache/pfp_character_thumb.png")
+    cache_path = Path(f"{shared.args.user_data_dir}/cache/pfp_character_thumb.png")
     if cache_path.exists():
         mtime = int(cache_path.stat().st_mtime)
-        return f'<img src="file/user_data/cache/pfp_character_thumb.png?{mtime}" class="pfp_character">'
+        return f'<img src="file/{shared.args.user_data_dir}/cache/pfp_character_thumb.png?{mtime}" class="pfp_character">'
 
     return ''
 
@@ -550,8 +550,8 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
 
         # Get appropriate image
         if role == "user":
-            img = (f'<img src="file/user_data/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
-                   if Path("user_data/cache/pfp_me.png").exists() else '')
+            img = (f'<img src="file/{shared.args.user_data_dir}/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
+                   if Path(f"{shared.args.user_data_dir}/cache/pfp_me.png").exists() else '')
         else:
             img = img_bot
 

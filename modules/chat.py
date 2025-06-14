@@ -960,9 +960,9 @@ def start_new_chat(state):
 
 def get_history_file_path(unique_id, character, mode):
     if mode == 'instruct':
-        p = Path(f'user_data/logs/instruct/{unique_id}.json')
+        p = Path(f'{shared.args.user_data_dir}/logs/instruct/{unique_id}.json')
     else:
-        p = Path(f'user_data/logs/chat/{character}/{unique_id}.json')
+        p = Path(f'{shared.args.user_data_dir}/logs/chat/{character}/{unique_id}.json')
 
     return p
 
@@ -998,13 +998,13 @@ def rename_history(old_id, new_id, character, mode):
 
 def get_paths(state):
     if state['mode'] == 'instruct':
-        return Path('user_data/logs/instruct').glob('*.json')
+        return Path(f'{shared.args.user_data_dir}/logs/instruct').glob('*.json')
     else:
         character = state['character_menu']
 
         # Handle obsolete filenames and paths
-        old_p = Path(f'user_data/logs/{character}_persistent.json')
-        new_p = Path(f'user_data/logs/persistent_{character}.json')
+        old_p = Path(f'{shared.args.user_data_dir}/logs/{character}_persistent.json')
+        new_p = Path(f'{shared.args.user_data_dir}/logs/persistent_{character}.json')
         if old_p.exists():
             logger.warning(f"Renaming \"{old_p}\" to \"{new_p}\"")
             old_p.rename(new_p)
@@ -1016,7 +1016,7 @@ def get_paths(state):
             p.parent.mkdir(exist_ok=True)
             new_p.rename(p)
 
-        return Path(f'user_data/logs/chat/{character}').glob('*.json')
+        return Path(f'{shared.args.user_data_dir}/logs/chat/{character}').glob('*.json')
 
 
 def find_all_histories(state):
@@ -1141,7 +1141,7 @@ def get_chat_state_key(character, mode):
 
 def load_last_chat_state():
     """Load the last chat state from file"""
-    state_file = Path('user_data/logs/chat_state.json')
+    state_file = Path(f'{shared.args.user_data_dir}/logs/chat_state.json')
     if state_file.exists():
         try:
             with open(state_file, 'r', encoding='utf-8') as f:
@@ -1161,7 +1161,7 @@ def save_last_chat_state(character, mode, unique_id):
     key = get_chat_state_key(character, mode)
     state["last_chats"][key] = unique_id
 
-    state_file = Path('user_data/logs/chat_state.json')
+    state_file = Path(f'{shared.args.user_data_dir}/logs/chat_state.json')
     state_file.parent.mkdir(exist_ok=True)
     with open(state_file, 'w', encoding='utf-8') as f:
         f.write(json.dumps(state, indent=2))
@@ -1234,7 +1234,7 @@ def generate_pfp_cache(character):
     if not cache_folder.exists():
         cache_folder.mkdir()
 
-    for path in [Path(f"user_data/characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
+    for path in [Path(f"{shared.args.user_data_dir}/characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
         if path.exists():
             original_img = Image.open(path)
             original_img.save(Path(f'{cache_folder}/pfp_character.png'), format='PNG')
@@ -1254,12 +1254,12 @@ def load_character(character, name1, name2):
 
     filepath = None
     for extension in ["yml", "yaml", "json"]:
-        filepath = Path(f'user_data/characters/{character}.{extension}')
+        filepath = Path(f'{shared.args.user_data_dir}/characters/{character}.{extension}')
         if filepath.exists():
             break
 
     if filepath is None or not filepath.exists():
-        logger.error(f"Could not find the character \"{character}\" inside user_data/characters. No character has been loaded.")
+        logger.error(f"Could not find the character \"{character}\" inside {shared.args.user_data_dir}/characters. No character has been loaded.")
         raise ValueError
 
     file_contents = open(filepath, 'r', encoding='utf-8').read()
@@ -1335,7 +1335,7 @@ def load_instruction_template(template):
     if template == 'None':
         return ''
 
-    for filepath in [Path(f'user_data/instruction-templates/{template}.yaml'), Path('user_data/instruction-templates/Alpaca.yaml')]:
+    for filepath in [Path(f'{shared.args.user_data_dir}/instruction-templates/{template}.yaml'), Path(f'{shared.args.user_data_dir}/instruction-templates/Alpaca.yaml')]:
         if filepath.exists():
             break
     else:
@@ -1377,17 +1377,17 @@ def upload_character(file, img, tavern=False):
 
     outfile_name = name
     i = 1
-    while Path(f'user_data/characters/{outfile_name}.yaml').exists():
+    while Path(f'{shared.args.user_data_dir}/characters/{outfile_name}.yaml').exists():
         outfile_name = f'{name}_{i:03d}'
         i += 1
 
-    with open(Path(f'user_data/characters/{outfile_name}.yaml'), 'w', encoding='utf-8') as f:
+    with open(Path(f'{shared.args.user_data_dir}/characters/{outfile_name}.yaml'), 'w', encoding='utf-8') as f:
         f.write(yaml_data)
 
     if img is not None:
-        img.save(Path(f'user_data/characters/{outfile_name}.png'))
+        img.save(Path(f'{shared.args.user_data_dir}/characters/{outfile_name}.png'))
 
-    logger.info(f'New character saved to "user_data/characters/{outfile_name}.yaml".')
+    logger.info(f'New character saved to "{shared.args.user_data_dir}/characters/{outfile_name}.yaml".')
     return gr.update(value=outfile_name, choices=get_available_characters())
 
 
@@ -1462,9 +1462,9 @@ def save_character(name, greeting, context, picture, filename):
         return
 
     data = generate_character_yaml(name, greeting, context)
-    filepath = Path(f'user_data/characters/{filename}.yaml')
+    filepath = Path(f'{shared.args.user_data_dir}/characters/{filename}.yaml')
     save_file(filepath, data)
-    path_to_img = Path(f'user_data/characters/{filename}.png')
+    path_to_img = Path(f'{shared.args.user_data_dir}/characters/{filename}.png')
     if picture is not None:
         picture.save(path_to_img)
         logger.info(f'Saved {path_to_img}.')
@@ -1472,9 +1472,9 @@ def save_character(name, greeting, context, picture, filename):
 
 def delete_character(name, instruct=False):
     for extension in ["yml", "yaml", "json"]:
-        delete_file(Path(f'user_data/characters/{name}.{extension}'))
+        delete_file(Path(f'{shared.args.user_data_dir}/characters/{name}.{extension}'))
 
-    delete_file(Path(f'user_data/characters/{name}.png'))
+    delete_file(Path(f'{shared.args.user_data_dir}/characters/{name}.png'))
 
 
 def jinja_template_from_old_format(params, verbose=False):
@@ -1885,7 +1885,7 @@ def handle_save_template_click(instruction_template_str):
     contents = generate_instruction_template_yaml(instruction_template_str)
     return [
         "My Template.yaml",
-        "user_data/instruction-templates/",
+        f"{shared.args.user_data_dir}/instruction-templates/",
         contents,
         gr.update(visible=True)
     ]
@@ -1894,7 +1894,7 @@ def handle_save_template_click(instruction_template_str):
 def handle_delete_template_click(template):
     return [
         f"{template}.yaml",
-        "user_data/instruction-templates/",
+        f"{shared.args.user_data_dir}/instruction-templates/",
         gr.update(visible=False)
     ]
 

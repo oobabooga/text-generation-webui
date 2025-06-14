@@ -37,10 +37,10 @@ group = parser.add_argument_group('Basic settings')
 group.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.')
 group.add_argument('--model', type=str, help='Name of the model to load by default.')
 group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
-group.add_argument('--model-dir', type=str, default='user_data/models', help='Path to directory with all the models.')
-group.add_argument('--lora-dir', type=str, default='user_data/loras', help='Path to directory with all the loras.')
+group.add_argument('--model-dir', type=str, default=f'{shared.args.user_data_dir}/models', help='Path to directory with all the models.')
+group.add_argument('--lora-dir', type=str, default=f'{shared.args.user_data_dir}/loras', help='Path to directory with all the loras.')
 group.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
-group.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See user_data/settings-template.yaml for an example. If you create a file called user_data/settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
+group.add_argument('--settings', type=str, help=f'Load the default interface settings from this yaml file. See {shared.args.user_data_dir}/settings-template.yaml for an example. If you create a file called {shared.args.user_data_dir}/settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 group.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 group.add_argument('--idle-timeout', type=int, default=0, help='Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.')
@@ -54,7 +54,7 @@ group = parser.add_argument_group('Transformers/Accelerate')
 group.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
 group.add_argument('--cpu-memory', type=float, default=0, help='Maximum CPU memory in GiB. Use this for CPU offloading.')
 group.add_argument('--disk', action='store_true', help='If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.')
-group.add_argument('--disk-cache-dir', type=str, default='user_data/cache', help='Directory to save the disk cache to. Defaults to "user_data/cache".')
+group.add_argument('--disk-cache-dir', type=str, default=f'{shared.args.user_data_dir}/cache', help=f'Directory to save the disk cache to. Defaults to "{shared.args.user_data_dir}/cache".')
 group.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision (using bitsandbytes).')
 group.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
 group.add_argument('--no-cache', action='store_true', help='Set use_cache to False while generating text. This reduces VRAM usage slightly, but it comes at a performance cost.')
@@ -159,7 +159,7 @@ group.add_argument('--nowebui', action='store_true', help='Do not launch the Gra
 group = parser.add_argument_group('Deprecated')
 
 # Handle CMD_FLAGS.txt
-cmd_flags_path = Path(__file__).parent.parent / "user_data" / "CMD_FLAGS.txt"
+cmd_flags_path = Path(__file__).parent.parent / shared.args.user_data_dir / "CMD_FLAGS.txt"
 if cmd_flags_path.exists():
     with cmd_flags_path.open('r', encoding='utf-8') as f:
         cmd_flags = ' '.join(
@@ -204,7 +204,7 @@ settings = {
     'web_search_pages': 3,
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
-    'preset': 'Qwen3 - Thinking' if Path('user_data/presets/Qwen3 - Thinking.yaml').exists() else None,
+    'preset': 'Qwen3 - Thinking' if Path(f'{shared.args.user_data_dir}/presets/Qwen3 - Thinking.yaml').exists() else None,
     'max_new_tokens': 512,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,

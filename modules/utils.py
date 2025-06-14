@@ -75,7 +75,7 @@ def natural_keys(text):
 def check_model_loaded():
     if shared.model_name == 'None' or shared.model is None:
         if len(get_available_models()) == 0:
-            error_msg = "No model is loaded.\n\nTo get started:\n1) Place a GGUF file in your user_data/models folder\n2) Go to the Model tab and select it"
+            error_msg = f"No model is loaded.\n\nTo get started:\n1) Place a GGUF file in your {shared.args.user_data_dir}/models folder\n2) Go to the Model tab and select it"
             logger.error(error_msg)
             return False, error_msg
         else:
@@ -155,11 +155,11 @@ def get_available_ggufs():
 
 
 def get_available_presets():
-    return sorted(set((k.stem for k in Path('user_data/presets').glob('*.yaml'))), key=natural_keys)
+    return sorted(set((k.stem for k in Path(f'{shared.args.user_data_dir}/presets').glob('*.yaml'))), key=natural_keys)
 
 
 def get_available_prompts():
-    prompt_files = list(Path('user_data/prompts').glob('*.txt'))
+    prompt_files = list(Path(f'{shared.args.user_data_dir}/prompts').glob('*.txt'))
     sorted_files = sorted(prompt_files, key=lambda x: x.stat().st_mtime, reverse=True)
     prompts = [file.stem for file in sorted_files]
     prompts.append('None')
@@ -167,12 +167,12 @@ def get_available_prompts():
 
 
 def get_available_characters():
-    paths = (x for x in Path('user_data/characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
+    paths = (x for x in Path(f'{shared.args.user_data_dir}/characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
     return sorted(set((k.stem for k in paths)), key=natural_keys)
 
 
 def get_available_instruction_templates():
-    path = "user_data/instruction-templates"
+    path = f"{shared.args.user_data_dir}/instruction-templates"
     paths = []
     if os.path.exists(path):
         paths = (x for x in Path(path).iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
@@ -202,4 +202,4 @@ def get_available_chat_styles():
 
 
 def get_available_grammars():
-    return ['None'] + sorted([item.name for item in list(Path('user_data/grammars').glob('*.gbnf'))], key=natural_keys)
+    return ['None'] + sorted([item.name for item in list(Path(f'{shared.args.user_data_dir}/grammars').glob('*.gbnf'))], key=natural_keys)
