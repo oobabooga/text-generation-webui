@@ -925,7 +925,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: fixed;
     bottom: 0;
     left: 0;
-    width: calc(100vw / 2 - 600px);
+    width: calc(0.5 * (100vw - min(100vw, 48rem) - (120px - var(--header-width))));
     z-index: 10000;
 }
 
