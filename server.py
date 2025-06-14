@@ -8,7 +8,7 @@ from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
 
 # Set up Gradio temp directory path
-gradio_temp_path = Path('user_data') / 'cache' / 'gradio'
+gradio_temp_path = Path(shared.args.user_data_dir) / 'cache' / 'gradio'
 shutil.rmtree(gradio_temp_path, ignore_errors=True)
 gradio_temp_path.mkdir(parents=True, exist_ok=True)
 
@@ -112,7 +112,7 @@ def create_interface():
 
     # Clear existing cache files
     for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
-        cache_path = Path(f"user_data/cache/{cache_file}")
+        cache_path = Path(f"{shared.args.user_data_dir}/cache/{cache_file}")
         if cache_path.exists():
             cache_path.unlink()
 
@@ -135,8 +135,8 @@ def create_interface():
         shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
 
         # Audio notification
-        if Path("user_data/notification.mp3").exists():
-            shared.gradio['audio_notification'] = gr.Audio(interactive=False, value="user_data/notification.mp3", elem_id="audio_notification", visible=False)
+        if Path(f"{shared.args.user_data_dir}/notification.mp3").exists():
+            shared.gradio['audio_notification'] = gr.Audio(interactive=False, value=f"{shared.args.user_data_dir}/notification.mp3", elem_id="audio_notification", visible=False)
 
         # Floating menus for saving/deleting files
         ui_file_saving.create_ui()
@@ -221,7 +221,7 @@ def create_interface():
             ssl_keyfile=shared.args.ssl_keyfile,
             ssl_certfile=shared.args.ssl_certfile,
             root_path=shared.args.subpath,
-            allowed_paths=["css", "js", "extensions", "user_data/cache"]
+            allowed_paths=["css", "js", "extensions", f"{shared.args.user_data_dir}/cache"]
         )
 
 
@@ -234,8 +234,8 @@ if __name__ == "__main__":
     settings_file = None
     if shared.args.settings is not None and Path(shared.args.settings).exists():
         settings_file = Path(shared.args.settings)
-    elif Path('user_data/settings.yaml').exists():
-        settings_file = Path('user_data/settings.yaml')
+    elif Path(f'{shared.args.user_data_dir}/settings.yaml').exists():
+        settings_file = Path(f'{shared.args.user_data_dir}/settings.yaml')
 
     if settings_file is not None:
         logger.info(f"Loading settings from \"{settings_file}\"")
