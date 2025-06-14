@@ -1079,16 +1079,27 @@ def load_latest_history(state):
     '''
 
     if shared.args.multi_user:
-        return start_new_chat(state)
+        return start_new_chat(state), None
 
     histories = find_all_histories(state)
 
     if len(histories) > 0:
-        history = load_history(histories[0], state['character_menu'], state['mode'])
-    else:
-        history = start_new_chat(state)
+        # Try to load the last visited chat for this character/mode
+        chat_state = load_last_chat_state()
+        key = get_chat_state_key(state['character_menu'], state['mode'])
+        last_chat_id = chat_state.get("last_chats", {}).get(key)
 
-    return history
+        # If we have a stored last chat and it still exists, use it
+        if last_chat_id and last_chat_id in histories:
+            unique_id = last_chat_id
+        else:
+            # Fall back to most recent (current behavior)
+            unique_id = histories[0]
+
+        history = load_history(unique_id, state['character_menu'], state['mode'])
+        return history, unique_id
+    else:
+        return start_new_chat(state), None
 
 
 def load_history_after_deletion(state, idx):
@@ -1118,6 +1129,42 @@ def update_character_menu_after_deletion(idx):
     idx = min(int(idx), len(characters) - 1)
     idx = max(0, idx)
     return gr.update(choices=characters, value=characters[idx])
+
+
+def get_chat_state_key(character, mode):
+    """Generate a key for storing last chat state"""
+    if mode == 'instruct':
+        return 'instruct'
+    else:
+        return f"chat_{character}"
+
+
+def load_last_chat_state():
+    """Load the last chat state from file"""
+    state_file = Path('user_data/logs/chat_state.json')
+    if state_file.exists():
+        try:
+            with open(state_file, 'r', encoding='utf-8') as f:
+                return json.loads(f.read())
+        except:
+            pass
+
+    return {"last_chats": {}}
+
+
+def save_last_chat_state(character, mode, unique_id):
+    """Save the last visited chat for a character/mode"""
+    if shared.args.multi_user:
+        return
+
+    state = load_last_chat_state()
+    key = get_chat_state_key(character, mode)
+    state["last_chats"][key] = unique_id
+
+    state_file = Path('user_data/logs/chat_state.json')
+    state_file.parent.mkdir(exist_ok=True)
+    with open(state_file, 'w', encoding='utf-8') as f:
+        f.write(json.dumps(state, indent=2))
 
 
 def load_history(unique_id, character, mode):
@@ -1553,6 +1600,9 @@ def handle_unique_id_select(state):
     history = load_history(state['unique_id'], state['character_menu'], state['mode'])
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
+    # Save this as the last visited chat
+    save_last_chat_state(state['character_menu'], state['mode'], state['unique_id'])
+
     convert_to_markdown.cache_clear()
 
     return [history, html]
@@ -1753,14 +1803,14 @@ def handle_character_menu_change(state):
     state['greeting'] = greeting
     state['context'] = context
 
-    history = load_latest_history(state)
+    history, loaded_unique_id = load_latest_history(state)
     histories = find_all_histories_with_first_prompts(state)
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     convert_to_markdown.cache_clear()
 
     if len(histories) > 0:
-        past_chats_update = gr.update(choices=histories, value=histories[0][1])
+        past_chats_update = gr.update(choices=histories, value=loaded_unique_id or histories[0][1])
     else:
         past_chats_update = gr.update(choices=histories)
 
@@ -1772,7 +1822,7 @@ def handle_character_menu_change(state):
         picture,
         greeting,
         context,
-        past_chats_update,
+        past_chats_update
     ]
 
 
@@ -1796,14 +1846,14 @@ def handle_character_picture_change(picture):
 
 
 def handle_mode_change(state):
-    history = load_latest_history(state)
+    history, loaded_unique_id = load_latest_history(state)
     histories = find_all_histories_with_first_prompts(state)
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     convert_to_markdown.cache_clear()
 
     if len(histories) > 0:
-        past_chats_update = gr.update(choices=histories, value=histories[0][1])
+        past_chats_update = gr.update(choices=histories, value=loaded_unique_id or histories[0][1])
     else:
         past_chats_update = gr.update(choices=histories)
 
