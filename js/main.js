@@ -231,8 +231,15 @@ function doSyntaxHighlighting() {
   if (messageBodies.length > 0) {
     observer.disconnect();
 
-    messageBodies.forEach((messageBody) => {
+    let hasSeenVisible = false;
+
+    // Go from last message to first
+    for (let i = messageBodies.length - 1; i >= 0; i--) {
+      const messageBody = messageBodies[i];
+
       if (isElementVisibleOnScreen(messageBody)) {
+        hasSeenVisible = true;
+
         // Handle both code and math in a single pass through each message
         const codeBlocks = messageBody.querySelectorAll("pre code:not([data-highlighted])");
         codeBlocks.forEach((codeBlock) => {
@@ -249,8 +256,12 @@ function doSyntaxHighlighting() {
             { left: "\\[", right: "\\]", display: true },
           ],
         });
+      } else if (hasSeenVisible) {
+        // We've seen visible messages but this one is not visible
+        // Since we're going from last to first, we can break
+        break;
       }
-    });
+    }
 
     observer.observe(targetElement, config);
   }
