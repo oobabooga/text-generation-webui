@@ -78,8 +78,6 @@
 }
 
 .message-body p {
-    margin-bottom: 0 !important;
-    margin-top: 2px !important;
     font-size: 15px !important;
     line-height: 1.4 !important;
     font-weight: 400;
@@ -100,4 +98,8 @@
 /* Message actions positioning */
 .message-actions {
     margin-top: 8px;
+}
+
+.message-body p, .chat .message-body ul, .chat .message-body ol {
+    margin-bottom: 10px !important;
 }
