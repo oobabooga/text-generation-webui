@@ -332,10 +332,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 user_message = messages[-1]['content']
 
                 # Bisect the truncation point
-                left, right = 0, len(user_message) - 1
+                left, right = 0, len(user_message)
 
-                while right - left > 1:
-                    mid = (left + right) // 2
+                while left < right:
+                    mid = (left + right + 1) // 2
 
                     messages[-1]['content'] = user_message[:mid]
                     prompt = make_prompt(messages)
@@ -344,7 +344,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                     if encoded_length <= max_length:
                         left = mid
                     else:
-                        right = mid
+                        right = mid - 1
 
                 messages[-1]['content'] = user_message[:left]
                 prompt = make_prompt(messages)
