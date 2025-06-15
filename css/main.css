@@ -905,6 +905,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     flex-shrink: 1;
 }
 
+#search_chat {
+    padding-right: 0.5rem;
+}
+
 #search_chat > :nth-child(2) > :first-child {
     display: none;
 }
@@ -1020,12 +1024,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: 100%;
     justify-content: center;
     gap: 9px;
+    padding-right: 0.5rem;
 }
 
 #past-chats-row,
 #chat-controls {
     width: 260px;
     padding: 0.5rem;
+    padding-right: 0;
     height: calc(100dvh - 16px);
     flex-shrink: 0;
     box-sizing: content-box;
