@@ -29,6 +29,8 @@ def download_web_page(url, timeout=10):
         # Initialize the HTML to Markdown converter
         h = html2text.HTML2Text()
         h.body_width = 0
+        h.ignore_images = True
+        h.ignore_links = True
 
         # Convert the HTML to Markdown
         markdown_text = h.handle(response.text)
