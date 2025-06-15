@@ -6,6 +6,7 @@ import gradio as gr
 import yaml
 
 import extensions
+import modules.extensions as extensions_module
 from modules import shared
 from modules.chat import load_history
 from modules.utils import gradio
@@ -334,34 +335,40 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
     output.pop('instruction_template_str')
     output.pop('truncation_length')
 
-    # Only save extensions on manual save
+    # Handle extensions and extension parameters
     if manual_save:
+        # Save current extensions and their parameter values
         output['default_extensions'] = extensions_list
+
+        for extension_name in extensions_list:
+            extension = getattr(extensions, extension_name, None)
+            if extension:
+                extension = extension.script
+                if hasattr(extension, 'params'):
+                    params = getattr(extension, 'params')
+                    for param in params:
+                        _id = f"{extension_name}-{param}"
+                        # Only save if different from default value
+                        if param not in shared.default_settings or params[param] != shared.default_settings[param]:
+                            output[_id] = params[param]
     else:
-        # Preserve existing extensions from settings file during autosave
+        # Preserve existing extensions and extension parameters during autosave
         settings_path = Path('user_data') / 'settings.yaml'
         if settings_path.exists():
             try:
                 with open(settings_path, 'r', encoding='utf-8') as f:
                     existing_settings = yaml.safe_load(f.read()) or {}
 
+                # Preserve default_extensions
                 if 'default_extensions' in existing_settings:
                     output['default_extensions'] = existing_settings['default_extensions']
+
+                # Preserve extension parameter values
+                for key, value in existing_settings.items():
+                    if any(key.startswith(f"{ext_name}-") for ext_name in extensions_module.available_extensions):
+                        output[key] = value
             except Exception:
                 pass  # If we can't read the file, just don't modify extensions
-
-    # Save extension values in the UI
-    for extension_name in extensions_list:
-        extension = getattr(extensions, extension_name, None)
-        if extension:
-            extension = extension.script
-            if hasattr(extension, 'params'):
-                params = getattr(extension, 'params')
-                for param in params:
-                    _id = f"{extension_name}-{param}"
-                    # Only save if different from default value
-                    if param not in shared.default_settings or params[param] != shared.default_settings[param]:
-                        output[_id] = params[param]
 
     # Do not save unchanged settings
     for key in list(output.keys()):
