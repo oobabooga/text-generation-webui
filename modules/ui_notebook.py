@@ -68,14 +68,13 @@ def create_ui():
                     shared.gradio['rename_prompt-notebook'] = gr.Button('Rename', elem_classes=['refresh-button'], interactive=not mu)
                     shared.gradio['delete_prompt-notebook'] = gr.Button('🗑️', elem_classes=['refresh-button'], interactive=not mu)
 
-                    # Rename elements (initially hidden)
-                    shared.gradio['rename_prompt_to-notebook'] = gr.Textbox(placeholder='New name', elem_classes=['no-background'], visible=False)
-                    shared.gradio['rename_prompt-cancel-notebook'] = gr.Button('Cancel', elem_classes=['refresh-button'], visible=False)
-                    shared.gradio['rename_prompt-confirm-notebook'] = gr.Button('Confirm', elem_classes=['refresh-button'], variant='primary', visible=False)
-
-                    # Delete confirmation elements (initially hidden)
+                with gr.Row():
                     shared.gradio['delete_prompt-cancel-notebook'] = gr.Button('Cancel', elem_classes=['refresh-button'], visible=False)
                     shared.gradio['delete_prompt-confirm-notebook'] = gr.Button('Confirm', variant='stop', elem_classes=['refresh-button'], visible=False)
+                    with gr.Row(visible=False) as shared.gradio['rename-row-notebook']:
+                        shared.gradio['rename_prompt_to-notebook'] = gr.Textbox(placeholder='New name', label="", elem_classes=['no-background'])
+                        shared.gradio['rename_prompt-cancel-notebook'] = gr.Button('Cancel', elem_classes=['refresh-button'])
+                        shared.gradio['rename_prompt-confirm-notebook'] = gr.Button('Confirm', elem_classes=['refresh-button'], variant='primary')
 
 
 def create_event_handlers():
@@ -114,40 +113,41 @@ def create_event_handlers():
     shared.gradio['Stop-notebook'].click(stop_everything_event, None, None, queue=False)
     shared.gradio['prompt_menu-notebook'].change(load_prompt, gradio('prompt_menu-notebook'), gradio('textbox-notebook'), show_progress=False)
     shared.gradio['new_prompt-notebook'].click(handle_new_prompt, None, gradio('prompt_menu-notebook'), show_progress=False)
+
     shared.gradio['delete_prompt-notebook'].click(
-        lambda: [gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=True), gr.update(visible=True)],
+        lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=True)],
         None,
-        gradio('new_prompt-notebook', 'rename_prompt-notebook', 'delete_prompt-notebook', 'delete_prompt-cancel-notebook', 'delete_prompt-confirm-notebook'),
+        gradio('delete_prompt-notebook', 'delete_prompt-cancel-notebook', 'delete_prompt-confirm-notebook'),
         show_progress=False)
 
     shared.gradio['delete_prompt-cancel-notebook'].click(
-        lambda: [gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)],
+        lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)],
         None,
-        gradio('new_prompt-notebook', 'rename_prompt-notebook', 'delete_prompt-notebook', 'delete_prompt-cancel-notebook', 'delete_prompt-confirm-notebook'),
+        gradio('delete_prompt-notebook', 'delete_prompt-cancel-notebook', 'delete_prompt-confirm-notebook'),
         show_progress=False)
 
     shared.gradio['delete_prompt-confirm-notebook'].click(
         handle_delete_prompt_confirm_notebook,
         gradio('prompt_menu-notebook'),
-        gradio('prompt_menu-notebook', 'new_prompt-notebook', 'rename_prompt-notebook', 'delete_prompt-notebook', 'delete_prompt-cancel-notebook', 'delete_prompt-confirm-notebook'),
+        gradio('prompt_menu-notebook', 'delete_prompt-notebook', 'delete_prompt-cancel-notebook', 'delete_prompt-confirm-notebook'),
         show_progress=False)
 
     shared.gradio['rename_prompt-notebook'].click(
         handle_rename_prompt_click_notebook,
         gradio('prompt_menu-notebook'),
-        gradio('rename_prompt_to-notebook', 'new_prompt-notebook', 'rename_prompt-notebook', 'delete_prompt-notebook', 'rename_prompt-cancel-notebook', 'rename_prompt-confirm-notebook'),
+        gradio('rename_prompt_to-notebook', 'rename_prompt-notebook', 'rename-row-notebook'),
         show_progress=False)
 
     shared.gradio['rename_prompt-cancel-notebook'].click(
-        lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)],
+        lambda: [gr.update(visible=True), gr.update(visible=False)],
         None,
-        gradio('rename_prompt_to-notebook', 'new_prompt-notebook', 'rename_prompt-notebook', 'delete_prompt-notebook', 'rename_prompt-cancel-notebook', 'rename_prompt-confirm-notebook'),
+        gradio('rename_prompt-notebook', 'rename-row-notebook'),
         show_progress=False)
 
     shared.gradio['rename_prompt-confirm-notebook'].click(
         handle_rename_prompt_confirm_notebook,
         gradio('rename_prompt_to-notebook', 'prompt_menu-notebook'),
-        gradio('prompt_menu-notebook', 'rename_prompt_to-notebook', 'new_prompt-notebook', 'rename_prompt-notebook', 'delete_prompt-notebook', 'rename_prompt-cancel-notebook', 'rename_prompt-confirm-notebook'),
+        gradio('prompt_menu-notebook', 'rename_prompt-notebook', 'rename-row-notebook'),
         show_progress=False)
 
     shared.gradio['textbox-notebook'].input(lambda x: f"<span>{count_tokens(x)}</span>", gradio('textbox-notebook'), gradio('token-counter-notebook'), show_progress=False)
@@ -195,7 +195,7 @@ def handle_delete_prompt_confirm_notebook(prompt_name):
     available_prompts = utils.get_available_prompts()
     current_index = available_prompts.index(prompt_name) if prompt_name in available_prompts else 0
 
-    Path("user_data/logs/notebook", f"{prompt_name}.txt").unlink(missing_ok=True)
+    (Path("user_data/logs/notebook") / f"{prompt_name}.txt").unlink(missing_ok=True)
     available_prompts = utils.get_available_prompts()
 
     if available_prompts:
@@ -203,24 +203,22 @@ def handle_delete_prompt_confirm_notebook(prompt_name):
     else:
         new_value = utils.current_time()
         Path("user_data/logs/notebook").mkdir(parents=True, exist_ok=True)
-        Path("user_data/logs/notebook", f"{new_value}.txt").write_text("In this story,")
+        (Path("user_data/logs/notebook") / f"{new_value}.txt").write_text("In this story,")
         available_prompts = [new_value]
 
     return [
         gr.update(choices=available_prompts, value=new_value),
-        *[gr.update(visible=True)] * 3,
-        *[gr.update(visible=False)] * 2
+        gr.update(visible=True),
+        gr.update(visible=False),
+        gr.update(visible=False)
     ]
 
 
 def handle_rename_prompt_click_notebook(current_name):
     return [
-        gr.update(value=current_name, visible=True),  # rename_prompt_to
-        gr.update(visible=False),  # new_prompt
-        gr.update(visible=False),  # rename_prompt
-        gr.update(visible=False),  # delete_prompt
-        gr.update(visible=True),  # rename_cancel
-        gr.update(visible=True)   # rename_confirm
+        gr.update(value=current_name),
+        gr.update(visible=False),
+        gr.update(visible=True)
     ]
 
 
@@ -234,10 +232,6 @@ def handle_rename_prompt_confirm_notebook(new_name, current_name):
     available_prompts = utils.get_available_prompts()
     return [
         gr.update(choices=available_prompts, value=new_name),
-        gr.update(visible=False),  # rename_prompt_to
-        gr.update(visible=True),  # new_prompt
-        gr.update(visible=True),  # rename_prompt
-        gr.update(visible=True),  # delete_prompt
-        gr.update(visible=False),  # rename_cancel
-        gr.update(visible=False)  # rename_confirm
+        gr.update(visible=True),
+        gr.update(visible=False)
     ]

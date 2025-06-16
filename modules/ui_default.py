@@ -105,39 +105,39 @@ def create_event_handlers():
     shared.gradio['new_prompt-default'].click(handle_new_prompt, None, gradio('prompt_menu-default'), show_progress=False)
 
     shared.gradio['delete_prompt-default'].click(
-        lambda: [gr.update(visible=False), gr.update(visible=False), gr.update(visible=False), gr.update(visible=True), gr.update(visible=True)],
+        lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=True)],
         None,
-        gradio('new_prompt-default', 'rename_prompt-default', 'delete_prompt-default', 'delete_prompt-cancel-default', 'delete_prompt-confirm-default'),
+        gradio('delete_prompt-default', 'delete_prompt-cancel-default', 'delete_prompt-confirm-default'),
         show_progress=False)
 
     shared.gradio['delete_prompt-cancel-default'].click(
-        lambda: [gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)],
+        lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)],
         None,
-        gradio('new_prompt-default', 'rename_prompt-default', 'delete_prompt-default', 'delete_prompt-cancel-default', 'delete_prompt-confirm-default'),
+        gradio('delete_prompt-default', 'delete_prompt-cancel-default', 'delete_prompt-confirm-default'),
         show_progress=False)
 
     shared.gradio['delete_prompt-confirm-default'].click(
         handle_delete_prompt_confirm_default,
         gradio('prompt_menu-default'),
-        gradio('prompt_menu-default', 'new_prompt-default', 'rename_prompt-default', 'delete_prompt-default', 'delete_prompt-cancel-default', 'delete_prompt-confirm-default'),
+        gradio('prompt_menu-default', 'delete_prompt-default', 'delete_prompt-cancel-default', 'delete_prompt-confirm-default'),
         show_progress=False)
 
     shared.gradio['rename_prompt-default'].click(
         handle_rename_prompt_click_default,
         gradio('prompt_menu-default'),
-        gradio('rename_prompt_to-default', 'new_prompt-default', 'rename_prompt-default', 'delete_prompt-default', 'rename_prompt-cancel-default', 'rename_prompt-confirm-default'),
+        gradio('rename_prompt_to-default', 'rename_prompt-default', 'rename_prompt-cancel-default', 'rename_prompt-confirm-default'),
         show_progress=False)
 
     shared.gradio['rename_prompt-cancel-default'].click(
-        lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=True), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)],
+        lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)],
         None,
-        gradio('rename_prompt_to-default', 'new_prompt-default', 'rename_prompt-default', 'delete_prompt-default', 'rename_prompt-cancel-default', 'rename_prompt-confirm-default'),
+        gradio('rename_prompt_to-default', 'rename_prompt-default', 'rename_prompt-cancel-default', 'rename_prompt-confirm-default'),
         show_progress=False)
 
     shared.gradio['rename_prompt-confirm-default'].click(
         handle_rename_prompt_confirm_default,
         gradio('rename_prompt_to-default', 'prompt_menu-default'),
-        gradio('prompt_menu-default', 'rename_prompt_to-default', 'new_prompt-default', 'rename_prompt-default', 'delete_prompt-default', 'rename_prompt-cancel-default', 'rename_prompt-confirm-default'),
+        gradio('prompt_menu-default', 'rename_prompt_to-default', 'rename_prompt-default', 'rename_prompt-cancel-default', 'rename_prompt-confirm-default'),
         show_progress=False)
 
     shared.gradio['textbox-default'].change(lambda x: f"<span>{count_tokens(x)}</span>", gradio('textbox-default'), gradio('token-counter-default'), show_progress=False)
@@ -215,36 +215,31 @@ def handle_delete_prompt_confirm_default(prompt_name):
     available_prompts = utils.get_available_prompts()
     current_index = available_prompts.index(prompt_name) if prompt_name in available_prompts else 0
 
-    # Delete
-    Path("user_data/logs/notebook", f"{prompt_name}.txt").unlink(missing_ok=True)
-
-    # Get updated list
+    (Path("user_data/logs/notebook") / f"{prompt_name}.txt").unlink(missing_ok=True)
     available_prompts = utils.get_available_prompts()
 
     if available_prompts:
         new_value = available_prompts[min(current_index, len(available_prompts) - 1)]
     else:
-        # Auto-create new prompt if empty
         new_value = utils.current_time()
         Path("user_data/logs/notebook").mkdir(parents=True, exist_ok=True)
-        Path("user_data/logs/notebook", f"{new_value}.txt").write_text("In this story,")
+        (Path("user_data/logs/notebook") / f"{new_value}.txt").write_text("In this story,")
         available_prompts = [new_value]
 
     return [
         gr.update(choices=available_prompts, value=new_value),
-        *[gr.update(visible=True)] * 3,   # show normal buttons
-        *[gr.update(visible=False)] * 2   # hide confirm buttons
+        gr.update(visible=True),
+        gr.update(visible=False),
+        gr.update(visible=False)
     ]
 
 
 def handle_rename_prompt_click_default(current_name):
     return [
-        gr.update(value=current_name, visible=True),  # rename_prompt_to
-        gr.update(visible=False),  # new_prompt
-        gr.update(visible=False),  # rename_prompt
-        gr.update(visible=False),  # delete_prompt
-        gr.update(visible=True),  # rename_cancel
-        gr.update(visible=True)   # rename_confirm
+        gr.update(value=current_name, visible=True),
+        gr.update(visible=False),
+        gr.update(visible=True),
+        gr.update(visible=True)
     ]
 
 
@@ -258,10 +253,8 @@ def handle_rename_prompt_confirm_default(new_name, current_name):
     available_prompts = utils.get_available_prompts()
     return [
         gr.update(choices=available_prompts, value=new_name),
-        gr.update(visible=False),  # rename_prompt_to
-        gr.update(visible=True),  # new_prompt
-        gr.update(visible=True),  # rename_prompt
-        gr.update(visible=True),  # delete_prompt
-        gr.update(visible=False),  # rename_cancel
-        gr.update(visible=False)  # rename_confirm
+        gr.update(visible=False),
+        gr.update(visible=True),
+        gr.update(visible=False),
+        gr.update(visible=False)
     ]
