@@ -159,10 +159,9 @@ def get_available_presets():
 
 
 def get_available_prompts():
-    prompt_files = list(Path('user_data/prompts').glob('*.txt'))
+    prompt_files = list(Path('user_data/logs/notebook').glob('*.txt'))
     sorted_files = sorted(prompt_files, key=lambda x: x.stat().st_mtime, reverse=True)
     prompts = [file.stem for file in sorted_files]
-    prompts.append('None')
     return prompts
 
 

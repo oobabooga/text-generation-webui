@@ -22,7 +22,8 @@ def create_ui():
         with gr.Row():
             with gr.Column():
                 with gr.Row():
-                    shared.gradio['textbox-default'] = gr.Textbox(value=load_prompt(shared.settings['prompt-notebook']), lines=27, label='Input', elem_classes=['textbox_default', 'add_scrollbar'])
+                    initial_text = load_prompt(shared.settings['prompt-notebook'])
+                    shared.gradio['textbox-default'] = gr.Textbox(value=initial_text, lines=27, label='Input', elem_classes=['textbox_default', 'add_scrollbar'])
                     shared.gradio['token-counter-default'] = gr.HTML(value="<span>0</span>", elem_id="default-token-counter")
 
                 with gr.Row():
@@ -104,7 +105,7 @@ def create_event_handlers():
 def autosave_prompt(text, prompt_name):
     """Automatically save the text to the selected prompt file"""
     if prompt_name and text.strip():
-        prompt_path = Path("user_data/prompts") / f"{prompt_name}.txt"
+        prompt_path = Path("user_data/logs/notebook") / f"{prompt_name}.txt"
         prompt_path.parent.mkdir(parents=True, exist_ok=True)
         prompt_path.write_text(text, encoding='utf-8')
 
@@ -155,14 +156,13 @@ def handle_new_prompt():
     new_name = utils.current_time()
 
     # Create the new prompt file
-    prompt_path = Path("user_data/prompts") / f"{new_name}.txt"
+    prompt_path = Path("user_data/logs/notebook") / f"{new_name}.txt"
     prompt_path.parent.mkdir(parents=True, exist_ok=True)
     prompt_path.write_text("", encoding='utf-8')
 
-    # Return: clear textbox, update dropdown choices, set dropdown value to new prompt
     return [
-        "In this story,",  # textbox-default (cleared)
-        gr.update(choices=utils.get_available_prompts(), value=new_name)  # prompt_menu-default
+        "In this story,",
+        gr.update(choices=utils.get_available_prompts(), value=new_name)
     ]
 
 

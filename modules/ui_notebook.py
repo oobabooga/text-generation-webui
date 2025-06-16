@@ -25,7 +25,8 @@ def create_ui():
             with gr.Column(scale=4):
                 with gr.Tab('Raw'):
                     with gr.Row():
-                        shared.gradio['textbox-notebook'] = gr.Textbox(value=load_prompt(shared.settings['prompt-notebook']), lines=27, elem_id='textbox-notebook', elem_classes=['textbox', 'add_scrollbar'])
+                        initial_text = load_prompt(shared.settings['prompt-notebook'])
+                        shared.gradio['textbox-notebook'] = gr.Textbox(value=initial_text, lines=27, elem_id='textbox-notebook', elem_classes=['textbox', 'add_scrollbar'])
                         shared.gradio['token-counter-notebook'] = gr.HTML(value="<span>0</span>", elem_id="notebook-token-counter")
 
                 with gr.Tab('Markdown'):
@@ -137,12 +138,11 @@ def handle_new_prompt():
     new_name = utils.current_time()
 
     # Create the new prompt file
-    prompt_path = Path("user_data/prompts") / f"{new_name}.txt"
+    prompt_path = Path("user_data/logs/notebook") / f"{new_name}.txt"
     prompt_path.parent.mkdir(parents=True, exist_ok=True)
     prompt_path.write_text("", encoding='utf-8')
 
-    # Return: clear textbox, update dropdown choices, set dropdown value to new prompt
     return [
-        "In this story,",  # textbox-notebook (cleared)
-        gr.update(choices=utils.get_available_prompts(), value=new_name)  # prompt_menu-notebook
+        "In this story,",
+        gr.update(choices=utils.get_available_prompts(), value=new_name)
     ]
