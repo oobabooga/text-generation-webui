@@ -1,16 +1,30 @@
-const belowChatInput = document.querySelectorAll(
-  "#chat-tab > div > :nth-child(1), #chat-tab > div > :nth-child(3), #chat-tab > div > :nth-child(4), #extensions"
-);
 const chatParent = document.querySelector(".chat-parent");
 
 function toggle_controls(value) {
-  const headerBar = document.querySelector(".header_bar");
+  const extensions = document.querySelector("#extensions");
 
   if (value) {
-    belowChatInput.forEach(element => {
-      element.style.display = "inherit";
-    });
+    // SHOW MODE: Click toggles to show hidden sidebars
+    const navToggle = document.getElementById("navigation-toggle");
+    const pastChatsToggle = document.getElementById("past-chats-toggle");
+    const chatControlsToggle = document.getElementById("chat-controls-toggle");
 
+    if (navToggle && document.querySelector(".header_bar")?.classList.contains("sidebar-hidden")) {
+      navToggle.click();
+    }
+    if (pastChatsToggle && document.getElementById("past-chats-row")?.classList.contains("sidebar-hidden")) {
+      pastChatsToggle.click();
+    }
+    if (chatControlsToggle && document.getElementById("chat-controls")?.classList.contains("sidebar-hidden")) {
+      chatControlsToggle.click();
+    }
+
+    // Show extensions only
+    if (extensions) {
+      extensions.style.display = "inherit";
+    }
+
+    // Remove bigchat classes
     chatParent.classList.remove("bigchat");
     document.getElementById("chat-input-row").classList.remove("bigchat");
     document.getElementById("chat-col").classList.remove("bigchat");
@@ -21,24 +35,31 @@ function toggle_controls(value) {
       gallery_element.style.display = "block";
     }
 
-    // Show header bar
-    if (headerBar) {
-      headerBar.style.removeProperty("display");
+  } else {
+    // HIDE MODE: Click toggles to hide visible sidebars
+    const navToggle = document.getElementById("navigation-toggle");
+    const pastChatsToggle = document.getElementById("past-chats-toggle");
+    const chatControlsToggle = document.getElementById("chat-controls-toggle");
+
+    if (navToggle && !document.querySelector(".header_bar")?.classList.contains("sidebar-hidden")) {
+      navToggle.click();
+    }
+    if (pastChatsToggle && !document.getElementById("past-chats-row")?.classList.contains("sidebar-hidden")) {
+      pastChatsToggle.click();
+    }
+    if (chatControlsToggle && !document.getElementById("chat-controls")?.classList.contains("sidebar-hidden")) {
+      chatControlsToggle.click();
     }
 
-  } else {
-    belowChatInput.forEach(element => {
-      element.style.display = "none";
-    });
+    // Hide extensions only
+    if (extensions) {
+      extensions.style.display = "none";
+    }
 
+    // Add bigchat classes
     chatParent.classList.add("bigchat");
     document.getElementById("chat-input-row").classList.add("bigchat");
     document.getElementById("chat-col").classList.add("bigchat");
     document.getElementById("chat-tab").style.paddingBottom = "0px";
-
-    // Hide header bar
-    if (headerBar) {
-      headerBar.style.setProperty("display", "none", "important");
-    }
   }
 }
