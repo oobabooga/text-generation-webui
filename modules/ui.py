@@ -274,6 +274,7 @@ def list_interface_input_elements():
 
     # Other elements
     elements += [
+        'show_two_notebook_columns',
         'paste_to_attachment',
         'include_past_attachments',
     ]
@@ -326,8 +327,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
             output[k] = state[k]
 
     output['preset'] = preset
-    output['prompt-default'] = state['prompt_menu-default']
-    output['prompt-notebook'] = state['prompt_menu-notebook']
+    output['prompt-notebook'] = state['prompt_menu-default'] if state['show_two_notebook_columns'] else state['prompt_menu-notebook']
     output['character'] = state['character_menu']
     output['seed'] = int(output['seed'])
     output['show_controls'] = show_controls
@@ -505,6 +505,7 @@ def setup_auto_save():
         # Session tab (ui_session.py)
         'show_controls',
         'theme_state',
+        'show_two_notebook_columns',
         'paste_to_attachment',
         'include_past_attachments'
     ]

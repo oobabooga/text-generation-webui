@@ -145,8 +145,9 @@ def create_interface():
 
         # Text Generation tab
         ui_chat.create_ui()
-        ui_default.create_ui()
-        ui_notebook.create_ui()
+        with gr.Tab("Notebook", elem_id='notebook-parent-tab'):
+            ui_default.create_ui()
+            ui_notebook.create_ui()
 
         ui_parameters.create_ui()  # Parameters tab
         ui_chat.create_character_settings_ui()  # Character tab
