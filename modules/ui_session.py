@@ -35,7 +35,10 @@ def create_ui():
             lambda x: 'dark' if x == 'light' else 'light', gradio('theme_state'), gradio('theme_state')).then(
             None, None, None, js=f'() => {{{ui.dark_theme_js}; toggleDarkMode(); localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light")}}')
 
-        shared.gradio['show_two_notebook_columns'].change(lambda x: [gr.update(visible=x), gr.update(visible=not x)], gradio('show_two_notebook_columns'), gradio('default-tab', 'notebook-tab'))
+        shared.gradio['show_two_notebook_columns'].change(
+            handle_default_to_notebook_change,
+            gradio('show_two_notebook_columns', 'textbox-default', 'output_textbox', 'prompt_menu-default', 'textbox-notebook', 'prompt_menu-notebook'),
+            gradio('default-tab', 'notebook-tab', 'textbox-default', 'output_textbox', 'prompt_menu-default', 'textbox-notebook', 'prompt_menu-notebook'))
 
         # Reset interface event
         shared.gradio['reset_interface'].click(
@@ -51,6 +54,31 @@ def handle_save_settings(state, preset, extensions, show_controls, theme):
         "user_data/",
         gr.update(visible=True)
     ]
+
+
+def handle_default_to_notebook_change(show_two_columns, default_input, default_output, default_prompt, notebook_input, notebook_prompt):
+    if show_two_columns:
+        # Notebook to default
+        return [
+            gr.update(visible=True),
+            gr.update(visible=False),
+            notebook_input,
+            notebook_input,
+            gr.update(value=notebook_prompt, choices=utils.get_available_prompts()),
+            gr.update(),
+            gr.update(),
+        ]
+    else:
+        # Default to notebook
+        return [
+            gr.update(visible=False),
+            gr.update(visible=True),
+            gr.update(),
+            gr.update(),
+            gr.update(),
+            default_input,
+            gr.update(value=default_prompt, choices=utils.get_available_prompts())
+        ]
 
 
 def set_interface_arguments(extensions, bool_active):
