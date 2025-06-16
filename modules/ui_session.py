@@ -11,6 +11,7 @@ def create_ui():
             with gr.Column():
                 gr.Markdown("## Settings")
                 shared.gradio['toggle_dark_mode'] = gr.Button('Toggle light/dark theme 💡', elem_classes='refresh-button')
+                shared.gradio['show_two_notebook_columns'] = gr.Checkbox(label='show_two_notebook_columns', value=shared.settings['show_two_notebook_columns'])
                 shared.gradio['paste_to_attachment'] = gr.Checkbox(label='Turn long pasted text into attachments in the Chat tab', value=shared.settings['paste_to_attachment'], elem_id='paste_to_attachment')
                 shared.gradio['include_past_attachments'] = gr.Checkbox(label='Include attachments/search results from previous messages in the chat prompt', value=shared.settings['include_past_attachments'])
 
@@ -33,6 +34,8 @@ def create_ui():
         shared.gradio['toggle_dark_mode'].click(
             lambda x: 'dark' if x == 'light' else 'light', gradio('theme_state'), gradio('theme_state')).then(
             None, None, None, js=f'() => {{{ui.dark_theme_js}; toggleDarkMode(); localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light")}}')
+
+        shared.gradio['show_two_notebook_columns'].change(lambda x: [gr.update(visible=x), gr.update(visible=not x)], gradio('show_two_notebook_columns'), gradio('default-tab', 'notebook-tab'))
 
         # Reset interface event
         shared.gradio['reset_interface'].click(

@@ -146,10 +146,8 @@ def create_interface():
         # Text Generation tab
         ui_chat.create_ui()
         with gr.Tab("Notebook"):
-            shared.gradio['show_two_notebook_columns'] = gr.Checkbox(label='show_two_notebook_columns', value=shared.settings['show_two_notebook_columns'])
             ui_default.create_ui()
             ui_notebook.create_ui()
-            shared.gradio['show_two_notebook_columns'].change(lambda x: [gr.update(visible=x), gr.update(visible=not x)], gradio('show_two_notebook_columns'), gradio('default-tab', 'notebook-tab'))
 
         ui_parameters.create_ui()  # Parameters tab
         ui_chat.create_character_settings_ui()  # Character tab
