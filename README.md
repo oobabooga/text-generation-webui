@@ -24,7 +24,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 - Multiple sampling parameters and generation options for sophisticated text generation control.
 - Switch between different models in the UI without restarting.
 - Automatic GPU layers for GGUF models (on NVIDIA GPUs).
-- Free-form text generation in the Default/Notebook tabs without being limited to chat turns.
+- Free-form text generation in the Notebook tab without being limited to chat turns.
 - OpenAI-compatible API with Chat and Completions endpoints, including tool-calling support – see [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
 - Extension support, with numerous built-in and user-contributed extensions available. See the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
 
