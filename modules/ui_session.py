@@ -38,7 +38,8 @@ def create_ui():
         shared.gradio['show_two_notebook_columns'].change(
             handle_default_to_notebook_change,
             gradio('show_two_notebook_columns', 'textbox-default', 'output_textbox', 'prompt_menu-default', 'textbox-notebook', 'prompt_menu-notebook'),
-            gradio('default-tab', 'notebook-tab', 'textbox-default', 'output_textbox', 'prompt_menu-default', 'textbox-notebook', 'prompt_menu-notebook'))
+            gradio('default-tab', 'notebook-tab', 'textbox-default', 'output_textbox', 'prompt_menu-default', 'textbox-notebook', 'prompt_menu-notebook')
+        )
 
         # Reset interface event
         shared.gradio['reset_interface'].click(
