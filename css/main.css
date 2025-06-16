@@ -97,11 +97,11 @@ ol li p, ul li p {
     display: inline-block;
 }
 
-#chat-tab, #default-tab, #notebook-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab {
+#chat-tab, #default-tab, #notebook-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab, #character-tab {
     border: 0;
 }
 
-#default-tab, #notebook-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab {
+#default-tab, #notebook-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab, #character-tab {
     padding: 1rem;
 }
 
@@ -1658,6 +1658,7 @@ button:focus {
     height: calc(100vh - 231px) !important;
 }
 
-#character-tab {
-    border: 0;
+#instruction-template-str textarea,
+#chat-template-str textarea {
+    height: calc(100vh - 300px) !important;
 }
