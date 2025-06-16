@@ -1,7 +1,7 @@
 accelerate==1.5.*
 colorama
 datasets
-duckduckgo_search==8.0.2
+duckduckgo_search==8.0.4
 einops
 fastapi==0.112.4
 gradio==4.37.*
