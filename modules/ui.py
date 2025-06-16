@@ -327,7 +327,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
             output[k] = state[k]
 
     output['preset'] = preset
-    output['prompt-notebook'] = state['prompt_menu-default'] if state['show_two_notebook_columns'] else state['prompt_menu-notebook'],
+    output['prompt-notebook'] = state['prompt_menu-default'] if state['show_two_notebook_columns'] else state['prompt_menu-notebook']
     output['character'] = state['character_menu']
     output['seed'] = int(output['seed'])
     output['show_controls'] = show_controls
