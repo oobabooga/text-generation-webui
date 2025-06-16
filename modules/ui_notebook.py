@@ -101,7 +101,7 @@ def create_event_handlers():
     shared.gradio['markdown_render-notebook'].click(lambda x: x, gradio('textbox-notebook'), gradio('markdown-notebook'), queue=False)
     shared.gradio['Stop-notebook'].click(stop_everything_event, None, None, queue=False)
     shared.gradio['prompt_menu-notebook'].change(load_prompt, gradio('prompt_menu-notebook'), gradio('textbox-notebook'), show_progress=False)
-    shared.gradio['new_prompt-notebook'].click(handle_new_prompt, None, gradio('textbox-notebook', 'prompt_menu-notebook'), show_progress=False)
+    shared.gradio['new_prompt-notebook'].click(handle_new_prompt, None, gradio('prompt_menu-notebook'), show_progress=False)
     shared.gradio['delete_prompt-notebook'].click(handle_delete_prompt, gradio('prompt_menu-notebook'), gradio('delete_filename', 'delete_root', 'file_deleter'), show_progress=False)
     shared.gradio['textbox-notebook'].input(lambda x: f"<span>{count_tokens(x)}</span>", gradio('textbox-notebook'), gradio('token-counter-notebook'), show_progress=False)
     shared.gradio['get_logits-notebook'].click(
@@ -139,9 +139,6 @@ def handle_new_prompt():
     # Create the new prompt file
     prompt_path = Path("user_data/logs/notebook") / f"{new_name}.txt"
     prompt_path.parent.mkdir(parents=True, exist_ok=True)
-    prompt_path.write_text("", encoding='utf-8')
+    prompt_path.write_text("In this story,", encoding='utf-8')
 
-    return [
-        "In this story,",
-        gr.update(choices=utils.get_available_prompts(), value=new_name)
-    ]
+    return gr.update(choices=utils.get_available_prompts(), value=new_name)
