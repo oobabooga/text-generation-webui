@@ -115,23 +115,22 @@ def generate_and_save_wrapper_notebook(textbox_content, interface_state, prompt_
     """Generate reply and automatically save the result for notebook mode with periodic saves"""
     last_save_time = time.monotonic()
     save_interval = 8
+    output = textbox_content
 
-    # Initial autosave - save the current textbox content
-    autosave_prompt(textbox_content, prompt_name)
+    # Initial autosave
+    autosave_prompt(output, prompt_name)
 
-    for i, (textbox_updated, html_output) in enumerate(generate_reply_wrapper(textbox_content, interface_state)):
-        yield textbox_updated, html_output
+    for i, (output, html_output) in enumerate(generate_reply_wrapper(textbox_content, interface_state)):
+        yield output, html_output
 
         current_time = time.monotonic()
         # Save on first iteration or if save_interval seconds have passed
         if i == 0 or (current_time - last_save_time) >= save_interval:
-            autosave_prompt(textbox_updated, prompt_name)
+            autosave_prompt(output, prompt_name)
             last_save_time = current_time
 
-    # Final autosave - save the final updated textbox content
-    # The textbox_updated from the last iteration contains the final content
-    if 'textbox_updated' in locals():
-        autosave_prompt(textbox_updated, prompt_name)
+    # Final autosave
+    autosave_prompt(output, prompt_name)
 
 
 def handle_new_prompt():

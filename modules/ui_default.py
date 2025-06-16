@@ -114,44 +114,44 @@ def generate_and_save_wrapper(textbox_content, interface_state, prompt_name):
     """Generate reply and automatically save the result with periodic saves"""
     last_save_time = time.monotonic()
     save_interval = 8
+    output = textbox_content
 
     # Initial autosave
-    autosave_prompt(textbox_content, prompt_name)
+    autosave_prompt(output, prompt_name)
 
-    for i, (output_textbox, html_output) in enumerate(generate_reply_wrapper(textbox_content, interface_state)):
-        yield output_textbox, html_output
+    for i, (output, html_output) in enumerate(generate_reply_wrapper(textbox_content, interface_state)):
+        yield output, html_output
 
         current_time = time.monotonic()
         # Save on first iteration or if save_interval seconds have passed
         if i == 0 or (current_time - last_save_time) >= save_interval:
-            autosave_prompt(output_textbox, prompt_name)
+            autosave_prompt(output, prompt_name)
             last_save_time = current_time
 
     # Final autosave
-    if output_textbox in locals():
-        autosave_prompt(output_textbox, prompt_name)
+    autosave_prompt(output, prompt_name)
 
 
 def continue_and_save_wrapper(output_textbox, textbox_content, interface_state, prompt_name):
     """Continue generation and automatically save the result with periodic saves"""
     last_save_time = time.monotonic()
     save_interval = 8
+    output = output_textbox
 
     # Initial autosave
-    autosave_prompt(textbox_content, prompt_name)
+    autosave_prompt(output, prompt_name)
 
-    for i, (output_textbox_new, html_output) in enumerate(generate_reply_wrapper(output_textbox, interface_state)):
-        yield output_textbox_new, html_output
+    for i, (output, html_output) in enumerate(generate_reply_wrapper(output_textbox, interface_state)):
+        yield output, html_output
 
         current_time = time.monotonic()
         # Save on first iteration or if save_interval seconds have passed
         if i == 0 or (current_time - last_save_time) >= save_interval:
-            autosave_prompt(output_textbox_new, prompt_name)
+            autosave_prompt(output, prompt_name)
             last_save_time = current_time
 
     # Final autosave
-    if output_textbox_new in locals():
-        autosave_prompt(output_textbox_new, prompt_name)
+    autosave_prompt(output, prompt_name)
 
 
 def handle_new_prompt():
