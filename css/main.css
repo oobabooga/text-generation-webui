@@ -1648,17 +1648,21 @@ button:focus {
 
 #character-context textarea {
     height: calc((100vh - 350px) * 2/3) !important;
+    min-height: 90px !important;
 }
 
 #character-greeting textarea {
     height: calc((100vh - 350px) * 1/3) !important;
+    min-height: 90px !important;
 }
 
 #user-description textarea {
     height: calc(100vh - 231px) !important;
+    min-height: 90px !important;
 }
 
 #instruction-template-str textarea,
 #chat-template-str textarea {
     height: calc(100vh - 300px) !important;
+    min-height: 90px !important;
 }
