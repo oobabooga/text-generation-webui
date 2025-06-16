@@ -196,6 +196,7 @@ neutral_samplers = default_preset()
 # UI defaults
 settings = {
     'show_controls': True,
+    'show_two_notebook_columns': True,
     'start_with': '',
     'mode': 'instruct',
     'chat_style': 'cai-chat',

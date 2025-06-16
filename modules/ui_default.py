@@ -15,7 +15,7 @@ outputs = ('output_textbox', 'html-default')
 
 def create_ui():
     mu = shared.args.multi_user
-    with gr.Tab('Default', elem_id='default-tab'):
+    with gr.Row(visible=shared.settings['show_two_notebook_columns']) as shared.gradio['default-tab']:
         with gr.Row():
             with gr.Column():
                 with gr.Row():
