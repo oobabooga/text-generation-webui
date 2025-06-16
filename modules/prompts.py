@@ -13,7 +13,7 @@ def load_prompt(fname):
 
         with open(file_path, 'r', encoding='utf-8') as f:
             text = f.read()
-            if text[-1] == '\n':
+            if len(text) > 0 and text[-1] == '\n':
                 text = text[:-1]
 
             return text

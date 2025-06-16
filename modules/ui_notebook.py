@@ -65,29 +65,6 @@ def create_ui():
                     shared.gradio['delete_prompt-notebook'] = gr.Button('🗑️', elem_classes=['refresh-button', 'refresh-button-small'], interactive=not mu)
 
 
-def generate_and_save_wrapper_notebook(textbox_content, interface_state, prompt_name):
-    """Generate reply and automatically save the result for notebook mode with periodic saves"""
-    last_save_time = time.monotonic()
-    save_interval = 8
-
-    # Initial autosave - save the current textbox content
-    autosave_prompt(textbox_content, prompt_name)
-
-    for i, (textbox_updated, html_output) in enumerate(generate_reply_wrapper(textbox_content, interface_state)):
-        yield textbox_updated, html_output
-
-        current_time = time.monotonic()
-        # Save on first iteration or if save_interval seconds have passed
-        if i == 0 or (current_time - last_save_time) >= save_interval:
-            autosave_prompt(textbox_updated, prompt_name)
-            last_save_time = current_time
-
-    # Final autosave - save the final updated textbox content
-    # The textbox_updated from the last iteration contains the final content
-    if 'textbox_updated' in locals():
-        autosave_prompt(textbox_updated, prompt_name)
-
-
 def create_event_handlers():
     shared.gradio['Generate-notebook'].click(
         lambda x: x, gradio('textbox-notebook'), gradio('last_input-notebook')).then(
@@ -133,6 +110,39 @@ def create_event_handlers():
     shared.gradio['get_tokens-notebook'].click(get_token_ids, gradio('textbox-notebook'), gradio('tokens-notebook'), show_progress=False)
 
 
+def generate_and_save_wrapper_notebook(textbox_content, interface_state, prompt_name):
+    """Generate reply and automatically save the result for notebook mode with periodic saves"""
+    last_save_time = time.monotonic()
+    save_interval = 8
+
+    # Initial autosave - save the current textbox content
+    autosave_prompt(textbox_content, prompt_name)
+
+    for i, (textbox_updated, html_output) in enumerate(generate_reply_wrapper(textbox_content, interface_state)):
+        yield textbox_updated, html_output
+
+        current_time = time.monotonic()
+        # Save on first iteration or if save_interval seconds have passed
+        if i == 0 or (current_time - last_save_time) >= save_interval:
+            autosave_prompt(textbox_updated, prompt_name)
+            last_save_time = current_time
+
+    # Final autosave - save the final updated textbox content
+    # The textbox_updated from the last iteration contains the final content
+    if 'textbox_updated' in locals():
+        autosave_prompt(textbox_updated, prompt_name)
+
+
 def handle_new_prompt():
     new_name = utils.current_time()
-    return ["", new_name]
+
+    # Create the new prompt file
+    prompt_path = Path("user_data/prompts") / f"{new_name}.txt"
+    prompt_path.parent.mkdir(parents=True, exist_ok=True)
+    prompt_path.write_text("", encoding='utf-8')
+
+    # Return: clear textbox, update dropdown choices, set dropdown value to new prompt
+    return [
+        "In this story,",  # textbox-notebook (cleared)
+        gr.update(choices=utils.get_available_prompts(), value=new_name)  # prompt_menu-notebook
+    ]

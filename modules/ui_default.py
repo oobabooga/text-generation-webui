@@ -63,56 +63,6 @@ def create_ui():
                     shared.gradio['tokens-default'] = gr.Textbox(lines=23, label='Tokens', elem_classes=['textbox_logits', 'add_scrollbar', 'monospace'])
 
 
-def autosave_prompt(text, prompt_name):
-    """Automatically save the text to the selected prompt file"""
-    if prompt_name and text.strip():
-        prompt_path = Path("user_data/prompts") / f"{prompt_name}.txt"
-        prompt_path.parent.mkdir(parents=True, exist_ok=True)
-        prompt_path.write_text(text, encoding='utf-8')
-
-
-def generate_and_save_wrapper(textbox_content, interface_state, prompt_name):
-    """Generate reply and automatically save the result with periodic saves"""
-    last_save_time = time.monotonic()
-    save_interval = 8
-
-    # Initial autosave
-    autosave_prompt(textbox_content, prompt_name)
-
-    for i, (output_textbox, html_output) in enumerate(generate_reply_wrapper(textbox_content, interface_state)):
-        yield output_textbox, html_output
-
-        current_time = time.monotonic()
-        # Save on first iteration or if save_interval seconds have passed
-        if i == 0 or (current_time - last_save_time) >= save_interval:
-            autosave_prompt(textbox_content, prompt_name)
-            last_save_time = current_time
-
-    # Final autosave
-    autosave_prompt(textbox_content, prompt_name)
-
-
-def continue_and_save_wrapper(output_textbox, textbox_content, interface_state, prompt_name):
-    """Continue generation and automatically save the result with periodic saves"""
-    last_save_time = time.monotonic()
-    save_interval = 8
-
-    # Initial autosave
-    autosave_prompt(textbox_content, prompt_name)
-
-    for i, (output_textbox_new, html_output) in enumerate(generate_reply_wrapper(output_textbox, interface_state)):
-        yield output_textbox_new, html_output
-
-        current_time = time.monotonic()
-        # Save on first iteration or if save_interval seconds have passed
-        if i == 0 or (current_time - last_save_time) >= save_interval:
-            autosave_prompt(textbox_content, prompt_name)
-            last_save_time = current_time
-
-    # Final autosave
-    autosave_prompt(textbox_content, prompt_name)
-
-
 def create_event_handlers():
     shared.gradio['Generate-default'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
@@ -151,9 +101,69 @@ def create_event_handlers():
     shared.gradio['get_tokens-default'].click(get_token_ids, gradio('textbox-default'), gradio('tokens-default'), show_progress=False)
 
 
+def autosave_prompt(text, prompt_name):
+    """Automatically save the text to the selected prompt file"""
+    if prompt_name and text.strip():
+        prompt_path = Path("user_data/prompts") / f"{prompt_name}.txt"
+        prompt_path.parent.mkdir(parents=True, exist_ok=True)
+        prompt_path.write_text(text, encoding='utf-8')
+
+
+def generate_and_save_wrapper(textbox_content, interface_state, prompt_name):
+    """Generate reply and automatically save the result with periodic saves"""
+    last_save_time = time.monotonic()
+    save_interval = 8
+
+    # Initial autosave
+    autosave_prompt(textbox_content, prompt_name)
+
+    for i, (output_textbox, html_output) in enumerate(generate_reply_wrapper(textbox_content, interface_state)):
+        yield output_textbox, html_output
+
+        current_time = time.monotonic()
+        # Save on first iteration or if save_interval seconds have passed
+        if i == 0 or (current_time - last_save_time) >= save_interval:
+            autosave_prompt(output_textbox, prompt_name)
+            last_save_time = current_time
+
+    # Final autosave
+    autosave_prompt(output_textbox, prompt_name)
+
+
+def continue_and_save_wrapper(output_textbox, textbox_content, interface_state, prompt_name):
+    """Continue generation and automatically save the result with periodic saves"""
+    last_save_time = time.monotonic()
+    save_interval = 8
+
+    # Initial autosave
+    autosave_prompt(textbox_content, prompt_name)
+
+    for i, (output_textbox_new, html_output) in enumerate(generate_reply_wrapper(output_textbox, interface_state)):
+        yield output_textbox_new, html_output
+
+        current_time = time.monotonic()
+        # Save on first iteration or if save_interval seconds have passed
+        if i == 0 or (current_time - last_save_time) >= save_interval:
+            autosave_prompt(output_textbox_new, prompt_name)
+            last_save_time = current_time
+
+    # Final autosave
+    autosave_prompt(textbox_content, prompt_name)
+
+
 def handle_new_prompt():
     new_name = utils.current_time()
-    return ["", new_name]
+
+    # Create the new prompt file
+    prompt_path = Path("user_data/prompts") / f"{new_name}.txt"
+    prompt_path.parent.mkdir(parents=True, exist_ok=True)
+    prompt_path.write_text("", encoding='utf-8')
+
+    # Return: clear textbox, update dropdown choices, set dropdown value to new prompt
+    return [
+        "In this story,",  # textbox-default (cleared)
+        gr.update(choices=utils.get_available_prompts(), value=new_name)  # prompt_menu-default
+    ]
 
 
 def handle_delete_prompt(prompt):
