@@ -7,16 +7,12 @@ function toggle_controls(value) {
     // SHOW MODE: Click toggles to show hidden sidebars
     const navToggle = document.getElementById("navigation-toggle");
     const pastChatsToggle = document.getElementById("past-chats-toggle");
-    const chatControlsToggle = document.getElementById("chat-controls-toggle");
 
     if (navToggle && document.querySelector(".header_bar")?.classList.contains("sidebar-hidden")) {
       navToggle.click();
     }
     if (pastChatsToggle && document.getElementById("past-chats-row")?.classList.contains("sidebar-hidden")) {
       pastChatsToggle.click();
-    }
-    if (chatControlsToggle && document.getElementById("chat-controls")?.classList.contains("sidebar-hidden")) {
-      chatControlsToggle.click();
     }
 
     // Show extensions only
@@ -39,16 +35,12 @@ function toggle_controls(value) {
     // HIDE MODE: Click toggles to hide visible sidebars
     const navToggle = document.getElementById("navigation-toggle");
     const pastChatsToggle = document.getElementById("past-chats-toggle");
-    const chatControlsToggle = document.getElementById("chat-controls-toggle");
 
     if (navToggle && !document.querySelector(".header_bar")?.classList.contains("sidebar-hidden")) {
       navToggle.click();
     }
     if (pastChatsToggle && !document.getElementById("past-chats-row")?.classList.contains("sidebar-hidden")) {
       pastChatsToggle.click();
-    }
-    if (chatControlsToggle && !document.getElementById("chat-controls")?.classList.contains("sidebar-hidden")) {
-      chatControlsToggle.click();
     }
 
     // Hide extensions only

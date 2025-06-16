@@ -788,11 +788,37 @@ initializeSidebars();
 
 // Add click event listeners to toggle buttons
 pastChatsToggle.addEventListener("click", () => {
+  const isCurrentlyOpen = !pastChatsRow.classList.contains("sidebar-hidden");
   toggleSidebar(pastChatsRow, pastChatsToggle);
+
+  if (isCurrentlyOpen) {
+    // If we just closed the left sidebar, also close the right sidebar
+    if (!chatControlsRow.classList.contains("sidebar-hidden")) {
+      toggleSidebar(chatControlsRow, chatControlsToggle, true);
+    }
+  } else {
+    // If we just opened the left sidebar, also open the right sidebar
+    if (chatControlsRow.classList.contains("sidebar-hidden")) {
+      toggleSidebar(chatControlsRow, chatControlsToggle, false);
+    }
+  }
 });
 
 chatControlsToggle.addEventListener("click", () => {
+  const isCurrentlyOpen = !chatControlsRow.classList.contains("sidebar-hidden");
   toggleSidebar(chatControlsRow, chatControlsToggle);
+
+  if (isCurrentlyOpen) {
+    // If we just closed the right sidebar, also close the left sidebar
+    if (!pastChatsRow.classList.contains("sidebar-hidden")) {
+      toggleSidebar(pastChatsRow, pastChatsToggle, true);
+    }
+  } else {
+    // If we just opened the right sidebar, also open the left sidebar
+    if (pastChatsRow.classList.contains("sidebar-hidden")) {
+      toggleSidebar(pastChatsRow, pastChatsToggle, false);
+    }
+  }
 });
 
 navigationToggle.addEventListener("click", () => {
