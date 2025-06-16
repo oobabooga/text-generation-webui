@@ -192,19 +192,24 @@ def handle_new_prompt():
 
 
 def handle_delete_prompt_confirm_notebook(prompt_name):
-    prompt_path = Path("user_data/logs/notebook") / f"{prompt_name}.txt"
-    if prompt_path.exists():
-        prompt_path.unlink()
-
     available_prompts = utils.get_available_prompts()
-    new_value = available_prompts[0] if available_prompts else ""
+    current_index = available_prompts.index(prompt_name) if prompt_name in available_prompts else 0
+
+    Path("user_data/logs/notebook", f"{prompt_name}.txt").unlink(missing_ok=True)
+    available_prompts = utils.get_available_prompts()
+
+    if available_prompts:
+        new_value = available_prompts[min(current_index, len(available_prompts) - 1)]
+    else:
+        new_value = utils.current_time()
+        Path("user_data/logs/notebook").mkdir(parents=True, exist_ok=True)
+        Path("user_data/logs/notebook", f"{new_value}.txt").write_text("In this story,")
+        available_prompts = [new_value]
+
     return [
         gr.update(choices=available_prompts, value=new_value),
-        gr.update(visible=True),  # new_prompt
-        gr.update(visible=True),  # rename_prompt
-        gr.update(visible=True),  # delete_prompt
-        gr.update(visible=False),  # delete_cancel
-        gr.update(visible=False)  # delete_confirm
+        *[gr.update(visible=True)] * 3,
+        *[gr.update(visible=False)] * 2
     ]
 
 
