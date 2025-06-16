@@ -185,7 +185,6 @@ def create_chat_settings_ui():
                 with gr.Row():
                     shared.gradio['send_instruction_to_default'] = gr.Button('Send to default', elem_classes=['small-button'])
                     shared.gradio['send_instruction_to_notebook'] = gr.Button('Send to notebook', elem_classes=['small-button'])
-                    shared.gradio['send_instruction_to_negative_prompt'] = gr.Button('Send to negative prompt', elem_classes=['small-button'])
 
             with gr.Column():
                 shared.gradio['chat_template_str'] = gr.Textbox(value=shared.settings['chat_template_str'], label='Chat template', lines=22, elem_classes=['add_scrollbar', 'monospace'], info='Defines how the chat prompt in chat/chat-instruct modes is generated.')
@@ -354,11 +353,6 @@ def create_event_handlers():
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.handle_send_instruction_click, gradio('interface_state'), gradio('textbox-notebook'), show_progress=False).then(
         None, None, None, js=f'() => {{{ui.switch_tabs_js}; switch_to_notebook()}}')
-
-    shared.gradio['send_instruction_to_negative_prompt'].click(
-        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.handle_send_instruction_click, gradio('interface_state'), gradio('negative_prompt'), show_progress=False).then(
-        None, None, None, js=f'() => {{{ui.switch_tabs_js}; switch_to_generation_parameters()}}')
 
     shared.gradio['send-chat-to-default'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
