@@ -1647,13 +1647,17 @@ button:focus {
 }
 
 #character-context textarea {
-    height: calc((100vh - 400px) * 2/3) !important;
+    height: calc((100vh - 350px) * 2/3) !important;
 }
 
 #character-greeting textarea {
-    height: calc((100vh - 400px) * 1/3) !important;
+    height: calc((100vh - 350px) * 1/3) !important;
 }
 
 #user-description textarea {
-    height: calc(100vh - 281px) !important;
+    height: calc(100vh - 231px) !important;
+}
+
+#character-tab {
+    border: 0;
 }

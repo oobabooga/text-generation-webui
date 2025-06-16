@@ -111,9 +111,9 @@ def create_ui():
             shared.gradio['edit_message'] = gr.Button(elem_id="Edit-message")
 
 
-def create_chat_settings_ui():
+def create_character_settings_ui():
     mu = shared.args.multi_user
-    with gr.Tab('Chat'):
+    with gr.Tab('Character', elem_id="character-tab"):
         with gr.Row():
             with gr.Column(scale=8):
                 with gr.Tab("Character"):
@@ -163,6 +163,9 @@ def create_chat_settings_ui():
                 shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil', interactive=not mu)
                 shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('user_data/cache/pfp_me.png')) if Path('user_data/cache/pfp_me.png').exists() else None, interactive=not mu)
 
+
+def create_chat_settings_ui():
+    mu = shared.args.multi_user
     with gr.Tab('Instruction template'):
         with gr.Row():
             with gr.Column():
@@ -186,7 +189,7 @@ def create_chat_settings_ui():
                     shared.gradio['send_instruction_to_negative_prompt'] = gr.Button('Send to negative prompt', elem_classes=['small-button'])
 
             with gr.Column():
-                shared.gradio['chat_template_str'] = gr.Textbox(value=shared.settings['chat_template_str'], label='Chat template', lines=22, elem_classes=['add_scrollbar', 'monospace'])
+                shared.gradio['chat_template_str'] = gr.Textbox(value=shared.settings['chat_template_str'], label='Chat template', lines=22, elem_classes=['add_scrollbar', 'monospace'], info='Defines how the chat prompt in chat/chat-instruct modes is generated.')
 
 
 def create_event_handlers():
