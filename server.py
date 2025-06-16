@@ -33,7 +33,6 @@ import matplotlib
 
 matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
 
-import json
 import os
 import signal
 import sys
