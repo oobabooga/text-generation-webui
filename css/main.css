@@ -167,11 +167,11 @@ gradio-app > :first-child {
 }
 
 .textbox_default textarea {
-    height: calc(100dvh - 201px);
+    height: calc(100dvh - 202px);
 }
 
 .textbox_default_output textarea {
-    height: calc(100dvh - 117px);
+    height: calc(100dvh - 118px);
 }
 
 .textbox textarea {

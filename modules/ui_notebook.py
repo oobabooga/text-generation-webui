@@ -67,14 +67,13 @@ def create_ui():
                     shared.gradio['new_prompt-notebook'] = gr.Button('New', elem_classes=['refresh-button'], interactive=not mu)
                     shared.gradio['rename_prompt-notebook'] = gr.Button('Rename', elem_classes=['refresh-button'], interactive=not mu)
                     shared.gradio['delete_prompt-notebook'] = gr.Button('🗑️', elem_classes=['refresh-button'], interactive=not mu)
-
-                with gr.Row():
-                    shared.gradio['delete_prompt-cancel-notebook'] = gr.Button('Cancel', elem_classes=['refresh-button'], visible=False)
                     shared.gradio['delete_prompt-confirm-notebook'] = gr.Button('Confirm', variant='stop', elem_classes=['refresh-button'], visible=False)
-                    with gr.Row(visible=False) as shared.gradio['rename-row-notebook']:
-                        shared.gradio['rename_prompt_to-notebook'] = gr.Textbox(label="New name", elem_classes=['no-background'])
-                        shared.gradio['rename_prompt-cancel-notebook'] = gr.Button('Cancel', elem_classes=['refresh-button'])
-                        shared.gradio['rename_prompt-confirm-notebook'] = gr.Button('Confirm', elem_classes=['refresh-button'], variant='primary')
+                    shared.gradio['delete_prompt-cancel-notebook'] = gr.Button('Cancel', elem_classes=['refresh-button'], visible=False)
+
+                with gr.Row(visible=False) as shared.gradio['rename-row-notebook']:
+                    shared.gradio['rename_prompt_to-notebook'] = gr.Textbox(label="New name", elem_classes=['no-background'])
+                    shared.gradio['rename_prompt-cancel-notebook'] = gr.Button('Cancel', elem_classes=['refresh-button'])
+                    shared.gradio['rename_prompt-confirm-notebook'] = gr.Button('Confirm', elem_classes=['refresh-button'], variant='primary')
 
 
 def create_event_handlers():
