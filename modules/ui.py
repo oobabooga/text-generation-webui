@@ -274,6 +274,7 @@ def list_interface_input_elements():
 
     # Other elements
     elements += [
+        'show_two_notebook_columns',
         'paste_to_attachment',
         'include_past_attachments',
     ]
@@ -505,6 +506,7 @@ def setup_auto_save():
         # Session tab (ui_session.py)
         'show_controls',
         'theme_state',
+        'show_two_notebook_columns',
         'paste_to_attachment',
         'include_past_attachments'
     ]
