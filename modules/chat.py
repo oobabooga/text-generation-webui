@@ -614,6 +614,7 @@ def generate_search_query(user_message, state):
     search_state['max_new_tokens'] = 64
     search_state['auto_max_new_tokens'] = False
     search_state['enable_thinking'] = False
+    search_state['start_with'] = ""
 
     # Generate the full prompt using existing history + augmented message
     formatted_prompt = generate_chat_prompt(augmented_message, search_state)
