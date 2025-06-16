@@ -148,7 +148,7 @@ def continue_and_save_wrapper(output_textbox, textbox_content, interface_state, 
             last_save_time = current_time
 
     # Final autosave
-    autosave_prompt(textbox_content, prompt_name)
+    autosave_prompt(output_textbox_new, prompt_name)
 
 
 def handle_new_prompt():
