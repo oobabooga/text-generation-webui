@@ -1645,3 +1645,15 @@ button:focus {
     justify-content: center;
     display: none;
 }
+
+#character-context textarea {
+    height: calc((100vh - 400px) * 2/3) !important;
+}
+
+#character-greeting textarea {
+    height: calc((100vh - 400px) * 1/3) !important;
+}
+
+#user-description textarea {
+    height: calc(100vh - 281px) !important;
+}
