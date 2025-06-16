@@ -1,3 +1,6 @@
+import time
+from pathlib import Path
+
 import gradio as gr
 
 from modules import logits, shared, ui, utils
@@ -7,7 +10,7 @@ from modules.text_generation import (
     get_token_ids,
     stop_everything_event
 )
-from modules.ui_default import handle_delete_prompt, handle_save_prompt
+from modules.ui_default import autosave_prompt, handle_delete_prompt
 from modules.utils import gradio
 
 inputs = ('textbox-notebook', 'interface_state')
@@ -58,8 +61,31 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['prompt_menu-notebook'] = gr.Dropdown(choices=utils.get_available_prompts(), value=shared.settings['prompt-notebook'], label='Prompt', elem_classes='slim-dropdown')
                     ui.create_refresh_button(shared.gradio['prompt_menu-notebook'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, ['refresh-button', 'refresh-button-small'], interactive=not mu)
-                    shared.gradio['save_prompt-notebook'] = gr.Button('💾', elem_classes=['refresh-button', 'refresh-button-small'], interactive=not mu)
+                    shared.gradio['new_prompt-notebook'] = gr.Button('New', elem_classes=['refresh-button', 'refresh-button-small'], interactive=not mu)
                     shared.gradio['delete_prompt-notebook'] = gr.Button('🗑️', elem_classes=['refresh-button', 'refresh-button-small'], interactive=not mu)
+
+
+def generate_and_save_wrapper_notebook(textbox_content, interface_state, prompt_name):
+    """Generate reply and automatically save the result for notebook mode with periodic saves"""
+    last_save_time = time.monotonic()
+    save_interval = 8
+
+    # Initial autosave - save the current textbox content
+    autosave_prompt(textbox_content, prompt_name)
+
+    for i, (textbox_updated, html_output) in enumerate(generate_reply_wrapper(textbox_content, interface_state)):
+        yield textbox_updated, html_output
+
+        current_time = time.monotonic()
+        # Save on first iteration or if save_interval seconds have passed
+        if i == 0 or (current_time - last_save_time) >= save_interval:
+            autosave_prompt(textbox_updated, prompt_name)
+            last_save_time = current_time
+
+    # Final autosave - save the final updated textbox content
+    # The textbox_updated from the last iteration contains the final content
+    if 'textbox_updated' in locals():
+        autosave_prompt(textbox_updated, prompt_name)
 
 
 def create_event_handlers():
@@ -67,7 +93,7 @@ def create_event_handlers():
         lambda x: x, gradio('textbox-notebook'), gradio('last_input-notebook')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda: [gr.update(visible=True), gr.update(visible=False)], None, gradio('Stop-notebook', 'Generate-notebook')).then(
-        generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
+        generate_and_save_wrapper_notebook, gradio('textbox-notebook', 'interface_state', 'prompt_menu-notebook'), gradio(outputs), show_progress=False).then(
         lambda state, text: state.update({'textbox-notebook': text}), gradio('interface_state', 'textbox-notebook'), None).then(
         lambda: [gr.update(visible=False), gr.update(visible=True)], None, gradio('Stop-notebook', 'Generate-notebook')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
@@ -76,7 +102,7 @@ def create_event_handlers():
         lambda x: x, gradio('textbox-notebook'), gradio('last_input-notebook')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda: [gr.update(visible=True), gr.update(visible=False)], None, gradio('Stop-notebook', 'Generate-notebook')).then(
-        generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
+        generate_and_save_wrapper_notebook, gradio('textbox-notebook', 'interface_state', 'prompt_menu-notebook'), gradio(outputs), show_progress=False).then(
         lambda state, text: state.update({'textbox-notebook': text}), gradio('interface_state', 'textbox-notebook'), None).then(
         lambda: [gr.update(visible=False), gr.update(visible=True)], None, gradio('Stop-notebook', 'Generate-notebook')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
@@ -85,7 +111,7 @@ def create_event_handlers():
         lambda x: x, gradio('last_input-notebook'), gradio('textbox-notebook'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda: [gr.update(visible=True), gr.update(visible=False)], None, gradio('Stop-notebook', 'Generate-notebook')).then(
-        generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
+        generate_and_save_wrapper_notebook, gradio('textbox-notebook', 'interface_state', 'prompt_menu-notebook'), gradio(outputs), show_progress=False).then(
         lambda state, text: state.update({'textbox-notebook': text}), gradio('interface_state', 'textbox-notebook'), None).then(
         lambda: [gr.update(visible=False), gr.update(visible=True)], None, gradio('Stop-notebook', 'Generate-notebook')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
@@ -97,7 +123,7 @@ def create_event_handlers():
     shared.gradio['markdown_render-notebook'].click(lambda x: x, gradio('textbox-notebook'), gradio('markdown-notebook'), queue=False)
     shared.gradio['Stop-notebook'].click(stop_everything_event, None, None, queue=False)
     shared.gradio['prompt_menu-notebook'].change(load_prompt, gradio('prompt_menu-notebook'), gradio('textbox-notebook'), show_progress=False)
-    shared.gradio['save_prompt-notebook'].click(handle_save_prompt, gradio('textbox-notebook'), gradio('save_contents', 'save_filename', 'save_root', 'file_saver'), show_progress=False)
+    shared.gradio['new_prompt-notebook'].click(handle_new_prompt, None, gradio('textbox-notebook', 'prompt_menu-notebook'), show_progress=False)
     shared.gradio['delete_prompt-notebook'].click(handle_delete_prompt, gradio('prompt_menu-notebook'), gradio('delete_filename', 'delete_root', 'file_deleter'), show_progress=False)
     shared.gradio['textbox-notebook'].input(lambda x: f"<span>{count_tokens(x)}</span>", gradio('textbox-notebook'), gradio('token-counter-notebook'), show_progress=False)
     shared.gradio['get_logits-notebook'].click(
@@ -105,3 +131,8 @@ def create_event_handlers():
         logits.get_next_logits, gradio('textbox-notebook', 'interface_state', 'use_samplers-notebook', 'logits-notebook'), gradio('logits-notebook', 'logits-notebook-previous'), show_progress=False)
 
     shared.gradio['get_tokens-notebook'].click(get_token_ids, gradio('textbox-notebook'), gradio('tokens-notebook'), show_progress=False)
+
+
+def handle_new_prompt():
+    new_name = utils.current_time()
+    return ["", new_name]

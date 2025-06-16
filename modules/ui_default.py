@@ -1,3 +1,6 @@
+import time
+from pathlib import Path
+
 import gradio as gr
 
 from modules import logits, shared, ui, utils
@@ -30,7 +33,7 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['prompt_menu-default'] = gr.Dropdown(choices=utils.get_available_prompts(), value=shared.settings['prompt-notebook'], label='Prompt', elem_classes='slim-dropdown')
                     ui.create_refresh_button(shared.gradio['prompt_menu-default'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button', interactive=not mu)
-                    shared.gradio['save_prompt-default'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['new_prompt-default'] = gr.Button('New', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['delete_prompt-default'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
 
             with gr.Column():
@@ -60,11 +63,61 @@ def create_ui():
                     shared.gradio['tokens-default'] = gr.Textbox(lines=23, label='Tokens', elem_classes=['textbox_logits', 'add_scrollbar', 'monospace'])
 
 
+def autosave_prompt(text, prompt_name):
+    """Automatically save the text to the selected prompt file"""
+    if prompt_name and text.strip():
+        prompt_path = Path("user_data/prompts") / f"{prompt_name}.txt"
+        prompt_path.parent.mkdir(parents=True, exist_ok=True)
+        prompt_path.write_text(text, encoding='utf-8')
+
+
+def generate_and_save_wrapper(textbox_content, interface_state, prompt_name):
+    """Generate reply and automatically save the result with periodic saves"""
+    last_save_time = time.monotonic()
+    save_interval = 8
+
+    # Initial autosave
+    autosave_prompt(textbox_content, prompt_name)
+
+    for i, (output_textbox, html_output) in enumerate(generate_reply_wrapper(textbox_content, interface_state)):
+        yield output_textbox, html_output
+
+        current_time = time.monotonic()
+        # Save on first iteration or if save_interval seconds have passed
+        if i == 0 or (current_time - last_save_time) >= save_interval:
+            autosave_prompt(textbox_content, prompt_name)
+            last_save_time = current_time
+
+    # Final autosave
+    autosave_prompt(textbox_content, prompt_name)
+
+
+def continue_and_save_wrapper(output_textbox, textbox_content, interface_state, prompt_name):
+    """Continue generation and automatically save the result with periodic saves"""
+    last_save_time = time.monotonic()
+    save_interval = 8
+
+    # Initial autosave
+    autosave_prompt(textbox_content, prompt_name)
+
+    for i, (output_textbox_new, html_output) in enumerate(generate_reply_wrapper(output_textbox, interface_state)):
+        yield output_textbox_new, html_output
+
+        current_time = time.monotonic()
+        # Save on first iteration or if save_interval seconds have passed
+        if i == 0 or (current_time - last_save_time) >= save_interval:
+            autosave_prompt(textbox_content, prompt_name)
+            last_save_time = current_time
+
+    # Final autosave
+    autosave_prompt(textbox_content, prompt_name)
+
+
 def create_event_handlers():
     shared.gradio['Generate-default'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda: [gr.update(visible=True), gr.update(visible=False)], None, gradio('Stop-default', 'Generate-default')).then(
-        generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
+        generate_and_save_wrapper, gradio('textbox-default', 'interface_state', 'prompt_menu-default'), gradio(outputs), show_progress=False).then(
         lambda state, left, right: state.update({'textbox-default': left, 'output_textbox': right}), gradio('interface_state', 'textbox-default', 'output_textbox'), None).then(
         lambda: [gr.update(visible=False), gr.update(visible=True)], None, gradio('Stop-default', 'Generate-default')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
@@ -72,7 +125,7 @@ def create_event_handlers():
     shared.gradio['textbox-default'].submit(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda: [gr.update(visible=True), gr.update(visible=False)], None, gradio('Stop-default', 'Generate-default')).then(
-        generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
+        generate_and_save_wrapper, gradio('textbox-default', 'interface_state', 'prompt_menu-default'), gradio(outputs), show_progress=False).then(
         lambda state, left, right: state.update({'textbox-default': left, 'output_textbox': right}), gradio('interface_state', 'textbox-default', 'output_textbox'), None).then(
         lambda: [gr.update(visible=False), gr.update(visible=True)], None, gradio('Stop-default', 'Generate-default')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
@@ -80,7 +133,7 @@ def create_event_handlers():
     shared.gradio['Continue-default'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda: [gr.update(visible=True), gr.update(visible=False)], None, gradio('Stop-default', 'Generate-default')).then(
-        generate_reply_wrapper, [shared.gradio['output_textbox']] + gradio(inputs)[1:], gradio(outputs), show_progress=False).then(
+        continue_and_save_wrapper, gradio('output_textbox', 'textbox-default', 'interface_state', 'prompt_menu-default'), gradio(outputs), show_progress=False).then(
         lambda state, left, right: state.update({'textbox-default': left, 'output_textbox': right}), gradio('interface_state', 'textbox-default', 'output_textbox'), None).then(
         lambda: [gr.update(visible=False), gr.update(visible=True)], None, gradio('Stop-default', 'Generate-default')).then(
         None, None, None, js=f'() => {{{ui.audio_notification_js}}}')
@@ -88,7 +141,7 @@ def create_event_handlers():
     shared.gradio['Stop-default'].click(stop_everything_event, None, None, queue=False)
     shared.gradio['markdown_render-default'].click(lambda x: x, gradio('output_textbox'), gradio('markdown-default'), queue=False)
     shared.gradio['prompt_menu-default'].change(load_prompt, gradio('prompt_menu-default'), gradio('textbox-default'), show_progress=False)
-    shared.gradio['save_prompt-default'].click(handle_save_prompt, gradio('textbox-default'), gradio('save_contents', 'save_filename', 'save_root', 'file_saver'), show_progress=False)
+    shared.gradio['new_prompt-default'].click(handle_new_prompt, None, gradio('textbox-default', 'prompt_menu-default'), show_progress=False)
     shared.gradio['delete_prompt-default'].click(handle_delete_prompt, gradio('prompt_menu-default'), gradio('delete_filename', 'delete_root', 'file_deleter'), show_progress=False)
     shared.gradio['textbox-default'].change(lambda x: f"<span>{count_tokens(x)}</span>", gradio('textbox-default'), gradio('token-counter-default'), show_progress=False)
     shared.gradio['get_logits-default'].click(
@@ -98,13 +151,9 @@ def create_event_handlers():
     shared.gradio['get_tokens-default'].click(get_token_ids, gradio('textbox-default'), gradio('tokens-default'), show_progress=False)
 
 
-def handle_save_prompt(text):
-    return [
-        text,
-        utils.current_time() + ".txt",
-        "user_data/prompts/",
-        gr.update(visible=True)
-    ]
+def handle_new_prompt():
+    new_name = utils.current_time()
+    return ["", new_name]
 
 
 def handle_delete_prompt(prompt):
