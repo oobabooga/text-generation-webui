@@ -19,7 +19,7 @@ def create_ui():
         with gr.Row():
             with gr.Column():
                 with gr.Row():
-                    shared.gradio['textbox-default'] = gr.Textbox(value=load_prompt(shared.settings['prompt-default']), lines=27, label='Input', elem_classes=['textbox_default', 'add_scrollbar'])
+                    shared.gradio['textbox-default'] = gr.Textbox(value=load_prompt(shared.settings['prompt-notebook']), lines=27, label='Input', elem_classes=['textbox_default', 'add_scrollbar'])
                     shared.gradio['token-counter-default'] = gr.HTML(value="<span>0</span>", elem_id="default-token-counter")
 
                 with gr.Row():
@@ -28,7 +28,7 @@ def create_ui():
                     shared.gradio['Generate-default'] = gr.Button('Generate', variant='primary')
 
                 with gr.Row():
-                    shared.gradio['prompt_menu-default'] = gr.Dropdown(choices=utils.get_available_prompts(), value=shared.settings['prompt-default'], label='Prompt', elem_classes='slim-dropdown')
+                    shared.gradio['prompt_menu-default'] = gr.Dropdown(choices=utils.get_available_prompts(), value=shared.settings['prompt-notebook'], label='Prompt', elem_classes='slim-dropdown')
                     ui.create_refresh_button(shared.gradio['prompt_menu-default'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button', interactive=not mu)
                     shared.gradio['save_prompt-default'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['delete_prompt-default'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
