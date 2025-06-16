@@ -128,7 +128,8 @@ def generate_and_save_wrapper(textbox_content, interface_state, prompt_name):
             last_save_time = current_time
 
     # Final autosave
-    autosave_prompt(output_textbox, prompt_name)
+    if output_textbox in locals():
+        autosave_prompt(output_textbox, prompt_name)
 
 
 def continue_and_save_wrapper(output_textbox, textbox_content, interface_state, prompt_name):
@@ -149,7 +150,8 @@ def continue_and_save_wrapper(output_textbox, textbox_content, interface_state, 
             last_save_time = current_time
 
     # Final autosave
-    autosave_prompt(output_textbox_new, prompt_name)
+    if output_textbox_new in locals():
+        autosave_prompt(output_textbox_new, prompt_name)
 
 
 def handle_new_prompt():
