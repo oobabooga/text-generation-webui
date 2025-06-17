@@ -30,13 +30,17 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## How to install
 
-#### Option 1: Portable builds (start here)
+#### Option 1: Portable builds (get started in 1 minute)
 
-No installation needed – just unzip and run. Compatible with GGUF (llama.cpp) models on Windows, Linux, and macOS.
+No installation needed – just download, unzip and run. All dependencies included.
 
-Download from: https://github.com/oobabooga/text-generation-webui/releases
+Compatible with GGUF (llama.cpp) models on Windows, Linux, and macOS.
+
+Download from here: https://github.com/oobabooga/text-generation-webui/releases
 
 #### Option 2: One-click installer
+
+For users who need additional backends (ExLlamaV3, Transformers) or extensions (TTS, voice input, translation, etc). Requires ~10GB disk space and downloads PyTorch.
 
 1. Clone the repository, or [download its source code](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) and extract it.
 2. Run the startup script for your OS: `start_windows.bat`, `start_linux.sh`, or `start_macos.sh`.
@@ -150,21 +154,21 @@ The `requirements*.txt` above contain various wheels precompiled through GitHub 
 ```
 For NVIDIA GPU:
 ln -s docker/{nvidia/Dockerfile,nvidia/docker-compose.yml,.dockerignore} .
-For AMD GPU: 
+For AMD GPU:
 ln -s docker/{amd/Dockerfile,amd/docker-compose.yml,.dockerignore} .
 For Intel GPU:
 ln -s docker/{intel/Dockerfile,amd/docker-compose.yml,.dockerignore} .
 For CPU only
 ln -s docker/{cpu/Dockerfile,cpu/docker-compose.yml,.dockerignore} .
 cp docker/.env.example .env
-#Create logs/cache dir : 
+#Create logs/cache dir :
 mkdir -p user_data/logs user_data/cache
-# Edit .env and set: 
+# Edit .env and set:
 #   TORCH_CUDA_ARCH_LIST based on your GPU model
 #   APP_RUNTIME_GID      your host user's group id (run `id -g` in a terminal)
 #   BUILD_EXTENIONS      optionally add comma separated list of extensions to build
 # Edit user_data/CMD_FLAGS.txt and add in it the options you want to execute (like --listen --cpu)
-# 
+#
 docker compose up --build
 ```
 
