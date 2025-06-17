@@ -25,12 +25,12 @@
     font-weight: 600;
     margin-bottom: 8px;
     opacity: 0.65;
-    padding-left: 4px;
+    padding-left: 0;
 }
 
 /* User messages - right aligned, WhatsApp green */
 .circle-you + .text {
-    background-color: #dcf8c6;
+    background-color: #d9fdd3;
     float: right;
     margin-left: auto;
     margin-right: 8px;
@@ -55,7 +55,7 @@
 
 /* Dark theme colors */
 .dark .circle-you + .text {
-    background-color: #056162;
+    background-color: #144d37;
     color: #e4e6ea;
     box-shadow: 0 1px 2px rgb(0 0 0 / 30%);
 }
