@@ -64,7 +64,7 @@ def handle_default_to_notebook_change(show_two_columns, default_input, default_o
             gr.update(visible=True),
             gr.update(visible=False),
             notebook_input,
-            notebook_input,
+            "",
             gr.update(value=notebook_prompt, choices=utils.get_available_prompts()),
             gr.update(),
             gr.update(),
@@ -77,7 +77,7 @@ def handle_default_to_notebook_change(show_two_columns, default_input, default_o
             gr.update(),
             gr.update(),
             gr.update(),
-            default_output,
+            default_input,
             gr.update(value=default_prompt, choices=utils.get_available_prompts())
         ]
 
