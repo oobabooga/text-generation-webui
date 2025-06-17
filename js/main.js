@@ -182,8 +182,7 @@ const observer = new MutationObserver(function(mutations) {
 
   doSyntaxHighlighting();
 
-  const isUserTyping = document.activeElement && document.activeElement.closest("#chat-input") && !targetElement.classList.contains("_generating");
-  if (!window.isScrolled && !isUserTyping && targetElement.scrollTop !== targetElement.scrollHeight) {
+  if (!window.isScrolled && targetElement.scrollTop !== targetElement.scrollHeight) {
     targetElement.scrollTop = targetElement.scrollHeight;
   }
 
