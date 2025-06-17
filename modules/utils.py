@@ -53,7 +53,7 @@ def delete_file(fname):
 
 
 def current_time():
-    return f"{datetime.now().strftime('%Y-%m-%d-%H%M%S')}"
+    return f"{datetime.now().strftime('%Y-%m-%d_%Hh%Mm%Ss')}"
 
 
 def atoi(text):
