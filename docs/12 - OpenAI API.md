@@ -134,9 +134,9 @@ curl -k http://127.0.0.1:5000/v1/internal/model/load \
   -d '{
     "model_name": "Qwen_Qwen3-0.6B-Q4_K_M.gguf",
     "args": {
-        "ctx_size": 32768,
-        "flash_attn": true,
-        "cache_type": "q8_0"
+      "ctx_size": 32768,
+      "flash_attn": true,
+      "cache_type": "q8_0"
     }
   }'
 ```
