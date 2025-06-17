@@ -168,7 +168,8 @@ def setup():
     print("[XTTS] Loading XTTS...")
     model = load_model()
     print("[XTTS] Done!")
-    Path(f"{this_dir}/outputs").mkdir(parents=True, exist_ok=True)
+    if not Path(f"{this_dir}/outputs").exists():
+        Path(f"{this_dir}/outputs").mkdir(parents=True, exist_ok=True)
 
 
 def ui():

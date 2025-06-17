@@ -20,7 +20,7 @@ def list_subfoldersByTime(directory):
     if not directory.endswith('/'):
         directory += '/'
     subfolders = []
-    subfolders.append('None') 
+    subfolders.append('None')
     path = directory
     name_list = os.listdir(path)
     full_list = [os.path.join(path,i) for i in name_list]
@@ -37,19 +37,19 @@ def list_subfoldersByTime(directory):
     return subfolders
 
 def get_available_loras_local(_sortedByTime):
-    
+
     model_dir = shared.args.lora_dir  # Update with the appropriate directory path
     subfolders = []
     if _sortedByTime:
         subfolders = list_subfoldersByTime(model_dir)
     else:
-        subfolders = utils.get_available_loras()        
+        subfolders = utils.get_available_loras()
 
     return subfolders
 
 
 # FPHAM SPLIT BY SENTENCE BLOCK ===============
-     
+
 def split_sentences(text: str, cutoff_len: int):
     sentences = []
     sentence = ''
@@ -57,24 +57,24 @@ def split_sentences(text: str, cutoff_len: int):
     abbreviations = ['Mr. ', 'Mrs. ', 'Dr. ', 'Ms. ', 'St. ', 'Prof. ', 'Jr. ', 'Ltd. ', 'Capt. ', 'Col. ', 'Gen. ', 'Ave. ', 'Blvd. ', 'Co. ', 'Corp. ', 'Dept. ', 'Est. ', 'Gov. ', 'Inc. ', 'Ph.D. ', 'Univ. ']
     errors = 0
     max_cut = cutoff_len-1
-    prev_char = ''  
+    prev_char = ''
 
     for char in text:
         sentence += char
 
-    
+
         if (any(sentence.endswith(delimiter) for delimiter in delimiters) and
-            not (prev_char.isupper() and len(sentence) >= 3 and sentence[-3] != ' ') and 
+            not (prev_char.isupper() and len(sentence) >= 3 and sentence[-3] != ' ') and
             not any(sentence.endswith(abbreviation) for abbreviation in abbreviations)):
             tokens = shared.tokenizer.encode(sentence)
-            
+
             if len(tokens) > max_cut:
                 tokens = tokens[:max_cut]
                 sentence = shared.tokenizer.decode(tokens, skip_special_tokens=True)
                 errors = errors + 1
 
             sentences.append({'text': sentence, 'size': len(tokens)})
-            
+
             sentence = ''
 
         prev_char = char
@@ -83,7 +83,7 @@ def split_sentences(text: str, cutoff_len: int):
         tokens = shared.tokenizer.encode(sentence)
         if len(tokens) > max_cut:
             tokens = tokens[:max_cut]
-            sentence = shared.tokenizer.decode(tokens, skip_special_tokens=True)  
+            sentence = shared.tokenizer.decode(tokens, skip_special_tokens=True)
             errors = errors + 1
 
         sentences.append({'text': sentence, 'size': len(tokens)})
@@ -95,16 +95,16 @@ def split_sentences(text: str, cutoff_len: int):
 
 # The goal of following code is to create blocks of text + overlapping blocks while:
 # respects sentence boundaries
-# always uses all the text 
+# always uses all the text
 # hard cut defined by hard_cut_string or </s> will always end at the end of data block
 # no overlapping blocks will be created across hard cut or across </s> token
 
 def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool, cutoff_len: int, hard_cut_string: str, debug_slicer:bool):
 
     EOSX_str = '<//>' #hardcut placeholder
-    EOS_str = '</s>' 
+    EOS_str = '</s>'
     print("Precise raw text slicer: ON")
-    
+
     cut_string = hard_cut_string.replace('\\n', '\n')
     text = text.replace(cut_string, EOSX_str)
     sentences = split_sentences(text, cutoff_len)
@@ -121,7 +121,7 @@ def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool, c
     half_index = 0
 
     for index, item in enumerate(sentences):
-        
+
         if halfcut_length+ item['size'] < half_cut:
             halfcut_length += item['size']
             half_index = index
@@ -130,7 +130,7 @@ def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool, c
             halfcut_length = -2 * max_cut
 
 
-        if totalLength + item['size'] < max_cut and not currentSentence.endswith(EOSX_str): 
+        if totalLength + item['size'] < max_cut and not currentSentence.endswith(EOSX_str):
             currentSentence += item['text']
             totalLength += item['size']
         else:
@@ -141,14 +141,14 @@ def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool, c
             currentSentence = item['text']
             totalLength = item['size']
             halfcut_length = item['size']
-            
-    if len(currentSentence.strip()) > min_chars_cut:    
+
+    if len(currentSentence.strip()) > min_chars_cut:
         sentencelist.append(currentSentence.strip())
 
     unique_blocks = len(sentencelist)
     print(f"Text Blocks: {unique_blocks}")
 
-    #overlap strategies: 
+    #overlap strategies:
     # don't overlap across HARD CUT (EOSX)
     if overlap:
         for edge_idx in edgeindex:
@@ -162,15 +162,15 @@ def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool, c
                 else:
                     #if by chance EOSX is at the end then it's acceptable
                     if currentSentence.endswith(EOSX_str) and len(currentSentence.strip()) > min_chars_cut:
-                            sentencelist.append(currentSentence.strip())    
-                    # otherwise don't cross hard cut    
+                            sentencelist.append(currentSentence.strip())
+                    # otherwise don't cross hard cut
                     elif EOSX_str not in currentSentence and len(currentSentence.strip()) > min_chars_cut:
                         sentencelist.append(currentSentence.strip())
-                    
+
                     currentSentence = ''
                     totalLength = 0
                     break
-        
+
         print(f"+ Overlapping blocks: {len(sentencelist)-unique_blocks}")
 
     num_EOS = 0
@@ -179,7 +179,7 @@ def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool, c
             sentencelist[i] = sentencelist[i].replace(EOSX_str, EOS_str)
         else:
             sentencelist[i] = sentencelist[i].replace(EOSX_str, '')
-        
+
         #someone may have had stop strings in the raw text...
         sentencelist[i] = sentencelist[i].replace("</s></s>", EOS_str)
         num_EOS += sentencelist[i].count(EOS_str)
@@ -193,47 +193,49 @@ def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool, c
 
 
     if debug_slicer:
-                    # Write the log file
-        Path('user_data/logs').mkdir(exist_ok=True)
+        # Write the log file
+        if not Path('user_data/logs').exists():
+            Path('user_data/logs').mkdir(exist_ok=True)
+
         sentencelist_dict = {index: sentence for index, sentence in enumerate(sentencelist)}
         output_file = "user_data/logs/sentencelist.json"
         with open(output_file, 'w') as f:
             json.dump(sentencelist_dict, f,indent=2)
-        
+
         print("Saved sentencelist.json in user_data/logs folder")
-    
-    return sentencelist   
+
+    return sentencelist
 
 
 def sliding_block_cut(text: str, min_chars_cut: int, eos_to_hc: bool, cutoff_len: int, hard_cut_string: str, debug_slicer:bool):
 
     EOSX_str = '<//>' #hardcut placeholder
-    EOS_str = '</s>' 
+    EOS_str = '</s>'
     print("Mega Block Overlap: ON")
-    
+
     cut_string = hard_cut_string.replace('\\n', '\n')
     text = text.replace(cut_string, EOSX_str)
     sentences = split_sentences(text, cutoff_len)
 
     print(f"Sentences: {len(sentences)}")
     sentencelist = []
-    
+
     max_cut = cutoff_len-1
 
     #print(f"max_cut: {max_cut}")
     advancing_to = 0
 
     prev_block_lastsentence = ""
-    
+
 
     for i in range(len(sentences)):
         totalLength = 0
         currentSentence = ''
         lastsentence = ""
-        
+
         if i >= advancing_to:
             for k in range(i, len(sentences)):
-                
+
                 current_length = sentences[k]['size']
 
                 if totalLength + current_length <= max_cut and not currentSentence.endswith(EOSX_str):
@@ -245,7 +247,7 @@ def sliding_block_cut(text: str, min_chars_cut: int, eos_to_hc: bool, cutoff_len
                         if prev_block_lastsentence!=lastsentence:
                             sentencelist.append(currentSentence.strip())
                             prev_block_lastsentence = lastsentence
-                        
+
                     advancing_to = 0
                     if currentSentence.endswith(EOSX_str):
                         advancing_to = k
@@ -253,7 +255,7 @@ def sliding_block_cut(text: str, min_chars_cut: int, eos_to_hc: bool, cutoff_len
                     currentSentence = ""
                     totalLength = 0
                     break
-            
+
             if currentSentence != "":
                 if len(currentSentence.strip()) > min_chars_cut:
                     sentencelist.append(currentSentence.strip())
@@ -266,7 +268,7 @@ def sliding_block_cut(text: str, min_chars_cut: int, eos_to_hc: bool, cutoff_len
             sentencelist[i] = sentencelist[i].replace(EOSX_str, EOS_str)
         else:
             sentencelist[i] = sentencelist[i].replace(EOSX_str, '')
-        
+
         #someone may have had stop strings in the raw text...
         sentencelist[i] = sentencelist[i].replace("</s></s>", EOS_str)
         num_EOS += sentencelist[i].count(EOS_str)
@@ -280,16 +282,18 @@ def sliding_block_cut(text: str, min_chars_cut: int, eos_to_hc: bool, cutoff_len
 
 
     if debug_slicer:
-                    # Write the log file
-        Path('user_data/logs').mkdir(exist_ok=True)
+        # Write the log file
+        if not Path('user_data/logs').exists():
+            Path('user_data/logs').mkdir(exist_ok=True)
+
         sentencelist_dict = {index: sentence for index, sentence in enumerate(sentencelist)}
         output_file = "user_data/logs/sentencelist.json"
         with open(output_file, 'w') as f:
             json.dump(sentencelist_dict, f,indent=2)
-        
+
         print("Saved sentencelist.json in user_data/logs folder")
-    
-    return sentencelist   
+
+    return sentencelist
 
 # Example usage:
 # download_file_from_url('https://example.com/path/to/your/file.ext', '/output/directory')
@@ -326,17 +330,17 @@ def download_file_from_url(url, overwrite, output_dir_in, valid_extensions = {'.
 
         # Send an HTTP GET request to the URL with a timeout
         file_extension = os.path.splitext(filename_lower)[-1]
-        
+
         if file_extension not in valid_extensions:
             yield f"Invalid file extension: {file_extension}. Only {valid_extensions} files are supported."
             return
 
         with session.get(url, stream=True, headers=headers, timeout=10) as r:
-            r.raise_for_status() 
+            r.raise_for_status()
             # total size can be wildly inaccurate
             #total_size = int(r.headers.get('content-length', 0))
-            
-            block_size = 1024 * 4  
+
+            block_size = 1024 * 4
             with open(local_filename, mode) as f:
                 count = 0
                 for data in r.iter_content(block_size):
