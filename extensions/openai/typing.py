@@ -158,7 +158,7 @@ class ChatCompletionRequestParams(BaseModel):
     user_bio: str | None = Field(default=None, description="The user description/personality.")
     chat_template_str: str | None = Field(default=None, description="Jinja2 template for chat.")
 
-    chat_instruct_command: str | None = None
+    chat_instruct_command: str | None = "Continue the chat dialogue below. Write a single reply for the character \"<|character|>\".\n\n<|prompt|>"
 
     continue_: bool = Field(default=False, description="Makes the last bot message in the history be continued instead of starting a new message.")
 
