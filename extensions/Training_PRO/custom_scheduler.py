@@ -20,7 +20,7 @@ custom_scheduler_params = {'trigger_loss': 0.0, 'ramp_down_ratio':1.0, 'current_
 
 def custom_scheduler_global_update(current_loss: float):
     custom_scheduler_params.update({'current_loss': current_loss})
-
+  
 def custom_scheduler_global_setup(trigger_loss: float, ramp_down_ratio: float):
     custom_scheduler_params.update({'trigger_loss': trigger_loss})
     custom_scheduler_params.update({'ramp_down_ratio': ramp_down_ratio})
@@ -35,12 +35,12 @@ def custom_scheduler_global_setup(trigger_loss: float, ramp_down_ratio: float):
 
 # hold constant to the half of epochs then cosine down to 0
 def _get_fp_half_schedule_with_warmup_lr_lambda(current_step: int, *, num_warmup_steps: int, num_training_steps: int, num_firstepoch_steps: int):
-
+    
     global last_print_label
     print_label = ''
 
     half_steps = num_training_steps//2
-
+    
     num_warmup_steps = min(num_warmup_steps,half_steps)
 
     if current_step < num_warmup_steps:
@@ -49,57 +49,57 @@ def _get_fp_half_schedule_with_warmup_lr_lambda(current_step: int, *, num_warmup
         print_label = 'Scheduler: Hold'
     else:
         print_label = 'Scheduler: Annealing'
-
+    
     if print_label != last_print_label:
         print(print_label)
-
+    
     last_print_label = print_label
 
     if current_step < num_warmup_steps:
         return float(current_step) / float(max(1, num_warmup_steps))
-
+    
     if current_step < half_steps:
-        return 1.0
-
+        return 1.0 
+    
     progress = float(current_step - half_steps) / float(max(1, num_training_steps - half_steps))
     num_cycles = 0.5
-    return max(0.0, 0.5 * (1.0 + math.cos(math.pi * float(num_cycles) * 2.0 * progress)))
-
+    return max(0.0, 0.5 * (1.0 + math.cos(math.pi * float(num_cycles) * 2.0 * progress)))    
+ 
 
 # raise up in cosine, then fall back in cosine
 def _get_fp_cosine_raise_and_fall_lr_lambda(current_step: int, *, num_warmup_steps: int, num_training_steps: int, num_firstepoch_steps: int):
-
+    
     global last_print_label
     print_label = ''
 
     half_steps = num_training_steps//2
-
+    
     #num_warmup_steps = min(num_warmup_steps,half_steps)
 
     if current_step < half_steps:
         print_label = 'Scheduler: Raise'
     else:
         print_label = 'Scheduler: Fall'
-
+    
     if print_label != last_print_label:
         print(print_label)
-
+    
     last_print_label = print_label
 
-
+    
     # linear
     #    return float(current_step) / float(max(1, num_warmup_steps))
-
+    
     progress = float(current_step - half_steps) / float(max(1, num_training_steps - half_steps))
     num_cycles = 0.5
-    return max(0.0, 0.5 * (1.0 + math.cos(math.pi * float(num_cycles) * 2.0 * progress)))
-
+    return max(0.0, 0.5 * (1.0 + math.cos(math.pi * float(num_cycles) * 2.0 * progress)))    
+ 
 # constant to the first epochs then cosine down to 0 over the rest epochs
 def _get_fp_cosine_schedule_with_warmup_lr_lambda(current_step: int, *, num_warmup_steps: int, num_training_steps: int, num_firstepoch_steps: int):
-
+    
     global last_print_label
     print_label = ''
-
+    
     num_warmup_steps = min(num_warmup_steps,num_firstepoch_steps)
 
     if current_step < num_warmup_steps:
@@ -108,56 +108,56 @@ def _get_fp_cosine_schedule_with_warmup_lr_lambda(current_step: int, *, num_warm
         print_label = 'Scheduler: Hold'
     else:
         print_label = 'Scheduler: Annealing'
-
+    
     if print_label != last_print_label:
         print(print_label)
-
+    
     last_print_label = print_label
 
     if current_step < num_warmup_steps:
         return float(current_step) / float(max(1, num_warmup_steps))
-
+    
     if current_step < num_firstepoch_steps:
-        return 1.0
-
+        return 1.0 
+    
     progress = float(current_step - num_firstepoch_steps) / float(max(1, num_training_steps - num_firstepoch_steps))
     num_cycles = 0.5
-    return max(0.0, 0.5 * (1.0 + math.cos(math.pi * float(num_cycles) * 2.0 * progress)))
-
-# halve lr each epoch
+    return max(0.0, 0.5 * (1.0 + math.cos(math.pi * float(num_cycles) * 2.0 * progress)))    
+    
+# halve lr each epoch   
 
 def _get_fp_cdrop_rate_schedule_with_warmup_lr_lambda(current_step: int, *, num_warmup_steps: int, num_training_steps: int, num_firstepoch_steps: int):
-
+    
     global last_print_label
     print_label = ''
-
+    
     num_warmup_steps = min(num_warmup_steps, num_firstepoch_steps)
 
     current_epoch = (current_step // num_firstepoch_steps) + 1
-
-
+    
+    
     if current_step < num_warmup_steps:
         print_label = 'Scheduler: Warmup'
     elif current_step < num_firstepoch_steps:
         print_label = 'Scheduler: Hold'
     else:
         print_label = 'Scheduler: Drop Rate'
-
+    
     if print_label != last_print_label:
         print(print_label)
-
+    
     last_print_label = print_label
 
     if current_step < num_warmup_steps:
         return float(current_step) / float(max(1, num_warmup_steps))
-
+    
     if current_step < num_firstepoch_steps:
-        return 1.0
+        return 1.0 
 
     # Compute the learning rate for the annealing phase
-
+    
     learning_rate = 1.0 / float(2 ** (current_epoch - 1))
-
+   
     return learning_rate
 
 # epoch decay: 1/(1 + decay * epoch)
@@ -177,7 +177,7 @@ def custom_cosine_scheduler_with_warmup(optimizer, num_warmup_steps, num_trainin
     Return:
         `torch.optim.lr_scheduler.LambdaLR` with the appropriate schedule.
     """
-
+    
     lr_lambda = partial(
         _get_fp_cosine_schedule_with_warmup_lr_lambda,
         num_warmup_steps=num_warmup_steps,
@@ -201,7 +201,7 @@ def custom_half_scheduler_with_warmup(optimizer, num_warmup_steps, num_training_
     Return:
         `torch.optim.lr_scheduler.LambdaLR` with the appropriate schedule.
     """
-
+    
     lr_lambda = partial(
         _get_fp_half_schedule_with_warmup_lr_lambda,
         num_warmup_steps=num_warmup_steps,
@@ -225,7 +225,7 @@ def custom_raise_fall_scheduler_with_warmup(optimizer, num_warmup_steps, num_tra
     Return:
         `torch.optim.lr_scheduler.LambdaLR` with the appropriate schedule.
     """
-
+    
     lr_lambda = partial(
         _get_fp_cosine_raise_and_fall_lr_lambda,
         num_warmup_steps=num_warmup_steps,
@@ -257,7 +257,7 @@ def neftune_forward(self, input: torch.Tensor):
         mag_norm = self.neftune_noise_alpha / torch.sqrt(dims)
         embeddings = embeddings + torch.zeros_like(embeddings).uniform_(-mag_norm, mag_norm)
 
-    return embeddings
+    return embeddings    
 
 
 class FPNEFtuneTrainer(transformers.Trainer):
@@ -267,7 +267,7 @@ class FPNEFtuneTrainer(transformers.Trainer):
             model = self._activate_neftune(model)
         super().__init__(model = model, *args, **kwargs)
 
-
+   
     def _activate_neftune(self, model):
         r"""
         Activates the neftune as presented in this code: https://github.com/neelsjain/NEFTune and paper: https://arxiv.org/abs/2310.05914
@@ -290,7 +290,7 @@ class FPNEFtuneTrainer(transformers.Trainer):
         embeddings._trl_old_forward = old_forward
 
         return model
-
+    
     def train(self, *args, **kwargs):
         output = super().train(*args, **kwargs)
 
@@ -318,7 +318,7 @@ class FPSchedulerTrainer(transformers.Trainer):
             model = self._activate_neftune(model)
         super().__init__(model = model, *args, **kwargs)
 
-
+   
     def _activate_neftune(self, model):
         r"""
         Activates the neftune as presented in this code: https://github.com/neelsjain/NEFTune and paper: https://arxiv.org/abs/2310.05914
@@ -341,7 +341,7 @@ class FPSchedulerTrainer(transformers.Trainer):
         embeddings._trl_old_forward = old_forward
 
         return model
-
+    
     def train(self, *args, **kwargs):
         output = super().train(*args, **kwargs)
 
@@ -364,19 +364,19 @@ class FPSchedulerTrainer(transformers.Trainer):
 
     def create_scheduler(self, num_training_steps: int, optimizer: torch.optim.Optimizer = None):
         #Setup the scheduler. The optimizer of the trainer must have been set up either before this method is called or passed as an argument.
-
+        
         num_train_epochs = self.args.num_train_epochs
         num_warmup_steps=self.args.get_warmup_steps(num_training_steps)
         num_firstepoch_steps = math.ceil(num_training_steps/num_train_epochs)
-        num_warmup_acc = num_warmup_steps*self.args.gradient_accumulation_steps
+        num_warmup_acc = num_warmup_steps*self.args.gradient_accumulation_steps 
         num_firstepoch_steps_acc = num_firstepoch_steps*self.args.gradient_accumulation_steps
         num_training_steps_acc = num_training_steps*self.args.gradient_accumulation_steps
 
         custom_scheduler_params.update({'dynamic_scheduler_stop': False})
-
+ 
         print (f"Warm-up steps aligned to Gradient accumulation ({self.args.gradient_accumulation_steps}) = {num_warmup_acc} actual warmup steps")
         if self.args.lr_scheduler_type == 'cosine':
-
+            
             num_warmup_acc_min = min(num_warmup_acc, num_firstepoch_steps_acc)
 
             if num_warmup_acc>num_firstepoch_steps_acc:
@@ -388,13 +388,13 @@ class FPSchedulerTrainer(transformers.Trainer):
             self.lr_scheduler = custom_cosine_scheduler_with_warmup(
                     optimizer=self.optimizer if optimizer is None else optimizer,
                     num_warmup_steps=num_warmup_steps,
-                    num_training_steps=num_training_steps,
+                    num_training_steps=num_training_steps, 
                     num_firstepoch_steps = num_firstepoch_steps,
                 )
             self._created_lr_scheduler = True
             return self.lr_scheduler
         elif self.args.lr_scheduler_type == 'constant':
-
+           
             half_step_acc = num_training_steps_acc//2
             num_warmup_acc_min = min(num_warmup_acc, half_step_acc)
 
@@ -407,15 +407,15 @@ class FPSchedulerTrainer(transformers.Trainer):
             self.lr_scheduler = custom_half_scheduler_with_warmup(
                     optimizer=self.optimizer if optimizer is None else optimizer,
                     num_warmup_steps=num_warmup_steps,
-                    num_training_steps=num_training_steps,
+                    num_training_steps=num_training_steps, 
                     num_firstepoch_steps = num_firstepoch_steps,
                 )
             self._created_lr_scheduler = True
             return self.lr_scheduler
         elif self.args.lr_scheduler_type == 'constant_with_warmup':
-
+           
             half_step_acc = num_training_steps_acc//2
-
+            
             if num_warmup_steps>0:
                 print(f"Warmup doesn't apply to this scheduler [Raise-Fall]")
 
@@ -424,10 +424,10 @@ class FPSchedulerTrainer(transformers.Trainer):
             self.lr_scheduler = custom_raise_fall_scheduler_with_warmup(
                     optimizer=self.optimizer if optimizer is None else optimizer,
                     num_warmup_steps=num_warmup_steps,
-                    num_training_steps=num_training_steps,
+                    num_training_steps=num_training_steps, 
                     num_firstepoch_steps = num_firstepoch_steps,
                 )
             self._created_lr_scheduler = True
-            return self.lr_scheduler
+            return self.lr_scheduler        
         else:
             return  super().create_scheduler(num_training_steps=num_training_steps, optimizer=optimizer)

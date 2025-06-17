@@ -27,9 +27,7 @@ def save_past_evaluations(df):
     global past_evaluations
     past_evaluations = df
     filepath = Path('user_data/logs/evaluations.csv')
-    if not filepath.parent.exists():
-        filepath.parent.mkdir(parents=True, exist_ok=True)
-
+    filepath.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(filepath, index=False)
 
 

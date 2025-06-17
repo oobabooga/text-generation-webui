@@ -409,9 +409,7 @@ def _perform_debounced_save():
         if _last_interface_state is not None:
             contents = save_settings(_last_interface_state, _last_preset, _last_extensions, _last_show_controls, _last_theme_state, manual_save=False)
             settings_path = Path('user_data') / 'settings.yaml'
-            if not settings_path.parent.exists():
-                settings_path.parent.mkdir(exist_ok=True)
-
+            settings_path.parent.mkdir(exist_ok=True)
             with open(settings_path, 'w', encoding='utf-8') as f:
                 f.write(contents)
     except Exception as e:

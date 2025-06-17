@@ -973,8 +973,8 @@ def save_history(history, unique_id, character, mode):
         return
 
     p = get_history_file_path(unique_id, character, mode)
-    if not p.parent.exists():
-        p.parent.mkdir(parents=True, exist_ok=True)
+    if not p.parent.is_dir():
+        p.parent.mkdir(parents=True)
 
     with open(p, 'w', encoding='utf-8') as f:
         f.write(json.dumps(history, indent=4, ensure_ascii=False))
@@ -1014,9 +1014,7 @@ def get_paths(state):
             unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
             p = get_history_file_path(unique_id, character, state['mode'])
             logger.warning(f"Moving \"{new_p}\" to \"{p}\"")
-            if not p.parent.exists():
-                p.parent.mkdir(exist_ok=True)
-
+            p.parent.mkdir(exist_ok=True)
             new_p.rename(p)
 
         return Path(f'user_data/logs/chat/{character}').glob('*.json')
@@ -1165,9 +1163,7 @@ def save_last_chat_state(character, mode, unique_id):
     state["last_chats"][key] = unique_id
 
     state_file = Path('user_data/logs/chat_state.json')
-    if not state_file.parent.exists():
-        state_file.parent.mkdir(exist_ok=True)
-
+    state_file.parent.mkdir(exist_ok=True)
     with open(state_file, 'w', encoding='utf-8') as f:
         f.write(json.dumps(state, indent=2))
 

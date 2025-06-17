@@ -5,7 +5,7 @@ def create_graph(lora_path, lora_name):
     try:
         import matplotlib.pyplot as plt
         from matplotlib.ticker import ScalarFormatter
-
+        
         peft_model_path = f'{lora_path}/training_graph.json'
         image_model_path = f'{lora_path}/training_graph.png'
         # Check if the JSON file exists
@@ -20,7 +20,7 @@ def create_graph(lora_path, lora_name):
 
             # Create the line chart
             fig, ax1 = plt.subplots(figsize=(10, 6))
-
+        
 
             # Plot y1 (learning rate) on the first y-axis
             ax1.plot(x, y1, 'b-', label='Learning Rate')
@@ -57,6 +57,6 @@ def create_graph(lora_path, lora_name):
             print(f"Graph saved in {image_model_path}")
         else:
             print(f"File 'training_graph.json' does not exist in the {lora_path}")
-
+      
     except ImportError:
         print("matplotlib is not installed. Please install matplotlib to create PNG graphs")

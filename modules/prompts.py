@@ -9,9 +9,7 @@ def load_prompt(fname):
         # Create new file
         new_name = utils.current_time()
         prompt_path = Path("user_data/logs/notebook") / f"{new_name}.txt"
-        if not prompt_path.parent.exists():
-            prompt_path.parent.mkdir(parents=True, exist_ok=True)
-
+        prompt_path.parent.mkdir(parents=True, exist_ok=True)
         initial_content = "In this story,"
         prompt_path.write_text(initial_content, encoding='utf-8')
 

@@ -10,8 +10,7 @@ from modules.logging_colors import logger
 # Set up Gradio temp directory path
 gradio_temp_path = Path('user_data') / 'cache' / 'gradio'
 shutil.rmtree(gradio_temp_path, ignore_errors=True)
-if not gradio_temp_path.exists():
-    gradio_temp_path.mkdir(parents=True, exist_ok=True)
+gradio_temp_path.mkdir(parents=True, exist_ok=True)
 
 # Set environment variables
 os.environ.update({

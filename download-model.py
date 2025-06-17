@@ -314,8 +314,8 @@ class ModelDownloader:
 
     def download_model_files(self, model, branch, links, sha256, output_folder, progress_queue=None, start_from_scratch=False, threads=4, specific_file=None, is_llamacpp=False):
         self.progress_queue = progress_queue
-        if not output_folder.exists():
-            output_folder.mkdir(parents=True, exist_ok=True)
+
+        output_folder.mkdir(parents=True, exist_ok=True)
 
         if not is_llamacpp:
             metadata = f'url: https://huggingface.co/{model}\n' \

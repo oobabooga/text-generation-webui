@@ -197,9 +197,7 @@ def handle_new_prompt():
 
     # Create the new prompt file
     prompt_path = Path("user_data/logs/notebook") / f"{new_name}.txt"
-    if not prompt_path.parent.exists():
-        prompt_path.parent.mkdir(parents=True, exist_ok=True)
-
+    prompt_path.parent.mkdir(parents=True, exist_ok=True)
     prompt_path.write_text("In this story,", encoding='utf-8')
 
     return gr.update(choices=utils.get_available_prompts(), value=new_name)
@@ -216,9 +214,7 @@ def handle_delete_prompt_confirm_notebook(prompt_name):
         new_value = available_prompts[min(current_index, len(available_prompts) - 1)]
     else:
         new_value = utils.current_time()
-        if not Path("user_data/logs/notebook").exists():
-            Path("user_data/logs/notebook").mkdir(parents=True, exist_ok=True)
-
+        Path("user_data/logs/notebook").mkdir(parents=True, exist_ok=True)
         (Path("user_data/logs/notebook") / f"{new_value}.txt").write_text("In this story,")
         available_prompts = [new_value]
 

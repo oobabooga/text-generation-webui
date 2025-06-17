@@ -241,8 +241,7 @@ def backup_adapter(input_folder):
 
             # Create the new subfolder
             subfolder_path = Path(f"{input_folder}/{creation_date_str}")
-            if not subfolder_path.exists():
-                subfolder_path.mkdir(parents=True, exist_ok=True)
+            subfolder_path.mkdir(parents=True, exist_ok=True)
 
             # Check if the file already exists in the subfolder
             backup_adapter_file = Path(f"{input_folder}/{creation_date_str}/adapter_model.bin")
@@ -677,9 +676,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
                 decoded_entries.append({"value": decoded_text})
 
             # Write the log file
-            if not Path('user_data/logs').exists():
-                Path('user_data/logs').mkdir(exist_ok=True)
-
+            Path('user_data/logs').mkdir(exist_ok=True)
             with open(Path('user_data/logs/train_dataset_sample.json'), 'w') as json_file:
                 json.dump(decoded_entries, json_file, indent=4)
 

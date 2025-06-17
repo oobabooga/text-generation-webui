@@ -168,8 +168,7 @@ def get_SD_pictures(description, character):
 
             variadic = f'{date.today().strftime("%Y_%m_%d")}/{character}_{int(time.time())}'
             output_file = Path(f'extensions/sd_api_pictures/outputs/{variadic}.png')
-            if not output_file.parent.exists():
-                output_file.parent.mkdir(parents=True, exist_ok=True)
+            output_file.parent.mkdir(parents=True, exist_ok=True)
 
             with open(output_file.as_posix(), 'wb') as f:
                 f.write(img_data)
