@@ -1849,6 +1849,11 @@ def handle_character_picture_change(picture):
 def handle_mode_change(state):
     history, loaded_unique_id = load_latest_history(state)
     histories = find_all_histories_with_first_prompts(state)
+
+    # Ensure character picture cache exists
+    if state['mode'] in ['chat', 'chat-instruct'] and state['character_menu'] and state['character_menu'] != 'None':
+        generate_pfp_cache(state['character_menu'])
+
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     convert_to_markdown.cache_clear()
