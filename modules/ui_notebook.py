@@ -1,3 +1,4 @@
+import threading
 import time
 from pathlib import Path
 
@@ -12,6 +13,11 @@ from modules.text_generation import (
 )
 from modules.ui_default import autosave_prompt
 from modules.utils import gradio
+
+_notebook_file_lock = threading.Lock()
+_notebook_auto_save_timer = None
+_last_notebook_text = None
+_last_notebook_prompt = None
 
 inputs = ('textbox-notebook', 'interface_state')
 outputs = ('textbox-notebook', 'html-notebook')
@@ -150,6 +156,13 @@ def create_event_handlers():
         show_progress=False)
 
     shared.gradio['textbox-notebook'].input(lambda x: f"<span>{count_tokens(x)}</span>", gradio('textbox-notebook'), gradio('token-counter-notebook'), show_progress=False)
+    shared.gradio['textbox-notebook'].change(
+        store_notebook_state_and_debounce,
+        gradio('textbox-notebook', 'prompt_menu-notebook'),
+        None,
+        show_progress=False
+    )
+
     shared.gradio['get_logits-notebook'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         logits.get_next_logits, gradio('textbox-notebook', 'interface_state', 'use_samplers-notebook', 'logits-notebook'), gradio('logits-notebook', 'logits-notebook-previous'), show_progress=False)
@@ -164,7 +177,7 @@ def generate_and_save_wrapper_notebook(textbox_content, interface_state, prompt_
     output = textbox_content
 
     # Initial autosave
-    autosave_prompt(output, prompt_name)
+    safe_autosave_prompt(output, prompt_name)
 
     for i, (output, html_output) in enumerate(generate_reply_wrapper(textbox_content, interface_state)):
         yield output, html_output
@@ -172,11 +185,11 @@ def generate_and_save_wrapper_notebook(textbox_content, interface_state, prompt_
         current_time = time.monotonic()
         # Save on first iteration or if save_interval seconds have passed
         if i == 0 or (current_time - last_save_time) >= save_interval:
-            autosave_prompt(output, prompt_name)
+            safe_autosave_prompt(output, prompt_name)
             last_save_time = current_time
 
     # Final autosave
-    autosave_prompt(output, prompt_name)
+    safe_autosave_prompt(output, prompt_name)
 
 
 def handle_new_prompt():
@@ -234,3 +247,35 @@ def handle_rename_prompt_confirm_notebook(new_name, current_name):
         gr.update(visible=True),
         gr.update(visible=False)
     ]
+
+
+def safe_autosave_prompt(content, prompt_name):
+    """Thread-safe wrapper for autosave_prompt to prevent file corruption"""
+    with _notebook_file_lock:
+        autosave_prompt(content, prompt_name)
+
+
+def store_notebook_state_and_debounce(text, prompt_name):
+    """Store current notebook state and trigger debounced save"""
+    global _notebook_auto_save_timer, _last_notebook_text, _last_notebook_prompt
+
+    if shared.args.multi_user:
+        return
+
+    _last_notebook_text = text
+    _last_notebook_prompt = prompt_name
+
+    if _notebook_auto_save_timer is not None:
+        _notebook_auto_save_timer.cancel()
+
+    _notebook_auto_save_timer = threading.Timer(1.0, _perform_notebook_debounced_save)
+    _notebook_auto_save_timer.start()
+
+
+def _perform_notebook_debounced_save():
+    """Actually perform the notebook save using the stored state"""
+    try:
+        if _last_notebook_text is not None and _last_notebook_prompt is not None:
+            safe_autosave_prompt(_last_notebook_text, _last_notebook_prompt)
+    except Exception as e:
+        print(f"Notebook auto-save failed: {e}")
