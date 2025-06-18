@@ -1918,10 +1918,16 @@ def handle_send_instruction_click(state):
 
     output = generate_chat_prompt("Input", state)
 
-    return output
+    if state["show_two_notebook_columns"]:
+        return gr.update(), output, ""
+    else:
+        return output, gr.update(), gr.update()
 
 
 def handle_send_chat_click(state):
     output = generate_chat_prompt("", state, _continue=True)
 
-    return output, output, ""
+    if state["show_two_notebook_columns"]:
+        return gr.update(), output, ""
+    else:
+        return output, gr.update(), gr.update()
