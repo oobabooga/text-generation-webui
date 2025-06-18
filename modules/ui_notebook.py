@@ -11,7 +11,6 @@ from modules.text_generation import (
     get_token_ids,
     stop_everything_event
 )
-from modules.ui_default import autosave_prompt
 from modules.utils import gradio
 
 _notebook_file_lock = threading.Lock()
@@ -247,6 +246,14 @@ def handle_rename_prompt_confirm_notebook(new_name, current_name):
         gr.update(visible=True),
         gr.update(visible=False)
     ]
+
+
+def autosave_prompt(text, prompt_name):
+    """Automatically save the text to the selected prompt file"""
+    if prompt_name and text.strip():
+        prompt_path = Path("user_data/logs/notebook") / f"{prompt_name}.txt"
+        prompt_path.parent.mkdir(parents=True, exist_ok=True)
+        prompt_path.write_text(text, encoding='utf-8')
 
 
 def safe_autosave_prompt(content, prompt_name):
