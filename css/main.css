@@ -175,7 +175,7 @@ gradio-app > :first-child {
 }
 
 .textbox textarea {
-    height: calc(100dvh - 172px);
+    height: calc(100dvh - 145px)
 }
 
 .textbox_logits textarea {
@@ -307,7 +307,7 @@ audio {
 }
 
 #notebook-token-counter {
-    top: calc(100dvh - 171px) !important;
+    top: calc(100dvh - 172px) !important;
 }
 
 #default-token-counter span, #notebook-token-counter span {
@@ -1665,4 +1665,8 @@ button:focus {
 #chat-template-str textarea {
     height: calc(100vh - 300px) !important;
     min-height: 90px !important;
+}
+
+#textbox-notebook span {
+    display: none;
 }
