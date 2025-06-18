@@ -59,7 +59,7 @@ def get_model_metadata(model):
         else:
             gguf_files = list(path.glob('*.gguf'))
             if not gguf_files:
-                error_msg = f"No .gguf files found in directory: {path}"
+                error_msg = f"No .gguf models found in directory: {path}"
                 logger.error(error_msg)
                 raise FileNotFoundError(error_msg)
 
