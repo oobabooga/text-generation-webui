@@ -31,12 +31,6 @@ function switch_to_chat() {
   scrollToTop();
 }
 
-function switch_to_default() {
-  let default_tab_button = main_parent.childNodes[0].childNodes[5];
-  default_tab_button.click();
-  scrollToTop();
-}
-
 function switch_to_notebook() {
   let notebook_tab_button = main_parent.childNodes[0].childNodes[9];
   notebook_tab_button.click();

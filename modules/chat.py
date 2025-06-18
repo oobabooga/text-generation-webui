@@ -1924,4 +1924,4 @@ def handle_send_instruction_click(state):
 def handle_send_chat_click(state):
     output = generate_chat_prompt("", state, _continue=True)
 
-    return output
+    return output, output, ""
