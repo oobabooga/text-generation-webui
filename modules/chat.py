@@ -217,8 +217,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
             user_key = f"user_{row_idx}"
             enhanced_user_msg = user_msg
 
-            # Add attachment content if present
-            if user_key in metadata and "attachments" in metadata[user_key]:
+            # Add attachment content if present AND if past attachments are enabled
+            if (state.get('include_past_attachments', True) and user_key in metadata and "attachments" in metadata[user_key]):
                 attachments_text = ""
                 for attachment in metadata[user_key]["attachments"]:
                     filename = attachment.get("name", "file")
@@ -332,10 +332,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 user_message = messages[-1]['content']
 
                 # Bisect the truncation point
-                left, right = 0, len(user_message) - 1
+                left, right = 0, len(user_message)
 
-                while right - left > 1:
-                    mid = (left + right) // 2
+                while left < right:
+                    mid = (left + right + 1) // 2
 
                     messages[-1]['content'] = user_message[:mid]
                     prompt = make_prompt(messages)
@@ -344,7 +344,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                     if encoded_length <= max_length:
                         left = mid
                     else:
-                        right = mid
+                        right = mid - 1
 
                 messages[-1]['content'] = user_message[:left]
                 prompt = make_prompt(messages)
@@ -353,7 +353,17 @@ def generate_chat_prompt(user_input, state, **kwargs):
                     logger.error(f"Failed to build the chat prompt. The input is too long for the available context length.\n\nTruncation length: {state['truncation_length']}\nmax_new_tokens: {state['max_new_tokens']} (is it too high?)\nAvailable context length: {max_length}\n")
                     raise ValueError
                 else:
-                    logger.warning(f"The input has been truncated. Context length: {state['truncation_length']}, max_new_tokens: {state['max_new_tokens']}, available context length: {max_length}.")
+                    # Calculate token counts for the log message
+                    original_user_tokens = get_encoded_length(user_message)
+                    truncated_user_tokens = get_encoded_length(user_message[:left])
+                    total_context = max_length + state['max_new_tokens']
+
+                    logger.warning(
+                        f"User message truncated from {original_user_tokens} to {truncated_user_tokens} tokens. "
+                        f"Context full: {max_length} input tokens ({total_context} total, {state['max_new_tokens']} for output). "
+                        f"Increase ctx-size while loading the model to avoid truncation."
+                    )
+
                     break
 
             prompt = make_prompt(messages)
@@ -604,6 +614,7 @@ def generate_search_query(user_message, state):
     search_state['max_new_tokens'] = 64
     search_state['auto_max_new_tokens'] = False
     search_state['enable_thinking'] = False
+    search_state['start_with'] = ""
 
     # Generate the full prompt using existing history + augmented message
     formatted_prompt = generate_chat_prompt(augmented_message, search_state)
@@ -1069,16 +1080,27 @@ def load_latest_history(state):
     '''
 
     if shared.args.multi_user:
-        return start_new_chat(state)
+        return start_new_chat(state), None
 
     histories = find_all_histories(state)
 
     if len(histories) > 0:
-        history = load_history(histories[0], state['character_menu'], state['mode'])
-    else:
-        history = start_new_chat(state)
+        # Try to load the last visited chat for this character/mode
+        chat_state = load_last_chat_state()
+        key = get_chat_state_key(state['character_menu'], state['mode'])
+        last_chat_id = chat_state.get("last_chats", {}).get(key)
 
-    return history
+        # If we have a stored last chat and it still exists, use it
+        if last_chat_id and last_chat_id in histories:
+            unique_id = last_chat_id
+        else:
+            # Fall back to most recent (current behavior)
+            unique_id = histories[0]
+
+        history = load_history(unique_id, state['character_menu'], state['mode'])
+        return history, unique_id
+    else:
+        return start_new_chat(state), None
 
 
 def load_history_after_deletion(state, idx):
@@ -1108,6 +1130,42 @@ def update_character_menu_after_deletion(idx):
     idx = min(int(idx), len(characters) - 1)
     idx = max(0, idx)
     return gr.update(choices=characters, value=characters[idx])
+
+
+def get_chat_state_key(character, mode):
+    """Generate a key for storing last chat state"""
+    if mode == 'instruct':
+        return 'instruct'
+    else:
+        return f"chat_{character}"
+
+
+def load_last_chat_state():
+    """Load the last chat state from file"""
+    state_file = Path('user_data/logs/chat_state.json')
+    if state_file.exists():
+        try:
+            with open(state_file, 'r', encoding='utf-8') as f:
+                return json.loads(f.read())
+        except:
+            pass
+
+    return {"last_chats": {}}
+
+
+def save_last_chat_state(character, mode, unique_id):
+    """Save the last visited chat for a character/mode"""
+    if shared.args.multi_user:
+        return
+
+    state = load_last_chat_state()
+    key = get_chat_state_key(character, mode)
+    state["last_chats"][key] = unique_id
+
+    state_file = Path('user_data/logs/chat_state.json')
+    state_file.parent.mkdir(exist_ok=True)
+    with open(state_file, 'w', encoding='utf-8') as f:
+        f.write(json.dumps(state, indent=2))
 
 
 def load_history(unique_id, character, mode):
@@ -1543,6 +1601,9 @@ def handle_unique_id_select(state):
     history = load_history(state['unique_id'], state['character_menu'], state['mode'])
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
+    # Save this as the last visited chat
+    save_last_chat_state(state['character_menu'], state['mode'], state['unique_id'])
+
     convert_to_markdown.cache_clear()
 
     return [history, html]
@@ -1743,14 +1804,14 @@ def handle_character_menu_change(state):
     state['greeting'] = greeting
     state['context'] = context
 
-    history = load_latest_history(state)
+    history, loaded_unique_id = load_latest_history(state)
     histories = find_all_histories_with_first_prompts(state)
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     convert_to_markdown.cache_clear()
 
     if len(histories) > 0:
-        past_chats_update = gr.update(choices=histories, value=histories[0][1])
+        past_chats_update = gr.update(choices=histories, value=loaded_unique_id or histories[0][1])
     else:
         past_chats_update = gr.update(choices=histories)
 
@@ -1762,7 +1823,7 @@ def handle_character_menu_change(state):
         picture,
         greeting,
         context,
-        past_chats_update,
+        past_chats_update
     ]
 
 
@@ -1786,14 +1847,19 @@ def handle_character_picture_change(picture):
 
 
 def handle_mode_change(state):
-    history = load_latest_history(state)
+    history, loaded_unique_id = load_latest_history(state)
     histories = find_all_histories_with_first_prompts(state)
+
+    # Ensure character picture cache exists
+    if state['mode'] in ['chat', 'chat-instruct'] and state['character_menu'] and state['character_menu'] != 'None':
+        generate_pfp_cache(state['character_menu'])
+
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     convert_to_markdown.cache_clear()
 
     if len(histories) > 0:
-        past_chats_update = gr.update(choices=histories, value=histories[0][1])
+        past_chats_update = gr.update(choices=histories, value=loaded_unique_id or histories[0][1])
     else:
         past_chats_update = gr.update(choices=histories)
 
@@ -1852,10 +1918,16 @@ def handle_send_instruction_click(state):
 
     output = generate_chat_prompt("Input", state)
 
-    return output
+    if state["show_two_notebook_columns"]:
+        return gr.update(), output, ""
+    else:
+        return output, gr.update(), gr.update()
 
 
 def handle_send_chat_click(state):
     output = generate_chat_prompt("", state, _continue=True)
 
-    return output
+    if state["show_two_notebook_columns"]:
+        return gr.update(), output, ""
+    else:
+        return output, gr.update(), gr.update()

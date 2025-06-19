@@ -30,6 +30,7 @@ class LlamaServer:
         self.session = requests.Session()
         self.vocabulary_size = None
         self.bos_token = "<s>"
+        self.last_prompt_token_count = 0
 
         # Start the server
         self._start_server()
@@ -128,6 +129,7 @@ class LlamaServer:
         payload = self.prepare_payload(state)
 
         token_ids = self.encode(prompt, add_bos_token=state["add_bos_token"])
+        self.last_prompt_token_count = len(token_ids)
         if state['auto_max_new_tokens']:
             max_new_tokens = state['truncation_length'] - len(token_ids)
         else:

@@ -33,7 +33,6 @@ import matplotlib
 
 matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
 
-import json
 import os
 import signal
 import sys
@@ -144,12 +143,16 @@ def create_interface():
         # Temporary clipboard for saving files
         shared.gradio['temporary_text'] = gr.Textbox(visible=False)
 
-        # Text Generation tab
+        # Chat tab
         ui_chat.create_ui()
-        ui_default.create_ui()
-        ui_notebook.create_ui()
+
+        # Notebook tab
+        with gr.Tab("Notebook", elem_id='notebook-parent-tab'):
+            ui_default.create_ui()
+            ui_notebook.create_ui()
 
         ui_parameters.create_ui()  # Parameters tab
+        ui_chat.create_character_settings_ui()  # Character tab
         ui_model_menu.create_ui()  # Model tab
         if not shared.args.portable:
             training.create_ui()  # Training tab

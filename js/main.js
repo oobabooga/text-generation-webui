@@ -170,6 +170,13 @@ targetElement.addEventListener("scroll", function() {
 
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
+  // Check if this is just the scrolling class being toggled
+  const isScrollingClassOnly = mutations.every(mutation =>
+    mutation.type === "attributes" &&
+    mutation.attributeName === "class" &&
+    mutation.target === targetElement
+  );
+
   if (targetElement.classList.contains("_generating")) {
     typing.parentNode.classList.add("visible-dots");
     document.getElementById("stop").style.display = "flex";
@@ -182,7 +189,7 @@ const observer = new MutationObserver(function(mutations) {
 
   doSyntaxHighlighting();
 
-  if (!window.isScrolled && targetElement.scrollTop !== targetElement.scrollHeight) {
+  if (!window.isScrolled && !isScrollingClassOnly && targetElement.scrollTop !== targetElement.scrollHeight) {
     targetElement.scrollTop = targetElement.scrollHeight;
   }
 
@@ -231,8 +238,15 @@ function doSyntaxHighlighting() {
   if (messageBodies.length > 0) {
     observer.disconnect();
 
-    messageBodies.forEach((messageBody) => {
+    let hasSeenVisible = false;
+
+    // Go from last message to first
+    for (let i = messageBodies.length - 1; i >= 0; i--) {
+      const messageBody = messageBodies[i];
+
       if (isElementVisibleOnScreen(messageBody)) {
+        hasSeenVisible = true;
+
         // Handle both code and math in a single pass through each message
         const codeBlocks = messageBody.querySelectorAll("pre code:not([data-highlighted])");
         codeBlocks.forEach((codeBlock) => {
@@ -249,8 +263,12 @@ function doSyntaxHighlighting() {
             { left: "\\[", right: "\\]", display: true },
           ],
         });
+      } else if (hasSeenVisible) {
+        // We've seen visible messages but this one is not visible
+        // Since we're going from last to first, we can break
+        break;
       }
-    });
+    }
 
     observer.observe(targetElement, config);
   }
@@ -777,11 +795,43 @@ initializeSidebars();
 
 // Add click event listeners to toggle buttons
 pastChatsToggle.addEventListener("click", () => {
+  const isCurrentlyOpen = !pastChatsRow.classList.contains("sidebar-hidden");
   toggleSidebar(pastChatsRow, pastChatsToggle);
+
+  // On desktop, open/close both sidebars at the same time
+  if (!isMobile()) {
+    if (isCurrentlyOpen) {
+      // If we just closed the left sidebar, also close the right sidebar
+      if (!chatControlsRow.classList.contains("sidebar-hidden")) {
+        toggleSidebar(chatControlsRow, chatControlsToggle, true);
+      }
+    } else {
+      // If we just opened the left sidebar, also open the right sidebar
+      if (chatControlsRow.classList.contains("sidebar-hidden")) {
+        toggleSidebar(chatControlsRow, chatControlsToggle, false);
+      }
+    }
+  }
 });
 
 chatControlsToggle.addEventListener("click", () => {
+  const isCurrentlyOpen = !chatControlsRow.classList.contains("sidebar-hidden");
   toggleSidebar(chatControlsRow, chatControlsToggle);
+
+  // On desktop, open/close both sidebars at the same time
+  if (!isMobile()) {
+    if (isCurrentlyOpen) {
+      // If we just closed the right sidebar, also close the left sidebar
+      if (!pastChatsRow.classList.contains("sidebar-hidden")) {
+        toggleSidebar(pastChatsRow, pastChatsToggle, true);
+      }
+    } else {
+      // If we just opened the right sidebar, also open the left sidebar
+      if (pastChatsRow.classList.contains("sidebar-hidden")) {
+        toggleSidebar(pastChatsRow, pastChatsToggle, false);
+      }
+    }
+  }
 });
 
 navigationToggle.addEventListener("click", () => {

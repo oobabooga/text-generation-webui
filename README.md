@@ -24,19 +24,23 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 - Multiple sampling parameters and generation options for sophisticated text generation control.
 - Switch between different models in the UI without restarting.
 - Automatic GPU layers for GGUF models (on NVIDIA GPUs).
-- Free-form text generation in the Default/Notebook tabs without being limited to chat turns.
+- Free-form text generation in the Notebook tab without being limited to chat turns.
 - OpenAI-compatible API with Chat and Completions endpoints, including tool-calling support – see [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
 - Extension support, with numerous built-in and user-contributed extensions available. See the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
 
 ## How to install
 
-#### Option 1: Portable builds (start here)
+#### Option 1: Portable builds (get started in 1 minute)
 
-No installation needed – just unzip and run. Compatible with GGUF (llama.cpp) models on Windows, Linux, and macOS.
+No installation needed – just download, unzip and run. All dependencies included.
 
-Download from: https://github.com/oobabooga/text-generation-webui/releases
+Compatible with GGUF (llama.cpp) models on Windows, Linux, and macOS.
+
+Download from here: https://github.com/oobabooga/text-generation-webui/releases
 
 #### Option 2: One-click installer
+
+For users who need additional backends (ExLlamaV3, Transformers) or extensions (TTS, voice input, translation, etc). Requires ~10GB disk space and downloads PyTorch.
 
 1. Clone the repository, or [download its source code](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) and extract it.
 2. Run the startup script for your OS: `start_windows.bat`, `start_linux.sh`, or `start_macos.sh`.
@@ -150,21 +154,21 @@ The `requirements*.txt` above contain various wheels precompiled through GitHub 
 ```
 For NVIDIA GPU:
 ln -s docker/{nvidia/Dockerfile,nvidia/docker-compose.yml,.dockerignore} .
-For AMD GPU: 
+For AMD GPU:
 ln -s docker/{amd/Dockerfile,amd/docker-compose.yml,.dockerignore} .
 For Intel GPU:
 ln -s docker/{intel/Dockerfile,amd/docker-compose.yml,.dockerignore} .
 For CPU only
 ln -s docker/{cpu/Dockerfile,cpu/docker-compose.yml,.dockerignore} .
 cp docker/.env.example .env
-#Create logs/cache dir : 
+#Create logs/cache dir :
 mkdir -p user_data/logs user_data/cache
-# Edit .env and set: 
+# Edit .env and set:
 #   TORCH_CUDA_ARCH_LIST based on your GPU model
 #   APP_RUNTIME_GID      your host user's group id (run `id -g` in a terminal)
 #   BUILD_EXTENIONS      optionally add comma separated list of extensions to build
 # Edit user_data/CMD_FLAGS.txt and add in it the options you want to execute (like --listen --cpu)
-# 
+#
 docker compose up --build
 ```
 
@@ -188,7 +192,7 @@ List of command-line flags
 </summary>
 
 ```txt
-usage: server.py [-h] [--multi-user] [--character CHARACTER] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--model-menu] [--settings SETTINGS]
+usage: server.py [-h] [--multi-user] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--model-menu] [--settings SETTINGS]
                  [--extensions EXTENSIONS [EXTENSIONS ...]] [--verbose] [--idle-timeout IDLE_TIMEOUT] [--loader LOADER] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR]
                  [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast] [--use_flash_attention_2] [--use_eager_attention] [--torch-compile] [--load-in-4bit]
                  [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE] [--flash-attn] [--threads THREADS] [--threads-batch THREADS_BATCH] [--batch-size BATCH_SIZE] [--no-mmap]
@@ -207,7 +211,6 @@ options:
 
 Basic settings:
   --multi-user                              Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.
-  --character CHARACTER                     The name of the character to load in chat mode by default.
   --model MODEL                             Name of the model to load by default.
   --lora LORA [LORA ...]                    The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.
   --model-dir MODEL_DIR                     Path to directory with all the models.

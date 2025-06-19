@@ -202,8 +202,7 @@ settings = {
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'enable_web_search': False,
     'web_search_pages': 3,
-    'prompt-default': 'QA',
-    'prompt-notebook': 'QA',
+    'prompt-notebook': '',
     'preset': 'Qwen3 - Thinking' if Path('user_data/presets/Qwen3 - Thinking.yaml').exists() else None,
     'max_new_tokens': 512,
     'max_new_tokens_min': 1,
@@ -223,7 +222,9 @@ settings = {
     'custom_token_bans': '',
     'negative_prompt': '',
     'dark_theme': True,
+    'show_two_notebook_columns': False,
     'paste_to_attachment': False,
+    'include_past_attachments': True,
 
     # Generation parameters - Curve shape
     'temperature': 0.6,

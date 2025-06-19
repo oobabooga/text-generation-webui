@@ -97,11 +97,11 @@ ol li p, ul li p {
     display: inline-block;
 }
 
-#chat-tab, #default-tab, #notebook-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab {
+#notebook-parent-tab, #chat-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab, #character-tab {
     border: 0;
 }
 
-#default-tab, #notebook-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab {
+#notebook-parent-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab, #character-tab {
     padding: 1rem;
 }
 
@@ -167,15 +167,15 @@ gradio-app > :first-child {
 }
 
 .textbox_default textarea {
-    height: calc(100dvh - 201px);
+    height: calc(100dvh - 202px);
 }
 
 .textbox_default_output textarea {
-    height: calc(100dvh - 117px);
+    height: calc(100dvh - 118px);
 }
 
 .textbox textarea {
-    height: calc(100dvh - 172px);
+    height: calc(100dvh - 145px)
 }
 
 .textbox_logits textarea {
@@ -307,7 +307,7 @@ audio {
 }
 
 #notebook-token-counter {
-    top: calc(100dvh - 171px) !important;
+    top: calc(100dvh - 172px) !important;
 }
 
 #default-token-counter span, #notebook-token-counter span {
@@ -421,6 +421,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     text-align: start;
     padding-left: 1rem;
     padding-right: 1rem;
+    contain: layout;
 }
 
 .chat .message .timestamp {
@@ -905,6 +906,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     flex-shrink: 1;
 }
 
+#search_chat {
+    padding-right: 0.5rem;
+}
+
 #search_chat > :nth-child(2) > :first-child {
     display: none;
 }
@@ -925,7 +930,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: fixed;
     bottom: 0;
     left: 0;
-    width: calc(100vw / 2 - 600px);
+    width: calc(0.5 * (100vw - min(100vw, 48rem) - (120px - var(--header-width))));
     z-index: 10000;
 }
 
@@ -1020,12 +1025,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: 100%;
     justify-content: center;
     gap: 9px;
+    padding-right: 0.5rem;
 }
 
 #past-chats-row,
 #chat-controls {
     width: 260px;
     padding: 0.5rem;
+    padding-right: 0;
     height: calc(100dvh - 16px);
     flex-shrink: 0;
     box-sizing: content-box;
@@ -1287,6 +1294,20 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .user-message:hover .message-actions,
 .assistant-message:hover .message-actions {
     opacity: 1;
+}
+
+/* Disable message action hover effects during generation */
+._generating .message:hover .message-actions,
+._generating .user-message:hover .message-actions,
+._generating .assistant-message:hover .message-actions {
+    opacity: 0 !important;
+}
+
+/* Disable message action hover effects during scrolling */
+.scrolling .message:hover .message-actions,
+.scrolling .user-message:hover .message-actions,
+.scrolling .assistant-message:hover .message-actions {
+    opacity: 0 !important;
 }
 
 .footer-button svg {
@@ -1625,7 +1646,27 @@ button:focus {
     display: none;
 }
 
-/* Disable hover effects while scrolling */
-.chat-parent.scrolling * {
-    pointer-events: none !important;
+#character-context textarea {
+    height: calc((100vh - 350px) * 2/3) !important;
+    min-height: 90px !important;
+}
+
+#character-greeting textarea {
+    height: calc((100vh - 350px) * 1/3) !important;
+    min-height: 90px !important;
+}
+
+#user-description textarea {
+    height: calc(100vh - 231px) !important;
+    min-height: 90px !important;
+}
+
+#instruction-template-str textarea,
+#chat-template-str textarea {
+    height: calc(100vh - 300px) !important;
+    min-height: 90px !important;
+}
+
+#textbox-notebook span {
+    display: none;
 }
