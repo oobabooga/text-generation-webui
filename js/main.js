@@ -170,6 +170,13 @@ targetElement.addEventListener("scroll", function() {
 
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
+  // Check if this is just the scrolling class being toggled
+  const isScrollingClassOnly = mutations.every(mutation =>
+    mutation.type === "attributes" &&
+    mutation.attributeName === "class" &&
+    mutation.target === targetElement
+  );
+
   if (targetElement.classList.contains("_generating")) {
     typing.parentNode.classList.add("visible-dots");
     document.getElementById("stop").style.display = "flex";
@@ -182,7 +189,7 @@ const observer = new MutationObserver(function(mutations) {
 
   doSyntaxHighlighting();
 
-  if (!window.isScrolled && targetElement.scrollTop !== targetElement.scrollHeight) {
+  if (!window.isScrolled && !isScrollingClassOnly && targetElement.scrollTop !== targetElement.scrollHeight) {
     targetElement.scrollTop = targetElement.scrollHeight;
   }
 
