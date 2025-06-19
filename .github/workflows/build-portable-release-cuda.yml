@@ -107,7 +107,7 @@ jobs:
             cp -r text-generation-webui "text-generation-webui-${VERSION_CLEAN}"
             cd "text-generation-webui-${VERSION_CLEAN}"
 
-            rm -rf .git cmd* update_wizard* Colab-TextGen-GPU.ipynb docker setup.cfg
+            rm -rf .git cmd* update_wizard* Colab-TextGen-GPU.ipynb docker setup.cfg .github .gitignore
             allowed=("character_bias" "gallery" "openai" "sd_api_pictures")
             find extensions/ -mindepth 1 -maxdepth 1 -type d | grep -v -E "$(printf '%s|' "${allowed[@]}" | sed 's/|$//')" | xargs rm -rf
 
