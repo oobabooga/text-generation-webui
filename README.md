@@ -91,8 +91,15 @@ venv\Scripts\activate
 # On macOS/Linux:
 source venv/bin/activate
 
+# Clone the repository
+git clone https://github.com/oobabooga/text-generation-webui
+cd text-generation-webui
+
 # Install dependencies (choose appropriate file under requirements/portable for your hardware)
 pip install -r requirements/portable/requirements.txt
+
+# Launch server (basic command)
+python server.py --portable --api --auto-launch
 
 # When done working, deactivate
 deactivate
