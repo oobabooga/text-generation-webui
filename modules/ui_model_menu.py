@@ -264,7 +264,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
 
             gguf_data.sort(key=lambda x: x[0])
 
-            output = "Multiple GGUF files found. Please copy one of the following filenames to the 'File name' field:\n\n```\n"
+            output = "Multiple GGUF files found. Please copy one of the following filenames to the 'File name' field above:\n\n```\n"
             for file_size, link in gguf_data:
                 size_str = format_file_size(file_size)
                 output += f"{size_str} - {Path(link).name}\n"
