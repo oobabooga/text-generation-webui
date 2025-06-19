@@ -101,7 +101,7 @@ def create_event_handlers():
 
     shared.gradio['Stop-default'].click(stop_everything_event, None, None, queue=False)
     shared.gradio['markdown_render-default'].click(lambda x: x, gradio('output_textbox'), gradio('markdown-default'), queue=False)
-    shared.gradio['prompt_menu-default'].change(lambda x : (load_prompt(x), ""), gradio('prompt_menu-default'), gradio('textbox-default', 'output_textbox'), show_progress=False)
+    shared.gradio['prompt_menu-default'].change(lambda x: (load_prompt(x), ""), gradio('prompt_menu-default'), gradio('textbox-default', 'output_textbox'), show_progress=False)
     shared.gradio['new_prompt-default'].click(handle_new_prompt, None, gradio('prompt_menu-default'), show_progress=False)
 
     # Input change handler to save input (reusing notebook's debounced saving)
