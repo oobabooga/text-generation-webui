@@ -18,6 +18,15 @@ def list_models():
     return {'model_names': get_available_models()}
 
 
+def list_models_openai_format():
+    """Returns model list in OpenAI API format"""
+    model_names = get_available_models()
+    return {
+        "object": "list",
+        "data": [model_info_dict(name) for name in model_names]
+    }
+
+
 def model_info_dict(model_name: str) -> dict:
     return {
         "id": model_name,
