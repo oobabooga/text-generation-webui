@@ -77,7 +77,7 @@ def get_model_metadata(model):
                 model_settings['compress_pos_emb'] = metadata[k]
             elif k.endswith('rope.scaling.factor'):
                 model_settings['compress_pos_emb'] = metadata[k]
-            elif k.endswith('block_count'):
+            elif k.endswith('.block_count'):
                 model_settings['gpu_layers'] = metadata[k] + 1
                 model_settings['max_gpu_layers'] = metadata[k] + 1
 

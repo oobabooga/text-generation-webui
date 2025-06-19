@@ -15,11 +15,11 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 - Supports multiple local text generation backends, including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), [ExLlamaV2](https://github.com/turboderp-org/exllamav2), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) (the latter via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile)).
 - Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory.
 - 100% offline and private, with zero telemetry, external resources, or remote update requests.
-- Automatic prompt formatting using Jinja2 templates. You don't need to ever worry about prompt formats.
 - **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
 - **Web search**: Optionally search the internet with LLM-generated queries to add context to the conversation.
 - Aesthetic UI with dark and light themes.
 - `instruct` mode for instruction-following (like ChatGPT), and `chat-instruct`/`chat` modes for talking to custom characters.
+- Automatic prompt formatting using Jinja2 templates. You don't need to ever worry about prompt formats.
 - Edit messages, navigate between message versions, and branch conversations at any point.
 - Multiple sampling parameters and generation options for sophisticated text generation control.
 - Switch between different models in the UI without restarting.
@@ -57,7 +57,7 @@ To update, run the update script for your OS: `update_wizard_windows.bat`, `upda
 
 <details>
 <summary>
-Setup details and information about installing manually
+One-click installer details
 </summary>
 
 ### One-click-installer
@@ -67,13 +67,51 @@ The script uses Miniconda to set up a Conda environment in the `installer_files`
 If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, or `cmd_macos.sh`.
 
 * There is no need to run any of those scripts (`start_`, `update_wizard_`, or `cmd_`) as admin/root.
-* To install the requirements for extensions, you can use the `extensions_reqs` script for your OS. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
-* For additional instructions about AMD and WSL setup, consult [the documentation](https://github.com/oobabooga/text-generation-webui/wiki).
+* To install requirements for extensions, it is recommended to use the update wizard script with the "Install/update extensions requirements" option. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
 * For automated installation, you can use the `GPU_CHOICE`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh`.
 
-### Manual installation using Conda
+</details>
 
-Recommended if you have some experience with the command-line.
+<details>
+<summary>
+Manual portable installation with venv
+</summary>
+
+### Manual portable installation with venv
+
+Very fast setup that should work on any Python 3.9+:
+
+```bash
+# Clone repository
+git clone https://github.com/oobabooga/text-generation-webui
+cd text-generation-webui
+
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies (choose appropriate file under requirements/portable for your hardware)
+pip install -r requirements/portable/requirements.txt
+
+# Launch server (basic command)
+python server.py --portable --api --auto-launch
+
+# When done working, deactivate
+deactivate
+```
+</details>
+
+<details>
+<summary>
+Manual full installation with conda or docker
+</summary>
+
+### Full installation with Conda
 
 #### 0. Install Conda
 

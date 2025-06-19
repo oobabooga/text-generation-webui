@@ -1,4 +1,5 @@
 import importlib
+import math
 import queue
 import threading
 import traceback
@@ -244,7 +245,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
 
         model, branch = downloader.sanitize_model_and_branch_names(repo_id, None)
         yield "Getting download links from Hugging Face..."
-        links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=False, specific_file=specific_file)
+        links, sha256, is_lora, is_llamacpp, file_sizes = downloader.get_download_links_from_huggingface(model, branch, text_only=False, specific_file=specific_file)
 
         if not links:
             yield "No files found to download for the given model/criteria."
@@ -254,17 +255,33 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
         # Check for multiple GGUF files
         gguf_files = [link for link in links if link.lower().endswith('.gguf')]
         if len(gguf_files) > 1 and not specific_file:
-            output = "Multiple GGUF files found. Please copy one of the following filenames to the 'File name' field:\n\n```\n"
-            for link in gguf_files:
-                output += f"{Path(link).name}\n"
+            # Sort by size in ascending order
+            gguf_data = []
+            for i, link in enumerate(links):
+                if link.lower().endswith('.gguf'):
+                    file_size = file_sizes[i]
+                    gguf_data.append((file_size, link))
+
+            gguf_data.sort(key=lambda x: x[0])
+
+            output = "Multiple GGUF files found. Please copy one of the following filenames to the 'File name' field above:\n\n```\n"
+            for file_size, link in gguf_data:
+                size_str = format_file_size(file_size)
+                output += f"{size_str} - {Path(link).name}\n"
+
             output += "```"
             yield output
             return
 
         if return_links:
+            # Sort by size in ascending order
+            file_data = list(zip(file_sizes, links))
+            file_data.sort(key=lambda x: x[0])
+
             output = "```\n"
-            for link in links:
-                output += f"{Path(link).name}" + "\n"
+            for file_size, link in file_data:
+                size_str = format_file_size(file_size)
+                output += f"{size_str} - {Path(link).name}\n"
 
             output += "```"
             yield output
@@ -391,3 +408,19 @@ def handle_load_model_event_final(truncation_length, loader, state):
 def handle_unload_model_click():
     unload_model()
     return "Model unloaded"
+
+
+def format_file_size(size_bytes):
+    """Convert bytes to human readable format with 2 decimal places for GB and above"""
+    if size_bytes == 0:
+        return "0 B"
+
+    size_names = ["B", "KB", "MB", "GB", "TB"]
+    i = int(math.floor(math.log(size_bytes, 1024)))
+    p = math.pow(1024, i)
+    s = size_bytes / p
+
+    if i >= 3:  # GB or TB
+        return f"{s:.2f} {size_names[i]}"
+    else:
+        return f"{s:.1f} {size_names[i]}"
