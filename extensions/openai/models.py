@@ -15,7 +15,7 @@ def get_current_model_info():
 
 
 def list_models():
-    return {'model_names': get_available_models()[1:]}
+    return {'model_names': get_available_models()}
 
 
 def model_info_dict(model_name: str) -> dict:
