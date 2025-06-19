@@ -255,7 +255,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
         # Check for multiple GGUF files
         gguf_files = [link for link in links if link.lower().endswith('.gguf')]
         if len(gguf_files) > 1 and not specific_file:
-            # Sort GGUF files by size (ascending - smallest first)
+            # Sort by size in ascending order
             gguf_data = []
             for i, link in enumerate(links):
                 if link.lower().endswith('.gguf'):
@@ -274,7 +274,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
             return
 
         if return_links:
-            # Sort files by size (ascending - smallest first)
+            # Sort by size in ascending order
             file_data = list(zip(file_sizes, links))
             file_data.sort(key=lambda x: x[0])
 
