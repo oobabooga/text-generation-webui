@@ -57,7 +57,7 @@ To update, run the update script for your OS: `update_wizard_windows.bat`, `upda
 
 <details>
 <summary>
-Setup details and information about installing manually
+One-click installer details
 </summary>
 
 ### One-click-installer
@@ -67,13 +67,44 @@ The script uses Miniconda to set up a Conda environment in the `installer_files`
 If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, or `cmd_macos.sh`.
 
 * There is no need to run any of those scripts (`start_`, `update_wizard_`, or `cmd_`) as admin/root.
-* To install the requirements for extensions, you can use the `extensions_reqs` script for your OS. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
-* For additional instructions about AMD and WSL setup, consult [the documentation](https://github.com/oobabooga/text-generation-webui/wiki).
+* To install requirements for extensions, it is recommended to use the update wizard script with the "Install/update extensions requirements" option. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
 * For automated installation, you can use the `GPU_CHOICE`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh`.
 
-### Manual installation using Conda
+</details>
 
-Recommended if you have some experience with the command-line.
+<details>
+<summary>
+Manual portable installation with venv
+</summary>
+
+### Manual portable installation with venv
+
+Very fast setup that should work on any Python 3.9+:
+
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies (choose appropriate file under requirements/portable for your hardware)
+pip install -r requirements/portable/requirements.txt
+
+# When done working, deactivate
+deactivate
+```
+</details>
+
+<details>
+<summary>
+Manual full installation with conda or docker
+</summary>
+
+### Full installation with Conda
 
 #### 0. Install Conda
 
