@@ -82,6 +82,10 @@ Manual portable installation with venv
 Very fast setup that should work on any Python 3.9+:
 
 ```bash
+# Clone repository
+git clone https://github.com/oobabooga/text-generation-webui
+cd text-generation-webui
+
 # Create virtual environment
 python -m venv venv
 
@@ -90,10 +94,6 @@ python -m venv venv
 venv\Scripts\activate
 # On macOS/Linux:
 source venv/bin/activate
-
-# Clone the repository
-git clone https://github.com/oobabooga/text-generation-webui
-cd text-generation-webui
 
 # Install dependencies (choose appropriate file under requirements/portable for your hardware)
 pip install -r requirements/portable/requirements.txt
