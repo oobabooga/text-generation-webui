@@ -365,10 +365,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     gap: 0;
 }
 
-#chat-tab button#Generate, #chat-tab button#stop {
-    width: 89.3438px !important;
-}
-
 #chat-tab button, #notebook-tab button, #default-tab button {
     min-width: 0 !important;
 }
