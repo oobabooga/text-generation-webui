@@ -1670,3 +1670,15 @@ button:focus {
 #textbox-notebook span {
     display: none;
 }
+
+.chat-parent {
+    /* Optimize for scrolling performance */
+    will-change: scroll-position;
+    contain: layout style paint;
+
+    /* Ensure GPU acceleration */
+    transform: translateZ(0);
+
+    /* Prevent layout shifts */
+    overflow-anchor: none;
+}
