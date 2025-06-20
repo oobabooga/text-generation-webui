@@ -670,7 +670,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: absolute;
     background-color: transparent;
     left: 23px;
-    top: -5px;
+    top: -25px;
     padding: var(--block-padding);
 }
 
@@ -830,7 +830,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #chat-input-row {
     padding: 1rem;
-    padding-top: 0;
 }
 
 #chat-input-row.bigchat {
@@ -1681,4 +1680,8 @@ button:focus {
 
     /* Prevent layout shifts */
     overflow-anchor: none;
+}
+
+#chat-input span {
+    display: none;
 }
