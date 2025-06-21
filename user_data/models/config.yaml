@@ -33,18 +33,14 @@
   skip_special_tokens: false
 .*alpaca-native-4bit:
   instruction_template: 'Alpaca'
-  custom_stopping_strings: '"### End"'
 .*llava:
   instruction_template: 'LLaVA'
-  custom_stopping_strings: '"\n###"'
 .*llava.*1.5:
   instruction_template: 'Vicuna-v1.1'
 .*wizard.*mega:
   instruction_template: 'Wizard-Mega'
-  custom_stopping_strings: '"</s>"'
 .*starchat-beta:
   instruction_template: 'Starchat-Beta'
-  custom_stopping_strings: '"<|end|>"'
 (?!.*v0)(?!.*1.1)(?!.*1_1)(?!.*stable)(?!.*chinese).*vicuna:
   instruction_template: 'Vicuna-v0'
 .*vicuna.*v0:
@@ -151,7 +147,6 @@
   instruction_template: 'Alpaca'
 .*(openorca-platypus2):
   instruction_template: 'OpenOrca-Platypus2'
-  custom_stopping_strings: '"### Instruction:", "### Response:"'
 .*longchat:
   instruction_template: 'Vicuna-v1.1'
 .*vicuna-33b:

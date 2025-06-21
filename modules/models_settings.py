@@ -23,7 +23,6 @@ def get_fallback_settings():
         'truncation_length': shared.settings['truncation_length'],
         'truncation_length_info': shared.settings['truncation_length'],
         'skip_special_tokens': shared.settings['skip_special_tokens'],
-        'custom_stopping_strings': shared.settings['custom_stopping_strings'],
     }
 
 
