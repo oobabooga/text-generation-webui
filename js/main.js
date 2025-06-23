@@ -1046,3 +1046,42 @@ new MutationObserver(() => addMiniDeletes()).observe(
   {childList: true, subtree: true}
 );
 addMiniDeletes();
+
+//------------------------------------------------
+// Maintain distance from bottom when input height changes
+//------------------------------------------------
+let wasAtBottom = false;
+let preservedDistance = 0;
+
+function checkIfAtBottom() {
+  const distanceFromBottom = targetElement.scrollHeight - targetElement.scrollTop - targetElement.clientHeight;
+  wasAtBottom = distanceFromBottom <= 1; // Allow for rounding errors
+}
+
+function preserveScrollPosition() {
+  preservedDistance = targetElement.scrollHeight - targetElement.scrollTop - targetElement.clientHeight;
+}
+
+function restoreScrollPosition() {
+  if (wasAtBottom) {
+    // Force to bottom
+    targetElement.scrollTop = targetElement.scrollHeight - targetElement.clientHeight;
+  } else {
+    // Restore original distance
+    targetElement.scrollTop = targetElement.scrollHeight - targetElement.clientHeight - preservedDistance;
+  }
+}
+
+// Check position before input
+chatInput.addEventListener("beforeinput", () => {
+  checkIfAtBottom();
+  preserveScrollPosition();
+});
+
+// Restore after input
+chatInput.addEventListener("input", () => {
+  requestAnimationFrame(() => restoreScrollPosition());
+});
+
+// Update wasAtBottom when user scrolls
+targetElement.addEventListener("scroll", checkIfAtBottom);
