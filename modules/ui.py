@@ -41,17 +41,17 @@ with open(Path(__file__).resolve().parent / '../js/chat-features.js', 'r', encod
 # Combine files into the main js variable
 js = initialization_js + keyboard_shortcuts_js + sidebar_management_js + chat_features_js
 
-with open(Path(__file__).resolve().parent / '../js/global_scope_js.js', 'r', encoding='utf-8') as f:
+with open(Path(__file__).resolve().parent / '../js/global-scope.js', 'r', encoding='utf-8') as f:
     global_scope_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r', encoding='utf-8') as f:
+with open(Path(__file__).resolve().parent / '../js/save-files.js', 'r', encoding='utf-8') as f:
     save_files_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/switch_tabs.js', 'r', encoding='utf-8') as f:
+with open(Path(__file__).resolve().parent / '../js/switch-tabs.js', 'r', encoding='utf-8') as f:
     switch_tabs_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/show_controls.js', 'r', encoding='utf-8') as f:
+with open(Path(__file__).resolve().parent / '../js/show-controls.js', 'r', encoding='utf-8') as f:
     show_controls_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/update_big_picture.js', 'r', encoding='utf-8') as f:
+with open(Path(__file__).resolve().parent / '../js/update-big-picture.js', 'r', encoding='utf-8') as f:
     update_big_picture_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/dark_theme.js', 'r', encoding='utf-8') as f:
+with open(Path(__file__).resolve().parent / '../js/dark-theme.js', 'r', encoding='utf-8') as f:
     dark_theme_js = f.read()
 
 refresh_symbol = '🔄'
