@@ -29,17 +29,11 @@ with open(Path(__file__).resolve().parent / '../css/katex/katex.min.css', 'r', e
 with open(Path(__file__).resolve().parent / '../css/highlightjs/highlightjs-copy.min.css', 'r', encoding='utf-8') as f:
     css += f.read()
 
-with open(Path(__file__).resolve().parent / '../js/initialization.js', 'r', encoding='utf-8') as f:
-    initialization_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/keyboard-shortcuts.js', 'r', encoding='utf-8') as f:
-    keyboard_shortcuts_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/sidebar-management.js', 'r', encoding='utf-8') as f:
-    sidebar_management_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/chat-features.js', 'r', encoding='utf-8') as f:
-    chat_features_js = f.read()
-
 # Combine files into the main js variable
-js = initialization_js + keyboard_shortcuts_js + sidebar_management_js + chat_features_js
+js = ""
+for filename in ['initialization.js', 'keyboard-shortcuts.js', 'sidebar-management.js', 'chat-features.js']:
+    with open(Path(__file__).resolve().parent / f'../js/{filename}', 'r', encoding='utf-8') as f:
+        js += f.read()
 
 with open(Path(__file__).resolve().parent / '../js/global-scope.js', 'r', encoding='utf-8') as f:
     global_scope_js = f.read()
