@@ -5,9 +5,6 @@
   // Keyboard shortcuts
   //------------------------------------------------
 
-  // Private variables
-  let previousTabId = "chat-tab-button";
-
   // Private helper functions
   function isModifiedKeyboardEvent() {
     return (event instanceof KeyboardEvent &&
