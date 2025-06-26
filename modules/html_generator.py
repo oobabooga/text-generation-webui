@@ -116,29 +116,29 @@ def extract_thinking_block(string):
     THINK_START_TAG = "&lt;think&gt;"
     THINK_END_TAG = "&lt;/think&gt;"
 
-    # Look for opening tag
-    start_pos = string.lstrip().find(THINK_START_TAG)
-    if start_pos == -1:
+    # Look for think tag
+    start_pos = string.find(THINK_START_TAG)
+    end_pos = string.find(THINK_END_TAG)
+
+    # Return if neither tag is in string
+    if start_pos == -1 and end_pos == -1:
         return None, string
 
-    # Adjust start position to account for any leading whitespace
-    start_pos = string.find(THINK_START_TAG)
-
-    # Find the content after the opening tag
-    content_start = start_pos + len(THINK_START_TAG)
-
-    # Look for closing tag
-    end_pos = string.find(THINK_END_TAG, content_start)
-
-    if end_pos != -1:
-        # Both tags found - extract content between them
-        thinking_content = string[content_start:end_pos]
-        remaining_content = string[end_pos + len(THINK_END_TAG):]
-        return thinking_content, remaining_content
+    # handle missing start or end tags
+    if start_pos == -1:
+        thought_start = 0
     else:
-        # Only opening tag found - everything else is thinking content
-        thinking_content = string[content_start:]
-        return thinking_content, ""
+        thought_start = start_pos + len(THINK_START_TAG)
+    if end_pos == -1:
+        thought_end = len(string)
+        content_start = len(string)
+    else:
+        thought_end = end_pos
+        content_start = end_pos + len(THINK_END_TAG)
+
+    thinking_content = string[thought_start:thought_end]
+    remaining_content = string[content_start:]
+    return thinking_content, remaining_content
 
 
 @functools.lru_cache(maxsize=None)
