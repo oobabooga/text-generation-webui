@@ -99,3 +99,9 @@
 .message-body p em {
     color: rgb(110 110 110) !important;
 }
+.editing-textarea {
+    width: max(30rem) !important;
+}
+.circle-you + .text .edit-control-button, .circle-you + .text .editing-textarea {
+    color: #000 !important;
+}
