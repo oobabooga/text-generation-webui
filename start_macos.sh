@@ -30,7 +30,7 @@ esac
 INSTALL_DIR="$(pwd)/installer_files"
 CONDA_ROOT_PREFIX="$(pwd)/installer_files/conda"
 INSTALL_ENV_DIR="$(pwd)/installer_files/env"
-MINICONDA_DOWNLOAD_URL="https://repo.anaconda.com/miniconda/Miniconda3-py311_24.11.1-0-MacOSX-${OS_ARCH}.sh"
+MINICONDA_DOWNLOAD_URL="https://github.com/conda-forge/miniforge/releases/download/25.3.0-3/Miniforge3-25.3.0-3-MacOSX-${OS_ARCH}.sh"
 conda_exists="F"
 
 # figure out whether git and conda needs to be installed

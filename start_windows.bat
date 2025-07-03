@@ -36,8 +36,8 @@ set TEMP=%cd%\installer_files
 set INSTALL_DIR=%cd%\installer_files
 set CONDA_ROOT_PREFIX=%cd%\installer_files\conda
 set INSTALL_ENV_DIR=%cd%\installer_files\env
-set MINICONDA_DOWNLOAD_URL=https://repo.anaconda.com/miniconda/Miniconda3-py311_24.11.1-0-Windows-x86_64.exe
-set MINICONDA_CHECKSUM=43dcbcc315ff91edf959e002cd2f1ede38c64b999fefcc951bccf2ed69c9e8bb
+set MINICONDA_DOWNLOAD_URL=https://github.com/conda-forge/miniforge/releases/download/25.3.0-3/Miniforge3-25.3.0-3-Windows-x86_64.exe
+set MINICONDA_CHECKSUM=b48cd98430170983076dfb51769a6d37668176f59bf3b59c4b21ac4c9bc24f39
 set conda_exists=F
 
 @rem figure out whether git and conda needs to be installed

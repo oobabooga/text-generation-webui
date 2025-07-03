@@ -62,7 +62,7 @@ One-click installer details
 
 ### One-click-installer
 
-The script uses Miniconda to set up a Conda environment in the `installer_files` folder.
+The script uses Miniforge to set up a Conda environment in the `installer_files` folder.
 
 If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, or `cmd_macos.sh`.
 
@@ -115,14 +115,16 @@ Manual full installation with conda or docker
 
 #### 0. Install Conda
 
-https://docs.conda.io/en/latest/miniconda.html
+https://github.com/conda-forge/miniforge
 
-On Linux or WSL, it can be automatically installed with these two commands ([source](https://educe-ubc.github.io/conda.html)):
+On Linux or WSL, Miniforge can be automatically installed with these two commands:
 
 ```
-curl -sL "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" > "Miniconda3.sh"
-bash Miniconda3.sh
+curl -sL "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh" > "Miniforge3.sh"
+bash Miniforge3.sh
 ```
+
+For other platforms, download from: https://github.com/conda-forge/miniforge/releases/latest
 
 #### 1. Create a new conda environment
 
