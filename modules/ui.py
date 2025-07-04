@@ -296,7 +296,7 @@ def gather_interface_values(*args):
         shared.persistent_interface_state.pop('textbox')
 
     # Prevent history loss if backend is restarted but UI is not refreshed
-    if output['history'] is None and output['unique_id'] is not None:
+    if (output['history'] is None or (len(output['history'].get('visible', [])) == 0 and len(output['history'].get('internal', [])) == 0)) and output['unique_id'] is not None:
         output['history'] = load_history(output['unique_id'], output['character_menu'], output['mode'])
 
     return output
