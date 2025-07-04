@@ -1086,3 +1086,17 @@ chatInput.addEventListener("input", () => {
 
 // Update wasAtBottom when user scrolls
 targetElement.addEventListener("scroll", checkIfAtBottom);
+
+//------------------------------------------------
+// Fix autoscroll after fonts load
+//------------------------------------------------
+document.fonts.addEventListener("loadingdone", (event) => {
+  setTimeout(() => {
+    if (!window.isScrolled) {
+      const maxScroll = targetElement.scrollHeight - targetElement.clientHeight;
+      if (targetElement.scrollTop < maxScroll - 5) {
+        targetElement.scrollTop = maxScroll;
+      }
+    }
+  }, 50);
+});
