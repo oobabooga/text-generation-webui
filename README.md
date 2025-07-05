@@ -183,9 +183,9 @@ python server.py
 
 Then browse to
 
-`http://localhost:7860/?__theme=dark`
+`http://127.0.0.1:7860`
 
-##### Manual install
+#### Manual install
 
 The `requirements*.txt` above contain various wheels precompiled through GitHub Actions. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
 
