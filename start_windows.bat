@@ -99,7 +99,7 @@ set "CUDA_HOME=%CUDA_PATH%"
 call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo Miniforge hook not found. && goto end )
 
 @rem setup installer env
-call python one_click.py %*
+call "%INSTALL_ENV_DIR%\python.exe" one_click.py %*
 
 @rem below are functions for the script   next line skips these during normal execution
 goto end
