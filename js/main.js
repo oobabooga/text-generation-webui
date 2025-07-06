@@ -27,9 +27,7 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
     this.style.marginBottom = chatVisible ? "0px" : "19px";
 
     if (chatVisible && !showControlsChecked) {
-      document.querySelectorAll(
-        "#chat-tab > div > :nth-child(1), #chat-tab > div > :nth-child(3), #chat-tab > div > :nth-child(4), #extensions"
-      ).forEach(element => {
+      document.querySelectorAll("#extensions").forEach(element => {
         element.style.display = "none";
       });
     }
