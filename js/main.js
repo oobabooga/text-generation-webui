@@ -23,7 +23,15 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
     if (extensions) {
       extensions.style.display = "flex";
     }
+
     this.style.marginBottom = chatVisible ? "0px" : "19px";
+
+    if (chatVisible && !showControlsChecked) {
+      document.querySelectorAll("#extensions").forEach(element => {
+        element.style.display = "none";
+      });
+    }
+
   } else {
     this.style.marginBottom = "19px";
     if (extensions) extensions.style.display = "none";
