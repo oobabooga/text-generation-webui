@@ -1,4 +1,3 @@
-duckduckgo_search==8.0.2
 fastapi==0.112.4
 gradio==4.37.*
 html2text==2025.4.15
