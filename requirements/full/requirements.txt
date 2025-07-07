@@ -33,8 +33,8 @@ sse-starlette==1.6.5
 tiktoken
 
 # CUDA wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.23.0/llama_cpp_binaries-0.23.0+cu124-py3-none-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.23.0/llama_cpp_binaries-0.23.0+cu124-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.24.0/llama_cpp_binaries-0.24.0+cu124-py3-none-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.24.0/llama_cpp_binaries-0.24.0+cu124-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
 https://github.com/oobabooga/exllamav3/releases/download/v0.0.4/exllamav3-0.0.4+cu124.torch2.6.0-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
 https://github.com/oobabooga/exllamav3/releases/download/v0.0.4/exllamav3-0.0.4+cu124.torch2.6.0-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
 https://github.com/turboderp-org/exllamav2/releases/download/v0.3.1/exllamav2-0.3.1+cu124.torch2.6.0-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
