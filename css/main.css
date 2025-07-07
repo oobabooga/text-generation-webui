@@ -1291,18 +1291,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     opacity: 1;
 }
 
-/* Disable message action hover effects during generation */
-._generating .message:hover .message-actions,
-._generating .user-message:hover .message-actions,
-._generating .assistant-message:hover .message-actions {
+/* Disable message actions and version navigation hover effects during generation */
+._generating :is(.message, .user-message, .assistant-message):hover :is(.message-actions, .version-navigation) {
     opacity: 0 !important;
+    pointer-events: none;
 }
 
-/* Disable message action hover effects during scrolling */
-.scrolling .message:hover .message-actions,
-.scrolling .user-message:hover .message-actions,
-.scrolling .assistant-message:hover .message-actions {
+/* Disable message actions and version navigation hover effects during scrolling */
+.scrolling :is(.message, .user-message, .assistant-message):hover :is(.message-actions, .version-navigation) {
     opacity: 0 !important;
+    pointer-events: none;
 }
 
 .footer-button svg {
