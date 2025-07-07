@@ -187,8 +187,11 @@ const observer = new MutationObserver(function(mutations) {
 
   doSyntaxHighlighting();
 
-  if (!window.isScrolled && !isScrollingClassOnly && targetElement.scrollTop !== targetElement.scrollHeight) {
-    targetElement.scrollTop = targetElement.scrollHeight;
+  if (!window.isScrolled && !isScrollingClassOnly) {
+    const maxScroll = targetElement.scrollHeight - targetElement.clientHeight;
+    if (maxScroll > 0 && targetElement.scrollTop < maxScroll - 1) {
+      targetElement.scrollTop = maxScroll;
+    }
   }
 
   const chatElement = document.getElementById("chat");
