@@ -133,6 +133,7 @@ def create_event_handlers():
     mu = shared.args.multi_user
     if mu:
         return  
+
     shared.gradio['loader'].change(loaders.make_loader_params_visible, gradio('loader'), gradio(loaders.get_all_params()), show_progress=False)
 
     # In this event handler, the interface state is read and updated
