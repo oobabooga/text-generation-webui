@@ -183,8 +183,18 @@ def get_available_instruction_templates():
 
 
 def get_available_extensions():
-    extensions = sorted(set(map(lambda x: x.parts[1], Path('extensions').glob('*/script.py'))), key=natural_keys)
-    return extensions
+    # User extensions (higher priority)
+    user_extensions = []
+    user_ext_path = Path('user_data/extensions')
+    if user_ext_path.exists():
+        user_exts = map(lambda x: x.parts[2], user_ext_path.glob('*/script.py'))
+        user_extensions = sorted(set(user_exts), key=natural_keys)
+
+    # System extensions (excluding those overridden by user extensions)
+    system_exts = map(lambda x: x.parts[1], Path('extensions').glob('*/script.py'))
+    system_extensions = sorted(set(system_exts) - set(user_extensions), key=natural_keys)
+
+    return user_extensions + system_extensions
 
 
 def get_available_loras():

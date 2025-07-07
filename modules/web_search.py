@@ -1,6 +1,9 @@
 import concurrent.futures
+import html
+import re
 from concurrent.futures import as_completed
 from datetime import datetime
+from urllib.parse import quote_plus
 
 import requests
 
@@ -44,19 +47,26 @@ def download_web_page(url, timeout=10):
         return ""
 
 
-def perform_web_search(query, num_pages=3, max_workers=5):
+def perform_web_search(query, num_pages=3, max_workers=5, timeout=10):
     """Perform web search and return results with content"""
-    from duckduckgo_search import DDGS
-
     try:
-        with DDGS() as ddgs:
-            results = list(ddgs.text(query, max_results=num_pages))
+        # Use DuckDuckGo HTML search endpoint
+        search_url = f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+
+        response = requests.get(search_url, headers=headers, timeout=timeout)
+        response.raise_for_status()
+
+        # Extract results with regex
+        titles = re.findall(r'<a[^>]*class="[^"]*result__a[^"]*"[^>]*>(.*?)</a>', response.text, re.DOTALL)
+        urls = re.findall(r'<a[^>]*class="[^"]*result__url[^"]*"[^>]*>(.*?)</a>', response.text, re.DOTALL)
 
         # Prepare download tasks
         download_tasks = []
-        for i, result in enumerate(results):
-            url = result.get('href', '')
-            title = result.get('title', f'Search Result {i+1}')
+        for i in range(min(len(titles), len(urls), num_pages)):
+            url = f"https://{urls[i].strip()}"
+            title = re.sub(r'<[^>]+>', '', titles[i]).strip()
+            title = html.unescape(title)
             download_tasks.append((url, title, i))
 
         search_results = [None] * len(download_tasks)  # Pre-allocate to maintain order
