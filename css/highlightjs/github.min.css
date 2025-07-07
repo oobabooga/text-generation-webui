@@ -1,0 +1,111 @@
+html body gradio-app .gradio-container pre code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1em
+}
+
+html body gradio-app .gradio-container code.hljs {
+  padding: 3px 5px
+}
+
+/*!
+  Theme: GitHub
+  Description: Light theme as seen on github.com
+  Author: github.com
+  Maintainer: @Hirse
+  Updated: 2021-05-15
+
+  Outdated base version: https://github.com/primer/github-syntax-light
+  Current colors taken from GitHub's CSS
+*/
+html body gradio-app .gradio-container .hljs {
+  color: #24292e;
+  background: #fff
+}
+
+html body gradio-app .gradio-container .hljs-doctag,
+html body gradio-app .gradio-container .hljs-keyword,
+html body gradio-app .gradio-container .hljs-meta .hljs-keyword,
+html body gradio-app .gradio-container .hljs-template-tag,
+html body gradio-app .gradio-container .hljs-template-variable,
+html body gradio-app .gradio-container .hljs-type,
+html body gradio-app .gradio-container .hljs-variable.language_ {
+  color: #d73a49
+}
+
+html body gradio-app .gradio-container .hljs-title,
+html body gradio-app .gradio-container .hljs-title.class_,
+html body gradio-app .gradio-container .hljs-title.class_.inherited__,
+html body gradio-app .gradio-container .hljs-title.function_ {
+  color: #6f42c1
+}
+
+html body gradio-app .gradio-container .hljs-attr,
+html body gradio-app .gradio-container .hljs-attribute,
+html body gradio-app .gradio-container .hljs-literal,
+html body gradio-app .gradio-container .hljs-meta,
+html body gradio-app .gradio-container .hljs-number,
+html body gradio-app .gradio-container .hljs-operator,
+html body gradio-app .gradio-container .hljs-selector-attr,
+html body gradio-app .gradio-container .hljs-selector-class,
+html body gradio-app .gradio-container .hljs-selector-id,
+html body gradio-app .gradio-container .hljs-variable {
+  color: #005cc5
+}
+
+html body gradio-app .gradio-container .hljs-meta .hljs-string,
+html body gradio-app .gradio-container .hljs-regexp,
+html body gradio-app .gradio-container .hljs-string {
+  color: #032f62
+}
+
+html body gradio-app .gradio-container .hljs-built_in,
+html body gradio-app .gradio-container .hljs-symbol {
+  color: #e36209
+}
+
+html body gradio-app .gradio-container .hljs-code,
+html body gradio-app .gradio-container .hljs-comment,
+html body gradio-app .gradio-container .hljs-formula {
+  color: #6a737d
+}
+
+html body gradio-app .gradio-container .hljs-name,
+html body gradio-app .gradio-container .hljs-quote,
+html body gradio-app .gradio-container .hljs-selector-pseudo,
+html body gradio-app .gradio-container .hljs-selector-tag {
+  color: #22863a
+}
+
+html body gradio-app .gradio-container .hljs-subst {
+  color: #24292e
+}
+
+html body gradio-app .gradio-container .hljs-section {
+  color: #005cc5;
+  font-weight: 700
+}
+
+html body gradio-app .gradio-container .hljs-bullet {
+  color: #735c0f
+}
+
+html body gradio-app .gradio-container .hljs-emphasis {
+  color: #24292e;
+  font-style: italic
+}
+
+html body gradio-app .gradio-container .hljs-strong {
+  color: #24292e;
+  font-weight: 700
+}
+
+html body gradio-app .gradio-container .hljs-addition {
+  color: #22863a;
+  background-color: #f0fff4
+}
+
+html body gradio-app .gradio-container .hljs-deletion {
+  color: #b31d28;
+  background-color: #ffeef0
+}

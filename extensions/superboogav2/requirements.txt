@@ -1,0 +1,16 @@
+beautifulsoup4==4.13.3
+chromadb==0.6.3
+lxml
+nltk
+optuna
+pandas
+posthog==3.13.0
+sentence_transformers==3.3.1
+spacy
+pytextrank
+num2words
+PyMuPDF
+python-docx
+python-pptx
+openpyxl
+odfpy

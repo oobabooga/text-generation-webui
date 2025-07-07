@@ -1,0 +1,25 @@
+instruction_template: |-
+  {%- set ns = namespace(found=false) -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set ns.found = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not ns.found -%}
+      {{- '<prefix>' + 'You are a helpful chatbot name Stan' + '</prefix>' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{- '<prefix>' + message['content'] + '</prefix>' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{-'<human>' + message['content'] + ''-}}
+          {%- else -%}
+              {{-'<bot>' + message['content'] + '' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{-'<bot>'-}}
+  {%- endif -%}
+

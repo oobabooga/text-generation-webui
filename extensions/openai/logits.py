@@ -1,0 +1,9 @@
+from extensions.openai.completions import process_parameters
+from modules.logits import get_next_logits
+
+
+def _get_next_logits(body):
+    # Pre-process the input payload to simulate a real generation
+    use_samplers = body['use_samplers']
+    state = process_parameters(body)
+    return get_next_logits(body['prompt'], state, use_samplers, "", top_logits=body['top_logits'], return_dict=True)

@@ -1,0 +1,208 @@
+.*(llama|alpac|vicuna|guanaco|koala|llava|wizardlm|metharme|pygmalion-7b|pygmalion-2|mythalion|wizard-mega|openbuddy|vigogne|h2ogpt-research|manticore):
+  model_type: 'llama'
+.*(opt-|opt_|opt1|opt3|optfor|galactica|galpaca|pygmalion-350m):
+  model_type: 'opt'
+.*(gpt-j|gptj|gpt4all-j|malion-6b|pygway|pygmalion-6b|dolly-v1):
+  model_type: 'gptj'
+.*(gpt-neox|koalpaca-polyglot|polyglot.*koalpaca|polyglot-ko|polyglot_ko|pythia|stablelm|incite|dolly-v2|polycoder|h2ogpt-oig|h2ogpt-oasst1|h2ogpt-gm):
+  model_type: 'gptneox'
+.*bloom:
+  model_type: 'bloom'
+.*gpt2:
+  model_type: 'gpt2'
+.*falcon:
+  model_type: 'falcon'
+.*mpt:
+  model_type: 'mpt'
+.*(starcoder|starchat):
+  model_type: 'starcoder'
+.*dolly-v2:
+  model_type: 'dollyv2'
+.*replit:
+  model_type: 'replit'
+.*(oasst|openassistant-|stablelm-7b-sft-v7-epoch-3):
+  instruction_template: 'Open Assistant'
+  skip_special_tokens: false
+(?!.*galactica)(?!.*reward).*openassistant:
+  instruction_template: 'Open Assistant'
+  skip_special_tokens: false
+.*galactica:
+  skip_special_tokens: false
+.*dolly-v[0-9]-[0-9]*b:
+  instruction_template: 'Alpaca'
+  skip_special_tokens: false
+.*alpaca-native-4bit:
+  instruction_template: 'Alpaca'
+  custom_stopping_strings: '"### End"'
+.*llava:
+  instruction_template: 'LLaVA'
+  custom_stopping_strings: '"\n###"'
+.*llava.*1.5:
+  instruction_template: 'Vicuna-v1.1'
+.*wizard.*mega:
+  instruction_template: 'Wizard-Mega'
+  custom_stopping_strings: '"</s>"'
+.*starchat-beta:
+  instruction_template: 'Starchat-Beta'
+  custom_stopping_strings: '"<|end|>"'
+(?!.*v0)(?!.*1.1)(?!.*1_1)(?!.*stable)(?!.*chinese).*vicuna:
+  instruction_template: 'Vicuna-v0'
+.*vicuna.*v0:
+  instruction_template: 'Vicuna-v0'
+.*vicuna.*(1.1|1_1|1.3|1_3):
+  instruction_template: 'Vicuna-v1.1'
+.*vicuna.*(1.5|1_5):
+  instruction_template: 'Vicuna-v1.1'
+.*stable.*vicuna:
+  instruction_template: 'StableVicuna'
+(?!.*chat).*chinese-vicuna:
+  instruction_template: 'Alpaca'
+.*chinese-vicuna.*chat:
+  instruction_template: 'Chinese-Vicuna-Chat'
+.*alpaca:
+  instruction_template: 'Alpaca'
+.*koala:
+  instruction_template: 'Koala'
+.*chatglm:
+  instruction_template: 'ChatGLM'
+.*(metharme|pygmalion|mythalion):
+  instruction_template: 'Metharme'
+.*raven:
+  instruction_template: 'RWKV-Raven'
+.*moss-moon.*sft:
+  instruction_template: 'MOSS'
+.*stablelm-tuned:
+  instruction_template: 'StableLM'
+.*galactica.*finetuned:
+  instruction_template: 'Galactica Finetuned'
+.*galactica.*-v2:
+  instruction_template: 'Galactica v2'
+(?!.*finetuned)(?!.*-v2).*galactica:
+  instruction_template: 'Galactica'
+.*guanaco:
+  instruction_template: 'Guanaco non-chat'
+.*baize:
+  instruction_template: 'Baize'
+.*mpt-.*instruct:
+  instruction_template: 'Alpaca'
+.*mpt-.*chat:
+  instruction_template: 'ChatML'
+(?!.*-flan-)(?!.*-t5-).*lamini-:
+  instruction_template: 'Alpaca'
+.*incite.*chat:
+  instruction_template: 'INCITE-Chat'
+.*incite.*instruct:
+  instruction_template: 'INCITE-Instruct'
+.*ziya-:
+  instruction_template: 'Ziya'
+.*koalpaca:
+  instruction_template: 'KoAlpaca'
+.*openbuddy:
+  instruction_template: 'OpenBuddy'
+(?!.*chat).*vigogne:
+  instruction_template: 'Vigogne-Instruct'
+.*vigogne.*chat:
+  instruction_template: 'Vigogne-Chat'
+.*(llama-deus|supercot|llama-natural-instructions|open-llama-0.3t-7b-instruct-dolly-hhrlhf|open-llama-0.3t-7b-open-instruct):
+  instruction_template: 'Alpaca'
+.*bactrian:
+  instruction_template: 'Bactrian'
+.*(h2ogpt-oig-|h2ogpt-oasst1-|h2ogpt-research-oasst1-):
+  instruction_template: 'INCITE-Chat'
+.*h2ogpt-gm-:
+  instruction_template: 'H2O-prompt_answer'
+.*manticore:
+  instruction_template: 'Manticore Chat'
+.*bluemoonrp-(30|13)b:
+  instruction_template: 'Bluemoon'
+.*Nous-Hermes-13b:
+  instruction_template: 'Alpaca'
+.*airoboros:
+  instruction_template: 'Vicuna-v1.1'
+.*airoboros.*1.2:
+  instruction_template: 'Airoboros-v1.2'
+.*alpa(cino|sta):
+  instruction_template: 'Alpaca'
+.*hippogriff:
+  instruction_template: 'Hippogriff'
+.*lazarus:
+  instruction_template: 'Alpaca'
+.*guanaco-.*(7|13|33|65)b:
+  instruction_template: 'Vicuna-v0'
+.*hypermantis:
+  instruction_template: 'Alpaca'
+.*open-llama-.*-open-instruct:
+  instruction_template: 'Alpaca'
+.*starcoder-gpteacher-code-instruct:
+  instruction_template: 'Alpaca'
+.*tulu:
+  instruction_template: 'Tulu'
+.*chronos:
+  instruction_template: 'Alpaca'
+.*samantha:
+  instruction_template: 'Samantha'
+.*wizardcoder:
+  instruction_template: 'Alpaca'
+.*minotaur:
+  instruction_template: 'Manticore Chat'
+.*orca_mini:
+  instruction_template: 'Orca Mini'
+.*(platypus|gplatty|superplatty):
+  instruction_template: 'Alpaca'
+.*(openorca-platypus2):
+  instruction_template: 'OpenOrca-Platypus2'
+  custom_stopping_strings: '"### Instruction:", "### Response:"'
+.*longchat:
+  instruction_template: 'Vicuna-v1.1'
+.*vicuna-33b:
+  instruction_template: 'Vicuna-v1.1'
+.*redmond-hermes-coder:
+  instruction_template: 'Alpaca'
+.*wizardcoder-15b:
+  instruction_template: 'Alpaca'
+.*wizardlm:
+  instruction_template: 'Vicuna-v1.1'
+.*godzilla:
+  instruction_template: 'Alpaca'
+.*llama(-?)(2|v2).*chat:
+  instruction_template: 'Llama-v2'
+.*newhope:
+  instruction_template: 'NewHope'
+.*stablebeluga2:
+  instruction_template: 'StableBeluga2'
+.*openchat:
+  instruction_template: 'OpenChat'
+.*codellama.*instruct:
+  instruction_template: 'Llama-v2'
+.*(mistral|mixtral).*instruct:
+  instruction_template: 'Mistral'
+.*mistral.*openorca:
+  instruction_template: 'ChatML'
+.*(WizardCoder-Python-34B-V1.0|Phind-CodeLlama-34B-v2|CodeBooga-34B-v0.1):
+  instruction_template: 'Alpaca'
+.*orca-2-(13|7)b:
+  instruction_template: 'ChatML'
+.*openhermes.*mistral:
+  instruction_template: 'ChatML'
+.*Yi-34B-Chat:
+  instruction_template: 'ChatML'
+(dolphin).*:
+  instruction_template: 'ChatML'
+.*synthia:
+  instruction_template: 'Synthia'
+.*(hercules|hyperion):
+  instruction_template: 'ChatML'
+.*command-r:
+  instruction_template: 'Command-R'
+.*xwin-lm-70b-v0.1:
+  instruction_template: 'Vicuna-v1.1'
+.*platypus-yi-34b:
+  instruction_template: 'Vicuna-v1.1'
+.*CausalLM-RP-34B:
+  instruction_template: 'ChatML'
+34b-beta:
+  instruction_template: 'ChatML'
+.*airoboros-3_1-yi-34b-200k:
+  instruction_template: 'Llama-v2'
+.*chatqa:
+  instruction_template: 'NVIDIA-ChatQA'

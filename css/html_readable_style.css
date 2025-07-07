@@ -1,0 +1,33 @@
+.readable-container {
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: rgb(31 41 55);
+    padding: 3em;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    color: #efefef !important;
+}
+
+.readable-container p, .readable-container li {
+    font-size: 16px !important;
+    color: #efefef !important;
+    margin-bottom: 22px;
+    line-height: 1.4 !important;
+}
+
+.readable-container li > p {
+    display: inline !important;
+}
+
+.readable-container code {
+    overflow-x: auto;
+}
+
+.readable-container :not(pre) > code {
+    white-space: normal !important;
+}
+
+.readable-container .hoverable {
+    font-size: 14px;
+}

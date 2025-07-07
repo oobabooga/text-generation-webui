@@ -1,0 +1,291 @@
+[
+    {
+        "text": "extensions/superboogav2/benchmark_texts/aircraft_lease.txt",
+        "questions": [
+            {
+                "question_variants": [
+                    "What is a wet lease?",
+                    "Agh, I'm really wracking my brain here, but can't figure it out. What is a wet lease?",
+                    "I've been trying to wrap my head around this concept and it's just not clicking. Could you elucidate the concept of a wet lease?",
+                    "I'm finding it so hard to understand this whole wet lease thing! Would you be so kind as to explicate on the matter of what is known as a wet lease in the domain of aviation?",
+                    "I've spent hours trying to grasp this and I'm still lost. Could you engage in a detailed exploration of the intricate and nuanced topic that is the wet lease, as it is commonly understood and applied within the broad and complex ecosystem of aviation?"
+                ],
+                "criteria": [
+                    "WET LEASE shall mean any arrangement whereby Lessee agrees to\n operate the Aircraft under a contractual arrangement with a third party\n pursuant to which no rights to any aircraft specifically identified by serial\n number or registration number are granted to such third party and pursuant to\n which the Aircraft (i) remains at all times under the sole and complete\n operational control of Lessee",
+                    "(ii) shall be operated solely by cockpit crew\n employed by Lessee possessing all current certificates and licenses required by\n applicable Laws and (iii) shall be maintained by Lessee in accordance with all\n the provisions of the Lease including, but not limited to, Sections 6(d) and 12\n (it being understood and agreed by Lessor and Lessee that any Wet Lease shall,\n by its terms, be in all cases subject and subordinate to this Lease)."
+                ]
+            },
+            {
+                "question_variants": [
+                    "What is PBGC?",
+                    "I'm stumped! Can you tell me what PBGC is?",
+                    "I've been racking my brain trying to understand PBGC. Would you mind explaining the concept to me?",
+                    "I've been trying to grasp what PBGC represents in the context of pension benefits, but I'm not getting it. Would it be possible for you to expound upon the matter?",
+                    "I'm having trouble understanding the multi-dimensional entity known as 'PBGC'. Could you embark on an exploration of it? How is it traditionally comprehended, interpreted, and implemented within the sphere of pension benefits?"
+                ],
+                "criteria": [
+                    "PBGC shall mean the Pension Benefit Guaranty Corporation\n established pursuant to Subtitle A of Part IV of ERISA, and any successor\n thereof."
+                ]
+            },
+            {
+                "question_variants": [
+                    "What is LIEN?",
+                    "I can't seem to find information on what LIEN is. Can you help me?",
+                    "I'm feeling stuck. I can't seem to find any information on what LIEN is. Could you provide some insights?",
+                    "It's like I'm chasing my tail here. I've been searching high and low and I just can't seem to find anything that clearly explains what LIEN is. Could you lend me a hand in understanding it?",
+                    "I'm in a bit of a pickle. I've scoured the internet, flipped through countless books, and I still can't seem to find any definitive information on what LIEN is. Could you possibly help me get my head around it?"
+                ],
+                "criteria": [
+                    "LIEN shall mean any mortgage, pledge, lien, charge,\n encumbrance, lease, exercise of rights, security interest or claim."
+                ]
+            },
+            {
+                "question_variants": [
+                    "What happens if the Lease is terminated by operation of law?",
+                    "I'm a bit lost here. What happens if the Lease is terminated by operation of law? Can you help me understand?",
+                    "I've been trying to figure this out but I'm stuck. What exactly happens if the Lease is terminated by operation of law? Could you explain?",
+                    "I've been poring over this and I'm still not clear. What exactly transpires if the Lease is terminated by operation of law? I'd appreciate your help in understanding this.",
+                    "I'm really hitting a wall here. I've been trying to understand this, but it feels like I'm reading a foreign language. What's the end result if the Lease is terminated by operation of law? Any help in understanding this, particularly a detailed breakdown, would be greatly appreciated."
+                ],
+                "criteria": [
+                    "If for any reason whatsoever this Lease shall be terminated\n in whole or in part by operation of law (other than termination under any\n bankruptcy laws as now or hereafter in effect), Lessee nonetheless agrees to\n pay to Lessor amounts equal to the Rent payments hereunder at the time such\n payments would have become due and payable in accordance with the terms hereof",
+                    "had this Lease not been terminated so long as Lessee is able to use, possess\n and quietly enjoy the Aircraft, and so long as such payments are made and all\n other terms and conditions hereof are complied\n\n                                      -16-\n\n\n<PAGE>\n\n\nwith by Lessor and Lessee, Lessor and Lessee will deem this Lease to remain in\nfull force and effect."
+                ]
+            },
+            {
+                "question_variants": [
+                    "What happens if a discrepancy or malfunction is detected during the Acceptance Flight?",
+                    "I'm having difficulty understanding this part. What exactly happens if a discrepancy or malfunction is detected during the Acceptance Flight? Can you provide a thorough explanation?",
+                    "I'm stuck on this one. I'm struggling to comprehend what steps are taken if a discrepancy or malfunction is detected during the Acceptance Flight. Could you possibly explain this in detail?",
+                    "I've been poring over this issue for a while, and it's not clicking. What steps are taken or what are the implications if a discrepancy or malfunction is detected during the Acceptance Flight? I'd appreciate a comprehensive explanation.",
+                    "I'm really hitting a wall here. I've been trying to understand, but it's like I'm reading a foreign language. What's the end result or the next step if a discrepancy or malfunction is detected during the Acceptance Flight? Any help in understanding this, particularly a detailed breakdown, would be greatly appreciated."
+                ],
+                "criteria": [
+                    "If, during the Acceptance Flight, no discrepancy or malfunction is\n           detected with respect to the airworthiness or operational nature of\n           the Aircraft by normal airline standards, then (i) the delivery of\n           the Aircraft from Lessor to Lessee hereunder shall occur, the\n           Aircraft shall be accepted by Lessee hereunder whilst the Aircraft\n           is located at the Delivery Location, and Lessee shall execute and\n           deliver the Lease Supplement, (ii) th",
+                    "e Aircraft shall continue en\n           route to a location selected by Lessee (the \"Ferry Location\"), under\n           the operational control of Lessee from the time of such delivery and\n           acceptance (the Acceptance Flight shall terminate at the time of\n           such delivery and acceptance, and that portion of the flight from\n           the Delivery Location to the Ferry Location is herein called the\n           \"Ferry Flight\"), and (iii) Lessee shall bear the costs of the flight\n  ",
+                    "         crew, fuel and other costs\n\n\n                                      -12-\n\n\n<PAGE>\n\n\n           relating to the Ferry Flight and shall reimburse the Beneficiaries\n           therefor promptly following receipt of the Beneficiaries, invoice\n           therefor, PROVIDED, HOWEVER, that, if any discrepancy or malfunction\n           is detected with respect to the airworthiness during the Acceptance\n           Flight, then, at Lessee's option after consultation with Lessor,\n           either ",
+                    "(A) the Aircraft shall be delivered to and accepted by Lessee\n           at the Delivery Location and shall be ferried to the Ferry Location,\n           as provided in clauses (i), (ii) and (iii) above, where Lessee shall\n           remedy such discrepancy or malfunction at the cost (without mark up)\n           of the Beneficiaries (provided that such subsequent repair or\n           maintenance work shall not affect Lessee's acceptance of the\n           Aircraft hereunder), or (B) the Aircraft s",
+                    "hall return to the\n           Beneficiaries' storage and maintenance facility where such\n           discrepancy or malfunction shall be corrected at the Beneficiaries'\n           expense, in which case the Delivery Date shall be postponed to such\n           date as the Beneficiaries shall advise, subject to the second\n           paragraph of Section 3(c) below. Any discrepancy or malfunction\n           detected of an airworthiness nature shall be corrected by Lessee or\n           the Beneficiari",
+                    "es in accordance with clause (A) or (B) above, as\n           applicable, at Beneficiaries, expense. If during the Acceptance\n           Flight a discrepancy or malfunction is detected with respect to the\n           operational nature of the Aircraft by normal airline standards but\n           no discrepancy or malfunction is detected with respect to the\n           airworthiness of the Aircraft, then the Aircraft shall be delivered\n           to and accepted by Lessee at the Delivery Location as p",
+                    "rovided in\n           clause (A) above, and Lessee shall remedy such discrepancy or\n           malfunction at the cost (without mark up) of the Beneficiaries.\n\n           In anticipation of the occurrence of the Delivery Date, the\n           Beneficiaries retained a flight crew to conduct the Acceptance\n           Flight and will incur costs relating to such retention. In\n           connection therewith, Lessee agrees to reimburse the Beneficiaries,\n           promptly following Lessee's receipt",
+                    " of an invoice therefor, for\n           one-half of the costs incurred by the Beneficiaries in connection\n           with retaining such flight crew for the Acceptance Flight, which\n           costs relate to the period commencing on and including November 29,\n           1995 and ending on the day immediately preceding the Delivery Date."
+                ]
+            },
+            {
+                "question_variants": [
+                    "What condition must the Aircraft meet before being delivered to the Lessee?",
+                    "I'm having some trouble understanding this part. Could you please clarify what condition the Aircraft must meet before being delivered to the Lessee? I would appreciate a detailed explanation.",
+                    "I'm stuck on this point. I'm finding it difficult to understand the specific condition the Aircraft must be in before being handed over to the Lessee. Could you possibly provide a comprehensive explanation?",
+                    "I'm feeling a bit lost here. I'm having trouble understanding the exact condition or standard that the Aircraft must meet before being delivered to the Lessee. Could you provide a detailed walkthrough of the requirements?",
+                    "I've hit a bit of a wall with this one. I've been trying my best to understand this, but it's proving to be quite complex. What is the precise condition that the Aircraft must meet before it can be delivered to the Lessee? Any help in understanding this, particularly a detailed explanation, would be of great help."
+                ],
+                "criteria": [
+                    "(d) Lessee's obligation to lease the Aircraft hereunder from\nLessor shall also be conditioned upon the Aircraft being delivered to Lessee in\nthe following condition:\n\n                           (1) The Aircraft shall be airworthy and in good\n           operating condition\n\n\n                                      -11-\n\n<PAGE>\n\n\n           with all of the Aircraft equipment, components and systems;\n\n                           (2) The Aircraft shall be clean;\n\n                           (3) The Airc",
+                    "raft shall meet the requirements for\n           airworthiness certification by the FAA;\n\n                           (4) A borescope of the Engines and the inspection of\n           the APU in accordance with the Manufacturer's or APU manufacturer's\n           recommendation shall have been performed at the direction of Lessee\n           but under the control and at the cost of the Beneficiaries, and any\n           discrepancies discovered in connection therewith shall have been\n           corrected;"
+                ]
+            },
+            {
+                "question_variants": [
+                    "What rights does the Lessee waive under section 4(c)?",
+                    "Can you tell me about the rights that the Lessee gives up under section 4(c)?",
+                    "I'm having some difficulty here, could you please explain to me what rights the Lessee is forfeiting under the terms of section 4(c)?",
+                    "I'm really struggling to understand this part, it's quite complex. Could you clarify what rights the Lessee is explicitly waiving as per section 4(c) in this agreement?",
+                    "I'm pulling my hair out! What does this even mean? Can you assist me in deciphering what rights the Lessee is giving up or putting aside according to section 4(c)? I'm finding this part particularly challenging to grasp."
+                ],
+                "criteria": [
+                    "(c) PROHIBITION AGAINST SETOFF, COUNTERCLAIM, ETC. This Lease\n is a net lease. Subject to Section 20(f), Lessee's obligation to pay all Rent\n hereunder shall be absolute and unconditional and shall not be affected or\n reduced by any circumstance, including, without limitation, (i) any setoff,\n counterclaim, recoupment, defense or other right which Lessee may have against\n Lessor, any Beneficiary, the Manufacturer, the Engine Manufacturer, any seller\n of or person providing services with respect ",
+                    "to the Aircraft or any other\n Person, for any reason whatsoever; (ii) any defect in the title, airworthiness\n or eligibility for registration under applicable Law, or any condition, design,\n operation or fitness for use of, or any damage to or loss or destruction of,\n the Aircraft, or any interruption or cessation in the use or possession thereof\n by Lessee for any reason whatsoever, whether arising out of or related to an\n act or omission of Lessee, or any other Person; (iii) any Liens with res",
+                    "pect to\n the Aircraft; (iv) the invalidity or unenforceability or lack of due\n authorization or other infirmity of this Lease or any absence of right, power\n or authority of Lessor or Lessee to enter into this Lease; (v) any insolvency,\n bankruptcy, reorganization or similar proceedings by or against Lessor or\n Lessee; (vi) any other circumstance or happening of any nature whatsoever,\n similar to any of the foregoing; or (vii) any Taxes (other Taxes to which\n Lessee's indemnity does not extend p",
+                    "ursuant to the provisions of Section 10);\n it being the express intention of Lessor and Lessee that all Rent payable\n hereunder shall be payable in all events, unless the obligation to pay the same\n shall be terminated pursuant to the express provisions of this Lease. Nothing\n in this paragraph (c) shall constitute a waiver by Lessee of any right or claim\n that Lessee may separately assert against Lessor or any Beneficiary.\n\n                   Lessee hereby waives, to the extent permitted by app",
+                    "licable\n Law, any and all rights which it may now have or which at any time hereafter\n may be conferred upon it, by Law or otherwise, to terminate this Lease or any\n obligation imposed upon Lessee hereunder or in relation hereto.\n\n                   If for any reason whatsoever this Lease shall be terminated\n in whole or in part by operation of law (other than termination under any\n bankruptcy laws as now or hereafter in effect), Lessee nonetheless agrees to\n pay to Lessor amounts equal to the R",
+                    "ent payments hereunder at the time such\n payments would have become due and payable in accordance with the terms hereof\n had this Lease not been terminated so long as Lessee is able to use, possess\n and quietly enjoy the Aircraft, and so long as such payments are made and all\n other terms and conditions hereof are complied\n\n                                      -16-\n\n\n<PAGE>\n\n\nwith by Lessor and Lessee, Lessor and Lessee will deem this Lease to remain in\nfull force and effect."
+                ]
+            },
+            {
+                "question_variants": [
+                    "Can the Lessor and Beneficiaries conduct inspections without notice under certain conditions? What are those conditions?",
+                    "Is it possible for the Lessor and Beneficiaries to carry out inspections without prior notice, given specific circumstances? If so, could you explain what these circumstances might be?",
+                    "I'm finding myself a bit confused here. Can the Lessor and Beneficiaries, under any special conditions, perform inspections without providing any advance notice? If yes, what exactly are these special conditions?",
+                    "I'm at my wit's end! Can the Lessor and Beneficiaries actually go ahead and conduct inspections without giving a heads up, but only when certain conditions are met? What exactly are these conditions that would allow for such actions?",
+                    "I'm really trying to get my head around this, but I could use some assistance. Is it within the Lessor and Beneficiaries' rights to initiate inspections without any forewarning, but only under certain predefined circumstances? What are these circumstances exactly?"
+                ],
+                "criteria": [
+                    "Lessee shall permit Lessor, each Beneficiary and their\n respective designees on at least seven (7) days' prior written notice to visit\n and inspect the Aircraft, its condition, use and operation and the records\n maintained in connection therewith during normal business hours; PROVIDED,\n HOWEVER, that this shall not unreasonably interfere with Lessee's quiet use and\n enjoyment of the Aircraft PROVIDED FURTHER, HOWEVER, that Lessor or the\n Beneficiaries may conduct such visit and inspection at any",
+                    " time and with or\n without notice if an Event of Default has occurred and is continuing."
+                ]
+            },
+            {
+                "question_variants": [
+                    "What aircraft-related information will the Lessee provide on a monthly and annual basis?",
+                    "Could you let me know what type of aircraft-related details the Lessee is obligated to provide on a monthly and annual basis?",
+                    "I'm finding it a bit tricky to understand this part - could you help me clarify what specific aircraft-related data or information is the Lessee expected to report on both a monthly and an annual basis?",
+                    "I'm really trying to grapple with this agreement. Could you assist me in figuring out the exact nature of the aircraft-related information that the Lessee is required to furnish on a consistent monthly and annual basis?",
+                    "I'm genuinely struggling here! What does it mean exactly? What is the exact nature and extent of the aircraft-related data or information that the Lessee has to provide routinely, both on a monthly and an annual basis? I'm having a hard time understanding the specificities of this provision."
+                ],
+                "criteria": [
+                    "(v) Lessee will use its reasonable efforts to provide the\n      Beneficiaries on or before the fifth day of each calendar month\n      commencing with the next calendar month of the Delivery Date, and shall\n      in any event provide to the Beneficiaries upon request of a Beneficiary,\n      with a properly completed Monthly Aircraft Utilization and Status Report\n      in the Form of Exhibit J hereto for the preceding calendar month\n      operation of the aircraft;\n\n                   (vi) Lessee ",
+                    "will use its reasonable efforts to provide the\n      Beneficiaries, on or before the 15th day of January of each year\n      (commencing with January 1996), and shall in any event provide Lessor and\n      the Beneficiaries upon request of a Beneficiary in English, the\n      information and documentation for the preceding calendar year as listed\n      in Exhibit K hereto; PROVIDED, HOWEVER, that if (i) a Default or an Event\n      of Default shall have occurred and be continuing or (ii) Lessee's\n  ",
+                    "    financial condition changes adversely from its financial condition at the\n      time of the Delivery Date, then, upon notice and a request from Lessor or\n      a Beneficiary, Lessee shall provide such information on a quarterly basis\n      on the 15th day of each January, April, July and October, commencing with\n      the first of such dates to follow the date of such notice."
+                ]
+            },
+            {
+                "question_variants": [
+                    "Under what conditions can Lessee consolidate, merge, or transfer assets without Lessor's prior written consent according to the text?",
+                    "Could you explain under which specific circumstances the Lessee is allowed to consolidate, merge, or transfer assets without needing the Lessor's prior written approval, as stated in the text?",
+                    "I'm having a bit of trouble with this section, could you clarify the exact conditions under which the Lessee is permitted to consolidate, merge, or transfer assets without first obtaining the Lessor's written consent, as outlined in the text?",
+                    "I'm really wracking my brain here trying to understand the terms. Can you help me decipher under which exact circumstances or conditions the Lessee can execute consolidation, merging, or asset transfer without needing prior written consent from the Lessor, as the text suggests?",
+                    "I'm pulling my hair out here! What on earth does it mean? What are the specific conditions or circumstances under which the Lessee can consolidate, merge, or transfer assets without having to acquire the Lessor's prior written consent, as it's described in the text? This is really a tough one to crack!"
+                ],
+                "criteria": [
+                    "(iv) CONSOLIDATION, MERGER, ETC. Without the prior written\n consent of Lessor and each Beneficiary, Lessee shall not consolidate with,\n merge with or merge into any other Person or convey, transfer or lease\n substantially all of its assets as an entirety to any other Person unless, upon\n and after giving effect to such transaction, (A) the surviving entity has at\n least the same net worth and gross assets as the Lessee immediately prior to\n such transaction, such surviving entity is Certified Ai",
+                    "r Carrier and a \"citizen\n of the United States\" as defined in Section 101(16) of the Federal Aviation\n Act, (C) Lessor shall continue to be entitled to the benefits of Section 1110\n of the United States Bankruptcy Code, as in effect from time to time, and (D)\n each of the Operative Documents shall continue in full force and effect and\n shall constitute the legally binding and enforceable obligation of such\n surviving entity."
+                ]
+            },
+            {
+                "question_variants": [
+                    "Who is responsible for replacing any parts on the Aircraft that become worn out, damaged, etc?",
+                    "Could you please specify who holds the responsibility for replacing any parts of the Aircraft that may become worn out, damaged, or similarly affected?",
+                    "I'm having a little trouble understanding this part. Who exactly is tasked with the responsibility of replacing any components of the Aircraft that may get worn out, damaged, or otherwise impaired?",
+                    "I'm really scratching my head trying to figure out who precisely is designated to handle the replacement of any Aircraft parts that become worn out, damaged, or in similar conditions? This aspect seems a bit complicated.",
+                    "I'm on the verge of losing it! Who in the world is charged with the duty of replacing any parts of the Aircraft that get worn out, damaged, or anything like that? I'm really finding it tough to get my head around this point."
+                ],
+                "criteria": [
+                    "(a) REPLACEMENT OF PARTS. Lessee, at its own cost and\n expense, will promptly replace all Parts which may from time to time become\n worn out, lost, stolen, destroyed, seized, confiscated, damaged beyond repair\n or permanently rendered unfit for use for any reason whatsoever. In addition,\n in the ordinary course of maintenance, service, repair, overhaul or testing,\n Lessee may at its own cost and expense cause to be removed any Parts, whether\n or not worn out, destroyed, damaged beyond repair or ",
+                    "permanently rendered unfit\n for use, provided that Lessee shall replace at its own cost and expense such\n Parts as promptly as practicable. All replacement Parts shall be free and clear\n of all Liens, other than Liens permitted by Section 14 hereof, shall be in at\n least the same modification status and service bulletin accomplishment status,\n shall be fully interchangeable as to form, fit and function, shall have been\n overhauled or repaired and inspected by an agency acceptable to the FAA and\n",
+                    " shall be in as good an operating condition as, and have a utility at least\n equal to and a value and remaining warranty reasonably approximating, the Parts\n replaced (assuming such replaced Parts were in the condition and repair in\n which they were required to be maintained by the terms hereof) and all\n historical records since new or last overhaul relating to such Parts (and all\n historical records since manufacture with respect to Engines, Landing Gears,\n the APU and all life limited parts in",
+                    "stalled on any Engine, Landing Gear or\n APU) shall be maintained by Lessee."
+                ]
+            },
+            {
+                "question_variants": [
+                    "Who bears responsibility if alterations, modifications or additions to the Aircraft result in any loss of revenue or grounding?",
+                    "Can you clarify who would take responsibility if any alterations, modifications, or additions made to the Aircraft cause any loss of revenue or result in grounding?",
+                    "I'm having some difficulty here. Could you please specify who should shoulder the responsibility if any changes, modifications or additions to the Aircraft lead to any form of revenue loss or cause the aircraft to be grounded?",
+                    "I'm really trying to understand this, but it's complex. Could you elucidate who is to bear the brunt if alterations, modifications, or additions to the Aircraft culminate in a loss of revenue or result in the grounding of the aircraft?",
+                    "I'm pulling my hair out over this! Who on earth would bear the responsibility if any alterations, modifications, or additions that are made to the Aircraft end up causing some form of revenue loss or force the aircraft to be grounded? I'm finding this part particularly challenging to comprehend."
+                ],
+                "criteria": [
+                    "In no event shall Lessor bear any liability or cost for any\n alteration, modification or addition to, or for any grounding or suspension of\n certification of, the Aircraft, or for any loss of revenue arising therefrom.\n Lessee shall make no material alterations, modifications or additions to the\n Aircraft (such as removal of seats, galleys, lavatories, major avionics\n equipment or the like) that would affect the marketability of the Aircraft\n without Lessor's and each Beneficiary's prior written",
+                    " consent. if Lessor and\n each Beneficiary grant such consent, title to such removed Parts shall remain\n with Lessor and Lessor and the Beneficiaries may request Lessee to reinstall\n such Parts prior to termination of this Lease. If Lessor or Beneficiaries\n request Lessee to reinstall such Parts, title to the Parts removed shall vest\n in Lessee. All costs associated with such removal and reinstallation shall be\n borne by Lessee."
+                ]
+            },
+            {
+                "question_variants": [
+                    "Who is the assignor and who is the assignee?",
+                    "Can you help me identify who the assignor is and who takes the role of the assignee?",
+                    "I'm having some trouble figuring this out. Could you clarify for me who exactly is the assignor and who is designated as the assignee in this context?",
+                    "I'm really wrestling with this, it seems a bit tricky. Could you help me to understand who exactly is acting as the assignor and who is being recognized as the assignee in this particular scenario?",
+                    "I'm at my wits' end here! What does it mean? Who exactly is playing the role of the assignor and who is being referred to as the assignee in this situation? This is proving to be quite a tough nut to crack!"
+                ],
+                "criteria": [
+                    "ASSIGNOR:                             ALOHA AIRLINES, INC.,\n                                       A HAWAII CORPORATION",
+                    "ASSIGNEE:                             ALOHA AIRLINES, INC., A\n                                       DELAWARE CORPORATION"
+                ]
+            },
+            {
+                "question_variants": [
+                    "What does it mean when the Assignee is referred to as a 'Certified Air Carrier'?",
+                    "Could you clarify what is implied when the Assignee is labeled as a 'Certified Air Carrier'?",
+                    "I'm having a hard time understanding this. Can you explain what the term 'Certified Air Carrier' means when it is applied to the Assignee in this context?",
+                    "I'm really struggling here to understand this terminology. Could you assist in explaining what it means when the Assignee is characterized as a 'Certified Air Carrier' in this particular situation?",
+                    "I'm almost at the end of my tether! What does this even mean? Can you help me grasp the meaning when the Assignee is designated as a 'Certified Air Carrier'? This particular terminology is really throwing me for a loop!"
+                ],
+                "criteria": [
+                    "(e) Assignee is a Certified Air Carrier and holds all\nlicenses, certificates, permits and franchises from the appropriate agencies of\nthe United States of America and/or all other governmental authorities having\njurisdiction which are necessary to authorize the Assignee to engage in air\ntransport and to carry on its business as presently conducted and to be\nconducted with the Aircraft."
+                ]
+            },
+            {
+                "question_variants": [
+                    "Why is it important for the Assignee to be a 'citizen of the United States' as defined in 40102(a)(15) of Title 49 of the United States Code?",
+                    "Could you help me understand why it's significant for the Assignee to be defined as a 'citizen of the United States' as per 40102(a)(15) of Title 49 of the United States Code?",
+                    "I'm finding it a bit challenging to comprehend this part. Why is it crucial for the Assignee to be designated as a 'citizen of the United States', as defined under 40102(a)(15) of Title 49 of the United States Code?",
+                    "I'm really trying to unravel this, but it seems quite complex. Could you elucidate why it's so imperative for the Assignee to be identified as a 'citizen of the United States', as per the definition provided in 40102(a)(15) of Title 49 of the United States Code?",
+                    "I'm pulling my hair out over this! What does it even mean? Can you help me decipher why it's so essential for the Assignee to be considered a 'citizen of the United States', as stipulated in 40102(a)(15) of Title 49 of the United States Code? I'm finding this legal terminology particularly difficult to grasp."
+                ],
+                "criteria": [
+                    "(f) Assignee is a \"citizen of the United States\" as defined\nin 40102(a)(15) of Title 49 of the United States Code."
+                ]
+            },
+            {
+                "question_variants": [
+                    "How many days do I have to pay?",
+                    "Could you specify the number of days I'm given to complete the payment?",
+                    "I'm a bit unsure about the payment deadline. Could you clarify how many days exactly I have to make the payment?",
+                    "I'm really trying to understand the payment terms. Could you help me ascertain the exact number of days that I am allotted to finalize the payment?",
+                    "I'm so confused! What does this mean exactly? Can you help me comprehend the specific amount of time, in days, that I have been provided with to conclude the payment? I'm finding this financial term quite challenging to understand."
+                ],
+                "criteria": [
+                    "(e) TIMING OF PAYMENT. Any amount due and payable to the\n relevant Indemnitee pursuant to this Section 10 will be paid within 10 days\n after receipt of a written demand therefor from such Indemnitee accompanied by\n a written statement describing in reasonable detail the basis for such\n indemnity and the computation of the amount so payable; PROVIDED, HOWEVER, that\n such amount need not be paid by Lessee prior to the later of (i) five days\n prior to the date the applicable Tax is payable to the a",
+                    "ppropriate Governmental\n Entity or taxing authority or (ii) in the case of amounts which are being\n contested by Lessee in good faith or by Lessor pursuant to Section 10(f), the\n date such contest is finally resolved. If requested in writing by Lessee, and\n at Lessee's sole cost and expense, any calculations by an Indemnitee of any\n amount due and payable\n\n                                      -44-\n\n\n<PAGE>\n\n\n hereunder shall be subject to review and verification by a firm of independent\n certif",
+                    "ied public accounts of internationally recognized stature selected by\n such Indemnitee and reasonably acceptable to Lessee (such approval not to be\n unreasonably withheld or delayed). Such Indemnitee shall make available to such\n accounting firm such information as shall be necessary for purposes of such\n review and verification (but such information shall be held by such accounting\n firm in strictest confidence and shall not in any event be disclosed or made\n available to Lessee). If the result",
+                    " of such review is that Lessee was liable\n for a smaller amount, the excess payment shall be returned by such Indemnitee\n forthwith."
+                ]
+            },
+            {
+                "question_variants": [
+                    "What currency should I pay in?",
+                    "Could you please clarify in which currency I am expected to make the payment?",
+                    "I'm a bit puzzled here, could you specify the exact currency I should use for the payment?",
+                    "I'm really scratching my head trying to figure this out. Could you help me understand in which specific currency I am supposed to settle the payment?",
+                    "I'm quite frustrated at this point! What exactly does it mean? Can you elucidate in which particular currency I'm required to execute the payment? I'm finding this point a bit difficult to decipher."
+                ],
+                "criteria": [
+                    "(i) PAYMENTS IN U.S. DOLLARS. All amounts to be paid hereunder to\nLessor or Lessee shall be paid in Dollars, in immediately available funds.\nLessee acknowledges that the specification of Dollars in this transaction is\nof the essence and that Dollars shall be the currency of account in any and\nall events. The obligations of Lessee or Lessor hereunder, to Lessor or\nLessee, respectively, shall not be discharged by an amount paid in another\ncurrency, whether pursuant to a judgment or otherwise, to t",
+                    "he extent that the\n amount so paid on prompt conversion to Dollars under normal banking\nprocedures does not yield the amount of Dollars owing to Lessor."
+                ]
+            },
+            {
+                "question_variants": [
+                    "What is the US registration number of the aircraft?",
+                    "Could you please tell me the US registration number assigned to the aircraft?",
+                    "I'm having some difficulty here. Could you specify the exact US registration number of the aircraft?",
+                    "I'm really struggling to get this part. Could you assist me in figuring out what the specific US registration number for the aircraft is?",
+                    "I'm pulling my hair out over this! What does it mean exactly? Can you help me decipher the precise US registration number that's associated with the aircraft? I'm finding it a bit challenging to understand."
+                ],
+                "criteria": [
+                    "U.S.\n                                                         MODEL AND             REGISTRATION          MANUFACTURER'S\nITEM                    MANUFACTURER                   CONFIGURATION               NUMBER            SERIAL NUMBER\n-------------------------------------------------------------------------------------------------------------------\n<S>                     <C>                            <C>                        <C>                  <C>\n\nAircraft                The Boeing Compa",
+                    "ny             737-25A                    N685MA*"
+                ]
+            },
+            {
+                "question_variants": [
+                    "What is the maximum duration that a safety or maintenance requirement can remain unaddressed on the aircraft, particularly in terms of airworthiness directives and mandatory orders?",
+                    "How long can a safety or maintenance requirement, especially airworthiness directives and mandatory orders, be left unresolved?",
+                    "How long can an airworthiness directive or mandatory order remain outstanding on the aircraft according to standard lease agreements?",
+                    "What's the longest period that a safety or maintenance requirement, such as airworthiness directives and mandatory orders, can remain unmet on a leased aircraft?",
+                    "What is the maximum allowable timeframe for a safety or maintenance requirement to be left unattended to on an aircraft, specifically referring to airworthiness directives and mandatory orders?"
+                ],
+                "criteria": [
+                    "(i)  have had all repetitive airworthiness directives and mandatory\n          orders and regulations in at least half-life or better condition;"
+                ]
+            },
+            {
+                "question_variants": [
+                    "What are the payment locations?",
+                    "Could you specify where exactly I should be making the payments? Are there particular bank accounts or locations?",
+                    "I'm a bit puzzled here. Could you clarify the exact payment locations or bank accounts where I'm supposed to deposit the payments?",
+                    "I'm really struggling to grasp this. Could you assist me in understanding the specific payment locations or bank accounts where I'm expected to send the payments?",
+                    "I'm at my wit's end here! What does this mean? Can you help me figure out the precise locations or bank accounts where I'm supposed to carry out the payments? I'm finding this financial aspect particularly hard to comprehend."
+                ],
+                "criteria": [
+                    "Payment Locations:                  For ITOCHU AirLease (Europe) Limited:\n\n                                    Account Name: Citibank New York (ABA No.\n                                    021000089) for the account of Citibank\n                                    Dublin (account no. 10994598) in favor of\n                                    ITOCHU AirLease (Europe) Limited (account\n                                    no. 1-00-6793-017)\n\n                                    For Marubeni Airleasing (",
+                    "U.K.) Limited:\n\n                                    Harris Bank International Corporation\n                                    ABA #026-007-760\n                                    for the credit of\n                                    The Mitsubishi Trust & Banking Corporation\n                                    London Branch A/C#16011100\n                                    UID No.107280\n                                    for further credit to\n                                    Marubeni Airleasi",
+                    "ng (UK) Ltd.\n                                    Account #020-404391\n\n                                    With respect to payments by\n                                    Lessee of Basic Rent hereunder, 62.682% of\n                                    such amounts shall be paid to ITOCHU\n                                    AirLease (Europe) Limited (as above\n                                    provided) and 37.318% of such amounts\n                                    shall be paid to Marubeni Airlea",
+                    "sing (U.K.)\n                                    Limited (as above provided)."
+                ]
+            },
+            {
+                "question_variants": [
+                    "What is the revision number of the aircraft?",
+                    "Could you please clarify what the revision number of the aircraft is?",
+                    "I'm finding this a bit hard to grasp. Could you specify the exact revision number associated with the aircraft?",
+                    "I'm really trying to understand this, but it's proving difficult. Could you assist me in determining the specific revision number that is attributed to the aircraft?",
+                    "Agh! What does it even mean? Can you help me decipher the exact revision number that is tied to the aircraft? I'm finding this technical detail quite challenging to comprehend."
+                ],
+                "criteria": [
+                    "Detail Specification (737-25A-Rev. B)"
+                ]
+            }
+        ]
+    }
+]

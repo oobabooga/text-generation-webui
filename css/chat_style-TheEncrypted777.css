@@ -1,0 +1,137 @@
+/* All credits to TheEncrypted777: https://www.reddit.com/r/Oobabooga/comments/12xe6vq/updated_css_styling_with_color_customization_for/ */
+
+.message {
+    display: grid;
+    align-items: start;
+    grid-template-columns: 60px minmax(0, 1fr);
+    padding-bottom: 21px;
+    padding-top: 7px;
+    font-size: 18px;
+    font-family: 'Noto Sans', Arial, sans-serif;
+    line-height: 1.428571429;
+}
+
+.circle-you,
+.circle-bot {
+    background-color: gray;
+    border-radius: 1rem;
+    border: 2px solid white;
+}
+
+.circle-bot img,
+.circle-you img {
+    border-radius: 10%;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.circle-you, .circle-bot {
+    /* You can set the size of the profile images here, but if you do, you have to also adjust the .text{padding-left: 90px} to a different number according to the width of the image which is right below here */
+    width: 135px;
+    height: 175px;
+}
+
+.text {
+    /* Change this to move the message box further left or right depending on the size of your profile pic */
+    padding-left: 90px;
+    text-shadow: 2px 2px 2px rgb(0 0 0 / 40%);
+}
+
+.text p {
+    margin-top: 2px;
+}
+
+.username {
+    padding-left: 10px;
+    font-size: 22px;
+    font-weight: bold;
+    border-top: 1px solid rgb(51 64 90);
+    padding: 3px;
+}
+
+.message-body {
+    position: relative;
+    border: 1px solid rgb(255 255 255 / 45.9%);
+    border-radius: 10px;
+    padding: 10px;
+    padding-top: 5px;
+
+    /* Message gradient background color - remove the line bellow if you don't want a background color or gradient */
+    background: linear-gradient(to bottom, #171730, #1b263f);
+}
+  
+/* Adds 2 extra lines at the top and bottom of the message */
+.message-body::before,
+.message-body::after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    height: 1px;
+    background-color: rgb(255 255 255 / 13%);
+}
+
+.message-body::before {
+    top: 6px;
+}
+
+.message-body::after {
+    bottom: 6px;
+}
+
+.message-body img {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 20px;
+}
+
+.message-body p {
+    margin-bottom: 0 !important;
+    font-size: 18px !important;
+    line-height: 1.428571429 !important;
+    color: rgb(243 244 246) !important;
+    text-shadow: 2px 2px 2px rgb(0 0 0);
+    font-weight: 500;
+}
+
+.message-body p em {
+    color: rgb(138 138 138) !important;
+}
+
+@media screen and (width <= 688px) {
+    .message {
+        display: grid;
+        align-items: start;
+        grid-template-columns: 60px minmax(0, 1fr);
+        padding-bottom: 25px;
+        font-size: 15px;
+        font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
+        line-height: 1.428571429;
+    }
+
+    .circle-you, .circle-bot {
+        width: 50px;
+        height: 73px;
+        border-radius: 0.5rem;
+    }
+
+    .circle-bot img,
+    .circle-you img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .text {
+        padding-left: 0;
+    }
+
+    .message-body p {
+        font-size: 16px !important;
+    }
+
+    .username {
+        font-size: 20px;
+    }
+}

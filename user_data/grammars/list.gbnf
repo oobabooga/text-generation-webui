@@ -1,0 +1,2 @@
+root       ::= "1. " paragraph "\n" ([0-9] [0-9]? ". " paragraph "\n")+
+paragraph  ::= [a-zA-Z'.,; ]+

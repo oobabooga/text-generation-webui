@@ -1,0 +1,4 @@
+SpeechRecognition==3.10.0
+openai-whisper
+soundfile
+ffmpeg

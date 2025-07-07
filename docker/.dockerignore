@@ -1,0 +1,8 @@
+.env
+Dockerfile
+/characters
+/loras
+/models
+/presets
+/prompts
+/training

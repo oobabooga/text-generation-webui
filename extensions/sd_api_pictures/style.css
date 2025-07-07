@@ -1,0 +1,52 @@
+/* Align the elements for SD_api_picture extension */
+.SDAP #sampler_box {
+  padding-top: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border: 0;
+}
+
+.SDAP #steps_box {
+  border-radius: 0 0 var(--block-radius) var(--block-radius);
+}
+
+.SDAP #sampler_col {
+  gap: 0;
+  padding: 0;
+  background-color: transparent;
+}
+
+.SDAP #sampler_row {
+    border-bottom: 0;
+    box-shadow: var(--block-shadow);
+    border-width: var(--block-border-width);
+    border-color: var(--block-border-color);
+    border-radius: var(--block-radius) var(--block-radius) 0 0;
+    background: var(--block-background-fill);
+    gap: 0;
+}
+
+.SDAP #sampler_row .refresh-button {
+    margin-bottom: var(--spacing-sm);
+    margin-right: var(--spacing-lg);
+}
+
+.SDAP #seed_box,
+.SDAP #cfg_box {
+  padding-top: var(--spacing-md);
+}
+
+.SDAP #sampler_box span,
+.SDAP #seed_box span,
+.SDAP #cfg_box span,
+.SDAP #steps_box span {
+  margin-bottom: var(--spacing-sm);
+}
+
+.SDAP svg.dropdown-arrow {
+  flex-shrink: 0 !important;
+  margin: 0px !important;
+}
+
+.SDAP .hires_opts input[type="number"] {
+  width: 6em !important;
+}
