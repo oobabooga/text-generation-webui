@@ -222,6 +222,12 @@ def clear_cache():
 def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, env=None):
     # Use the conda environment
     if environment:
+        # Determine embedded Python path based on platform
+        python_path  = os.path.join(conda_env_path, "python.exe" if is_windows() else "bin/python")
+        
+        # Replace all standalone 'python' calls with full path
+        cmd = re.sub(r'(?<![\w"])python(?=\s)', lambda _: f'"{python_path}"', cmd)
+        
         if is_windows():
             conda_bat_path = os.path.join(script_dir, "installer_files", "conda", "condabin", "conda.bat")
             cmd = f'"{conda_bat_path}" activate "{conda_env_path}" >nul && {cmd}'
