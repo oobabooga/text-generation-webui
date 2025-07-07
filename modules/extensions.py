@@ -54,12 +54,17 @@ def load_extensions():
 
         except ModuleNotFoundError:
             extension_location = Path('user_data/extensions') / name if user_script_path.exists() else Path('extensions') / name
+            windows_path = str(extension_location).replace('/', '\\')
             logger.error(
                 f"Could not import the requirements for '{name}'. Make sure to install the requirements for the extension.\n\n"
-                f"* To install requirements for all available extensions, launch the\n  update_wizard script for your OS and choose the B option.\n\n"
-                f"* To install the requirements for this extension alone, launch the\n  cmd script for your OS and paste the following command in the\n  terminal window that appears:\n\n"
-                f"Linux / Mac:\n\npip install -r {extension_location}/requirements.txt --upgrade\n\n"
-                f"Windows:\n\npip install -r {extension_location}\\requirements.txt --upgrade\n"
+                f"* To install requirements automatically, launch the update_wizard script for your OS and:\n\n"
+                f"1. Choose option B (Install/update extensions requirements)\n"
+                f"2. Select '{name}' from the extension list\n\n"
+                f"* To install requirements manually, launch the cmd script for your OS and paste the following command:\n\n"
+                f"Linux / Mac:\n\n"
+                f"pip install -r {extension_location}/requirements.txt --upgrade\n\n"
+                f"Windows:\n\n"
+                f"pip install -r {windows_path}\\requirements.txt --upgrade\n"
             )
             raise
 
