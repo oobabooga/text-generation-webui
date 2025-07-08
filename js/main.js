@@ -147,11 +147,15 @@ window.isScrolled = false;
 let scrollTimeout;
 
 targetElement.addEventListener("scroll", function() {
-  // Add scrolling class to disable hover effects
-  targetElement.classList.add("scrolling");
-
   let diff = targetElement.scrollHeight - targetElement.clientHeight;
-  if(Math.abs(targetElement.scrollTop - diff) <= 10 || diff == 0) {
+  let isAtBottomNow = Math.abs(targetElement.scrollTop - diff) <= 10 || diff == 0;
+
+  // Add scrolling class to disable hover effects
+  if (window.isScrolled || !isAtBottomNow) {
+    targetElement.classList.add("scrolling");
+  }
+
+  if(isAtBottomNow) {
     window.isScrolled = false;
   } else {
     window.isScrolled = true;
@@ -163,7 +167,6 @@ targetElement.addEventListener("scroll", function() {
     targetElement.classList.remove("scrolling");
     doSyntaxHighlighting(); // Only run after scrolling stops
   }, 150);
-
 });
 
 // Create a MutationObserver instance
