@@ -18,6 +18,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 - **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
 - **Web search**: Optionally search the internet with LLM-generated queries to add context to the conversation.
 - Aesthetic UI with dark and light themes.
+- Syntax highlighting for code blocks and LaTeX rendering for mathematical expressions.
 - `instruct` mode for instruction-following (like ChatGPT), and `chat-instruct`/`chat` modes for talking to custom characters.
 - Automatic prompt formatting using Jinja2 templates. You don't need to ever worry about prompt formats.
 - Edit messages, navigate between message versions, and branch conversations at any point.
