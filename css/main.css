@@ -365,10 +365,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     gap: 0;
 }
 
-#chat-tab button#Generate, #chat-tab button#stop {
-    width: 89.3438px !important;
-}
-
 #chat-tab button, #notebook-tab button, #default-tab button {
     min-width: 0 !important;
 }
@@ -670,7 +666,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: absolute;
     background-color: transparent;
     left: 23px;
-    top: -5px;
+    top: -25px;
     padding: var(--block-padding);
 }
 
@@ -830,7 +826,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #chat-input-row {
     padding: 1rem;
-    padding-top: 0;
 }
 
 #chat-input-row.bigchat {
@@ -1296,18 +1291,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     opacity: 1;
 }
 
-/* Disable message action hover effects during generation */
-._generating .message:hover .message-actions,
-._generating .user-message:hover .message-actions,
-._generating .assistant-message:hover .message-actions {
+/* Disable message actions and version navigation hover effects during generation */
+._generating :is(.message, .user-message, .assistant-message):hover :is(.message-actions, .version-navigation) {
     opacity: 0 !important;
+    pointer-events: none;
 }
 
-/* Disable message action hover effects during scrolling */
-.scrolling .message:hover .message-actions,
-.scrolling .user-message:hover .message-actions,
-.scrolling .assistant-message:hover .message-actions {
+/* Disable message actions and version navigation hover effects during scrolling */
+.scrolling :is(.message, .user-message, .assistant-message):hover :is(.message-actions, .version-navigation) {
     opacity: 0 !important;
+    pointer-events: none;
 }
 
 .footer-button svg {
@@ -1668,5 +1661,21 @@ button:focus {
 }
 
 #textbox-notebook span {
+    display: none;
+}
+
+.chat-parent {
+    /* Optimize for scrolling performance */
+    will-change: scroll-position;
+    contain: layout style paint;
+
+    /* Ensure GPU acceleration */
+    transform: translateZ(0);
+
+    /* Prevent layout shifts */
+    overflow-anchor: none;
+}
+
+#chat-input span {
     display: none;
 }

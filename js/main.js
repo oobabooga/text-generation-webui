@@ -27,9 +27,7 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
     this.style.marginBottom = chatVisible ? "0px" : "19px";
 
     if (chatVisible && !showControlsChecked) {
-      document.querySelectorAll(
-        "#chat-tab > div > :nth-child(1), #chat-tab > div > :nth-child(3), #chat-tab > div > :nth-child(4), #extensions"
-      ).forEach(element => {
+      document.querySelectorAll("#extensions").forEach(element => {
         element.style.display = "none";
       });
     }
@@ -189,8 +187,11 @@ const observer = new MutationObserver(function(mutations) {
 
   doSyntaxHighlighting();
 
-  if (!window.isScrolled && !isScrollingClassOnly && targetElement.scrollTop !== targetElement.scrollHeight) {
-    targetElement.scrollTop = targetElement.scrollHeight;
+  if (!window.isScrolled && !isScrollingClassOnly) {
+    const maxScroll = targetElement.scrollHeight - targetElement.clientHeight;
+    if (maxScroll > 0 && targetElement.scrollTop < maxScroll - 1) {
+      targetElement.scrollTop = maxScroll;
+    }
   }
 
   const chatElement = document.getElementById("chat");
@@ -199,10 +200,11 @@ const observer = new MutationObserver(function(mutations) {
     const lastChild = messagesContainer?.lastElementChild;
     const prevSibling = lastChild?.previousElementSibling;
     if (lastChild && prevSibling) {
-      lastChild.style.setProperty("margin-bottom",
-        `max(0px, calc(max(70vh, 100vh - ${prevSibling.offsetHeight}px - 84px) - ${lastChild.offsetHeight}px))`,
-        "important"
-      );
+      // Add padding to the messages container to create room for the last message.
+      // The purpose of this is to avoid constant scrolling during streaming in
+      // instruct mode.
+      const bufferHeight = Math.max(0, Math.max(0.7 * window.innerHeight, window.innerHeight - prevSibling.offsetHeight - 84) - lastChild.offsetHeight);
+      messagesContainer.style.paddingBottom = `${bufferHeight}px`;
     }
   }
 });
@@ -1046,3 +1048,56 @@ new MutationObserver(() => addMiniDeletes()).observe(
   {childList: true, subtree: true}
 );
 addMiniDeletes();
+
+//------------------------------------------------
+// Maintain distance from bottom when input height changes
+//------------------------------------------------
+let wasAtBottom = false;
+let preservedDistance = 0;
+
+function checkIfAtBottom() {
+  const distanceFromBottom = targetElement.scrollHeight - targetElement.scrollTop - targetElement.clientHeight;
+  wasAtBottom = distanceFromBottom <= 1; // Allow for rounding errors
+}
+
+function preserveScrollPosition() {
+  preservedDistance = targetElement.scrollHeight - targetElement.scrollTop - targetElement.clientHeight;
+}
+
+function restoreScrollPosition() {
+  if (wasAtBottom) {
+    // Force to bottom
+    targetElement.scrollTop = targetElement.scrollHeight - targetElement.clientHeight;
+  } else {
+    // Restore original distance
+    targetElement.scrollTop = targetElement.scrollHeight - targetElement.clientHeight - preservedDistance;
+  }
+}
+
+// Check position before input
+chatInput.addEventListener("beforeinput", () => {
+  checkIfAtBottom();
+  preserveScrollPosition();
+});
+
+// Restore after input
+chatInput.addEventListener("input", () => {
+  requestAnimationFrame(() => restoreScrollPosition());
+});
+
+// Update wasAtBottom when user scrolls
+targetElement.addEventListener("scroll", checkIfAtBottom);
+
+//------------------------------------------------
+// Fix autoscroll after fonts load
+//------------------------------------------------
+document.fonts.addEventListener("loadingdone", (event) => {
+  setTimeout(() => {
+    if (!window.isScrolled) {
+      const maxScroll = targetElement.scrollHeight - targetElement.clientHeight;
+      if (targetElement.scrollTop < maxScroll - 5) {
+        targetElement.scrollTop = maxScroll;
+      }
+    }
+  }, 50);
+});

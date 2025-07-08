@@ -62,7 +62,7 @@ One-click installer details
 
 ### One-click-installer
 
-The script uses Miniconda to set up a Conda environment in the `installer_files` folder.
+The script uses Miniforge to set up a Conda environment in the `installer_files` folder.
 
 If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, or `cmd_macos.sh`.
 
@@ -115,14 +115,16 @@ Manual full installation with conda or docker
 
 #### 0. Install Conda
 
-https://docs.conda.io/en/latest/miniconda.html
+https://github.com/conda-forge/miniforge
 
-On Linux or WSL, it can be automatically installed with these two commands ([source](https://educe-ubc.github.io/conda.html)):
+On Linux or WSL, Miniforge can be automatically installed with these two commands:
 
 ```
-curl -sL "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" > "Miniconda3.sh"
-bash Miniconda3.sh
+curl -sL "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh" > "Miniforge3.sh"
+bash Miniforge3.sh
 ```
+
+For other platforms, download from: https://github.com/conda-forge/miniforge/releases/latest
 
 #### 1. Create a new conda environment
 
@@ -135,12 +137,12 @@ conda activate textgen
 
 | System | GPU | Command |
 |--------|---------|---------|
-| Linux/WSL | NVIDIA | `pip3 install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124` |
-| Linux/WSL | CPU only | `pip3 install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cpu` |
-| Linux | AMD | `pip3 install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/rocm6.2.4` |
-| MacOS + MPS | Any | `pip3 install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0` |
-| Windows | NVIDIA | `pip3 install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124` |
-| Windows | CPU only | `pip3 install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0` |
+| Linux/WSL | NVIDIA | `pip3 install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124` |
+| Linux/WSL | CPU only | `pip3 install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu` |
+| Linux | AMD | `pip3 install torch==2.6.0 --index-url https://download.pytorch.org/whl/rocm6.2.4` |
+| MacOS + MPS | Any | `pip3 install torch==2.6.0` |
+| Windows | NVIDIA | `pip3 install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124` |
+| Windows | CPU only | `pip3 install torch==2.6.0` |
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/.
 
@@ -181,9 +183,9 @@ python server.py
 
 Then browse to
 
-`http://localhost:7860/?__theme=dark`
+`http://127.0.0.1:7860`
 
-##### Manual install
+#### Manual install
 
 The `requirements*.txt` above contain various wheels precompiled through GitHub Actions. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
 
