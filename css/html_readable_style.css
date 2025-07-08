@@ -31,7 +31,7 @@
     font-size: 14px;
 }
 
-/* Standard spacing */
+/* Standard spacing from instruct style */
 .readable-container :is(p, ul, ol) {
     margin: 1.25em 0 !important;
 }
@@ -42,14 +42,4 @@
 
 .readable-container :is(p, ul, ol):last-child {
     margin-bottom: 0 !important;
-}
-
-.readable-container ul, .readable-container ol {
-    padding-inline-start: 2em;
-}
-
-.readable-container li {
-    list-style-position: outside;
-    margin-top: 0.5em !important;
-    margin-bottom: 0.5em !important;
 }

@@ -35,10 +35,6 @@
     color: #f0f0f0; /* Light text color for readability */
 }
 
-.text p {
-    margin-top: 2px;
-}
-
 .username {
     padding-left: 10px;
     font-size: 20px;
@@ -129,7 +125,7 @@
     }
 }
 
-/* Standard spacing */
+/* Standard spacing from instruct style */
 .chat .message-body :is(p, ul, ol) {
     margin: 1.25em 0 !important;
 }
@@ -140,18 +136,4 @@
 
 .chat .message-body :is(p, ul, ol):last-child {
     margin-bottom: 0 !important;
-}
-
-.chat .message-body ul, .chat .message-body ol {
-    padding-inline-start: 2em;
-}
-
-.message-body li {
-    list-style-position: outside;
-    margin-top: 0.5em !important;
-    margin-bottom: 0.5em !important;
-}
-
-.message-body li > p {
-    display: inline !important;
 }
