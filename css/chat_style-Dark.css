@@ -91,7 +91,6 @@
 }
 
 .message-body p {
-    margin-bottom: 0 !important;
     font-size: 16px !important;
     line-height: 1.5 !important;
     color: #e0e0e0 !important; /* Light color for text */
@@ -128,4 +127,31 @@
     .username {
         font-size: 18px; /* Smaller username for mobile */
     }
+}
+
+/* Standard spacing */
+.chat .message-body :is(p, ul, ol) {
+    margin: 1.25em 0 !important;
+}
+
+.chat .message-body :is(p, ul, ol):first-child {
+    margin-top: 0 !important;
+}
+
+.chat .message-body :is(p, ul, ol):last-child {
+    margin-bottom: 0 !important;
+}
+
+.chat .message-body ul, .chat .message-body ol {
+    padding-inline-start: 2em;
+}
+
+.message-body li {
+    list-style-position: outside;
+    margin-top: 0.5em !important;
+    margin-bottom: 0.5em !important;
+}
+
+.message-body li > p {
+    display: inline !important;
 }
