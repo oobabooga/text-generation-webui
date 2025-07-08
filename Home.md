@@ -1,0 +1,1 @@
+[**API examples**](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples)
