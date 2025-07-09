@@ -106,7 +106,7 @@ jobs:
             cp -r text-generation-webui "text-generation-webui-${VERSION_CLEAN}"
             cd "text-generation-webui-${VERSION_CLEAN}"
 
-            rm -rf .git cmd* update_wizard* Colab-TextGen-GPU.ipynb docker setup.cfg .github .gitignore
+            # Remove extensions that need additional requirements
             allowed=("character_bias" "gallery" "openai" "sd_api_pictures")
             find extensions/ -mindepth 1 -maxdepth 1 -type d | grep -v -E "$(printf '%s|' "${allowed[@]}" | sed 's/|$//')" | xargs rm -rf
 
@@ -176,7 +176,10 @@ jobs:
             echo "Installing Python packages from $REQ_FILE..."
             $PIP_PATH install --target="./$PACKAGES_PATH" -r "$REQ_FILE"
 
-            # 5. Create ZIP file
+            # 5. Clean up
+            rm -rf .git cmd* update_wizard* Colab-TextGen-GPU.ipynb docker setup.cfg .github .gitignore requirements/ one_click.py
+
+            # 6. Create ZIP file
             cd ..
             ZIP_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}.zip"
             echo "Creating archive: $ZIP_NAME"
