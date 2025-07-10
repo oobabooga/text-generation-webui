@@ -135,19 +135,14 @@ def load_model_HF(model_name):
     params = {
         'low_cpu_mem_usage': True,
         'torch_dtype': torch.bfloat16 if shared.args.bf16 else torch.float16,
+        'attn_implementation': shared.args.attn_implementation,
     }
 
     if shared.args.trust_remote_code:
         params['trust_remote_code'] = True
 
-    if shared.args.use_flash_attention_2:
-        params['use_flash_attention_2'] = True
-
     if shared.args.force_safetensors:
         params['force_safetensors'] = True
-
-    if shared.args.use_eager_attention:
-        params['attn_implementation'] = 'eager'
 
     config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
 
