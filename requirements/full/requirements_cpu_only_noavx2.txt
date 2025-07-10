@@ -23,7 +23,7 @@ scipy
 sentencepiece
 tensorboard
 transformers==4.53.*
-triton-windows==3.3.1.post19; platform_system == "Windows"
+triton-windows==3.2.0.post19; platform_system == "Windows"
 tqdm
 wandb
 
