@@ -643,6 +643,10 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     output = apply_extensions('history', output)
     state = apply_extensions('state', state)
 
+    # Let the jinja2 template handle the BOS token
+    if state['mode'] in ['instruct', 'chat-instruct']:
+        state['add_bos_token'] = False
+
     # Initialize metadata if not present
     if 'metadata' not in output:
         output['metadata'] = {}
