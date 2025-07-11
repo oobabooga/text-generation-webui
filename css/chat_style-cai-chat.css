@@ -9,6 +9,11 @@
     line-height: 22.5px !important;
 }
 
+.message-body {
+    margin-top: 3px;
+    font-size: 15px !important;
+}
+
 .circle-you {
     width: 50px;
     height: 50px;
@@ -56,7 +61,7 @@
     font-weight: 500;
 }
 
-/* Standard spacing from instruct style */
+/* Standard spacing */
 .chat .message-body :is(p, ul, ol) {
     margin: 1.25em 0 !important;
 }
@@ -67,4 +72,18 @@
 
 .chat .message-body :is(p, ul, ol):last-child {
     margin-bottom: 0 !important;
+}
+
+.chat .message-body ul, .chat .message-body ol {
+    padding-inline-start: 2em;
+}
+
+.message-body li {
+    list-style-position: outside;
+    margin-top: 0.5em !important;
+    margin-bottom: 0.5em !important;
+}
+
+.message-body li > p {
+    display: inline !important;
 }
