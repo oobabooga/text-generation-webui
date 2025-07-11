@@ -258,9 +258,6 @@ def load_model_HF(model_name):
         print()
         model = LoaderClass.from_pretrained(path_to_model, **params)
 
-    if shared.args.torch_compile:
-        model = torch.compile(model)
-
     return model
 
 

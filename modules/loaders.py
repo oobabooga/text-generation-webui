@@ -39,7 +39,6 @@ loaders_and_params = OrderedDict({
         'quant_type',
         'load_in_8bit',
         'load_in_4bit',
-        'torch_compile',
         'attn_implementation',
         'cpu',
         'disk',
