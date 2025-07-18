@@ -120,7 +120,7 @@ def MLX_loader(model_name):
 
     result = MLXModel.from_pretrained(model_name)
     if result is None:
-        raise RuntimeError(f"Failed to load MLX model: {model_name}")
+        raise RuntimeError(f"Failed to load MLX model: {model_name}. Check the logs above for specific error details.")
     
     return result
 
