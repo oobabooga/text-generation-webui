@@ -174,25 +174,34 @@ def get_model_metadata(model):
 
 
 def infer_loader(model_name, model_settings, hf_quant_method=None):
-    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
-    if not path_to_model.exists():
-        loader = None
-    elif shared.args.portable:
-        loader = 'llama.cpp'
-    elif len(list(path_to_model.glob('*.gguf'))) > 0:
-        loader = 'llama.cpp'
-    elif re.match(r'.*\.gguf', model_name.lower()):
-        loader = 'llama.cpp'
-    elif hf_quant_method == 'exl3':
-        loader = 'ExLlamav3_HF'
-    elif hf_quant_method in ['exl2', 'gptq']:
-        loader = 'ExLlamav2_HF'
-    elif re.match(r'.*exl3', model_name.lower()):
-        loader = 'ExLlamav3_HF'
-    elif re.match(r'.*exl2', model_name.lower()):
-        loader = 'ExLlamav2_HF'
+    import platform
+    
+    # Check for MLX models first (before path checks)
+    if (model_name.startswith('mlx-community/') or model_name.startswith('mlx-community_')) and platform.system() == "Darwin" and platform.machine() == "arm64":
+        loader = 'MLX'
+    elif re.match(r'.*\.mlx', model_name.lower()) and platform.system() == "Darwin" and platform.machine() == "arm64":
+        loader = 'MLX'
     else:
-        loader = 'Transformers'
+        # Original logic for other loaders
+        path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+        if not path_to_model.exists():
+            loader = None
+        elif shared.args.portable:
+            loader = 'llama.cpp'
+        elif len(list(path_to_model.glob('*.gguf'))) > 0:
+            loader = 'llama.cpp'
+        elif re.match(r'.*\.gguf', model_name.lower()):
+            loader = 'llama.cpp'
+        elif hf_quant_method == 'exl3':
+            loader = 'ExLlamav3_HF'
+        elif hf_quant_method in ['exl2', 'gptq']:
+            loader = 'ExLlamav2_HF'
+        elif re.match(r'.*exl3', model_name.lower()):
+            loader = 'ExLlamav3_HF'
+        elif re.match(r'.*exl2', model_name.lower()):
+            loader = 'ExLlamav2_HF'
+        else:
+            loader = 'Transformers'
 
     return loader
 
