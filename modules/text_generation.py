@@ -40,7 +40,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             yield ''
             return
 
-        if shared.model.__class__.__name__ in ['LlamaServer', 'Exllamav2Model', 'TensorRTLLMModel']:
+        if shared.model.__class__.__name__ in ['LlamaServer', 'Exllamav2Model', 'TensorRTLLMModel', 'MLXModel']:
             generate_func = generate_reply_custom
         else:
             generate_func = generate_reply_HF
@@ -153,7 +153,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
         if truncation_length is not None:
             input_ids = input_ids[:, -truncation_length:]
 
-        if shared.model.__class__.__name__ in ['Exllamav2Model', 'TensorRTLLMModel'] or shared.args.cpu:
+        if shared.model.__class__.__name__ in ['Exllamav2Model', 'TensorRTLLMModel', 'MLXModel'] or shared.args.cpu:
             return input_ids
         else:
             device = get_device()
