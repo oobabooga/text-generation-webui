@@ -68,8 +68,15 @@
     max-width: 80%;
 }
 
+.text p {
+    margin-top: 5px;
+}
+
 .username {
     font-weight: bold;
+}
+
+.message-body {
 }
 
 .message-body img {
@@ -79,6 +86,7 @@
 }
 
 .message-body p {
+    margin-bottom: 0 !important;
     font-size: 15px !important;
     line-height: 1.428571429 !important;
     font-weight: 500;
@@ -90,17 +98,4 @@
 
 .message-body p em {
     color: rgb(110 110 110) !important;
-}
-
-/* Standard spacing from instruct style */
-.chat .message-body :is(p, ul, ol) {
-    margin: 1.25em 0 !important;
-}
-
-.chat .message-body :is(p, ul, ol):first-child {
-    margin-top: 0 !important;
-}
-
-.chat .message-body :is(p, ul, ol):last-child {
-    margin-bottom: 0 !important;
 }
