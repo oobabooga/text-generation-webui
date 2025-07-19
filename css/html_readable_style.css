@@ -11,8 +11,9 @@
 
 .readable-container p, .readable-container li {
     font-size: 16px !important;
-    line-height: 1.4 !important;
     color: #efefef !important;
+    margin-bottom: 22px;
+    line-height: 1.4 !important;
 }
 
 .readable-container li > p {
@@ -29,17 +30,4 @@
 
 .readable-container .hoverable {
     font-size: 14px;
-}
-
-/* Standard spacing from instruct style */
-.readable-container :is(p, ul, ol) {
-    margin: 1.25em 0 !important;
-}
-
-.readable-container :is(p, ul, ol):first-child {
-    margin-top: 0 !important;
-}
-
-.readable-container :is(p, ul, ol):last-child {
-    margin-bottom: 0 !important;
 }

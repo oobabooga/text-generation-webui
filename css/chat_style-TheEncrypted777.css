@@ -38,6 +38,10 @@
     text-shadow: 2px 2px 2px rgb(0 0 0 / 40%);
 }
 
+.text p {
+    margin-top: 2px;
+}
+
 .username {
     padding-left: 10px;
     font-size: 22px;
@@ -83,6 +87,7 @@
 }
 
 .message-body p {
+    margin-bottom: 0 !important;
     font-size: 18px !important;
     line-height: 1.428571429 !important;
     color: rgb(243 244 246) !important;
@@ -129,17 +134,4 @@
     .username {
         font-size: 20px;
     }
-}
-
-/* Standard spacing from instruct style */
-.chat .message-body :is(p, ul, ol) {
-    margin: 1.25em 0 !important;
-}
-
-.chat .message-body :is(p, ul, ol):first-child {
-    margin-top: 0 !important;
-}
-
-.chat .message-body :is(p, ul, ol):last-child {
-    margin-bottom: 0 !important;
 }
