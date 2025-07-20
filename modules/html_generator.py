@@ -511,9 +511,9 @@ def generate_instruct_html(history, last_message_only=False):
 
         # Generate messages
         if not last_message_only and converted_visible[0]:
-            output += create_message("user", converted_visible[0], row_internal[0])
+            output += create_message("user", converted_visible[0], row_visible[0])
 
-        output += create_message("assistant", converted_visible[1], row_internal[1])
+        output += create_message("assistant", converted_visible[1], row_visible[1])
 
     if not last_message_only:
         output += "</div></div>"
@@ -585,9 +585,9 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
 
         # Generate messages
         if not last_message_only and converted_visible[0]:
-            output += create_message("user", converted_visible[0], row_internal[0])
+            output += create_message("user", converted_visible[0], row_visible[0])
 
-        output += create_message("assistant", converted_visible[1], row_internal[1])
+        output += create_message("assistant", converted_visible[1], row_visible[1])
 
     if not last_message_only:
         output += "</div></div>"
