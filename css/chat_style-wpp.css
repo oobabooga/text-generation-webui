@@ -83,6 +83,10 @@
     font-weight: 400;
 }
 
+.message-body p:first-child {
+    margin-top: 0 !important;
+}
+
 .dark .message-body p em {
     color: rgb(170 170 170) !important;
 }
@@ -96,15 +100,6 @@
     margin-top: 8px;
 }
 
-/* Standard spacing from instruct style */
-.chat .message-body :is(p, ul, ol) {
-    margin: 1.25em 0 !important;
-}
-
-.chat .message-body :is(p, ul, ol):first-child {
-    margin-top: 0 !important;
-}
-
-.chat .message-body :is(p, ul, ol):last-child {
-    margin-bottom: 0 !important;
+.message-body p, .chat .message-body ul, .chat .message-body ol {
+    margin-bottom: 10px !important;
 }
