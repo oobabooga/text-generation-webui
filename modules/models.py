@@ -19,6 +19,7 @@ def load_model(model_name, loader=None):
         'llama.cpp': llama_cpp_server_loader,
         'Transformers': transformers_loader,
         'ExLlamav3_HF': ExLlamav3_HF_loader,
+        'ExLlamav3': ExLlamav3_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ExLlamav2': ExLlamav2_loader,
         'TensorRT-LLM': TensorRT_LLM_loader,
@@ -88,6 +89,14 @@ def ExLlamav3_HF_loader(model_name):
     return Exllamav3HF.from_pretrained(model_name)
 
 
+def ExLlamav3_loader(model_name):
+    from modules.exllamav3 import Exllamav3Model
+
+    model = Exllamav3Model.from_pretrained(model_name)
+    tokenizer = model.tokenizer
+    return model, tokenizer
+
+
 def ExLlamav2_HF_loader(model_name):
     from modules.exllamav2_hf import Exllamav2HF
 
@@ -116,7 +125,9 @@ def unload_model(keep_model_name=False):
         return
 
     is_llamacpp = (shared.model.__class__.__name__ == 'LlamaServer')
-    if shared.model.__class__.__name__ == 'Exllamav3HF':
+    if shared.args.loader in ['ExLlamav3_HF', 'ExLlamav3']:
+        shared.model.unload()
+    elif shared.args.loader in ['ExLlamav2_HF', 'ExLlamav2'] and hasattr(shared.model, 'unload'):
         shared.model.unload()
 
     shared.model = shared.tokenizer = None
