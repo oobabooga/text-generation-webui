@@ -113,6 +113,7 @@ class CompletionRequestParams(BaseModel):
     temperature: float | None = 1
     top_p: float | None = 1
     user: str | None = Field(default=None, description="Unused parameter.")
+    image_data: List[str] = Field(default=[], description="List of base64-encoded images for multimodal completion.")
 
 
 class CompletionRequest(GenerationOptions, CompletionRequestParams):
