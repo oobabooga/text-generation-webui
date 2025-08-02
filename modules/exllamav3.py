@@ -1,0 +1,275 @@
+import json
+import traceback
+from pathlib import Path
+
+import torch
+from exllamav3 import Cache, Config, Model, Tokenizer
+from exllamav3.cache import CacheLayer_fp16, CacheLayer_quant
+from exllamav3 import Generator
+
+from modules import shared
+from modules.logging_colors import logger
+from modules.text_generation import get_max_prompt_length
+
+try:
+    import flash_attn
+except Exception:
+    logger.warning('Failed to load flash-attention due to the following error:\n')
+    traceback.print_exc()
+
+
+class Exllamav3Model:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def from_pretrained(cls, path_to_model):
+        path_to_model = Path(f'{shared.args.model_dir}') / Path(path_to_model)
+
+        config = Config.from_directory(str(path_to_model))
+        model = Model.from_config(config)
+
+        # Calculate the closest multiple of 256 at or above the chosen value
+        max_tokens = shared.args.ctx_size
+        if max_tokens % 256 != 0:
+            adjusted_tokens = ((max_tokens // 256) + 1) * 256
+            logger.warning(f"max_num_tokens must be a multiple of 256. Adjusting from {max_tokens} to {adjusted_tokens}")
+            max_tokens = adjusted_tokens
+
+        # Parse cache type (ExLlamaV2 pattern)
+        cache_type = shared.args.cache_type.lower()
+        cache_kwargs = {}
+        if cache_type == 'fp16':
+            layer_type = CacheLayer_fp16
+        elif cache_type.startswith('q'):
+            layer_type = CacheLayer_quant
+            if '_' in cache_type:
+                # Different bits for k and v (e.g., q4_q8)
+                k_part, v_part = cache_type.split('_')
+                k_bits = int(k_part[1:])
+                v_bits = int(v_part[1:])
+            else:
+                # Same bits for k and v (e.g., q4)
+                k_bits = v_bits = int(cache_type[1:])
+
+            # Validate bit ranges
+            if not (2 <= k_bits <= 8 and 2 <= v_bits <= 8):
+                logger.warning(f"Invalid quantization bits: k_bits={k_bits}, v_bits={v_bits}. Must be between 2 and 8. Falling back to fp16.")
+                layer_type = CacheLayer_fp16
+            else:
+                cache_kwargs = {'k_bits': k_bits, 'v_bits': v_bits}
+        else:
+            logger.warning(f"Unrecognized cache type: {cache_type}. Falling back to fp16.")
+            layer_type = CacheLayer_fp16
+
+        cache = Cache(model, max_num_tokens=max_tokens, layer_type=layer_type, **cache_kwargs)
+
+        load_params = {'progressbar': True}
+        if shared.args.gpu_split:
+            split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
+            load_params['use_per_device'] = split
+
+        model.load(**load_params)
+
+        tokenizer = Tokenizer.from_config(config)
+
+        # Load vision model component (ExLlamaV3 native)
+        vision_model = None
+        try:
+            logger.info("Loading vision model component...")
+            vision_model = Model.from_config(config, component="vision")
+            vision_model.load(progressbar=True)
+            logger.info("Vision model loaded successfully")
+        except Exception as e:
+            logger.warning(f"Vision model loading failed (multimodal disabled): {e}")
+
+        generator = Generator(
+            model=model,
+            cache=cache,
+            tokenizer=tokenizer,
+        )
+
+        result = cls()
+        result.model = model
+        result.cache = cache
+        result.tokenizer = tokenizer
+        result.generator = generator
+        result.config = config
+        result.max_tokens = max_tokens
+        result.vision_model = vision_model
+
+        return result
+
+    def generate_with_streaming(self, prompt, state):
+        """
+        Generate text with streaming using native ExLlamaV3 API
+        """
+        from exllamav3 import Job
+        from exllamav3.generator.sampler.presets import ComboSampler
+        
+        # Handle multimodal generation if images are present
+        image_embeddings = None
+        has_images = ('raw_images' in state and state['raw_images']) or ('image_attachments' in state and state['image_attachments'])
+        
+        if has_images and self.vision_model:
+            images_to_process = []
+            
+            # Get images from state
+            if 'raw_images' in state and state['raw_images']:
+                images_to_process = state['raw_images']
+            elif 'image_attachments' in state and state['image_attachments']:
+                # Convert image_attachments format to PIL images
+                from extensions.openai.multimodal import decode_base64_image
+                for attachment in state['image_attachments']:
+                    if attachment.get('type') == 'image' and 'image_data' in attachment:
+                        image = decode_base64_image(attachment['image_data'])
+                        if image:
+                            # Convert to RGB if needed
+                            if image.mode != 'RGB':
+                                image = image.convert('RGB')
+                            images_to_process.append(image)
+            
+            # Generate image embeddings using vision model (like ExLlamaV3 example)
+            if images_to_process:
+                image_embeddings = [
+                    self.vision_model.get_image_embeddings(tokenizer=self.tokenizer, image=img)
+                    for img in images_to_process
+                ]
+                
+                placeholders = "\n".join([ie.text_alias for ie in image_embeddings]) + "\n"
+                prompt = placeholders + prompt
+                logger.info(f"Processing {len(image_embeddings)} image(s) with native ExLlamaV3")
+        
+        sampler = ComboSampler(
+            rep_p=state.get('repetition_penalty', 1.0),
+            freq_p=state.get('frequency_penalty', 0.0),
+            pres_p=state.get('presence_penalty', 0.0),
+            temperature=state.get('temperature', 0.7),
+            min_p=state.get('min_p', 0.0),
+            top_k=state.get('top_k', 0),
+            top_p=state.get('top_p', 1.0),
+        )
+        
+        # Encode prompt with embeddings
+        if image_embeddings:
+            input_ids = self.tokenizer.encode(
+                prompt,
+                encode_special_tokens=True,
+                embeddings=image_embeddings,
+            )
+        else:
+            input_ids = self.tokenizer.encode(prompt, encode_special_tokens=True)
+        
+        job = Job(
+            input_ids=input_ids,
+            max_new_tokens=state.get('max_new_tokens', 500),
+            decode_special_tokens=True,
+            embeddings=image_embeddings if image_embeddings else None,
+            sampler=sampler,
+        )
+        
+        # Let webui's stop_conditions string handling stopping. ExLlamaV3 cache doesn't need manual reset.
+        # Stream generation
+        self.generator.enqueue(job)
+        
+        response_text = ""
+        try:
+            while self.generator.num_remaining_jobs():
+                results = self.generator.iterate()
+                for result in results:
+                    if "eos" in result and result["eos"]:
+                        break
+                        
+                    chunk = result.get("text", "")
+                    if chunk:
+                        response_text += chunk
+                        yield response_text
+        finally:
+            # Proper cleanup: call generator.pagetable.reset_page_table() when there are no active jobs
+            # Only do this after multimodal requests to be conservative
+            if image_embeddings:
+                try:
+                    if hasattr(self.generator, 'pagetable') and hasattr(self.generator.pagetable, 'reset_page_table'):
+                        if self.generator.num_remaining_jobs() == 0:  # Only when no active jobs
+                            self.generator.pagetable.reset_page_table()
+                            logger.debug("Reset generator page table after multimodal generation")
+                except Exception as e:
+                    logger.debug(f"Could not reset generator page table: {e}")
+
+
+    def generate(self, prompt, state):
+        """
+        Generate text using native ExLlamaV3 API (non-streaming)
+        """
+        output = self.generator.generate(
+            prompt=prompt,
+            max_new_tokens=state.get('max_new_tokens', 500),
+            temperature=state.get('temperature', 0.7),
+            top_p=state.get('top_p', 1.0),
+            top_k=state.get('top_k', 0),
+            repetition_penalty=state.get('repetition_penalty', 1.0),
+            frequency_penalty=state.get('frequency_penalty', 0.0),
+            presence_penalty=state.get('presence_penalty', 0.0),
+            min_p=state.get('min_p', 0.0),
+        )
+        
+        return output
+
+    def encode(self, string, **kwargs):
+        return self.tokenizer.encode(string, **kwargs)
+
+    def decode(self, ids, **kwargs):
+        return self.tokenizer.decode(ids, **kwargs)
+
+    @property
+    def last_prompt_token_count(self):
+        # This would need to be tracked during generation
+        return 0
+
+    def unload(self):
+        logger.info("Unloading ExLlamaV3 model components...")
+        
+        if hasattr(self, 'vision_model') and self.vision_model is not None:
+            try:
+                logger.info("Unloading vision model...")
+                # Explicitly delete vision model components
+                del self.vision_model
+                logger.info("Vision model unloaded")
+            except Exception as e:
+                logger.warning(f"Error unloading vision model: {e}")
+            self.vision_model = None
+            
+        if hasattr(self, 'model') and self.model is not None:
+            logger.info("Unloading main model...")
+            try:
+                self.model.unload()
+                del self.model
+            except Exception as e:
+                logger.warning(f"Error unloading main model: {e}")
+            logger.info("Main model unloaded")
+            self.model = None
+
+        if hasattr(self, 'cache') and self.cache is not None:
+            logger.info("Clearing cache...")
+            self.cache = None
+
+        if hasattr(self, 'generator') and self.generator is not None:
+            logger.info("Clearing generator...")
+            self.generator = None
+
+        if hasattr(self, 'tokenizer') and self.tokenizer is not None:
+            logger.info("Clearing tokenizer...")
+            self.tokenizer = None
+            
+        # Force GPU memory cleanup
+        import torch
+        import gc
+        gc.collect()
+        
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            # Multiple cache clears for stubborn memory
+            torch.cuda.empty_cache()
+        
+        logger.info("ExLlamaV3 model fully unloaded")
