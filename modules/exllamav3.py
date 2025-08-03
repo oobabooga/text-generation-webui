@@ -109,36 +109,45 @@ class Exllamav3Model:
         
         # Handle multimodal generation if images are present
         image_embeddings = None
-        has_images = ('raw_images' in state and state['raw_images']) or ('image_attachments' in state and state['image_attachments'])
+        has_images = ('raw_images' in state and state['raw_images']) or ('image_attachments' in state and state['image_attachments']) or ('image_embeddings' in state and state['image_embeddings'])
         
         if has_images and self.vision_model:
-            images_to_process = []
-            
-            # Get images from state
-            if 'raw_images' in state and state['raw_images']:
-                images_to_process = state['raw_images']
-            elif 'image_attachments' in state and state['image_attachments']:
-                # Convert image_attachments format to PIL images
-                from extensions.openai.multimodal import decode_base64_image
-                for attachment in state['image_attachments']:
-                    if attachment.get('type') == 'image' and 'image_data' in attachment:
-                        image = decode_base64_image(attachment['image_data'])
-                        if image:
-                            # Convert to RGB if needed
-                            if image.mode != 'RGB':
-                                image = image.convert('RGB')
-                            images_to_process.append(image)
-            
-            # Generate image embeddings using vision model (like ExLlamaV3 example)
-            if images_to_process:
-                image_embeddings = [
-                    self.vision_model.get_image_embeddings(tokenizer=self.tokenizer, image=img)
-                    for img in images_to_process
-                ]
-                
+            # Use pre-computed embeddings if available (proper MMEmbedding lifetime)
+            if 'image_embeddings' in state and state['image_embeddings']:
+                # Use existing embeddings - this preserves MMEmbedding lifetime
+                image_embeddings = state['image_embeddings']
                 placeholders = "\n".join([ie.text_alias for ie in image_embeddings]) + "\n"
                 prompt = placeholders + prompt
-                logger.info(f"Processing {len(image_embeddings)} image(s) with native ExLlamaV3")
+                logger.info(f"Processing {len(image_embeddings)} pre-computed embedding(s) with native ExLlamaV3")
+            else:
+                # Fallback: Create embeddings from raw images
+                images_to_process = []
+                
+                # Get images from state
+                if 'raw_images' in state and state['raw_images']:
+                    images_to_process = state['raw_images']
+                elif 'image_attachments' in state and state['image_attachments']:
+                    # Convert image_attachments format to PIL images
+                    from extensions.openai.multimodal import decode_base64_image
+                    for attachment in state['image_attachments']:
+                        if attachment.get('type') == 'image' and 'image_data' in attachment:
+                            image = decode_base64_image(attachment['image_data'])
+                            if image:
+                                # Convert to RGB if needed
+                                if image.mode != 'RGB':
+                                    image = image.convert('RGB')
+                                images_to_process.append(image)
+                
+                # Generate image embeddings using vision model (like ExLlamaV3 example)
+                if images_to_process:
+                    image_embeddings = [
+                        self.vision_model.get_image_embeddings(tokenizer=self.tokenizer, image=img)
+                        for img in images_to_process
+                    ]
+                    
+                    placeholders = "\n".join([ie.text_alias for ie in image_embeddings]) + "\n"
+                    prompt = placeholders + prompt
+                    logger.info(f"Processing {len(image_embeddings)} image(s) with native ExLlamaV3")
         
         sampler = ComboSampler(
             rep_p=state.get('repetition_penalty', 1.0),
@@ -160,15 +169,25 @@ class Exllamav3Model:
         else:
             input_ids = self.tokenizer.encode(prompt, encode_special_tokens=True)
         
+        # Get stop conditions from state (webui format) - keep as strings like ExLlamaV3 examples
+        stop_conditions = []
+        if 'stopping_strings' in state and state['stopping_strings']:
+            # Use strings directly (ExLlamaV3 handles the conversion internally)
+            stop_conditions.extend(state['stopping_strings'])
+        
+        # Add EOS token ID as ExLlamaV3 examples do
+        if hasattr(self.tokenizer, 'eos_token_id') and self.tokenizer.eos_token_id is not None:
+            stop_conditions.append(self.tokenizer.eos_token_id)
+        
         job = Job(
             input_ids=input_ids,
             max_new_tokens=state.get('max_new_tokens', 500),
             decode_special_tokens=True,
             embeddings=image_embeddings if image_embeddings else None,
             sampler=sampler,
+            stop_conditions=stop_conditions if stop_conditions else None,
         )
         
-        # Let webui's stop_conditions string handling stopping. ExLlamaV3 cache doesn't need manual reset.
         # Stream generation
         self.generator.enqueue(job)
         
@@ -185,16 +204,9 @@ class Exllamav3Model:
                         response_text += chunk
                         yield response_text
         finally:
-            # Proper cleanup: call generator.pagetable.reset_page_table() when there are no active jobs
-            # Only do this after multimodal requests to be conservative
-            if image_embeddings:
-                try:
-                    if hasattr(self.generator, 'pagetable') and hasattr(self.generator.pagetable, 'reset_page_table'):
-                        if self.generator.num_remaining_jobs() == 0:  # Only when no active jobs
-                            self.generator.pagetable.reset_page_table()
-                            logger.debug("Reset generator page table after multimodal generation")
-                except Exception as e:
-                    logger.debug(f"Could not reset generator page table: {e}")
+            # Per ExLlamaV3 author: No cleanup needed. MMEmbedding lifetime is managed by Python.
+            # Cache and page table resets are unnecessary and can cause token ID conflicts.
+            pass
 
 
     def generate(self, prompt, state):
@@ -231,34 +243,26 @@ class Exllamav3Model:
         
         if hasattr(self, 'vision_model') and self.vision_model is not None:
             try:
-                logger.info("Unloading vision model...")
-                # Explicitly delete vision model components
                 del self.vision_model
-                logger.info("Vision model unloaded")
             except Exception as e:
                 logger.warning(f"Error unloading vision model: {e}")
             self.vision_model = None
             
         if hasattr(self, 'model') and self.model is not None:
-            logger.info("Unloading main model...")
             try:
                 self.model.unload()
                 del self.model
             except Exception as e:
                 logger.warning(f"Error unloading main model: {e}")
-            logger.info("Main model unloaded")
             self.model = None
 
         if hasattr(self, 'cache') and self.cache is not None:
-            logger.info("Clearing cache...")
             self.cache = None
 
         if hasattr(self, 'generator') and self.generator is not None:
-            logger.info("Clearing generator...")
             self.generator = None
 
         if hasattr(self, 'tokenizer') and self.tokenizer is not None:
-            logger.info("Clearing tokenizer...")
             self.tokenizer = None
             
         # Force GPU memory cleanup
@@ -269,7 +273,6 @@ class Exllamav3Model:
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
             torch.cuda.synchronize()
-            # Multiple cache clears for stubborn memory
             torch.cuda.empty_cache()
         
         logger.info("ExLlamaV3 model fully unloaded")
