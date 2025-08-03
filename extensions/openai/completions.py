@@ -1,8 +1,10 @@
+import base64
 import copy
 import json
 import time
 from collections import deque
 
+import requests
 import tiktoken
 from pydantic import ValidationError
 
@@ -10,6 +12,7 @@ from extensions.openai.errors import InvalidRequestError
 from extensions.openai.typing import ToolDefinition
 from extensions.openai.utils import debug_msg, getToolCallId, parseToolCall
 from modules import shared
+from modules.logging_colors import logger
 from modules.chat import (
     generate_chat_prompt,
     generate_chat_reply,
@@ -18,6 +21,17 @@ from modules.chat import (
 )
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
+
+
+# Import from dedicated multimodal module
+from extensions.openai.multimodal import (
+    process_message_content,
+    get_image_embeddings,
+    inject_image_placeholders,
+    is_multimodal_model,
+    generate_with_images,
+    generate_with_embeddings
+)
 
 
 def convert_logprobs_to_tiktoken(model, logprobs):
@@ -93,14 +107,29 @@ def convert_history(history):
     user_input = ""
     user_input_last = True
     system_message = ""
+    all_images = []  # Simple list to collect all images
 
     for entry in history:
         content = entry["content"]
         role = entry["role"]
 
         if role == "user":
+            # Process multimodal content using dedicated module
+            if is_multimodal_model():
+                processed_content, images = process_message_content(content)
+                all_images.extend(images)
+                content = processed_content
+            elif isinstance(content, list):
+                # Extract text from multimodal content if model doesn't support images
+                text_parts = []
+                for item in content:
+                    if isinstance(item, dict) and item.get('type') == 'text':
+                        text_parts.append(item.get('text', ''))
+                content = ' '.join(text_parts) if text_parts else str(content)
+
             user_input = content
             user_input_last = True
+
             if current_message:
                 chat_dialogue.append([current_message, '', ''])
                 current_message = ""
@@ -126,7 +155,21 @@ def convert_history(history):
     if not user_input_last:
         user_input = ""
 
-    return user_input, system_message, {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
+    # Process images for multimodal models
+    processed_user_input = user_input
+    if all_images and is_multimodal_model():
+        # Get image embeddings and inject placeholders following ExLlamaV3 pattern
+        image_embeddings = get_image_embeddings(all_images)
+        if image_embeddings:
+            processed_user_input = inject_image_placeholders(user_input, image_embeddings)
+
+    # Store raw images for HuggingFace multimodal processing
+    return processed_user_input, system_message, {
+        'internal': chat_dialogue,
+        'visible': copy.deepcopy(chat_dialogue),
+        'images': all_images,  # Simple list of all images from the conversation
+        'raw_images': all_images  # For multimodal processing
+    }
 
 
 def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, prompt_only=False) -> dict:
@@ -150,8 +193,22 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         elif m['role'] == 'function':
             raise InvalidRequestError(message="role: function is not supported.", param='messages')
 
-        if 'content' not in m and "image_url" not in m:
+        # Handle multimodal content validation
+        content = m.get('content')
+        if content is None:
             raise InvalidRequestError(message="messages: missing content", param='messages')
+
+        # Validate multimodal content structure
+        if isinstance(content, list):
+            for item in content:
+                if not isinstance(item, dict) or 'type' not in item:
+                    raise InvalidRequestError(message="messages: invalid content item format", param='messages')
+                if item['type'] not in ['text', 'image_url']:
+                    raise InvalidRequestError(message="messages: unsupported content type", param='messages')
+                if item['type'] == 'text' and 'text' not in item:
+                    raise InvalidRequestError(message="messages: missing text in content item", param='messages')
+                if item['type'] == 'image_url' and ('image_url' not in item or 'url' not in item['image_url']):
+                    raise InvalidRequestError(message="messages: missing image_url in content item", param='messages')
 
     # Chat Completions
     object_type = 'chat.completion' if not stream else 'chat.completion.chunk'
@@ -204,6 +261,10 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         'history': history,
         'stream': stream
     })
+    
+    # Simple multimodal generation setup
+    if 'raw_images' in history and history['raw_images'] and is_multimodal_model():
+        generate_params['raw_images'] = history['raw_images']
 
     max_tokens = generate_params['max_new_tokens']
     if max_tokens in [None, 0]:
@@ -340,6 +401,21 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
     if prompt_str not in body:
         raise InvalidRequestError("Missing required input", param=prompt_str)
 
+    # Handle image_data for multimodal completion
+    image_data_list = body.get('image_data', [])
+    
+    raw_images = []
+    if image_data_list and is_multimodal_model():
+        from extensions.openai.multimodal import decode_base64_image
+        
+        for i, image_url in enumerate(image_data_list):
+            try:
+                if image_url:
+                    image = decode_base64_image(image_url)
+                    raw_images.append(image)
+            except Exception as e:
+                logger.error(f"Error processing image {i+1}: {e}")
+
     # common params
     generate_params = process_parameters(body, is_legacy=is_legacy)
     max_tokens = generate_params['max_new_tokens']
@@ -348,6 +424,10 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
     logprob_proc = generate_params.pop('logprob_proc', None)
     suffix = body['suffix'] if body['suffix'] else ''
     echo = body['echo']
+    
+    # Add raw images to generate_params if present
+    if raw_images:
+        generate_params['raw_images'] = raw_images
 
     if not stream:
         prompt_arg = body[prompt_str]
@@ -374,7 +454,16 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
 
             # generate reply #######################################
             debug_msg({'prompt': prompt, 'generate_params': generate_params})
-            generator = generate_reply(prompt, generate_params, is_chat=False)
+            
+            # Use multimodal generation if images are present
+            if raw_images and is_multimodal_model():
+                logger.info(f"Using multimodal generation for {len(raw_images)} images")
+                # Remove conflicting parameters before passing to generate_with_images
+                img_params = generate_params.copy()
+                img_params.pop('prompt', None)  # Remove prompt to avoid conflict
+                generator = generate_with_images(prompt, raw_images, **img_params)
+            else:
+                generator = generate_reply(prompt, generate_params, is_chat=False)
             answer = ''
 
             for a in generator:
@@ -447,7 +536,16 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
 
         # generate reply #######################################
         debug_msg({'prompt': prompt, 'generate_params': generate_params})
-        generator = generate_reply(prompt, generate_params, is_chat=False)
+        
+        # Use multimodal generation if images are present
+        if raw_images and is_multimodal_model():
+            logger.info(f"Using multimodal streaming generation for {len(raw_images)} images")
+            # Remove conflicting parameters before passing to generate_with_images
+            img_params = generate_params.copy()
+            img_params.pop('prompt', None)  # Remove prompt to avoid conflict
+            generator = generate_with_images(prompt, raw_images, **img_params)
+        else:
+            generator = generate_reply(prompt, generate_params, is_chat=False)
 
         answer = ''
         seen_content = ''
