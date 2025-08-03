@@ -77,9 +77,7 @@ curl http://127.0.0.1:5000/v1/chat/completions \
   }'
 ```
 
-#### Multimodal chat completions (ExLlamaV3)
-
-Send images with your chat messages using base64-encoded images. Compatible with ExLlamaV3 multimodal models.
+#### Multimodal support (ExLlamaV3)
 
 ```shell
 curl http://127.0.0.1:5000/v1/chat/completions \
@@ -87,43 +85,13 @@ curl http://127.0.0.1:5000/v1/chat/completions \
   -d '{
     "messages": [
       {
-        "role": "user",
+        "role": "user", 
         "content": [
-          {
-            "type": "text",
-            "text": "What is in this image?"
-          },
-          {
-            "type": "image_url",
-            "image_url": {
-              "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
-            }
-          }
+          {"type": "text", "text": "What color is this image?"},
+          {"type": "image_url", "image_url": {"url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAIAAAACUFjqAAAAEklEQVR4nGP8z4APMOGVHbHSAEEsAROxCnMTAAAAAElFTkSuQmCC"}}
         ]
       }
-    ],
-    "temperature": 0.6,
-    "top_p": 0.95,
-    "top_k": 20
-  }'
-```
-
-#### Multimodal completions
-
-The completions endpoint also supports images via the `image_data` parameter:
-
-```shell
-curl http://127.0.0.1:5000/v1/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "Describe this image:",
-    "image_data": [
-      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
-    ],
-    "max_tokens": 512,
-    "temperature": 0.6,
-    "top_p": 0.95,
-    "top_k": 20
+    ]
   }'
 ```
 
