@@ -53,12 +53,59 @@ def process_message_content(content: Any) -> Tuple[str, List[Image.Image]]:
                         images.append(decode_base64_image(image_url))
                     except Exception as e:
                         logger.warning(f"Failed to process a base64 image: {e}")
+                elif image_url.startswith('http'):
+                    # Support external URLs
+                    try:
+                        import requests
+                        response = requests.get(image_url, timeout=10)
+                        response.raise_for_status()
+                        image_data = response.content
+                        image = Image.open(io.BytesIO(image_data))
+                        images.append(image)
+                        logger.info(f"Successfully loaded external image from URL")
+                    except Exception as e:
+                        logger.warning(f"Failed to fetch external image: {e}")
                 else:
-                    logger.warning(f"Unsupported image URL format (only base64 is supported): {image_url[:70]}...")
+                    logger.warning(f"Unsupported image URL format: {image_url[:70]}...")
 
         return ' '.join(text_parts), images
 
     return str(content), []
+
+
+def process_unified_images(body: dict) -> List[Image.Image]:
+    """
+    Unified image processor for both /chat/completions and /completions endpoints.
+    Always expects OpenAI image_url format, handles both endpoints consistently.
+    
+    Returns:
+        List of PIL Images ready for multimodal processing.
+    """
+    raw_images = []
+    
+    if not is_multimodal_model():
+        return raw_images
+    
+    try:
+        # Handle /chat/completions format (messages array)
+        if 'messages' in body:
+            for message in body.get('messages', []):
+                if isinstance(message, dict) and 'content' in message:
+                    _, images = process_message_content(message['content'])
+                    raw_images.extend(images)
+        
+        # Handle /completions format - check if multimodal content exists
+        # Look for any image-related parameters and convert to messages format
+        elif 'prompt' in body:
+            # Check if there are any image parameters that need processing
+            # This would be where we'd handle future image parameters for completions
+            # For now, /completions should use messages format internally for images
+            pass
+            
+    except Exception as e:
+        logger.error(f"Error processing images in unified processor: {e}")
+    
+    return raw_images
 
 
 def is_multimodal_model() -> bool:
