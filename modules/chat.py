@@ -770,6 +770,16 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     output = apply_extensions('history', output)
     state = apply_extensions('state', state)
 
+    # Automatically set skip_special_tokens to False for channel-based templates
+    if state['mode'] in ['instruct', 'chat-instruct']:
+        template_str = state['instruction_template_str']
+    else:  # chat mode
+        template_str = state['chat_template_str']
+
+    handler = create_template_handler(template_str)
+    if isinstance(handler, ChannelTemplateHandler):
+        state['skip_special_tokens'] = False
+
     # Let the jinja2 template handle the BOS token
     if state['mode'] in ['instruct', 'chat-instruct']:
         state['add_bos_token'] = False
