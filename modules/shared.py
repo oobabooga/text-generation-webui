@@ -211,6 +211,7 @@ settings = {
     'ban_eos_token': False,
     'add_bos_token': True,
     'enable_thinking': True,
+    'reasoning_effort': 'medium',
     'skip_special_tokens': True,
     'stream': True,
     'static_cache': False,
