@@ -307,7 +307,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
         tools=state['tools'] if 'tools' in state else None,
         tools_in_user_message=False,
         add_generation_prompt=False,
-        reasoning_effort=state['reasoning_effort'])
+        reasoning_effort=state['reasoning_effort']
     )
 
     chat_renderer = partial(
