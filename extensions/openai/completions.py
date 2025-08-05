@@ -414,7 +414,8 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
                             if isinstance(item, dict) and item.get('type') == 'text':
                                 prompt_text += item.get('text', '')
             
-            # Allow empty prompts for image-only requests            body[prompt_str] = prompt_text
+            # Allow empty prompts for image-only requests 
+            body[prompt_str] = prompt_text
         else:
             raise InvalidRequestError("Missing required input", param=prompt_str)
 
