@@ -30,7 +30,8 @@ from extensions.openai.multimodal import (
     inject_image_placeholders,
     is_multimodal_model,
     generate_with_images,
-    generate_with_embeddings
+    generate_with_embeddings,
+    process_unified_images
 )
 
 
@@ -397,24 +398,28 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
 
     prompt_str = 'context' if is_legacy else 'prompt'
 
-    # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
-    if prompt_str not in body:
-        raise InvalidRequestError("Missing required input", param=prompt_str)
+    # Handle both prompt and messages format for unified multimodal support
+    if prompt_str not in body or body[prompt_str] is None:
+        if 'messages' in body:
+            # Convert messages format to prompt for completions endpoint
+            prompt_text = ""
+            for message in body.get('messages', []):
+                if isinstance(message, dict) and 'content' in message:
+                    # Extract text content from multimodal messages
+                    content = message['content']
+                    if isinstance(content, str):
+                        prompt_text += content
+                    elif isinstance(content, list):
+                        for item in content:
+                            if isinstance(item, dict) and item.get('type') == 'text':
+                                prompt_text += item.get('text', '')
+            
+            # Allow empty prompts for image-only requests            body[prompt_str] = prompt_text
+        else:
+            raise InvalidRequestError("Missing required input", param=prompt_str)
 
-    # Handle image_data for multimodal completion
-    image_data_list = body.get('image_data', [])
-    
-    raw_images = []
-    if image_data_list and is_multimodal_model():
-        from extensions.openai.multimodal import decode_base64_image
-        
-        for i, image_url in enumerate(image_data_list):
-            try:
-                if image_url:
-                    image = decode_base64_image(image_url)
-                    raw_images.append(image)
-            except Exception as e:
-                logger.error(f"Error processing image {i+1}: {e}")
+    # Handle images using unified processor (supports both formats)
+    raw_images = process_unified_images(body)
 
     # common params
     generate_params = process_parameters(body, is_legacy=is_legacy)
@@ -431,7 +436,12 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
 
     if not stream:
         prompt_arg = body[prompt_str]
-        if isinstance(prompt_arg, str) or (isinstance(prompt_arg, list) and isinstance(prompt_arg[0], int)):
+        
+        # Handle empty/None prompts (e.g., image-only requests)
+        if prompt_arg is None:
+            prompt_arg = ""
+            
+        if isinstance(prompt_arg, str) or (isinstance(prompt_arg, list) and len(prompt_arg) > 0 and isinstance(prompt_arg[0], int)):
             prompt_arg = [prompt_arg]
 
         resp_list_data = []
