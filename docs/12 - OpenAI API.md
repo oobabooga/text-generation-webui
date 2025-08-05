@@ -85,10 +85,10 @@ curl http://127.0.0.1:5000/v1/chat/completions \
   -d '{
     "messages": [
       {
-        "role": "user", 
+        "role": "user",
         "content": [
           {"type": "text", "text": "What color is this image?"},
-          {"type": "image_url", "image_url": {"url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAIAAAACUFjqAAAAEklEQVR4nGP8z4APMOGVHbHSAEEsAROxCnMTAAAAAElFTkSuQmCC"}}
+          {"type": "image_url", "image_url": {"url": "https://github.com/turboderp-org/exllamav3/blob/master/examples/media/cat.png?raw=true"}}
         ]
       }
     ]
