@@ -307,7 +307,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
         tools=state['tools'] if 'tools' in state else None,
         tools_in_user_message=False,
         add_generation_prompt=False,
-        reasoning_effort=state.get('reasoning_effort', 'medium')
+        reasoning_effort=state['reasoning_effort'])
     )
 
     chat_renderer = partial(
@@ -730,9 +730,9 @@ def generate_search_query(user_message, state):
 
     # Use a minimal state for search query generation but keep the full history
     search_state = state.copy()
-    search_state['max_new_tokens'] = 64
-    search_state['auto_max_new_tokens'] = False
+    search_state['auto_max_new_tokens'] = True
     search_state['enable_thinking'] = False
+    search_state['reasoning_effort'] = 'low'
     search_state['start_with'] = ""
 
     # Generate the full prompt using existing history + augmented message
@@ -741,6 +741,12 @@ def generate_search_query(user_message, state):
     query = ""
     for reply in generate_reply(formatted_prompt, search_state, stopping_strings=[], is_chat=True):
         query = reply
+
+    # Check for thinking block delimiters and extract content after them
+    if "</think>" in query:
+        query = query.rsplit("</think>", 1)[1]
+    elif "<|start|>assistant<|channel|>final<|message|>" in query:
+        query = query.rsplit("<|start|>assistant<|channel|>final<|message|>", 1)[1]
 
     # Strip and remove surrounding quotes if present
     query = query.strip()
