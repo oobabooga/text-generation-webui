@@ -90,7 +90,7 @@ def get_model_metadata(model):
             template = template.replace('eos_token', "'{}'".format(eos_token))
             template = template.replace('bos_token', "'{}'".format(bos_token))
 
-            template = re.sub(r'raise_exception\([^)]*\)', "''", template)
+            template = re.sub(r"\{\{-?\s*raise_exception\(.*?\)\s*-?\}\}", "", template, flags=re.DOTALL)
             template = re.sub(r'{% if add_generation_prompt %}.*', '', template, flags=re.DOTALL)
             model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
             model_settings['instruction_template_str'] = template
@@ -149,7 +149,7 @@ def get_model_metadata(model):
 
                     template = template.replace(k, "'{}'".format(value))
 
-            template = re.sub(r'raise_exception\([^)]*\)', "''", template)
+            template = re.sub(r"\{\{-?\s*raise_exception\(.*?\)\s*-?\}\}", "", template, flags=re.DOTALL)
             template = re.sub(r'{% if add_generation_prompt %}.*', '', template, flags=re.DOTALL)
             model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
             model_settings['instruction_template_str'] = template
