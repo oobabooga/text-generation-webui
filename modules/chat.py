@@ -165,6 +165,7 @@ class LinearTemplateHandler(TemplateHandler):
         suffix = self.get_generation_prefix_suffix(renderer, impersonate)[1]
         if len(suffix) > 0:
             return prompt[:-len(suffix)]
+
         return prompt
 
 
@@ -199,7 +200,10 @@ class ChannelTemplateHandler(TemplateHandler):
         ]
 
     def modify_for_continue(self, prompt, renderer, impersonate=False):
-        # Channels don't need suffix stripping for the continue logic to work.
+        suffix = '<|return|>'
+        if prompt.endswith(suffix):
+            return prompt[:-len(suffix)]
+
         return prompt
 
 
