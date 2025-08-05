@@ -146,19 +146,23 @@ def extract_thinking_block(string):
     alt_end_pos = string.find(ALT_END)
     alt_content_pos = string.find(ALT_CONTENT_START)
 
-    # Check if start tag or end tag is found
     if alt_start_pos != -1 or alt_end_pos != -1:
         if alt_start_pos == -1:
             thought_start = 0
         else:
             thought_start = alt_start_pos + len(ALT_START)
 
+        # If no explicit end tag but content start exists, use content start as end
         if alt_end_pos == -1:
-            thought_end = len(string)
-            content_start = len(string)
+            if alt_content_pos != -1:
+                thought_end = alt_content_pos
+                content_start = alt_content_pos + len(ALT_CONTENT_START)
+            else:
+                thought_end = len(string)
+                content_start = len(string)
         else:
             thought_end = alt_end_pos
-            content_start = alt_content_pos + len(ALT_CONTENT_START) if alt_content_pos != -1 else len(string)
+            content_start = alt_content_pos + len(ALT_CONTENT_START) if alt_content_pos != -1 else alt_end_pos + len(ALT_END)
 
         thinking_content = string[thought_start:thought_end]
         remaining_content = string[content_start:]
