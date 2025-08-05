@@ -26,6 +26,11 @@ class Exllamav3Model:
     def from_pretrained(cls, path_to_model):
         path_to_model = Path(f'{shared.args.model_dir}') / Path(path_to_model)
 
+        # Reset global MMTokenAllocator to prevent token ID corruption when switching models
+        from exllamav3.tokenizer.mm_embedding import global_allocator, FIRST_MM_EMBEDDING_INDEX
+        global_allocator.next_token_index = FIRST_MM_EMBEDDING_INDEX
+        logger.info("Reset MMTokenAllocator for clean multimodal token allocation")
+
         config = Config.from_directory(str(path_to_model))
         model = Model.from_config(config)
 
@@ -116,9 +121,19 @@ class Exllamav3Model:
             if 'image_embeddings' in state and state['image_embeddings']:
                 # Use existing embeddings - this preserves MMEmbedding lifetime
                 image_embeddings = state['image_embeddings']
-                placeholders = "\n".join([ie.text_alias for ie in image_embeddings]) + "\n"
-                prompt = placeholders + prompt
-                logger.info(f"Processing {len(image_embeddings)} pre-computed embedding(s) with native ExLlamaV3")
+                # Handle both prepending and <__media__> placeholder replacement
+                placeholders = [ie.text_alias for ie in image_embeddings]
+                
+                # Check if prompt contains <__media__> placeholders from webui chat
+                if '<__media__>' in prompt:
+                    # WEB CHAT: Replace <__media__> placeholders with actual embedding aliases
+                    for alias in placeholders:
+                        prompt = prompt.replace('<__media__>', alias, 1)
+                    logger.info(f"Replaced {len(placeholders)} <__media__> placeholder(s) with ExLlamaV3 embeddings")
+                else:
+                    # API: Prepend embedding aliases                    combined_placeholders = "\n".join(placeholders)
+                    prompt = combined_placeholders + "\n" + prompt
+                    logger.info(f"Prepended {len(placeholders)} ExLlamaV3 embedding(s) to prompt")
             else:
                 # Fallback: Create embeddings from raw images
                 images_to_process = []
@@ -145,9 +160,20 @@ class Exllamav3Model:
                         for img in images_to_process
                     ]
                     
-                    placeholders = "\n".join([ie.text_alias for ie in image_embeddings]) + "\n"
-                    prompt = placeholders + prompt
-                    logger.info(f"Processing {len(image_embeddings)} image(s) with native ExLlamaV3")
+                    # Handle both prepending and <__media__> placeholder replacement
+                    placeholders = [ie.text_alias for ie in image_embeddings]
+                    
+                    # Check if prompt contains <__media__> placeholders from webui chat
+                    if '<__media__>' in prompt:
+                        # WEB CHAT: Replace <__media__> placeholders with actual embedding aliases
+                        for alias in placeholders:
+                            prompt = prompt.replace('<__media__>', alias, 1)
+                        logger.info(f"Replaced {len(placeholders)} <__media__> placeholder(s) with ExLlamaV3 embeddings")
+                    else:
+                        # API: Prepend embedding aliases (original behavior)
+                        combined_placeholders = "\n".join(placeholders)
+                        prompt = combined_placeholders + "\n" + prompt
+                        logger.info(f"Prepended {len(placeholders)} ExLlamaV3 embedding(s) to prompt")
         
         sampler = ComboSampler(
             rep_p=state.get('repetition_penalty', 1.0),
@@ -204,7 +230,7 @@ class Exllamav3Model:
                         response_text += chunk
                         yield response_text
         finally:
-            # Per ExLlamaV3 author: No cleanup needed. MMEmbedding lifetime is managed by Python.
+            # No cleanup needed. MMEmbedding lifetime is managed by Python.
             # Cache and page table resets are unnecessary and can cause token ID conflicts.
             pass
 
