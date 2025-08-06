@@ -175,7 +175,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
         builtin_tools=None,
         tools=state['tools'] if 'tools' in state else None,
         tools_in_user_message=False,
-        add_generation_prompt=False
+        add_generation_prompt=False,
+        reasoning_effort=state['reasoning_effort']
     )
 
     chat_renderer = partial(
@@ -301,12 +302,19 @@ def generate_chat_prompt(user_input, state, **kwargs):
                     prompt = prompt[:-len(suffix)]
             else:
                 prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
+
+                # Handle GPT-OSS as a special case
+                if '<|channel|>final<|message|>' in state['instruction_template_str']:
+                    prefix = prefix.rstrip("<|channel|>final<|message|>")
+                    if impersonate:
+                        prefix += "<|message|>"
+
                 if state['mode'] == 'chat' and not impersonate:
                     prefix = apply_extensions('bot_prefix', prefix, state)
 
                 prompt += prefix
 
-        if state['mode'] == 'instruct' and not any((_continue, impersonate, state['enable_thinking'])):
+        if state['mode'] == 'instruct' and 'enable_thinking' in state['instruction_template_str'] and not any((_continue, impersonate, state['enable_thinking'])):
             prompt += get_thinking_suppression_string(instruction_template)
 
         return prompt
@@ -458,6 +466,12 @@ def get_stopping_strings(state):
     # Remove redundant items that start with another item
     result = [item for item in stopping_strings if not any(item.startswith(other) and item != other for other in stopping_strings)]
     result = list(set(result))
+
+    # Handle GPT-OSS as a special case
+    if '<|channel|>final<|message|>' in state['instruction_template_str'] and "<|end|>" in result:
+        result.remove("<|end|>")
+        result.append("<|result|>")
+        result = list(set(result))
 
     if shared.args.verbose:
         logger.info("STOPPING_STRINGS=")
@@ -611,9 +625,9 @@ def generate_search_query(user_message, state):
 
     # Use a minimal state for search query generation but keep the full history
     search_state = state.copy()
-    search_state['max_new_tokens'] = 64
-    search_state['auto_max_new_tokens'] = False
+    search_state['auto_max_new_tokens'] = True
     search_state['enable_thinking'] = False
+    search_state['reasoning_effort'] = 'low'
     search_state['start_with'] = ""
 
     # Generate the full prompt using existing history + augmented message
@@ -622,6 +636,12 @@ def generate_search_query(user_message, state):
     query = ""
     for reply in generate_reply(formatted_prompt, search_state, stopping_strings=[], is_chat=True):
         query = reply
+
+    # Check for thinking block delimiters and extract content after them
+    if "</think>" in query:
+        query = query.rsplit("</think>", 1)[1]
+    elif "<|start|>assistant<|channel|>final<|message|>" in query:
+        query = query.rsplit("<|start|>assistant<|channel|>final<|message|>", 1)[1]
 
     # Strip and remove surrounding quotes if present
     query = query.strip()
@@ -642,6 +662,10 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     output = copy.deepcopy(history)
     output = apply_extensions('history', output)
     state = apply_extensions('state', state)
+
+    # Handle GPT-OSS as a special case
+    if '<|channel|>final<|message|>' in state['instruction_template_str']:
+        state['skip_special_tokens'] = False
 
     # Let the jinja2 template handle the BOS token
     if state['mode'] in ['instruct', 'chat-instruct']:
@@ -1174,6 +1198,9 @@ def save_last_chat_state(character, mode, unique_id):
 
 def load_history(unique_id, character, mode):
     p = get_history_file_path(unique_id, character, mode)
+
+    if not p.exists():
+        return {'internal': [], 'visible': [], 'metadata': {}}
 
     f = json.loads(open(p, 'rb').read())
     if 'internal' in f and 'visible' in f:
