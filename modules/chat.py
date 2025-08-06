@@ -307,7 +307,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
                 prompt += prefix
 
-        if state['mode'] == 'instruct' and not any((_continue, impersonate, state['enable_thinking'])):
+        if state['mode'] == 'instruct' and 'enable_thinking' in state['instruction_template_str'] and not any((_continue, impersonate, state['enable_thinking'])):
             prompt += get_thinking_suppression_string(instruction_template)
 
         return prompt
