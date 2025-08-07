@@ -211,7 +211,57 @@ def generate_chat_prompt(user_input, state, **kwargs):
             messages.insert(insert_pos, {"role": "tool", "content": tool_msg})
 
         if assistant_msg:
-            messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
+            # Handle GPT-OSS as a special case
+            if '<|channel|>analysis<|message|>' in assistant_msg or '<|channel|>final<|message|>' in assistant_msg:
+
+                thinking_content = ""
+                final_content = ""
+
+                # Extract analysis content if present
+                if '<|channel|>analysis<|message|>' in assistant_msg:
+                    # Split the message by the analysis tag to isolate the content that follows
+                    parts = assistant_msg.split('<|channel|>analysis<|message|>', 1)
+                    if len(parts) > 1:
+                        # The content is everything after the tag
+                        potential_content = parts[1]
+
+                        # Now, find the end of this content block
+                        analysis_end_tag = '<|end|>'
+                        if analysis_end_tag in potential_content:
+                            thinking_content = potential_content.split(analysis_end_tag, 1)[0].strip()
+                        else:
+                            # Fallback: if no <|end|> tag, stop at the start of the final channel if it exists
+                            final_channel_tag = '<|channel|>final<|message|>'
+                            if final_channel_tag in potential_content:
+                                thinking_content = potential_content.split(final_channel_tag, 1)[0].strip()
+                            else:
+                                thinking_content = potential_content.strip()
+
+                # Extract final content if present
+                final_tag_to_find = '<|channel|>final<|message|>'
+                if final_tag_to_find in assistant_msg:
+                    # Split the message by the final tag to isolate the content that follows
+                    parts = assistant_msg.split(final_tag_to_find, 1)
+                    if len(parts) > 1:
+                        # The content is everything after the tag
+                        potential_content = parts[1]
+
+                        # Now, find the end of this content block
+                        final_end_tag = '<|end|>'
+                        if final_end_tag in potential_content:
+                            final_content = potential_content.split(final_end_tag, 1)[0].strip()
+                        else:
+                            final_content = potential_content.strip()
+
+                # Insert as structured message
+                msg_dict = {"role": "assistant", "content": final_content}
+                if '<|channel|>analysis<|message|>' in assistant_msg:
+                    msg_dict["thinking"] = thinking_content
+
+                messages.insert(insert_pos, msg_dict)
+
+            else:
+                messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
 
         if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
             # Check for user message attachments in metadata
@@ -296,23 +346,42 @@ def generate_chat_prompt(user_input, state, **kwargs):
             if len(suffix) > 0:
                 prompt = prompt[:-len(suffix)]
         else:
-            if _continue:
-                suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
-                if len(suffix) > 0:
-                    prompt = prompt[:-len(suffix)]
+            # Handle GPT-OSS as a special case when continuing
+            if _continue and '<|channel|>final<|message|>' in state['instruction_template_str']:
+                last_message_to_continue = messages[-1]
+                prompt = renderer(messages=messages[:-1])
+
+                # Start the assistant turn wrapper
+                assistant_reply_so_far = "<|start|>assistant"
+
+                if 'thinking' in last_message_to_continue:
+                    assistant_reply_so_far += f"<|channel|>analysis<|message|>{last_message_to_continue['thinking']}<|end|>"
+
+                assistant_reply_so_far += f"<|channel|>final<|message|>{last_message_to_continue.get('content', '')}"
+
+                prompt += assistant_reply_so_far
+
             else:
-                prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
+                prompt = renderer(messages=messages)
+                if _continue:
+                    suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
+                    if len(suffix) > 0:
+                        prompt = prompt[:-len(suffix)]
+                else:
+                    prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
 
-                # Handle GPT-OSS as a special case
-                if '<|channel|>final<|message|>' in state['instruction_template_str']:
-                    prefix = prefix.rstrip("<|channel|>final<|message|>")
-                    if impersonate:
-                        prefix += "<|message|>"
+                    # Handle GPT-OSS as a special case when not continuing
+                    if '<|channel|>final<|message|>' in state['instruction_template_str']:
+                        if prefix.endswith("<|channel|>final<|message|>"):
+                            prefix = prefix[:-len("<|channel|>final<|message|>")]
 
-                if state['mode'] == 'chat' and not impersonate:
-                    prefix = apply_extensions('bot_prefix', prefix, state)
+                        if impersonate:
+                            prefix += "<|message|>"
 
-                prompt += prefix
+                    if state['mode'] == 'chat' and not impersonate:
+                        prefix = apply_extensions('bot_prefix', prefix, state)
+
+                    prompt += prefix
 
         if state['mode'] == 'instruct' and 'enable_thinking' in state['instruction_template_str'] and not any((_continue, impersonate, state['enable_thinking'])):
             prompt += get_thinking_suppression_string(instruction_template)
