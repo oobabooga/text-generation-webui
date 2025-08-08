@@ -1,5 +1,6 @@
 import builtins
 import io
+import re
 
 import requests
 
@@ -60,6 +61,13 @@ def my_open(*args, **kwargs):
             '\n    <script>hljs.addPlugin(new CopyButtonPlugin());</script>'
             f'\n    <script>{ui.global_scope_js}</script>'
             '\n  </head>'
+        )
+
+        file_contents = re.sub(
+            r'@media \(prefers-color-scheme: dark\) \{\s*body \{([^}]*)\}\s*\}',
+            r'body.dark {\1}',
+            file_contents,
+            flags=re.DOTALL
         )
 
         if len(args) > 1 and args[1] == 'rb':

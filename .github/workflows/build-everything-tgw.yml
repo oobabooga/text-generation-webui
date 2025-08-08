@@ -18,7 +18,7 @@ jobs:
     uses: ./.github/workflows/build-portable-release-cuda.yml
     with:
       version: ${{ inputs.version }}
-      config: 'os:windows-2019'
+      config: 'os:windows-2022'
 
   build_release_cuda_linux:
     name: CUDA Linux
@@ -32,7 +32,7 @@ jobs:
     uses: ./.github/workflows/build-portable-release-vulkan.yml
     with:
       version: ${{ inputs.version }}
-      config: 'os:windows-2019'
+      config: 'os:windows-2022'
 
   build_release_vulkan_linux:
     name: Vulkan Linux
@@ -46,7 +46,7 @@ jobs:
     uses: ./.github/workflows/build-portable-release.yml
     with:
       version: ${{ inputs.version }}
-      config: 'os:windows-2019'
+      config: 'os:windows-2022'
 
   build_release_cpu_linux:
     name: CPU Linux

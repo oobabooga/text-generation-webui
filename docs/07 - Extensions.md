@@ -1,8 +1,14 @@
 # Extensions
 
-Extensions are defined by files named `script.py` inside subfolders of `text-generation-webui/extensions`. They are loaded at startup if the folder name is specified after the `--extensions` flag.
+Extensions are defined by files named `script.py` inside subfolders of either:
+- `text-generation-webui/extensions`
+- `text-generation-webui/user_data/extensions`
 
-For instance, `extensions/silero_tts/script.py` gets loaded with `python server.py --extensions silero_tts`.
+They are loaded at startup if the folder name is specified after the `--extensions` flag.
+
+For instance, `extensions/silero_tts/script.py` or `user_data/extensions/silero_tts/script.py` gets loaded with `python server.py --extensions silero_tts`.
+
+**Note:** Extensions in `user_data/extensions/` take priority over those in `extensions/` when both exist with the same name.
 
 ## [text-generation-webui-extensions](https://github.com/oobabooga/text-generation-webui-extensions)
 

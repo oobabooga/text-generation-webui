@@ -5,7 +5,6 @@
 | Shortcut                | Description                                      |
 |-------------------------|--------------------------------------------------|
 | Esc                     | Stop generation                                  |
-| Tab                     | Switch between current tab and Parameters tab    |
 
 #### Chat tab
 
@@ -15,6 +14,6 @@
 | Ctrl + Enter            | Regenerate                                       |
 | Alt + Enter             | Continue                                         |
 | Ctrl + Shift + Backspace| Remove last                                      |
-| Ctrl + Shift + K        | Copy last                                        |
-| Ctrl + Shift + L        | Replace last                                     |
 | Ctrl + Shift + M        | Impersonate                                      |
+| ← (Left Arrow)          | Navigate to previous version of last assistant message |
+| → (Right Arrow)         | Navigate to next version of last assistant message (or regenerate if at latest version) |

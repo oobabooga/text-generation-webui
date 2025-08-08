@@ -1,11 +1,11 @@
 :root {
-    --darker-gray: #202123;
-    --dark-gray: #2A2B32;
-    --light-gray: #373943;
+    --darker-gray: #1C1C1D;
+    --dark-gray: #212125;
+    --light-gray: #2C2E34;
     --light-theme-gray: #f9fbff;
     --border-color-dark: #525252;
     --header-width: 112px;
-    --selected-item-color-dark: #2E2F38;
+    --selected-item-color-dark: #282930;
 }
 
 @font-face {
@@ -53,13 +53,17 @@ div.svelte-iyf88w {
 }
 
 .refresh-button {
-    max-width: 4.4em;
+    max-width: none;
     min-width: 2.2em !important;
     height: 39.594px;
     align-self: end;
     line-height: 1em;
     border-radius: 0.375rem;
     flex: none;
+}
+
+.refresh-button-medium {
+    max-width: 4.4em;
 }
 
 .refresh-button-small {
@@ -93,11 +97,11 @@ ol li p, ul li p {
     display: inline-block;
 }
 
-#chat-tab, #default-tab, #notebook-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab {
+#notebook-parent-tab, #chat-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab, #character-tab {
     border: 0;
 }
 
-#default-tab, #notebook-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab {
+#notebook-parent-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab, #character-tab {
     padding: 1rem;
 }
 
@@ -163,15 +167,15 @@ gradio-app > :first-child {
 }
 
 .textbox_default textarea {
-    height: calc(100dvh - 201px);
+    height: calc(100dvh - 202px);
 }
 
 .textbox_default_output textarea {
-    height: calc(100dvh - 117px);
+    height: calc(100dvh - 118px);
 }
 
 .textbox textarea {
-    height: calc(100dvh - 172px);
+    height: calc(100dvh - 145px)
 }
 
 .textbox_logits textarea {
@@ -265,7 +269,7 @@ button {
 
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb,
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgb(255 255 255 / 10%);
+    background: rgb(255 255 255 / 6.25%);
     border-radius: 10px;
 }
 
@@ -303,7 +307,7 @@ audio {
 }
 
 #notebook-token-counter {
-    top: calc(100dvh - 171px) !important;
+    top: calc(100dvh - 172px) !important;
 }
 
 #default-token-counter span, #notebook-token-counter span {
@@ -361,10 +365,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     gap: 0;
 }
 
-#chat-tab button#Generate, #chat-tab button#stop {
-    width: 89.3438px !important;
-}
-
 #chat-tab button, #notebook-tab button, #default-tab button {
     min-width: 0 !important;
 }
@@ -417,6 +417,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     text-align: start;
     padding-left: 1rem;
     padding-right: 1rem;
+    contain: layout;
 }
 
 .chat .message .timestamp {
@@ -664,8 +665,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     display: none;
     position: absolute;
     background-color: transparent;
-    left: -2px;
-    top: -5px;
+    left: 23px;
+    top: -25px;
     padding: var(--block-padding);
 }
 
@@ -741,14 +742,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     justify-content: space-between;
     margin: 0 !important;
     height: 36px;
+    border-color: transparent !important;
 }
 
 .hover-menu button:not(#clear-history-confirm) {
     border-bottom: 0 !important;
-}
-
-.hover-menu button:not(#clear-history-confirm):last-child {
-    border-bottom: var(--button-border-width) solid var(--border-color-primary) !important;
 }
 
 .hover-menu button:hover {
@@ -760,26 +758,30 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #show-controls {
+    background-color: white;
+    border-color: transparent !important;
     height: 36px;
-    border-top: 1px solid var(--border-color-dark) !important;
-    border-left: 1px solid var(--border-color-dark) !important;
-    border-right: 1px solid var(--border-color-dark) !important;
     border-radius: 0;
     border-bottom: 0 !important;
-    background-color: var(--darker-gray);
     padding-top: 3px;
     padding-left: 4px;
     display: flex;
+    font-weight: normal;
+}
+
+.dark #show-controls {
+    background-color: var(--darker-gray);
 }
 
 #show-controls label {
     display: flex;
     flex-direction: row-reverse;
-    font-weight: bold;
     justify-content: start;
     width: 100%;
     padding-right: 12px;
     gap: 10px;
+    font-weight: 600;
+    color: var(--button-secondary-text-color);
 }
 
 #show-controls label input {
@@ -824,7 +826,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #chat-input-row {
     padding: 1rem;
-    padding-top: 0;
 }
 
 #chat-input-row.bigchat {
@@ -900,6 +901,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     flex-shrink: 1;
 }
 
+#search_chat {
+    padding-right: 0.5rem;
+}
+
 #search_chat > :nth-child(2) > :first-child {
     display: none;
 }
@@ -920,7 +925,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: fixed;
     bottom: 0;
     left: 0;
-    width: calc(100vw / 2 - 600px);
+    width: calc(0.5 * (100vw - min(100vw, 48rem) - (120px - var(--header-width))));
     z-index: 10000;
 }
 
@@ -1015,12 +1020,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: 100%;
     justify-content: center;
     gap: 9px;
+    padding-right: 0.5rem;
 }
 
 #past-chats-row,
 #chat-controls {
     width: 260px;
     padding: 0.5rem;
+    padding-right: 0;
     height: calc(100dvh - 16px);
     flex-shrink: 0;
     box-sizing: content-box;
@@ -1284,6 +1291,18 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     opacity: 1;
 }
 
+/* Disable message actions and version navigation hover effects during generation */
+._generating :is(.message, .user-message, .assistant-message):hover :is(.message-actions, .version-navigation) {
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
+/* Disable message actions and version navigation hover effects during scrolling */
+.scrolling :is(.message, .user-message, .assistant-message):hover :is(.message-actions, .version-navigation) {
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
 .footer-button svg {
     stroke: rgb(156 163 175);
     transition: stroke 0.2s;
@@ -1332,7 +1351,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .dark .thinking-block {
-    background-color: var(--darker-gray);
+    background-color: transparent;
+    border: 1px solid var(--input-border-color);
 }
 
 .thinking-header {
@@ -1576,5 +1596,99 @@ button:focus {
 
 /* Fix extra gaps for hidden elements on the right sidebar */
 .svelte-sa48pu.stretch:has(> .hidden:only-child) {
+    display: none;
+}
+
+.delete-container {
+    position: absolute;
+    right: 8px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    margin-left: 0;
+}
+
+.chat-label-with-delete {
+    position: relative;
+    padding-right: 60px;
+}
+
+.trash-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 2px;
+    opacity: 0.7;
+}
+
+.cancel-btn {
+    border: none;
+    background: #ef4444;
+    color: white;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    border-radius: 2px;
+    font-family: monospace;
+    font-size: 12px;
+    align-items: center;
+    justify-content: center;
+    display: none;
+}
+
+.confirm-btn {
+    border: none;
+    background: #22c55e;
+    color: white;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    border-radius: 2px;
+    font-family: monospace;
+    font-size: 12px;
+    align-items: center;
+    justify-content: center;
+    display: none;
+}
+
+#character-context textarea {
+    height: calc((100vh - 350px) * 2/3) !important;
+    min-height: 90px !important;
+}
+
+#character-greeting textarea {
+    height: calc((100vh - 350px) * 1/3) !important;
+    min-height: 90px !important;
+}
+
+#user-description textarea {
+    height: calc(100vh - 231px) !important;
+    min-height: 90px !important;
+}
+
+#instruction-template-str textarea,
+#chat-template-str textarea {
+    height: calc(100vh - 300px) !important;
+    min-height: 90px !important;
+}
+
+#textbox-notebook span {
+    display: none;
+}
+
+.chat-parent {
+    /* Optimize for scrolling performance */
+    will-change: scroll-position;
+    contain: layout style paint;
+
+    /* Ensure GPU acceleration */
+    transform: translateZ(0);
+
+    /* Prevent layout shifts */
+    overflow-anchor: none;
+}
+
+#chat-input span {
     display: none;
 }

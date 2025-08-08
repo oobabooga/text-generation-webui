@@ -27,9 +27,7 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
     this.style.marginBottom = chatVisible ? "0px" : "19px";
 
     if (chatVisible && !showControlsChecked) {
-      document.querySelectorAll(
-        "#chat-tab > div > :nth-child(1), #chat-tab > div > :nth-child(3), #chat-tab > div > :nth-child(4), #extensions"
-      ).forEach(element => {
+      document.querySelectorAll("#extensions").forEach(element => {
         element.style.display = "none";
       });
     }
@@ -145,22 +143,41 @@ typingSibling.insertBefore(typing, typingSibling.childNodes[2]);
 const targetElement = document.getElementById("chat").parentNode.parentNode.parentNode;
 targetElement.classList.add("pretty_scrollbar");
 targetElement.classList.add("chat-parent");
-let isScrolled = false;
+window.isScrolled = false;
+let scrollTimeout;
 
 targetElement.addEventListener("scroll", function() {
   let diff = targetElement.scrollHeight - targetElement.clientHeight;
-  if(Math.abs(targetElement.scrollTop - diff) <= 10 || diff == 0) {
-    isScrolled = false;
-  } else {
-    isScrolled = true;
+  let isAtBottomNow = Math.abs(targetElement.scrollTop - diff) <= 10 || diff == 0;
+
+  // Add scrolling class to disable hover effects
+  if (window.isScrolled || !isAtBottomNow) {
+    targetElement.classList.add("scrolling");
   }
 
-  doSyntaxHighlighting();
+  if(isAtBottomNow) {
+    window.isScrolled = false;
+  } else {
+    window.isScrolled = true;
+  }
 
+  // Clear previous timeout and set new one
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    targetElement.classList.remove("scrolling");
+    doSyntaxHighlighting(); // Only run after scrolling stops
+  }, 150);
 });
 
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
+  // Check if this is just the scrolling class being toggled
+  const isScrollingClassOnly = mutations.every(mutation =>
+    mutation.type === "attributes" &&
+    mutation.attributeName === "class" &&
+    mutation.target === targetElement
+  );
+
   if (targetElement.classList.contains("_generating")) {
     typing.parentNode.classList.add("visible-dots");
     document.getElementById("stop").style.display = "flex";
@@ -173,8 +190,11 @@ const observer = new MutationObserver(function(mutations) {
 
   doSyntaxHighlighting();
 
-  if (!isScrolled && targetElement.scrollTop !== targetElement.scrollHeight) {
-    targetElement.scrollTop = targetElement.scrollHeight;
+  if (!window.isScrolled && !isScrollingClassOnly) {
+    const maxScroll = targetElement.scrollHeight - targetElement.clientHeight;
+    if (maxScroll > 0 && targetElement.scrollTop < maxScroll - 1) {
+      targetElement.scrollTop = maxScroll;
+    }
   }
 
   const chatElement = document.getElementById("chat");
@@ -183,10 +203,11 @@ const observer = new MutationObserver(function(mutations) {
     const lastChild = messagesContainer?.lastElementChild;
     const prevSibling = lastChild?.previousElementSibling;
     if (lastChild && prevSibling) {
-      lastChild.style.setProperty("margin-bottom",
-        `max(0px, calc(max(70vh, 100vh - ${prevSibling.offsetHeight}px - 84px) - ${lastChild.offsetHeight}px))`,
-        "important"
-      );
+      // Add padding to the messages container to create room for the last message.
+      // The purpose of this is to avoid constant scrolling during streaming in
+      // instruct mode.
+      const bufferHeight = Math.max(0, Math.max(0.7 * window.innerHeight, window.innerHeight - prevSibling.offsetHeight - 84) - lastChild.offsetHeight);
+      messagesContainer.style.paddingBottom = `${bufferHeight}px`;
     }
   }
 });
@@ -222,8 +243,15 @@ function doSyntaxHighlighting() {
   if (messageBodies.length > 0) {
     observer.disconnect();
 
-    messageBodies.forEach((messageBody) => {
+    let hasSeenVisible = false;
+
+    // Go from last message to first
+    for (let i = messageBodies.length - 1; i >= 0; i--) {
+      const messageBody = messageBodies[i];
+
       if (isElementVisibleOnScreen(messageBody)) {
+        hasSeenVisible = true;
+
         // Handle both code and math in a single pass through each message
         const codeBlocks = messageBody.querySelectorAll("pre code:not([data-highlighted])");
         codeBlocks.forEach((codeBlock) => {
@@ -240,8 +268,12 @@ function doSyntaxHighlighting() {
             { left: "\\[", right: "\\]", display: true },
           ],
         });
+      } else if (hasSeenVisible) {
+        // We've seen visible messages but this one is not visible
+        // Since we're going from last to first, we can break
+        break;
       }
-    });
+    }
 
     observer.observe(targetElement, config);
   }
@@ -555,6 +587,7 @@ function moveToChatTab() {
 
   newParent.insertBefore(grandParent, newParent.children[newPosition]);
   document.getElementById("save-character").style.display = "none";
+  document.getElementById("restore-character").style.display = "none";
 }
 
 function restoreOriginalPosition() {
@@ -566,6 +599,7 @@ function restoreOriginalPosition() {
     }
 
     document.getElementById("save-character").style.display = "";
+    document.getElementById("restore-character").style.display = "";
     movedElement.style.display = "";
     movedElement.children[0].style.minWidth = "";
   }
@@ -766,11 +800,43 @@ initializeSidebars();
 
 // Add click event listeners to toggle buttons
 pastChatsToggle.addEventListener("click", () => {
+  const isCurrentlyOpen = !pastChatsRow.classList.contains("sidebar-hidden");
   toggleSidebar(pastChatsRow, pastChatsToggle);
+
+  // On desktop, open/close both sidebars at the same time
+  if (!isMobile()) {
+    if (isCurrentlyOpen) {
+      // If we just closed the left sidebar, also close the right sidebar
+      if (!chatControlsRow.classList.contains("sidebar-hidden")) {
+        toggleSidebar(chatControlsRow, chatControlsToggle, true);
+      }
+    } else {
+      // If we just opened the left sidebar, also open the right sidebar
+      if (chatControlsRow.classList.contains("sidebar-hidden")) {
+        toggleSidebar(chatControlsRow, chatControlsToggle, false);
+      }
+    }
+  }
 });
 
 chatControlsToggle.addEventListener("click", () => {
+  const isCurrentlyOpen = !chatControlsRow.classList.contains("sidebar-hidden");
   toggleSidebar(chatControlsRow, chatControlsToggle);
+
+  // On desktop, open/close both sidebars at the same time
+  if (!isMobile()) {
+    if (isCurrentlyOpen) {
+      // If we just closed the right sidebar, also close the left sidebar
+      if (!pastChatsRow.classList.contains("sidebar-hidden")) {
+        toggleSidebar(pastChatsRow, pastChatsToggle, true);
+      }
+    } else {
+      // If we just opened the right sidebar, also open the left sidebar
+      if (pastChatsRow.classList.contains("sidebar-hidden")) {
+        toggleSidebar(pastChatsRow, pastChatsToggle, false);
+      }
+    }
+  }
 });
 
 navigationToggle.addEventListener("click", () => {
@@ -884,7 +950,7 @@ function setupPasteHandler() {
   textbox.addEventListener("paste", async (event) => {
     const text = event.clipboardData?.getData("text");
 
-    if (text && text.length > MAX_PLAIN_TEXT_LENGTH) {
+    if (text && text.length > MAX_PLAIN_TEXT_LENGTH && document.querySelector("#paste_to_attachment input[data-testid=\"checkbox\"]")?.checked) {
       event.preventDefault();
 
       const file = new File([text], "pasted_text.txt", {
@@ -915,3 +981,87 @@ document.querySelector("#chat-input .upload-button").title = "Upload text files,
 
 // Activate web search
 document.getElementById("web-search").title = "Search the internet with DuckDuckGo";
+
+//------------------------------------------------
+// Inline icons for deleting past chats
+//------------------------------------------------
+
+function addMiniDeletes() {
+  document.querySelectorAll("#past-chats label:not(.has-delete)").forEach(label => {
+    const container = document.createElement("span");
+    container.className = "delete-container";
+
+    label.classList.add("chat-label-with-delete");
+
+    const trashBtn = document.createElement("button");
+    trashBtn.innerHTML = "🗑️";
+    trashBtn.className = "trash-btn";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.innerHTML = "✕";
+    cancelBtn.className = "cancel-btn";
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.innerHTML = "✓";
+    confirmBtn.className = "confirm-btn";
+
+    label.addEventListener("mouseenter", () => {
+      container.style.opacity = "1";
+    });
+
+    label.addEventListener("mouseleave", () => {
+      container.style.opacity = "0";
+    });
+
+    trashBtn.onclick = (e) => {
+      e.stopPropagation();
+      label.querySelector("input").click();
+      document.querySelector("#delete_chat").click();
+      trashBtn.style.display = "none";
+      cancelBtn.style.display = "flex";
+      confirmBtn.style.display = "flex";
+    };
+
+    cancelBtn.onclick = (e) => {
+      e.stopPropagation();
+      document.querySelector("#delete_chat-cancel").click();
+      resetButtons();
+    };
+
+    confirmBtn.onclick = (e) => {
+      e.stopPropagation();
+      document.querySelector("#delete_chat-confirm").click();
+      resetButtons();
+    };
+
+    function resetButtons() {
+      trashBtn.style.display = "inline";
+      cancelBtn.style.display = "none";
+      confirmBtn.style.display = "none";
+    }
+
+    container.append(trashBtn, cancelBtn, confirmBtn);
+    label.appendChild(container);
+    label.classList.add("has-delete");
+  });
+}
+
+new MutationObserver(() => addMiniDeletes()).observe(
+  document.querySelector("#past-chats"),
+  {childList: true, subtree: true}
+);
+addMiniDeletes();
+
+//------------------------------------------------
+// Fix autoscroll after fonts load
+//------------------------------------------------
+document.fonts.addEventListener("loadingdone", (event) => {
+  setTimeout(() => {
+    if (!window.isScrolled) {
+      const maxScroll = targetElement.scrollHeight - targetElement.clientHeight;
+      if (targetElement.scrollTop < maxScroll - 5) {
+        targetElement.scrollTop = maxScroll;
+      }
+    }
+  }, 50);
+});

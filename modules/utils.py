@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from modules import github, shared
+from modules import shared
 from modules.logging_colors import logger
 
 
@@ -53,7 +53,7 @@ def delete_file(fname):
 
 
 def current_time():
-    return f"{datetime.now().strftime('%Y-%m-%d-%H%M%S')}"
+    return f"{datetime.now().strftime('%Y-%m-%d_%Hh%Mm%Ss')}"
 
 
 def atoi(text):
@@ -159,10 +159,12 @@ def get_available_presets():
 
 
 def get_available_prompts():
-    prompt_files = list(Path('user_data/prompts').glob('*.txt'))
+    notebook_dir = Path('user_data/logs/notebook')
+    notebook_dir.mkdir(parents=True, exist_ok=True)
+
+    prompt_files = list(notebook_dir.glob('*.txt'))
     sorted_files = sorted(prompt_files, key=lambda x: x.stat().st_mtime, reverse=True)
     prompts = [file.stem for file in sorted_files]
-    prompts.append('None')
     return prompts
 
 
@@ -181,9 +183,18 @@ def get_available_instruction_templates():
 
 
 def get_available_extensions():
-    extensions = sorted(set(map(lambda x: x.parts[1], Path('extensions').glob('*/script.py'))), key=natural_keys)
-    extensions = [v for v in extensions if v not in github.new_extensions]
-    return extensions
+    # User extensions (higher priority)
+    user_extensions = []
+    user_ext_path = Path('user_data/extensions')
+    if user_ext_path.exists():
+        user_exts = map(lambda x: x.parts[2], user_ext_path.glob('*/script.py'))
+        user_extensions = sorted(set(user_exts), key=natural_keys)
+
+    # System extensions (excluding those overridden by user extensions)
+    system_exts = map(lambda x: x.parts[1], Path('extensions').glob('*/script.py'))
+    system_extensions = sorted(set(system_exts) - set(user_extensions), key=natural_keys)
+
+    return user_extensions + system_extensions
 
 
 def get_available_loras():

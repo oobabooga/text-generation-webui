@@ -1,4 +1,5 @@
 import importlib
+import math
 import queue
 import threading
 import traceback
@@ -43,6 +44,7 @@ def create_ui():
                             shared.gradio['gpu_layers'] = gr.Slider(label="gpu-layers", minimum=0, maximum=get_initial_gpu_layers_max(), step=1, value=shared.args.gpu_layers, info='Must be greater than 0 for the GPU to be used. ⚠️ Lower this value if you can\'t load the model.')
                             shared.gradio['ctx_size'] = gr.Slider(label='ctx-size', minimum=256, maximum=131072, step=256, value=shared.args.ctx_size, info='Context length. Common values: 4096, 8192, 16384, 32768, 65536, 131072. ⚠️ Lower this value if you can\'t load the model.')
                             shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info='Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7')
+                            shared.gradio['attn_implementation'] = gr.Dropdown(label="attn-implementation", choices=['sdpa', 'eager', 'flash_attention_2'], value=shared.args.attn_implementation, info='Attention implementation.')
                             shared.gradio['cache_type'] = gr.Dropdown(label="cache-type", choices=['fp16', 'q8_0', 'q4_0', 'fp8', 'q8', 'q7', 'q6', 'q5', 'q4', 'q3', 'q2'], value=shared.args.cache_type, allow_custom_value=True, info='Valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8. For ExLlamaV3, you can type custom combinations for separate k/v bits (e.g. q4_q8).')
                         with gr.Column():
                             shared.gradio['vram_info'] = gr.HTML(value=get_initial_vram_info())
@@ -50,8 +52,6 @@ def create_ui():
                             shared.gradio['streaming_llm'] = gr.Checkbox(label="streaming-llm", value=shared.args.streaming_llm, info='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
                             shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
                             shared.gradio['load_in_4bit'] = gr.Checkbox(label="load-in-4bit", value=shared.args.load_in_4bit)
-                            shared.gradio['torch_compile'] = gr.Checkbox(label="torch-compile", value=shared.args.torch_compile, info='Compile the model with torch.compile for improved performance.')
-                            shared.gradio['use_flash_attention_2'] = gr.Checkbox(label="use_flash_attention_2", value=shared.args.use_flash_attention_2, info='Set use_flash_attention_2=True while loading the model.')
                             shared.gradio['use_double_quant'] = gr.Checkbox(label="use_double_quant", value=shared.args.use_double_quant, info='Used by load-in-4bit.')
                             shared.gradio['autosplit'] = gr.Checkbox(label="autosplit", value=shared.args.autosplit, info='Automatically split the model tensors across the available GPUs.')
                             shared.gradio['enable_tp'] = gr.Checkbox(label="enable_tp", value=shared.args.enable_tp, info='Enable Tensor Parallelism (TP).')
@@ -62,8 +62,8 @@ def create_ui():
                             # Speculative decoding
                             with gr.Accordion("Speculative decoding", open=False, elem_classes='tgw-accordion') as shared.gradio['speculative_decoding_accordion']:
                                 with gr.Row():
-                                    shared.gradio['model_draft'] = gr.Dropdown(label="model-draft", choices=utils.get_available_models(), value=lambda: shared.args.model_draft, elem_classes='slim-dropdown', info='Draft model. Speculative decoding only works with models sharing the same vocabulary (e.g., same model family).', interactive=not mu)
-                                    ui.create_refresh_button(shared.gradio['model_draft'], lambda: None, lambda: {'choices': utils.get_available_models()}, 'refresh-button', interactive=not mu)
+                                    shared.gradio['model_draft'] = gr.Dropdown(label="model-draft", choices=['None'] + utils.get_available_models(), value=lambda: shared.args.model_draft, elem_classes='slim-dropdown', info='Draft model. Speculative decoding only works with models sharing the same vocabulary (e.g., same model family).', interactive=not mu)
+                                    ui.create_refresh_button(shared.gradio['model_draft'], lambda: None, lambda: {'choices': ['None'] + utils.get_available_models()}, 'refresh-button', interactive=not mu)
 
                                 shared.gradio['gpu_layers_draft'] = gr.Slider(label="gpu-layers-draft", minimum=0, maximum=256, value=shared.args.gpu_layers_draft, info='Number of layers to offload to the GPU for the draft model.')
                                 shared.gradio['draft_max'] = gr.Number(label="draft-max", precision=0, step=1, value=shared.args.draft_max, info='Number of tokens to draft for speculative decoding. Recommended value: 4.')
@@ -95,7 +95,6 @@ def create_ui():
                                 shared.gradio['no_mmap'] = gr.Checkbox(label="no-mmap", value=shared.args.no_mmap)
                                 shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
                                 shared.gradio['numa'] = gr.Checkbox(label="numa", value=shared.args.numa, info='NUMA support can help on some systems with non-uniform memory access.')
-                                shared.gradio['use_eager_attention'] = gr.Checkbox(label="use_eager_attention", value=shared.args.use_eager_attention, info='Set attn_implementation= eager while loading the model.')
                                 shared.gradio['bf16'] = gr.Checkbox(label="bf16", value=shared.args.bf16)
                                 shared.gradio['no_flash_attn'] = gr.Checkbox(label="no_flash_attn", value=shared.args.no_flash_attn)
                                 shared.gradio['no_xformers'] = gr.Checkbox(label="no_xformers", value=shared.args.no_xformers)
@@ -129,13 +128,17 @@ def create_ui():
 
 
 def create_event_handlers():
+    mu = shared.args.multi_user
+    if mu:
+        return
+
     shared.gradio['loader'].change(loaders.make_loader_params_visible, gradio('loader'), gradio(loaders.get_all_params()), show_progress=False)
 
     # In this event handler, the interface state is read and updated
     # with the model defaults (if any), and then the model is loaded
     shared.gradio['model_menu'].change(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        handle_load_model_event_initial, gradio('model_menu', 'interface_state'), gradio(ui.list_interface_input_elements()) + gradio('interface_state'), show_progress=False).then(
+        handle_load_model_event_initial, gradio('model_menu', 'interface_state'), gradio(ui.list_interface_input_elements()) + gradio('interface_state') + gradio('vram_info'), show_progress=False).then(
         partial(load_model_wrapper, autoload=False), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=True).success(
         handle_load_model_event_final, gradio('truncation_length', 'loader', 'interface_state'), gradio('truncation_length', 'filter_by_loader'), show_progress=False)
 
@@ -174,7 +177,12 @@ def create_event_handlers():
 
 
 def load_model_wrapper(selected_model, loader, autoload=False):
-    settings = get_model_metadata(selected_model)
+    try:
+        settings = get_model_metadata(selected_model)
+    except FileNotFoundError:
+        exc = traceback.format_exc()
+        yield exc.replace('\n', '\n\n')
+        return
 
     if not autoload:
         yield "### {}\n\n- Settings updated: Click \"Load\" to load the model\n- Max sequence length: {}".format(selected_model, settings['truncation_length_info'])
@@ -239,7 +247,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
 
         model, branch = downloader.sanitize_model_and_branch_names(repo_id, None)
         yield "Getting download links from Hugging Face..."
-        links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=False, specific_file=specific_file)
+        links, sha256, is_lora, is_llamacpp, file_sizes = downloader.get_download_links_from_huggingface(model, branch, text_only=False, specific_file=specific_file)
 
         if not links:
             yield "No files found to download for the given model/criteria."
@@ -249,17 +257,34 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
         # Check for multiple GGUF files
         gguf_files = [link for link in links if link.lower().endswith('.gguf')]
         if len(gguf_files) > 1 and not specific_file:
-            output = "Multiple GGUF files found. Please copy one of the following filenames to the 'File name' field:\n\n```\n"
-            for link in gguf_files:
-                output += f"{Path(link).name}\n"
+            # Sort by size in ascending order
+            gguf_data = []
+            for i, link in enumerate(links):
+                if link.lower().endswith('.gguf'):
+                    file_size = file_sizes[i]
+                    gguf_data.append((file_size, link))
+
+            gguf_data.sort(key=lambda x: x[0])
+
+            output = "Multiple GGUF files found. Please copy one of the following filenames to the 'File name' field above:\n\n```\n"
+            for file_size, link in gguf_data:
+                size_str = format_file_size(file_size)
+                output += f"{size_str} - {Path(link).name}\n"
+
             output += "```"
             yield output
             return
 
         if return_links:
+            # Sort by size in ascending order
+            file_data = list(zip(file_sizes, links))
+            file_data.sort(key=lambda x: x[0])
+
             output = "```\n"
-            for link in links:
-                output += f"{Path(link).name}" + "\n"
+            for file_size, link in file_data:
+                size_str = format_file_size(file_size)
+                output += f"{size_str} - {Path(link).name}\n"
+
             output += "```"
             yield output
             return
@@ -373,7 +398,8 @@ def handle_load_model_event_initial(model, state):
     output = ui.apply_interface_values(state)
     update_model_parameters(state)  # This updates the command-line flags
 
-    return output + [state]
+    vram_info = state.get('vram_info', "<div id=\"vram-info\"'>Estimated VRAM to load the model:</div>")
+    return output + [state] + [vram_info]
 
 
 def handle_load_model_event_final(truncation_length, loader, state):
@@ -384,3 +410,19 @@ def handle_load_model_event_final(truncation_length, loader, state):
 def handle_unload_model_click():
     unload_model()
     return "Model unloaded"
+
+
+def format_file_size(size_bytes):
+    """Convert bytes to human readable format with 2 decimal places for GB and above"""
+    if size_bytes == 0:
+        return "0 B"
+
+    size_names = ["B", "KB", "MB", "GB", "TB"]
+    i = int(math.floor(math.log(size_bytes, 1024)))
+    p = math.pow(1024, i)
+    s = size_bytes / p
+
+    if i >= 3:  # GB or TB
+        return f"{s:.2f} {size_names[i]}"
+    else:
+        return f"{s:.1f} {size_names[i]}"

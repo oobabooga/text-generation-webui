@@ -1,6 +1,6 @@
 ## OpenAI compatible API
 
-The main API for this project is meant to be a drop-in replacement to the OpenAI API, including Chat and Completions endpoints. 
+The main API for this project is meant to be a drop-in replacement to the OpenAI API, including Chat and Completions endpoints.
 
 * It is 100% offline and private.
 * It doesn't create any logs.
@@ -30,10 +30,10 @@ curl http://127.0.0.1:5000/v1/completions \
   -H "Content-Type: application/json" \
   -d '{
     "prompt": "This is a cake recipe:\n\n1.",
-    "max_tokens": 200,
-    "temperature": 1,
-    "top_p": 0.9,
-    "seed": 10
+    "max_tokens": 512,
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20
   }'
 ```
 
@@ -51,7 +51,9 @@ curl http://127.0.0.1:5000/v1/chat/completions \
         "content": "Hello!"
       }
     ],
-    "mode": "instruct"
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20
   }'
 ```
 
@@ -67,8 +69,11 @@ curl http://127.0.0.1:5000/v1/chat/completions \
         "content": "Hello! Who are you?"
       }
     ],
-    "mode": "chat",
-    "character": "Example"
+    "mode": "chat-instruct",
+    "character": "Example",
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20
   }'
 ```
 
@@ -84,7 +89,9 @@ curl http://127.0.0.1:5000/v1/chat/completions \
         "content": "Hello!"
       }
     ],
-    "mode": "instruct",
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20,
     "stream": true
   }'
 ```
@@ -125,10 +132,11 @@ curl -k http://127.0.0.1:5000/v1/internal/model/list \
 curl -k http://127.0.0.1:5000/v1/internal/model/load \
   -H "Content-Type: application/json" \
   -d '{
-    "model_name": "model_name",
+    "model_name": "Qwen_Qwen3-0.6B-Q4_K_M.gguf",
     "args": {
-      "load_in_4bit": true,
-      "n_gpu_layers": 12
+      "ctx_size": 32768,
+      "flash_attn": true,
+      "cache_type": "q8_0"
     }
   }'
 ```
@@ -150,9 +158,10 @@ while True:
     user_message = input("> ")
     history.append({"role": "user", "content": user_message})
     data = {
-        "mode": "chat",
-        "character": "Example",
-        "messages": history
+        "messages": history,
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "top_k": 20
     }
 
     response = requests.post(url, headers=headers, json=data, verify=False)
@@ -182,9 +191,11 @@ while True:
     user_message = input("> ")
     history.append({"role": "user", "content": user_message})
     data = {
-        "mode": "instruct",
         "stream": True,
-        "messages": history
+        "messages": history,
+        "temperature": 0.6,
+        "top_p": 0.95,
+        "top_k": 20
     }
 
     stream_response = requests.post(url, headers=headers, json=data, verify=False, stream=True)
@@ -218,10 +229,10 @@ headers = {
 
 data = {
     "prompt": "This is a cake recipe:\n\n1.",
-    "max_tokens": 200,
-    "temperature": 1,
-    "top_p": 0.9,
-    "seed": 10,
+    "max_tokens": 512,
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20,
     "stream": True,
 }
 

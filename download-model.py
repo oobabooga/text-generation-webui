@@ -82,6 +82,7 @@ class ModelDownloader:
 
         links = []
         sha256 = []
+        file_sizes = []
         classifications = []
         has_pytorch = False
         has_pt = False
@@ -118,8 +119,14 @@ class ModelDownloader:
                 is_tokenizer = re.match(r"(tokenizer|ice|spiece).*\.model", fname) or is_tiktoken
                 is_text = re.match(r".*\.(txt|json|py|md)", fname) or is_tokenizer
                 if any((is_pytorch, is_safetensors, is_pt, is_gguf, is_tokenizer, is_text)):
+                    file_size = 0
                     if 'lfs' in dict[i]:
                         sha256.append([fname, dict[i]['lfs']['oid']])
+                        file_size = dict[i]['lfs'].get('size', 0)
+                    elif 'size' in dict[i]:
+                        file_size = dict[i]['size']
+
+                    file_sizes.append(file_size)
 
                     if is_text:
                         links.append(f"{base}/{model}/resolve/{branch}/{fname}")
@@ -152,6 +159,7 @@ class ModelDownloader:
             for i in range(len(classifications) - 1, -1, -1):
                 if classifications[i] in ['pytorch', 'pt', 'gguf']:
                     links.pop(i)
+                    file_sizes.pop(i)
 
         # For GGUF, try to download only the Q4_K_M if no specific file is specified.
         if has_gguf and specific_file is None:
@@ -164,13 +172,15 @@ class ModelDownloader:
                 for i in range(len(classifications) - 1, -1, -1):
                     if 'q4_k_m' not in links[i].lower():
                         links.pop(i)
+                        file_sizes.pop(i)
             else:
                 for i in range(len(classifications) - 1, -1, -1):
                     if links[i].lower().endswith('.gguf'):
                         links.pop(i)
+                        file_sizes.pop(i)
 
         is_llamacpp = has_gguf and specific_file is not None
-        return links, sha256, is_lora, is_llamacpp
+        return links, sha256, is_lora, is_llamacpp, file_sizes
 
     def get_output_folder(self, model, branch, is_lora, is_llamacpp=False, model_dir=None):
         if model_dir:
@@ -396,7 +406,7 @@ if __name__ == '__main__':
         sys.exit()
 
     # Get the download links from Hugging Face
-    links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(
+    links, sha256, is_lora, is_llamacpp, file_sizes = downloader.get_download_links_from_huggingface(
         model, branch, text_only=args.text_only, specific_file=specific_file, exclude_pattern=exclude_pattern
     )
 

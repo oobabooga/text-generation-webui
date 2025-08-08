@@ -95,11 +95,20 @@ function startEditing(messageElement, messageBody, isUserMessage) {
   editingInterface.textarea.focus();
   editingInterface.textarea.setSelectionRange(rawText.length, rawText.length);
 
+  // Temporarily mark as scrolled to prevent auto-scroll
+  const wasScrolled = window.isScrolled;
+  window.isScrolled = true;
+
   // Scroll the textarea into view
   editingInterface.textarea.scrollIntoView({
     behavior: "smooth",
     block: "center"
   });
+
+  // Restore the original scroll state after animation
+  setTimeout(() => {
+    window.isScrolled = wasScrolled;
+  }, 500);
 
   // Setup event handlers
   setupEditingHandlers(editingInterface.textarea, messageElement, originalHTML, messageBody, isUserMessage);
@@ -342,3 +351,24 @@ function handleMorphdomUpdate(data) {
     }
   });
 }
+
+// Wait for Gradio to finish setting its styles, then force dark theme
+const observer = new MutationObserver((mutations) => {
+  mutations.forEach((mutation) => {
+    if (mutation.type === "attributes" &&
+        mutation.target.tagName === "GRADIO-APP" &&
+        mutation.attributeName === "style") {
+
+      // Gradio just set its styles, now force dark theme
+      document.body.classList.add("dark");
+      observer.disconnect();
+    }
+  });
+});
+
+// Start observing
+observer.observe(document.documentElement, {
+  attributes: true,
+  subtree: true,
+  attributeFilter: ["style"]
+});

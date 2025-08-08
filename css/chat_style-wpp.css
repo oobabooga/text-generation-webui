@@ -1,57 +1,105 @@
 .message {
-    padding-bottom: 22px;
-    padding-top: 3px;
+    display: block;
+    padding-top: 0;
+    padding-bottom: 21px;
     font-size: 15px;
     font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
     line-height: 1.428571429;
+    grid-template-columns: none;
 }
 
-.text-you {
+.circle-you, .circle-bot {
+    display: none;
+}
+
+.text {
+    max-width: 65%;
+    border-radius: 18px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    clear: both;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 10%);
+}
+
+.username {
+    font-weight: 600;
+    margin-bottom: 8px;
+    opacity: 0.65;
+    padding-left: 0;
+}
+
+/* User messages - right aligned, WhatsApp green */
+.circle-you + .text {
     background-color: #d9fdd3;
-    border-radius: 15px;
-    padding: 10px;
-    padding-top: 5px;
     float: right;
+    margin-left: auto;
+    margin-right: 8px;
 }
 
-.text-bot {
-    background-color: #f2f2f2;
-    border-radius: 15px;
-    padding: 10px;
-    padding-top: 5px;
+.circle-you + .text .username {
+    display: none;
 }
 
-.dark .text-you {
-    background-color: #005c4b;
-    color: #111b21;
+/* Bot messages - left aligned, white */
+.circle-bot + .text {
+    background-color: #fff;
+    float: left;
+    margin-right: auto;
+    margin-left: 8px;
+    border: 1px solid #e5e5e5;
 }
 
-.dark .text-bot {
-    background-color: #1f2937;
-    color: #111b21;
+.circle-bot + .text .message-actions {
+    bottom: -25px !important;
 }
 
-.text-bot p, .text-you p {
-    margin-top: 5px;
+/* Dark theme colors */
+.dark .circle-you + .text {
+    background-color: #144d37;
+    color: #e4e6ea;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+}
+
+.dark .circle-bot + .text {
+    background-color: #202c33;
+    color: #e4e6ea;
+    border: 1px solid #3c4043;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+}
+
+.dark .username {
+    opacity: 0.7;
 }
 
 .message-body img {
     max-width: 300px;
     max-height: 300px;
-    border-radius: 20px;
+    border-radius: 12px;
 }
 
 .message-body p {
-    margin-bottom: 0 !important;
     font-size: 15px !important;
-    line-height: 1.428571429 !important;
-    font-weight: 500;
+    line-height: 1.4 !important;
+    font-weight: 400;
+}
+
+.message-body p:first-child {
+    margin-top: 0 !important;
 }
 
 .dark .message-body p em {
-    color: rgb(138 138 138) !important;
+    color: rgb(170 170 170) !important;
 }
 
 .message-body p em {
-    color: rgb(110 110 110) !important;
+    color: rgb(100 100 100) !important;
+}
+
+/* Message actions positioning */
+.message-actions {
+    margin-top: 8px;
+}
+
+.message-body p, .chat .message-body ul, .chat .message-body ol {
+    margin-bottom: 10px !important;
 }

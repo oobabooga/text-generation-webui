@@ -1,0 +1,45 @@
+accelerate==1.8.*
+bitsandbytes==0.46.*
+colorama
+datasets
+einops
+fastapi==0.112.4
+gradio==4.37.*
+html2text==2025.4.15
+jinja2==3.1.6
+markdown
+numpy==2.2.*
+pandas
+peft==0.16.*
+Pillow>=9.5.0
+psutil
+pydantic==2.8.2
+PyPDF2==3.0.1
+python-docx==1.1.2
+pyyaml
+requests
+rich
+safetensors==0.5.*
+scipy
+sentencepiece
+tensorboard
+transformers==4.55.*
+triton-windows==3.3.1.post19; platform_system == "Windows"
+tqdm
+wandb
+
+# API
+flask_cloudflared==0.0.14
+sse-starlette==1.6.5
+tiktoken
+
+# CUDA wheels
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.33.0/llama_cpp_binaries-0.33.0+cu124-py3-none-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.33.0/llama_cpp_binaries-0.33.0+cu124-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/turboderp-org/exllamav3/releases/download/v0.0.5/exllamav3-0.0.5+cu128.torch2.7.0-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://github.com/turboderp-org/exllamav3/releases/download/v0.0.5/exllamav3-0.0.5+cu128.torch2.7.0-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/turboderp-org/exllamav2/releases/download/v0.3.2/exllamav2-0.3.2+cu128.torch2.7.0-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://github.com/turboderp-org/exllamav2/releases/download/v0.3.2/exllamav2-0.3.2+cu128.torch2.7.0-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/turboderp-org/exllamav2/releases/download/v0.3.2/exllamav2-0.3.2-py3-none-any.whl; platform_system == "Linux" and platform_machine != "x86_64"
+https://github.com/kingbri1/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu128torch2.7.0cxx11abiFALSE-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
+https://github.com/kingbri1/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu128torch2.7.0cxx11abiFALSE-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"

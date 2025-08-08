@@ -9,12 +9,12 @@ import gradio as gr
 import yaml
 
 from modules import chat, loaders, metadata_gguf, shared, ui
+from modules.logging_colors import logger
 
 
 def get_fallback_settings():
     return {
         'bf16': False,
-        'use_eager_attention': False,
         'ctx_size': 2048,
         'rope_freq_base': 0,
         'compress_pos_emb': 1,
@@ -22,7 +22,6 @@ def get_fallback_settings():
         'truncation_length': shared.settings['truncation_length'],
         'truncation_length_info': shared.settings['truncation_length'],
         'skip_special_tokens': shared.settings['skip_special_tokens'],
-        'custom_stopping_strings': shared.settings['custom_stopping_strings'],
     }
 
 
@@ -56,7 +55,13 @@ def get_model_metadata(model):
         if path.is_file():
             model_file = path
         else:
-            model_file = list(path.glob('*.gguf'))[0]
+            gguf_files = list(path.glob('*.gguf'))
+            if not gguf_files:
+                error_msg = f"No .gguf models found in directory: {path}"
+                logger.error(error_msg)
+                raise FileNotFoundError(error_msg)
+
+            model_file = gguf_files[0]
 
         metadata = load_gguf_metadata_with_cache(model_file)
 
@@ -70,7 +75,7 @@ def get_model_metadata(model):
                 model_settings['compress_pos_emb'] = metadata[k]
             elif k.endswith('rope.scaling.factor'):
                 model_settings['compress_pos_emb'] = metadata[k]
-            elif k.endswith('block_count'):
+            elif k.endswith('.block_count'):
                 model_settings['gpu_layers'] = metadata[k] + 1
                 model_settings['max_gpu_layers'] = metadata[k] + 1
 
@@ -85,8 +90,10 @@ def get_model_metadata(model):
             template = template.replace('eos_token', "'{}'".format(eos_token))
             template = template.replace('bos_token', "'{}'".format(bos_token))
 
+            template = re.sub(r"\{\{-?\s*raise_exception\(.*?\)\s*-?\}\}", "", template, flags=re.DOTALL)
             template = re.sub(r'raise_exception\([^)]*\)', "''", template)
             template = re.sub(r'{% if add_generation_prompt %}.*', '', template, flags=re.DOTALL)
+            template = re.sub(r'elif loop\.last and not add_generation_prompt', 'elif False', template)  # Handle GPT-OSS
             model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
             model_settings['instruction_template_str'] = template
 
@@ -112,23 +119,30 @@ def get_model_metadata(model):
                 if metadata['rope_scaling']['type'] == 'linear':
                     model_settings['compress_pos_emb'] = metadata['rope_scaling']['factor']
 
-            # For Gemma-2
             if 'torch_dtype' in metadata and metadata['torch_dtype'] == 'bfloat16':
                 model_settings['bf16'] = True
 
-            # For Gemma-2
-            if 'architectures' in metadata and isinstance(metadata['architectures'], list) and 'Gemma2ForCausalLM' in metadata['architectures']:
-                model_settings['use_eager_attention'] = True
-
     # Try to find the Jinja instruct template
     path = Path(f'{shared.args.model_dir}/{model}') / 'tokenizer_config.json'
+    template = None
+
+    # 1. Prioritize reading from chat_template.jinja if it exists
+    jinja_path = Path(f'{shared.args.model_dir}/{model}') / 'chat_template.jinja'
+    if jinja_path.exists():
+        with open(jinja_path, 'r', encoding='utf-8') as f:
+            template = f.read()
+
     if path.exists():
         metadata = json.loads(open(path, 'r', encoding='utf-8').read())
-        if 'chat_template' in metadata:
+
+        # 2. Only read from metadata if we haven't already loaded from .jinja
+        if template is None and 'chat_template' in metadata:
             template = metadata['chat_template']
             if isinstance(template, list):
                 template = template[0]['template']
 
+        # 3. If a template was found from either source, process it
+        if template:
             for k in ['eos_token', 'bos_token']:
                 if k in metadata:
                     value = metadata[k]
@@ -137,8 +151,10 @@ def get_model_metadata(model):
 
                     template = template.replace(k, "'{}'".format(value))
 
+            template = re.sub(r"\{\{-?\s*raise_exception\(.*?\)\s*-?\}\}", "", template, flags=re.DOTALL)
             template = re.sub(r'raise_exception\([^)]*\)', "''", template)
             template = re.sub(r'{% if add_generation_prompt %}.*', '', template, flags=re.DOTALL)
+            template = re.sub(r'elif loop\.last and not add_generation_prompt', 'elif False', template)  # Handle GPT-OSS
             model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
             model_settings['instruction_template_str'] = template
 
@@ -171,6 +187,8 @@ def infer_loader(model_name, model_settings, hf_quant_method=None):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     if not path_to_model.exists():
         loader = None
+    elif shared.args.portable:
+        loader = 'llama.cpp'
     elif len(list(path_to_model.glob('*.gguf'))) > 0:
         loader = 'llama.cpp'
     elif re.match(r'.*\.gguf', model_name.lower()):
@@ -329,6 +347,7 @@ def estimate_vram(gguf_file, gpu_layers, ctx_size, cache_type):
     # Extract values from metadata
     n_layers = None
     n_kv_heads = None
+    n_attention_heads = None  # Fallback for models without separate KV heads
     embedding_dim = None
 
     for key, value in metadata.items():
@@ -336,8 +355,13 @@ def estimate_vram(gguf_file, gpu_layers, ctx_size, cache_type):
             n_layers = value
         elif key.endswith('.attention.head_count_kv'):
             n_kv_heads = max(value) if isinstance(value, list) else value
+        elif key.endswith('.attention.head_count'):
+            n_attention_heads = max(value) if isinstance(value, list) else value
         elif key.endswith('.embedding_length'):
             embedding_dim = value
+
+    if n_kv_heads is None:
+        n_kv_heads = n_attention_heads
 
     if gpu_layers > n_layers:
         gpu_layers = n_layers
@@ -444,26 +468,19 @@ def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type, 
         else:
             return (0, gpu_layers) if auto_adjust else 0
 
+    # Get model settings including user preferences
+    model_settings = get_model_metadata(model)
+
     current_layers = gpu_layers
-    max_layers = gpu_layers
+    max_layers = model_settings.get('max_gpu_layers', 256)
 
     if auto_adjust:
-        # Get model settings including user preferences
-        model_settings = get_model_metadata(model)
-
-        # Get the true maximum layers
-        max_layers = model_settings.get('max_gpu_layers', model_settings.get('gpu_layers', gpu_layers))
-
         # Check if this is a user-saved setting
         user_config = shared.user_config
         model_regex = Path(model).name + '$'
         has_user_setting = model_regex in user_config and 'gpu_layers' in user_config[model_regex]
 
-        if has_user_setting:
-            # For user settings, just use the current value (which already has user pref)
-            # but ensure the slider maximum is correct
-            current_layers = gpu_layers  # Already has user setting
-        else:
+        if not has_user_setting:
             # No user setting, auto-adjust from the maximum
             current_layers = max_layers  # Start from max
 
