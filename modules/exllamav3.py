@@ -1,6 +1,7 @@
 import json
 import traceback
 from pathlib import Path
+from typing import List, Tuple, Any
 
 import torch
 from exllamav3 import Cache, Config, Model, Tokenizer
@@ -10,6 +11,10 @@ from exllamav3 import Generator
 from modules import shared
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
+from extensions.openai.image_utils import (
+    convert_image_attachments_to_pil,
+    convert_openai_messages_to_images
+)
 
 try:
     import flash_attn
@@ -105,76 +110,76 @@ class Exllamav3Model:
 
         return result
 
+    def is_multimodal(self) -> bool:
+        """Check if this model supports multimodal input."""
+        return hasattr(self, 'vision_model') and self.vision_model is not None
+
+    def _process_images_for_generation(self, prompt: str, state: dict) -> Tuple[str, List[Any]]:
+        """
+        Process all possible image inputs and return modified prompt + embeddings.
+        Returns: (processed_prompt, image_embeddings)
+        """
+        if not self.is_multimodal():
+            return prompt, []
+
+        # Collect images from various sources using shared utilities
+        pil_images = []
+
+        # From webui image_attachments (preferred format)
+        if 'image_attachments' in state and state['image_attachments']:
+            pil_images.extend(convert_image_attachments_to_pil(state['image_attachments']))
+
+        # From OpenAI API raw_images
+        elif 'raw_images' in state and state['raw_images']:
+            pil_images.extend(state['raw_images'])
+
+        # From OpenAI API messages format
+        elif 'messages' in state and state['messages']:
+            pil_images.extend(convert_openai_messages_to_images(state['messages']))
+
+        if not pil_images:
+            return prompt, []
+
+        # ExLlamaV3-specific: Generate embeddings
+        try:
+            # Do not reset the cache/allocator index; it causes token ID conflicts during generation.
+
+            logger.info(f"Processing {len(pil_images)} image(s) with ExLlamaV3 vision model")
+            image_embeddings = [
+                self.vision_model.get_image_embeddings(tokenizer=self.tokenizer, image=img)
+                for img in pil_images
+            ]
+
+            # ExLlamaV3-specific: Handle prompt processing with placeholders
+            placeholders = [ie.text_alias for ie in image_embeddings]
+
+            if '<__media__>' in prompt:
+                # Web chat: Replace <__media__> placeholders
+                for alias in placeholders:
+                    prompt = prompt.replace('<__media__>', alias, 1)
+                logger.info(f"Replaced {len(placeholders)} <__media__> placeholder(s)")
+            else:
+                # API: Prepend embedding aliases
+                combined_placeholders = "\n".join(placeholders)
+                prompt = combined_placeholders + "\n" + prompt
+                logger.info(f"Prepended {len(placeholders)} embedding(s) to prompt")
+
+            return prompt, image_embeddings
+
+        except Exception as e:
+            logger.error(f"Failed to process images: {e}")
+            return prompt, []
+
     def generate_with_streaming(self, prompt, state):
         """
         Generate text with streaming using native ExLlamaV3 API
         """
         from exllamav3 import Job
         from exllamav3.generator.sampler.presets import ComboSampler
-        
-        # Handle multimodal generation if images are present
-        image_embeddings = None
-        has_images = ('raw_images' in state and state['raw_images']) or ('image_attachments' in state and state['image_attachments']) or ('image_embeddings' in state and state['image_embeddings'])
-        
-        if has_images and self.vision_model:
-            # Use pre-computed embeddings if available (proper MMEmbedding lifetime)
-            if 'image_embeddings' in state and state['image_embeddings']:
-                # Use existing embeddings - this preserves MMEmbedding lifetime
-                image_embeddings = state['image_embeddings']
-                # Handle both prepending and <__media__> placeholder replacement
-                placeholders = [ie.text_alias for ie in image_embeddings]
-                
-                # Check if prompt contains <__media__> placeholders from webui chat
-                if '<__media__>' in prompt:
-                    # WEB CHAT: Replace <__media__> placeholders with actual embedding aliases
-                    for alias in placeholders:
-                        prompt = prompt.replace('<__media__>', alias, 1)
-                    logger.info(f"Replaced {len(placeholders)} <__media__> placeholder(s) with ExLlamaV3 embeddings")
-                else:
-                    # API: Prepend embedding aliases                    combined_placeholders = "\n".join(placeholders)
-                    prompt = combined_placeholders + "\n" + prompt
-                    logger.info(f"Prepended {len(placeholders)} ExLlamaV3 embedding(s) to prompt")
-            else:
-                # Fallback: Create embeddings from raw images
-                images_to_process = []
-                
-                # Get images from state
-                if 'raw_images' in state and state['raw_images']:
-                    images_to_process = state['raw_images']
-                elif 'image_attachments' in state and state['image_attachments']:
-                    # Convert image_attachments format to PIL images
-                    from extensions.openai.multimodal import decode_base64_image
-                    for attachment in state['image_attachments']:
-                        if attachment.get('type') == 'image' and 'image_data' in attachment:
-                            image = decode_base64_image(attachment['image_data'])
-                            if image:
-                                # Convert to RGB if needed
-                                if image.mode != 'RGB':
-                                    image = image.convert('RGB')
-                                images_to_process.append(image)
-                
-                # Generate image embeddings using vision model (like ExLlamaV3 example)
-                if images_to_process:
-                    image_embeddings = [
-                        self.vision_model.get_image_embeddings(tokenizer=self.tokenizer, image=img)
-                        for img in images_to_process
-                    ]
-                    
-                    # Handle both prepending and <__media__> placeholder replacement
-                    placeholders = [ie.text_alias for ie in image_embeddings]
-                    
-                    # Check if prompt contains <__media__> placeholders from webui chat
-                    if '<__media__>' in prompt:
-                        # WEB CHAT: Replace <__media__> placeholders with actual embedding aliases
-                        for alias in placeholders:
-                            prompt = prompt.replace('<__media__>', alias, 1)
-                        logger.info(f"Replaced {len(placeholders)} <__media__> placeholder(s) with ExLlamaV3 embeddings")
-                    else:
-                        # API: Prepend embedding aliases (original behavior)
-                        combined_placeholders = "\n".join(placeholders)
-                        prompt = combined_placeholders + "\n" + prompt
-                        logger.info(f"Prepended {len(placeholders)} ExLlamaV3 embedding(s) to prompt")
-        
+
+        # Process images and modify prompt (ExLlamaV3-specific)
+        prompt, image_embeddings = self._process_images_for_generation(prompt, state)
+
         sampler = ComboSampler(
             rep_p=state.get('repetition_penalty', 1.0),
             freq_p=state.get('frequency_penalty', 0.0),
@@ -184,8 +189,8 @@ class Exllamav3Model:
             top_k=state.get('top_k', 0),
             top_p=state.get('top_p', 1.0),
         )
-        
-        # Encode prompt with embeddings
+
+        # Encode prompt with embeddings (ExLlamaV3-specific)
         if image_embeddings:
             input_ids = self.tokenizer.encode(
                 prompt,
@@ -194,17 +199,17 @@ class Exllamav3Model:
             )
         else:
             input_ids = self.tokenizer.encode(prompt, encode_special_tokens=True)
-        
+
         # Get stop conditions from state (webui format) - keep as strings like ExLlamaV3 examples
         stop_conditions = []
         if 'stopping_strings' in state and state['stopping_strings']:
             # Use strings directly (ExLlamaV3 handles the conversion internally)
             stop_conditions.extend(state['stopping_strings'])
-        
+
         # Add EOS token ID as ExLlamaV3 examples do
         if hasattr(self.tokenizer, 'eos_token_id') and self.tokenizer.eos_token_id is not None:
             stop_conditions.append(self.tokenizer.eos_token_id)
-        
+
         job = Job(
             input_ids=input_ids,
             max_new_tokens=state.get('max_new_tokens', 500),
@@ -213,10 +218,10 @@ class Exllamav3Model:
             sampler=sampler,
             stop_conditions=stop_conditions if stop_conditions else None,
         )
-        
+
         # Stream generation
         self.generator.enqueue(job)
-        
+
         response_text = ""
         try:
             while self.generator.num_remaining_jobs():
@@ -224,7 +229,7 @@ class Exllamav3Model:
                 for result in results:
                     if "eos" in result and result["eos"]:
                         break
-                        
+
                     chunk = result.get("text", "")
                     if chunk:
                         response_text += chunk
@@ -233,7 +238,6 @@ class Exllamav3Model:
             # No cleanup needed. MMEmbedding lifetime is managed by Python.
             # Cache and page table resets are unnecessary and can cause token ID conflicts.
             pass
-
 
     def generate(self, prompt, state):
         """
@@ -250,7 +254,7 @@ class Exllamav3Model:
             presence_penalty=state.get('presence_penalty', 0.0),
             min_p=state.get('min_p', 0.0),
         )
-        
+
         return output
 
     def encode(self, string, **kwargs):
@@ -266,14 +270,14 @@ class Exllamav3Model:
 
     def unload(self):
         logger.info("Unloading ExLlamaV3 model components...")
-        
+
         if hasattr(self, 'vision_model') and self.vision_model is not None:
             try:
                 del self.vision_model
             except Exception as e:
                 logger.warning(f"Error unloading vision model: {e}")
             self.vision_model = None
-            
+
         if hasattr(self, 'model') and self.model is not None:
             try:
                 self.model.unload()
@@ -290,15 +294,15 @@ class Exllamav3Model:
 
         if hasattr(self, 'tokenizer') and self.tokenizer is not None:
             self.tokenizer = None
-            
+
         # Force GPU memory cleanup
         import torch
         import gc
         gc.collect()
-        
+
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
             torch.cuda.synchronize()
             torch.cuda.empty_cache()
-        
+
         logger.info("ExLlamaV3 model fully unloaded")
