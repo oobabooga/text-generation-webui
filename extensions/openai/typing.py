@@ -43,6 +43,7 @@ class GenerationOptions(BaseModel):
     ban_eos_token: bool = False
     add_bos_token: bool = True
     enable_thinking: bool = True
+    reasoning_effort: str = "medium"
     skip_special_tokens: bool = True
     static_cache: bool = False
     truncation_length: int = 0
