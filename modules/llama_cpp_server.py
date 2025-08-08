@@ -122,6 +122,18 @@ class LlamaServer:
             to_ban = [[int(token_id), False] for token_id in state['custom_token_bans'].split(',')]
             payload["logit_bias"] = to_ban
 
+        # Add image data if present
+        if 'image_attachments' in state:
+            medias = []
+            for attachment in state['image_attachments']:
+                medias.append({
+                    "type": "image",
+                    "data": attachment['image_data']
+                })
+
+            if medias:
+                payload["medias"] = medias
+
         return payload
 
     def generate_with_streaming(self, prompt, state):
@@ -144,7 +156,7 @@ class LlamaServer:
 
         if shared.args.verbose:
             logger.info("GENERATE_PARAMS=")
-            printable_payload = {k: v for k, v in payload.items() if k != "prompt"}
+            printable_payload = {k: v for k, v in payload.items() if k not in ["prompt", "image_data"]}
             pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(printable_payload)
             print()
 

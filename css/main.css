@@ -1577,6 +1577,19 @@ strong {
     margin-top: 4px;
 }
 
+.image-attachment {
+    flex-direction: column;
+}
+
+.image-preview {
+    border-radius: 16px;
+    margin-bottom: 5px;
+    object-fit: cover;
+    object-position: center;
+    border: 2px solid var(--border-color-primary);
+    aspect-ratio: 1 / 1;
+}
+
 button:focus {
     outline: none;
 }
