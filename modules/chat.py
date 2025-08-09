@@ -326,7 +326,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
                             attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
                 if image_refs or attachments_text:
-                    user_input = f"{user_input} {image_refs}"
+                    user_input = user_input
+                    if image_refs:
+                        user_input = f"{image_refs}\n\n{user_input}"
                     if attachments_text:
                         user_input += f"\n\nATTACHMENTS:\n{attachments_text}"
 
