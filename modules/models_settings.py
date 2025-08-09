@@ -139,16 +139,26 @@ def get_model_metadata(model):
         with open(jinja_path, 'r', encoding='utf-8') as f:
             template = f.read()
 
+    # 2. If no .jinja file, try chat_template.json
+    if template is None:
+        json_template_path = Path(f'{shared.args.model_dir}/{model}') / 'chat_template.json'
+        if json_template_path.exists():
+            with open(json_template_path, 'r', encoding='utf-8') as f:
+                json_data = json.load(f)
+                if 'chat_template' in json_data:
+                    template = json_data['chat_template']
+
+    # 3. Fall back to tokenizer_config.json metadata
     if path.exists():
         metadata = json.loads(open(path, 'r', encoding='utf-8').read())
 
-        # 2. Only read from metadata if we haven't already loaded from .jinja
+        # Only read from metadata if we haven't already loaded from .jinja or .json
         if template is None and 'chat_template' in metadata:
             template = metadata['chat_template']
             if isinstance(template, list):
                 template = template[0]['template']
 
-        # 3. If a template was found from either source, process it
+        # 4. If a template was found from any source, process it
         if template:
             for k in ['eos_token', 'bos_token']:
                 if k in metadata:
