@@ -271,16 +271,27 @@ def generate_chat_prompt(user_input, state, **kwargs):
             # Add attachment content if present AND if past attachments are enabled
             if (state.get('include_past_attachments', True) and user_key in metadata and "attachments" in metadata[user_key]):
                 attachments_text = ""
-                for attachment in metadata[user_key]["attachments"]:
-                    filename = attachment.get("name", "file")
-                    content = attachment.get("content", "")
-                    if attachment.get("type") == "text/html" and attachment.get("url"):
-                        attachments_text += f"\nName: {filename}\nURL: {attachment['url']}\nContents:\n\n=====\n{content}\n=====\n\n"
-                    else:
-                        attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
+                image_refs = ""
 
-                if attachments_text:
-                    enhanced_user_msg = f"{user_msg}\n\nATTACHMENTS:\n{attachments_text}"
+                for attachment in metadata[user_key]["attachments"]:
+                    if attachment.get("type") == "image":
+                        # Add image reference for multimodal models
+                        image_refs += "<__media__>"
+                    else:
+                        # Handle text/PDF attachments
+                        filename = attachment.get("name", "file")
+                        content = attachment.get("content", "")
+                        if attachment.get("type") == "text/html" and attachment.get("url"):
+                            attachments_text += f"\nName: {filename}\nURL: {attachment['url']}\nContents:\n\n=====\n{content}\n=====\n\n"
+                        else:
+                            attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
+
+                if image_refs or attachments_text:
+                    enhanced_user_msg = user_msg
+                    if image_refs:
+                        enhanced_user_msg += f" {image_refs}"
+                    if attachments_text:
+                        enhanced_user_msg += f"\n\nATTACHMENTS:\n{attachments_text}"
 
             messages.insert(insert_pos, {"role": "user", "content": enhanced_user_msg})
 
@@ -301,16 +312,23 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
             if user_key in metadata and "attachments" in metadata[user_key]:
                 attachments_text = ""
-                for attachment in metadata[user_key]["attachments"]:
-                    filename = attachment.get("name", "file")
-                    content = attachment.get("content", "")
-                    if attachment.get("type") == "text/html" and attachment.get("url"):
-                        attachments_text += f"\nName: {filename}\nURL: {attachment['url']}\nContents:\n\n=====\n{content}\n=====\n\n"
-                    else:
-                        attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
+                image_refs = ""
 
-                if attachments_text:
-                    user_input = f"{user_input}\n\nATTACHMENTS:\n{attachments_text}"
+                for attachment in metadata[user_key]["attachments"]:
+                    if attachment.get("type") == "image":
+                        image_refs += "<__media__>"
+                    else:
+                        filename = attachment.get("name", "file")
+                        content = attachment.get("content", "")
+                        if attachment.get("type") == "text/html" and attachment.get("url"):
+                            attachments_text += f"\nName: {filename}\nURL: {attachment['url']}\nContents:\n\n=====\n{content}\n=====\n\n"
+                        else:
+                            attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
+
+                if image_refs or attachments_text:
+                    user_input = f"{user_input} {image_refs}"
+                    if attachments_text:
+                        user_input += f"\n\nATTACHMENTS:\n{attachments_text}"
 
         messages.append({"role": "user", "content": user_input})
 
@@ -594,29 +612,64 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
     file_extension = path.suffix.lower()
 
     try:
-        # Handle different file types
-        if file_extension == '.pdf':
+        # Handle image files
+        if file_extension in ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif']:
+            # Convert image to base64
+            with open(path, 'rb') as f:
+                image_data = base64.b64encode(f.read()).decode('utf-8')
+
+            # Determine MIME type from extension
+            mime_type_map = {
+                '.jpg': 'image/jpeg',
+                '.jpeg': 'image/jpeg',
+                '.png': 'image/png',
+                '.webp': 'image/webp',
+                '.bmp': 'image/bmp',
+                '.gif': 'image/gif'
+            }
+            mime_type = mime_type_map.get(file_extension, 'image/jpeg')
+
+            # Format as data URL
+            data_url = f"data:{mime_type};base64,{image_data}"
+
+            # Generate unique image ID
+            image_id = len([att for att in history['metadata'][key]["attachments"] if att.get("type") == "image"]) + 1
+
+            attachment = {
+                "name": filename,
+                "type": "image",
+                "image_data": data_url,
+                "image_id": image_id,
+                "file_path": str(path)  # For UI preview
+            }
+        elif file_extension == '.pdf':
             # Process PDF file
             content = extract_pdf_text(path)
-            file_type = "application/pdf"
+            attachment = {
+                "name": filename,
+                "type": "application/pdf",
+                "content": content,
+            }
         elif file_extension == '.docx':
             content = extract_docx_text(path)
-            file_type = "application/docx"
+            attachment = {
+                "name": filename,
+                "type": "application/docx",
+                "content": content,
+            }
         else:
             # Default handling for text files
             with open(path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            file_type = "text/plain"
 
-        # Add attachment
-        attachment = {
-            "name": filename,
-            "type": file_type,
-            "content": content,
-        }
+            attachment = {
+                "name": filename,
+                "type": "text/plain",
+                "content": content,
+            }
 
         history['metadata'][key]["attachments"].append(attachment)
-        return content  # Return the content for reuse
+        return attachment  # Return the attachment for reuse
     except Exception as e:
         logger.error(f"Error processing attachment {filename}: {e}")
         return None
@@ -758,6 +811,19 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         # Add attachments to metadata only, not modifying the message text
         for file_path in files:
             add_message_attachment(output, row_idx, file_path, is_user=True)
+
+        # Collect image attachments for ExLlamaV3
+        image_attachments = []
+        if 'metadata' in output:
+            user_key = f"user_{row_idx}"
+            if user_key in output['metadata'] and "attachments" in output['metadata'][user_key]:
+                for attachment in output['metadata'][user_key]["attachments"]:
+                    if attachment.get("type") == "image":
+                        image_attachments.append(attachment)
+
+        # Add image attachments to state for the generation
+        if image_attachments:
+            state['image_attachments'] = image_attachments
 
         # Add web search results as attachments if enabled
         if state.get('enable_web_search', False):

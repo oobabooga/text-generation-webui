@@ -2,7 +2,7 @@ import json
 import time
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, validator
 
 
 class GenerationOptions(BaseModel):
@@ -99,7 +99,8 @@ class ToolCall(BaseModel):
 
 class CompletionRequestParams(BaseModel):
     model: str | None = Field(default=None, description="Unused parameter. To change the model, use the /v1/internal/model/load endpoint.")
-    prompt: str | List[str]
+    prompt: str | List[str] | None = Field(default=None, description="Text prompt for completion. Can also use 'messages' format for multimodal.")
+    messages: List[dict] | None = Field(default=None, description="OpenAI messages format for multimodal support. Alternative to 'prompt'.")
     best_of: int | None = Field(default=1, description="Unused parameter.")
     echo: bool | None = False
     frequency_penalty: float | None = 0
@@ -114,6 +115,17 @@ class CompletionRequestParams(BaseModel):
     temperature: float | None = 1
     top_p: float | None = 1
     user: str | None = Field(default=None, description="Unused parameter.")
+
+    @field_validator('prompt', 'messages')
+    @classmethod
+    def validate_prompt_or_messages(cls, v, info):
+        """Ensure either 'prompt' or 'messages' is provided for completions."""
+        if info.field_name == 'prompt':  # If we're validating 'prompt', check if neither prompt nor messages will be set
+            messages = info.data.get('messages')
+            if v is None and messages is None:
+                raise ValueError("Either 'prompt' or 'messages' must be provided")
+
+        return v
 
 
 class CompletionRequest(GenerationOptions, CompletionRequestParams):

@@ -77,6 +77,24 @@ curl http://127.0.0.1:5000/v1/chat/completions \
   }'
 ```
 
+#### Multimodal support (ExLlamaV3)
+
+```shell
+curl http://127.0.0.1:5000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "text", "text": "What color is this image?"},
+          {"type": "image_url", "image_url": {"url": "https://github.com/turboderp-org/exllamav3/blob/master/examples/media/cat.png?raw=true"}}
+        ]
+      }
+    ]
+  }'
+```
+
 #### SSE streaming
 
 ```shell
