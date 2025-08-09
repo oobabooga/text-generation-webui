@@ -640,7 +640,6 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
                 "type": "image",
                 "image_data": data_url,
                 "image_id": image_id,
-                "file_path": str(path)  # For UI preview
             }
         elif file_extension == '.pdf':
             # Process PDF file

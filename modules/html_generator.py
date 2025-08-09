@@ -407,11 +407,10 @@ def format_message_attachments(history, role, index):
             name = html.escape(attachment["name"])
 
             if attachment.get("type") == "image":
-                # Show image preview
-                file_path = attachment.get("file_path", "")
+                image_data = attachment.get("image_data", "")
                 attachments_html += (
                     f'<div class="attachment-box image-attachment">'
-                    f'<img src="file/{file_path}" alt="{name}" class="image-preview" />'
+                    f'<img src="{image_data}" alt="{name}" class="image-preview" />'
                     f'<div class="attachment-name">{name}</div>'
                     f'</div>'
                 )
