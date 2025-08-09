@@ -9,16 +9,17 @@ import tiktoken
 from pydantic import ValidationError
 
 from extensions.openai.errors import InvalidRequestError
+from extensions.openai.image_utils import convert_openai_messages_to_images
 from extensions.openai.typing import ToolDefinition
 from extensions.openai.utils import debug_msg, getToolCallId, parseToolCall
 from modules import shared
-from modules.logging_colors import logger
 from modules.chat import (
     generate_chat_prompt,
     generate_chat_reply,
     load_character_memoized,
     load_instruction_template_memoized
 )
+from modules.logging_colors import logger
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
 
@@ -439,7 +440,19 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
 
             # generate reply #######################################
             debug_msg({'prompt': prompt, 'generate_params': generate_params})
-            generator = generate_reply(prompt, generate_params, is_chat=False)
+
+            # Use multimodal generation if images are present
+            if 'messages' in generate_params:
+                raw_images = convert_openai_messages_to_images(generate_params['messages'])
+                if raw_images:
+                    logger.info(f"Using multimodal generation for {len(raw_images)} images")
+                    generate_params['raw_images'] = raw_images
+                    generator = shared.model.generate_with_streaming(prompt, generate_params)
+                else:
+                    generator = generate_reply(prompt, generate_params, is_chat=False)
+            else:
+                generator = generate_reply(prompt, generate_params, is_chat=False)
+
             answer = ''
 
             for a in generator:
@@ -512,7 +525,17 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
 
         # generate reply #######################################
         debug_msg({'prompt': prompt, 'generate_params': generate_params})
-        generator = generate_reply(prompt, generate_params, is_chat=False)
+        # Use multimodal generation if images are present
+        if 'messages' in generate_params:
+            raw_images = convert_openai_messages_to_images(generate_params['messages'])
+            if raw_images:
+                logger.info(f"Using multimodal generation for {len(raw_images)} images")
+                generate_params['raw_images'] = raw_images
+                generator = shared.model.generate_with_streaming(prompt, generate_params)
+            else:
+                generator = generate_reply(prompt, generate_params, is_chat=False)
+        else:
+            generator = generate_reply(prompt, generate_params, is_chat=False)
 
         answer = ''
         seen_content = ''
