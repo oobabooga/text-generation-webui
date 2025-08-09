@@ -12,6 +12,7 @@ from pathlib import Path
 import llama_cpp_binaries
 import requests
 
+from extensions.openai.image_utils import convert_pil_to_base64
 from modules import shared
 from modules.logging_colors import logger
 
@@ -128,15 +129,37 @@ class LlamaServer:
         url = f"http://127.0.0.1:{self.port}/completion"
         payload = self.prepare_payload(state)
 
-        token_ids = self.encode(prompt, add_bos_token=state["add_bos_token"])
-        self.last_prompt_token_count = len(token_ids)
+        pil_images = state.get('raw_images', [])
+        if pil_images:
+            IMAGE_TOKEN_COST_ESTIMATE = 600  # A safe, conservative estimate per image
+
+            # 1. Convert all images to base64
+            base64_images = [convert_pil_to_base64(img) for img in pil_images]
+
+            # 2. Construct the special prompt object
+            multimodal_prompt_object = {
+                "prompt": prompt,
+                "multimodal_data": base64_images
+            }
+
+            # 3. Overwrite the payload's prompt with our new object
+            payload["prompt"] = multimodal_prompt_object
+
+            # 4. Calculate an estimated token count
+            text_tokens = self.encode(prompt, add_bos_token=state["add_bos_token"])
+            self.last_prompt_token_count = len(text_tokens) + (len(pil_images) * IMAGE_TOKEN_COST_ESTIMATE)
+        else:
+            # Text only behavior
+            token_ids = self.encode(prompt, add_bos_token=state["add_bos_token"])
+            self.last_prompt_token_count = len(token_ids)
+            payload["prompt"] = token_ids
+
         if state['auto_max_new_tokens']:
-            max_new_tokens = state['truncation_length'] - len(token_ids)
+            max_new_tokens = state['truncation_length'] - self.last_prompt_token_count
         else:
             max_new_tokens = state['max_new_tokens']
 
         payload.update({
-            "prompt": token_ids,
             "n_predict": max_new_tokens,
             "stream": True,
             "cache_prompt": True
@@ -144,7 +167,7 @@ class LlamaServer:
 
         if shared.args.verbose:
             logger.info("GENERATE_PARAMS=")
-            printable_payload = {k: v for k, v in payload.items() if k != "prompt"}
+            printable_payload = {k: (v if k != "prompt" else "[multimodal object]" if pil_images else v) for k, v in payload.items()}
             pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(printable_payload)
             print()
 

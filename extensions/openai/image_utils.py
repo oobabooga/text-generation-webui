@@ -11,6 +11,15 @@ from PIL import Image
 from modules.logging_colors import logger
 
 
+def convert_pil_to_base64(image: Image.Image) -> str:
+    """Converts a PIL Image to a base64 encoded string."""
+    buffered = io.BytesIO()
+    # Save image to an in-memory bytes buffer in PNG format
+    image.save(buffered, format="PNG")
+    # Encode the bytes to a base64 string
+    return base64.b64encode(buffered.getvalue()).decode('utf-8')
+
+
 def decode_base64_image(base64_string: str) -> Image.Image:
     """Decodes a base64 string to a PIL Image."""
     try:
