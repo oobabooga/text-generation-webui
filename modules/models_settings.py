@@ -106,16 +106,9 @@ def get_model_metadata(model):
 
             for k in ['max_position_embeddings', 'model_max_length', 'max_seq_len']:
                 if k in metadata:
-                    value = metadata[k]
-                elif k in metadata.get('text_config', {}):
-                    value = metadata['text_config'][k]
-                else:
-                    continue
-
-                model_settings['truncation_length'] = value
-                model_settings['truncation_length_info'] = value
-                model_settings['ctx_size'] = min(value, 8192)
-                break
+                    model_settings['truncation_length'] = metadata[k]
+                    model_settings['truncation_length_info'] = metadata[k]
+                    model_settings['ctx_size'] = min(metadata[k], 8192)
 
             if 'rope_theta' in metadata:
                 model_settings['rope_freq_base'] = metadata['rope_theta']
