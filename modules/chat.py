@@ -278,7 +278,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                         # Add image reference for multimodal models
                         image_refs += "<__media__>"
                     else:
-                        # Handle text/PDF attachments as before
+                        # Handle text/PDF attachments
                         filename = attachment.get("name", "file")
                         content = attachment.get("content", "")
                         if attachment.get("type") == "text/html" and attachment.get("url"):
@@ -287,7 +287,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
                             attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
                 if image_refs or attachments_text:
-                    enhanced_user_msg = f"{user_msg} {image_refs}"
+                    enhanced_user_msg = user_msg
+                    if image_refs:
+                        enhanced_user_msg += f" {image_refs}"
                     if attachments_text:
                         enhanced_user_msg += f"\n\nATTACHMENTS:\n{attachments_text}"
 
