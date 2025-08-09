@@ -289,7 +289,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 if image_refs or attachments_text:
                     enhanced_user_msg = user_msg
                     if image_refs:
-                        enhanced_user_msg += f" {image_refs}"
+                        enhanced_user_msg = f"{image_refs}\n\n{enhanced_user_msg}"
                     if attachments_text:
                         enhanced_user_msg += f"\n\nATTACHMENTS:\n{attachments_text}"
 
