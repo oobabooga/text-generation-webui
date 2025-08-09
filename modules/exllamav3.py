@@ -304,9 +304,7 @@ class Exllamav3Model:
                         response_text += chunk
                         yield response_text
         finally:
-            # No cleanup needed. MMEmbedding lifetime is managed by Python.
-            # Cache and page table resets are unnecessary and can cause token ID conflicts.
-            pass
+            self.generator.clear_queue()
 
     def generate(self, prompt, state):
         output = ""
