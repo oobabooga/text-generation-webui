@@ -615,7 +615,6 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
         # Handle image files
         if file_extension in ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif']:
             # Convert image to base64
-            import base64
             with open(path, 'rb') as f:
                 image_data = base64.b64encode(f.read()).decode('utf-8')
 
@@ -662,6 +661,7 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
             # Default handling for text files
             with open(path, 'r', encoding='utf-8') as f:
                 content = f.read()
+
             attachment = {
                 "name": filename,
                 "type": "text/plain",
