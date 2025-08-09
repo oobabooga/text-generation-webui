@@ -1,10 +1,8 @@
-import base64
 import copy
 import json
 import time
 from collections import deque
 
-import requests
 import tiktoken
 from pydantic import ValidationError
 

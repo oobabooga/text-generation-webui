@@ -1,20 +1,16 @@
-import json
 import traceback
 from pathlib import Path
-from typing import List, Tuple, Any
+from typing import Any, List, Tuple
 
-import torch
-from exllamav3 import Cache, Config, Model, Tokenizer
+from exllamav3 import Cache, Config, Generator, Model, Tokenizer
 from exllamav3.cache import CacheLayer_fp16, CacheLayer_quant
-from exllamav3 import Generator
 
-from modules import shared
-from modules.logging_colors import logger
-from modules.text_generation import get_max_prompt_length
 from extensions.openai.image_utils import (
     convert_image_attachments_to_pil,
     convert_openai_messages_to_images
 )
+from modules import shared
+from modules.logging_colors import logger
 
 try:
     import flash_attn
@@ -32,7 +28,10 @@ class Exllamav3Model:
         path_to_model = Path(f'{shared.args.model_dir}') / Path(path_to_model)
 
         # Reset global MMTokenAllocator to prevent token ID corruption when switching models
-        from exllamav3.tokenizer.mm_embedding import global_allocator, FIRST_MM_EMBEDDING_INDEX
+        from exllamav3.tokenizer.mm_embedding import (
+            FIRST_MM_EMBEDDING_INDEX,
+            global_allocator
+        )
         global_allocator.next_token_index = FIRST_MM_EMBEDDING_INDEX
         logger.info("Reset MMTokenAllocator for clean multimodal token allocation")
 
@@ -301,8 +300,9 @@ class Exllamav3Model:
             self.tokenizer = None
 
         # Force GPU memory cleanup
-        import torch
         import gc
+
+        import torch
         gc.collect()
 
         if torch.cuda.is_available():

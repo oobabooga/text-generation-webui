@@ -4,7 +4,8 @@ Used by both ExLlamaV3 and llama.cpp implementations.
 """
 import base64
 import io
-from typing import List, Tuple, Any
+from typing import Any, List, Tuple
+
 from PIL import Image
 
 from modules.logging_colors import logger
@@ -60,7 +61,7 @@ def process_message_content(content: Any) -> Tuple[str, List[Image.Image]]:
                         image_data = response.content
                         image = Image.open(io.BytesIO(image_data))
                         images.append(image)
-                        logger.info(f"Successfully loaded external image from URL")
+                        logger.info("Successfully loaded external image from URL")
                     except Exception as e:
                         logger.warning(f"Failed to fetch external image: {e}")
                 else:

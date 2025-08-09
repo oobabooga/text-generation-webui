@@ -280,8 +280,6 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
     return reply
 
 
-
-
 def generate_reply_HF(question, original_question, state, stopping_strings=None, is_chat=False):
     import torch
     import transformers
