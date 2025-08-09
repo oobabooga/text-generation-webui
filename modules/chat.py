@@ -175,7 +175,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
         builtin_tools=None,
         tools=state['tools'] if 'tools' in state else None,
         tools_in_user_message=False,
-        add_generation_prompt=False
+        add_generation_prompt=False,
+        reasoning_effort=state['reasoning_effort']
     )
 
     chat_renderer = partial(
@@ -210,7 +211,57 @@ def generate_chat_prompt(user_input, state, **kwargs):
             messages.insert(insert_pos, {"role": "tool", "content": tool_msg})
 
         if assistant_msg:
-            messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
+            # Handle GPT-OSS as a special case
+            if '<|channel|>analysis<|message|>' in assistant_msg or '<|channel|>final<|message|>' in assistant_msg:
+
+                thinking_content = ""
+                final_content = ""
+
+                # Extract analysis content if present
+                if '<|channel|>analysis<|message|>' in assistant_msg:
+                    # Split the message by the analysis tag to isolate the content that follows
+                    parts = assistant_msg.split('<|channel|>analysis<|message|>', 1)
+                    if len(parts) > 1:
+                        # The content is everything after the tag
+                        potential_content = parts[1]
+
+                        # Now, find the end of this content block
+                        analysis_end_tag = '<|end|>'
+                        if analysis_end_tag in potential_content:
+                            thinking_content = potential_content.split(analysis_end_tag, 1)[0].strip()
+                        else:
+                            # Fallback: if no <|end|> tag, stop at the start of the final channel if it exists
+                            final_channel_tag = '<|channel|>final<|message|>'
+                            if final_channel_tag in potential_content:
+                                thinking_content = potential_content.split(final_channel_tag, 1)[0].strip()
+                            else:
+                                thinking_content = potential_content.strip()
+
+                # Extract final content if present
+                final_tag_to_find = '<|channel|>final<|message|>'
+                if final_tag_to_find in assistant_msg:
+                    # Split the message by the final tag to isolate the content that follows
+                    parts = assistant_msg.split(final_tag_to_find, 1)
+                    if len(parts) > 1:
+                        # The content is everything after the tag
+                        potential_content = parts[1]
+
+                        # Now, find the end of this content block
+                        final_end_tag = '<|end|>'
+                        if final_end_tag in potential_content:
+                            final_content = potential_content.split(final_end_tag, 1)[0].strip()
+                        else:
+                            final_content = potential_content.strip()
+
+                # Insert as structured message
+                msg_dict = {"role": "assistant", "content": final_content}
+                if '<|channel|>analysis<|message|>' in assistant_msg:
+                    msg_dict["thinking"] = thinking_content
+
+                messages.insert(insert_pos, msg_dict)
+
+            else:
+                messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
 
         if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
             # Check for user message attachments in metadata
@@ -295,18 +346,44 @@ def generate_chat_prompt(user_input, state, **kwargs):
             if len(suffix) > 0:
                 prompt = prompt[:-len(suffix)]
         else:
-            if _continue:
-                suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
-                if len(suffix) > 0:
-                    prompt = prompt[:-len(suffix)]
+            # Handle GPT-OSS as a special case when continuing
+            if _continue and '<|channel|>final<|message|>' in state['instruction_template_str']:
+                last_message_to_continue = messages[-1]
+                prompt = renderer(messages=messages[:-1])
+
+                # Start the assistant turn wrapper
+                assistant_reply_so_far = "<|start|>assistant"
+
+                if 'thinking' in last_message_to_continue:
+                    assistant_reply_so_far += f"<|channel|>analysis<|message|>{last_message_to_continue['thinking']}<|end|>"
+
+                assistant_reply_so_far += f"<|channel|>final<|message|>{last_message_to_continue.get('content', '')}"
+
+                prompt += assistant_reply_so_far
+
             else:
-                prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
-                if state['mode'] == 'chat' and not impersonate:
-                    prefix = apply_extensions('bot_prefix', prefix, state)
+                prompt = renderer(messages=messages)
+                if _continue:
+                    suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
+                    if len(suffix) > 0:
+                        prompt = prompt[:-len(suffix)]
+                else:
+                    prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
 
-                prompt += prefix
+                    # Handle GPT-OSS as a special case when not continuing
+                    if '<|channel|>final<|message|>' in state['instruction_template_str']:
+                        if prefix.endswith("<|channel|>final<|message|>"):
+                            prefix = prefix[:-len("<|channel|>final<|message|>")]
 
-        if state['mode'] == 'instruct' and not any((_continue, impersonate, state['enable_thinking'])):
+                        if impersonate:
+                            prefix += "<|message|>"
+
+                    if state['mode'] == 'chat' and not impersonate:
+                        prefix = apply_extensions('bot_prefix', prefix, state)
+
+                    prompt += prefix
+
+        if state['mode'] == 'instruct' and 'enable_thinking' in state['instruction_template_str'] and not any((_continue, impersonate, state['enable_thinking'])):
             prompt += get_thinking_suppression_string(instruction_template)
 
         return prompt
@@ -458,6 +535,12 @@ def get_stopping_strings(state):
     # Remove redundant items that start with another item
     result = [item for item in stopping_strings if not any(item.startswith(other) and item != other for other in stopping_strings)]
     result = list(set(result))
+
+    # Handle GPT-OSS as a special case
+    if '<|channel|>final<|message|>' in state['instruction_template_str'] and "<|end|>" in result:
+        result.remove("<|end|>")
+        result.append("<|result|>")
+        result = list(set(result))
 
     if shared.args.verbose:
         logger.info("STOPPING_STRINGS=")
@@ -611,9 +694,9 @@ def generate_search_query(user_message, state):
 
     # Use a minimal state for search query generation but keep the full history
     search_state = state.copy()
-    search_state['max_new_tokens'] = 64
-    search_state['auto_max_new_tokens'] = False
+    search_state['auto_max_new_tokens'] = True
     search_state['enable_thinking'] = False
+    search_state['reasoning_effort'] = 'low'
     search_state['start_with'] = ""
 
     # Generate the full prompt using existing history + augmented message
@@ -622,6 +705,12 @@ def generate_search_query(user_message, state):
     query = ""
     for reply in generate_reply(formatted_prompt, search_state, stopping_strings=[], is_chat=True):
         query = reply
+
+    # Check for thinking block delimiters and extract content after them
+    if "</think>" in query:
+        query = query.rsplit("</think>", 1)[1]
+    elif "<|start|>assistant<|channel|>final<|message|>" in query:
+        query = query.rsplit("<|start|>assistant<|channel|>final<|message|>", 1)[1]
 
     # Strip and remove surrounding quotes if present
     query = query.strip()
@@ -642,6 +731,10 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     output = copy.deepcopy(history)
     output = apply_extensions('history', output)
     state = apply_extensions('state', state)
+
+    # Handle GPT-OSS as a special case
+    if '<|channel|>final<|message|>' in state['instruction_template_str']:
+        state['skip_special_tokens'] = False
 
     # Let the jinja2 template handle the BOS token
     if state['mode'] in ['instruct', 'chat-instruct']:
@@ -1174,6 +1267,9 @@ def save_last_chat_state(character, mode, unique_id):
 
 def load_history(unique_id, character, mode):
     p = get_history_file_path(unique_id, character, mode)
+
+    if not p.exists():
+        return {'internal': [], 'visible': [], 'metadata': {}}
 
     f = json.loads(open(p, 'rb').read())
     if 'internal' in f and 'visible' in f:

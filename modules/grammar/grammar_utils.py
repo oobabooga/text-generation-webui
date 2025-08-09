@@ -463,7 +463,7 @@ class IncrementalGrammarConstraint(GrammarConstraint):
         super().__init__(grammar_str, start_rule_name, tokenizer)
 
     def accept_char(self, char, stacks):
-        byte = ord(char)
+        byte = char if isinstance(char, int) else ord(char)
         new_stacks = []
         for stack in stacks:
             # stack is empty
@@ -549,7 +549,7 @@ class IncrementalGrammarConstraint(GrammarConstraint):
     # For each sub-rule in the grammar, cache whether each byte is accepted.
     @lru_cache(maxsize=None)
     def pos_char_acceptance(self, pos, char):
-        byte = ord(char)
+        byte = char if isinstance(char, int) else ord(char)
         num_chars = self.grammar_encoding[pos]
         pos += 1
         for i in range(0, num_chars, 2):
