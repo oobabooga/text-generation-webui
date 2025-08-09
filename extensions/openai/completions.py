@@ -407,6 +407,10 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
     # Add messages to generate_params if present for multimodal processing
     if 'messages' in body:
         generate_params['messages'] = body['messages']
+        raw_images = convert_openai_messages_to_images(generate_params['messages'])
+        if raw_images:
+            logger.info(f"Found {len(raw_images)} image(s) in request.")
+            generate_params['raw_images'] = raw_images
 
     if not stream:
         prompt_arg = body[prompt_str]
@@ -423,7 +427,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
         total_prompt_token_count = 0
 
         for idx, prompt in enumerate(prompt_arg, start=0):
-            if isinstance(prompt[0], int):
+            if isinstance(prompt, list) and len(prompt) > 0 and isinstance(prompt[0], int):
                 # token lists
                 if requested_model == shared.model_name:
                     prompt = decode(prompt)[0]
@@ -438,19 +442,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
 
             # generate reply #######################################
             debug_msg({'prompt': prompt, 'generate_params': generate_params})
-
-            # Use multimodal generation if images are present
-            if 'messages' in generate_params:
-                raw_images = convert_openai_messages_to_images(generate_params['messages'])
-                if raw_images:
-                    logger.info(f"Using multimodal generation for {len(raw_images)} images")
-                    generate_params['raw_images'] = raw_images
-                    generator = shared.model.generate_with_streaming(prompt, generate_params)
-                else:
-                    generator = generate_reply(prompt, generate_params, is_chat=False)
-            else:
-                generator = generate_reply(prompt, generate_params, is_chat=False)
-
+            generator = generate_reply(prompt, generate_params, is_chat=False)
             answer = ''
 
             for a in generator:
@@ -523,18 +515,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
 
         # generate reply #######################################
         debug_msg({'prompt': prompt, 'generate_params': generate_params})
-        # Use multimodal generation if images are present
-        if 'messages' in generate_params:
-            raw_images = convert_openai_messages_to_images(generate_params['messages'])
-            if raw_images:
-                logger.info(f"Using multimodal generation for {len(raw_images)} images")
-                generate_params['raw_images'] = raw_images
-                generator = shared.model.generate_with_streaming(prompt, generate_params)
-            else:
-                generator = generate_reply(prompt, generate_params, is_chat=False)
-        else:
-            generator = generate_reply(prompt, generate_params, is_chat=False)
-
+        generator = generate_reply(prompt, generate_params, is_chat=False)
         answer = ''
         seen_content = ''
         completion_token_count = 0
