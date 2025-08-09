@@ -48,7 +48,6 @@ class Exllamav3Model:
             global_allocator
         )
         global_allocator.next_token_index = FIRST_MM_EMBEDDING_INDEX
-        logger.info("Reset MMTokenAllocator for clean multimodal token allocation")
 
         config = Config.from_directory(str(path_to_model))
         model = Model.from_config(config)
