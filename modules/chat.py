@@ -813,7 +813,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         for file_path in files:
             add_message_attachment(output, row_idx, file_path, is_user=True)
 
-        # Collect image attachments for ExLlamaV3
+        # Collect image attachments for multimodal generation
         image_attachments = []
         if 'metadata' in output:
             user_key = f"user_{row_idx}"
