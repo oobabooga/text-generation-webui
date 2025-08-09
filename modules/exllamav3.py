@@ -26,6 +26,7 @@ from extensions.openai.image_utils import (
 from modules import shared
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
+from modules.torch_utils import clear_torch_cache
 
 try:
     import flash_attn
@@ -342,6 +343,7 @@ class Exllamav3Model:
                 del self.model
             except Exception as e:
                 logger.warning(f"Error unloading main model: {e}")
+
             self.model = None
 
         if hasattr(self, 'cache') and self.cache is not None:
@@ -352,14 +354,3 @@ class Exllamav3Model:
 
         if hasattr(self, 'tokenizer') and self.tokenizer is not None:
             self.tokenizer = None
-
-        # Force GPU memory cleanup
-        import gc
-        gc.collect()
-
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
-            torch.cuda.empty_cache()
-
-        logger.info("ExLlamaV3 model fully unloaded")
