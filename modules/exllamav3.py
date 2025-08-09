@@ -6,7 +6,6 @@ import torch
 from exllamav3 import Cache, Config, Generator, Model, Tokenizer
 from exllamav3.cache import CacheLayer_fp16, CacheLayer_quant
 from exllamav3.generator import Job
-# Import the base sampler components directly from exllamav3
 from exllamav3.generator.sampler import (
     CustomSampler,
     SS_Argmax,
