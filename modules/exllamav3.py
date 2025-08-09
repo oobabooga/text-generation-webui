@@ -142,13 +142,18 @@ class Exllamav3Model:
 
         # ExLlamaV3-specific: Generate embeddings
         try:
-            # Do not reset the cache/allocator index; it causes token ID conflicts during generation.
+            # Use pre-computed embeddings if available (proper MMEmbedding lifetime)
+            if 'image_embeddings' in state and state['image_embeddings']:
+                # Use existing embeddings - this preserves MMEmbedding lifetime
+                image_embeddings = state['image_embeddings']
+            else:
+                # Do not reset the cache/allocator index; it causes token ID conflicts during generation.
 
-            logger.info(f"Processing {len(pil_images)} image(s) with ExLlamaV3 vision model")
-            image_embeddings = [
-                self.vision_model.get_image_embeddings(tokenizer=self.tokenizer, image=img)
-                for img in pil_images
-            ]
+                logger.info(f"Processing {len(pil_images)} image(s) with ExLlamaV3 vision model")
+                image_embeddings = [
+                    self.vision_model.get_image_embeddings(tokenizer=self.tokenizer, image=img)
+                    for img in pil_images
+                ]
 
             # ExLlamaV3-specific: Handle prompt processing with placeholders
             placeholders = [ie.text_alias for ie in image_embeddings]
