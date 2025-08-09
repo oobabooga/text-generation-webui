@@ -2,8 +2,22 @@ import traceback
 from pathlib import Path
 from typing import Any, List, Tuple
 
+import torch
 from exllamav3 import Cache, Config, Generator, Model, Tokenizer
 from exllamav3.cache import CacheLayer_fp16, CacheLayer_quant
+from exllamav3.generator import Job
+# Import the base sampler components directly from exllamav3
+from exllamav3.generator.sampler import (
+    CustomSampler,
+    SS_Argmax,
+    SS_MinP,
+    SS_PresFreqP,
+    SS_RepP,
+    SS_Sample,
+    SS_Temperature,
+    SS_TopK,
+    SS_TopP
+)
 
 from extensions.openai.image_utils import (
     convert_image_attachments_to_pil,
@@ -11,6 +25,7 @@ from extensions.openai.image_utils import (
 )
 from modules import shared
 from modules.logging_colors import logger
+from modules.text_generation import get_max_prompt_length
 
 try:
     import flash_attn
@@ -79,7 +94,6 @@ class Exllamav3Model:
             load_params['use_per_device'] = split
 
         model.load(**load_params)
-
         tokenizer = Tokenizer.from_config(config)
 
         # Load vision model component (ExLlamaV3 native)
@@ -127,11 +141,9 @@ class Exllamav3Model:
         # From webui image_attachments (preferred format)
         if 'image_attachments' in state and state['image_attachments']:
             pil_images.extend(convert_image_attachments_to_pil(state['image_attachments']))
-
         # From OpenAI API raw_images
         elif 'raw_images' in state and state['raw_images']:
             pil_images.extend(state['raw_images'])
-
         # From OpenAI API messages format
         elif 'messages' in state and state['messages']:
             pil_images.extend(convert_openai_messages_to_images(state['messages']))
@@ -147,7 +159,6 @@ class Exllamav3Model:
                 image_embeddings = state['image_embeddings']
             else:
                 # Do not reset the cache/allocator index; it causes token ID conflicts during generation.
-
                 logger.info(f"Processing {len(pil_images)} image(s) with ExLlamaV3 vision model")
                 image_embeddings = [
                     self.vision_model.get_image_embeddings(tokenizer=self.tokenizer, image=img)
@@ -178,46 +189,98 @@ class Exllamav3Model:
         """
         Generate text with streaming using native ExLlamaV3 API
         """
-        from exllamav3 import Job
-        from exllamav3.generator.sampler.presets import ComboSampler
-
         # Process images and modify prompt (ExLlamaV3-specific)
         prompt, image_embeddings = self._process_images_for_generation(prompt, state)
 
-        sampler = ComboSampler(
-            rep_p=state.get('repetition_penalty', 1.0),
-            freq_p=state.get('frequency_penalty', 0.0),
-            pres_p=state.get('presence_penalty', 0.0),
-            temperature=state.get('temperature', 0.7),
-            min_p=state.get('min_p', 0.0),
-            top_k=state.get('top_k', 0),
-            top_p=state.get('top_p', 1.0),
-        )
+        # -- Manually build and sort the sampler stack --
+        # Greedy decoding is a special case
+        if state['temperature'] == 0:
+            sampler = CustomSampler([SS_Argmax()])
+        else:
+            # 1. Create a list of all active, unordered samplers
+            unordered_samplers = []
+
+            # Penalties
+            penalty_range = state['repetition_penalty_range']
+            if penalty_range <= 0:
+                penalty_range = -1 # ExllamaV3 uses -1 for whole context
+            rep_decay = 0 # Not a configurable parameter
+
+            # Add penalty samplers if they are active
+            if state['repetition_penalty'] != 1.0:
+                 unordered_samplers.append(SS_RepP(state['repetition_penalty'], penalty_range, rep_decay))
+            if state['presence_penalty'] != 0.0 or state['frequency_penalty'] != 0.0:
+                 unordered_samplers.append(SS_PresFreqP(state['presence_penalty'], state['frequency_penalty'], penalty_range, rep_decay))
+
+            # Standard samplers
+            if state['top_k'] > 0:
+                unordered_samplers.append(SS_TopK(state['top_k']))
+            if state['top_p'] < 1.0:
+                unordered_samplers.append(SS_TopP(state['top_p']))
+            if state['min_p'] > 0.0:
+                unordered_samplers.append(SS_MinP(state['min_p']))
+
+            # Temperature
+            unordered_samplers.append(SS_Temperature(state['temperature']))
+
+            # 2. Define the mapping from class names to the priority list keys
+            class_name_to_nickname = {
+                'SS_RepP': 'repetition_penalty',
+                'SS_PresFreqP': 'presence_frequency_penalty',
+                'SS_TopK': 'top_k',
+                'SS_TopP': 'top_p',
+                'SS_MinP': 'min_p',
+                'SS_Temperature': 'temperature',
+            }
+
+            # 3. Get the priority list and handle temperature_last
+            default_priority = ['repetition_penalty', 'presence_frequency_penalty', 'top_k', 'top_p', 'min_p', 'temperature']
+            sampler_priority = state.get('sampler_priority', default_priority)
+
+            if state['temperature_last'] and 'temperature' in sampler_priority:
+                sampler_priority.append(sampler_priority.pop(sampler_priority.index('temperature')))
+
+            # 4. Sort the unordered list based on the priority list
+            def custom_sort_key(sampler_obj):
+                class_name = sampler_obj.__class__.__name__
+                nickname = class_name_to_nickname.get(class_name)
+                if nickname in sampler_priority:
+                    return sampler_priority.index(nickname)
+                return -1
+
+            ordered_samplers = sorted(unordered_samplers, key=custom_sort_key)
+
+            # 5. Add the final sampling stage and build the sampler
+            ordered_samplers.append(SS_Sample())
+            sampler = CustomSampler(ordered_samplers)
+        # -- End of sampler building --
 
         # Encode prompt with embeddings (ExLlamaV3-specific)
-        if image_embeddings:
-            input_ids = self.tokenizer.encode(
-                prompt,
-                encode_special_tokens=True,
-                embeddings=image_embeddings,
-            )
+        input_ids = self.tokenizer.encode(
+            prompt,
+            add_bos=state['add_bos_token'],
+            encode_special_tokens=True,
+            embeddings=image_embeddings,
+        )
+
+        input_ids = input_ids[:, -get_max_prompt_length(state):]
+
+        # Determine max_new_tokens
+        if state['auto_max_new_tokens']:
+            max_new_tokens = state['truncation_length'] - input_ids.shape[-1]
         else:
-            input_ids = self.tokenizer.encode(prompt, encode_special_tokens=True)
+            max_new_tokens = state['max_new_tokens']
 
-        # Get stop conditions from state (webui format) - keep as strings like ExLlamaV3 examples
+        # Get stop conditions
         stop_conditions = []
-        if 'stopping_strings' in state and state['stopping_strings']:
-            # Use strings directly (ExLlamaV3 handles the conversion internally)
-            stop_conditions.extend(state['stopping_strings'])
-
-        # Add EOS token ID as ExLlamaV3 examples do
-        if hasattr(self.tokenizer, 'eos_token_id') and self.tokenizer.eos_token_id is not None:
-            stop_conditions.append(self.tokenizer.eos_token_id)
+        if not state['ban_eos_token']:
+            if hasattr(self.tokenizer, 'eos_token_id') and self.tokenizer.eos_token_id is not None:
+                stop_conditions.append(self.tokenizer.eos_token_id)
 
         job = Job(
             input_ids=input_ids,
-            max_new_tokens=state.get('max_new_tokens', 500),
-            decode_special_tokens=True,
+            max_new_tokens=max_new_tokens,
+            decode_special_tokens=not state['skip_special_tokens'],
             embeddings=image_embeddings if image_embeddings else None,
             sampler=sampler,
             stop_conditions=stop_conditions if stop_conditions else None,
@@ -244,25 +307,16 @@ class Exllamav3Model:
             pass
 
     def generate(self, prompt, state):
-        """
-        Generate text using native ExLlamaV3 API (non-streaming)
-        """
-        output = self.generator.generate(
-            prompt=prompt,
-            max_new_tokens=state.get('max_new_tokens', 500),
-            temperature=state.get('temperature', 0.7),
-            top_p=state.get('top_p', 1.0),
-            top_k=state.get('top_k', 0),
-            repetition_penalty=state.get('repetition_penalty', 1.0),
-            frequency_penalty=state.get('frequency_penalty', 0.0),
-            presence_penalty=state.get('presence_penalty', 0.0),
-            min_p=state.get('min_p', 0.0),
-        )
+        output = ""
+        for chunk in self.generate_with_streaming(prompt, state):
+            output = chunk
 
         return output
 
     def encode(self, string, **kwargs):
-        return self.tokenizer.encode(string, **kwargs)
+        # Default add_bos to True for consistency with exllamav2 behavior
+        add_bos = kwargs.pop('add_bos', True)
+        return self.tokenizer.encode(string, add_bos=add_bos, **kwargs)
 
     def decode(self, ids, **kwargs):
         return self.tokenizer.decode(ids, **kwargs)
@@ -301,8 +355,6 @@ class Exllamav3Model:
 
         # Force GPU memory cleanup
         import gc
-
-        import torch
         gc.collect()
 
         if torch.cuda.is_available():
