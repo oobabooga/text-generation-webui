@@ -868,6 +868,8 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
                     'metadata': output['metadata']
                 }
 
+    row_idx = len(output['internal']) - 1
+
     # Collect image attachments for multimodal generation
     image_attachments = []
     if 'metadata' in output:
@@ -895,7 +897,6 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         prompt = generate_chat_prompt(text, state, **kwargs)
 
     # Add timestamp for assistant's response at the start of generation
-    row_idx = len(output['internal']) - 1
     update_message_metadata(output['metadata'], "assistant", row_idx, timestamp=get_current_timestamp(), model_name=shared.model_name)
 
     # Generate
