@@ -12,7 +12,10 @@ from pathlib import Path
 import llama_cpp_binaries
 import requests
 
-from extensions.openai.image_utils import convert_pil_to_base64
+from extensions.openai.image_utils import (
+    convert_image_attachments_to_pil,
+    convert_pil_to_base64
+)
 from modules import shared
 from modules.logging_colors import logger
 
@@ -129,27 +132,30 @@ class LlamaServer:
         url = f"http://127.0.0.1:{self.port}/completion"
         payload = self.prepare_payload(state)
 
-        pil_images = state.get('raw_images', [])
+        pil_images = []
+        # Check for images from the Web UI (image_attachments)
+        if 'image_attachments' in state and state['image_attachments']:
+            pil_images.extend(convert_image_attachments_to_pil(state['image_attachments']))
+        # Else, check for images from the API (raw_images)
+        elif 'raw_images' in state and state['raw_images']:
+            pil_images.extend(state.get('raw_images', []))
+
         if pil_images:
+            # Multimodal case
             IMAGE_TOKEN_COST_ESTIMATE = 600  # A safe, conservative estimate per image
 
-            # 1. Convert all images to base64
             base64_images = [convert_pil_to_base64(img) for img in pil_images]
-
-            # 2. Construct the special prompt object
             multimodal_prompt_object = {
                 "prompt": prompt,
                 "multimodal_data": base64_images
             }
-
-            # 3. Overwrite the payload's prompt with our new object
             payload["prompt"] = multimodal_prompt_object
 
-            # 4. Calculate an estimated token count
+            # Calculate an estimated token count
             text_tokens = self.encode(prompt, add_bos_token=state["add_bos_token"])
             self.last_prompt_token_count = len(text_tokens) + (len(pil_images) * IMAGE_TOKEN_COST_ESTIMATE)
         else:
-            # Text only behavior
+            # Text only case
             token_ids = self.encode(prompt, add_bos_token=state["add_bos_token"])
             self.last_prompt_token_count = len(token_ids)
             payload["prompt"] = token_ids
