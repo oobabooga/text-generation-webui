@@ -405,7 +405,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
     echo = body['echo']
 
     # Add messages to generate_params if present for multimodal processing
-    if 'messages' in body:
+    if body.get('messages'):
         generate_params['messages'] = body['messages']
         raw_images = convert_openai_messages_to_images(generate_params['messages'])
         if raw_images:
