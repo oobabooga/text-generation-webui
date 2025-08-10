@@ -12,11 +12,11 @@ from pathlib import Path
 import llama_cpp_binaries
 import requests
 
-from extensions.openai.image_utils import (
+from modules import shared
+from modules.image_utils import (
     convert_image_attachments_to_pil,
     convert_pil_to_base64
 )
-from modules import shared
 from modules.logging_colors import logger
 
 llamacpp_valid_cache_types = {"fp16", "q8_0", "q4_0"}

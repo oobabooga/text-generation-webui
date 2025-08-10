@@ -7,7 +7,6 @@ import tiktoken
 from pydantic import ValidationError
 
 from extensions.openai.errors import InvalidRequestError
-from extensions.openai.image_utils import convert_openai_messages_to_images
 from extensions.openai.typing import ToolDefinition
 from extensions.openai.utils import debug_msg, getToolCallId, parseToolCall
 from modules import shared
@@ -17,6 +16,7 @@ from modules.chat import (
     load_character_memoized,
     load_instruction_template_memoized
 )
+from modules.image_utils import convert_openai_messages_to_images
 from modules.logging_colors import logger
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply

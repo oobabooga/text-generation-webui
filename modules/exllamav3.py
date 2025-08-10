@@ -18,11 +18,11 @@ from exllamav3.generator.sampler import (
     SS_TopP
 )
 
-from extensions.openai.image_utils import (
+from modules import shared
+from modules.image_utils import (
     convert_image_attachments_to_pil,
     convert_openai_messages_to_images
 )
-from modules import shared
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
 from modules.torch_utils import clear_torch_cache
