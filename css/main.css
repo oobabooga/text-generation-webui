@@ -1579,6 +1579,7 @@ strong {
 
 .image-attachment {
     flex-direction: column;
+    max-width: 314px;
 }
 
 .image-preview {
