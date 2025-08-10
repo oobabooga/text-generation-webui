@@ -106,7 +106,7 @@ class CompletionRequestParams(BaseModel):
     frequency_penalty: float | None = 0
     logit_bias: dict | None = None
     logprobs: int | None = None
-    max_tokens: int | None = 16
+    max_tokens: int | None = 512
     n: int | None = Field(default=1, description="Unused parameter.")
     presence_penalty: float | None = 0
     stop: str | List[str] | None = None
@@ -232,7 +232,7 @@ class LogitsRequestParams(BaseModel):
     use_samplers: bool = False
     top_logits: int | None = 50
     frequency_penalty: float | None = 0
-    max_tokens: int | None = 16
+    max_tokens: int | None = 512
     presence_penalty: float | None = 0
     temperature: float | None = 1
     top_p: float | None = 1
