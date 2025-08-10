@@ -267,9 +267,11 @@ class Exllamav3Model:
 
         input_ids = input_ids[:, -get_max_prompt_length(state):]
 
+        self._last_prompt_token_count = input_ids.shape[-1]
+
         # Determine max_new_tokens
         if state['auto_max_new_tokens']:
-            max_new_tokens = state['truncation_length'] - input_ids.shape[-1]
+            max_new_tokens = state['truncation_length'] - self._last_prompt_token_count
         else:
             max_new_tokens = state['max_new_tokens']
 
@@ -323,8 +325,7 @@ class Exllamav3Model:
 
     @property
     def last_prompt_token_count(self):
-        # This would need to be tracked during generation
-        return 0
+        return getattr(self, '_last_prompt_token_count', 0)
 
     def unload(self):
         logger.info("Unloading ExLlamaV3 model components...")
