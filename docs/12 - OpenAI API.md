@@ -77,7 +77,7 @@ curl http://127.0.0.1:5000/v1/chat/completions \
   }'
 ```
 
-#### Multimodal support (ExLlamaV3)
+#### Multimodal support (llama.cpp and ExLlamaV3)
 
 ```shell
 curl http://127.0.0.1:5000/v1/chat/completions \
