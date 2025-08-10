@@ -28,6 +28,8 @@ loaders_and_params = OrderedDict({
         'device_draft',
         'ctx_size_draft',
         'speculative_decoding_accordion',
+        'mmproj',
+        'mmproj_accordion',
         'vram_info',
     ],
     'Transformers': [

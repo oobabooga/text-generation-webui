@@ -167,6 +167,7 @@ def list_model_elements():
         'gpu_layers_draft',
         'device_draft',
         'ctx_size_draft',
+        'mmproj',
     ]
 
     return elements

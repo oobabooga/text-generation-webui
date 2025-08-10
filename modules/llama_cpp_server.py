@@ -324,6 +324,13 @@ class LlamaServer:
             cmd += ["--rope-freq-scale", str(1.0 / shared.args.compress_pos_emb)]
         if shared.args.rope_freq_base > 0:
             cmd += ["--rope-freq-base", str(shared.args.rope_freq_base)]
+        if shared.args.mmproj not in [None, 'None']:
+            path = Path(shared.args.mmproj)
+            if not path.exists():
+                path = Path('user_data/mmproj') / shared.args.mmproj
+
+            if path.exists():
+                cmd += ["--mmproj", str(path)]
         if shared.args.model_draft not in [None, 'None']:
             path = Path(shared.args.model_draft)
             if not path.exists():
