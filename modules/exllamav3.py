@@ -316,7 +316,6 @@ class Exllamav3Model:
         return output
 
     def encode(self, string, **kwargs):
-        # Default add_bos to True for consistency with exllamav2 behavior
         add_bos = kwargs.pop('add_bos', True)
         return self.tokenizer.encode(string, add_bos=add_bos, **kwargs)
 
