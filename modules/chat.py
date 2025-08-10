@@ -813,19 +813,6 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         for file_path in files:
             add_message_attachment(output, row_idx, file_path, is_user=True)
 
-        # Collect image attachments for multimodal generation
-        image_attachments = []
-        if 'metadata' in output:
-            user_key = f"user_{row_idx}"
-            if user_key in output['metadata'] and "attachments" in output['metadata'][user_key]:
-                for attachment in output['metadata'][user_key]["attachments"]:
-                    if attachment.get("type") == "image":
-                        image_attachments.append(attachment)
-
-        # Add image attachments to state for the generation
-        if image_attachments:
-            state['image_attachments'] = image_attachments
-
         # Add web search results as attachments if enabled
         if state.get('enable_web_search', False):
             search_query = generate_search_query(text, state)
@@ -880,6 +867,19 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
                     'internal': output['internal'],
                     'metadata': output['metadata']
                 }
+
+    # Collect image attachments for multimodal generation
+    image_attachments = []
+    if 'metadata' in output:
+        user_key = f"user_{row_idx}"
+        if user_key in output['metadata'] and "attachments" in output['metadata'][user_key]:
+            for attachment in output['metadata'][user_key]["attachments"]:
+                if attachment.get("type") == "image":
+                    image_attachments.append(attachment)
+
+    # Add image attachments to state for the generation
+    if image_attachments:
+        state['image_attachments'] = image_attachments
 
     # Generate the prompt
     kwargs = {

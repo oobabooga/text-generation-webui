@@ -154,6 +154,19 @@ def get_available_ggufs():
     return sorted(model_list, key=natural_keys)
 
 
+def get_available_mmproj():
+    mmproj_dir = Path('user_data/mmproj')
+    if not mmproj_dir.exists():
+        return ['None']
+
+    mmproj_files = []
+    for item in mmproj_dir.iterdir():
+        if item.is_file() and item.suffix.lower() in ('.gguf', '.bin'):
+            mmproj_files.append(item.name)
+
+    return ['None'] + sorted(mmproj_files, key=natural_keys)
+
+
 def get_available_presets():
     return sorted(set((k.stem for k in Path('user_data/presets').glob('*.yaml'))), key=natural_keys)
 
