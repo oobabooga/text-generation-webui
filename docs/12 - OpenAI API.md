@@ -79,7 +79,7 @@ curl http://127.0.0.1:5000/v1/chat/completions \
 
 #### Multimodal/vision (llama.cpp and ExLlamaV3)
 
-##### /v1/chat/completions (recommended!)
+##### With /v1/chat/completions (recommended!)
 
 ```shell
 curl http://127.0.0.1:5000/v1/chat/completions \
@@ -97,7 +97,7 @@ curl http://127.0.0.1:5000/v1/chat/completions \
   }'
 ```
 
-##### /v1/completions
+##### With /v1/completions
 
 ```shell
 curl http://127.0.0.1:5000/v1/completions \
