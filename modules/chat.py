@@ -870,18 +870,19 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
     row_idx = len(output['internal']) - 1
 
-    # Collect image attachments for multimodal generation
-    image_attachments = []
+    # Collect image attachments for multimodal generation from the entire history
+    all_image_attachments = []
     if 'metadata' in output:
-        user_key = f"user_{row_idx}"
-        if user_key in output['metadata'] and "attachments" in output['metadata'][user_key]:
-            for attachment in output['metadata'][user_key]["attachments"]:
-                if attachment.get("type") == "image":
-                    image_attachments.append(attachment)
+        for i in range(len(output['internal'])):
+            user_key = f"user_{i}"
+            if user_key in output['metadata'] and "attachments" in output['metadata'][user_key]:
+                for attachment in output['metadata'][user_key]["attachments"]:
+                    if attachment.get("type") == "image":
+                        all_image_attachments.append(attachment)
 
-    # Add image attachments to state for the generation
-    if image_attachments:
-        state['image_attachments'] = image_attachments
+    # Add all collected image attachments to state for the generation
+    if all_image_attachments:
+        state['image_attachments'] = all_image_attachments
 
     # Generate the prompt
     kwargs = {

@@ -15,6 +15,7 @@ import requests
 from modules import shared
 from modules.image_utils import (
     convert_image_attachments_to_pil,
+    convert_openai_messages_to_images,
     convert_pil_to_base64
 )
 from modules.logging_colors import logger
@@ -133,10 +134,13 @@ class LlamaServer:
         payload = self.prepare_payload(state)
 
         pil_images = []
-        # Check for images from the Web UI (image_attachments)
+        # Source 1: Web UI (from chatbot_wrapper)
         if 'image_attachments' in state and state['image_attachments']:
             pil_images.extend(convert_image_attachments_to_pil(state['image_attachments']))
-        # Else, check for images from the API (raw_images)
+        # Source 2: Chat Completions API (/v1/chat/completions)
+        elif 'history' in state and state.get('history', {}).get('messages'):
+            pil_images.extend(convert_openai_messages_to_images(state['history']['messages']))
+        # Source 3: Legacy Completions API (/v1/completions)
         elif 'raw_images' in state and state['raw_images']:
             pil_images.extend(state.get('raw_images', []))
 

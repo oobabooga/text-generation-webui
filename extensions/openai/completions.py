@@ -85,16 +85,28 @@ def process_parameters(body, is_legacy=False):
 
 
 def process_multimodal_content(content):
-    """Extract text from OpenAI multimodal format for non-multimodal models"""
+    """Extract text and add image placeholders from OpenAI multimodal format"""
     if isinstance(content, str):
         return content
 
     if isinstance(content, list):
         text_parts = []
+        image_placeholders = ""
         for item in content:
-            if isinstance(item, dict) and item.get('type') == 'text':
+            if not isinstance(item, dict):
+                continue
+
+            item_type = item.get('type', '')
+            if item_type == 'text':
                 text_parts.append(item.get('text', ''))
-        return ' '.join(text_parts) if text_parts else str(content)
+            elif item_type == 'image_url':
+                image_placeholders += "<__media__>"
+
+        final_text = ' '.join(text_parts)
+        if image_placeholders:
+            return f"{image_placeholders}\n\n{final_text}"
+        else:
+            return final_text
 
     return str(content)
 
