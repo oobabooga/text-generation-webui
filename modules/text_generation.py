@@ -295,8 +295,6 @@ def generate_reply_HF(question, original_question, state, stopping_strings=None,
         _StopEverythingStoppingCriteria
     )
 
-    # Native ExLlamav3Model handles multimodal internally - no special routing needed
-
     if shared.args.loader == 'Transformers':
         clear_torch_cache()
 
