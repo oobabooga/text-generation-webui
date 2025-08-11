@@ -77,7 +77,9 @@ curl http://127.0.0.1:5000/v1/chat/completions \
   }'
 ```
 
-#### Multimodal support (llama.cpp and ExLlamaV3)
+#### Multimodal/vision (llama.cpp and ExLlamaV3)
+
+##### /v1/chat/completions (recommended!)
 
 ```shell
 curl http://127.0.0.1:5000/v1/chat/completions \
@@ -87,8 +89,40 @@ curl http://127.0.0.1:5000/v1/chat/completions \
       {
         "role": "user",
         "content": [
-          {"type": "text", "text": "What color is this image?"},
+          {"type": "text", "text": "Please describe what you see in this image."},
           {"type": "image_url", "image_url": {"url": "https://github.com/turboderp-org/exllamav3/blob/master/examples/media/cat.png?raw=true"}}
+        ]
+      }
+    ]
+  }'
+```
+
+##### /v1/completions
+
+```shell
+curl http://127.0.0.1:5000/v1/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "About image <__media__> and image <__media__>, what I can say is that the first one"
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "https://github.com/turboderp-org/exllamav3/blob/master/examples/media/cat.png?raw=true"
+            }
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "https://github.com/turboderp-org/exllamav3/blob/master/examples/media/strawberry.png?raw=true"
+            }
+          }
         ]
       }
     ]
