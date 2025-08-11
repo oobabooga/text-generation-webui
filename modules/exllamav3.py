@@ -8,7 +8,7 @@ from exllamav3.cache import CacheLayer_fp16, CacheLayer_quant
 from exllamav3.generator import Job
 
 from modules import shared
-from modules.exllamav3_custom_sampler import (
+from exllamav3.generator.sampler import (
     CustomSampler,
     SS_Argmax,
     SS_MinP,
