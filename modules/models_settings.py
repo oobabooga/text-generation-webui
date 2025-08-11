@@ -15,7 +15,7 @@ from modules.logging_colors import logger
 def get_fallback_settings():
     return {
         'bf16': False,
-        'ctx_size': 2048,
+        'ctx_size': 8192,
         'rope_freq_base': 0,
         'compress_pos_emb': 1,
         'alpha_value': 1,
