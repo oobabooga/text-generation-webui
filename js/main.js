@@ -977,7 +977,7 @@ if (document.readyState === "loading") {
 //------------------------------------------------
 
 // File upload button
-document.querySelector("#chat-input .upload-button").title = "Upload text files, PDFs, and DOCX documents";
+document.querySelector("#chat-input .upload-button").title = "Upload text files, PDFs, DOCX documents, and images";
 
 // Activate web search
 document.getElementById("web-search").title = "Search the internet with DuckDuckGo";
