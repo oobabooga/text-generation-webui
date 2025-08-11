@@ -237,7 +237,7 @@ class Exllamav3Model:
 
             # 3. Get the priority list and handle temperature_last
             default_priority = ['repetition_penalty', 'presence_frequency_penalty', 'top_k', 'top_p', 'min_p', 'temperature']
-            sampler_priority = state.get('sampler_priority', default_priority)
+            sampler_priority = state.get('sampler_priority') or default_priority
 
             if state['temperature_last'] and 'temperature' in sampler_priority:
                 sampler_priority.append(sampler_priority.pop(sampler_priority.index('temperature')))
