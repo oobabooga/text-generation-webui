@@ -40,7 +40,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             yield ''
             return
 
-        if shared.model.__class__.__name__ in ['LlamaServer', 'Exllamav2Model', 'TensorRTLLMModel']:
+        if shared.model.__class__.__name__ in ['LlamaServer', 'Exllamav2Model', 'Exllamav3Model', 'TensorRTLLMModel']:
             generate_func = generate_reply_custom
         else:
             generate_func = generate_reply_HF
@@ -128,9 +128,9 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
 
         from modules.torch_utils import get_device
 
-        if shared.model.__class__.__name__ in ['Exllamav2Model', 'TensorRTLLMModel']:
+        if shared.model.__class__.__name__ in ['Exllamav2Model', 'Exllamav3Model', 'TensorRTLLMModel']:
             input_ids = shared.tokenizer.encode(str(prompt))
-            if shared.model.__class__.__name__ != 'Exllamav2Model':
+            if shared.model.__class__.__name__ not in ['Exllamav2Model', 'Exllamav3Model']:
                 input_ids = np.array(input_ids).reshape(1, len(input_ids))
         else:
             input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', add_special_tokens=add_special_tokens)
@@ -148,7 +148,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
         if truncation_length is not None:
             input_ids = input_ids[:, -truncation_length:]
 
-        if shared.model.__class__.__name__ in ['Exllamav2Model', 'TensorRTLLMModel'] or shared.args.cpu:
+        if shared.model.__class__.__name__ in ['Exllamav2Model', 'Exllamav3Model', 'TensorRTLLMModel'] or shared.args.cpu:
             return input_ids
         else:
             device = get_device()

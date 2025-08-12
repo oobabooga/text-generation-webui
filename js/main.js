@@ -583,7 +583,7 @@ function moveToChatTab() {
 
   const chatControlsFirstChild = document.querySelector("#chat-controls").firstElementChild;
   const newParent = chatControlsFirstChild;
-  let newPosition = newParent.children.length - 2;
+  let newPosition = newParent.children.length - 3;
 
   newParent.insertBefore(grandParent, newParent.children[newPosition]);
   document.getElementById("save-character").style.display = "none";
@@ -977,7 +977,7 @@ if (document.readyState === "loading") {
 //------------------------------------------------
 
 // File upload button
-document.querySelector("#chat-input .upload-button").title = "Upload text files, PDFs, and DOCX documents";
+document.querySelector("#chat-input .upload-button").title = "Upload text files, PDFs, DOCX documents, and images";
 
 // Activate web search
 document.getElementById("web-search").title = "Search the internet with DuckDuckGo";

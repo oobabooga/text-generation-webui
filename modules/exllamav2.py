@@ -135,7 +135,8 @@ class Exllamav2Model:
         return result, result
 
     def encode(self, string, **kwargs):
-        return self.tokenizer.encode(string, add_bos=True, encode_special_tokens=True)
+        add_bos = kwargs.pop('add_bos', True)
+        return self.tokenizer.encode(string, add_bos=add_bos, encode_special_tokens=True, **kwargs)
 
     def decode(self, ids, **kwargs):
         if isinstance(ids, list):

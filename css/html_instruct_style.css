@@ -13,7 +13,7 @@
     line-height: 28px !important;
 }
 
-.dark .chat .message-body :is(p, li, q, h1, h2, h3, h4, h5, h6) {
+.dark .chat .message-body :is(p, li, q, em, h1, h2, h3, h4, h5, h6) {
     color: #d1d5db !important;
 }
 

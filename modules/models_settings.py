@@ -15,7 +15,7 @@ from modules.logging_colors import logger
 def get_fallback_settings():
     return {
         'bf16': False,
-        'ctx_size': 2048,
+        'ctx_size': 8192,
         'rope_freq_base': 0,
         'compress_pos_emb': 1,
         'alpha_value': 1,
@@ -106,9 +106,16 @@ def get_model_metadata(model):
 
             for k in ['max_position_embeddings', 'model_max_length', 'max_seq_len']:
                 if k in metadata:
-                    model_settings['truncation_length'] = metadata[k]
-                    model_settings['truncation_length_info'] = metadata[k]
-                    model_settings['ctx_size'] = min(metadata[k], 8192)
+                    value = metadata[k]
+                elif k in metadata.get('text_config', {}):
+                    value = metadata['text_config'][k]
+                else:
+                    continue
+
+                model_settings['truncation_length'] = value
+                model_settings['truncation_length_info'] = value
+                model_settings['ctx_size'] = min(value, 8192)
+                break
 
             if 'rope_theta' in metadata:
                 model_settings['rope_freq_base'] = metadata['rope_theta']
@@ -132,16 +139,26 @@ def get_model_metadata(model):
         with open(jinja_path, 'r', encoding='utf-8') as f:
             template = f.read()
 
+    # 2. If no .jinja file, try chat_template.json
+    if template is None:
+        json_template_path = Path(f'{shared.args.model_dir}/{model}') / 'chat_template.json'
+        if json_template_path.exists():
+            with open(json_template_path, 'r', encoding='utf-8') as f:
+                json_data = json.load(f)
+                if 'chat_template' in json_data:
+                    template = json_data['chat_template']
+
+    # 3. Fall back to tokenizer_config.json metadata
     if path.exists():
         metadata = json.loads(open(path, 'r', encoding='utf-8').read())
 
-        # 2. Only read from metadata if we haven't already loaded from .jinja
+        # Only read from metadata if we haven't already loaded from .jinja or .json
         if template is None and 'chat_template' in metadata:
             template = metadata['chat_template']
             if isinstance(template, list):
                 template = template[0]['template']
 
-        # 3. If a template was found from either source, process it
+        # 4. If a template was found from any source, process it
         if template:
             for k in ['eos_token', 'bos_token']:
                 if k in metadata:
@@ -194,11 +211,11 @@ def infer_loader(model_name, model_settings, hf_quant_method=None):
     elif re.match(r'.*\.gguf', model_name.lower()):
         loader = 'llama.cpp'
     elif hf_quant_method == 'exl3':
-        loader = 'ExLlamav3_HF'
+        loader = 'ExLlamav3'
     elif hf_quant_method in ['exl2', 'gptq']:
         loader = 'ExLlamav2_HF'
     elif re.match(r'.*exl3', model_name.lower()):
-        loader = 'ExLlamav3_HF'
+        loader = 'ExLlamav3'
     elif re.match(r'.*exl2', model_name.lower()):
         loader = 'ExLlamav2_HF'
     else:

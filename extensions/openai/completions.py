@@ -16,6 +16,8 @@ from modules.chat import (
     load_character_memoized,
     load_instruction_template_memoized
 )
+from modules.image_utils import convert_openai_messages_to_images
+from modules.logging_colors import logger
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
 
@@ -82,6 +84,33 @@ def process_parameters(body, is_legacy=False):
     return generate_params
 
 
+def process_multimodal_content(content):
+    """Extract text and add image placeholders from OpenAI multimodal format"""
+    if isinstance(content, str):
+        return content
+
+    if isinstance(content, list):
+        text_parts = []
+        image_placeholders = ""
+        for item in content:
+            if not isinstance(item, dict):
+                continue
+
+            item_type = item.get('type', '')
+            if item_type == 'text':
+                text_parts.append(item.get('text', ''))
+            elif item_type == 'image_url':
+                image_placeholders += "<__media__>"
+
+        final_text = ' '.join(text_parts)
+        if image_placeholders:
+            return f"{image_placeholders}\n\n{final_text}"
+        else:
+            return final_text
+
+    return str(content)
+
+
 def convert_history(history):
     '''
     Chat histories in this program are in the format [message, reply].
@@ -99,8 +128,11 @@ def convert_history(history):
         role = entry["role"]
 
         if role == "user":
+            # Extract text content (images handled by model-specific code)
+            content = process_multimodal_content(content)
             user_input = content
             user_input_last = True
+
             if current_message:
                 chat_dialogue.append([current_message, '', ''])
                 current_message = ""
@@ -126,7 +158,11 @@ def convert_history(history):
     if not user_input_last:
         user_input = ""
 
-    return user_input, system_message, {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
+    return user_input, system_message, {
+        'internal': chat_dialogue,
+        'visible': copy.deepcopy(chat_dialogue),
+        'messages': history  # Store original messages for multimodal models
+    }
 
 
 def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, prompt_only=False) -> dict:
@@ -150,8 +186,22 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         elif m['role'] == 'function':
             raise InvalidRequestError(message="role: function is not supported.", param='messages')
 
-        if 'content' not in m and "image_url" not in m:
+        # Handle multimodal content validation
+        content = m.get('content')
+        if content is None:
             raise InvalidRequestError(message="messages: missing content", param='messages')
+
+        # Validate multimodal content structure
+        if isinstance(content, list):
+            for item in content:
+                if not isinstance(item, dict) or 'type' not in item:
+                    raise InvalidRequestError(message="messages: invalid content item format", param='messages')
+                if item['type'] not in ['text', 'image_url']:
+                    raise InvalidRequestError(message="messages: unsupported content type", param='messages')
+                if item['type'] == 'text' and 'text' not in item:
+                    raise InvalidRequestError(message="messages: missing text in content item", param='messages')
+                if item['type'] == 'image_url' and ('image_url' not in item or 'url' not in item['image_url']):
+                    raise InvalidRequestError(message="messages: missing image_url in content item", param='messages')
 
     # Chat Completions
     object_type = 'chat.completion' if not stream else 'chat.completion.chunk'
@@ -336,9 +386,26 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
 
     prompt_str = 'context' if is_legacy else 'prompt'
 
-    # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
-    if prompt_str not in body:
-        raise InvalidRequestError("Missing required input", param=prompt_str)
+    # Handle both prompt and messages format for unified multimodal support
+    if prompt_str not in body or body[prompt_str] is None:
+        if 'messages' in body:
+            # Convert messages format to prompt for completions endpoint
+            prompt_text = ""
+            for message in body.get('messages', []):
+                if isinstance(message, dict) and 'content' in message:
+                    # Extract text content from multimodal messages
+                    content = message['content']
+                    if isinstance(content, str):
+                        prompt_text += content
+                    elif isinstance(content, list):
+                        for item in content:
+                            if isinstance(item, dict) and item.get('type') == 'text':
+                                prompt_text += item.get('text', '')
+
+            # Allow empty prompts for image-only requests
+            body[prompt_str] = prompt_text
+        else:
+            raise InvalidRequestError("Missing required input", param=prompt_str)
 
     # common params
     generate_params = process_parameters(body, is_legacy=is_legacy)
@@ -349,9 +416,22 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
     suffix = body['suffix'] if body['suffix'] else ''
     echo = body['echo']
 
+    # Add messages to generate_params if present for multimodal processing
+    if body.get('messages'):
+        generate_params['messages'] = body['messages']
+        raw_images = convert_openai_messages_to_images(generate_params['messages'])
+        if raw_images:
+            logger.info(f"Found {len(raw_images)} image(s) in request.")
+            generate_params['raw_images'] = raw_images
+
     if not stream:
         prompt_arg = body[prompt_str]
-        if isinstance(prompt_arg, str) or (isinstance(prompt_arg, list) and isinstance(prompt_arg[0], int)):
+
+        # Handle empty/None prompts (e.g., image-only requests)
+        if prompt_arg is None:
+            prompt_arg = ""
+
+        if isinstance(prompt_arg, str) or (isinstance(prompt_arg, list) and len(prompt_arg) > 0 and isinstance(prompt_arg[0], int)):
             prompt_arg = [prompt_arg]
 
         resp_list_data = []
@@ -359,7 +439,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
         total_prompt_token_count = 0
 
         for idx, prompt in enumerate(prompt_arg, start=0):
-            if isinstance(prompt[0], int):
+            if isinstance(prompt, list) and len(prompt) > 0 and isinstance(prompt[0], int):
                 # token lists
                 if requested_model == shared.model_name:
                     prompt = decode(prompt)[0]
@@ -448,7 +528,6 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
         # generate reply #######################################
         debug_msg({'prompt': prompt, 'generate_params': generate_params})
         generator = generate_reply(prompt, generate_params, is_chat=False)
-
         answer = ''
         seen_content = ''
         completion_token_count = 0

@@ -85,6 +85,7 @@ group.add_argument('--no-kv-offload', action='store_true', help='Do not offload 
 group.add_argument('--row-split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
 group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"')
 group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
+group.add_argument('--mmproj', type=str, default=None, help='Path to the mmproj file for vision models.')
 
 # Cache
 group = parser.add_argument_group('Context and cache')
@@ -318,6 +319,8 @@ def fix_loader_name(name):
         return 'ExLlamav2_HF'
     elif name in ['exllamav3-hf', 'exllamav3_hf', 'exllama-v3-hf', 'exllama_v3_hf', 'exllama-v3_hf', 'exllama3-hf', 'exllama3_hf', 'exllama-3-hf', 'exllama_3_hf', 'exllama-3_hf']:
         return 'ExLlamav3_HF'
+    elif name in ['exllamav3']:
+        return 'ExLlamav3'
     elif name in ['tensorrt', 'tensorrtllm', 'tensorrt_llm', 'tensorrt-llm', 'tensort', 'tensortllm']:
         return 'TensorRT-LLM'
 
