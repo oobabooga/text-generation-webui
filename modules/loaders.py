@@ -61,6 +61,10 @@ loaders_and_params = OrderedDict({
         'ctx_size',
         'cache_type',
         'gpu_split',
+        'model_draft',
+        'draft_max',
+        'ctx_size_draft',
+        'speculative_decoding_accordion',
     ],
     'ExLlamav2_HF': [
         'ctx_size',
