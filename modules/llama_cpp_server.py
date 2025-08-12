@@ -34,6 +34,7 @@ class LlamaServer:
         self.process = None
         self.session = requests.Session()
         self.vocabulary_size = None
+        self.has_multimodal = False
         self.bos_token = "<s>"
         self.last_prompt_token_count = 0
 
@@ -143,6 +144,10 @@ class LlamaServer:
         # Source 3: Legacy Completions API (/v1/completions)
         elif 'raw_images' in state and state['raw_images']:
             pil_images.extend(state.get('raw_images', []))
+
+        # Fail early if images are provided but the model doesn't support them
+        if pil_images and not self.has_multimodal:
+            raise RuntimeError("The loaded llama.cpp model does not support multimodal requests. You must load a vision model and provide an mmproj file.")
 
         if pil_images:
             # Multimodal case
@@ -261,8 +266,8 @@ class LlamaServer:
         else:
             raise Exception(f"Unexpected response format: 'completion_probabilities' not found in {result}")
 
-    def _get_vocabulary_size(self):
-        """Get and store the model's maximum context length."""
+    def _get_model_properties(self):
+        """Get and store the model's properties, including vocab size and multimodal capability."""
         url = f"http://127.0.0.1:{self.port}/v1/models"
         response = self.session.get(url).json()
 
@@ -270,6 +275,10 @@ class LlamaServer:
             model_info = response["data"][0]
             if "meta" in model_info and "n_vocab" in model_info["meta"]:
                 self.vocabulary_size = model_info["meta"]["n_vocab"]
+
+            # Check for multimodal capability
+            if "capabilities" in model_info and "multimodal" in model_info["capabilities"]:
+                self.has_multimodal = True
 
     def _get_bos_token(self):
         """Get and store the model's BOS token."""
@@ -421,7 +430,7 @@ class LlamaServer:
             time.sleep(1)
 
         # Server is now healthy, get model info
-        self._get_vocabulary_size()
+        self._get_model_properties()
         self._get_bos_token()
         return self.port
 
