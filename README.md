@@ -16,7 +16,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 - Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory.
 - 100% offline and private, with zero telemetry, external resources, or remote update requests.
 - **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
-- **Vision (multimodal models)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Multimodal%E2Tutorial)).
+- **Vision (multimodal models)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Multimodal-Tutorial)).
 - **Web search**: Optionally search the internet with LLM-generated queries to add context to the conversation.
 - Aesthetic UI with dark and light themes.
 - Syntax highlighting for code blocks and LaTeX rendering for mathematical expressions.
