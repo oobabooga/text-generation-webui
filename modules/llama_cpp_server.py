@@ -149,11 +149,10 @@ class LlamaServer:
             IMAGE_TOKEN_COST_ESTIMATE = 600  # A safe, conservative estimate per image
 
             base64_images = [convert_pil_to_base64(img) for img in pil_images]
-            multimodal_prompt_object = {
-                "prompt": prompt,
+            payload["prompt"] = {
+                "prompt_string": prompt,
                 "multimodal_data": base64_images
             }
-            payload["prompt"] = multimodal_prompt_object
 
             # Calculate an estimated token count
             text_tokens = self.encode(prompt, add_bos_token=state["add_bos_token"])
