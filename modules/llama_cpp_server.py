@@ -8,6 +8,7 @@ import sys
 import threading
 import time
 from pathlib import Path
+from typing import Any, List
 
 import llama_cpp_binaries
 import requests
@@ -129,10 +130,10 @@ class LlamaServer:
 
         return payload
 
-    def generate_with_streaming(self, prompt, state):
-        url = f"http://127.0.0.1:{self.port}/completion"
-        payload = self.prepare_payload(state)
-
+    def _process_images_for_generation(self, state: dict) -> List[Any]:
+        """
+        Process all possible image inputs and return PIL images
+        """
         pil_images = []
         # Source 1: Web UI (from chatbot_wrapper)
         if 'image_attachments' in state and state['image_attachments']:
@@ -143,6 +144,21 @@ class LlamaServer:
         # Source 3: Legacy Completions API (/v1/completions)
         elif 'raw_images' in state and state['raw_images']:
             pil_images.extend(state.get('raw_images', []))
+
+        return pil_images
+
+    def is_multimodal(self) -> bool:
+        """Check if this model supports multimodal input."""
+        return shared.args.mmproj not in [None, 'None']
+
+    def generate_with_streaming(self, prompt, state):
+        url = f"http://127.0.0.1:{self.port}/completion"
+        payload = self.prepare_payload(state)
+
+        pil_images = []
+
+        if shared.is_multimodal:
+            pil_images = self._process_images_for_generation(state)
 
         if pil_images:
             # Multimodal case

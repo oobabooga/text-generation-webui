@@ -16,6 +16,7 @@ model = None
 tokenizer = None
 model_name = 'None'
 is_seq2seq = False
+is_multimodal = False
 model_dirty_from_training = False
 lora_names = []
 
