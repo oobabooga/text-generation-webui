@@ -177,9 +177,6 @@ class Exllamav3Model:
         Process all possible image inputs and return modified prompt + embeddings.
         Returns: (processed_prompt, image_embeddings)
         """
-        if not self.is_multimodal():
-            return prompt, []
-
         # Collect images from various sources using shared utilities
         pil_images = []
 
@@ -234,8 +231,11 @@ class Exllamav3Model:
         """
         Generate text with streaming using native ExLlamaV3 API
         """
-        # Process images and modify prompt (ExLlamaV3-specific)
-        prompt, image_embeddings = self._process_images_for_generation(prompt, state)
+        image_embeddings = []
+
+        if shared.is_multimodal:
+            # Process images and modify prompt (ExLlamaV3-specific)
+            prompt, image_embeddings = self._process_images_for_generation(prompt, state)
 
         # Greedy decoding is a special case
         if state['temperature'] == 0:
