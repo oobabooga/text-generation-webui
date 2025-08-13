@@ -97,6 +97,8 @@ curl http://127.0.0.1:5000/v1/chat/completions \
   }'
 ```
 
+For base64-encoded images, just replace the inner "url" value with the base64 string, formatted as `data:image/FORMAT;base64,BASE64_STRING` where FORMAT is the image type (image/png, image/jpeg, image/gif, etc.) and BASE64_STRING is your encoded image.
+
 ##### With /v1/completions
 
 ```shell
@@ -128,6 +130,8 @@ curl http://127.0.0.1:5000/v1/completions \
     ]
   }'
 ```
+
+For base64-encoded images, just replace the inner "url" values with the base64 strings, formatted as `data:image/FORMAT;base64,BASE64_STRING` where FORMAT is the image type (image/png, image/jpeg, image/gif, etc.) and BASE64_STRING is your encoded image.
 
 #### SSE streaming
 
