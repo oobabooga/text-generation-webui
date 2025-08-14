@@ -93,7 +93,10 @@ curl http://127.0.0.1:5000/v1/chat/completions \
           {"type": "image_url", "image_url": {"url": "https://github.com/turboderp-org/exllamav3/blob/master/examples/media/cat.png?raw=true"}}
         ]
       }
-    ]
+    ],
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20
   }'
 ```
 
@@ -127,7 +130,10 @@ curl http://127.0.0.1:5000/v1/completions \
           }
         ]
       }
-    ]
+    ],
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20
   }'
 ```
 
