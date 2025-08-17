@@ -91,6 +91,11 @@ class Exllamav3Model:
             split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
             load_params['use_per_device'] = split
 
+        # Tensor-parallelism
+        if shared.args.enable_tp:
+            load_params['tensor_p'] = True
+            load_params['tp_backend'] = shared.args.tp_backend
+
         model.load(**load_params)
         tokenizer = Tokenizer.from_config(config)
 

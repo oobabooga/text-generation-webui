@@ -65,6 +65,8 @@ loaders_and_params = OrderedDict({
         'draft_max',
         'ctx_size_draft',
         'speculative_decoding_accordion',
+        'enable_tp',
+        'tp_backend',
     ],
     'ExLlamav2_HF': [
         'ctx_size',

@@ -101,6 +101,11 @@ group.add_argument('--gpu-layers-draft', type=int, default=256, help='Number of 
 group.add_argument('--device-draft', type=str, default=None, help='Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1')
 group.add_argument('--ctx-size-draft', type=int, default=0, help='Size of the prompt context for the draft model. If 0, uses the same as the main model.')
 
+# ExLlamaV3
+group = parser.add_argument_group('ExLlamaV3')
+group.add_argument('--enable-tp', '--enable_tp', action='store_true', help='Enable Tensor Parallelism (TP) to split the model across GPUs.')
+group.add_argument('--tp-backend', type=str, default='native', help='The backend for tensor parallelism. Valid options: native, nccl. Default: native.')
+
 # ExLlamaV2
 group = parser.add_argument_group('ExLlamaV2')
 group.add_argument('--gpu-split', type=str, help='Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.')
@@ -110,7 +115,6 @@ group.add_argument('--no_flash_attn', action='store_true', help='Force flash-att
 group.add_argument('--no_xformers', action='store_true', help='Force xformers to not be used.')
 group.add_argument('--no_sdpa', action='store_true', help='Force Torch SDPA to not be used.')
 group.add_argument('--num_experts_per_token', type=int, default=2, metavar='N', help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
-group.add_argument('--enable_tp', action='store_true', help='Enable Tensor Parallelism (TP) in ExLlamaV2.')
 
 # TensorRT-LLM
 group = parser.add_argument_group('TensorRT-LLM')
