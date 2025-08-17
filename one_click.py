@@ -16,7 +16,7 @@ import sys
 # os.environ["HCC_AMDGPU_TARGET"] = 'gfx1030'
 
 # Define the required versions
-TORCH_VERSION = "2.6.0"
+TORCH_VERSION = "2.7.0"
 PYTHON_VERSION = "3.11"
 LIBSTDCXX_VERSION_LINUX = "12.1.0"
 
@@ -113,17 +113,16 @@ def get_gpu_choice():
             choice = get_user_choice(
                 "What is your GPU?",
                 {
-                    'A': 'NVIDIA - CUDA 12.4',
+                    'A': 'NVIDIA',
                     'B': 'AMD - Linux/macOS only, requires ROCm 6.2.4',
                     'C': 'Apple M Series',
                     'D': 'Intel Arc (beta)',
-                    'E': 'NVIDIA - CUDA 12.8',
                     'N': 'CPU mode'
                 },
             )
 
         # Convert choice to GPU name
-        gpu_choice = {"A": "NVIDIA", "B": "AMD", "C": "APPLE", "D": "INTEL", "E": "NVIDIA_CUDA128", "N": "NONE"}[choice]
+        gpu_choice = {"A": "NVIDIA_CUDA128", "B": "AMD", "C": "APPLE", "D": "INTEL", "N": "NONE"}[choice]
 
         # Save choice to state
         state['gpu_choice'] = gpu_choice
@@ -367,6 +366,19 @@ def update_requirements(initial_installation=False, pull=True):
             environment=True,
             assert_success=True
         )
+
+    # Check for outdated CUDA 12.4 installs and refuse to update
+    state = load_state()
+    if state.get('gpu_choice') == 'NVIDIA':
+        print_big_message(
+            "Your current installation uses CUDA 12.4, which has been removed.\n"
+            "To update to the new default (CUDA 12.8), a clean installation is required.\n\n"
+            "INSTRUCTIONS:\n"
+            "1. Delete the 'installer_files' folder in your text-generation-webui directory.\n"
+            "2. Run the start script again (e.g., start_windows.bat).\n\n"
+            "This will create a fresh environment with the latest software."
+        )
+        sys.exit(0)
 
     current_commit = get_current_commit()
     wheels_changed = not os.path.exists(state_file)
