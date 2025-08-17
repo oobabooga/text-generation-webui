@@ -135,9 +135,7 @@ def get_pytorch_install_command(gpu_choice):
     """Get PyTorch installation command based on GPU choice"""
     base_cmd = f"python -m pip install torch=={TORCH_VERSION} "
 
-    if gpu_choice == "NVIDIA":
-        return base_cmd + "--index-url https://download.pytorch.org/whl/cu124"
-    elif gpu_choice == "NVIDIA_CUDA128":
+    if gpu_choice == "NVIDIA_CUDA128":
         return "python -m pip install torch==2.7.1 --index-url https://download.pytorch.org/whl/cu128"
     elif gpu_choice == "AMD":
         return base_cmd + "--index-url https://download.pytorch.org/whl/rocm6.2.4"
@@ -156,9 +154,7 @@ def get_pytorch_update_command(gpu_choice):
     """Get PyTorch update command based on GPU choice"""
     base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} "
 
-    if gpu_choice == "NVIDIA":
-        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cu124"
-    elif gpu_choice == "NVIDIA_CUDA128":
+    if gpu_choice == "NVIDIA_CUDA128":
         return "python -m pip install --upgrade torch==2.7.1 --index-url https://download.pytorch.org/whl/cu128"
     elif gpu_choice == "AMD":
         return f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.2.4"
@@ -181,8 +177,6 @@ def get_requirements_file(gpu_choice):
         file_name = f"requirements_apple_{'intel' if is_x86_64() else 'silicon'}.txt"
     elif gpu_choice in ["INTEL", "NONE"]:
         file_name = f"requirements_cpu_only{'_noavx2' if not cpu_has_avx2() else ''}.txt"
-    elif gpu_choice == "NVIDIA":
-        file_name = f"requirements{'_noavx2' if not cpu_has_avx2() else ''}.txt"
     elif gpu_choice == "NVIDIA_CUDA128":
         file_name = f"requirements_cuda128{'_noavx2' if not cpu_has_avx2() else ''}.txt"
     else:
@@ -330,8 +324,6 @@ def install_webui():
                 cmd_flags_file.write("\n--cpu\n")
 
     # Handle CUDA version display
-    elif any((is_windows(), is_linux())) and gpu_choice == "NVIDIA":
-        print("CUDA: 12.4")
     elif any((is_windows(), is_linux())) and gpu_choice == "NVIDIA_CUDA128":
         print("CUDA: 12.8")
 
