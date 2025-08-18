@@ -40,7 +40,35 @@ Compatible with GGUF (llama.cpp) models on Windows, Linux, and macOS.
 
 Download from here: **https://github.com/oobabooga/text-generation-webui/releases**
 
-#### Option 2: One-click installer
+#### Option 2: Manual portable install with venv
+
+Very fast setup that should work on any Python 3.9+:
+
+```bash
+# Clone repository
+git clone https://github.com/oobabooga/text-generation-webui
+cd text-generation-webui
+
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies (choose appropriate file under requirements/portable for your hardware)
+pip install -r requirements/portable/requirements.txt --upgrade
+
+# Launch server (basic command)
+python server.py --portable --api --auto-launch
+
+# When done working, deactivate
+deactivate
+```
+
+#### Option 3: One-click installer
 
 For users who need additional backends (ExLlamaV3, Transformers) or extensions (TTS, voice input, translation, etc). Requires ~10GB disk space and downloads PyTorch.
 
@@ -62,36 +90,6 @@ To update, run the update script for your OS: `update_wizard_windows.bat`, `upda
 Manual portable installation with venv
 </summary>
 
-### Manual portable installation with venv
-
-Very fast setup that should work on any Python 3.9+:
-
-```bash
-# Clone repository
-git clone https://github.com/oobabooga/text-generation-webui
-cd text-generation-webui
-
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-# On Windows:
-venv\Scripts\activate
-# On macOS/Linux:
-source venv/bin/activate
-
-# Install dependencies (choose appropriate file under requirements/portable for your hardware)
-pip install -r requirements/portable/requirements.txt
-
-# Launch server (basic command)
-python server.py --portable --api --auto-launch
-
-# When done working, deactivate
-deactivate
-```
-</details>
-
-<details>
 <summary>
 One-click installer details
 </summary>
