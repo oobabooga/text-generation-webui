@@ -32,13 +32,13 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## How to install
 
-#### Option 1: Portable builds (get started in 1 minute)
+#### ✅ Option 1: Portable builds (get started in 1 minute)
 
 No installation needed – just download, unzip and run. All dependencies included.
 
 Compatible with GGUF (llama.cpp) models on Windows, Linux, and macOS.
 
-Download from here: https://github.com/oobabooga/text-generation-webui/releases
+Download from here: **https://github.com/oobabooga/text-generation-webui/releases**
 
 #### Option 2: One-click installer
 
@@ -56,23 +56,6 @@ To reinstall with a fresh Python environment, delete the `installer_files` folde
 You can pass command-line flags directly (e.g., `./start_linux.sh --help`), or add them to `user_data/CMD_FLAGS.txt` (e.g., `--api` to enable the API).
 
 To update, run the update script for your OS: `update_wizard_windows.bat`, `update_wizard_linux.sh`, or `update_wizard_macos.sh`.
-
-<details>
-<summary>
-One-click installer details
-</summary>
-
-### One-click-installer
-
-The script uses Miniforge to set up a Conda environment in the `installer_files` folder.
-
-If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, or `cmd_macos.sh`.
-
-* There is no need to run any of those scripts (`start_`, `update_wizard_`, or `cmd_`) as admin/root.
-* To install requirements for extensions, it is recommended to use the update wizard script with the "Install/update extensions requirements" option. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
-* For automated installation, you can use the `GPU_CHOICE`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh`.
-
-</details>
 
 <details>
 <summary>
@@ -106,6 +89,23 @@ python server.py --portable --api --auto-launch
 # When done working, deactivate
 deactivate
 ```
+</details>
+
+<details>
+<summary>
+One-click installer details
+</summary>
+
+### One-click-installer
+
+The script uses Miniforge to set up a Conda environment in the `installer_files` folder.
+
+If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, or `cmd_macos.sh`.
+
+* There is no need to run any of those scripts (`start_`, `update_wizard_`, or `cmd_`) as admin/root.
+* To install requirements for extensions, it is recommended to use the update wizard script with the "Install/update extensions requirements" option. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
+* For automated installation, you can use the `GPU_CHOICE`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh`.
+
 </details>
 
 <details>
