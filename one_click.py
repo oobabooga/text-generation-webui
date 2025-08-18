@@ -16,7 +16,7 @@ import sys
 # os.environ["HCC_AMDGPU_TARGET"] = 'gfx1030'
 
 # Define the required versions
-TORCH_VERSION = "2.7.0"
+TORCH_VERSION = "2.7.1"
 PYTHON_VERSION = "3.11"
 LIBSTDCXX_VERSION_LINUX = "12.1.0"
 
@@ -136,7 +136,7 @@ def get_pytorch_install_command(gpu_choice):
     base_cmd = f"python -m pip install torch=={TORCH_VERSION} "
 
     if gpu_choice == "NVIDIA_CUDA128":
-        return "python -m pip install torch==2.7.1 --index-url https://download.pytorch.org/whl/cu128"
+        return base_cmd + "--index-url https://download.pytorch.org/whl/cu128"
     elif gpu_choice == "AMD":
         return base_cmd + "--index-url https://download.pytorch.org/whl/rocm6.2.4"
     elif gpu_choice in ["APPLE", "NONE"]:
