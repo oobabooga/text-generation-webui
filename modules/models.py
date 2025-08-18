@@ -128,10 +128,12 @@ def unload_model(keep_model_name=False):
     if shared.model is None:
         return
 
-    is_llamacpp = (shared.model.__class__.__name__ == 'LlamaServer')
-    if shared.args.loader in ['ExLlamav3_HF', 'ExLlamav3']:
+    model_class_name = shared.model.__class__.__name__
+    is_llamacpp = (model_class_name == 'LlamaServer')
+
+    if model_class_name in ['Exllamav3Model', 'Exllamav3HF']:
         shared.model.unload()
-    elif shared.args.loader in ['ExLlamav2_HF', 'ExLlamav2'] and hasattr(shared.model, 'unload'):
+    elif model_class_name in ['Exllamav2Model', 'Exllamav2HF'] and hasattr(shared.model, 'unload'):
         shared.model.unload()
 
     shared.model = shared.tokenizer = None
