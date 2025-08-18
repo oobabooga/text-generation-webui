@@ -408,7 +408,7 @@ def update_requirements(initial_installation=False, pull=True):
             with open(requirements_file, 'r') as f:
                 after_pull_whl_lines = [line for line in f if '.whl' in line]
 
-        wheels_changed = wheels_changed or (before_pull_whl_lines != after_pull_whl_lines)
+            wheels_changed = wheels_changed or (before_pull_whl_lines != after_pull_whl_lines)
 
         # Check for changes to installer files
         for file in files_to_check:
