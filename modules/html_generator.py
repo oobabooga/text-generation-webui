@@ -306,6 +306,9 @@ def process_markdown_content(string):
         # Convert to HTML using markdown
         html_output = markdown.markdown(result, extensions=['fenced_code', 'tables', SaneListExtension()])
 
+    # Remove extra newlines before </code>
+    html_output = re.sub(r'\s*</code>', '</code>', html_output)
+
     # Unescape code blocks
     pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)
     html_output = pattern.sub(lambda x: html.unescape(x.group()), html_output)
