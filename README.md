@@ -83,6 +83,7 @@ To update, run the update script for your OS: `update_wizard_windows.bat`, `upda
 
 To reinstall with a fresh Python environment, delete the `installer_files` folder and run the `start_` script again.
 
+<details>
 <summary>
 One-click installer details
 </summary>
