@@ -2,8 +2,6 @@
 
 A Gradio web UI for Large Language Models.
 
-Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
-
 [Try the Deep Reason extension](https://oobabooga.gumroad.com/l/deep_reason)
 
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/INSTRUCT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/CHAT-3.5.png) |
@@ -32,54 +30,15 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## How to install
 
-#### Option 1: Portable builds (get started in 1 minute)
+#### ✅ Option 1: Portable builds (get started in 1 minute)
 
 No installation needed – just download, unzip and run. All dependencies included.
 
 Compatible with GGUF (llama.cpp) models on Windows, Linux, and macOS.
 
-Download from here: https://github.com/oobabooga/text-generation-webui/releases
+Download from here: **https://github.com/oobabooga/text-generation-webui/releases**
 
-#### Option 2: One-click installer
-
-For users who need additional backends (ExLlamaV3, Transformers) or extensions (TTS, voice input, translation, etc). Requires ~10GB disk space and downloads PyTorch.
-
-1. Clone the repository, or [download its source code](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) and extract it.
-2. Run the startup script for your OS: `start_windows.bat`, `start_linux.sh`, or `start_macos.sh`.
-3. When prompted, select your GPU vendor.
-4. After installation, open `http://127.0.0.1:7860` in your browser.
-
-To restart the web UI later, run the same `start_` script.
-
-To reinstall with a fresh Python environment, delete the `installer_files` folder and run the `start_` script again.
-
-You can pass command-line flags directly (e.g., `./start_linux.sh --help`), or add them to `user_data/CMD_FLAGS.txt` (e.g., `--api` to enable the API).
-
-To update, run the update script for your OS: `update_wizard_windows.bat`, `update_wizard_linux.sh`, or `update_wizard_macos.sh`.
-
-<details>
-<summary>
-One-click installer details
-</summary>
-
-### One-click-installer
-
-The script uses Miniforge to set up a Conda environment in the `installer_files` folder.
-
-If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, or `cmd_macos.sh`.
-
-* There is no need to run any of those scripts (`start_`, `update_wizard_`, or `cmd_`) as admin/root.
-* To install requirements for extensions, it is recommended to use the update wizard script with the "Install/update extensions requirements" option. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
-* For automated installation, you can use the `GPU_CHOICE`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh`.
-
-</details>
-
-<details>
-<summary>
-Manual portable installation with venv
-</summary>
-
-### Manual portable installation with venv
+#### Option 2: Manual portable install with venv
 
 Very fast setup that should work on any Python 3.9+:
 
@@ -98,7 +57,7 @@ venv\Scripts\activate
 source venv/bin/activate
 
 # Install dependencies (choose appropriate file under requirements/portable for your hardware)
-pip install -r requirements/portable/requirements.txt
+pip install -r requirements/portable/requirements.txt --upgrade
 
 # Launch server (basic command)
 python server.py --portable --api --auto-launch
@@ -106,6 +65,39 @@ python server.py --portable --api --auto-launch
 # When done working, deactivate
 deactivate
 ```
+
+#### Option 3: One-click installer
+
+For users who need additional backends (ExLlamaV3, Transformers) or extensions (TTS, voice input, translation, etc). Requires ~10GB disk space and downloads PyTorch.
+
+1. Clone the repository, or [download its source code](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) and extract it.
+2. Run the startup script for your OS: `start_windows.bat`, `start_linux.sh`, or `start_macos.sh`.
+3. When prompted, select your GPU vendor.
+4. After installation, open `http://127.0.0.1:7860` in your browser.
+
+To restart the web UI later, run the same `start_` script.
+
+You can pass command-line flags directly (e.g., `./start_linux.sh --help`), or add them to `user_data/CMD_FLAGS.txt` (e.g., `--api` to enable the API).
+
+To update, run the update script for your OS: `update_wizard_windows.bat`, `update_wizard_linux.sh`, or `update_wizard_macos.sh`.
+
+To reinstall with a fresh Python environment, delete the `installer_files` folder and run the `start_` script again.
+
+<details>
+<summary>
+One-click installer details
+</summary>
+
+### One-click-installer
+
+The script uses Miniforge to set up a Conda environment in the `installer_files` folder.
+
+If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, or `cmd_macos.sh`.
+
+* There is no need to run any of those scripts (`start_`, `update_wizard_`, or `cmd_`) as admin/root.
+* To install requirements for extensions, it is recommended to use the update wizard script with the "Install/update extensions requirements" option. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
+* For automated installation, you can use the `GPU_CHOICE`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh`.
+
 </details>
 
 <details>
@@ -139,19 +131,19 @@ conda activate textgen
 
 | System | GPU | Command |
 |--------|---------|---------|
-| Linux/WSL | NVIDIA | `pip3 install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124` |
-| Linux/WSL | CPU only | `pip3 install torch==2.6.0 --index-url https://download.pytorch.org/whl/cpu` |
-| Linux | AMD | `pip3 install torch==2.6.0 --index-url https://download.pytorch.org/whl/rocm6.2.4` |
-| MacOS + MPS | Any | `pip3 install torch==2.6.0` |
-| Windows | NVIDIA | `pip3 install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124` |
-| Windows | CPU only | `pip3 install torch==2.6.0` |
+| Linux/WSL | NVIDIA | `pip3 install torch==2.7.1 --index-url https://download.pytorch.org/whl/cu128` |
+| Linux/WSL | CPU only | `pip3 install torch==2.7.1 --index-url https://download.pytorch.org/whl/cpu` |
+| Linux | AMD | `pip3 install torch==2.7.1 --index-url https://download.pytorch.org/whl/rocm6.2.4` |
+| MacOS + MPS | Any | `pip3 install torch==2.7.1` |
+| Windows | NVIDIA | `pip3 install torch==2.7.1 --index-url https://download.pytorch.org/whl/cu128` |
+| Windows | CPU only | `pip3 install torch==2.7.1` |
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/.
 
 If you need `nvcc` to compile some library manually, you will additionally need to install this:
 
 ```
-conda install -y -c "nvidia/label/cuda-12.4.1" cuda
+conda install -y -c "nvidia/label/cuda-12.8.1" cuda
 ```
 
 #### 3. Install the web UI
@@ -238,13 +230,13 @@ usage: server.py [-h] [--multi-user] [--model MODEL] [--lora LORA [LORA ...]] [-
                  [--extensions EXTENSIONS [EXTENSIONS ...]] [--verbose] [--idle-timeout IDLE_TIMEOUT] [--loader LOADER] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR]
                  [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION] [--load-in-4bit] [--use_double_quant]
                  [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE] [--flash-attn] [--threads THREADS] [--threads-batch THREADS_BATCH] [--batch-size BATCH_SIZE] [--no-mmap] [--mlock]
-                 [--gpu-layers N] [--tensor-split TENSOR_SPLIT] [--numa] [--no-kv-offload] [--row-split] [--extra-flags EXTRA_FLAGS] [--streaming-llm] [--ctx-size N] [--cache-type N]
-                 [--model-draft MODEL_DRAFT] [--draft-max DRAFT_MAX] [--gpu-layers-draft GPU_LAYERS_DRAFT] [--device-draft DEVICE_DRAFT] [--ctx-size-draft CTX_SIZE_DRAFT] [--gpu-split GPU_SPLIT]
-                 [--autosplit] [--cfg-cache] [--no_flash_attn] [--no_xformers] [--no_sdpa] [--num_experts_per_token N] [--enable_tp] [--cpp-runner] [--deepspeed] [--nvme-offload-dir NVME_OFFLOAD_DIR]
-                 [--local_rank LOCAL_RANK] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE] [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT]
-                 [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE]
-                 [--subpath SUBPATH] [--old-colors] [--portable] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY]
-                 [--api-enable-ipv6] [--api-disable-ipv4] [--nowebui]
+                 [--gpu-layers N] [--tensor-split TENSOR_SPLIT] [--numa] [--no-kv-offload] [--row-split] [--extra-flags EXTRA_FLAGS] [--streaming-llm] [--mmproj MMPROJ] [--ctx-size N] [--cache-type N]
+                 [--model-draft MODEL_DRAFT] [--draft-max DRAFT_MAX] [--gpu-layers-draft GPU_LAYERS_DRAFT] [--device-draft DEVICE_DRAFT] [--ctx-size-draft CTX_SIZE_DRAFT] [--enable-tp]
+                 [--tp-backend TP_BACKEND] [--gpu-split GPU_SPLIT] [--autosplit] [--cfg-cache] [--no_flash_attn] [--no_xformers] [--no_sdpa] [--num_experts_per_token N] [--cpp-runner] [--deepspeed]
+                 [--nvme-offload-dir NVME_OFFLOAD_DIR] [--local_rank LOCAL_RANK] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE] [--compress_pos_emb COMPRESS_POS_EMB] [--listen]
+                 [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE]
+                 [--ssl-certfile SSL_CERTFILE] [--subpath SUBPATH] [--old-colors] [--portable] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY]
+                 [--admin-key ADMIN_KEY] [--api-enable-ipv6] [--api-disable-ipv4] [--nowebui]
 
 Text generation web UI
 
@@ -301,6 +293,7 @@ llama.cpp:
   --row-split                               Split the model by rows across GPUs. This may improve multi-gpu performance.
   --extra-flags EXTRA_FLAGS                 Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"
   --streaming-llm                           Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.
+  --mmproj MMPROJ                           Path to the mmproj file for vision models.
 
 Context and cache:
   --ctx-size N, --n_ctx N, --max_seq_len N  Context size in tokens.
@@ -314,6 +307,10 @@ Speculative decoding:
   --device-draft DEVICE_DRAFT               Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1
   --ctx-size-draft CTX_SIZE_DRAFT           Size of the prompt context for the draft model. If 0, uses the same as the main model.
 
+ExLlamaV3:
+  --enable-tp, --enable_tp                  Enable Tensor Parallelism (TP) to split the model across GPUs.
+  --tp-backend TP_BACKEND                   The backend for tensor parallelism. Valid options: native, nccl. Default: native.
+
 ExLlamaV2:
   --gpu-split GPU_SPLIT                     Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.
   --autosplit                               Autosplit the model tensors across the available GPUs. This causes --gpu-split to be ignored.
@@ -322,7 +319,6 @@ ExLlamaV2:
   --no_xformers                             Force xformers to not be used.
   --no_sdpa                                 Force Torch SDPA to not be used.
   --num_experts_per_token N                 Number of experts to use for generation. Applies to MoE models like Mixtral.
-  --enable_tp                               Enable Tensor Parallelism (TP) in ExLlamaV2.
 
 TensorRT-LLM:
   --cpp-runner                              Use the ModelRunnerCpp runner, which is faster than the default ModelRunner but doesn't support streaming yet.
@@ -382,7 +378,7 @@ text-generation-webui
         └── llama-2-13b-chat.Q4_K_M.gguf
 ```
 
-* The remaining model types (like 16-bit Transformers models and EXL2 models) are made of several files and must be placed in a subfolder. Example:
+* The remaining model types (like 16-bit Transformers models and EXL3 models) are made of several files and must be placed in a subfolder. Example:
 
 ```
 text-generation-webui

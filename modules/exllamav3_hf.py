@@ -74,6 +74,11 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
             split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
             load_params['use_per_device'] = split
 
+        # Tensor-parallelism
+        if shared.args.enable_tp:
+            load_params['tensor_p'] = True
+            load_params['tp_backend'] = shared.args.tp_backend
+
         self.ex_model.load(**load_params)
         self.past_seq = None
         self.max_tokens = max_tokens

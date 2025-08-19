@@ -269,7 +269,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
             enhanced_user_msg = user_msg
 
             # Add attachment content if present AND if past attachments are enabled
-            if (state.get('include_past_attachments', True) and user_key in metadata and "attachments" in metadata[user_key]):
+            if user_key in metadata and "attachments" in metadata[user_key]:
                 attachments_text = ""
                 image_refs = ""
 
@@ -277,7 +277,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                     if attachment.get("type") == "image":
                         # Add image reference for multimodal models
                         image_refs += "<__media__>"
-                    else:
+                    elif state.get('include_past_attachments', True):
                         # Handle text/PDF attachments
                         filename = attachment.get("name", "file")
                         content = attachment.get("content", "")
