@@ -236,11 +236,12 @@ class Exllamav3Model:
         """
         Generate text with streaming using native ExLlamaV3 API
         """
-        image_embeddings = []
 
         if shared.is_multimodal:
             # Process images and modify prompt (ExLlamaV3-specific)
             prompt, image_embeddings = self._process_images_for_generation(prompt, state)
+        else:
+            image_embeddings = []
 
         # Greedy decoding is a special case
         if state['temperature'] == 0:

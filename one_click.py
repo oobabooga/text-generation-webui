@@ -155,7 +155,7 @@ def get_pytorch_update_command(gpu_choice):
     base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} "
 
     if gpu_choice == "NVIDIA_CUDA128":
-        return "python -m pip install --upgrade torch==2.7.1 --index-url https://download.pytorch.org/whl/cu128"
+        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cu128"
     elif gpu_choice == "AMD":
         return f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.2.4"
     elif gpu_choice in ["APPLE", "NONE"]:
