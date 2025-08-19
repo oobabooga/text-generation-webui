@@ -251,7 +251,7 @@ def apply_model_settings_to_state(model, state):
     model_settings = get_model_metadata(model)
     if 'loader' in model_settings:
         loader = model_settings.pop('loader')
-        if not (loader == 'ExLlamav2_HF' and state['loader'] in ['ExLlamav2']):
+        if not ((loader == 'ExLlamav2_HF' and state['loader'] == 'ExLlamav2') or (loader == 'ExLlamav3_HF' and state['loader'] == 'ExLlamav3')):
             state['loader'] = loader
 
     for k in model_settings:
