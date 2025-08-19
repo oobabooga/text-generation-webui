@@ -56,6 +56,8 @@ loaders_and_params = OrderedDict({
         'cfg_cache',
         'trust_remote_code',
         'no_use_fast',
+        'enable_tp',
+        'tp_backend',
     ],
     'ExLlamav3': [
         'ctx_size',
