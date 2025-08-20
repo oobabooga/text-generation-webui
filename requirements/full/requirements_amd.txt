@@ -33,7 +33,7 @@ sse-starlette==1.6.5
 tiktoken
 
 # AMD wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.33.0/llama_cpp_binaries-0.33.0+vulkan-py3-none-win_amd64.whl; platform_system == "Windows"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.33.0/llama_cpp_binaries-0.33.0+vulkan-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.37.0/llama_cpp_binaries-0.37.0+vulkan-py3-none-win_amd64.whl; platform_system == "Windows"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.37.0/llama_cpp_binaries-0.37.0+vulkan-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 https://github.com/turboderp-org/exllamav2/releases/download/v0.3.2/exllamav2-0.3.2+rocm6.2.4.torch2.6.0-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
 https://github.com/turboderp-org/exllamav2/releases/download/v0.3.2/exllamav2-0.3.2-py3-none-any.whl; platform_system != "Darwin" and platform_machine != "x86_64"

@@ -16,7 +16,7 @@ import sys
 # os.environ["HCC_AMDGPU_TARGET"] = 'gfx1030'
 
 # Define the required versions
-TORCH_VERSION = "2.6.0"
+TORCH_VERSION = "2.7.1"
 PYTHON_VERSION = "3.11"
 LIBSTDCXX_VERSION_LINUX = "12.1.0"
 
@@ -113,17 +113,16 @@ def get_gpu_choice():
             choice = get_user_choice(
                 "What is your GPU?",
                 {
-                    'A': 'NVIDIA - CUDA 12.4',
+                    'A': 'NVIDIA',
                     'B': 'AMD - Linux/macOS only, requires ROCm 6.2.4',
                     'C': 'Apple M Series',
                     'D': 'Intel Arc (beta)',
-                    'E': 'NVIDIA - CUDA 12.8',
                     'N': 'CPU mode'
                 },
             )
 
         # Convert choice to GPU name
-        gpu_choice = {"A": "NVIDIA", "B": "AMD", "C": "APPLE", "D": "INTEL", "E": "NVIDIA_CUDA128", "N": "NONE"}[choice]
+        gpu_choice = {"A": "NVIDIA_CUDA128", "B": "AMD", "C": "APPLE", "D": "INTEL", "N": "NONE"}[choice]
 
         # Save choice to state
         state['gpu_choice'] = gpu_choice
@@ -136,10 +135,8 @@ def get_pytorch_install_command(gpu_choice):
     """Get PyTorch installation command based on GPU choice"""
     base_cmd = f"python -m pip install torch=={TORCH_VERSION} "
 
-    if gpu_choice == "NVIDIA":
-        return base_cmd + "--index-url https://download.pytorch.org/whl/cu124"
-    elif gpu_choice == "NVIDIA_CUDA128":
-        return "python -m pip install torch==2.7.1 --index-url https://download.pytorch.org/whl/cu128"
+    if gpu_choice == "NVIDIA_CUDA128":
+        return base_cmd + "--index-url https://download.pytorch.org/whl/cu128"
     elif gpu_choice == "AMD":
         return base_cmd + "--index-url https://download.pytorch.org/whl/rocm6.2.4"
     elif gpu_choice in ["APPLE", "NONE"]:
@@ -157,10 +154,8 @@ def get_pytorch_update_command(gpu_choice):
     """Get PyTorch update command based on GPU choice"""
     base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} "
 
-    if gpu_choice == "NVIDIA":
-        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cu124"
-    elif gpu_choice == "NVIDIA_CUDA128":
-        return "python -m pip install --upgrade torch==2.7.1 --index-url https://download.pytorch.org/whl/cu128"
+    if gpu_choice == "NVIDIA_CUDA128":
+        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cu128"
     elif gpu_choice == "AMD":
         return f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.2.4"
     elif gpu_choice in ["APPLE", "NONE"]:
@@ -176,16 +171,14 @@ def get_requirements_file(gpu_choice):
     """Get requirements file path based on GPU choice"""
     requirements_base = os.path.join("requirements", "full")
 
-    if gpu_choice == "AMD":
+    if gpu_choice == "NVIDIA_CUDA128":
+        file_name = f"requirements{'_noavx2' if not cpu_has_avx2() else ''}.txt"
+    elif gpu_choice == "AMD":
         file_name = f"requirements_amd{'_noavx2' if not cpu_has_avx2() else ''}.txt"
     elif gpu_choice == "APPLE":
         file_name = f"requirements_apple_{'intel' if is_x86_64() else 'silicon'}.txt"
     elif gpu_choice in ["INTEL", "NONE"]:
         file_name = f"requirements_cpu_only{'_noavx2' if not cpu_has_avx2() else ''}.txt"
-    elif gpu_choice == "NVIDIA":
-        file_name = f"requirements{'_noavx2' if not cpu_has_avx2() else ''}.txt"
-    elif gpu_choice == "NVIDIA_CUDA128":
-        file_name = f"requirements_cuda128{'_noavx2' if not cpu_has_avx2() else ''}.txt"
     else:
         raise ValueError(f"Unknown GPU choice: {gpu_choice}")
 
@@ -331,8 +324,6 @@ def install_webui():
                 cmd_flags_file.write("\n--cpu\n")
 
     # Handle CUDA version display
-    elif any((is_windows(), is_linux())) and gpu_choice == "NVIDIA":
-        print("CUDA: 12.4")
     elif any((is_windows(), is_linux())) and gpu_choice == "NVIDIA_CUDA128":
         print("CUDA: 12.8")
 
@@ -367,6 +358,19 @@ def update_requirements(initial_installation=False, pull=True):
             environment=True,
             assert_success=True
         )
+
+    # Check for outdated CUDA 12.4 installs and refuse to update
+    state = load_state()
+    if state.get('gpu_choice') == 'NVIDIA':
+        print_big_message(
+            "Your current installation uses CUDA 12.4, which has been removed.\n"
+            "To update to the new default (CUDA 12.8), a clean installation is required.\n\n"
+            "INSTRUCTIONS:\n"
+            "1. Delete the 'installer_files' folder in your text-generation-webui directory.\n"
+            "2. Run the start script again (e.g., start_windows.bat).\n\n"
+            "This will create a fresh environment with the latest software."
+        )
+        sys.exit(0)
 
     current_commit = get_current_commit()
     wheels_changed = not os.path.exists(state_file)
@@ -404,7 +408,7 @@ def update_requirements(initial_installation=False, pull=True):
             with open(requirements_file, 'r') as f:
                 after_pull_whl_lines = [line for line in f if '.whl' in line]
 
-        wheels_changed = wheels_changed or (before_pull_whl_lines != after_pull_whl_lines)
+            wheels_changed = wheels_changed or (before_pull_whl_lines != after_pull_whl_lines)
 
         # Check for changes to installer files
         for file in files_to_check:

@@ -155,6 +155,7 @@ def list_model_elements():
         'bf16',
         'autosplit',
         'enable_tp',
+        'tp_backend',
         'no_flash_attn',
         'no_xformers',
         'no_sdpa',
@@ -167,6 +168,7 @@ def list_model_elements():
         'gpu_layers_draft',
         'device_draft',
         'ctx_size_draft',
+        'mmproj',
     ]
 
     return elements

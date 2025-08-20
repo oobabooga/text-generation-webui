@@ -1,6 +1,8 @@
 import concurrent.futures
 import html
+import random
 import re
+import urllib.request
 from concurrent.futures import as_completed
 from datetime import datetime
 from urllib.parse import quote_plus
@@ -50,16 +52,21 @@ def download_web_page(url, timeout=10):
 def perform_web_search(query, num_pages=3, max_workers=5, timeout=10):
     """Perform web search and return results with content"""
     try:
-        # Use DuckDuckGo HTML search endpoint
         search_url = f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
 
-        response = requests.get(search_url, headers=headers, timeout=timeout)
-        response.raise_for_status()
+        agents = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+        ]
+
+        response_text = ""
+        req = urllib.request.Request(search_url, headers={'User-Agent': random.choice(agents)})
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            response_text = response.read().decode('utf-8')
 
         # Extract results with regex
-        titles = re.findall(r'<a[^>]*class="[^"]*result__a[^"]*"[^>]*>(.*?)</a>', response.text, re.DOTALL)
-        urls = re.findall(r'<a[^>]*class="[^"]*result__url[^"]*"[^>]*>(.*?)</a>', response.text, re.DOTALL)
+        titles = re.findall(r'<a[^>]*class="[^"]*result__a[^"]*"[^>]*>(.*?)</a>', response_text, re.DOTALL)
+        urls = re.findall(r'<a[^>]*class="[^"]*result__url[^"]*"[^>]*>(.*?)</a>', response_text, re.DOTALL)
 
         # Prepare download tasks
         download_tasks = []

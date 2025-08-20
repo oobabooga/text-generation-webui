@@ -77,6 +77,68 @@ curl http://127.0.0.1:5000/v1/chat/completions \
   }'
 ```
 
+#### Multimodal/vision (llama.cpp and ExLlamaV3)
+
+##### With /v1/chat/completions (recommended!)
+
+```shell
+curl http://127.0.0.1:5000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {"type": "text", "text": "Please describe what you see in this image."},
+          {"type": "image_url", "image_url": {"url": "https://github.com/turboderp-org/exllamav3/blob/master/examples/media/cat.png?raw=true"}}
+        ]
+      }
+    ],
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20
+  }'
+```
+
+For base64-encoded images, just replace the inner "url" value with this format: `data:image/FORMAT;base64,BASE64_STRING` where FORMAT is the file type (png, jpeg, gif, etc.) and BASE64_STRING is your base64-encoded image data.
+
+##### With /v1/completions
+
+```shell
+curl http://127.0.0.1:5000/v1/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "About image <__media__> and image <__media__>, what I can say is that the first one"
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "https://github.com/turboderp-org/exllamav3/blob/master/examples/media/cat.png?raw=true"
+            }
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "https://github.com/turboderp-org/exllamav3/blob/master/examples/media/strawberry.png?raw=true"
+            }
+          }
+        ]
+      }
+    ],
+    "temperature": 0.6,
+    "top_p": 0.95,
+    "top_k": 20
+  }'
+```
+
+For base64-encoded images, just replace the inner "url" values with this format: `data:image/FORMAT;base64,BASE64_STRING` where FORMAT is the file type (png, jpeg, gif, etc.) and BASE64_STRING is your base64-encoded image data.
+
 #### SSE streaming
 
 ```shell
