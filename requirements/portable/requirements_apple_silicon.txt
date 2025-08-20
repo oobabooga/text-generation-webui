@@ -3,6 +3,7 @@ gradio==4.37.*
 html2text==2025.4.15
 jinja2==3.1.6
 markdown
+mlx-lm>=0.26.3
 numpy==2.2.*
 pydantic==2.8.2
 PyPDF2==3.0.1
