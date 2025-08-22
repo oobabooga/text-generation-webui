@@ -10,6 +10,7 @@ import yaml
 
 from modules import chat, loaders, metadata_gguf, shared, ui
 from modules.logging_colors import logger
+from modules.utils import resolve_model_path
 
 
 def get_fallback_settings():
@@ -26,6 +27,7 @@ def get_fallback_settings():
 
 
 def get_model_metadata(model):
+    model_path = resolve_model_path(model)
     model_settings = {}
 
     # Get settings from user_data/models/config.yaml and user_data/models/config-user.yaml
@@ -35,7 +37,7 @@ def get_model_metadata(model):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
-    path = Path(f'{shared.args.model_dir}/{model}/config.json')
+    path = model_path / 'config.json'
     if path.exists():
         hf_metadata = json.loads(open(path, 'r', encoding='utf-8').read())
     else:
@@ -51,7 +53,7 @@ def get_model_metadata(model):
 
     # GGUF metadata
     if model_settings['loader'] == 'llama.cpp':
-        path = Path(f'{shared.args.model_dir}/{model}')
+        path = model_path
         if path.is_file():
             model_file = path
         else:
@@ -130,18 +132,18 @@ def get_model_metadata(model):
                 model_settings['bf16'] = True
 
     # Try to find the Jinja instruct template
-    path = Path(f'{shared.args.model_dir}/{model}') / 'tokenizer_config.json'
+    path = model_path / 'tokenizer_config.json'
     template = None
 
     # 1. Prioritize reading from chat_template.jinja if it exists
-    jinja_path = Path(f'{shared.args.model_dir}/{model}') / 'chat_template.jinja'
+    jinja_path = model_path / 'chat_template.jinja'
     if jinja_path.exists():
         with open(jinja_path, 'r', encoding='utf-8') as f:
             template = f.read()
 
     # 2. If no .jinja file, try chat_template.json
     if template is None:
-        json_template_path = Path(f'{shared.args.model_dir}/{model}') / 'chat_template.json'
+        json_template_path = model_path / 'chat_template.json'
         if json_template_path.exists():
             with open(json_template_path, 'r', encoding='utf-8') as f:
                 json_data = json.load(f)
@@ -201,7 +203,7 @@ def get_model_metadata(model):
 
 
 def infer_loader(model_name, model_settings, hf_quant_method=None):
-    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+    path_to_model = resolve_model_path(model_name)
     if not path_to_model.exists():
         loader = None
     elif shared.args.portable:
@@ -357,7 +359,7 @@ def get_model_size_mb(model_file: Path) -> float:
 
 
 def estimate_vram(gguf_file, gpu_layers, ctx_size, cache_type):
-    model_file = Path(f'{shared.args.model_dir}/{gguf_file}')
+    model_file = resolve_model_path(gguf_file)
     metadata = load_gguf_metadata_with_cache(model_file)
     size_in_mb = get_model_size_mb(model_file)
 

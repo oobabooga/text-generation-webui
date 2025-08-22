@@ -283,21 +283,14 @@ if __name__ == "__main__":
 
     # If any model has been selected, load it
     if shared.model_name != 'None':
-        p = Path(shared.model_name)
-        if p.exists():
-            model_name = p.parts[-1]
-            shared.model_name = model_name
-        else:
-            model_name = shared.model_name
-
-        model_settings = get_model_metadata(model_name)
+        model_settings = get_model_metadata(shared.model_name)
         update_model_parameters(model_settings, initial=True)  # hijack the command-line arguments
 
         # Auto-adjust GPU layers if not provided by user and it's a llama.cpp model
         if 'gpu_layers' not in shared.provided_arguments and shared.args.loader == 'llama.cpp' and 'gpu_layers' in model_settings:
             vram_usage, adjusted_layers = update_gpu_layers_and_vram(
                 shared.args.loader,
-                model_name,
+                shared.model_name,
                 model_settings['gpu_layers'],
                 shared.args.ctx_size,
                 shared.args.cache_type,
@@ -308,7 +301,7 @@ if __name__ == "__main__":
             shared.args.gpu_layers = adjusted_layers
 
         # Load the model
-        shared.model, shared.tokenizer = load_model(model_name)
+        shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
             add_lora_to_model(shared.args.lora)
 
