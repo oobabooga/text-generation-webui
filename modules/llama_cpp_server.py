@@ -410,8 +410,7 @@ class LlamaServer:
         self.process = subprocess.Popen(
             cmd,
             stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1,
+            bufsize=0,
             env=env
         )
 
@@ -473,34 +472,55 @@ def filter_stderr_with_progress(process_stderr):
     last_was_progress = False
 
     try:
-        for raw in iter(process_stderr.readline, ''):
-            line = raw.rstrip('\r\n')
-            match = progress_re.search(line)
+        # Read in binary mode and decode manually
+        buffer = b""
+        while True:
+            # Read chunks aggressively to prevent buffer overflow
+            chunk = process_stderr.read(4096)
+            if not chunk:
+                break
 
-            if match:
-                progress = float(match.group(1))
+            buffer += chunk
 
-                # Extract just the part from "prompt processing" onwards
-                prompt_processing_idx = line.find('prompt processing')
-                if prompt_processing_idx != -1:
-                    display_line = line[prompt_processing_idx:]
-                else:
-                    display_line = line  # fallback to full line
+            # Process complete lines
+            while b'\n' in buffer:
+                line_bytes, buffer = buffer.split(b'\n', 1)
+                try:
+                    line = line_bytes.decode('utf-8', errors='replace').strip('\r\n')
+                    if line:  # Process non-empty lines
+                        match = progress_re.search(line)
 
-                # choose carriage return for in-progress or newline at completion
-                end_char = '\r' if progress < 1.0 else '\n'
-                print(display_line, end=end_char, file=sys.stderr, flush=True)
-                last_was_progress = (progress < 1.0)
+                        if match:
+                            progress = float(match.group(1))
 
-            # skip noise lines
-            elif not (line.startswith(('srv ', 'slot ')) or 'log_server_r: request: GET /health' in line):
-                # if we were in progress, finish that line first
-                if last_was_progress:
-                    print(file=sys.stderr)
+                            # Extract just the part from "prompt processing" onwards
+                            prompt_processing_idx = line.find('prompt processing')
+                            if prompt_processing_idx != -1:
+                                display_line = line[prompt_processing_idx:]
+                            else:
+                                display_line = line  # fallback to full line
 
-                print(line, file=sys.stderr, flush=True)
-                last_was_progress = False
+                            # choose carriage return for in-progress or newline at completion
+                            end_char = '\r' if progress < 1.0 else '\n'
+                            print(display_line, end=end_char, file=sys.stderr, flush=True)
+                            last_was_progress = (progress < 1.0)
+
+                        # skip noise lines
+                        elif not (line.startswith(('srv ', 'slot ')) or 'log_server_r: request: GET /health' in line):
+                            # if we were in progress, finish that line first
+                            if last_was_progress:
+                                print(file=sys.stderr)
+
+                            print(line, file=sys.stderr, flush=True)
+                            last_was_progress = False
+
+                except Exception:
+                    continue
 
     except (ValueError, IOError):
-        # silently ignore broken output or IO errors
         pass
+    finally:
+        try:
+            process_stderr.close()
+        except:
+            pass
