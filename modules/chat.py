@@ -213,13 +213,11 @@ def generate_chat_prompt(user_input, state, **kwargs):
         if assistant_msg:
             # Handle GPT-OSS as a special case
             if '<|channel|>analysis<|message|>' in assistant_msg or '<|channel|>final<|message|>' in assistant_msg:
-
                 thinking_content = ""
                 final_content = ""
 
                 # Extract analysis content if present
                 if '<|channel|>analysis<|message|>' in assistant_msg:
-                    # Split the message by the analysis tag to isolate the content that follows
                     parts = assistant_msg.split('<|channel|>analysis<|message|>', 1)
                     if len(parts) > 1:
                         # The content is everything after the tag
@@ -240,7 +238,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 # Extract final content if present
                 final_tag_to_find = '<|channel|>final<|message|>'
                 if final_tag_to_find in assistant_msg:
-                    # Split the message by the final tag to isolate the content that follows
                     parts = assistant_msg.split(final_tag_to_find, 1)
                     if len(parts) > 1:
                         # The content is everything after the tag
@@ -261,6 +258,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 messages.insert(insert_pos, msg_dict)
 
             else:
+                # Default case (used by all other models)
                 messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
 
         if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
@@ -286,18 +284,17 @@ def generate_chat_prompt(user_input, state, **kwargs):
                         else:
                             attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
-                if image_refs or attachments_text:
-                    enhanced_user_msg = user_msg
-                    if image_refs:
-                        enhanced_user_msg = f"{image_refs}\n\n{enhanced_user_msg}"
-                    if attachments_text:
-                        enhanced_user_msg += f"\n\nATTACHMENTS:\n{attachments_text}"
+                if image_refs:
+                    enhanced_user_msg = f"{image_refs}\n\n{enhanced_user_msg}"
+                if attachments_text:
+                    enhanced_user_msg += f"\n\nATTACHMENTS:\n{attachments_text}"
 
             messages.insert(insert_pos, {"role": "user", "content": enhanced_user_msg})
 
+    # Handle the current user input
     user_input = user_input.strip()
 
-    # Check if we have attachments even with empty input
+    # Check if we have attachments
     has_attachments = False
     if not impersonate and not _continue and len(history_data.get('metadata', {})) > 0:
         current_row_idx = len(history)
@@ -306,7 +303,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
     if (user_input or has_attachments) and not impersonate and not _continue:
         # For the current user input being processed, check if we need to add attachments
-        if not impersonate and not _continue and len(history_data.get('metadata', {})) > 0:
+        if len(history_data.get('metadata', {})) > 0:
             current_row_idx = len(history)
             user_key = f"user_{current_row_idx}"
 
@@ -325,12 +322,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
                         else:
                             attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
-                if image_refs or attachments_text:
-                    user_input = user_input
-                    if image_refs:
-                        user_input = f"{image_refs}\n\n{user_input}"
-                    if attachments_text:
-                        user_input += f"\n\nATTACHMENTS:\n{attachments_text}"
+                if image_refs:
+                    user_input = f"{image_refs}\n\n{user_input}"
+                if attachments_text:
+                    user_input += f"\n\nATTACHMENTS:\n{attachments_text}"
 
         messages.append({"role": "user", "content": user_input})
 
