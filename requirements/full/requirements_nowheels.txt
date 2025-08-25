@@ -29,5 +29,5 @@ wandb
 
 # API
 flask_cloudflared==0.0.14
-sse-starlette==1.6.5
+sse-starlette==3.0.2
 tiktoken
