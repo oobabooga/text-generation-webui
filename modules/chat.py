@@ -228,44 +228,48 @@ def generate_chat_prompt(user_input, state, **kwargs):
     user_input = user_input.strip()
 
     # Check if we have attachments
-    has_attachments = False
-    if not impersonate and not _continue and len(history_data.get('metadata', {})) > 0:
-        current_row_idx = len(history)
-        user_key = f"user_{current_row_idx}"
-        has_attachments = user_key in metadata and "attachments" in metadata[user_key]
-
-    if (user_input or has_attachments) and not impersonate and not _continue:
-        # For the current user input being processed, check if we need to add attachments
+    if not (impersonate or _continue):
+        has_attachments = False
         if len(history_data.get('metadata', {})) > 0:
             current_row_idx = len(history)
             user_key = f"user_{current_row_idx}"
+            has_attachments = user_key in metadata and "attachments" in metadata[user_key]
 
-            if user_key in metadata and "attachments" in metadata[user_key]:
-                attachments_text = ""
-                image_refs = ""
+        if user_input or has_attachments:
+            # For the current user input being processed, check if we need to add attachments
+            if len(history_data.get('metadata', {})) > 0:
+                current_row_idx = len(history)
+                user_key = f"user_{current_row_idx}"
 
-                for attachment in metadata[user_key]["attachments"]:
-                    if attachment.get("type") == "image":
-                        image_refs += "<__media__>"
-                    else:
-                        filename = attachment.get("name", "file")
-                        content = attachment.get("content", "")
-                        if attachment.get("type") == "text/html" and attachment.get("url"):
-                            attachments_text += f"\nName: {filename}\nURL: {attachment['url']}\nContents:\n\n=====\n{content}\n=====\n\n"
+                if user_key in metadata and "attachments" in metadata[user_key]:
+                    attachments_text = ""
+                    image_refs = ""
+
+                    for attachment in metadata[user_key]["attachments"]:
+                        if attachment.get("type") == "image":
+                            image_refs += "<__media__>"
                         else:
-                            attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
+                            filename = attachment.get("name", "file")
+                            content = attachment.get("content", "")
+                            if attachment.get("type") == "text/html" and attachment.get("url"):
+                                attachments_text += f"\nName: {filename}\nURL: {attachment['url']}\nContents:\n\n=====\n{content}\n=====\n\n"
+                            else:
+                                attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
-                if image_refs:
-                    user_input = f"{image_refs}\n\n{user_input}"
-                if attachments_text:
-                    user_input += f"\n\nATTACHMENTS:\n{attachments_text}"
+                    if image_refs:
+                        user_input = f"{image_refs}\n\n{user_input}"
+                    if attachments_text:
+                        user_input += f"\n\nATTACHMENTS:\n{attachments_text}"
 
-        messages.append({"role": "user", "content": user_input})
+            messages.append({"role": "user", "content": user_input})
+
+    if impersonate:
+        messages.append({"role": "user", "content": "fake user message replace me"})
 
     def make_prompt(messages):
         prompt = renderer(
             messages=messages[:-1] if _continue else messages,
-            add_generation_prompt=(state['mode'] != 'chat-instruct')
+            add_generation_prompt=(state['mode'] != 'chat-instruct' and not impersonate)
         )
 
         if state['mode'] == 'chat-instruct':
@@ -297,6 +301,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
         if _continue:
             prompt += messages[-1].get('content', '')
+
+        if impersonate:
+            prompt = prompt.split("fake user message replace me", 1)[0]
+            prompt += user_input
 
         return prompt
 
