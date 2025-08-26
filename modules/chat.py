@@ -108,6 +108,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
         tools=state['tools'] if 'tools' in state else None,
         tools_in_user_message=False,
         add_generation_prompt=False,
+        enable_thinking=state['enable_thinking'],
         reasoning_effort=state['reasoning_effort']
     )
 
@@ -262,10 +263,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
         messages.append({"role": "user", "content": user_input})
 
     def make_prompt(messages):
-        if state['mode'] == 'chat-instruct' and _continue:
-            prompt = renderer(messages=messages[:-1])
-        else:
-            prompt = renderer(messages=messages)
+        prompt = renderer(
+            messages=messages[:-1] if _continue else messages,
+            add_generation_prompt=(state['mode'] != 'chat-instruct')
+        )
 
         if state['mode'] == 'chat-instruct':
             command = state['chat-instruct_command']
@@ -287,20 +288,15 @@ def generate_chat_prompt(user_input, state, **kwargs):
             # Handle GPT-OSS as a special case when continuing
             # (otherwise the thinking block gets removed...)
             if _continue and '<|channel|>final<|message|>' in state['instruction_template_str']:
-                last_message_to_continue = messages[-1]
-                prompt = renderer(messages=messages[:-1])
-
                 assistant_reply_so_far = "<|start|>assistant"
-                if 'thinking' in last_message_to_continue:
-                    assistant_reply_so_far += f"<|channel|>analysis<|message|>{last_message_to_continue['thinking']}<|end|>"
+                if 'thinking' in messages[-1]:
+                    assistant_reply_so_far += f"<|channel|>analysis<|message|>{messages[-1]['thinking']}<|end|>"
 
-                assistant_reply_so_far += f"<|channel|>final<|message|>{last_message_to_continue.get('content', '')}"
+                assistant_reply_so_far += f"<|channel|>final<|message|>"
                 prompt += assistant_reply_so_far
-            else:
-                prompt = renderer(
-                    messages=messages,
-                    add_generation_prompt=True
-                )
+
+        if _continue:
+            prompt += messages[-1].get('content', '')
 
         return prompt
 
