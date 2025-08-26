@@ -475,6 +475,12 @@ def get_stopping_strings(state):
     result = [item for item in stopping_strings if not any(item.startswith(other) and item != other for other in stopping_strings)]
     result = list(set(result))
 
+    # Handle GPT-OSS as a special case
+    if '<|channel|>final<|message|>' in state['instruction_template_str'] and "<|end|>" in result:
+        result.remove("<|end|>")
+        result.append("<|result|>")
+        result = list(set(result))
+
     if shared.args.verbose:
         logger.info("STOPPING_STRINGS=")
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(result)
