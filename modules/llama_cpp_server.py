@@ -193,7 +193,7 @@ class LlamaServer:
 
         if shared.args.verbose:
             logger.info("GENERATE_PARAMS=")
-            printable_payload = {k: (v if k != "prompt" else "[multimodal object]" if pil_images else v) for k, v in payload.items()}
+            printable_payload = {k: v for k, v in payload.items() if k != "prompt"}
             pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(printable_payload)
             print()
 
