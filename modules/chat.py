@@ -292,9 +292,22 @@ def generate_chat_prompt(user_input, state, **kwargs):
         messages.append({"role": "user", "content": "fake user message replace me"})
 
     def make_prompt(messages):
+        last_message = messages[-1].copy()
+        if _continue:
+            if state['mode'] == 'chat-instruct':
+                messages = messages[:-1]
+            else:
+                messages[-1]["content"] = "fake assistant message replace me"
+                messages.append({"role": "assistant", "content": "this will get deleted"})
+
+        if state['mode'] != 'chat-instruct':
+            add_generation_prompt = (not _continue and not impersonate)
+        else:
+            add_generation_prompt = False
+
         prompt = renderer(
-            messages=messages[:-1] if _continue else messages,
-            add_generation_prompt=(state['mode'] != 'chat-instruct' and not impersonate)
+            messages=messages,
+            add_generation_prompt=add_generation_prompt
         )
 
         if state['mode'] == 'chat-instruct':
@@ -308,24 +321,19 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 outer_messages.append({"role": "system", "content": state['custom_system_message']})
 
             outer_messages.append({"role": "user", "content": command})
+            if _continue:
+                outer_messages.append(last_message.copy())
+                outer_messages[-1]["content"] = "fake assistant message replace me"
+                outer_messages.append({"role": "assistant", "content": "this will get deleted"})
 
             prompt = instruct_renderer(
                 messages=outer_messages,
-                add_generation_prompt=True
+                add_generation_prompt=not _continue
             )
-        else:
-            # Handle GPT-OSS as a special case when continuing
-            # (otherwise the thinking block gets removed...)
-            if _continue and '<|channel|>final<|message|>' in state['instruction_template_str']:
-                assistant_reply_so_far = "<|start|>assistant"
-                if 'thinking' in messages[-1]:
-                    assistant_reply_so_far += f"<|channel|>analysis<|message|>{messages[-1]['thinking']}<|end|>"
-
-                assistant_reply_so_far += f"<|channel|>final<|message|>"
-                prompt += assistant_reply_so_far
 
         if _continue:
-            prompt += messages[-1].get('content', '')
+            prompt = prompt.split("fake assistant message replace me", 1)[0]
+            prompt += last_message.get("content", "")
 
         if impersonate:
             prompt = prompt.split("fake user message replace me", 1)[0]
@@ -453,7 +461,7 @@ def get_stopping_strings(state):
         renderer = partial(template.render, add_generation_prompt=False)
         renderers.append(renderer)
 
-    if state['mode'] in ['chat', 'chat-instruct']:
+    if state['mode'] in ['chat']:
         template = jinja_env.from_string(state['chat_template_str'])
         renderer = partial(template.render, add_generation_prompt=False, name1=state['name1'], name2=state['name2'])
         renderers.append(renderer)
