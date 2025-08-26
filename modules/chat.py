@@ -263,7 +263,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
             messages.append({"role": "user", "content": user_input})
 
-    if impersonate:
+    if impersonate and state['mode'] != 'chat-instruct':
         messages.append({"role": "user", "content": "fake user message replace me"})
 
     def make_prompt(messages):
