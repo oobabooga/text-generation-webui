@@ -336,10 +336,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
             prompt = renderer(messages=messages)
 
         if state['mode'] == 'chat-instruct':
-            outer_messages = []
-            if state['custom_system_message'].strip() != '':
-                outer_messages.append({"role": "system", "content": state['custom_system_message']})
-
             command = state['chat-instruct_command']
             command = command.replace('<|character|>', state['name2'] if not impersonate else state['name1'])
             command = command.replace('<|prompt|>', prompt)
@@ -353,29 +349,31 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 if not impersonate:
                     prefix = apply_extensions('bot_prefix', prefix, state)
 
+            suffix = get_generation_prompt(instruct_renderer, impersonate=False)[1]
+
+            outer_messages = []
+            if state['custom_system_message'].strip() != '':
+                outer_messages.append({"role": "system", "content": state['custom_system_message']})
+
             outer_messages.append({"role": "user", "content": command})
             outer_messages.append({"role": "assistant", "content": prefix})
 
             prompt = instruct_renderer(messages=outer_messages)
-            suffix = get_generation_prompt(instruct_renderer, impersonate=False)[1]
             if len(suffix) > 0:
                 prompt = prompt[:-len(suffix)]
         else:
             # Handle GPT-OSS as a special case when continuing
+            # (otherwise the thinking block gets removed...)
             if _continue and '<|channel|>final<|message|>' in state['instruction_template_str']:
                 last_message_to_continue = messages[-1]
                 prompt = renderer(messages=messages[:-1])
 
-                # Start the assistant turn wrapper
                 assistant_reply_so_far = "<|start|>assistant"
-
                 if 'thinking' in last_message_to_continue:
                     assistant_reply_so_far += f"<|channel|>analysis<|message|>{last_message_to_continue['thinking']}<|end|>"
 
                 assistant_reply_so_far += f"<|channel|>final<|message|>{last_message_to_continue.get('content', '')}"
-
                 prompt += assistant_reply_so_far
-
             else:
                 prompt = renderer(messages=messages)
                 if _continue:
