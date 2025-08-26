@@ -456,15 +456,17 @@ def get_stopping_strings(state):
         ]
 
         for text in texts:
-            text = text.strip()
-            if text.startswith("<") and ">" in text:
-                stopping_strings.append(text.split(">")[0] + ">")
-            elif text.startswith("[") and "]" in text:
-                stopping_strings.append(text.split("]")[0] + "]")
-            elif text.startswith("(") and ")" in text:
-                stopping_strings.append(text.split(")")[0] + ")")
-            elif text.startswith("{") and "}" in text:
-                stopping_strings.append(text.split("}")[0] + "}")
+            stripped_text = text.strip()
+            if stripped_text.startswith("<") and ">" in stripped_text:
+                stopping_strings.append(stripped_text.split(">")[0] + ">")
+            elif stripped_text.startswith("[") and "]" in stripped_text:
+                stopping_strings.append(stripped_text.split("]")[0] + "]")
+            elif stripped_text.startswith("(") and ")" in stripped_text:
+                stopping_strings.append(stripped_text.split(")")[0] + ")")
+            elif stripped_text.startswith("{") and "}" in stripped_text:
+                stopping_strings.append(stripped_text.split("}")[0] + "}")
+            elif ":" in text:
+                stopping_strings.append(text.split(":")[0] + ":")
 
     if 'stopping_strings' in state and isinstance(state['stopping_strings'], list):
         stopping_strings += state.pop('stopping_strings')
