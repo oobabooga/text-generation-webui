@@ -86,44 +86,6 @@ yaml.add_representer(str, str_presenter)
 yaml.representer.SafeRepresenter.add_representer(str, str_presenter)
 
 
-def get_thinking_suppression_string(template):
-    """
-    Determines what string needs to be added to suppress thinking mode
-    by comparing template renderings with thinking enabled vs disabled.
-    """
-
-    # Render with thinking enabled
-    with_thinking = template.render(
-        messages=[{'role': 'user', 'content': ''}],
-        builtin_tools=None,
-        tools=None,
-        tools_in_user_message=False,
-        add_generation_prompt=True,
-        enable_thinking=True
-    )
-
-    # Render with thinking disabled
-    without_thinking = template.render(
-        messages=[{'role': 'user', 'content': ''}],
-        builtin_tools=None,
-        tools=None,
-        tools_in_user_message=False,
-        add_generation_prompt=True,
-        enable_thinking=False
-    )
-
-    # Find the difference (what gets added to suppress thinking)
-    i = 0
-    while i < min(len(with_thinking), len(without_thinking)) and with_thinking[i] == without_thinking[i]:
-        i += 1
-
-    j = 0
-    while j < min(len(with_thinking), len(without_thinking)) - i and with_thinking[-1 - j] == without_thinking[-1 - j]:
-        j += 1
-
-    return without_thinking[i:len(without_thinking) - j if j else None]
-
-
 def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs.get('impersonate', False)
     _continue = kwargs.get('_continue', False)
