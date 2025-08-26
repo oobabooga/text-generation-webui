@@ -306,6 +306,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
             prompt = prompt.split("fake user message replace me", 1)[0]
             prompt += user_input
 
+        if state['mode'] in ['chat', 'chat-instruct'] and not impersonate and not _continue:
+            prompt += apply_extensions('bot_prefix', "", state)
+
         return prompt
 
     prompt = make_prompt(messages)
