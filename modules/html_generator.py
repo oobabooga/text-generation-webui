@@ -137,7 +137,7 @@ def extract_thinking_block(string):
         remaining_content = string[content_start:]
         return thinking_content, remaining_content
 
-    # If think tags not found, try alternative format
+    # If think tags not found, try GPT-OSS alternative format
     ALT_START = "&lt;|channel|&gt;analysis&lt;|message|&gt;"
     ALT_END = "&lt;|end|&gt;"
     ALT_CONTENT_START = "&lt;|start|&gt;assistant&lt;|channel|&gt;final&lt;|message|&gt;"
@@ -168,7 +168,31 @@ def extract_thinking_block(string):
         remaining_content = string[content_start:]
         return thinking_content, remaining_content
 
-    # Return if neither format is found
+    # Try seed:think format
+    SEED_START = "&lt;seed:think&gt;"
+    SEED_END = "&lt;/seed:think&gt;"
+
+    seed_start_pos = string.find(SEED_START)
+    seed_end_pos = string.find(SEED_END)
+
+    if seed_start_pos != -1 or seed_end_pos != -1:
+        if seed_start_pos == -1:
+            thought_start = 0
+        else:
+            thought_start = seed_start_pos + len(SEED_START)
+
+        if seed_end_pos == -1:
+            thought_end = len(string)
+            content_start = len(string)
+        else:
+            thought_end = seed_end_pos
+            content_start = seed_end_pos + len(SEED_END)
+
+        thinking_content = string[thought_start:thought_end]
+        remaining_content = string[content_start:]
+        return thinking_content, remaining_content
+
+    # Return if no format is found
     return None, string
 
 

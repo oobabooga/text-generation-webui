@@ -109,7 +109,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
         tools_in_user_message=False,
         add_generation_prompt=False,
         enable_thinking=state['enable_thinking'],
-        reasoning_effort=state['reasoning_effort']
+        reasoning_effort=state['reasoning_effort'],
+        thinking_budget=-1 if state.get('enable_thinking', True) else 0
     )
 
     chat_renderer = partial(
@@ -187,6 +188,30 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 msg_dict = {"role": "assistant", "content": final_content}
                 if '<|channel|>analysis<|message|>' in assistant_msg:
                     msg_dict["thinking"] = thinking_content
+
+                messages.insert(insert_pos, msg_dict)
+
+            # Handle Seed-OSS
+            elif '<seed:think>' in assistant_msg:
+                thinking_content = ""
+                final_content = assistant_msg
+
+                # Extract thinking content if present
+                if '<seed:think>' in assistant_msg:
+                    parts = assistant_msg.split('<seed:think>', 1)
+                    if len(parts) > 1:
+                        potential_content = parts[1]
+                        if '</seed:think>' in potential_content:
+                            thinking_content = potential_content.split('</seed:think>', 1)[0].strip()
+                            final_content = parts[0] + potential_content.split('</seed:think>', 1)[1]
+                        else:
+                            thinking_content = potential_content.strip()
+                            final_content = parts[0]
+
+                # Insert as structured message
+                msg_dict = {"role": "assistant", "content": final_content.strip()}
+                if thinking_content:
+                    msg_dict["reasoning_content"] = thinking_content
 
                 messages.insert(insert_pos, msg_dict)
 
@@ -687,6 +712,8 @@ def generate_search_query(user_message, state):
         query = query.rsplit("</think>", 1)[1]
     elif "<|start|>assistant<|channel|>final<|message|>" in query:
         query = query.rsplit("<|start|>assistant<|channel|>final<|message|>", 1)[1]
+    elif "</seed:think>" in query:
+        query = query.rsplit("</seed:think>", 1)[1]
 
     # Strip and remove surrounding quotes if present
     query = query.strip()
