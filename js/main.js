@@ -1065,3 +1065,30 @@ document.fonts.addEventListener("loadingdone", (event) => {
     }
   }, 50);
 });
+
+(function() {
+  const chatParent = document.querySelector(".chat-parent");
+  const chatInputRow = document.querySelector("#chat-input-row");
+  const originalMarginBottom = 75;
+  let originalHeight = chatInputRow.offsetHeight;
+
+  function updateMargin() {
+    const currentHeight = chatInputRow.offsetHeight;
+    const heightDifference = currentHeight - originalHeight;
+    chatParent.style.marginBottom = `${originalMarginBottom + heightDifference}px`;
+  }
+
+  // Watch for changes that might affect height
+  const observer = new MutationObserver(updateMargin);
+  observer.observe(chatInputRow, {
+    childList: true,
+    subtree: true,
+    attributes: true
+  });
+
+  // Also listen for window resize
+  window.addEventListener("resize", updateMargin);
+
+  // Initial call to set the margin based on current state
+  updateMargin();
+})();

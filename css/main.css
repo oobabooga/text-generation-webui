@@ -404,6 +404,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     flex: 1;
     overflow: auto !important;
     border-radius: 0 !important;
+    margin-bottom: 75px;
 }
 
 .chat-parent .prose {
@@ -626,6 +627,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     max-width: 54rem;
     left: 50%;
     transform: translateX(-50%);
+    position: absolute;
+    bottom: 0;
+    background: var(--body-background-fill);
 }
 
 @media print {
