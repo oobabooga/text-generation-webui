@@ -68,7 +68,7 @@ def get_model_metadata(model):
         metadata = load_gguf_metadata_with_cache(model_file)
 
         for k in metadata:
-            if k.endswith('context_length'):
+            if k.endswith('.context_length'):
                 model_settings['ctx_size'] = min(metadata[k], 8192)
                 model_settings['truncation_length_info'] = metadata[k]
             elif k.endswith('rope.freq_base'):
