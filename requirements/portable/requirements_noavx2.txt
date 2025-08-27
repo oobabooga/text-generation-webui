@@ -1,3 +1,4 @@
+audioop-lts<1.0; python_version >= "3.13"
 fastapi==0.112.4
 gradio==4.37.*
 html2text==2025.4.15

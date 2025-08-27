@@ -1,4 +1,5 @@
 accelerate==1.8.*
+audioop-lts<1.0; python_version >= "3.13"
 bitsandbytes==0.46.*
 colorama
 datasets
