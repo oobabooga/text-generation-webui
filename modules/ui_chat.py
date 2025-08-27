@@ -81,7 +81,7 @@ def create_ui():
                 gr.HTML("<div style='margin: 0; border-bottom: 1px solid rgba(255,255,255,0.1);'></div>")
 
                 shared.gradio['reasoning_effort'] = gr.Dropdown(value=shared.settings['reasoning_effort'], choices=['low', 'medium', 'high'], label='Reasoning effort', info='Used by GPT-OSS.')
-                shared.gradio['enable_thinking'] = gr.Checkbox(value=shared.settings['enable_thinking'], label='Enable thinking', info='Used by pre-2507 Qwen3.')
+                shared.gradio['enable_thinking'] = gr.Checkbox(value=shared.settings['enable_thinking'], label='Enable thinking', info='Used by Seed-OSS, pre-2507 Qwen3.')
 
                 gr.HTML("<div style='margin: 0; border-bottom: 1px solid rgba(255,255,255,0.1);'></div>")
 
