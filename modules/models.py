@@ -57,7 +57,7 @@ def load_model(model_name, loader=None):
         shared.settings['truncation_length'] = shared.args.ctx_size
 
     shared.is_multimodal = False
-    if loader.lower() in ('exllamav3', 'llama.cpp'):
+    if loader.lower() in ('exllamav3', 'llama.cpp') and hasattr(model, 'is_multimodal'):
         shared.is_multimodal = model.is_multimodal()
 
     logger.info(f"Loaded \"{model_name}\" in {(time.time()-t0):.2f} seconds.")
