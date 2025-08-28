@@ -1697,3 +1697,12 @@ button:focus {
 #chat-input span {
     display: none;
 }
+
+.sidebar-vertical-separator {
+    margin: 0;
+    border-bottom: var(--input-border-width) solid var(--input-border-color);
+}
+
+.dark .sidebar-vertical-separator {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
