@@ -20,12 +20,6 @@ function toggle_controls(value) {
       extensions.style.display = "inherit";
     }
 
-    // Remove bigchat classes
-    chatParent.classList.remove("bigchat");
-    document.getElementById("chat-input-row").classList.remove("bigchat");
-    document.getElementById("chat-col").classList.remove("bigchat");
-    document.getElementById("chat-tab").style.paddingBottom = "";
-
     let gallery_element = document.getElementById("gallery-extension");
     if (gallery_element) {
       gallery_element.style.display = "block";
@@ -47,11 +41,5 @@ function toggle_controls(value) {
     if (extensions) {
       extensions.style.display = "none";
     }
-
-    // Add bigchat classes
-    chatParent.classList.add("bigchat");
-    document.getElementById("chat-input-row").classList.add("bigchat");
-    document.getElementById("chat-col").classList.add("bigchat");
-    document.getElementById("chat-tab").style.paddingBottom = "0px";
   }
 }

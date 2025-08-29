@@ -429,10 +429,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     margin-left: 5px;
 }
 
-.chat-parent.bigchat {
-    flex: 1;
-}
-
 .chat > .messages {
     display: flex;
     flex-direction: column;
@@ -832,10 +828,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding: 1rem;
 }
 
-#chat-input-row.bigchat {
-    padding-bottom: 1px !important;
-}
-
 #chat-col {
     height: 100dvh;
     display: flex;
@@ -849,10 +841,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         margin-top: 32px;
         height: calc(100dvh - 32px);
     }
-}
-
-#chat-col.bigchat {
-    padding-bottom: 15px !important;
 }
 
 .message-body ol, .message-body ul {
