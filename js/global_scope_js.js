@@ -380,7 +380,7 @@ observer.observe(document.documentElement, {
   const originalWarn = console.warn;
 
   console.warn = function(...args) {
-    if (args[0] && args[0].includes("Attempted to select a non-interactive or hidden tab")) {
+    if (args[0] && typeof args[0] === 'string' && args[0].includes("Attempted to select a non-interactive or hidden tab")) {
       return;
     }
 
