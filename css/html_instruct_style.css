@@ -14,8 +14,8 @@
 }
 
 .dark .chat .message-body :is(p,li,h1,h2,h3,h4,h5,h6),
-.dark .chat .message-body em:not(:is(h1,h2,h3,h4,h5,h6) em),
-.dark .chat .message-body q:not(:is(h1,h2,h3,h4,h5,h6) q) {
+.dark .chat .message-body em:not(:is(h1,h2,h3,h4,h5,h6,b,strong) em),
+.dark .chat .message-body q:not(:is(h1,h2,h3,h4,h5,h6,b,strong) q) {
     color: #d1d5db !important;
 }
 
