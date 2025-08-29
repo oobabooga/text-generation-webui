@@ -1354,6 +1354,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     cursor: pointer;
     user-select: none;
     font-size: 14px;
+    line-height: var(--line-sm);
     color: rgb(0 0 0 / 70%);
     transition: background-color 0.2s;
 }
