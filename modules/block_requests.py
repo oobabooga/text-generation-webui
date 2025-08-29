@@ -53,8 +53,9 @@ def my_open(*args, **kwargs):
             '</head>',
             '\n    <link rel="preload" href="file/css/Inter/Inter-VariableFont_opsz,wght.ttf" as="font" type="font/ttf" crossorigin>'
             '\n    <link rel="preload" href="file/css/Inter/Inter-Italic-VariableFont_opsz,wght.ttf" as="font" type="font/ttf" crossorigin>'
-            '\n    <link rel="preload" href="file/css/NotoSans/NotoSans-Regular.woff2" as="font" type="font/woff2" crossorigin>'
-            '\n    <link rel="preload" href="file/css/NotoSans/NotoSans-Italic.woff2" as="font" type="font/woff2" crossorigin>'
+            '\n    <link rel="preload" href="file/css/NotoSans/NotoSans-Medium.woff2" as="font" type="font/woff2" crossorigin>'
+            '\n    <link rel="preload" href="file/css/NotoSans/NotoSans-MediumItalic.woff2" as="font" type="font/woff2" crossorigin>'
+            '\n    <link rel="preload" href="file/css/NotoSans/NotoSans-Bold.woff2" as="font" type="font/woff2" crossorigin>'
             '\n    <script src="file/js/katex/katex.min.js"></script>'
             '\n    <script src="file/js/katex/auto-render.min.js"></script>'
             '\n    <script src="file/js/highlightjs/highlight.min.js"></script>'
