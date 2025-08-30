@@ -30,8 +30,7 @@ def create_ui():
             with gr.Column(scale=4):
                 with gr.Tab('Raw'):
                     with gr.Row():
-                        initial_text = load_prompt(shared.settings['prompt-notebook'])
-                        shared.gradio['textbox-notebook'] = gr.Textbox(label="", value=initial_text, lines=27, elem_id='textbox-notebook', elem_classes=['textbox', 'add_scrollbar'])
+                        shared.gradio['textbox-notebook'] = gr.Textbox(label="", value="", lines=27, elem_id='textbox-notebook', elem_classes=['textbox', 'add_scrollbar'])
                         shared.gradio['token-counter-notebook'] = gr.HTML(value="<span>0</span>", elem_id="notebook-token-counter")
 
                 with gr.Tab('Markdown'):

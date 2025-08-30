@@ -22,8 +22,7 @@ def load_prompt(fname):
     if file_path.exists():
         with open(file_path, 'r', encoding='utf-8') as f:
             text = f.read()
-            if len(text) > 0 and text[-1] == '\n':
-                text = text[:-1]
+            text = text.rstrip()
 
             return text
     else:

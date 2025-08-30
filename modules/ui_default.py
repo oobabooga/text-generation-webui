@@ -22,8 +22,7 @@ def create_ui():
         with gr.Row():
             with gr.Column():
                 with gr.Row():
-                    initial_text = load_prompt(shared.settings['prompt-notebook'])
-                    shared.gradio['textbox-default'] = gr.Textbox(value=initial_text, lines=27, label='Input', elem_classes=['textbox_default', 'add_scrollbar'])
+                    shared.gradio['textbox-default'] = gr.Textbox(value="", lines=27, label='Input', elem_classes=['textbox_default', 'add_scrollbar'])
                     shared.gradio['token-counter-default'] = gr.HTML(value="<span>0</span>", elem_id="default-token-counter")
 
                 with gr.Row():

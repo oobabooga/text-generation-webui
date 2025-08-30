@@ -6,6 +6,7 @@ from pathlib import Path
 from modules import shared
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
+from modules.prompts import load_prompt
 
 # Set up Gradio temp directory path
 gradio_temp_path = Path('user_data') / 'cache' / 'gradio'
@@ -108,6 +109,13 @@ def create_interface():
         'loader': shared.args.loader or 'llama.cpp',
         'filter_by_loader': (shared.args.loader or 'All') if not shared.args.portable else 'llama.cpp'
     })
+
+    if shared.settings['prompt-notebook']:
+        prompt = load_prompt(shared.settings['prompt-notebook'])
+        shared.persistent_interface_state.update({
+            'textbox-default': prompt,
+            'textbox-notebook': prompt
+        })
 
     # Clear existing cache files
     for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
