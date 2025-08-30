@@ -333,7 +333,23 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
         if _continue:
             prompt = prompt.split("fake assistant message replace me", 1)[0]
-            prompt += last_message.get("content", "")
+            content = last_message.get("content", "")
+            thinking = last_message.get("thinking", "")
+            reasoning = last_message.get("reasoning_content", "")
+
+            partial_thought = thinking or reasoning
+            # Handle partial thinking blocks (GPT-OSS and Seed-OSS)
+            if partial_thought and partial_thought.strip():
+                search_string = partial_thought.strip()
+                index = prompt.rfind(search_string)
+                if index != -1:
+                    prompt = prompt[:index] + partial_thought
+                else:
+                    # Fallback
+                    prompt += content
+            else:
+                # All other cases
+                prompt += content
 
         if impersonate:
             prompt = prompt.split("fake user message replace me", 1)[0]
