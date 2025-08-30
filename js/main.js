@@ -261,7 +261,7 @@ function doSyntaxHighlighting() {
         });
 
         // Only render math in visible elements
-        const mathContainers = messageBody.querySelectorAll("p, div, span, li, td, th, h1, h2, h3, h4, h5, h6, blockquote, figcaption, caption, dd, dt");
+        const mathContainers = messageBody.querySelectorAll("p, span, li, td, th, h1, h2, h3, h4, h5, h6, blockquote, figcaption, caption, dd, dt");
         mathContainers.forEach(container => {
           if (isElementVisibleOnScreen(container)) {
             renderMathInElement(container, {
