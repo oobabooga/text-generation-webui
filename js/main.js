@@ -260,13 +260,19 @@ function doSyntaxHighlighting() {
           codeBlock.classList.add("pretty_scrollbar");
         });
 
-        renderMathInElement(messageBody, {
-          delimiters: [
-            { left: "$$", right: "$$", display: true },
-            { left: "$", right: "$", display: false },
-            { left: "\\(", right: "\\)", display: false },
-            { left: "\\[", right: "\\]", display: true },
-          ],
+        // Only render math in visible elements
+        const mathContainers = messageBody.querySelectorAll("p, div, span, li, td, th, h1, h2, h3, h4, h5, h6, blockquote, figcaption, caption, dd, dt");
+        mathContainers.forEach(container => {
+          if (isElementVisibleOnScreen(container)) {
+            renderMathInElement(container, {
+              delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true },
+              ],
+            });
+          }
         });
       } else if (hasSeenVisible) {
         // We've seen visible messages but this one is not visible
