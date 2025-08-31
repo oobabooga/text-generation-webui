@@ -73,7 +73,6 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
-group.add_argument('--flash-attn', action='store_true', help='Use flash-attention.')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
 group.add_argument('--batch-size', type=int, default=256, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
@@ -158,9 +157,6 @@ group.add_argument('--admin-key', type=str, default='', help='API authentication
 group.add_argument('--api-enable-ipv6', action='store_true', help='Enable IPv6 for the API')
 group.add_argument('--api-disable-ipv4', action='store_true', help='Disable IPv4 for the API')
 group.add_argument('--nowebui', action='store_true', help='Do not launch the Gradio UI. Useful for launching the API in standalone mode.')
-
-# Deprecated parameters
-group = parser.add_argument_group('Deprecated')
 
 # Handle CMD_FLAGS.txt
 cmd_flags_path = Path(__file__).parent.parent / "user_data" / "CMD_FLAGS.txt"

@@ -16,7 +16,6 @@ loaders_and_params = OrderedDict({
         'streaming_llm',
         'rope_freq_base',
         'compress_pos_emb',
-        'flash_attn',
         'row_split',
         'no_kv_offload',
         'no_mmap',

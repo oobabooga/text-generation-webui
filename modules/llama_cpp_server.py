@@ -318,8 +318,6 @@ class LlamaServer:
             "--no-webui",
         ]
 
-        if shared.args.flash_attn:
-            cmd.append("--flash-attn")
         if shared.args.threads > 0:
             cmd += ["--threads", str(shared.args.threads)]
         if shared.args.threads_batch > 0:
