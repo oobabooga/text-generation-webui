@@ -1,6 +1,5 @@
 import sys
 import time
-from pathlib import Path
 
 import modules.shared as shared
 from modules.logging_colors import logger
