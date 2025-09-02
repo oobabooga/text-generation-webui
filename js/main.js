@@ -206,7 +206,13 @@ const observer = new MutationObserver(function(mutations) {
       // Add padding to the messages container to create room for the last message.
       // The purpose of this is to avoid constant scrolling during streaming in
       // instruct mode.
-      const bufferHeight = Math.max(0, Math.max(window.innerHeight - 128 - 84, window.innerHeight - prevSibling.offsetHeight - 84) - lastChild.offsetHeight);
+      let bufferHeight = Math.max(0, Math.max(window.innerHeight - 128 - 84, window.innerHeight - prevSibling.offsetHeight - 84) - lastChild.offsetHeight);
+
+      // Subtract header height when screen width is <= 924px
+      if (window.innerWidth <= 924) {
+        bufferHeight = Math.max(0, bufferHeight - 32);
+      }
+
       messagesContainer.style.paddingBottom = `${bufferHeight}px`;
     }
   }
