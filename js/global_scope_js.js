@@ -372,3 +372,18 @@ observer.observe(document.documentElement, {
   subtree: true,
   attributeFilter: ["style"]
 });
+
+//------------------------------------------------
+// Suppress "Attempted to select a non-interactive or hidden tab" warning
+//------------------------------------------------
+(function() {
+  const originalWarn = console.warn;
+
+  console.warn = function(...args) {
+    if (args[0] && typeof args[0] === "string" && args[0].includes("Attempted to select a non-interactive or hidden tab")) {
+      return;
+    }
+
+    originalWarn.apply(console, args);
+  };
+})();

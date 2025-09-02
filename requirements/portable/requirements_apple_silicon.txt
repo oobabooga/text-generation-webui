@@ -1,3 +1,4 @@
+audioop-lts<1.0; python_version >= "3.13"
 fastapi==0.112.4
 gradio==4.37.*
 html2text==2025.4.15
@@ -18,6 +19,6 @@ sse-starlette==1.6.5
 tiktoken
 
 # Mac wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.37.0/llama_cpp_binaries-0.37.0-py3-none-macosx_15_0_arm64.whl; platform_system == "Darwin" and platform_release >= "24.0.0" and platform_release < "25.0.0"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.37.0/llama_cpp_binaries-0.37.0-py3-none-macosx_14_0_arm64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.37.0/llama_cpp_binaries-0.37.0-py3-none-macosx_13_0_arm64.whl; platform_system == "Darwin" and platform_release >= "22.0.0" and platform_release < "23.0.0"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.42.0/llama_cpp_binaries-0.42.0-py3-none-macosx_15_0_arm64.whl; platform_system == "Darwin" and platform_release >= "24.0.0" and platform_release < "25.0.0"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.42.0/llama_cpp_binaries-0.42.0-py3-none-macosx_14_0_arm64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.42.0/llama_cpp_binaries-0.42.0-py3-none-macosx_13_0_arm64.whl; platform_system == "Darwin" and platform_release >= "22.0.0" and platform_release < "23.0.0"

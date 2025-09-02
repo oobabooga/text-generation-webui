@@ -142,7 +142,6 @@ def list_model_elements():
         'num_experts_per_token',
         'load_in_8bit',
         'load_in_4bit',
-        'flash_attn',
         'attn_implementation',
         'cpu',
         'disk',

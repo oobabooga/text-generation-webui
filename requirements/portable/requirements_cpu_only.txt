@@ -1,3 +1,4 @@
+audioop-lts<1.0; python_version >= "3.13"
 fastapi==0.112.4
 gradio==4.37.*
 html2text==2025.4.15
@@ -18,5 +19,5 @@ sse-starlette==1.6.5
 tiktoken
 
 # llama.cpp (CPU only, AVX2)
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.37.0/llama_cpp_binaries-0.37.0+cpuavx2-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.37.0/llama_cpp_binaries-0.37.0+cpuavx2-py3-none-win_amd64.whl; platform_system == "Windows"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.42.0/llama_cpp_binaries-0.42.0+cpuavx2-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.42.0/llama_cpp_binaries-0.42.0+cpuavx2-py3-none-win_amd64.whl; platform_system == "Windows"

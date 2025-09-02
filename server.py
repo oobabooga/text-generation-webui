@@ -6,6 +6,7 @@ from pathlib import Path
 from modules import shared
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
+from modules.prompts import load_prompt
 
 # Set up Gradio temp directory path
 gradio_temp_path = Path('user_data') / 'cache' / 'gradio'
@@ -70,7 +71,7 @@ from modules.utils import gradio
 
 
 def signal_handler(sig, frame):
-    logger.info("Received Ctrl+C. Shutting down Text generation web UI gracefully.")
+    logger.info("Received Ctrl+C. Shutting down Text Generation Web UI gracefully.")
 
     # Explicitly stop LlamaServer to avoid __del__ cleanup issues during shutdown
     if shared.model and shared.model.__class__.__name__ == 'LlamaServer':
@@ -87,7 +88,7 @@ signal.signal(signal.SIGINT, signal_handler)
 
 def create_interface():
 
-    title = 'Text generation web UI'
+    title = 'Text Generation Web UI'
 
     # Password authentication
     auth = []
@@ -108,6 +109,13 @@ def create_interface():
         'loader': shared.args.loader or 'llama.cpp',
         'filter_by_loader': (shared.args.loader or 'All') if not shared.args.portable else 'llama.cpp'
     })
+
+    if shared.settings['prompt-notebook']:
+        prompt = load_prompt(shared.settings['prompt-notebook'])
+        shared.persistent_interface_state.update({
+            'textbox-default': prompt,
+            'textbox-notebook': prompt
+        })
 
     # Clear existing cache files
     for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
@@ -230,7 +238,7 @@ def create_interface():
 
 if __name__ == "__main__":
 
-    logger.info("Starting Text generation web UI")
+    logger.info("Starting Text Generation Web UI")
     do_cmd_flags_warnings()
 
     # Load custom settings
@@ -283,21 +291,14 @@ if __name__ == "__main__":
 
     # If any model has been selected, load it
     if shared.model_name != 'None':
-        p = Path(shared.model_name)
-        if p.exists():
-            model_name = p.parts[-1]
-            shared.model_name = model_name
-        else:
-            model_name = shared.model_name
-
-        model_settings = get_model_metadata(model_name)
+        model_settings = get_model_metadata(shared.model_name)
         update_model_parameters(model_settings, initial=True)  # hijack the command-line arguments
 
         # Auto-adjust GPU layers if not provided by user and it's a llama.cpp model
         if 'gpu_layers' not in shared.provided_arguments and shared.args.loader == 'llama.cpp' and 'gpu_layers' in model_settings:
             vram_usage, adjusted_layers = update_gpu_layers_and_vram(
                 shared.args.loader,
-                model_name,
+                shared.model_name,
                 model_settings['gpu_layers'],
                 shared.args.ctx_size,
                 shared.args.cache_type,
@@ -308,7 +309,7 @@ if __name__ == "__main__":
             shared.args.gpu_layers = adjusted_layers
 
         # Load the model
-        shared.model, shared.tokenizer = load_model(model_name)
+        shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
             add_lora_to_model(shared.args.lora)
 

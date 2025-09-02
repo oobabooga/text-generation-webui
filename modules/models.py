@@ -1,10 +1,10 @@
 import sys
 import time
-from pathlib import Path
 
 import modules.shared as shared
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
+from modules.utils import resolve_model_path
 
 last_generation_time = time.time()
 
@@ -45,18 +45,19 @@ def load_model(model_name, loader=None):
         model, tokenizer = output
     else:
         model = output
-        if model is None:
-            return None, None
-        else:
+        if model is not None:
             from modules.transformers_loader import load_tokenizer
             tokenizer = load_tokenizer(model_name)
+
+    if model is None:
+        return None, None
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
     if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt') or loader == 'llama.cpp':
         shared.settings['truncation_length'] = shared.args.ctx_size
 
     shared.is_multimodal = False
-    if loader.lower() in ('exllamav3', 'llama.cpp'):
+    if loader.lower() in ('exllamav3', 'llama.cpp') and hasattr(model, 'is_multimodal'):
         shared.is_multimodal = model.is_multimodal()
 
     logger.info(f"Loaded \"{model_name}\" in {(time.time()-t0):.2f} seconds.")
@@ -69,17 +70,24 @@ def load_model(model_name, loader=None):
 def llama_cpp_server_loader(model_name):
     from modules.llama_cpp_server import LlamaServer
 
-    path = Path(f'{shared.args.model_dir}/{model_name}')
+    path = resolve_model_path(model_name)
+
     if path.is_file():
         model_file = path
     else:
-        model_file = sorted(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0]
+        gguf_files = sorted(path.glob('*.gguf'))
+        if not gguf_files:
+            logger.error(f"No .gguf models found in the directory: {path}")
+            return None, None
+
+        model_file = gguf_files[0]
 
     try:
         model = LlamaServer(model_file)
         return model, model
     except Exception as e:
         logger.error(f"Error loading the model with llama.cpp: {str(e)}")
+        return None, None
 
 
 def transformers_loader(model_name):

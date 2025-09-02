@@ -86,74 +86,6 @@ yaml.add_representer(str, str_presenter)
 yaml.representer.SafeRepresenter.add_representer(str, str_presenter)
 
 
-def get_generation_prompt(renderer, impersonate=False, strip_trailing_spaces=True):
-    '''
-    Given a Jinja template, reverse-engineers the prefix and the suffix for
-    an assistant message (if impersonate=False) or an user message
-    (if impersonate=True)
-    '''
-
-    if impersonate:
-        messages = [
-            {"role": "user", "content": "<<|user-message-1|>>"},
-            {"role": "user", "content": "<<|user-message-2|>>"},
-        ]
-    else:
-        messages = [
-            {"role": "assistant", "content": "<<|user-message-1|>>"},
-            {"role": "assistant", "content": "<<|user-message-2|>>"},
-        ]
-
-    prompt = renderer(messages=messages)
-
-    suffix_plus_prefix = prompt.split("<<|user-message-1|>>")[1].split("<<|user-message-2|>>")[0]
-    suffix = prompt.split("<<|user-message-2|>>")[1]
-    prefix = suffix_plus_prefix[len(suffix):]
-
-    if strip_trailing_spaces:
-        prefix = prefix.rstrip(' ')
-
-    return prefix, suffix
-
-
-def get_thinking_suppression_string(template):
-    """
-    Determines what string needs to be added to suppress thinking mode
-    by comparing template renderings with thinking enabled vs disabled.
-    """
-
-    # Render with thinking enabled
-    with_thinking = template.render(
-        messages=[{'role': 'user', 'content': ''}],
-        builtin_tools=None,
-        tools=None,
-        tools_in_user_message=False,
-        add_generation_prompt=True,
-        enable_thinking=True
-    )
-
-    # Render with thinking disabled
-    without_thinking = template.render(
-        messages=[{'role': 'user', 'content': ''}],
-        builtin_tools=None,
-        tools=None,
-        tools_in_user_message=False,
-        add_generation_prompt=True,
-        enable_thinking=False
-    )
-
-    # Find the difference (what gets added to suppress thinking)
-    i = 0
-    while i < min(len(with_thinking), len(without_thinking)) and with_thinking[i] == without_thinking[i]:
-        i += 1
-
-    j = 0
-    while j < min(len(with_thinking), len(without_thinking)) - i and with_thinking[-1 - j] == without_thinking[-1 - j]:
-        j += 1
-
-    return without_thinking[i:len(without_thinking) - j if j else None]
-
-
 def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs.get('impersonate', False)
     _continue = kwargs.get('_continue', False)
@@ -176,7 +108,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
         tools=state['tools'] if 'tools' in state else None,
         tools_in_user_message=False,
         add_generation_prompt=False,
-        reasoning_effort=state['reasoning_effort']
+        enable_thinking=state['enable_thinking'],
+        reasoning_effort=state['reasoning_effort'],
+        thinking_budget=-1 if state.get('enable_thinking', True) else 0
     )
 
     chat_renderer = partial(
@@ -213,13 +147,11 @@ def generate_chat_prompt(user_input, state, **kwargs):
         if assistant_msg:
             # Handle GPT-OSS as a special case
             if '<|channel|>analysis<|message|>' in assistant_msg or '<|channel|>final<|message|>' in assistant_msg:
-
                 thinking_content = ""
                 final_content = ""
 
                 # Extract analysis content if present
                 if '<|channel|>analysis<|message|>' in assistant_msg:
-                    # Split the message by the analysis tag to isolate the content that follows
                     parts = assistant_msg.split('<|channel|>analysis<|message|>', 1)
                     if len(parts) > 1:
                         # The content is everything after the tag
@@ -240,7 +172,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 # Extract final content if present
                 final_tag_to_find = '<|channel|>final<|message|>'
                 if final_tag_to_find in assistant_msg:
-                    # Split the message by the final tag to isolate the content that follows
                     parts = assistant_msg.split(final_tag_to_find, 1)
                     if len(parts) > 1:
                         # The content is everything after the tag
@@ -260,7 +191,32 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
                 messages.insert(insert_pos, msg_dict)
 
+            # Handle Seed-OSS
+            elif '<seed:think>' in assistant_msg:
+                thinking_content = ""
+                final_content = assistant_msg
+
+                # Extract thinking content if present
+                if '<seed:think>' in assistant_msg:
+                    parts = assistant_msg.split('<seed:think>', 1)
+                    if len(parts) > 1:
+                        potential_content = parts[1]
+                        if '</seed:think>' in potential_content:
+                            thinking_content = potential_content.split('</seed:think>', 1)[0].strip()
+                            final_content = parts[0] + potential_content.split('</seed:think>', 1)[1]
+                        else:
+                            thinking_content = potential_content.strip()
+                            final_content = parts[0]
+
+                # Insert as structured message
+                msg_dict = {"role": "assistant", "content": final_content.strip()}
+                if thinking_content:
+                    msg_dict["reasoning_content"] = thinking_content
+
+                messages.insert(insert_pos, msg_dict)
+
             else:
+                # Default case (used by all other models)
                 messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
 
         if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
@@ -286,125 +242,120 @@ def generate_chat_prompt(user_input, state, **kwargs):
                         else:
                             attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
-                if image_refs or attachments_text:
-                    enhanced_user_msg = user_msg
-                    if image_refs:
-                        enhanced_user_msg = f"{image_refs}\n\n{enhanced_user_msg}"
-                    if attachments_text:
-                        enhanced_user_msg += f"\n\nATTACHMENTS:\n{attachments_text}"
+                if image_refs:
+                    enhanced_user_msg = f"{image_refs}\n\n{enhanced_user_msg}"
+                if attachments_text:
+                    enhanced_user_msg += f"\n\nATTACHMENTS:\n{attachments_text}"
 
             messages.insert(insert_pos, {"role": "user", "content": enhanced_user_msg})
 
+    # Handle the current user input
     user_input = user_input.strip()
 
-    # Check if we have attachments even with empty input
-    has_attachments = False
-    if not impersonate and not _continue and len(history_data.get('metadata', {})) > 0:
-        current_row_idx = len(history)
-        user_key = f"user_{current_row_idx}"
-        has_attachments = user_key in metadata and "attachments" in metadata[user_key]
-
-    if (user_input or has_attachments) and not impersonate and not _continue:
-        # For the current user input being processed, check if we need to add attachments
-        if not impersonate and not _continue and len(history_data.get('metadata', {})) > 0:
+    # Check if we have attachments
+    if not (impersonate or _continue):
+        has_attachments = False
+        if len(history_data.get('metadata', {})) > 0:
             current_row_idx = len(history)
             user_key = f"user_{current_row_idx}"
+            has_attachments = user_key in metadata and "attachments" in metadata[user_key]
 
-            if user_key in metadata and "attachments" in metadata[user_key]:
-                attachments_text = ""
-                image_refs = ""
+        if user_input or has_attachments:
+            # For the current user input being processed, check if we need to add attachments
+            if len(history_data.get('metadata', {})) > 0:
+                current_row_idx = len(history)
+                user_key = f"user_{current_row_idx}"
 
-                for attachment in metadata[user_key]["attachments"]:
-                    if attachment.get("type") == "image":
-                        image_refs += "<__media__>"
-                    else:
-                        filename = attachment.get("name", "file")
-                        content = attachment.get("content", "")
-                        if attachment.get("type") == "text/html" and attachment.get("url"):
-                            attachments_text += f"\nName: {filename}\nURL: {attachment['url']}\nContents:\n\n=====\n{content}\n=====\n\n"
+                if user_key in metadata and "attachments" in metadata[user_key]:
+                    attachments_text = ""
+                    image_refs = ""
+
+                    for attachment in metadata[user_key]["attachments"]:
+                        if attachment.get("type") == "image":
+                            image_refs += "<__media__>"
                         else:
-                            attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
+                            filename = attachment.get("name", "file")
+                            content = attachment.get("content", "")
+                            if attachment.get("type") == "text/html" and attachment.get("url"):
+                                attachments_text += f"\nName: {filename}\nURL: {attachment['url']}\nContents:\n\n=====\n{content}\n=====\n\n"
+                            else:
+                                attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
-                if image_refs or attachments_text:
-                    user_input = user_input
                     if image_refs:
                         user_input = f"{image_refs}\n\n{user_input}"
                     if attachments_text:
                         user_input += f"\n\nATTACHMENTS:\n{attachments_text}"
 
-        messages.append({"role": "user", "content": user_input})
+            messages.append({"role": "user", "content": user_input})
+
+    if impersonate and state['mode'] != 'chat-instruct':
+        messages.append({"role": "user", "content": "fake user message replace me"})
 
     def make_prompt(messages):
-        if state['mode'] == 'chat-instruct' and _continue:
-            prompt = renderer(messages=messages[:-1])
+        last_message = messages[-1].copy()
+        if _continue:
+            if state['mode'] == 'chat-instruct':
+                messages = messages[:-1]
+            else:
+                messages[-1]["content"] = "fake assistant message replace me"
+                messages.append({"role": "assistant", "content": "this will get deleted"})
+
+        if state['mode'] != 'chat-instruct':
+            add_generation_prompt = (not _continue and not impersonate)
         else:
-            prompt = renderer(messages=messages)
+            add_generation_prompt = False
+
+        prompt = renderer(
+            messages=messages,
+            add_generation_prompt=add_generation_prompt
+        )
 
         if state['mode'] == 'chat-instruct':
-            outer_messages = []
-            if state['custom_system_message'].strip() != '':
-                outer_messages.append({"role": "system", "content": state['custom_system_message']})
-
             command = state['chat-instruct_command']
             command = command.replace('<|character|>', state['name2'] if not impersonate else state['name1'])
             command = command.replace('<|prompt|>', prompt)
             command = replace_character_names(command, state['name1'], state['name2'])
 
-            if _continue:
-                prefix = get_generation_prompt(renderer, impersonate=impersonate, strip_trailing_spaces=False)[0]
-                prefix += messages[-1]["content"]
-            else:
-                prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
-                if not impersonate:
-                    prefix = apply_extensions('bot_prefix', prefix, state)
+            outer_messages = []
+            if state['custom_system_message'].strip() != '':
+                outer_messages.append({"role": "system", "content": state['custom_system_message']})
 
             outer_messages.append({"role": "user", "content": command})
-            outer_messages.append({"role": "assistant", "content": prefix})
+            if _continue:
+                outer_messages.append(last_message.copy())
+                outer_messages[-1]["content"] = "fake assistant message replace me"
+                outer_messages.append({"role": "assistant", "content": "this will get deleted"})
 
-            prompt = instruct_renderer(messages=outer_messages)
-            suffix = get_generation_prompt(instruct_renderer, impersonate=False)[1]
-            if len(suffix) > 0:
-                prompt = prompt[:-len(suffix)]
-        else:
-            # Handle GPT-OSS as a special case when continuing
-            if _continue and '<|channel|>final<|message|>' in state['instruction_template_str']:
-                last_message_to_continue = messages[-1]
-                prompt = renderer(messages=messages[:-1])
+            prompt = instruct_renderer(
+                messages=outer_messages,
+                add_generation_prompt=not _continue
+            )
 
-                # Start the assistant turn wrapper
-                assistant_reply_so_far = "<|start|>assistant"
+        if _continue:
+            prompt = prompt.split("fake assistant message replace me", 1)[0]
 
-                if 'thinking' in last_message_to_continue:
-                    assistant_reply_so_far += f"<|channel|>analysis<|message|>{last_message_to_continue['thinking']}<|end|>"
+            content = last_message.get("content", "")
+            partial_thought = last_message.get("thinking", "") or last_message.get("reasoning_content", "")
 
-                assistant_reply_so_far += f"<|channel|>final<|message|>{last_message_to_continue.get('content', '')}"
-
-                prompt += assistant_reply_so_far
-
-            else:
-                prompt = renderer(messages=messages)
-                if _continue:
-                    suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
-                    if len(suffix) > 0:
-                        prompt = prompt[:-len(suffix)]
+            # Handle partial thinking blocks (GPT-OSS and Seed-OSS)
+            if not content and partial_thought and partial_thought.strip():
+                search_string = partial_thought.strip()
+                index = prompt.rfind(search_string)
+                if index != -1:
+                    prompt = prompt[:index] + partial_thought
                 else:
-                    prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
+                    # Fallback if search fails: just append the thought
+                    prompt += partial_thought
+            else:
+                # All other cases
+                prompt += content
 
-                    # Handle GPT-OSS as a special case when not continuing
-                    if '<|channel|>final<|message|>' in state['instruction_template_str']:
-                        if prefix.endswith("<|channel|>final<|message|>"):
-                            prefix = prefix[:-len("<|channel|>final<|message|>")]
+        if impersonate:
+            prompt = prompt.split("fake user message replace me", 1)[0]
+            prompt += user_input
 
-                        if impersonate:
-                            prefix += "<|message|>"
-
-                    if state['mode'] == 'chat' and not impersonate:
-                        prefix = apply_extensions('bot_prefix', prefix, state)
-
-                    prompt += prefix
-
-        if state['mode'] == 'instruct' and 'enable_thinking' in state['instruction_template_str'] and not any((_continue, impersonate, state['enable_thinking'])):
-            prompt += get_thinking_suppression_string(instruction_template)
+        if state['mode'] in ['chat', 'chat-instruct'] and not impersonate and not _continue:
+            prompt += apply_extensions('bot_prefix', "", state)
 
         return prompt
 
@@ -525,29 +476,48 @@ def get_stopping_strings(state):
         renderer = partial(template.render, add_generation_prompt=False)
         renderers.append(renderer)
 
-    if state['mode'] in ['chat', 'chat-instruct']:
+    if state['mode'] in ['chat']:
         template = jinja_env.from_string(state['chat_template_str'])
         renderer = partial(template.render, add_generation_prompt=False, name1=state['name1'], name2=state['name2'])
         renderers.append(renderer)
 
-    for renderer in renderers:
-        prefix_bot, suffix_bot = get_generation_prompt(renderer, impersonate=False)
-        prefix_user, suffix_user = get_generation_prompt(renderer, impersonate=True)
+    fake_messages = [
+        {"role": "user", "content": "first user message"},
+        {"role": "assistant", "content": "first assistant message"},
+        {"role": "user", "content": "second user message"},
+        {"role": "assistant", "content": "second assistant message"},
+    ]
 
-        stopping_strings += [
-            suffix_user + prefix_bot,
-            suffix_user + prefix_user,
-            suffix_bot + prefix_bot,
-            suffix_bot + prefix_user,
+    stopping_strings = []
+    for renderer in renderers:
+        prompt = renderer(messages=fake_messages)
+
+        # Find positions of each message content
+        first_user_end = prompt.find("first user message") + len("first user message")
+        first_assistant_start = prompt.find("first assistant message")
+        first_assistant_end = prompt.find("first assistant message") + len("first assistant message")
+        second_user_start = prompt.find("second user message")
+        second_assistant_end = prompt.find("second assistant message") + len("second assistant message")
+
+        # Extract pieces of text potentially containing unique stopping strings
+        texts = [
+            prompt[first_user_end:first_assistant_start],
+            prompt[first_assistant_end:second_user_start],
+            prompt[second_assistant_end:]
         ]
 
-    # Try to find the EOT token
-    for item in stopping_strings.copy():
-        item = item.strip()
-        if item.startswith("<") and ">" in item:
-            stopping_strings.append(item.split(">")[0] + ">")
-        elif item.startswith("[") and "]" in item:
-            stopping_strings.append(item.split("]")[0] + "]")
+        for text in texts:
+            stripped_text = text.strip()
+            if stripped_text.startswith("<") and ">" in stripped_text:
+                stopping_strings.append(stripped_text.split(">")[0] + ">")
+            elif stripped_text.startswith("[") and "]" in stripped_text:
+                stopping_strings.append(stripped_text.split("]")[0] + "]")
+            elif stripped_text.startswith("(") and ")" in stripped_text:
+                stopping_strings.append(stripped_text.split(")")[0] + ")")
+            elif stripped_text.startswith("{") and "}" in stripped_text:
+                stopping_strings.append(stripped_text.split("}")[0] + "}")
+            elif ":" in text:
+                stopping_strings.append(text.split(":")[0] + ":")
 
     if 'stopping_strings' in state and isinstance(state['stopping_strings'], list):
         stopping_strings += state.pop('stopping_strings')
@@ -765,6 +735,8 @@ def generate_search_query(user_message, state):
         query = query.rsplit("</think>", 1)[1]
     elif "<|start|>assistant<|channel|>final<|message|>" in query:
         query = query.rsplit("<|start|>assistant<|channel|>final<|message|>", 1)[1]
+    elif "</seed:think>" in query:
+        query = query.rsplit("</seed:think>", 1)[1]
 
     # Strip and remove surrounding quotes if present
     query = query.strip()
@@ -906,6 +878,12 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
         # Extract the reply
         if state['mode'] in ['chat', 'chat-instruct']:
+            reply = reply.lstrip()
+            if reply.startswith(state['name2'] + ':'):
+                reply = reply[len(state['name2'] + ':'):]
+            elif reply.startswith(state['name1'] + ':'):
+                reply = reply[len(state['name1'] + ':'):]
+
             visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
         else:
             visible_reply = reply
