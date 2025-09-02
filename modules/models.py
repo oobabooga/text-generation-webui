@@ -45,11 +45,12 @@ def load_model(model_name, loader=None):
         model, tokenizer = output
     else:
         model = output
-        if model is None:
-            return None, None
-        else:
+        if model is not None:
             from modules.transformers_loader import load_tokenizer
             tokenizer = load_tokenizer(model_name)
+
+    if model is None:
+        return None, None
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
     if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt') or loader == 'llama.cpp':
