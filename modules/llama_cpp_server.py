@@ -316,6 +316,7 @@ class LlamaServer:
             "--batch-size", str(shared.args.batch_size),
             "--port", str(self.port),
             "--no-webui",
+            "--flash-attn", "on",
         ]
 
         if shared.args.threads > 0:
