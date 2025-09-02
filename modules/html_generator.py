@@ -262,7 +262,7 @@ def process_markdown_content(string):
             modified_content = content.replace('*', LATEX_ASTERISK_PLACEHOLDER)
             return f'\\({modified_content}\\)'
 
-        return match.group(0) # Fallback
+        return match.group(0)  # Fallback
 
     # Make \[ \]  LaTeX equations inline
     pattern = r'^\s*\\\[\s*\n([\s\S]*?)\n\s*\\\]\s*$'
