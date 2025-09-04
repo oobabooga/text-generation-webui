@@ -134,10 +134,17 @@ def load_model_HF(model_name):
     torch._dynamo.config.disable = True
 
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+       
     params = {
         'low_cpu_mem_usage': True,
         'attn_implementation': shared.args.attn_implementation,
     }
+    
+    if shared.args.bf16:
+        params['torch_dtype'] = torch.bfloat16
+    elif params['attn_implementation'] == 'flash_attention_2':
+        params['torch_dtype'] = torch.float16
+        logger.warning(r'Using Flash Attention 2 with float16 by default. To use Flash Attention 2 with bfloat16, set the --bf16 flag.')
 
     if shared.args.trust_remote_code:
         params['trust_remote_code'] = True
