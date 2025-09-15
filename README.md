@@ -1,6 +1,5 @@
 # Text Generation WebUI
 A Gradio web UI for Large Language Models.
-
 Try the Deep Reason extension  
 
 ---
