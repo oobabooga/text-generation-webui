@@ -35,7 +35,9 @@ except Exception:
 
 class Exllamav2HF(PreTrainedModel, GenerationMixin):
     def __init__(self, config: ExLlamaV2Config):
-        super().__init__(PretrainedConfig())
+        hf_config = PretrainedConfig.from_pretrained(config.model_dir)
+        super().__init__(hf_config)
+
         self.ex_config = config
         self.loras = None
         self.generation_config = GenerationConfig()
