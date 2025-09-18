@@ -286,9 +286,7 @@ function doSyntaxHighlighting() {
           break;
         }
       }
-
     } finally {
-
       observer.observe(targetElement, config);
     }
   }
