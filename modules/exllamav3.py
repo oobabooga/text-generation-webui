@@ -344,6 +344,9 @@ class Exllamav3Model:
 
         try:
             while self.generator.num_remaining_jobs():
+                if shared.stop_everything:
+                    break
+
                 results = self.generator.iterate()
                 for result in results:
                     if "eos" in result and result["eos"]:
