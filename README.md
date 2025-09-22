@@ -1,45 +1,53 @@
-# Text Generation Web UI
-
+# Text Generation WebUI
 A Gradio web UI for Large Language Models.
+Try the Deep Reason extension  
 
-[Try the Deep Reason extension](https://oobabooga.gumroad.com/l/deep_reason)
+---
+## Table of Contents
+- [Features](#features)
+- [How to install](#how-to-install)
+  - [Option 1: Portable builds](#option-1-portable-builds-get-started-in-1-minute)
+  - [Option 2: Manual portable install with venv](#option-2-manual-portable-install-with-venv)
+  - [Option 3: One-click installer](#option-3-one-click-installer)
+- [iDownloading models](#downloading-models)
+- [Documentation](#documentation)
+- [Google Colab notebook](#google-colab-notebook)
+- [Community](#community)
+- [Acknowledgment](#acknowledgment)
+- [About](#about)
+- [Resources](#resources)
 
-|![Image1](https://github.com/oobabooga/screenshots/raw/main/INSTRUCT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/CHAT-3.5.png) |
-|:---:|:---:|
-|![Image1](https://github.com/oobabooga/screenshots/raw/main/DEFAULT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/PARAMETERS-3.5.png) |
+---
 
 ## Features
-
-- Supports multiple local text generation backends, including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), [ExLlamaV2](https://github.com/turboderp-org/exllamav2), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) (the latter via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile)).
-- Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory.
-- 100% offline and private, with zero telemetry, external resources, or remote update requests.
-- **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
-- **Vision (multimodal models)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Multimodal-Tutorial)).
-- **Web search**: Optionally search the internet with LLM-generated queries to add context to the conversation.
-- Aesthetic UI with dark and light themes.
-- Syntax highlighting for code blocks and LaTeX rendering for mathematical expressions.
-- `instruct` mode for instruction-following (like ChatGPT), and `chat-instruct`/`chat` modes for talking to custom characters.
-- Automatic prompt formatting using Jinja2 templates. You don't need to ever worry about prompt formats.
-- Edit messages, navigate between message versions, and branch conversations at any point.
-- Multiple sampling parameters and generation options for sophisticated text generation control.
-- Switch between different models in the UI without restarting.
-- Automatic GPU layers for GGUF models (on NVIDIA GPUs).
-- Free-form text generation in the Notebook tab without being limited to chat turns.
-- OpenAI-compatible API with Chat and Completions endpoints, including tool-calling support – see [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
-- Extension support, with numerous built-in and user-contributed extensions available. See the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
+- Supports multiple local text generation backends, including llama.cpp, Transformers, ExLlamaV3, ExLlamaV2, and TensorRT-LLM (the latter via its own Dockerfile).  
+- Easy setup: Choose between portable builds (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained installer_files directory.  
+- 100% offline and private, with zero telemetry, external resources, or remote update requests.  
+- File attachments: Upload text files, PDF documents, and .docx documents to talk about their contents.  
+- Vision (multimodal models): Attach images to messages for visual understanding (tutorial).  
+- Web search: Optionally search the internet with LLM-generated queries to add context to the conversation.  
+- Aesthetic UI with dark and light themes.  
+- Syntax highlighting for code blocks and LaTeX rendering for mathematical expressions.  
+- instruct mode for instruction-following (like ChatGPT), and chat-instruct/chat modes for talking to custom characters.  
+- Automatic prompt formatting using Jinja2 templates. You don't need to ever worry about prompt formats.  
+- Edit messages, navigate between message versions, and branch conversations at any point.  
+- Multiple sampling parameters and generation options for sophisticated text generation control.  
+- Switch between different models in the UI without restarting.  
+- Automatic GPU layers for GGUF models (on NVIDIA GPUs).  
+- Free-form text generation in the Notebook tab without being limited to chat turns.  
+- OpenAI-compatible API with Chat and Completions endpoints, including tool-calling support – see examples.  
+- Extension support, with numerous built-in and user-contributed extensions available. See the wiki and [extensions directory](./extensions) for details.  
 
 ## How to install
 
-#### ✅ Option 1: Portable builds (get started in 1 minute)
-
+### ✅ Option 1: Portable builds (get started in 1 minute)
 No installation needed – just download, unzip and run. All dependencies included.
 
 Compatible with GGUF (llama.cpp) models on Windows, Linux, and macOS.
 
-Download from here: **https://github.com/oobabooga/text-generation-webui/releases**
+Download from here: https://github.com/oobabooga/text-generation-webui/releases
 
-#### Option 2: Manual portable install with venv
-
+### Option 2: Manual portable install with venv
 Very fast setup that should work on any Python 3.9+:
 
 ```bash
@@ -64,8 +72,6 @@ python server.py --portable --api --auto-launch
 
 # When done working, deactivate
 deactivate
-```
-
 #### Option 3: One-click installer
 
 For users who need additional backends (ExLlamaV3, Transformers) or extensions (TTS, voice input, translation, etc). Requires ~10GB disk space and downloads PyTorch.
@@ -421,5 +427,5 @@ https://colab.research.google.com/github/oobabooga/text-generation-webui/blob/ma
 https://www.reddit.com/r/Oobabooga/
 
 ## Acknowledgment
-
 In August 2023, [Andreessen Horowitz](https://a16z.com/) (a16z) provided a generous grant to encourage and support my independent work on this project. I am **extremely** grateful for their trust and recognition.
+
