@@ -412,6 +412,12 @@ Run `python download-model.py --help` to see all the options.
 
 https://github.com/oobabooga/text-generation-webui/wiki
 
+### Русская документация
+
+[Как работает система](docs/КАК_РАБОТАЕТ_СИСТЕМА.md) - подробное объяснение архитектуры и рабочего процесса системы на русском языке.
+
+*This document provides a comprehensive explanation of the system architecture and workflow in Russian, covering initialization, model loading, text generation process, training workflow, and system components.*
+
 ## Google Colab notebook
 
 https://colab.research.google.com/github/oobabooga/text-generation-webui/blob/main/Colab-TextGen-GPU.ipynb
