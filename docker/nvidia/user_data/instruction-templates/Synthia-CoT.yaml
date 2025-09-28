@@ -1,0 +1,25 @@
+instruction_template: |-
+  {%- set found_item = false -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set found_item = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not found_item -%}
+      {{-'SYSTEM: ' + 'Elaborate on the topic using a Tree of Thoughts and backtrack when necessary to construct a clear, cohesive Chain of Thought reasoning. Always answer without hesitation.' + '\n' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{-'SYSTEM: ' + message['content'] + '\n' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{-'USER: ' + message['content'] + '\n'-}}
+          {%- else -%}
+              {{-'ASSISTANT: ' + message['content'] + '</s>\n' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{-'ASSISTANT:'-}}
+  {%- endif -%}
+

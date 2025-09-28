@@ -1,0 +1,25 @@
+instruction_template: |-
+  {%- set ns = namespace(found=false) -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set ns.found = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not ns.found -%}
+      {{- '### System:\n' + 'This is a system prompt, please behave and help the user.' + '\n\n' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{- '### System:\n' + message['content'] + '\n\n' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{-'### User:\n' + message['content'] + '\n\n'-}}
+          {%- else -%}
+              {{-'### Assistant:\n' + message['content'] + '\n\n' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{-'### Assistant:\n'-}}
+  {%- endif -%}
+

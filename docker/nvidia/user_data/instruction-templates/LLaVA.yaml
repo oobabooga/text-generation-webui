@@ -1,0 +1,25 @@
+instruction_template: |-
+  {%- set ns = namespace(found=false) -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set ns.found = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not ns.found -%}
+      {{- '' + 'You are LLaVA, a large language and vision assistant trained by UW Madison WAIV Lab. You are able to understand the visual content that the user provides, and assist the user with a variety of tasks using natural language. Follow the instructions carefully and explain your answers in detail.### Human: Hi!### Assistant: Hi there! How can I help you today?' + '\n' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{- '' + message['content'] + '\n' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{-'### Human: ' + message['content'] + ''-}}
+          {%- else -%}
+              {{-'### Assistant: ' + message['content'] + '\n' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{-'### Assistant:'-}}
+  {%- endif -%}
+

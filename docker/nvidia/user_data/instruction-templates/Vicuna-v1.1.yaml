@@ -1,0 +1,25 @@
+instruction_template: |-
+  {%- set ns = namespace(found=false) -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set ns.found = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not ns.found -%}
+      {{- '' + 'A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user\'s questions.' + '\n\n' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{- '' + message['content'] + '\n\n' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{-'USER: ' + message['content'] + '\n'-}}
+          {%- else -%}
+              {{-'ASSISTANT: ' + message['content'] + '</s>\n' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{-'ASSISTANT:'-}}
+  {%- endif -%}
+
