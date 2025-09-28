@@ -1,4 +1,4 @@
-# Text Generation Web UI
+# Text Generation-Webui-Podman
 
 Updated Dockerfile and docker-compose.yml files for Nvidia, optimized to run with Podman.
 
