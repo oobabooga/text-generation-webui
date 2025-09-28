@@ -1,5 +1,9 @@
 # Text Generation Web UI
 
+Updated Dockerfile and docker-compose.yml files for Nvidia, optimized to run with Podman.
+
+Inside the 'docker' folder there is an 'nvidia' folder which contains the files as they are needed to build and run the container.
+
 A Gradio web UI for Large Language Models.
 
 [Try the Deep Reason extension](https://oobabooga.gumroad.com/l/deep_reason)
