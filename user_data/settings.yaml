@@ -1,1 +1,15 @@
-{}
+# Рабочая конфигурация для Qwen2.5-14B-Instruct-Uncensored.i1-Q5_K_S.gguf
+# Успешно протестировано 29.09.2025
+loader: llama.cpp
+model_name: Qwen2.5-14B-Instruct-Uncensored.i1-Q5_K_S.gguf
+gpu_layers: 43
+ctx_size: 8192
+batch_size: 256
+cache_type: fp16
+rope_freq_base: 1000000
+compress_pos_emb: 1
+
+# UI настройки
+mode: instruct
+instruction_template: Custom (obtained from model metadata)
+truncation_length: 8192

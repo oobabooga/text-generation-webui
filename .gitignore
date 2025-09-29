@@ -1,23 +1,43 @@
+# Text Generation Web UI - Рабочая конфигурация
+# Обновлено 29.09.2025 для стабильной версии проекта
+
 /css
 /extensions
 /installer_files
 /repositories
 
-# Include user_data but exclude large model files
+# Модели и кэш - исключаем большие файлы
 /user_data/models/*.gguf
 /user_data/models/*.bin
 /user_data/models/*.safetensors
 /user_data/models/*/pytorch_model.bin
 /user_data/models/*/model-*.safetensors
 /user_data/logs/*.log
+/user_data/logs/
 /user_data/cache/
 
+# Временные и системные файлы
 .chroma
 .DS_Store
 .eslintrc.js
 .idea
 .installer_state.json
 .venv
+Thumbs.db
+desktop.ini
+
+# Python кэш
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Исключения - сохраняем важные конфиги
+!user_data/settings.yaml
+!user_data/models-settings/
+!README_READY.md
+!WORKING_CONFIG.md
+!start_working.bat
 venv
 .envrc
 .direnv

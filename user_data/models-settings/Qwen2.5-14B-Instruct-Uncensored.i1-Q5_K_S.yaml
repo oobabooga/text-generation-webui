@@ -1,0 +1,18 @@
+loader: llama.cpp
+# Консервативные настройки для RTX 3060
+n_gpu_layers: 20     # Безопасное количество слоев
+n_batch: 64         # Маленький батч
+n_ctx: 2048        # Небольшой контекст
+cpu_memory: 0
+threads: 6
+threads_batch: 6
+no_mmap: false
+mlock: false
+no_kv_offload: false
+row_split: false
+rope_freq_base: 1.0    # Базовое значение
+compress_pos_emb: 1.0
+alpha_value: 1.0
+gpu_split: ""
+tensor_split: ""
+flash_attn: false      # Отключено для стабильности
