@@ -155,7 +155,7 @@ def create_interface():
         ui_chat.create_ui()
 
         # Notebook tab
-        with gr.Tab("Notebook", elem_id='notebook-parent-tab'):
+        with gr.Tab("Блокнот", elem_id='notebook-parent-tab'):
             ui_default.create_ui()
             ui_notebook.create_ui()
 

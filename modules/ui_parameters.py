@@ -8,35 +8,35 @@ from modules.utils import gradio
 
 def create_ui():
     mu = shared.args.multi_user
-    with gr.Tab("Parameters", elem_id="parameters"):
-        with gr.Tab("Generation"):
+    with gr.Tab("Параметры", elem_id="parameters"):
+        with gr.Tab("Генерация"):
             with gr.Row():
                 with gr.Column():
                     with gr.Row():
-                        shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=shared.settings['preset'], label='Preset', elem_classes='slim-dropdown')
+                        shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=shared.settings['preset'], label='Пресет', elem_classes='slim-dropdown')
                         ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button', interactive=not mu)
                         shared.gradio['save_preset'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
                         shared.gradio['delete_preset'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
-                        shared.gradio['reset_preset'] = gr.Button('Restore preset', elem_classes='refresh-button', interactive=True)
-                        shared.gradio['neutralize_samplers'] = gr.Button('Neutralize samplers', elem_classes='refresh-button', interactive=True)
+                        shared.gradio['reset_preset'] = gr.Button('Восстановить пресет', elem_classes='refresh-button', interactive=True)
+                        shared.gradio['neutralize_samplers'] = gr.Button('Обнулить сэмплеры', elem_classes='refresh-button', interactive=True)
 
                 with gr.Column():
-                    shared.gradio['filter_by_loader'] = gr.Dropdown(label="Filter by loader", choices=["All"] + list(loaders.loaders_and_params.keys()) if not shared.args.portable else ['llama.cpp'], value="All", elem_classes='slim-dropdown')
+                    shared.gradio['filter_by_loader'] = gr.Dropdown(label="Фильтр по загрузчику", choices=["Все"] + list(loaders.loaders_and_params.keys()) if not shared.args.portable else ['llama.cpp'], value="Все", elem_classes='slim-dropdown')
 
             with gr.Row():
                 with gr.Column():
                     with gr.Row():
                         with gr.Column():
-                            gr.Markdown('## Curve shape')
-                            shared.gradio['temperature'] = gr.Slider(0.01, 5, value=shared.settings['temperature'], step=0.01, label='temperature')
-                            shared.gradio['dynatemp_low'] = gr.Slider(0.01, 5, value=shared.settings['dynatemp_low'], step=0.01, label='dynatemp_low', visible=shared.settings['dynamic_temperature'])
-                            shared.gradio['dynatemp_high'] = gr.Slider(0.01, 5, value=shared.settings['dynatemp_high'], step=0.01, label='dynatemp_high', visible=shared.settings['dynamic_temperature'])
-                            shared.gradio['dynatemp_exponent'] = gr.Slider(0.01, 5, value=shared.settings['dynatemp_exponent'], step=0.01, label='dynatemp_exponent', visible=shared.settings['dynamic_temperature'])
-                            shared.gradio['smoothing_factor'] = gr.Slider(0.0, 10.0, value=shared.settings['smoothing_factor'], step=0.01, label='smoothing_factor', info='Activates Quadratic Sampling.')
-                            shared.gradio['smoothing_curve'] = gr.Slider(1.0, 10.0, value=shared.settings['smoothing_curve'], step=0.01, label='smoothing_curve', info='Adjusts the dropoff curve of Quadratic Sampling.')
-                            shared.gradio['dynamic_temperature'] = gr.Checkbox(value=shared.settings['dynamic_temperature'], label='dynamic_temperature')
+                            gr.Markdown('## Форма кривой')
+                            shared.gradio['temperature'] = gr.Slider(0.01, 5, value=shared.settings['temperature'], step=0.01, label='температура')
+                            shared.gradio['dynatemp_low'] = gr.Slider(0.01, 5, value=shared.settings['dynatemp_low'], step=0.01, label='нижняя_динам_темп', visible=shared.settings['dynamic_temperature'])
+                            shared.gradio['dynatemp_high'] = gr.Slider(0.01, 5, value=shared.settings['dynatemp_high'], step=0.01, label='верхняя_динам_темп', visible=shared.settings['dynamic_temperature'])
+                            shared.gradio['dynatemp_exponent'] = gr.Slider(0.01, 5, value=shared.settings['dynatemp_exponent'], step=0.01, label='экспонента_динам_темп', visible=shared.settings['dynamic_temperature'])
+                            shared.gradio['smoothing_factor'] = gr.Slider(0.0, 10.0, value=shared.settings['smoothing_factor'], step=0.01, label='коэффициент_сглаживания', info='Активирует квадратичную выборку.')
+                            shared.gradio['smoothing_curve'] = gr.Slider(1.0, 10.0, value=shared.settings['smoothing_curve'], step=0.01, label='кривая_сглаживания', info='Настраивает кривую спада квадратичной выборки.')
+                            shared.gradio['dynamic_temperature'] = gr.Checkbox(value=shared.settings['dynamic_temperature'], label='динамическая_температура')
 
-                            gr.Markdown('## Curve cutoff')
+                            gr.Markdown('## Обрезка кривой')
                             shared.gradio['min_p'] = gr.Slider(0.0, 1.0, value=shared.settings['min_p'], step=0.01, label='min_p')
                             shared.gradio['top_n_sigma'] = gr.Slider(0.0, 5.0, value=shared.settings['top_n_sigma'], step=0.01, label='top_n_sigma')
                             shared.gradio['top_p'] = gr.Slider(0.0, 1.0, value=shared.settings['top_p'], step=0.01, label='top_p')

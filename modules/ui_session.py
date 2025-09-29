@@ -6,25 +6,25 @@ from modules.utils import gradio
 
 def create_ui():
     mu = shared.args.multi_user
-    with gr.Tab("Session", elem_id="session-tab"):
+    with gr.Tab("Сессия", elem_id="session-tab"):
         with gr.Row():
             with gr.Column():
-                gr.Markdown("## Settings")
-                shared.gradio['toggle_dark_mode'] = gr.Button('Toggle light/dark theme 💡', elem_classes='refresh-button')
-                shared.gradio['show_two_notebook_columns'] = gr.Checkbox(label='Show two columns in the Notebook tab', value=shared.settings['show_two_notebook_columns'])
-                shared.gradio['paste_to_attachment'] = gr.Checkbox(label='Turn long pasted text into attachments in the Chat tab', value=shared.settings['paste_to_attachment'], elem_id='paste_to_attachment')
-                shared.gradio['include_past_attachments'] = gr.Checkbox(label='Include attachments/search results from previous messages in the chat prompt', value=shared.settings['include_past_attachments'])
+                gr.Markdown("## Настройки")
+                shared.gradio['toggle_dark_mode'] = gr.Button('Переключить светлую/тёмную тему 💡', elem_classes='refresh-button')
+                shared.gradio['show_two_notebook_columns'] = gr.Checkbox(label='Показать два столбца в вкладке Блокнот', value=shared.settings['show_two_notebook_columns'])
+                shared.gradio['paste_to_attachment'] = gr.Checkbox(label='Превращать длинные вставленные тексты в вложения в вкладке Чат', value=shared.settings['paste_to_attachment'], elem_id='paste_to_attachment')
+                shared.gradio['include_past_attachments'] = gr.Checkbox(label='Включать вложения/результаты поиска из предыдущих сообщений в промпт чата', value=shared.settings['include_past_attachments'])
 
             with gr.Column():
-                gr.Markdown("## Extensions & flags")
-                shared.gradio['save_settings'] = gr.Button('Save extensions settings to user_data/settings.yaml', elem_classes='refresh-button', interactive=not mu)
-                shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions and restart", interactive=not mu)
+                gr.Markdown("## Расширения и флаги")
+                shared.gradio['save_settings'] = gr.Button('Сохранить настройки расширений в user_data/settings.yaml', elem_classes='refresh-button', interactive=not mu)
+                shared.gradio['reset_interface'] = gr.Button("Применить флаги/расширения и перезапустить", interactive=not mu)
                 with gr.Row():
                     with gr.Column():
-                        shared.gradio['extensions_menu'] = gr.CheckboxGroup(choices=utils.get_available_extensions(), value=shared.args.extensions, label="Available extensions", info='Note that some of these extensions may require manually installing Python requirements through the command: pip install -r extensions/extension_name/requirements.txt', elem_classes='checkboxgroup-table')
+                        shared.gradio['extensions_menu'] = gr.CheckboxGroup(choices=utils.get_available_extensions(), value=shared.args.extensions, label="Доступные расширения", info='Обратите внимание, что некоторые из этих расширений могут потребовать ручной установки зависимостей Python: pip install -r extensions/extension_name/requirements.txt', elem_classes='checkboxgroup-table')
 
                     with gr.Column():
-                        shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=get_boolean_arguments(), value=get_boolean_arguments(active=True), label="Boolean command-line flags", elem_classes='checkboxgroup-table')
+                        shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=get_boolean_arguments(), value=get_boolean_arguments(active=True), label="Логические флаги командной строки", elem_classes='checkboxgroup-table')
 
         shared.gradio['theme_state'] = gr.Textbox(visible=False, value='dark' if shared.settings['dark_theme'] else 'light')
         if not mu:

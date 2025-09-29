@@ -26,27 +26,27 @@ from modules.utils import gradio
 def create_ui():
     mu = shared.args.multi_user
 
-    with gr.Tab("Model", elem_id="model-tab"):
+    with gr.Tab("Модель", elem_id="model-tab"):
         with gr.Row():
             with gr.Column():
                 with gr.Row():
-                    shared.gradio['model_menu'] = gr.Dropdown(choices=utils.get_available_models(), value=lambda: shared.model_name, label='Model', elem_classes='slim-dropdown', interactive=not mu)
+                    shared.gradio['model_menu'] = gr.Dropdown(choices=utils.get_available_models(), value=lambda: shared.model_name, label='Модель', elem_classes='slim-dropdown', interactive=not mu)
                     ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': utils.get_available_models()}, 'refresh-button', interactive=not mu)
-                    shared.gradio['load_model'] = gr.Button("Load", elem_classes='refresh-button', interactive=not mu)
-                    shared.gradio['unload_model'] = gr.Button("Unload", elem_classes='refresh-button', interactive=not mu)
-                    shared.gradio['save_model_settings'] = gr.Button("Save settings", elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['load_model'] = gr.Button("Загрузить", elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['unload_model'] = gr.Button("Выгрузить", elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['save_model_settings'] = gr.Button("Сохранить настройки", elem_classes='refresh-button', interactive=not mu)
 
-                shared.gradio['loader'] = gr.Dropdown(label="Model loader", choices=loaders.loaders_and_params.keys() if not shared.args.portable else ['llama.cpp'], value=None)
+                shared.gradio['loader'] = gr.Dropdown(label="Загрузчик модели", choices=loaders.loaders_and_params.keys() if not shared.args.portable else ['llama.cpp'], value=None)
                 with gr.Blocks():
-                    gr.Markdown("## Main options")
+                    gr.Markdown("## Основные параметры")
                     with gr.Row():
                         with gr.Column():
-                            shared.gradio['gpu_layers'] = gr.Slider(label="gpu-layers", minimum=0, maximum=get_initial_gpu_layers_max(), step=1, value=shared.args.gpu_layers, info='Must be greater than 0 for the GPU to be used. ⚠️ Lower this value if you can\'t load the model.')
-                            shared.gradio['ctx_size'] = gr.Slider(label='ctx-size', minimum=256, maximum=131072, step=256, value=shared.args.ctx_size, info='Context length. Common values: 4096, 8192, 16384, 32768, 65536, 131072.')
-                            shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info='Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7')
-                            shared.gradio['attn_implementation'] = gr.Dropdown(label="attn-implementation", choices=['sdpa', 'eager', 'flash_attention_2'], value=shared.args.attn_implementation, info='Attention implementation.')
-                            shared.gradio['cache_type'] = gr.Dropdown(label="cache-type", choices=['fp16', 'q8_0', 'q4_0', 'fp8', 'q8', 'q7', 'q6', 'q5', 'q4', 'q3', 'q2'], value=shared.args.cache_type, allow_custom_value=True, info='Valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8. For ExLlamaV3, you can type custom combinations for separate k/v bits (e.g. q4_q8).')
-                            shared.gradio['tp_backend'] = gr.Dropdown(label="tp-backend", choices=['native', 'nccl'], value=shared.args.tp_backend, info='The backend for tensor parallelism.')
+                            shared.gradio['gpu_layers'] = gr.Slider(label="слои-на-gpu", minimum=0, maximum=get_initial_gpu_layers_max(), step=1, value=shared.args.gpu_layers, info='Должно быть больше 0 для использования GPU. ⚠️ Уменьшите это значение, если не можете загрузить модель.')
+                            shared.gradio['ctx_size'] = gr.Slider(label='размер-контекста', minimum=256, maximum=131072, step=256, value=shared.args.ctx_size, info='Длина контекста. Обычные значения: 4096, 8192, 16384, 32768, 65536, 131072.')
+                            shared.gradio['gpu_split'] = gr.Textbox(label='разделение-gpu', info='Команды, разделенные запятыми, количества VRAM (в ГБ) для каждого GPU. Пример: 20,7,7')
+                            shared.gradio['attn_implementation'] = gr.Dropdown(label="реализация-внимания", choices=['sdpa', 'eager', 'flash_attention_2'], value=shared.args.attn_implementation, info='Реализация механизма внимания.')
+                            shared.gradio['cache_type'] = gr.Dropdown(label="тип-кэша", choices=['fp16', 'q8_0', 'q4_0', 'fp8', 'q8', 'q7', 'q6', 'q5', 'q4', 'q3', 'q2'], value=shared.args.cache_type, allow_custom_value=True, info='Доступные варианты: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8. Для ExLlamaV3 можно вводить пользовательские комбинации (например, q4_q8).')
+                            shared.gradio['tp_backend'] = gr.Dropdown(label="tp-бэкенд", choices=['native', 'nccl'], value=shared.args.tp_backend, info='Бэкенд для тензорного параллелизма.')
 
                         with gr.Column():
                             shared.gradio['vram_info'] = gr.HTML(value=get_initial_vram_info())

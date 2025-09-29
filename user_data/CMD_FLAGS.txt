@@ -1,8 +1,10 @@
 # Add persistent flags here to use every time you launch the web UI.
-# Example:
-# --listen --api
+# Рабочая конфигурация с оптимальными настройками
+# Сохранено: 29 сентября 2025 г.
 
---api
---auto-launch
 --model Qwen2.5-14B-Instruct-Uncensored.i1-Q5_K_S.gguf
+--loader llama.cpp
+--auto-launch
+--share
+--api
 --verbose
