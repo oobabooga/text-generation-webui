@@ -2,7 +2,15 @@
 /extensions
 /installer_files
 /repositories
-/user_data
+
+# Include user_data but exclude large model files
+/user_data/models/*.gguf
+/user_data/models/*.bin
+/user_data/models/*.safetensors
+/user_data/models/*/pytorch_model.bin
+/user_data/models/*/model-*.safetensors
+/user_data/logs/*.log
+/user_data/cache/
 
 .chroma
 .DS_Store

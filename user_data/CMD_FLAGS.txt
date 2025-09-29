@@ -1,3 +1,8 @@
 # Add persistent flags here to use every time you launch the web UI.
 # Example:
 # --listen --api
+
+--api
+--auto-launch
+--model Qwen2.5-14B-Instruct-Uncensored.i1-Q5_K_S.gguf
+--verbose
