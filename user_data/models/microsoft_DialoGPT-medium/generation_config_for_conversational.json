@@ -1,0 +1,7 @@
+{
+  "_from_model_config": true,
+  "bos_token_id": 50256,
+  "eos_token_id": 50256,
+  "max_length": 1000,
+  "transformers_version": "4.27.0.dev0"
+}

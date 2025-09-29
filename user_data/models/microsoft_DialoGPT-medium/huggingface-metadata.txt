@@ -1,0 +1,5 @@
+url: https://huggingface.co/microsoft/DialoGPT-medium
+branch: main
+download date: 2025-09-29 10:20:59
+sha256sum:
+    d2214b95438592f420ef4df037d9c72ddf993fb6877479fb09320b757f96cfa7 pytorch_model.bin
