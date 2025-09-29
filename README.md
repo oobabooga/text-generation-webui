@@ -4,7 +4,7 @@ Updated Dockerfile and docker-compose.yml files for Nvidia, optimized to run wit
 
 Inside the 'docker' folder there is an 'nvidia' folder which contains the files as they are needed to build and run the container using:
 
-sudo podman compose up -d
+```sudo podman compose up -d```
 
 You will need podman-compose installed and the nvidia-container-toolkit installed with the proper Selinux permissions, I personally use this Fedora Copr repo which installs the nvidia-container-toolkit with the Selinux configuration out of the box.
 
