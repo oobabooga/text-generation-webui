@@ -1194,7 +1194,7 @@ def find_all_histories_with_first_prompts(state):
         if re.match(r'^[0-9]{8}-[0-9]{2}-[0-9]{2}-[0-9]{2}$', filename):
             first_prompt = ""
             if data and 'visible' in data and len(data['visible']) > 0:
-                if data['internal'][0][0] == '<|BEGIN-VISIBLE-CHAT|>':
+                if len(data['internal']) > 1 and data['internal'][0][0] == '<|BEGIN-VISIBLE-CHAT|>':
                     if len(data['visible']) > 1:
                         first_prompt = html.unescape(data['visible'][1][0])
                     elif i == 0:
