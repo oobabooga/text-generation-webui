@@ -1,15 +1,15 @@
 # BUILDER
-FROM ubuntu:22.04
+FROM fedora:latest
 WORKDIR /builder
 ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST:-3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX}"
 ARG BUILD_EXTENSIONS="${BUILD_EXTENSIONS:-}"
-ARG APP_UID="${APP_UID:-6972}"
-ARG APP_GID="${APP_GID:-6972}"
+ARG APP_UID="${APP_UID:-1000}"
+ARG APP_GID="${APP_GID:-1000}"
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw \
-    apt update && \
-    apt install --no-install-recommends -y git vim build-essential python3-dev pip bash curl && \
-    rm -rf /var/lib/apt/lists/*
+    dnf -y update && \
+    dnf -y install git vim python3-devel make automake gcc gcc-c++ kernel-devel pip && \
+    dnf clean all
 WORKDIR /home/app/
 RUN git clone https://github.com/oobabooga/text-generation-webui.git 
 WORKDIR /home/app/text-generation-webui
