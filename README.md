@@ -1,3 +1,16 @@
+<div align="center" markdown="1">
+   <sup>Special thanks to:</sup>
+   <br>
+   <br>
+   <a href="https://go.warp.dev/text-generation-webui">
+      <img alt="Warp sponsorship" width="400" src="https://raw.githubusercontent.com/warpdotdev/brand-assets/refs/heads/main/Github/Sponsor/Warp-Github-LG-02.png">
+   </a>
+
+### [Warp, built for coding with multiple AI agents](https://go.warp.dev/text-generation-webui)
+[Available for macOS, Linux, & Windows](https://go.warp.dev/text-generation-webui)<br>
+</div>
+<hr>
+
 # Text Generation Web UI
 
 A Gradio web UI for Large Language Models.
