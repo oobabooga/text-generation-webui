@@ -255,6 +255,11 @@ class ModelDownloader:
                         mode = 'ab'
 
                     with session.get(url, stream=True, headers=headers, timeout=30) as r:
+                        # Assume error 416 (range unsatisfiable) means the download is complete.
+                        # Small size differences can happen in Git LFS
+                        if mode == 'ab' and r.status_code == 416:
+                            break
+
                         r.raise_for_status()
                         total_size_from_stream = int(r.headers.get('content-length', 0))
                         if mode == 'ab':
