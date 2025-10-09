@@ -104,8 +104,7 @@ def ExLlamav3_HF_loader(model_name):
 def ExLlamav3_loader(model_name):
     from modules.exllamav3 import Exllamav3Model
 
-    model = Exllamav3Model.from_pretrained(model_name)
-    tokenizer = model.tokenizer
+    model, tokenizer = Exllamav3Model.from_pretrained(model_name)
     return model, tokenizer
 
 
