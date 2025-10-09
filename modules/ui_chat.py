@@ -152,14 +152,14 @@ def create_character_settings_ui():
                     with gr.Tab('YAML or JSON'):
                         with gr.Row():
                             shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json', '.yaml'], label='JSON or YAML File', interactive=not mu)
-                            shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='Profile Picture (optional)', interactive=not mu)
+                            shared.gradio['upload_img_bot'] = gr.Image(type='filepath', label='Profile Picture (optional)', interactive=not mu)
 
                         shared.gradio['Submit character'] = gr.Button(value='Submit', interactive=False)
 
                     with gr.Tab('TavernAI PNG'):
                         with gr.Row():
                             with gr.Column():
-                                shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG File', elem_id='upload_img_tavern', interactive=not mu)
+                                shared.gradio['upload_img_tavern'] = gr.Image(type='filepath', label='TavernAI PNG File', elem_id='upload_img_tavern', interactive=not mu)
                                 shared.gradio['tavern_json'] = gr.State()
                             with gr.Column():
                                 shared.gradio['tavern_name'] = gr.Textbox(value='', lines=1, label='Name', interactive=False)
@@ -168,8 +168,8 @@ def create_character_settings_ui():
                         shared.gradio['Submit tavern character'] = gr.Button(value='Submit', interactive=False)
 
             with gr.Column(scale=1):
-                shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil', interactive=not mu)
-                shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('user_data/cache/pfp_me.png')) if Path('user_data/cache/pfp_me.png').exists() else None, interactive=not mu)
+                shared.gradio['character_picture'] = gr.Image(label='Character picture', type='filepath', interactive=not mu)
+                shared.gradio['your_picture'] = gr.Image(label='Your picture', type='filepath', value=Image.open(Path('user_data/cache/pfp_me.png')) if Path('user_data/cache/pfp_me.png').exists() else None, interactive=not mu)
 
 
 def create_chat_settings_ui():
