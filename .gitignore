@@ -15,6 +15,7 @@
 /user_data/logs/*.log
 /user_data/logs/
 /user_data/cache/
+/user_data/agent_learning/
 
 # Временные и системные файлы
 .chroma
