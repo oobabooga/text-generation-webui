@@ -281,7 +281,6 @@ def truncate_content_by_tokens(content, max_tokens=8192):
 
 def add_web_search_attachments(history, row_idx, user_message, search_query, state):
     """Perform web search and add results as attachments"""
-    logger.debug(f"add_web_search_attachments")
     if not search_query:
         logger.warning("No search query provided")
         return
