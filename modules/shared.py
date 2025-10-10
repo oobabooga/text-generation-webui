@@ -50,6 +50,35 @@ group.add_argument('--idle-timeout', type=int, default=0, help='Unload model aft
 group = parser.add_argument_group('Model loader')
 group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav2_HF, ExLlamav2, TensorRT-LLM.')
 
+# Cache
+group = parser.add_argument_group('Context and cache')
+group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=8192, metavar='N', help='Context size in tokens.')
+group.add_argument('--cache-type', '--cache_type', type=str, default='fp16', metavar='N', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).')
+
+# Speculative decoding
+group = parser.add_argument_group('Speculative decoding')
+group.add_argument('--model-draft', type=str, default=None, help='Path to the draft model for speculative decoding.')
+group.add_argument('--draft-max', type=int, default=4, help='Number of tokens to draft for speculative decoding.')
+group.add_argument('--gpu-layers-draft', type=int, default=256, help='Number of layers to offload to the GPU for the draft model.')
+group.add_argument('--device-draft', type=str, default=None, help='Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1')
+group.add_argument('--ctx-size-draft', type=int, default=0, help='Size of the prompt context for the draft model. If 0, uses the same as the main model.')
+
+# llama.cpp
+group = parser.add_argument_group('llama.cpp')
+group.add_argument('--gpu-layers', '--n-gpu-layers', type=int, default=256, metavar='N', help='Number of layers to offload to the GPU.')
+group.add_argument('--mmproj', type=str, default=None, help='Path to the mmproj file for vision models.')
+group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
+group.add_argument('--tensor-split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.')
+group.add_argument('--row-split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
+group.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
+group.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
+group.add_argument('--no-kv-offload', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
+group.add_argument('--batch-size', type=int, default=256, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
+group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
+group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
+group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
+group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"')
+
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
 group.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
@@ -70,35 +99,6 @@ group.add_argument('--load-in-4bit', action='store_true', help='Load the model w
 group.add_argument('--use_double_quant', action='store_true', help='use_double_quant for 4-bit.')
 group.add_argument('--compute_dtype', type=str, default='float16', help='compute dtype for 4-bit. Valid options: bfloat16, float16, float32.')
 group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for 4-bit. Valid options: nf4, fp4.')
-
-# llama.cpp
-group = parser.add_argument_group('llama.cpp')
-group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
-group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
-group.add_argument('--batch-size', type=int, default=256, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
-group.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
-group.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
-group.add_argument('--gpu-layers', '--n-gpu-layers', type=int, default=256, metavar='N', help='Number of layers to offload to the GPU.')
-group.add_argument('--tensor-split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.')
-group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
-group.add_argument('--no-kv-offload', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
-group.add_argument('--row-split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
-group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"')
-group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
-group.add_argument('--mmproj', type=str, default=None, help='Path to the mmproj file for vision models.')
-
-# Cache
-group = parser.add_argument_group('Context and cache')
-group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=8192, metavar='N', help='Context size in tokens.')
-group.add_argument('--cache-type', '--cache_type', type=str, default='fp16', metavar='N', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).')
-
-# Speculative decoding
-group = parser.add_argument_group('Speculative decoding')
-group.add_argument('--model-draft', type=str, default=None, help='Path to the draft model for speculative decoding.')
-group.add_argument('--draft-max', type=int, default=4, help='Number of tokens to draft for speculative decoding.')
-group.add_argument('--gpu-layers-draft', type=int, default=256, help='Number of layers to offload to the GPU for the draft model.')
-group.add_argument('--device-draft', type=str, default=None, help='Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1')
-group.add_argument('--ctx-size-draft', type=int, default=0, help='Size of the prompt context for the draft model. If 0, uses the same as the main model.')
 
 # ExLlamaV3
 group = parser.add_argument_group('ExLlamaV3')
