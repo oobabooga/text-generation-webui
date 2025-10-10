@@ -23,7 +23,7 @@ def download_web_page(url, timeout=10):
     Download a web page and convert its HTML content to Markdown text,
     handling Brotli/gzip and non-HTML content robustly.
     """
-    logger.info(f"download_web_page {url}")
+    logger.info(f"Downloading {url}")
 
     # --- soft deps
     try:
@@ -281,14 +281,12 @@ def truncate_content_by_tokens(content, max_tokens=8192):
 
 def add_web_search_attachments(history, row_idx, user_message, search_query, state):
     """Perform web search and add results as attachments"""
-    logger.info(f"add_web_search_attachments")
+    logger.debug(f"add_web_search_attachments")
     if not search_query:
         logger.warning("No search query provided")
         return
 
     try:
-        logger.info(f"Add Web Search - Using search query: {search_query}")
-
         # Perform web search
         num_pages = int(state.get('web_search_pages', 3))
         search_results = perform_web_search(search_query, num_pages)
@@ -298,7 +296,6 @@ def add_web_search_attachments(history, row_idx, user_message, search_query, sta
             return
 
         # Filter out failed downloads before adding attachments
-        #  logger.info(f"search_results {search_results}")
         successful_results = [result for result in search_results if result['content'].strip()]
 
         if not successful_results:
