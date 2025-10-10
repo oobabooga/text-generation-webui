@@ -23,7 +23,7 @@ safetensors==0.6.*
 scipy
 sentencepiece
 tensorboard
-transformers==4.56.*
+transformers==4.57.*
 triton-windows==3.2.0.post19; platform_system == "Windows"
 tqdm
 wandb
@@ -34,7 +34,7 @@ sse-starlette==1.6.5
 tiktoken
 
 # AMD wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.46.0/llama_cpp_binaries-0.46.0+vulkanavx-py3-none-win_amd64.whl; platform_system == "Windows"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.46.0/llama_cpp_binaries-0.46.0+vulkanavx-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.49.0/llama_cpp_binaries-0.49.0+vulkanavx-py3-none-win_amd64.whl; platform_system == "Windows"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.49.0/llama_cpp_binaries-0.49.0+vulkanavx-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 https://github.com/turboderp-org/exllamav2/releases/download/v0.3.2/exllamav2-0.3.2+rocm6.2.4.torch2.6.0-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
 https://github.com/turboderp-org/exllamav2/releases/download/v0.3.2/exllamav2-0.3.2-py3-none-any.whl; platform_system != "Darwin" and platform_machine != "x86_64"

@@ -3,8 +3,10 @@ import copy
 import functools
 import html
 import json
+import os
 import pprint
 import re
+import shutil
 import time
 from datetime import datetime
 from functools import partial
@@ -1194,7 +1196,7 @@ def find_all_histories_with_first_prompts(state):
         if re.match(r'^[0-9]{8}-[0-9]{2}-[0-9]{2}-[0-9]{2}$', filename):
             first_prompt = ""
             if data and 'visible' in data and len(data['visible']) > 0:
-                if data['internal'][0][0] == '<|BEGIN-VISIBLE-CHAT|>':
+                if len(data['internal']) > 0 and data['internal'][0][0] == '<|BEGIN-VISIBLE-CHAT|>':
                     if len(data['visible']) > 1:
                         first_prompt = html.unescape(data['visible'][1][0])
                     elif i == 0:
@@ -1385,12 +1387,17 @@ def generate_pfp_cache(character):
     for path in [Path(f"user_data/characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
         if path.exists():
             original_img = Image.open(path)
-            original_img.save(Path(f'{cache_folder}/pfp_character.png'), format='PNG')
+            # Define file paths
+            pfp_path = Path(f'{cache_folder}/pfp_character.png')
+            thumb_path = Path(f'{cache_folder}/pfp_character_thumb.png')
 
+            # Save main picture and thumbnail
+            original_img.save(pfp_path, format='PNG')
             thumb = make_thumbnail(original_img)
-            thumb.save(Path(f'{cache_folder}/pfp_character_thumb.png'), format='PNG')
+            thumb.save(thumb_path, format='PNG')
 
-            return thumb
+            # Return the path to the thumbnail, not the in-memory PIL Image object.
+            return str(thumb_path)
 
     return None
 
@@ -1507,7 +1514,22 @@ def load_instruction_template_memoized(template):
     return load_instruction_template(template)
 
 
-def upload_character(file, img, tavern=False):
+def open_image_safely(path):
+    if path is None or not isinstance(path, str) or not Path(path).exists():
+        return None
+
+    if os.path.islink(path):
+        return None
+
+    try:
+        return Image.open(path)
+    except Exception as e:
+        logger.error(f"Failed to open image file: {path}. Reason: {e}")
+        return None
+
+
+def upload_character(file, img_path, tavern=False):
+    img = open_image_safely(img_path)
     decoded_file = file if isinstance(file, str) else file.decode('utf-8')
     try:
         data = json.loads(decoded_file)
@@ -1554,12 +1576,17 @@ def build_pygmalion_style_context(data):
     return context
 
 
-def upload_tavern_character(img, _json):
+def upload_tavern_character(img_path, _json):
     _json = {'char_name': _json['name'], 'char_persona': _json['description'], 'char_greeting': _json['first_mes'], 'example_dialogue': _json['mes_example'], 'world_scenario': _json['scenario']}
-    return upload_character(json.dumps(_json), img, tavern=True)
+    return upload_character(json.dumps(_json), img_path, tavern=True)
 
 
-def check_tavern_character(img):
+def check_tavern_character(img_path):
+    img = open_image_safely(img_path)
+
+    if img is None:
+        return "Invalid or disallowed image file.", None, None, gr.update(interactive=False)
+
     if "chara" not in img.info:
         return "Not a TavernAI card", None, None, gr.update(interactive=False)
 
@@ -1571,7 +1598,8 @@ def check_tavern_character(img):
     return _json['name'], _json['description'], _json, gr.update(interactive=True)
 
 
-def upload_your_profile_picture(img):
+def upload_your_profile_picture(img_path):
+    img = open_image_safely(img_path)
     cache_folder = Path(shared.args.disk_cache_dir)
     if not cache_folder.exists():
         cache_folder.mkdir()
@@ -1614,15 +1642,19 @@ def save_character(name, greeting, context, picture, filename):
     save_file(filepath, data)
     path_to_img = Path(f'user_data/characters/{filename}.png')
     if picture is not None:
-        picture.save(path_to_img)
+        # Copy the image file from its source path to the character folder
+        shutil.copy(picture, path_to_img)
         logger.info(f'Saved {path_to_img}.')
 
 
 def delete_character(name, instruct=False):
+    # Check for character data files
     for extension in ["yml", "yaml", "json"]:
         delete_file(Path(f'user_data/characters/{name}.{extension}'))
 
-    delete_file(Path(f'user_data/characters/{name}.png'))
+    # Check for character image files
+    for extension in ["png", "jpg", "jpeg"]:
+        delete_file(Path(f'user_data/characters/{name}.{extension}'))
 
 
 def jinja_template_from_old_format(params, verbose=False):
@@ -1974,8 +2006,9 @@ def handle_character_menu_change(state):
     ]
 
 
-def handle_character_picture_change(picture):
+def handle_character_picture_change(picture_path):
     """Update or clear cache when character picture changes"""
+    picture = open_image_safely(picture_path)
     cache_folder = Path(shared.args.disk_cache_dir)
     if not cache_folder.exists():
         cache_folder.mkdir()

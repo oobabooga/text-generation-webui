@@ -23,7 +23,7 @@ safetensors==0.6.*
 scipy
 sentencepiece
 tensorboard
-transformers==4.56.*
+transformers==4.57.*
 triton-windows==3.2.0.post19; platform_system == "Windows"
 tqdm
 wandb
@@ -34,7 +34,5 @@ sse-starlette==1.6.5
 tiktoken
 
 # Mac wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.46.0/llama_cpp_binaries-0.46.0-py3-none-macosx_15_0_x86_64.whl; platform_system == "Darwin" and platform_release >= "24.0.0" and platform_release < "25.0.0" and python_version == "3.11"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.46.0/llama_cpp_binaries-0.46.0-py3-none-macosx_14_0_x86_64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0" and python_version == "3.11"
-https://github.com/oobabooga/exllamav3/releases/download/v0.0.6/exllamav3-0.0.6-py3-none-any.whl
-https://github.com/turboderp-org/exllamav2/releases/download/v0.3.2/exllamav2-0.3.2-py3-none-any.whl
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.49.0/llama_cpp_binaries-0.49.0-py3-none-macosx_15_0_x86_64.whl; platform_system == "Darwin" and platform_release >= "24.0.0" and platform_release < "25.0.0" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.49.0/llama_cpp_binaries-0.49.0-py3-none-macosx_14_0_x86_64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0" and python_version == "3.11"
