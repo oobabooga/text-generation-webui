@@ -1831,6 +1831,10 @@ def handle_branch_chat_click(state):
         history = state['history']
         history['visible'] = history['visible'][:branch_from_index + 1]
         history['internal'] = history['internal'][:branch_from_index + 1]
+        # Prune the metadata dictionary to remove entries beyond the branch point
+        if 'metadata' in history:
+            history['metadata'] = {k: v for k, v in history['metadata'].items() if int(k.split('_')[-1]) <= branch_from_index}
+
     new_unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
     save_history(history, new_unique_id, state['character_menu'], state['mode'])
 
