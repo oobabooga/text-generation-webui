@@ -880,7 +880,9 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
         # Extract the reply
         if state['mode'] in ['chat', 'chat-instruct']:
-            reply = reply.lstrip()
+            if not _continue:
+                reply = reply.lstrip()
+
             if reply.startswith(state['name2'] + ':'):
                 reply = reply[len(state['name2'] + ':'):]
             elif reply.startswith(state['name1'] + ':'):
