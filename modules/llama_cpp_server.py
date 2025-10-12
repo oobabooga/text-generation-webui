@@ -200,7 +200,10 @@ class LlamaServer:
         # Make the generation request
         response = self.session.post(url, json=payload, stream=True)
         try:
-            response.raise_for_status()  # Raise an exception for HTTP errors
+            if response.status_code == 400 and response.json()["error"]["type"] == "exceed_context_size_error":
+                logger.error("The request exceeds the available context size, try increasing it")
+            else:
+                response.raise_for_status()  # Raise an exception for HTTP errors
 
             full_text = ""
 
