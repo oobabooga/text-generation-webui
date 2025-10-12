@@ -164,7 +164,7 @@ conda install -y -c "nvidia/label/cuda-12.8.1" cuda
 ```
 git clone https://github.com/oobabooga/text-generation-webui
 cd text-generation-webui
-pip install -r <requirements file according to table below>
+pip install -r requirements/full/<requirements file according to table below>
 ```
 
 Requirements file to use:
