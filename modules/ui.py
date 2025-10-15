@@ -160,7 +160,6 @@ def list_model_elements():
         'no_sdpa',
         'cfg_cache',
         'cpp_runner',
-        'trust_remote_code',
         'no_use_fast',
         'model_draft',
         'draft_max',

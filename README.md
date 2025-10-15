@@ -164,7 +164,7 @@ conda install -y -c "nvidia/label/cuda-12.8.1" cuda
 ```
 git clone https://github.com/oobabooga/text-generation-webui
 cd text-generation-webui
-pip install -r <requirements file according to table below>
+pip install -r requirements/full/<requirements file according to table below>
 ```
 
 Requirements file to use:
@@ -240,16 +240,16 @@ List of command-line flags
 
 ```txt
 usage: server.py [-h] [--multi-user] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--model-menu] [--settings SETTINGS]
-                 [--extensions EXTENSIONS [EXTENSIONS ...]] [--verbose] [--idle-timeout IDLE_TIMEOUT] [--loader LOADER] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR]
-                 [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION] [--load-in-4bit] [--use_double_quant]
-                 [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE] [--flash-attn] [--threads THREADS] [--threads-batch THREADS_BATCH] [--batch-size BATCH_SIZE] [--no-mmap] [--mlock]
-                 [--gpu-layers N] [--tensor-split TENSOR_SPLIT] [--numa] [--no-kv-offload] [--row-split] [--extra-flags EXTRA_FLAGS] [--streaming-llm] [--mmproj MMPROJ] [--ctx-size N] [--cache-type N]
-                 [--model-draft MODEL_DRAFT] [--draft-max DRAFT_MAX] [--gpu-layers-draft GPU_LAYERS_DRAFT] [--device-draft DEVICE_DRAFT] [--ctx-size-draft CTX_SIZE_DRAFT] [--enable-tp]
-                 [--tp-backend TP_BACKEND] [--gpu-split GPU_SPLIT] [--autosplit] [--cfg-cache] [--no_flash_attn] [--no_xformers] [--no_sdpa] [--num_experts_per_token N] [--cpp-runner] [--deepspeed]
-                 [--nvme-offload-dir NVME_OFFLOAD_DIR] [--local_rank LOCAL_RANK] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE] [--compress_pos_emb COMPRESS_POS_EMB] [--listen]
-                 [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE]
-                 [--ssl-certfile SSL_CERTFILE] [--subpath SUBPATH] [--old-colors] [--portable] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY]
-                 [--admin-key ADMIN_KEY] [--api-enable-ipv6] [--api-disable-ipv4] [--nowebui]
+                 [--extensions EXTENSIONS [EXTENSIONS ...]] [--verbose] [--idle-timeout IDLE_TIMEOUT] [--loader LOADER] [--ctx-size N] [--cache-type N] [--model-draft MODEL_DRAFT]
+                 [--draft-max DRAFT_MAX] [--gpu-layers-draft GPU_LAYERS_DRAFT] [--device-draft DEVICE_DRAFT] [--ctx-size-draft CTX_SIZE_DRAFT] [--gpu-layers N] [--mmproj MMPROJ] [--streaming-llm]
+                 [--tensor-split TENSOR_SPLIT] [--row-split] [--no-mmap] [--mlock] [--no-kv-offload] [--batch-size BATCH_SIZE] [--threads THREADS] [--threads-batch THREADS_BATCH] [--numa]
+                 [--extra-flags EXTRA_FLAGS] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code]
+                 [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE]
+                 [--enable-tp] [--tp-backend TP_BACKEND] [--gpu-split GPU_SPLIT] [--autosplit] [--cfg-cache] [--no_flash_attn] [--no_xformers] [--no_sdpa] [--num_experts_per_token N] [--cpp-runner]
+                 [--deepspeed] [--nvme-offload-dir NVME_OFFLOAD_DIR] [--local_rank LOCAL_RANK] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE] [--compress_pos_emb COMPRESS_POS_EMB]
+                 [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH]
+                 [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE] [--subpath SUBPATH] [--old-colors] [--portable] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT]
+                 [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6] [--api-disable-ipv4] [--nowebui]
 
 Text Generation Web UI
 
@@ -273,6 +273,33 @@ Model loader:
   --loader LOADER                           Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav2_HF, ExLlamav2,
                                             TensorRT-LLM.
 
+Context and cache:
+  --ctx-size N, --n_ctx N, --max_seq_len N  Context size in tokens.
+  --cache-type N, --cache_type N            KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits
+                                            separately, e.g. q4_q8).
+
+Speculative decoding:
+  --model-draft MODEL_DRAFT                 Path to the draft model for speculative decoding.
+  --draft-max DRAFT_MAX                     Number of tokens to draft for speculative decoding.
+  --gpu-layers-draft GPU_LAYERS_DRAFT       Number of layers to offload to the GPU for the draft model.
+  --device-draft DEVICE_DRAFT               Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1
+  --ctx-size-draft CTX_SIZE_DRAFT           Size of the prompt context for the draft model. If 0, uses the same as the main model.
+
+llama.cpp:
+  --gpu-layers N, --n-gpu-layers N          Number of layers to offload to the GPU.
+  --mmproj MMPROJ                           Path to the mmproj file for vision models.
+  --streaming-llm                           Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.
+  --tensor-split TENSOR_SPLIT               Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.
+  --row-split                               Split the model by rows across GPUs. This may improve multi-gpu performance.
+  --no-mmap                                 Prevent mmap from being used.
+  --mlock                                   Force the system to keep the model in RAM.
+  --no-kv-offload                           Do not offload the K, Q, V to the GPU. This saves VRAM but reduces the performance.
+  --batch-size BATCH_SIZE                   Maximum number of prompt tokens to batch together when calling llama_eval.
+  --threads THREADS                         Number of threads to use.
+  --threads-batch THREADS_BATCH             Number of threads to use for batches/prompt processing.
+  --numa                                    Activate NUMA task allocation for llama.cpp.
+  --extra-flags EXTRA_FLAGS                 Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"
+
 Transformers/Accelerate:
   --cpu                                     Use the CPU to generate text. Warning: Training on CPU is extremely slow.
   --cpu-memory CPU_MEMORY                   Maximum CPU memory in GiB. Use this for CPU offloading.
@@ -291,34 +318,6 @@ bitsandbytes 4-bit:
   --use_double_quant                        use_double_quant for 4-bit.
   --compute_dtype COMPUTE_DTYPE             compute dtype for 4-bit. Valid options: bfloat16, float16, float32.
   --quant_type QUANT_TYPE                   quant_type for 4-bit. Valid options: nf4, fp4.
-
-llama.cpp:
-  --flash-attn                              Use flash-attention.
-  --threads THREADS                         Number of threads to use.
-  --threads-batch THREADS_BATCH             Number of threads to use for batches/prompt processing.
-  --batch-size BATCH_SIZE                   Maximum number of prompt tokens to batch together when calling llama_eval.
-  --no-mmap                                 Prevent mmap from being used.
-  --mlock                                   Force the system to keep the model in RAM.
-  --gpu-layers N, --n-gpu-layers N          Number of layers to offload to the GPU.
-  --tensor-split TENSOR_SPLIT               Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.
-  --numa                                    Activate NUMA task allocation for llama.cpp.
-  --no-kv-offload                           Do not offload the K, Q, V to the GPU. This saves VRAM but reduces the performance.
-  --row-split                               Split the model by rows across GPUs. This may improve multi-gpu performance.
-  --extra-flags EXTRA_FLAGS                 Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"
-  --streaming-llm                           Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.
-  --mmproj MMPROJ                           Path to the mmproj file for vision models.
-
-Context and cache:
-  --ctx-size N, --n_ctx N, --max_seq_len N  Context size in tokens.
-  --cache-type N, --cache_type N            KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits
-                                            separately, e.g. q4_q8).
-
-Speculative decoding:
-  --model-draft MODEL_DRAFT                 Path to the draft model for speculative decoding.
-  --draft-max DRAFT_MAX                     Number of tokens to draft for speculative decoding.
-  --gpu-layers-draft GPU_LAYERS_DRAFT       Number of layers to offload to the GPU for the draft model.
-  --device-draft DEVICE_DRAFT               Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1
-  --ctx-size-draft CTX_SIZE_DRAFT           Size of the prompt context for the draft model. If 0, uses the same as the main model.
 
 ExLlamaV3:
   --enable-tp, --enable_tp                  Enable Tensor Parallelism (TP) to split the model across GPUs.

@@ -242,9 +242,19 @@ class ModelDownloader:
                 try:
                     if output_path.exists() and not start_from_scratch:
                         current_file_size_on_disk = output_path.stat().st_size
-                        r_head = session.head(url, timeout=20)
-                        r_head.raise_for_status()
-                        total_size = int(r_head.headers.get('content-length', 0))
+
+                        # Make a HEAD request without following redirects to get metadata first
+                        r_head = session.head(url, timeout=20, allow_redirects=True)
+                        r_head.raise_for_status()  # Will raise an error for 4xx or 5xx status codes
+
+                        # Check for the new 'x-linked-size' header from Hugging Face
+                        if 'x-linked-size' in r_head.headers:
+                            total_size = int(r_head.headers['x-linked-size'])
+                        # Fallback to the old 'content-length' just in case
+                        elif 'content-length' in r_head.headers:
+                            total_size = int(r_head.headers.get('content-length', 0))
+                        else:
+                            total_size = 0
 
                         if current_file_size_on_disk >= total_size and total_size > 0:
                             if self.progress_queue is not None and total_size > 0:

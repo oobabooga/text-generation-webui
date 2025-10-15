@@ -123,7 +123,7 @@ def load_tokenizer(model_name, tokenizer_dir=None):
 
         tokenizer = AutoTokenizer.from_pretrained(
             path_to_model,
-            trust_remote_code=shared.args.trust_remote_code,
+            trust_remote_code=shared.original_args.trust_remote_code,
             use_fast=not shared.args.no_use_fast
         )
 
@@ -140,13 +140,13 @@ def load_model_HF(model_name):
         'torch_dtype': torch.bfloat16 if shared.args.bf16 else torch.float16,
     }
 
-    if shared.args.trust_remote_code:
+    if shared.original_args.trust_remote_code:
         params['trust_remote_code'] = True
 
     if shared.args.force_safetensors:
         params['force_safetensors'] = True
 
-    config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
+    config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.original_args.trust_remote_code)
 
     if 'chatglm' in model_name.lower():
         LoaderClass = AutoModel
