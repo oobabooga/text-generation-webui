@@ -174,6 +174,7 @@ if cmd_flags_path.exists():
 
 
 args = parser.parse_args()
+original_args = copy.deepcopy(args)
 args_defaults = parser.parse_args([])
 
 # Create a mapping of all argument aliases to their canonical names
@@ -295,7 +296,13 @@ default_settings = copy.deepcopy(settings)
 def do_cmd_flags_warnings():
     # Security warnings
     if args.trust_remote_code:
-        logger.warning('trust_remote_code is enabled. This is dangerous.')
+        logger.warning(
+            "The `--trust-remote-code` flag is enabled.\n"
+            "This allows models to execute arbitrary code on your machine.\n\n"
+            "1. Only use with models from sources you fully trust.\n"
+            "2. Set an access password with `--gradio-auth`."
+        )
+
     if 'COLAB_GPU' not in os.environ and not args.nowebui:
         if args.share:
             logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
