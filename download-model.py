@@ -245,7 +245,7 @@ class ModelDownloader:
 
                         # Make a HEAD request without following redirects to get metadata first
                         r_head = session.head(url, timeout=20, allow_redirects=True)
-                        r_head.raise_for_status() # Will raise an error for 4xx or 5xx status codes
+                        r_head.raise_for_status()  # Will raise an error for 4xx or 5xx status codes
 
                         # Check for the new 'x-linked-size' header from Hugging Face
                         if 'x-linked-size' in r_head.headers:
