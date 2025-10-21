@@ -5,7 +5,7 @@ export PYTHONNOUSERSITE=1
 unset PYTHONPATH
 unset PYTHONHOME
 
-cd "$(dirname "${BASH_SOURCE[0]}")"
+cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 # Portable install case
 if [ -d "portable_env" ]; then
