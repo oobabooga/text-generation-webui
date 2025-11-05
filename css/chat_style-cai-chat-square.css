@@ -1,4 +1,4 @@
-@import url("file/css/chat_style-cai-chat.css");
+@import url("/gradio_api/file=css/chat_style-cai-chat.css");
 
 .circle-bot, .circle-you {
     height: 90px;

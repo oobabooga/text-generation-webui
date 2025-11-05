@@ -10,14 +10,14 @@
 
 @font-face {
     font-family: Inter;
-    src: url('file/css/Inter/Inter-VariableFont_opsz,wght.ttf') format('truetype');
+    src: url('/gradio_api/file=css/Inter/Inter-VariableFont_opsz,wght.ttf') format('truetype');
     font-weight: 100 900;
     font-style: normal;
 }
 
 @font-face {
     font-family: Inter;
-    src: url('file/css/Inter/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
+    src: url('/gradio_api/file=css/Inter/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
     font-weight: 100 900;
     font-style: italic;
 }
