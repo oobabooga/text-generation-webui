@@ -60,7 +60,7 @@ jobs:
               'os' = @('ubuntu-22.04', 'windows-2022')
               'pyver' = @("3.11")
               'avx' = @("AVX2")
-              'cuda' = @("11.7", "12.4")
+              'cuda' = @("12.4")
           }
 
           if ($env:CONFIGIN -ne 'Default') {$env:CONFIGIN.split(';').foreach({$matrix[$_.split(':')[0]] = $_.split(':')[1].split(',')})}
@@ -147,22 +147,13 @@ jobs:
 
             # Create CUDA-specific requirements file if needed
             cd "text-generation-webui-${VERSION_CLEAN}"
-            if [[ "$CUDA_VERSION" == "11.7" ]]; then
-                echo "Creating CUDA 11.7 specific requirements file"
-                sed 's/cu124/cu117/g' "$BASE_REQ_FILE" > requirements_cuda_temp.txt
-                REQ_FILE="requirements_cuda_temp.txt"
-            else
-                REQ_FILE="$BASE_REQ_FILE"
-            fi
+            REQ_FILE="$BASE_REQ_FILE"
 
             # 4. Install packages
             echo "Installing Python packages from $REQ_FILE..."
             $PIP_PATH install --target="./$PACKAGES_PATH" -r "$REQ_FILE"
 
             # 5. Clean up
-            if [[ "$CUDA_VERSION" == "11.7" ]]; then
-                rm requirements_cuda_temp.txt
-            fi
             rm -rf .git cmd* update_wizard* Colab-TextGen-GPU.ipynb docker setup.cfg .github .gitignore requirements/ one_click.py
 
             # 6. Create ZIP file
