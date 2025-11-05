@@ -4,7 +4,7 @@ bitsandbytes==0.48.*
 colorama
 datasets
 einops
-fastapi==0.112.4
+fastapi==0.115.2
 gradio==5.49.*
 flash-linear-attention==0.4.0
 html2text==2025.4.15
