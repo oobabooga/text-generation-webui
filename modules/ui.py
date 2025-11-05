@@ -78,7 +78,6 @@ if not shared.args.old_colors:
         button_secondary_background_fill="white",
         button_secondary_border_color="var(--border-color-primary)",
         input_shadow="none",
-        button_shadow_hover="none",
 
         # Dark Mode Colors
         input_background_fill_dark='var(--darker-gray, #1C1C1D)',
