@@ -611,7 +611,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
             bf16=shared.args.bf16,
             optim=optimizer,
             logging_steps=2 if stop_at_loss > 0 else 5,
-            evaluation_strategy="steps" if eval_data is not None else "no",
+            eval_strategy="steps" if eval_data is not None else "no",
             eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
             save_strategy="steps" if eval_data is not None else "no",
             output_dir=lora_file_path,
@@ -620,7 +620,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
             # TODO: Enable multi-device support
             ddp_find_unused_parameters=None,
             no_cuda=shared.args.cpu,
-            use_ipex=True if is_torch_xpu_available() and not shared.args.cpu else False
+            # use_ipex=True if is_torch_xpu_available() and not shared.args.cpu else False
         ),
         data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
         callbacks=list([Callbacks()])
