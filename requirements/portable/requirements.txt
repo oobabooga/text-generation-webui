@@ -1,7 +1,7 @@
 audioop-lts<1.0; python_version >= "3.13"
 fastapi==0.112.4
 html2text==2025.4.15
-huggingface-hub==0.36.0
+huggingface-hub==1.1.2
 jinja2==3.1.6
 markdown
 numpy==2.2.*
