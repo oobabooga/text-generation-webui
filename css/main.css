@@ -1674,3 +1674,14 @@ button:focus {
 .dark .sidebar-vertical-separator {
     border-bottom: 1px solid rgb(255 255 255 / 10%);
 }
+
+/* Gradio 5 fixes */
+
+main {
+    padding: 0 !important;
+    max-width: 100% !important;
+}
+
+.chat-parent > :nth-child(2) {
+    padding: 0;
+}
