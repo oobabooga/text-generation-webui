@@ -30,10 +30,6 @@ with RequestBlocker():
     from modules import gradio_hijack
     import gradio as gr
 
-import matplotlib
-
-matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
-
 import os
 import signal
 import sys
