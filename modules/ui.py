@@ -128,6 +128,7 @@ def list_model_elements():
         'threads',
         'threads_batch',
         'batch_size',
+        'ubatch_size',
         'ctx_size',
         'cache_type',
         'tensor_split',
