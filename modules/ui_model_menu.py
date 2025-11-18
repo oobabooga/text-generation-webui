@@ -217,7 +217,7 @@ def load_model_wrapper(selected_model, loader, autoload=False):
 def load_lora_wrapper(selected_loras):
     yield ("Applying the following LoRAs to {}:\n\n{}".format(shared.model_name, '\n'.join(selected_loras)))
     add_lora_to_model(selected_loras)
-    yield ("Successfuly applied the LoRAs")
+    yield ("Successfully applied the LoRAs")
 
 
 def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False, check=False):
