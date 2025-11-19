@@ -41,6 +41,13 @@ jobs:
       version: ${{ inputs.version }}
       config: 'os:ubuntu-22.04'
 
+  build_release_rocm_linux:
+    name: ROCm Linux
+    uses: ./.github/workflows/build-portable-release-rocm.yml
+    with:
+      version: ${{ inputs.version }}
+      config: 'os:ubuntu-22.04'
+
   build_release_cpu_windows:
     name: CPU Windows
     uses: ./.github/workflows/build-portable-release.yml
