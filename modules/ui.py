@@ -125,6 +125,7 @@ def list_model_elements():
         'loader',
         'cpu_memory',
         'gpu_layers',
+        'cpu_moe',
         'threads',
         'threads_batch',
         'batch_size',
