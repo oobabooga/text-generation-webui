@@ -326,6 +326,8 @@ class LlamaServer:
             cmd += ["--threads", str(shared.args.threads)]
         if shared.args.threads_batch > 0:
             cmd += ["--threads-batch", str(shared.args.threads_batch)]
+        if shared.args.cpu_moe:
+            cmd.append("--cpu-moe")
         if shared.args.no_mmap:
             cmd.append("--no-mmap")
         if shared.args.mlock:

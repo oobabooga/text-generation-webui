@@ -10,7 +10,7 @@ jinja2==3.1.6
 markdown
 numpy==2.2.*
 pandas
-peft==0.17.*
+peft==0.18.*
 Pillow>=9.5.0
 psutil
 pydantic==2.11.0
@@ -24,7 +24,7 @@ scipy
 sentencepiece
 tensorboard
 transformers==4.57.*
-triton-windows==3.5.0.post21; platform_system == "Windows"
+triton-windows==3.5.1.post21; platform_system == "Windows"
 tqdm
 wandb
 
@@ -38,6 +38,5 @@ sse-starlette==1.6.5
 tiktoken
 
 # Mac wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.60.0/llama_cpp_binaries-0.60.0-py3-none-macosx_15_0_arm64.whl; platform_system == "Darwin" and platform_release >= "24.0.0" and python_version == "3.11"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.60.0/llama_cpp_binaries-0.60.0-py3-none-macosx_14_0_arm64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0" and python_version == "3.11"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.60.0/llama_cpp_binaries-0.60.0-py3-none-macosx_13_0_arm64.whl; platform_system == "Darwin" and platform_release >= "22.0.0" and platform_release < "23.0.0" and python_version == "3.11"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.61.0/llama_cpp_binaries-0.61.0-py3-none-macosx_15_0_arm64.whl; platform_system == "Darwin" and platform_release >= "24.0.0"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.61.0/llama_cpp_binaries-0.61.0-py3-none-macosx_14_0_arm64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0"
