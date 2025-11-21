@@ -196,50 +196,45 @@ def extract_thinking_block(string):
     return None, string
 
 
-@functools.lru_cache(maxsize=None)
-def convert_to_markdown(string, message_id=None):
-    if not string:
+def build_thinking_block(thinking_content, message_id, has_remaining_content):
+    """Build HTML for a thinking block."""
+    if thinking_content is None:
+        return None
+
+    # Process the thinking content through markdown
+    thinking_html = process_markdown_content(thinking_content)
+
+    # Generate unique ID for the thinking block
+    block_id = f"thinking-{message_id}-0"
+
+    # Check if thinking is complete or still in progress
+    is_streaming = not has_remaining_content
+    title_text = "Thinking..." if is_streaming else "Thought"
+
+    return f'''
+    <details class="thinking-block" data-block-id="{block_id}" data-streaming="{str(is_streaming).lower()}">
+        <summary class="thinking-header">
+            {info_svg_small}
+            <span class="thinking-title">{title_text}</span>
+        </summary>
+        <div class="thinking-content pretty_scrollbar">{thinking_html}</div>
+    </details>
+    '''
+
+
+def build_main_content_block(content):
+    """Build HTML for the main content block."""
+    if not content:
         return ""
 
-    # Use a default message ID if none provided
-    if message_id is None:
-        message_id = "unknown"
-
-    # Extract thinking block if present
-    thinking_content, remaining_content = extract_thinking_block(string)
-
-    # Process the main content
-    html_output = process_markdown_content(remaining_content)
-
-    # If thinking content was found, process it using the same function
-    if thinking_content is not None:
-        thinking_html = process_markdown_content(thinking_content)
-
-        # Generate unique ID for the thinking block
-        block_id = f"thinking-{message_id}-0"
-
-        # Check if thinking is complete or still in progress
-        is_streaming = not remaining_content
-        title_text = "Thinking..." if is_streaming else "Thought"
-
-        thinking_block = f'''
-        <details class="thinking-block" data-block-id="{block_id}" data-streaming="{str(is_streaming).lower()}">
-            <summary class="thinking-header">
-                {info_svg_small}
-                <span class="thinking-title">{title_text}</span>
-            </summary>
-            <div class="thinking-content pretty_scrollbar">{thinking_html}</div>
-        </details>
-        '''
-
-        # Prepend the thinking block to the message HTML
-        html_output = thinking_block + html_output
-
-    return html_output
+    return process_markdown_content(content)
 
 
 def process_markdown_content(string):
-    """Process a string through the markdown conversion pipeline."""
+    """
+    Process a string through the markdown conversion pipeline.
+    Uses robust manual parsing to ensure correct LaTeX and Code Block rendering.
+    """
     if not string:
         return ""
 
@@ -280,7 +275,7 @@ def process_markdown_content(string):
     pattern = re.compile(r'\\begin{blockquote}(.*?)\\end{blockquote}', re.DOTALL)
     string = pattern.sub(replace_blockquote, string)
 
-    # Code
+    # Code block standardization
     string = string.replace('\\begin{code}', '```')
     string = string.replace('\\end{code}', '```')
     string = string.replace('\\begin{align*}', '$$')
@@ -301,6 +296,7 @@ def process_markdown_content(string):
     is_code = False
     is_latex = False
 
+    # Manual line iteration for robust structure parsing
     for line in string.split('\n'):
         stripped_line = line.strip()
 
@@ -369,6 +365,39 @@ def process_markdown_content(string):
     html_output = html_output.replace('\\\\', '\\')
 
     return html_output
+
+
+@functools.lru_cache(maxsize=None)
+def convert_to_markdown(string, message_id=None):
+    """
+    Convert a string to markdown HTML with support for multiple block types.
+    Blocks are assembled in order: thinking, main content, etc.
+    """
+    if not string:
+        return ""
+
+    # Use a default message ID if none provided
+    if message_id is None:
+        message_id = "unknown"
+
+    # Extract different components from the string
+    thinking_content, remaining_content = extract_thinking_block(string)
+
+    # Build individual HTML blocks
+    blocks = []
+
+    # Add thinking block if present
+    thinking_html = build_thinking_block(thinking_content, message_id, bool(remaining_content))
+    if thinking_html:
+        blocks.append(thinking_html)
+
+    # Add main content block
+    main_html = build_main_content_block(remaining_content)
+    if main_html:
+        blocks.append(main_html)
+
+    # Assemble all blocks into final HTML
+    return ''.join(blocks)
 
 
 def convert_to_markdown_wrapped(string, message_id=None, use_cache=True):
