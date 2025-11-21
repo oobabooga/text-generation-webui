@@ -10,6 +10,7 @@ loaders_and_params = OrderedDict({
         'threads',
         'threads_batch',
         'batch_size',
+        'ubatch_size',
         'ctx_size',
         'cache_type',
         'tensor_split',
