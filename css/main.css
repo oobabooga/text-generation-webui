@@ -1674,3 +1674,10 @@ button:focus {
 .dark .sidebar-vertical-separator {
     border-bottom: 1px solid rgb(255 255 255 / 10%);
 }
+
+button#swap-height-width {
+    position: absolute;
+    top: -50px;
+    right: 0px;
+    border: 0;
+}

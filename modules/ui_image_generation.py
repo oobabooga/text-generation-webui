@@ -149,6 +149,8 @@ def create_ui():
                             with gr.Column():
                                 height_slider = gr.Slider(256, 2048, value=1024, step=32, label="Height")
 
+                            swap_btn = gr.Button("⇄ Swap", elem_classes='refresh-button', scale=0, min_width=80, elem_id="swap-height-width")
+
                         with gr.Row():
                             preset_radio = gr.Radio(
                                 choices=["1:1 Square", "16:9 Cinema", "9:16 Mobile", "4:3 Photo", "Custom"],
@@ -156,7 +158,6 @@ def create_ui():
                                 label="Aspect Ratio",
                                 interactive=True
                             )
-                            swap_btn = gr.Button("⇄ Swap", elem_classes='refresh-button', scale=0, min_width=80)
 
                         # 4. SETTINGS & BATCHING
                         gr.Markdown("### ⚙️ Config")
@@ -200,52 +201,50 @@ def create_ui():
                                 elem_classes='slim-dropdown'
                             )
                             image_refresh_models = gr.Button("🔄", elem_classes='refresh-button', scale=0, min_width=40)
+                            image_load_model = gr.Button("Load", variant='primary', elem_classes='refresh-button')
+                            image_unload_model = gr.Button("Unload", elem_classes='refresh-button')
+                        
+                        gr.Markdown("## Settings")
                         
                         with gr.Row():
-                            image_load_model = gr.Button("Load", variant='primary')
-                            image_unload_model = gr.Button("Unload")
-                        
-                        gr.Markdown("### Settings")
-                        
-                        image_dtype = gr.Dropdown(
-                            choices=['bfloat16', 'float16'],
-                            value=settings['dtype'],
-                            label='Data Type',
-                            info='bfloat16 recommended for modern GPUs'
+                            with gr.Column():
+                                image_dtype = gr.Dropdown(
+                                    choices=['bfloat16', 'float16'],
+                                    value=settings['dtype'],
+                                    label='Data Type',
+                                    info='bfloat16 recommended for modern GPUs'
+                                )
+                                
+                                image_attn_backend = gr.Dropdown(
+                                    choices=['sdpa', 'flash_attention_2', 'flash_attention_3'],
+                                    value=settings['attn_backend'],
+                                    label='Attention Backend',
+                                    info='SDPA is default. Flash Attention requires compatible GPU.'
+                                )
+         
+                            with gr.Column():
+                                image_compile = gr.Checkbox(
+                                    value=settings['compile_model'],
+                                    label='Compile Model',
+                                    info='Faster inference after first run. First run will be slow.'
+                                )
+
+                                image_cpu_offload = gr.Checkbox(
+                                    value=settings['cpu_offload'],
+                                    label='CPU Offload',
+                                    info='Enable for low VRAM GPUs. Slower but uses less memory.'
+                                )
+                                
+                    with gr.Column():
+                        image_download_path = gr.Textbox(
+                            label="Download model",
+                            placeholder="Tongyi-MAI/Z-Image-Turbo",
+                            info="Enter the HuggingFace model path like Tongyi-MAI/Z-Image-Turbo. Use : for branch, e.g. Tongyi-MAI/Z-Image-Turbo:main"
                         )
-                        
-                        image_attn_backend = gr.Dropdown(
-                            choices=['sdpa', 'flash_attention_2', 'flash_attention_3'],
-                            value=settings['attn_backend'],
-                            label='Attention Backend',
-                            info='SDPA is default. Flash Attention requires compatible GPU.'
-                        )
-                        
-                        image_cpu_offload = gr.Checkbox(
-                            value=settings['cpu_offload'],
-                            label='CPU Offload',
-                            info='Enable for low VRAM GPUs. Slower but uses less memory.'
-                        )
-                        
-                        image_compile = gr.Checkbox(
-                            value=settings['compile_model'],
-                            label='Compile Model',
-                            info='Faster inference after first run. First run will be slow.'
-                        )
-                        
+                        image_download_btn = gr.Button("Download", variant='primary')
                         image_model_status = gr.Markdown(
                             value=f"Model: **{settings['model_name']}** (not loaded)" if settings['model_name'] != 'None' else "No model selected"
                         )
-
-                    with gr.Column():
-                        gr.Markdown("### Download Model")
-                        image_download_path = gr.Textbox(
-                            label="Hugging Face Model",
-                            placeholder="Tongyi-MAI/Z-Image-Turbo",
-                            info="Enter the HuggingFace model path. Use : for branch, e.g. model:main"
-                        )
-                        image_download_btn = gr.Button("Download", variant='primary')
-                        image_download_status = gr.Markdown("")
 
         # === WIRING ===
         
@@ -326,7 +325,7 @@ def create_ui():
         image_download_btn.click(
             fn=download_image_model_wrapper,
             inputs=[image_download_path],
-            outputs=[image_download_status, image_model_menu],
+            outputs=[image_model_status, image_model_menu],
             show_progress=True
         )
         
