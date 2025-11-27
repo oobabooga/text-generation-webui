@@ -9,6 +9,18 @@ from modules import shared
 from modules.image_models import load_image_model, unload_image_model
 
 
+# Aspect ratio definitions: name -> (width_ratio, height_ratio)
+ASPECT_RATIOS = {
+    "1:1 Square": (1, 1),
+    "16:9 Cinema": (16, 9),
+    "9:16 Mobile": (9, 16),
+    "4:3 Photo": (4, 3),
+    "Custom": None,
+}
+
+STEP = 32  # Slider step for rounding
+
+
 def create_ui():
     with gr.Tab("Image AI", elem_id="image-ai-tab"):
         with gr.Tabs():
@@ -36,12 +48,14 @@ def create_ui():
                             with gr.Column():
                                 height_slider = gr.Slider(256, 2048, value=1024, step=32, label="Height")
 
-                        preset_radio = gr.Radio(
-                            choices=["1:1 Square", "16:9 Cinema", "9:16 Mobile", "4:3 Photo", "Custom"],
-                            value="1:1 Square",
-                            label="Aspect Ratio",
-                            interactive=True
-                        )
+                        with gr.Row():
+                            preset_radio = gr.Radio(
+                                choices=["1:1 Square", "16:9 Cinema", "9:16 Mobile", "4:3 Photo", "Custom"],
+                                value="1:1 Square",
+                                label="Aspect Ratio",
+                                interactive=True
+                            )
+                            swap_btn = gr.Button("⇄ Swap", elem_classes='refresh-button', scale=0, min_width=80)
 
                         # 4. SETTINGS & BATCHING
                         gr.Markdown("### ⚙️  Config")
@@ -74,6 +88,49 @@ def create_ui():
                 )
 
         # === WIRING ===
+
+        # Aspect ratio preset changes -> update dimensions
+        preset_radio.change(
+            fn=apply_aspect_ratio,
+            inputs=[preset_radio, width_slider, height_slider],
+            outputs=[width_slider, height_slider],
+            show_progress=False
+        )
+
+        # Width slider changes -> update height (if not Custom)
+        width_slider.release(
+            fn=update_height_from_width,
+            inputs=[width_slider, preset_radio],
+            outputs=[height_slider],
+            show_progress=False
+        )
+
+        # Height slider changes -> update width (if not Custom)
+        height_slider.release(
+            fn=update_width_from_height,
+            inputs=[height_slider, preset_radio],
+            outputs=[width_slider],
+            show_progress=False
+        )
+
+        # Swap button -> swap dimensions and update aspect ratio
+        swap_btn.click(
+            fn=swap_dimensions_and_update_ratio,
+            inputs=[width_slider, height_slider, preset_radio],
+            outputs=[width_slider, height_slider, preset_radio],
+            show_progress=False
+        )
+
+        # Generation
+        inputs = [prompt, neg_prompt, width_slider, height_slider, steps_slider, seed_input, batch_size_parallel, batch_count_seq]
+        outputs = [output_gallery, used_seed]
+
+        generate_btn.click(fn=generate, inputs=inputs, outputs=outputs)
+        prompt.submit(fn=generate, inputs=inputs, outputs=outputs)
+        neg_prompt.submit(fn=generate, inputs=inputs, outputs=outputs)
+
+        # History
+        # refresh_btn.click(fn=get_history_images, inputs=None, outputs=history_gallery)
 
         # Aspect Buttons
         # btn_sq.click(lambda: set_dims(1024, 1024), outputs=[width_slider, height_slider])
@@ -187,3 +244,99 @@ def get_history_images():
     # Sort by time, newest first
     image_files.sort(key=lambda x: x[1], reverse=True)
     return [x[0] for x in image_files]
+
+
+def round_to_step(value, step=STEP):
+    """Round a value to the nearest step."""
+    return round(value / step) * step
+
+
+def clamp(value, min_val, max_val):
+    """Clamp value between min and max."""
+    return max(min_val, min(max_val, value))
+
+
+def apply_aspect_ratio(aspect_ratio, current_width, current_height):
+    """
+    Apply an aspect ratio preset.
+
+    Logic to prevent dimension creep:
+    - For tall ratios (like 9:16): keep width fixed, calculate height
+    - For wide ratios (like 16:9): keep height fixed, calculate width
+    - For square (1:1): use the smaller of the current dimensions
+
+    Returns (new_width, new_height).
+    """
+    if aspect_ratio == "Custom" or aspect_ratio not in ASPECT_RATIOS:
+        return current_width, current_height
+
+    w_ratio, h_ratio = ASPECT_RATIOS[aspect_ratio]
+
+    if w_ratio == h_ratio:
+        # Square ratio - use the smaller current dimension to prevent creep
+        base = min(current_width, current_height)
+        new_width = base
+        new_height = base
+    elif w_ratio < h_ratio:
+        # Tall ratio (like 9:16) - width is the smaller side, keep it fixed
+        new_width = current_width
+        new_height = round_to_step(current_width * h_ratio / w_ratio)
+    else:
+        # Wide ratio (like 16:9) - height is the smaller side, keep it fixed
+        new_height = current_height
+        new_width = round_to_step(current_height * w_ratio / h_ratio)
+
+    # Clamp to slider bounds
+    new_width = clamp(new_width, 256, 2048)
+    new_height = clamp(new_height, 256, 2048)
+
+    return int(new_width), int(new_height)
+
+
+def update_height_from_width(width, aspect_ratio):
+    """Update height when width changes (if not Custom)."""
+    if aspect_ratio == "Custom" or aspect_ratio not in ASPECT_RATIOS:
+        return gr.update()
+
+    w_ratio, h_ratio = ASPECT_RATIOS[aspect_ratio]
+    new_height = round_to_step(width * h_ratio / w_ratio)
+    new_height = clamp(new_height, 256, 2048)
+
+    return int(new_height)
+
+
+def update_width_from_height(height, aspect_ratio):
+    """Update width when height changes (if not Custom)."""
+    if aspect_ratio == "Custom" or aspect_ratio not in ASPECT_RATIOS:
+        return gr.update()
+
+    w_ratio, h_ratio = ASPECT_RATIOS[aspect_ratio]
+    new_width = round_to_step(height * w_ratio / h_ratio)
+    new_width = clamp(new_width, 256, 2048)
+
+    return int(new_width)
+
+
+def swap_dimensions(width, height):
+    """Swap width and height values."""
+    return height, width
+
+
+def swap_dimensions_and_update_ratio(width, height, aspect_ratio):
+    """Swap dimensions and update aspect ratio to match (or set to Custom)."""
+    new_width, new_height = height, width
+
+    # Try to find a matching aspect ratio for the swapped dimensions
+    new_ratio = "Custom"
+    for name, ratios in ASPECT_RATIOS.items():
+        if ratios is None:
+            continue
+        w_r, h_r = ratios
+        # Check if the swapped dimensions match this ratio (within tolerance)
+        expected_height = new_width * h_r / w_r
+        if abs(expected_height - new_height) < STEP:
+            new_ratio = name
+            break
+
+    return new_width, new_height, new_ratio
+
