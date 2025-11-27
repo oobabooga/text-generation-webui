@@ -227,14 +227,14 @@ def create_event_handlers():
         gradio('image_model_status'),
         show_progress=True
     )
-    
+
     shared.gradio['image_unload_model'].click(
         handle_unload_image_model_click,
         None,
         gradio('image_model_status'),
         show_progress=False
     )
-    
+
     shared.gradio['image_download_model_button'].click(
         download_image_model_wrapper,
         gradio('image_custom_model_menu'),

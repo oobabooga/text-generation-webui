@@ -15,10 +15,10 @@ def create_ui():
             # TAB 1: GENERATION STUDIO
             with gr.TabItem("Generate Images"):
                 with gr.Row():
-                    
+
                     # === LEFT COLUMN: CONTROLS ===
                     with gr.Column(scale=4, min_width=350):
-                        
+
                         # 1. PROMPT
                         prompt = gr.Textbox(label="Prompt", placeholder="Describe your imagination...", lines=3, autofocus=True)
                         neg_prompt = gr.Textbox(label="Negative Prompt", placeholder="Low quality...", lines=3)
@@ -54,12 +54,12 @@ def create_ui():
                             with gr.Column():
                                 batch_size_parallel = gr.Slider(1, 32, value=1, step=1, label="Batch Size (VRAM Heavy)", info="Generates N images at once.")
                                 batch_count_seq = gr.Slider(1, 128, value=1, step=1, label="Sequential Count (Loop)", info="Repeats the generation N times.")
-                        
+
                     # === RIGHT COLUMN: VIEWPORT ===
                     with gr.Column(scale=6, min_width=500):
                         with gr.Column(elem_classes=["viewport-container"]):
                             output_gallery = gr.Gallery(
-                                label="Output", show_label=False, columns=2, rows=2, height="80vh", object_fit="contain", preview=True 
+                                label="Output", show_label=False, columns=2, rows=2, height="80vh", object_fit="contain", preview=True
                             )
                         with gr.Row():
                             used_seed = gr.Markdown(label="Info", interactive=False, lines=3)
@@ -74,7 +74,7 @@ def create_ui():
                 )
 
         # === WIRING ===
-        
+
         # Aspect Buttons
         # btn_sq.click(lambda: set_dims(1024, 1024), outputs=[width_slider, height_slider])
         # btn_port.click(lambda: set_dims(720, 1280), outputs=[width_slider, height_slider])
@@ -91,7 +91,7 @@ def create_ui():
 
         # System
         # load_btn.click(fn=load_pipeline, inputs=[backend_drop, compile_check, offload_check, gr.State("bfloat16")], outputs=None)
-        
+
         # History
         # refresh_btn.click(fn=get_history_images, inputs=None, outputs=history_gallery)
         # Load history on app launch
@@ -103,27 +103,27 @@ def generate(prompt, neg_prompt, width, height, steps, seed, batch_size_parallel
     import torch
     from modules import shared
     from modules.image_models import load_image_model
-    
+
     # Auto-load model if not loaded
     if shared.image_model is None:
         if shared.image_model_name == 'None':
             return [], "No image model selected. Please load a model first."
         load_image_model(shared.image_model_name)
-    
+
     if shared.image_model is None:
         return [], "Failed to load image model."
-    
+
     if seed == -1:
         seed = np.random.randint(0, 2**32 - 1)
-    
+
     generator = torch.Generator("cuda").manual_seed(int(seed))
     all_images = []
-    
+
     # Sequential loop (easier on VRAM)
     for i in range(int(batch_count_seq)):
         current_seed = seed + i
         generator.manual_seed(int(current_seed))
-        
+
         # Parallel generation
         batch_results = shared.image_model(
             prompt=prompt,
@@ -135,12 +135,12 @@ def generate(prompt, neg_prompt, width, height, steps, seed, batch_size_parallel
             num_images_per_prompt=int(batch_size_parallel),
             generator=generator,
         ).images
-        
+
         all_images.extend(batch_results)
-    
+
     # Save to disk
     save_generated_images(all_images, prompt, seed)
-    
+
     return all_images, f"Seed: {seed}"
 
 
@@ -163,7 +163,7 @@ def save_generated_images(images, prompt, seed):
         img.save(full_path)
         saved_paths.append(full_path)
 
-        # Optional: Save prompt metadata in a text file next to it? 
+        # Optional: Save prompt metadata in a text file next to it?
         # For now, we just save the image.
 
     return saved_paths
