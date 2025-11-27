@@ -50,6 +50,7 @@ from modules import (
     ui_chat,
     ui_default,
     ui_file_saving,
+    ui_image_generation,
     ui_model_menu,
     ui_notebook,
     ui_parameters,
@@ -163,6 +164,7 @@ def create_interface():
         ui_chat.create_character_settings_ui()  # Character tab
         ui_model_menu.create_ui()  # Model tab
         if not shared.args.portable:
+            ui_image_generation.create_ui()  # Image generation tab
             training.create_ui()  # Training tab
         ui_session.create_ui()  # Session tab
 
