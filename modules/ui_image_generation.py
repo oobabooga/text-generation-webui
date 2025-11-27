@@ -339,4 +339,3 @@ def swap_dimensions_and_update_ratio(width, height, aspect_ratio):
             break
 
     return new_width, new_height, new_ratio
-
