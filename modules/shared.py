@@ -51,8 +51,12 @@ group.add_argument('--verbose', action='store_true', help='Print the prompts to 
 group.add_argument('--idle-timeout', type=int, default=0, help='Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.')
 
 # Image generation
+group = parser.add_argument_group('Image model')
 group.add_argument('--image-model', type=str, help='Name of the image model to load by default.')
 group.add_argument('--image-model-dir', type=str, default='user_data/image_models', help='Path to directory with all the image models.')
+group.add_argument('--image-dtype', type=str, default='bfloat16', choices=['bfloat16', 'float16'], help='Data type for image model.')
+group.add_argument('--image-attn-backend', type=str, default='sdpa', choices=['sdpa', 'flash_attention_2', 'flash_attention_3'], help='Attention backend for image model.')
+group.add_argument('--image-cpu-offload', action='store_true', help='Enable CPU offloading for image model.')
 
 # Model loader
 group = parser.add_argument_group('Model loader')
