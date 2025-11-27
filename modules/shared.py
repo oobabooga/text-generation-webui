@@ -22,6 +22,7 @@ lora_names = []
 
 # Image model variables
 image_model = None
+image_model_name = 'None'
 
 # Generation variables
 stop_everything = False
