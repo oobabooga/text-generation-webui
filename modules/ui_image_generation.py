@@ -164,7 +164,6 @@ def create_ui():
                         with gr.Row():
                             with gr.Column():
                                 steps_slider = gr.Slider(1, 15, value=9, step=1, label="Steps")
-                                cfg_slider = gr.Slider(value=0.0, label="Guidance", interactive=False, info="Locked")
                                 seed_input = gr.Number(label="Seed", value=-1, precision=0, info="-1 = Random")
 
                             with gr.Column():
