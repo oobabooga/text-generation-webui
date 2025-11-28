@@ -446,11 +446,11 @@ def download_image_model_wrapper(model_path):
         else:
             model_id, branch = model_path, 'main'
 
-        # Output folder name
-        folder_name = model_id.split('/')[-1]
+        # Output folder name (username_model format)
+        folder_name = model_id.replace('/', '_')
         output_folder = Path(shared.args.image_model_dir) / folder_name
 
-        yield f"Downloading `{model_id}` (branch: {branch})...", gr.update()
+        yield f"Downloading `{model_id}` (branch: {branch}) to `{output_folder}`...", gr.update()
 
         snapshot_download(
             repo_id=model_id,
