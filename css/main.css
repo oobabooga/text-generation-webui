@@ -1678,6 +1678,6 @@ button:focus {
 button#swap-height-width {
     position: absolute;
     top: -50px;
-    right: 0px;
+    right: 0;
     border: 0;
 }

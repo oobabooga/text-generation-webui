@@ -1,12 +1,9 @@
-# modules/image_model_settings.py
-import os
 from pathlib import Path
 
 import yaml
 
 import modules.shared as shared
 from modules.logging_colors import logger
-
 
 DEFAULTS = {
     'model_name': 'None',

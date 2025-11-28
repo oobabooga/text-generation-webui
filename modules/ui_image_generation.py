@@ -1,4 +1,3 @@
-# modules/ui_image_generation.py
 import os
 import traceback
 from datetime import datetime
@@ -9,9 +8,11 @@ import numpy as np
 import torch
 
 from modules import shared, utils
+from modules.image_model_settings import (
+    get_effective_settings,
+    save_image_model_settings
+)
 from modules.image_models import load_image_model, unload_image_model
-from modules.image_model_settings import get_effective_settings, save_image_model_settings
-
 
 # Aspect ratio definitions: name -> (width_ratio, height_ratio)
 ASPECT_RATIOS = {

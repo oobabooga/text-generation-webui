@@ -1,11 +1,11 @@
-# modules/image_models.py
 import time
+
 import torch
 
 import modules.shared as shared
 from modules.logging_colors import logger
-from modules.utils import resolve_model_path
 from modules.torch_utils import get_device
+from modules.utils import resolve_model_path
 
 
 def load_image_model(model_name, dtype='bfloat16', attn_backend='sdpa', cpu_offload=False, compile_model=False):
@@ -56,7 +56,7 @@ def load_image_model(model_name, dtype='bfloat16', attn_backend='sdpa', cpu_offl
         shared.image_model = pipe
         shared.image_model_name = model_name
 
-        logger.info(f"Loaded image model \"{model_name}\" in {(time.time()-t0):.2f} seconds.")
+        logger.info(f"Loaded image model \"{model_name}\" in {(time.time() - t0):.2f} seconds.")
         return pipe
 
     except Exception as e:
@@ -73,9 +73,7 @@ def unload_image_model():
     shared.image_model = None
     shared.image_model_name = 'None'
 
-    # Clear CUDA cache
-    if torch.cuda.is_available():
-
-        torch.cuda.empty_cache()
+    from modules.torch_utils import clear_torch_cache
+    clear_torch_cache()
 
     logger.info("Image model unloaded.")
