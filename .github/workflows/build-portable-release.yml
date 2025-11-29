@@ -57,7 +57,7 @@ jobs:
         id: set-matrix
         run: |
           $matrix = @{
-              'os' = @('ubuntu-22.04', 'windows-2022', 'macos-13', 'macos-14')
+              'os' = @('ubuntu-22.04', 'windows-2022', 'macos-14')
               'pyver' = @("3.11")
               'avx' = @("AVX2")
           }

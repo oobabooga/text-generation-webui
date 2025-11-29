@@ -317,6 +317,7 @@ class LlamaServer:
             "--ctx-size", str(shared.args.ctx_size),
             "--gpu-layers", str(shared.args.gpu_layers),
             "--batch-size", str(shared.args.batch_size),
+            "--ubatch-size", str(shared.args.ubatch_size),
             "--port", str(self.port),
             "--no-webui",
             "--flash-attn", "on",
