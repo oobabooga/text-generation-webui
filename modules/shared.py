@@ -11,7 +11,7 @@ import yaml
 from modules.logging_colors import logger
 from modules.presets import default_preset
 
-# Model variables
+# Text model variables
 model = None
 tokenizer = None
 model_name = 'None'
@@ -19,6 +19,10 @@ is_seq2seq = False
 is_multimodal = False
 model_dirty_from_training = False
 lora_names = []
+
+# Image model variables
+image_model = None
+image_model_name = 'None'
 
 # Generation variables
 stop_everything = False
@@ -45,6 +49,15 @@ group.add_argument('--settings', type=str, help='Load the default interface sett
 group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 group.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 group.add_argument('--idle-timeout', type=int, default=0, help='Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.')
+
+# Image generation
+group = parser.add_argument_group('Image model')
+group.add_argument('--image-model', type=str, help='Name of the image model to select on startup (overrides saved setting).')
+group.add_argument('--image-model-dir', type=str, default='user_data/image_models', help='Path to directory with all the image models.')
+group.add_argument('--image-dtype', type=str, default=None, choices=['bfloat16', 'float16'], help='Data type for image model.')
+group.add_argument('--image-attn-backend', type=str, default=None, choices=['sdpa', 'flash_attention_2', 'flash_attention_3'], help='Attention backend for image model.')
+group.add_argument('--image-cpu-offload', action='store_true', help='Enable CPU offloading for image model.')
+group.add_argument('--image-compile', action='store_true', help='Compile the image model for faster inference.')
 
 # Model loader
 group = parser.add_argument_group('Model loader')
