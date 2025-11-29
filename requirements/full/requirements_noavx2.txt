@@ -31,7 +31,7 @@ tqdm
 wandb
 
 # Gradio
-gradio==4.37.*
+gradio==6.0.*
 https://github.com/oobabooga/gradio/releases/download/custom-build/gradio_client-1.0.2+custom.1-py3-none-any.whl
 
 # API
