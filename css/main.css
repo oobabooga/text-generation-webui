@@ -1682,10 +1682,12 @@ button#swap-height-width {
     border: 0;
 }
 
-#image-output-gallery {
-    height: calc(100vh - 105px);
+#image-output-gallery, #image-output-gallery > :nth-child(2) {
+    height: calc(100vh - 128px);
+    max-height: calc(100vh - 128px);
 }
 
-#image-history-gallery {
+#image-history-gallery, #image-history-gallery > :nth-child(2) {
     height: calc(100vh - 139px);
+    max-height: calc(100vh - 139px);
 }
