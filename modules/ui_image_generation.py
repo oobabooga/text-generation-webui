@@ -643,7 +643,7 @@ def generate(state):
     t1 = time.time()
     save_generated_images(all_images, state, seed)
 
-    logger.info(f'Images generated in {(t1-t0):.2f} seconds (seed {seed})')
+    logger.info(f'Images generated in {(t1-t0):.2f} seconds ({state["image_steps"]/(t1-t0):.2f} steps/s, seed {seed})')
     return all_images
 
 
