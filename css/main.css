@@ -1683,8 +1683,8 @@ button#swap-height-width {
 }
 
 #image-output-gallery, #image-output-gallery > :nth-child(2) {
-    height: calc(100vh - 128px);
-    max-height: calc(100vh - 128px);
+    height: calc(100vh - 83px);
+    max-height: calc(100vh - 83px);
 }
 
 #image-history-gallery, #image-history-gallery > :nth-child(2) {
