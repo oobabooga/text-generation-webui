@@ -1681,3 +1681,11 @@ button#swap-height-width {
     right: 0;
     border: 0;
 }
+
+#image-output-gallery {
+    height: calc(100vh - 105px);
+}
+
+#image-history-gallery {
+    height: calc(100vh - 139px);
+}

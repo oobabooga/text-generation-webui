@@ -145,7 +145,7 @@ def create_ui():
 
                     with gr.Column(scale=6, min_width=500):
                         with gr.Column(elem_classes=["viewport-container"]):
-                            shared.gradio['image_output_gallery'] = gr.Gallery(label="Output", show_label=False, columns=2, rows=2, height="80vh", object_fit="contain", preview=True)
+                            shared.gradio['image_output_gallery'] = gr.Gallery(label="Output", show_label=False, columns=2, rows=2, height="80vh", object_fit="contain", preview=True, elem_id="image-output-gallery")
                         with gr.Row():
                             shared.gradio['image_used_seed'] = gr.Markdown(label="Info", interactive=False)
 
@@ -153,7 +153,7 @@ def create_ui():
             with gr.TabItem("Gallery"):
                 with gr.Row():
                     shared.gradio['image_refresh_history'] = gr.Button("🔄 Refresh Gallery", elem_classes="refresh-button")
-                shared.gradio['image_history_gallery'] = gr.Gallery(label="History", show_label=False, columns=6, object_fit="cover", height="auto", allow_preview=True)
+                shared.gradio['image_history_gallery'] = gr.Gallery(label="History", show_label=False, columns=6, object_fit="cover", height="auto", allow_preview=True, elem_id="image-history-gallery")
 
             # TAB 3: MODEL
             with gr.TabItem("Model"):
