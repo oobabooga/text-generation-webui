@@ -1,4 +1,5 @@
 import os
+import time
 import traceback
 from datetime import datetime
 from pathlib import Path
@@ -9,6 +10,7 @@ import torch
 
 from modules import shared, ui, utils
 from modules.image_models import load_image_model, unload_image_model
+from modules.logging_colors import logger
 from modules.utils import gradio
 
 ASPECT_RATIOS = {
@@ -146,8 +148,6 @@ def create_ui():
                     with gr.Column(scale=6, min_width=500):
                         with gr.Column(elem_classes=["viewport-container"]):
                             shared.gradio['image_output_gallery'] = gr.Gallery(label="Output", show_label=False, columns=2, rows=2, height="80vh", object_fit="contain", preview=True, elem_id="image-output-gallery")
-                        with gr.Row():
-                            shared.gradio['image_used_seed'] = gr.Markdown(label="Info", interactive=False)
 
             # TAB 2: GALLERY
             with gr.TabItem("Gallery"):
@@ -242,15 +242,15 @@ def create_event_handlers():
     # Generation
     shared.gradio['image_generate_btn'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        generate, gradio('interface_state'), gradio('image_output_gallery', 'image_used_seed'))
+        generate, gradio('interface_state'), gradio('image_output_gallery'))
 
     shared.gradio['image_prompt'].submit(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        generate, gradio('interface_state'), gradio('image_output_gallery', 'image_used_seed'))
+        generate, gradio('interface_state'), gradio('image_output_gallery'))
 
     shared.gradio['image_neg_prompt'].submit(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        generate, gradio('interface_state'), gradio('image_output_gallery', 'image_used_seed'))
+        generate, gradio('interface_state'), gradio('image_output_gallery'))
 
     # Model management
     shared.gradio['image_refresh_models'].click(
@@ -294,7 +294,8 @@ def generate(state):
     model_name = state['image_model_menu']
 
     if not model_name or model_name == 'None':
-        return [], "No image model selected. Go to the Model tab and select a model."
+        logger.error("No image model selected. Go to the Model tab and select a model.")
+        return []
 
     if shared.image_model is None:
         result = load_image_model(
@@ -305,7 +306,8 @@ def generate(state):
             compile_model=state['image_compile']
         )
         if result is None:
-            return [], f"Failed to load model `{model_name}`."
+            logger.error(f"Failed to load model `{model_name}`.")
+            return []
 
         shared.image_model_name = model_name
 
@@ -316,6 +318,7 @@ def generate(state):
     generator = torch.Generator("cuda").manual_seed(int(seed))
     all_images = []
 
+    t0 = time.time()
     for i in range(int(state['image_batch_count'])):
         generator.manual_seed(int(seed + i))
         batch_results = shared.image_model(
@@ -330,8 +333,11 @@ def generate(state):
         ).images
         all_images.extend(batch_results)
 
+    t1 = time.time()
     save_generated_images(all_images, state['image_prompt'], seed)
-    return all_images, f"Seed: {seed}"
+
+    logger.info(f'Images generated in {(t1-t0):.2f} seconds (seed {seed})')
+    return all_images
 
 
 def load_image_model_wrapper(model_name, dtype, attn_backend, cpu_offload, compile_model):
