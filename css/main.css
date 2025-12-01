@@ -1688,6 +1688,52 @@ button#swap-height-width {
 }
 
 #image-history-gallery, #image-history-gallery > :nth-child(2) {
-    height: calc(100vh - 139px);
-    max-height: calc(100vh - 139px);
+    height: calc(100vh - 174px);
+    max-height: calc(100vh - 174px);
+}
+
+/* Additional CSS for the paginated image gallery */
+
+/* Page info styling */
+#image-page-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 200px;
+    font-size: 0.9em;
+    color: var(--body-text-color-subdued);
+}
+
+/* Settings display panel */
+#image-ai-tab .settings-display-panel {
+    background: var(--background-fill-secondary);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9em;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 8px;
+}
+
+/* Gallery status message */
+#image-ai-tab .gallery-status {
+    color: var(--color-accent);
+    font-size: 0.85em;
+    margin-top: 4px;
+}
+
+/* Pagination button row alignment */
+#image-ai-tab .pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Selected image preview container */
+#image-ai-tab .selected-preview-container {
+    border: 1px solid var(--border-color-primary);
+    border-radius: 8px;
+    padding: 8px;
+    background: var(--background-fill-secondary);
 }
