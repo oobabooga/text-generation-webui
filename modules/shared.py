@@ -303,6 +303,22 @@ settings = {
 
     # Extensions
     'default_extensions': [],
+
+    # Image generation settings
+    'image_prompt': '',
+    'image_neg_prompt': '',
+    'image_width': 1024,
+    'image_height': 1024,
+    'image_aspect_ratio': '1:1 Square',
+    'image_steps': 9,
+    'image_seed': -1,
+    'image_batch_size': 1,
+    'image_batch_count': 1,
+    'image_model_menu': 'None',
+    'image_dtype': 'bfloat16',
+    'image_attn_backend': 'sdpa',
+    'image_compile': False,
+    'image_cpu_offload': False,
 }
 
 default_settings = copy.deepcopy(settings)
@@ -325,6 +341,20 @@ def do_cmd_flags_warnings():
             logger.warning("\nYou are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
             if args.multi_user:
                 logger.warning('\nThe multi-user mode is highly experimental and should not be shared publicly.')
+
+
+def apply_image_model_cli_overrides():
+    """Apply CLI flags for image model settings, overriding saved settings."""
+    if args.image_model:
+        settings['image_model_menu'] = args.image_model
+    if args.image_dtype is not None:
+        settings['image_dtype'] = args.image_dtype
+    if args.image_attn_backend is not None:
+        settings['image_attn_backend'] = args.image_attn_backend
+    if args.image_cpu_offload:
+        settings['image_cpu_offload'] = True
+    if args.image_compile:
+        settings['image_compile'] = True
 
 
 def fix_loader_name(name):

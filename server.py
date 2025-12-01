@@ -172,6 +172,7 @@ def create_interface():
         ui_chat.create_event_handlers()
         ui_default.create_event_handlers()
         ui_notebook.create_event_handlers()
+        ui_image_generation.create_event_handlers()
 
         # Other events
         ui_file_saving.create_event_handlers()
@@ -257,6 +258,9 @@ if __name__ == "__main__":
 
         if new_settings:
             shared.settings.update(new_settings)
+
+    # Apply CLI overrides for image model settings (CLI flags take precedence over saved settings)
+    shared.apply_image_model_cli_overrides()
 
     # Fallback settings for models
     shared.model_config['.*'] = get_fallback_settings()
