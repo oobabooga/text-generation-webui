@@ -118,7 +118,7 @@ def create_ui():
                         shared.gradio['image_generate_btn'] = gr.Button("✨ GENERATE", variant="primary", size="lg", elem_id="gen-btn")
                         gr.HTML("<hr style='border-top: 1px solid #444; margin: 20px 0;'>")
 
-                        gr.Markdown("### 📐 Dimensions")
+                        gr.Markdown("### Dimensions")
                         with gr.Row():
                             with gr.Column():
                                 shared.gradio['image_width'] = gr.Slider(256, 2048, value=shared.settings['image_width'], step=32, label="Width")
@@ -134,7 +134,7 @@ def create_ui():
                                 interactive=True
                             )
 
-                        gr.Markdown("### ⚙️ Config")
+                        gr.Markdown("### Config")
                         with gr.Row():
                             with gr.Column():
                                 shared.gradio['image_steps'] = gr.Slider(1, 15, value=shared.settings['image_steps'], step=1, label="Steps")
