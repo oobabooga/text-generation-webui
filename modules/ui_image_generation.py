@@ -378,7 +378,7 @@ def create_ui():
                                 shared.gradio['image_steps'] = gr.Slider(1, 100, value=shared.settings['image_steps'], step=1, label="Steps")
                                 shared.gradio['image_cfg_scale'] = gr.Slider(
                                     0.0, 10.0,
-                                    value=0.0,
+                                    value=shared.settings['image_cfg_scale'],
                                     step=0.1,
                                     label="CFG Scale",
                                     info="Z-Image Turbo: 0.0 | Qwen: 4.0"
@@ -705,7 +705,10 @@ def generate(state):
     t1 = time.time()
     save_generated_images(all_images, state, seed)
 
-    logger.info(f'Images generated in {(t1-t0):.2f} seconds ({state["image_steps"]/(t1-t0):.2f} steps/s, seed {seed})')
+    total_images = int(state['image_batch_count']) * int(state['image_batch_size'])
+    total_steps = state["image_steps"] * int(state['image_batch_count'])
+    logger.info(f'Generated {total_images} images in {(t1-t0):.2f} seconds ({total_steps/(t1-t0):.2f} steps/s, seed {seed})')
+
     return all_images
 
 
@@ -737,9 +740,10 @@ def load_image_model_wrapper(model_name, dtype, attn_backend, cpu_offload, compi
 
 
 def unload_image_model_wrapper():
+    previous_name = shared.image_model_name
     unload_image_model()
-    if shared.image_model_name != 'None':
-        return f"Model: **{shared.image_model_name}** (not loaded)"
+    if previous_name != 'None':
+        return f"Model: **{previous_name}** (unloaded)"
     return "No model loaded"
 
 

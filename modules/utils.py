@@ -157,14 +157,7 @@ def get_available_models():
 
 def get_available_image_models():
     model_dir = Path(shared.args.image_model_dir)
-
-    # Find directories with safetensors files
-    dirs_with_safetensors = set()
-    for item in os.listdir(model_dir):
-        item_path = model_dir / item
-        if item_path.is_dir():
-            if any(file.lower().endswith(('.safetensors', '.pt')) for file in os.listdir(item_path) if (item_path / file).is_file()):
-                dirs_with_safetensors.add(item)
+    model_dir.mkdir(parents=True, exist_ok=True)
 
     # Find valid model directories
     model_dirs = []
