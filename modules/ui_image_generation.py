@@ -604,7 +604,12 @@ def create_event_handlers():
 
 
 def generate(state):
+    """
+    Generate images using the loaded model.
+    Automatically adjusts parameters based on pipeline type.
+    """
     import torch
+    import numpy as np
 
     model_name = state['image_model_menu']
 
@@ -634,19 +639,34 @@ def generate(state):
     generator = torch.Generator("cuda").manual_seed(int(seed))
     all_images = []
 
+    # Get pipeline type for parameter adjustment
+    pipeline_type = getattr(shared, 'image_pipeline_type', None)
+    if pipeline_type is None:
+        pipeline_type = get_pipeline_type(shared.image_model)
+
+    # Build generation kwargs based on pipeline type
+    gen_kwargs = {
+        "prompt": state['image_prompt'],
+        "negative_prompt": state['image_neg_prompt'],
+        "height": int(state['image_height']),
+        "width": int(state['image_width']),
+        "num_inference_steps": int(state['image_steps']),
+        "num_images_per_prompt": int(state['image_batch_size']),
+        "generator": generator,
+    }
+
+    # Add pipeline-specific parameters
+    if pipeline_type == 'qwenimage':
+        # Qwen-Image uses true_cfg_scale instead of guidance_scale
+        gen_kwargs["true_cfg_scale"] = state.get('image_cfg_scale', 4.0)
+    else:
+        # Z-Image and others use guidance_scale
+        gen_kwargs["guidance_scale"] = state.get('image_cfg_scale', 0.0)
+
     t0 = time.time()
     for i in range(int(state['image_batch_count'])):
         generator.manual_seed(int(seed + i))
-        batch_results = shared.image_model(
-            prompt=state['image_prompt'],
-            negative_prompt=state['image_neg_prompt'],
-            height=int(state['image_height']),
-            width=int(state['image_width']),
-            num_inference_steps=int(state['image_steps']),
-            guidance_scale=0.0,
-            num_images_per_prompt=int(state['image_batch_size']),
-            generator=generator,
-        ).images
+        batch_results = shared.image_model(**gen_kwargs).images
         all_images.extend(batch_results)
 
     t1 = time.time()
