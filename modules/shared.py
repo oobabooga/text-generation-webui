@@ -365,7 +365,6 @@ def apply_image_model_cli_overrides():
         settings['image_quant'] = args.image_quant
 
 
-
 def fix_loader_name(name):
     if not name:
         return name

@@ -538,7 +538,6 @@ def create_event_handlers():
         generate, gradio('interface_state'), gradio('image_output_gallery'), show_progress=False).then(
         lambda: [gr.update(visible=False), gr.update(visible=True)], None, gradio('image_generating_btn', 'image_generate_btn'))
 
-
     # Model management
     shared.gradio['image_refresh_models'].click(
         lambda: gr.update(choices=utils.get_available_image_models()),
@@ -713,7 +712,7 @@ def generate(state):
 
         total_images = int(state['image_batch_count']) * int(state['image_batch_size'])
         total_steps = state["image_steps"] * int(state['image_batch_count'])
-        logger.info(f'Generated {total_images} images in {(t1-t0):.2f} seconds ({total_steps/(t1-t0):.2f} steps/s, seed {seed})')
+        logger.info(f'Generated {total_images} images in {(t1 - t0):.2f} seconds ({total_steps / (t1 - t0):.2f} steps/s, seed {seed})')
 
         return all_images
 
