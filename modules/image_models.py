@@ -1,7 +1,5 @@
 import time
 
-import torch
-
 import modules.shared as shared
 from modules.logging_colors import logger
 from modules.torch_utils import get_device
@@ -18,8 +16,9 @@ def get_quantization_config(quant_method):
     Returns:
         PipelineQuantizationConfig or None
     """
-    from diffusers.quantizers import PipelineQuantizationConfig
+    import torch
     from diffusers import BitsAndBytesConfig, QuantoConfig
+    from diffusers.quantizers import PipelineQuantizationConfig
 
     if quant_method == 'none' or not quant_method:
         return None
@@ -88,6 +87,7 @@ def load_image_model(model_name, dtype='bfloat16', attn_backend='sdpa', cpu_offl
         compile_model: Compile the model for faster inference (slow first run)
         quant_method: Quantization method - 'none', 'bnb-8bit', 'bnb-4bit', 'quanto-8bit', 'quanto-4bit', 'quanto-2bit'
     """
+    import torch
     from diffusers import ZImagePipeline
 
     logger.info(f"Loading image model \"{model_name}\" with quantization: {quant_method}")

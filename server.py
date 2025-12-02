@@ -172,7 +172,8 @@ def create_interface():
         ui_chat.create_event_handlers()
         ui_default.create_event_handlers()
         ui_notebook.create_event_handlers()
-        ui_image_generation.create_event_handlers()
+        if not shared.args.portable:
+            ui_image_generation.create_event_handlers()
 
         # Other events
         ui_file_saving.create_event_handlers()

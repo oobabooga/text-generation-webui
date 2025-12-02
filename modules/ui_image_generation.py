@@ -7,7 +7,6 @@ from pathlib import Path
 
 import gradio as gr
 import numpy as np
-import torch
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
@@ -605,6 +604,8 @@ def create_event_handlers():
 
 
 def generate(state):
+    import torch
+
     model_name = state['image_model_menu']
 
     if not model_name or model_name == 'None':
