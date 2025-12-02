@@ -83,9 +83,9 @@ def get_pipeline_type(pipe):
         str: 'zimage', 'qwenimage', or 'unknown'
     """
     class_name = pipe.__class__.__name__
-    if 'ZImage' in class_name:
+    if class_name == 'ZImagePipeline':
         return 'zimage'
-    elif 'QwenImage' in class_name:
+    elif class_name == 'QwenImagePipeline':
         return 'qwenimage'
     else:
         return 'unknown'
