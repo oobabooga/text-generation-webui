@@ -314,6 +314,7 @@ settings = {
     'image_height': 1024,
     'image_aspect_ratio': '1:1 Square',
     'image_steps': 9,
+    'image_cfg_scale': 0.0,
     'image_seed': -1,
     'image_batch_size': 1,
     'image_batch_count': 1,

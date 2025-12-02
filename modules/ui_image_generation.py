@@ -37,6 +37,7 @@ METADATA_SETTINGS_KEYS = [
     'image_seed',
     'image_batch_size',
     'image_batch_count',
+    'image_cfg_scale',
 ]
 
 # Cache for all image paths
@@ -176,6 +177,7 @@ def format_metadata_for_display(metadata):
         ('image_height', 'Height'),
         ('image_aspect_ratio', 'Aspect Ratio'),
         ('image_steps', 'Steps'),
+        ('image_cfg_scale', 'CFG Scale'),
         ('image_seed', 'Seed'),
         ('image_batch_size', 'Batch Size'),
         ('image_batch_count', 'Batch Count'),
@@ -298,11 +300,11 @@ def on_gallery_select(evt: gr.SelectData, current_page):
 def send_to_generate(selected_image_path):
     """Load settings from selected image and return updates for all Generate tab inputs."""
     if not selected_image_path or not os.path.exists(selected_image_path):
-        return [gr.update()] * 9 + ["No image selected"]
+        return [gr.update()] * 10 + ["No image selected"]
 
     metadata = read_image_metadata(selected_image_path)
     if not metadata:
-        return [gr.update()] * 9 + ["No settings found in this image"]
+        return [gr.update()] * 10 + ["No settings found in this image"]
 
     # Return updates for each input element in order
     updates = [
@@ -315,11 +317,11 @@ def send_to_generate(selected_image_path):
         gr.update(value=metadata.get('image_seed', -1)),
         gr.update(value=metadata.get('image_batch_size', 1)),
         gr.update(value=metadata.get('image_batch_count', 1)),
+        gr.update(value=metadata.get('image_cfg_scale', 0.0)),
     ]
 
     status = f"✓ Settings loaded from image (seed: {metadata.get('image_seed', 'unknown')})"
     return updates + [status]
-
 
 
 def create_ui():
@@ -352,9 +354,9 @@ def create_ui():
                         gr.Markdown("### Dimensions")
                         with gr.Row():
                             with gr.Column():
-                                shared.gradio['image_width'] = gr.Slider(256, 2048, value=shared.settings['image_width'], step=32, label="Width")
+                                shared.gradio['image_width'] = gr.Slider(256, 2048, value=shared.settings['image_width'], step=STEP, label="Width")
                             with gr.Column():
-                                shared.gradio['image_height'] = gr.Slider(256, 2048, value=shared.settings['image_height'], step=32, label="Height")
+                                shared.gradio['image_height'] = gr.Slider(256, 2048, value=shared.settings['image_height'], step=STEP, label="Height")
                             shared.gradio['image_swap_btn'] = gr.Button("⇄ Swap", elem_classes='refresh-button', scale=0, min_width=80, elem_id="swap-height-width")
 
                         with gr.Row():
@@ -369,6 +371,13 @@ def create_ui():
                         with gr.Row():
                             with gr.Column():
                                 shared.gradio['image_steps'] = gr.Slider(1, 100, value=shared.settings['image_steps'], step=1, label="Steps")
+                                shared.gradio['image_cfg_scale'] = gr.Slider(
+                                    0.0, 10.0,
+                                    value=0.0,
+                                    step=0.1,
+                                    label="CFG Scale",
+                                    info="Z-Image Turbo: 0.0 | Qwen: 4.0"
+                                )
                                 shared.gradio['image_seed'] = gr.Number(label="Seed", value=shared.settings['image_seed'], precision=0, info="-1 = Random")
                             with gr.Column():
                                 shared.gradio['image_batch_size'] = gr.Slider(1, 32, value=shared.settings['image_batch_size'], step=1, label="Batch Size (VRAM Heavy)", info="Generates N images at once.")
@@ -597,6 +606,7 @@ def create_event_handlers():
             'image_seed',
             'image_batch_size',
             'image_batch_count',
+            'image_cfg_scale',
             'image_gallery_status'
         ),
         show_progress=False
@@ -644,9 +654,19 @@ def generate(state):
     if pipeline_type is None:
         pipeline_type = get_pipeline_type(shared.image_model)
 
-    # Build generation kwargs based on pipeline type
+    # Process Prompt
+    prompt = state['image_prompt']
+
+    # Apply "Positive Magic" for Qwen models only
+    if pipeline_type == 'qwenimage':
+        magic_suffix = ", Ultra HD, 4K, cinematic composition"
+        # Avoid duplication if user already added it
+        if magic_suffix.strip(", ") not in prompt:
+            prompt += magic_suffix
+
+    # Build generation kwargs
     gen_kwargs = {
-        "prompt": state['image_prompt'],
+        "prompt": prompt,
         "negative_prompt": state['image_neg_prompt'],
         "height": int(state['image_height']),
         "width": int(state['image_width']),
@@ -655,13 +675,15 @@ def generate(state):
         "generator": generator,
     }
 
-    # Add pipeline-specific parameters
+    # Add pipeline-specific parameters for CFG
+    cfg_val = state.get('image_cfg_scale', 0.0)
+
     if pipeline_type == 'qwenimage':
-        # Qwen-Image uses true_cfg_scale instead of guidance_scale
-        gen_kwargs["true_cfg_scale"] = state.get('image_cfg_scale', 4.0)
+        # Qwen-Image uses true_cfg_scale (typically 4.0)
+        gen_kwargs["true_cfg_scale"] = cfg_val
     else:
-        # Z-Image and others use guidance_scale
-        gen_kwargs["guidance_scale"] = state.get('image_cfg_scale', 0.0)
+        # Z-Image and others use guidance_scale (typically 0.0 for Turbo)
+        gen_kwargs["guidance_scale"] = cfg_val
 
     t0 = time.time()
     for i in range(int(state['image_batch_count'])):
