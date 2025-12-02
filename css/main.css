@@ -1737,3 +1737,9 @@ button#swap-height-width {
     padding: 8px;
     background: var(--background-fill-secondary);
 }
+
+/* Fix a gr.Markdown UI glitch when clicking Next in the
+ * Image AI > Gallery tab */
+.min.svelte-1yrv54 {
+    min-height: 0;
+}

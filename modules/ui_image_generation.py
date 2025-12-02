@@ -411,7 +411,7 @@ def create_ui():
                         with gr.Row():
                             shared.gradio['image_refresh_history'] = gr.Button("🔄 Refresh", elem_classes="refresh-button")
                             shared.gradio['image_prev_page'] = gr.Button("◀ Prev", elem_classes="refresh-button")
-                            shared.gradio['image_page_info'] = gr.Markdown("Loading...", elem_id="image-page-info")
+                            shared.gradio['image_page_info'] = gr.Markdown("", elem_id="image-page-info")
                             shared.gradio['image_next_page'] = gr.Button("Next ▶", elem_classes="refresh-button")
                             shared.gradio['image_page_input'] = gr.Number(value=1, label="Page", precision=0, minimum=1, scale=0, min_width=80)
                             shared.gradio['image_go_to_page'] = gr.Button("Go", elem_classes="refresh-button", scale=0, min_width=50)
