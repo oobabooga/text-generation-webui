@@ -11,7 +11,7 @@ def get_quantization_config(quant_method):
     Get the appropriate quantization config based on the selected method.
 
     Args:
-        quant_method: One of 'none', 'bnb-8bit', 'bnb-4bit', 'quanto-8bit', 'quanto-4bit', 'quanto-2bit'
+        quant_method: One of 'none', 'bnb-8bit', 'bnb-4bit'
 
     Returns:
         PipelineQuantizationConfig or None
@@ -46,30 +46,6 @@ def get_quantization_config(quant_method):
             }
         )
 
-    # Quanto 8-bit quantization
-    elif quant_method == 'quanto-8bit':
-        return PipelineQuantizationConfig(
-            quant_mapping={
-                "transformer": QuantoConfig(weights_dtype="int8")
-            }
-        )
-
-    # Quanto 4-bit quantization
-    elif quant_method == 'quanto-4bit':
-        return PipelineQuantizationConfig(
-            quant_mapping={
-                "transformer": QuantoConfig(weights_dtype="int4")
-            }
-        )
-
-    # Quanto 2-bit quantization
-    elif quant_method == 'quanto-2bit':
-        return PipelineQuantizationConfig(
-            quant_mapping={
-                "transformer": QuantoConfig(weights_dtype="int2")
-            }
-        )
-
     else:
         logger.warning(f"Unknown quantization method: {quant_method}. Loading without quantization.")
         return None
@@ -101,7 +77,7 @@ def load_image_model(model_name, dtype='bfloat16', attn_backend='sdpa', cpu_offl
         attn_backend: 'sdpa', 'flash_attention_2', or 'flash_attention_3'
         cpu_offload: Enable CPU offloading for low VRAM
         compile_model: Compile the model for faster inference (slow first run)
-        quant_method: Quantization method - 'none', 'bnb-8bit', 'bnb-4bit', 'quanto-8bit', 'quanto-4bit', 'quanto-2bit'
+        quant_method: Quantization method - 'none', 'bnb-8bit', 'bnb-4bit'
     """
     import torch
     from diffusers import DiffusionPipeline

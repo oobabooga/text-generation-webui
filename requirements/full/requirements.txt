@@ -11,7 +11,6 @@ huggingface-hub==0.36.0
 jinja2==3.1.6
 markdown
 numpy==2.2.*
-optimum-quanto==0.2.7
 pandas
 peft==0.18.*
 Pillow>=9.5.0
