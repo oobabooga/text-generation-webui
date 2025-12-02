@@ -290,8 +290,11 @@ def on_gallery_select(evt: gr.SelectData, current_page):
     if evt.index is None:
         return "", "Select an image to view its settings"
 
+    if not _image_cache:
+        get_all_history_images()
+
     # Get the current page's images to find the actual file path
-    all_images = get_all_history_images()
+    all_images = _image_cache
     total_images = len(all_images)
 
     # Calculate the actual index in the full list
@@ -506,9 +509,7 @@ def create_ui():
                             info="Enter HuggingFace path. Use : for branch, e.g. user/model:main"
                         )
                         shared.gradio['image_download_btn'] = gr.Button("Download", variant='primary')
-                        shared.gradio['image_model_status'] = gr.Markdown(
-                            value=f"Model: **{shared.settings['image_model_menu']}** (not loaded)" if shared.settings['image_model_menu'] != 'None' else "No model selected"
-                        )
+                        shared.gradio['image_model_status'] = gr.Markdown(value="")
 
 
 def create_event_handlers():
