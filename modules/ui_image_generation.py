@@ -330,6 +330,15 @@ def send_to_generate(selected_image_path):
     return updates + [status]
 
 
+def read_dropped_image_metadata(image_path):
+    """Read metadata from a dropped/uploaded image."""
+    if not image_path:
+        return "Drop an image to view its generation settings."
+
+    metadata = read_image_metadata(image_path)
+    return format_metadata_for_display(metadata)
+
+
 def create_ui():
     if shared.settings['image_model_menu'] != 'None':
         shared.image_model_name = shared.settings['image_model_menu']
@@ -428,6 +437,13 @@ def create_ui():
                         shared.gradio['image_settings_display'] = gr.Markdown("Select an image to view its settings")
                         shared.gradio['image_send_to_generate'] = gr.Button("Send to Generate", variant="primary")
                         shared.gradio['image_gallery_status'] = gr.Markdown("")
+
+                        gr.Markdown("### Import Image")
+                        shared.gradio['image_drop_upload'] = gr.Image(
+                            label="Drop image here to view settings",
+                            type="filepath",
+                            height=150
+                        )
 
             # TAB 3: MODEL
             with gr.TabItem("Model"):
@@ -627,6 +643,13 @@ def create_event_handlers():
             'image_cfg_scale',
             'image_gallery_status'
         ),
+        show_progress=False
+    )
+
+    shared.gradio['image_drop_upload'].change(
+        read_dropped_image_metadata,
+        gradio('image_drop_upload'),
+        gradio('image_settings_display'),
         show_progress=False
     )
 
