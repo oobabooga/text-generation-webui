@@ -5,6 +5,7 @@ from pathlib import Path
 
 from modules import shared
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
+from modules.image_models import load_image_model
 from modules.logging_colors import logger
 from modules.prompts import load_prompt
 
@@ -50,6 +51,7 @@ from modules import (
     ui_chat,
     ui_default,
     ui_file_saving,
+    ui_image_generation,
     ui_model_menu,
     ui_notebook,
     ui_parameters,
@@ -163,6 +165,7 @@ def create_interface():
         ui_chat.create_character_settings_ui()  # Character tab
         ui_model_menu.create_ui()  # Model tab
         if not shared.args.portable:
+            ui_image_generation.create_ui()  # Image generation tab
             training.create_ui()  # Training tab
         ui_session.create_ui()  # Session tab
 
@@ -170,6 +173,8 @@ def create_interface():
         ui_chat.create_event_handlers()
         ui_default.create_event_handlers()
         ui_notebook.create_event_handlers()
+        if not shared.args.portable:
+            ui_image_generation.create_event_handlers()
 
         # Other events
         ui_file_saving.create_event_handlers()
@@ -256,6 +261,9 @@ if __name__ == "__main__":
         if new_settings:
             shared.settings.update(new_settings)
 
+    # Apply CLI overrides for image model settings (CLI flags take precedence over saved settings)
+    shared.apply_image_model_cli_overrides()
+
     # Fallback settings for models
     shared.model_config['.*'] = get_fallback_settings()
     shared.model_config.move_to_end('.*', last=False)  # Move to the beginning
@@ -312,6 +320,22 @@ if __name__ == "__main__":
         shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
             add_lora_to_model(shared.args.lora)
+
+    # Load image model if specified via CLI
+    if shared.args.image_model:
+        logger.info(f"Loading image model: {shared.args.image_model}")
+        result = load_image_model(
+            shared.args.image_model,
+            dtype=shared.settings.get('image_dtype', 'bfloat16'),
+            attn_backend=shared.settings.get('image_attn_backend', 'sdpa'),
+            cpu_offload=shared.settings.get('image_cpu_offload', False),
+            compile_model=shared.settings.get('image_compile', False),
+            quant_method=shared.settings.get('image_quant', 'none')
+        )
+        if result is not None:
+            shared.image_model_name = shared.args.image_model
+        else:
+            logger.error(f"Failed to load image model: {shared.args.image_model}")
 
     shared.generation_lock = Lock()
 

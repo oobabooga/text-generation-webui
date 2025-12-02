@@ -11,7 +11,7 @@ import yaml
 from modules.logging_colors import logger
 from modules.presets import default_preset
 
-# Model variables
+# Text model variables
 model = None
 tokenizer = None
 model_name = 'None'
@@ -19,6 +19,11 @@ is_seq2seq = False
 is_multimodal = False
 model_dirty_from_training = False
 lora_names = []
+
+# Image model variables
+image_model = None
+image_model_name = 'None'
+image_pipeline_type = None
 
 # Generation variables
 stop_everything = False
@@ -45,6 +50,18 @@ group.add_argument('--settings', type=str, help='Load the default interface sett
 group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 group.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 group.add_argument('--idle-timeout', type=int, default=0, help='Unload model after this many minutes of inactivity. It will be automatically reloaded when you try to use it again.')
+
+# Image generation
+group = parser.add_argument_group('Image model')
+group.add_argument('--image-model', type=str, help='Name of the image model to select on startup (overrides saved setting).')
+group.add_argument('--image-model-dir', type=str, default='user_data/image_models', help='Path to directory with all the image models.')
+group.add_argument('--image-dtype', type=str, default=None, choices=['bfloat16', 'float16'], help='Data type for image model.')
+group.add_argument('--image-attn-backend', type=str, default=None, choices=['sdpa', 'flash_attention_2', 'flash_attention_3'], help='Attention backend for image model.')
+group.add_argument('--image-cpu-offload', action='store_true', help='Enable CPU offloading for image model.')
+group.add_argument('--image-compile', action='store_true', help='Compile the image model for faster inference.')
+group.add_argument('--image-quant', type=str, default=None,
+                   choices=['none', 'bnb-8bit', 'bnb-4bit', 'quanto-8bit', 'quanto-4bit', 'quanto-2bit'],
+                   help='Quantization method for image model.')
 
 # Model loader
 group = parser.add_argument_group('Model loader')
@@ -290,6 +307,24 @@ settings = {
 
     # Extensions
     'default_extensions': [],
+
+    # Image generation settings
+    'image_prompt': '',
+    'image_neg_prompt': '',
+    'image_width': 1024,
+    'image_height': 1024,
+    'image_aspect_ratio': '1:1 Square',
+    'image_steps': 9,
+    'image_cfg_scale': 0.0,
+    'image_seed': -1,
+    'image_batch_size': 1,
+    'image_batch_count': 1,
+    'image_model_menu': 'None',
+    'image_dtype': 'bfloat16',
+    'image_attn_backend': 'sdpa',
+    'image_cpu_offload': False,
+    'image_compile': False,
+    'image_quant': 'none',
 }
 
 default_settings = copy.deepcopy(settings)
@@ -312,6 +347,22 @@ def do_cmd_flags_warnings():
             logger.warning("\nYou are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
             if args.multi_user:
                 logger.warning('\nThe multi-user mode is highly experimental and should not be shared publicly.')
+
+
+def apply_image_model_cli_overrides():
+    """Apply command-line overrides for image model settings."""
+    if args.image_model is not None:
+        settings['image_model_menu'] = args.image_model
+    if args.image_dtype is not None:
+        settings['image_dtype'] = args.image_dtype
+    if args.image_attn_backend is not None:
+        settings['image_attn_backend'] = args.image_attn_backend
+    if args.image_cpu_offload:
+        settings['image_cpu_offload'] = True
+    if args.image_compile:
+        settings['image_compile'] = True
+    if args.image_quant is not None:
+        settings['image_quant'] = args.image_quant
 
 
 def fix_loader_name(name):
