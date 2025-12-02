@@ -348,7 +348,7 @@ def create_ui():
                             value=shared.settings['image_neg_prompt']
                         )
 
-                        shared.gradio['image_generate_btn'] = gr.Button("✨ GENERATE", variant="primary", size="lg", elem_id="gen-btn")
+                        shared.gradio['image_generate_btn'] = gr.Button("GENERATE", variant="primary", size="lg", elem_id="gen-btn")
                         gr.HTML("<hr style='border-top: 1px solid #444; margin: 20px 0;'>")
 
                         gr.Markdown("### Dimensions")
@@ -419,7 +419,7 @@ def create_ui():
                     with gr.Column(scale=1):
                         gr.Markdown("### Selected Image")
                         shared.gradio['image_settings_display'] = gr.Markdown("Select an image to view its settings")
-                        shared.gradio['image_send_to_generate'] = gr.Button("📤 Send to Generate", variant="primary")
+                        shared.gradio['image_send_to_generate'] = gr.Button("Send to Generate", variant="primary")
                         shared.gradio['image_gallery_status'] = gr.Markdown("")
 
             # TAB 3: MODEL
