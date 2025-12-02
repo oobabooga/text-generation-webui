@@ -5,6 +5,7 @@ from pathlib import Path
 
 from modules import shared
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
+from modules.image_models import load_image_model
 from modules.logging_colors import logger
 from modules.prompts import load_prompt
 
@@ -319,6 +320,22 @@ if __name__ == "__main__":
         shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
             add_lora_to_model(shared.args.lora)
+
+    # Load image model if specified via CLI
+    if shared.args.image_model:
+        logger.info(f"Loading image model: {shared.args.image_model}")
+        result = load_image_model(
+            shared.args.image_model,
+            dtype=shared.settings.get('image_dtype', 'bfloat16'),
+            attn_backend=shared.settings.get('image_attn_backend', 'sdpa'),
+            cpu_offload=shared.settings.get('image_cpu_offload', False),
+            compile_model=shared.settings.get('image_compile', False),
+            quant_method=shared.settings.get('image_quant', 'none')
+        )
+        if result is not None:
+            shared.image_model_name = shared.args.image_model
+        else:
+            logger.error(f"Failed to load image model: {shared.args.image_model}")
 
     shared.generation_lock = Lock()
 
