@@ -247,6 +247,12 @@ def get_paginated_images(page=0, force_refresh=False):
     return page_images, page, total_pages, total_images
 
 
+def get_initial_page_info():
+    """Get page info string for initial load."""
+    _, page, total_pages, total_images = get_paginated_images(0)
+    return f"Page {page + 1} of {total_pages} ({total_images} total images)"
+
+
 def refresh_gallery(current_page=0):
     """Refresh gallery with current page."""
     images, page, total_pages, total_images = get_paginated_images(current_page, force_refresh=True)
@@ -411,7 +417,7 @@ def create_ui():
                         with gr.Row():
                             shared.gradio['image_refresh_history'] = gr.Button("🔄 Refresh", elem_classes="refresh-button")
                             shared.gradio['image_prev_page'] = gr.Button("◀ Prev", elem_classes="refresh-button")
-                            shared.gradio['image_page_info'] = gr.Markdown("", elem_id="image-page-info")
+                            shared.gradio['image_page_info'] = gr.Markdown(value=get_initial_page_info, elem_id="image-page-info")
                             shared.gradio['image_next_page'] = gr.Button("Next ▶", elem_classes="refresh-button")
                             shared.gradio['image_page_input'] = gr.Number(value=1, label="Page", precision=0, minimum=1, scale=0, min_width=80)
                             shared.gradio['image_go_to_page'] = gr.Button("Go", elem_classes="refresh-button", scale=0, min_width=50)
