@@ -140,7 +140,7 @@ def save_generated_images(images, state, actual_seed):
 
     for idx, img in enumerate(images):
         timestamp = datetime.now().strftime("%H-%M-%S")
-        filename = f"{timestamp}_{actual_seed}_{idx}.png"
+        filename = f"{timestamp}_{actual_seed:010d}_{idx:03d}.png"
         filepath = os.path.join(folder_path, filename)
 
         # Create PNG metadata
