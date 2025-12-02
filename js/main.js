@@ -1105,11 +1105,3 @@ document.fonts.addEventListener("loadingdone", (event) => {
   // Initial call to set the margin based on current state
   updateMargin();
 })();
-
-//------------------------------------------------
-// Better scrollbar for Image AI > Gallery
-//------------------------------------------------
-const element = document.querySelector('#image-history-gallery > :nth-child(2)');
-if (element) {
-  element.classList.add('pretty_scrollbar');
-}
