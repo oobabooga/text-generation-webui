@@ -348,7 +348,8 @@ def create_ui():
                             value=shared.settings['image_neg_prompt']
                         )
 
-                        shared.gradio['image_generate_btn'] = gr.Button("GENERATE", variant="primary", size="lg", elem_id="gen-btn")
+                        shared.gradio['image_generate_btn'] = gr.Button("Generate", variant="primary", size="lg")
+                        shared.gradio['image_generating_btn'] = gr.Button("Generating...", size="lg", visible=False, interactive=False)
                         gr.HTML("<hr style='border-top: 1px solid #444; margin: 20px 0;'>")
 
                         gr.Markdown("### Dimensions")
@@ -516,15 +517,22 @@ def create_event_handlers():
     # Generation
     shared.gradio['image_generate_btn'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        generate, gradio('interface_state'), gradio('image_output_gallery'))
+        lambda: [gr.update(visible=True), gr.update(visible=False)], None, gradio('image_generating_btn', 'image_generate_btn')).then(
+        generate, gradio('interface_state'), gradio('image_output_gallery'), show_progress=False).then(
+        lambda: [gr.update(visible=False), gr.update(visible=True)], None, gradio('image_generating_btn', 'image_generate_btn'))
 
     shared.gradio['image_prompt'].submit(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        generate, gradio('interface_state'), gradio('image_output_gallery'))
+        lambda: [gr.update(visible=True), gr.update(visible=False)], None, gradio('image_generating_btn', 'image_generate_btn')).then(
+        generate, gradio('interface_state'), gradio('image_output_gallery'), show_progress=False).then(
+        lambda: [gr.update(visible=False), gr.update(visible=True)], None, gradio('image_generating_btn', 'image_generate_btn'))
 
     shared.gradio['image_neg_prompt'].submit(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        generate, gradio('interface_state'), gradio('image_output_gallery'))
+        lambda: [gr.update(visible=True), gr.update(visible=False)], None, gradio('image_generating_btn', 'image_generate_btn')).then(
+        generate, gradio('interface_state'), gradio('image_output_gallery'), show_progress=False).then(
+        lambda: [gr.update(visible=False), gr.update(visible=True)], None, gradio('image_generating_btn', 'image_generate_btn'))
+
 
     # Model management
     shared.gradio['image_refresh_models'].click(
