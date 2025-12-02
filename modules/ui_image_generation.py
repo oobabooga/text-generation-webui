@@ -17,6 +17,7 @@ from modules.image_models import (
     unload_image_model
 )
 from modules.logging_colors import logger
+from modules.torch_utils import get_device
 from modules.utils import gradio
 
 ASPECT_RATIOS = {
@@ -657,7 +658,11 @@ def generate(state):
     if seed == -1:
         seed = np.random.randint(0, 2**32 - 1)
 
-    generator = torch.Generator("cuda").manual_seed(int(seed))
+    device = get_device()
+    if device is None:
+        device = "cpu"
+    generator = torch.Generator(device).manual_seed(int(seed))
+
     all_images = []
 
     # Get pipeline type for parameter adjustment
