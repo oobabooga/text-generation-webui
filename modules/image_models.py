@@ -120,7 +120,7 @@ def load_image_model(model_name, dtype='bfloat16', attn_backend='sdpa', cpu_offl
 
         # Load the pipeline
         load_kwargs = {
-            "dtype": target_dtype,
+            "torch_dtype": target_dtype,
             "low_cpu_mem_usage": True,
         }
 
