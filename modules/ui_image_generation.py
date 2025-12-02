@@ -667,6 +667,10 @@ def generate(state):
     """
     import torch
 
+    from modules.torch_utils import clear_torch_cache
+
+    clear_torch_cache()
+
     try:
         model_name = state['image_model_menu']
 
