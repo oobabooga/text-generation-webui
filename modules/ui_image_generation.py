@@ -697,6 +697,12 @@ def download_image_model_wrapper(model_path):
         return
 
     try:
+        model_path = model_path.strip()
+        if model_path.startswith('https://huggingface.co/'):
+            model_path = model_path[len('https://huggingface.co/'):]
+        elif model_path.startswith('huggingface.co/'):
+            model_path = model_path[len('huggingface.co/'):]
+
         if ':' in model_path:
             model_id, branch = model_path.rsplit(':', 1)
         else:
