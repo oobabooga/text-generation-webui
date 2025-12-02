@@ -732,7 +732,7 @@ def generate(state):
 
         total_images = int(state['image_batch_count']) * int(state['image_batch_size'])
         total_steps = state["image_steps"] * int(state['image_batch_count'])
-        logger.info(f'Generated {total_images} images in {(t1 - t0):.2f} seconds ({total_steps / (t1 - t0):.2f} steps/s, seed {seed})')
+        logger.info(f'Generated {total_images} {"image" if total_images == 1 else "images"} in {(t1 - t0):.2f} seconds ({total_steps / (t1 - t0):.2f} steps/s, seed {seed})')
 
         return all_images
 
