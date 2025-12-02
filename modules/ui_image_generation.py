@@ -18,7 +18,6 @@ from modules.image_models import (
 )
 from modules.logging_colors import logger
 from modules.text_generation import stop_everything_event
-from modules.torch_utils import get_device
 from modules.utils import gradio
 
 ASPECT_RATIOS = {
@@ -667,7 +666,7 @@ def generate(state):
     """
     import torch
 
-    from modules.torch_utils import clear_torch_cache
+    from modules.torch_utils import clear_torch_cache, get_device
 
     clear_torch_cache()
 

@@ -2,7 +2,6 @@ import time
 
 import modules.shared as shared
 from modules.logging_colors import logger
-from modules.torch_utils import get_device
 from modules.utils import resolve_model_path
 
 
@@ -81,6 +80,8 @@ def load_image_model(model_name, dtype='bfloat16', attn_backend='sdpa', cpu_offl
     """
     import torch
     from diffusers import DiffusionPipeline
+
+    from modules.torch_utils import get_device
 
     logger.info(f"Loading image model \"{model_name}\" with quantization: {quant_method}")
     t0 = time.time()

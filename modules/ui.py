@@ -280,25 +280,26 @@ def list_interface_input_elements():
         'include_past_attachments',
     ]
 
-    # Image generation elements
-    elements += [
-        'image_prompt',
-        'image_neg_prompt',
-        'image_width',
-        'image_height',
-        'image_aspect_ratio',
-        'image_steps',
-        'image_cfg_scale',
-        'image_seed',
-        'image_batch_size',
-        'image_batch_count',
-        'image_model_menu',
-        'image_dtype',
-        'image_attn_backend',
-        'image_compile',
-        'image_cpu_offload',
-        'image_quant',
-    ]
+    if not shared.args.portable:
+        # Image generation elements
+        elements += [
+            'image_prompt',
+            'image_neg_prompt',
+            'image_width',
+            'image_height',
+            'image_aspect_ratio',
+            'image_steps',
+            'image_cfg_scale',
+            'image_seed',
+            'image_batch_size',
+            'image_batch_count',
+            'image_model_menu',
+            'image_dtype',
+            'image_attn_backend',
+            'image_compile',
+            'image_cpu_offload',
+            'image_quant',
+        ]
 
     return elements
 
@@ -531,24 +532,28 @@ def setup_auto_save():
         'paste_to_attachment',
         'include_past_attachments',
 
-        # Image generation tab (ui_image_generation.py)
-        'image_prompt',
-        'image_neg_prompt',
-        'image_width',
-        'image_height',
-        'image_aspect_ratio',
-        'image_steps',
-        'image_cfg_scale',
-        'image_seed',
-        'image_batch_size',
-        'image_batch_count',
-        'image_model_menu',
-        'image_dtype',
-        'image_attn_backend',
-        'image_compile',
-        'image_cpu_offload',
-        'image_quant',
     ]
+
+    if not shared.args.portable:
+        # Image generation tab (ui_image_generation.py)
+        change_elements += [
+            'image_prompt',
+            'image_neg_prompt',
+            'image_width',
+            'image_height',
+            'image_aspect_ratio',
+            'image_steps',
+            'image_cfg_scale',
+            'image_seed',
+            'image_batch_size',
+            'image_batch_count',
+            'image_model_menu',
+            'image_dtype',
+            'image_attn_backend',
+            'image_compile',
+            'image_cpu_offload',
+            'image_quant',
+        ]
 
     for element_name in change_elements:
         if element_name in shared.gradio:
