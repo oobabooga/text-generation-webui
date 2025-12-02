@@ -11,7 +11,11 @@ from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
 from modules import shared, ui, utils
-from modules.image_models import load_image_model, unload_image_model
+from modules.image_models import (
+    get_pipeline_type,
+    load_image_model,
+    unload_image_model
+)
 from modules.logging_colors import logger
 from modules.utils import gradio
 
@@ -627,7 +631,6 @@ def generate(state):
     Automatically adjusts parameters based on pipeline type.
     """
     import torch
-    import numpy as np
 
     model_name = state['image_model_menu']
 
