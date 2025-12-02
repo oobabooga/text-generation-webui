@@ -8,7 +8,75 @@ from modules.torch_utils import get_device
 from modules.utils import resolve_model_path
 
 
-def load_image_model(model_name, dtype='bfloat16', attn_backend='sdpa', cpu_offload=False, compile_model=False):
+def get_quantization_config(quant_method):
+    """
+    Get the appropriate quantization config based on the selected method.
+
+    Args:
+        quant_method: One of 'none', 'bnb-8bit', 'bnb-4bit', 'quanto-8bit', 'quanto-4bit', 'quanto-2bit'
+
+    Returns:
+        PipelineQuantizationConfig or None
+    """
+    from diffusers.quantizers import PipelineQuantizationConfig
+    from diffusers import BitsAndBytesConfig, QuantoConfig
+
+    if quant_method == 'none' or not quant_method:
+        return None
+
+    # Bitsandbytes 8-bit quantization
+    elif quant_method == 'bnb-8bit':
+        return PipelineQuantizationConfig(
+            quant_mapping={
+                "transformer": BitsAndBytesConfig(
+                    load_in_8bit=True
+                )
+            }
+        )
+
+    # Bitsandbytes 4-bit quantization
+    elif quant_method == 'bnb-4bit':
+        return PipelineQuantizationConfig(
+            quant_mapping={
+                "transformer": BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_quant_type="nf4",
+                    bnb_4bit_compute_dtype=torch.bfloat16,
+                    bnb_4bit_use_double_quant=True
+                )
+            }
+        )
+
+    # Quanto 8-bit quantization
+    elif quant_method == 'quanto-8bit':
+        return PipelineQuantizationConfig(
+            quant_mapping={
+                "transformer": QuantoConfig(weights_dtype="int8")
+            }
+        )
+
+    # Quanto 4-bit quantization
+    elif quant_method == 'quanto-4bit':
+        return PipelineQuantizationConfig(
+            quant_mapping={
+                "transformer": QuantoConfig(weights_dtype="int4")
+            }
+        )
+
+    # Quanto 2-bit quantization
+    elif quant_method == 'quanto-2bit':
+        return PipelineQuantizationConfig(
+            quant_mapping={
+                "transformer": QuantoConfig(weights_dtype="int2")
+            }
+        )
+
+    else:
+        logger.warning(f"Unknown quantization method: {quant_method}. Loading without quantization.")
+        return None
+
+
+def load_image_model(model_name, dtype='bfloat16', attn_backend='sdpa', cpu_offload=False, compile_model=False, quant_method='none'):
     """
     Load a diffusers image generation model.
 
@@ -18,10 +86,11 @@ def load_image_model(model_name, dtype='bfloat16', attn_backend='sdpa', cpu_offl
         attn_backend: 'sdpa', 'flash_attention_2', or 'flash_attention_3'
         cpu_offload: Enable CPU offloading for low VRAM
         compile_model: Compile the model for faster inference (slow first run)
+        quant_method: Quantization method - 'none', 'bnb-8bit', 'bnb-4bit', 'quanto-8bit', 'quanto-4bit', 'quanto-2bit'
     """
-    from diffusers import PipelineQuantizationConfig, ZImagePipeline
+    from diffusers import ZImagePipeline
 
-    logger.info(f"Loading image model \"{model_name}\"")
+    logger.info(f"Loading image model \"{model_name}\" with quantization: {quant_method}")
     t0 = time.time()
 
     dtype_map = {"bfloat16": torch.bfloat16, "float16": torch.float16}
@@ -30,28 +99,21 @@ def load_image_model(model_name, dtype='bfloat16', attn_backend='sdpa', cpu_offl
     model_path = resolve_model_path(model_name, image_model=True)
 
     try:
-        # Define quantization config for 8-bit
-        pipeline_quant_config = PipelineQuantizationConfig(
-            quant_backend="bitsandbytes_8bit",
-            quant_kwargs={"load_in_8bit": True},
-        )
+        # Get quantization config based on selected method
+        pipeline_quant_config = get_quantization_config(quant_method)
 
-        # Define quantization config for 4-bit
-        # pipeline_quant_config = PipelineQuantizationConfig(
-        #     quant_backend="bitsandbytes_4bit",
-        #     quant_kwargs={
-        #         "load_in_4bit": True,
-        #         "bnb_4bit_quant_type": "nf4",  # Or "fp4" for floating point
-        #         "bnb_4bit_compute_dtype": torch.bfloat16,  # For faster computation
-        #         "bnb_4bit_use_double_quant": True,  # Nested quantization for extra savings
-        #     },
-        # )
+        # Load the pipeline
+        load_kwargs = {
+            "torch_dtype": target_dtype,
+            "low_cpu_mem_usage": True,
+        }
+
+        if pipeline_quant_config is not None:
+            load_kwargs["quantization_config"] = pipeline_quant_config
 
         pipe = ZImagePipeline.from_pretrained(
             str(model_path),
-            quantization_config=pipeline_quant_config,
-            torch_dtype=target_dtype,
-            low_cpu_mem_usage=True,
+            **load_kwargs
         )
 
         if not cpu_offload:

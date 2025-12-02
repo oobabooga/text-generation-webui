@@ -58,6 +58,9 @@ group.add_argument('--image-dtype', type=str, default=None, choices=['bfloat16',
 group.add_argument('--image-attn-backend', type=str, default=None, choices=['sdpa', 'flash_attention_2', 'flash_attention_3'], help='Attention backend for image model.')
 group.add_argument('--image-cpu-offload', action='store_true', help='Enable CPU offloading for image model.')
 group.add_argument('--image-compile', action='store_true', help='Compile the image model for faster inference.')
+group.add_argument('--image-quant', type=str, default=None,
+                   choices=['none', 'bnb-8bit', 'bnb-4bit', 'quanto-8bit', 'quanto-4bit', 'quanto-2bit'],
+                   help='Quantization method for image model.')
 
 # Model loader
 group = parser.add_argument_group('Model loader')
@@ -317,8 +320,9 @@ settings = {
     'image_model_menu': 'None',
     'image_dtype': 'bfloat16',
     'image_attn_backend': 'sdpa',
-    'image_compile': False,
     'image_cpu_offload': False,
+    'image_compile': False,
+    'image_quant': 'none',
 }
 
 default_settings = copy.deepcopy(settings)
@@ -344,8 +348,8 @@ def do_cmd_flags_warnings():
 
 
 def apply_image_model_cli_overrides():
-    """Apply CLI flags for image model settings, overriding saved settings."""
-    if args.image_model:
+    """Apply command-line overrides for image model settings."""
+    if args.image_model is not None:
         settings['image_model_menu'] = args.image_model
     if args.image_dtype is not None:
         settings['image_dtype'] = args.image_dtype
@@ -355,6 +359,9 @@ def apply_image_model_cli_overrides():
         settings['image_cpu_offload'] = True
     if args.image_compile:
         settings['image_compile'] = True
+    if args.image_quant is not None:
+        settings['image_quant'] = args.image_quant
+
 
 
 def fix_loader_name(name):

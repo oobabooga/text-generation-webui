@@ -432,6 +432,13 @@ def create_ui():
                         gr.Markdown("## Settings")
                         with gr.Row():
                             with gr.Column():
+                                shared.gradio['image_quant'] = gr.Dropdown(
+                                    label='Quantization',
+                                    choices=['none', 'bnb-8bit', 'bnb-4bit', 'quanto-8bit', 'quanto-4bit', 'quanto-2bit'],
+                                    value=shared.settings['image_quant'],
+                                    info='Quantization method for reduced VRAM usage. Quanto supports lower precisions (2-bit, 4-bit, 8-bit).'
+                                )
+
                                 shared.gradio['image_dtype'] = gr.Dropdown(
                                     choices=['bfloat16', 'float16'],
                                     value=shared.settings['image_dtype'],
@@ -521,7 +528,7 @@ def create_event_handlers():
 
     shared.gradio['image_load_model'].click(
         load_image_model_wrapper,
-        gradio('image_model_menu', 'image_dtype', 'image_attn_backend', 'image_cpu_offload', 'image_compile'),
+        gradio('image_model_menu', 'image_dtype', 'image_attn_backend', 'image_cpu_offload', 'image_compile', 'image_quant'),
         gradio('image_model_status'),
         show_progress=True
     )
@@ -610,7 +617,8 @@ def generate(state):
             dtype=state['image_dtype'],
             attn_backend=state['image_attn_backend'],
             cpu_offload=state['image_cpu_offload'],
-            compile_model=state['image_compile']
+            compile_model=state['image_compile'],
+            quant_method=state['image_quant']
         )
         if result is None:
             logger.error(f"Failed to load model `{model_name}`.")
@@ -647,7 +655,7 @@ def generate(state):
     return all_images
 
 
-def load_image_model_wrapper(model_name, dtype, attn_backend, cpu_offload, compile_model):
+def load_image_model_wrapper(model_name, dtype, attn_backend, cpu_offload, compile_model, quant_method):
     if not model_name or model_name == 'None':
         yield "No model selected"
         return
@@ -661,12 +669,13 @@ def load_image_model_wrapper(model_name, dtype, attn_backend, cpu_offload, compi
             dtype=dtype,
             attn_backend=attn_backend,
             cpu_offload=cpu_offload,
-            compile_model=compile_model
+            compile_model=compile_model,
+            quant_method=quant_method
         )
 
         if result is not None:
             shared.image_model_name = model_name
-            yield f"✓ Loaded **{model_name}**"
+            yield f"✓ Loaded **{model_name}** (quantization: {quant_method})"
         else:
             yield f"✗ Failed to load `{model_name}`"
     except Exception:

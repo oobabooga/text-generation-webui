@@ -296,6 +296,7 @@ def list_interface_input_elements():
         'image_attn_backend',
         'image_compile',
         'image_cpu_offload',
+        'image_quant',
     ]
 
     return elements
@@ -542,6 +543,7 @@ def setup_auto_save():
         'image_attn_backend',
         'image_compile',
         'image_cpu_offload',
+        'image_quant',
     ]
 
     for element_name in change_elements:
