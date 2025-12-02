@@ -23,7 +23,7 @@ ASPECT_RATIOS = {
     "Custom": None,
 }
 
-STEP = 32
+STEP = 16
 IMAGES_PER_PAGE = 64
 
 # Settings keys to save in PNG metadata (Generate tab only)
