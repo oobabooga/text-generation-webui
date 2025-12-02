@@ -473,9 +473,9 @@ def create_ui():
                             with gr.Column():
                                 shared.gradio['image_quant'] = gr.Dropdown(
                                     label='Quantization',
-                                    choices=['none', 'bnb-8bit', 'bnb-4bit'],
+                                    choices=['none', 'bnb-8bit', 'bnb-4bit', 'torchao-int8wo', 'torchao-fp4', 'torchao-float8wo'],
                                     value=shared.settings['image_quant'],
-                                    info='Quantization method for reduced VRAM usage. Quanto supports lower precisions (2-bit, 4-bit, 8-bit).'
+                                    info='BnB: bitsandbytes quantization. torchao: int8wo, fp4, float8wo.'
                                 )
 
                                 shared.gradio['image_dtype'] = gr.Dropdown(

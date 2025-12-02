@@ -25,6 +25,7 @@ safetensors==0.6.*
 scipy
 sentencepiece
 tensorboard
+torchao==0.14.*
 transformers==4.57.*
 triton-windows==3.5.1.post21; platform_system == "Windows"
 tqdm

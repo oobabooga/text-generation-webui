@@ -60,7 +60,7 @@ group.add_argument('--image-attn-backend', type=str, default=None, choices=['sdp
 group.add_argument('--image-cpu-offload', action='store_true', help='Enable CPU offloading for image model.')
 group.add_argument('--image-compile', action='store_true', help='Compile the image model for faster inference.')
 group.add_argument('--image-quant', type=str, default=None,
-                   choices=['none', 'bnb-8bit', 'bnb-4bit'],
+                   choices=['none', 'bnb-8bit', 'bnb-4bit', 'torchao-int8wo', 'torchao-fp4', 'torchao-float8wo'],
                    help='Quantization method for image model.')
 
 # Model loader

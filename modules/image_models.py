@@ -10,13 +10,14 @@ def get_quantization_config(quant_method):
     Get the appropriate quantization config based on the selected method.
 
     Args:
-        quant_method: One of 'none', 'bnb-8bit', 'bnb-4bit'
+        quant_method: One of 'none', 'bnb-8bit', 'bnb-4bit',
+                      'torchao-int8wo', 'torchao-fp4', 'torchao-float8wo'
 
     Returns:
         PipelineQuantizationConfig or None
     """
     import torch
-    from diffusers import BitsAndBytesConfig, QuantoConfig
+    from diffusers import BitsAndBytesConfig, TorchAoConfig
     from diffusers.quantizers import PipelineQuantizationConfig
 
     if quant_method == 'none' or not quant_method:
@@ -42,6 +43,30 @@ def get_quantization_config(quant_method):
                     bnb_4bit_compute_dtype=torch.bfloat16,
                     bnb_4bit_use_double_quant=True
                 )
+            }
+        )
+
+    # torchao int8 weight-only
+    elif quant_method == 'torchao-int8wo':
+        return PipelineQuantizationConfig(
+            quant_mapping={
+                "transformer": TorchAoConfig("int8wo")
+            }
+        )
+
+    # torchao fp4 (e2m1)
+    elif quant_method == 'torchao-fp4':
+        return PipelineQuantizationConfig(
+            quant_mapping={
+                "transformer": TorchAoConfig("fp4_e2m1")
+            }
+        )
+
+    # torchao float8 weight-only
+    elif quant_method == 'torchao-float8wo':
+        return PipelineQuantizationConfig(
+            quant_mapping={
+                "transformer": TorchAoConfig("float8wo")
             }
         )
 
@@ -76,7 +101,7 @@ def load_image_model(model_name, dtype='bfloat16', attn_backend='sdpa', cpu_offl
         attn_backend: 'sdpa', 'flash_attention_2', or 'flash_attention_3'
         cpu_offload: Enable CPU offloading for low VRAM
         compile_model: Compile the model for faster inference (slow first run)
-        quant_method: Quantization method - 'none', 'bnb-8bit', 'bnb-4bit'
+        quant_method: 'none', 'bnb-8bit', 'bnb-4bit', or torchao options (int8wo, fp4, float8wo)
     """
     import torch
     from diffusers import DiffusionPipeline
