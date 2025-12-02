@@ -532,6 +532,8 @@ def setup_auto_save():
         'include_past_attachments',
 
         # Image generation tab (ui_image_generation.py)
+        'image_prompt',
+        'image_neg_prompt',
         'image_width',
         'image_height',
         'image_aspect_ratio',
