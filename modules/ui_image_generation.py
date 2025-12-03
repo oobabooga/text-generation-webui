@@ -29,7 +29,7 @@ ASPECT_RATIOS = {
 }
 
 STEP = 16
-IMAGES_PER_PAGE = 64
+IMAGES_PER_PAGE = 32
 
 # Settings keys to save in PNG metadata (Generate tab only)
 METADATA_SETTINGS_KEYS = [
@@ -172,7 +172,7 @@ def format_metadata_for_display(metadata):
     if not metadata:
         return "No generation settings found in this image."
 
-    lines = ["**Generation Settings**", ""]
+    lines = []
 
     # Display in a nice order
     display_order = [
@@ -441,7 +441,7 @@ def create_ui():
                         )
 
                     with gr.Column(scale=1):
-                        gr.Markdown("### Selected Image")
+                        gr.Markdown("### Generation Settings")
                         shared.gradio['image_settings_display'] = gr.Markdown("Select an image to view its settings")
                         shared.gradio['image_send_to_generate'] = gr.Button("Send to Generate", variant="primary")
                         shared.gradio['image_gallery_status'] = gr.Markdown("")
