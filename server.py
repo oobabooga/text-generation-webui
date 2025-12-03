@@ -275,6 +275,22 @@ if __name__ == "__main__":
         if extension not in shared.args.extensions:
             shared.args.extensions.append(extension)
 
+    # Load image model if specified via CLI
+    if shared.args.image_model:
+        logger.info(f"Loading image model: {shared.args.image_model}")
+        result = load_image_model(
+            shared.args.image_model,
+            dtype=shared.settings.get('image_dtype', 'bfloat16'),
+            attn_backend=shared.settings.get('image_attn_backend', 'sdpa'),
+            cpu_offload=shared.settings.get('image_cpu_offload', False),
+            compile_model=shared.settings.get('image_compile', False),
+            quant_method=shared.settings.get('image_quant', 'none')
+        )
+        if result is not None:
+            shared.image_model_name = shared.args.image_model
+        else:
+            logger.error(f"Failed to load image model: {shared.args.image_model}")
+
     available_models = utils.get_available_models()
 
     # Model defined through --model
@@ -320,22 +336,6 @@ if __name__ == "__main__":
         shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
             add_lora_to_model(shared.args.lora)
-
-    # Load image model if specified via CLI
-    if shared.args.image_model:
-        logger.info(f"Loading image model: {shared.args.image_model}")
-        result = load_image_model(
-            shared.args.image_model,
-            dtype=shared.settings.get('image_dtype', 'bfloat16'),
-            attn_backend=shared.settings.get('image_attn_backend', 'sdpa'),
-            cpu_offload=shared.settings.get('image_cpu_offload', False),
-            compile_model=shared.settings.get('image_compile', False),
-            quant_method=shared.settings.get('image_quant', 'none')
-        )
-        if result is not None:
-            shared.image_model_name = shared.args.image_model
-        else:
-            logger.error(f"Failed to load image model: {shared.args.image_model}")
 
     shared.generation_lock = Lock()
 
