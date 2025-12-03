@@ -139,6 +139,35 @@ curl http://127.0.0.1:5000/v1/completions \
 
 For base64-encoded images, just replace the inner "url" values with this format: `data:image/FORMAT;base64,BASE64_STRING` where FORMAT is the file type (png, jpeg, gif, etc.) and BASE64_STRING is your base64-encoded image data.
 
+#### Image generation
+
+```shell
+curl http://127.0.0.1:5000/v1/images/generations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "an orange tree",
+    "steps": 9,
+    "cfg_scale": 0,
+    "batch_size": 1,
+    "batch_count": 1
+  }'
+```
+
+You need to load an image model first. You can do this via the UI, or by adding `--image-model your_model_name` when launching the server.
+
+The output is a JSON object containing a `data` array. Each element has a `b64_json` field with the base64-encoded PNG image:
+
+```json
+{
+  "created": 1764791227,
+  "data": [
+    {
+      "b64_json": "iVBORw0KGgo..."
+    }
+  ]
+}
+```
+
 #### SSE streaming
 
 ```shell
@@ -419,7 +448,6 @@ The following environment variables can be used (they take precedence over every
 | `OPENEDAI_CERT_PATH`      | SSL certificate file path         |            cert.pem                |
 | `OPENEDAI_KEY_PATH`       | SSL key file path                    |             key.pem               |
 | `OPENEDAI_DEBUG`          | Enable debugging (set to 1)    | 1                          |
-| `SD_WEBUI_URL`           | WebUI URL (used by endpoint) | http://127.0.0.1:7861 |
 | `OPENEDAI_EMBEDDING_MODEL` | Embedding model (if applicable) |          sentence-transformers/all-mpnet-base-v2                  |
 | `OPENEDAI_EMBEDDING_DEVICE` | Embedding device (if applicable) |           cuda                 |
 
@@ -430,7 +458,6 @@ You can also set the following variables in your `settings.yaml` file:
 ```
 openai-embedding_device: cuda
 openai-embedding_model: "sentence-transformers/all-mpnet-base-v2"
-openai-sd_webui_url: http://127.0.0.1:7861
 openai-debug: 1
 ```
 
