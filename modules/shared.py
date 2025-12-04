@@ -319,6 +319,7 @@ settings = {
     'image_seed': -1,
     'image_batch_size': 1,
     'image_batch_count': 1,
+    'image_llm_variations': False,
     'image_model_menu': 'None',
     'image_dtype': 'bfloat16',
     'image_attn_backend': 'sdpa',
