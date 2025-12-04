@@ -320,6 +320,7 @@ settings = {
     'image_batch_size': 1,
     'image_batch_count': 1,
     'image_llm_variations': False,
+    'image_llm_variations_prompt': 'Please create a creative variation of the image generation prompt above. Keep the same general subject and style, but vary the details, composition, lighting, or mood. Respond with only the new prompt, nothing else.',
     'image_model_menu': 'None',
     'image_dtype': 'bfloat16',
     'image_attn_backend': 'sdpa',

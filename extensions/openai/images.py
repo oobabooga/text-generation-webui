@@ -36,6 +36,7 @@ def generations(request):
         'image_batch_count': request.batch_count,
         'image_cfg_scale': request.cfg_scale,
         'image_llm_variations': request.llm_variations,
+        'image_llm_variations_prompt': request.llm_variations_prompt or shared.settings.get('image_llm_variations_prompt', ''),
     })
 
     # Exhaust generator, keep final result

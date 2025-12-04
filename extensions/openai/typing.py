@@ -276,6 +276,7 @@ class ImageGenerationRequestParams(BaseModel):
     n: int = Field(default=1, ge=1, description="Alias for batch_size (OpenAI compatibility)")
     batch_count: int = Field(default=1, ge=1, description="Sequential batch count")
     llm_variations: bool = False
+    llm_variations_prompt: str | None = None
 
     # OpenAI compatibility (unused)
     model: str | None = None
