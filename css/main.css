@@ -1752,3 +1752,42 @@ button#swap-height-width {
 .min.svelte-1yrv54 {
     min-height: 0;
 }
+
+/* Image Generation Progress Bar */
+#image-progress .image-ai-separator {
+    height: 24px;
+    margin: 20px 0;
+    border-top: 1px solid var(--input-border-color);
+}
+
+#image-progress .image-ai-progress-wrapper {
+    height: 24px;
+    margin: 20px 0;
+}
+
+#image-progress .image-ai-progress-track {
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    height: 8px;
+}
+
+.dark #image-progress .image-ai-progress-track {
+    background: #333;
+}
+
+#image-progress .image-ai-progress-fill {
+    background: #4a9eff;
+    height: 100%;
+}
+
+#image-progress .image-ai-progress-text {
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.dark #image-progress .image-ai-progress-text {
+    color: #888;
+}

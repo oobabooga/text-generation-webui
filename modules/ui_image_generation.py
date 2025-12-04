@@ -667,13 +667,13 @@ def create_event_handlers():
 def progress_bar_html(progress=0, text=""):
     """Generate HTML for progress bar. Empty div when progress <= 0."""
     if progress <= 0:
-        return '<div style="height: 24px; margin: 20px 0; border-top: 1px solid #444;"></div>'
+        return '<div class="image-ai-separator"></div>'
 
-    return f'''<div style="height: 24px; margin: 20px 0;">
-        <div style="background: #333; border-radius: 4px; overflow: hidden; height: 8px;">
-            <div style="background: #4a9eff; height: 100%; width: {progress*100:.1f}%;"></div>
+    return f'''<div class="image-ai-progress-wrapper">
+        <div class="image-ai-progress-track">
+            <div class="image-ai-progress-fill" style="width: {progress*100:.1f}%;"></div>
         </div>
-        <div style="text-align: center; font-size: 11px; color: #888; margin-top: 4px;">{text}</div>
+        <div class="image-ai-progress-text">{text}</div>
     </div>'''
 
 
