@@ -670,8 +670,6 @@ def generate(state):
 
     from modules.torch_utils import clear_torch_cache, get_device
 
-    clear_torch_cache()
-
     try:
         model_name = state['image_model_menu']
 
@@ -772,11 +770,13 @@ def generate(state):
         logger.info(f'Generated {total_images} {"image" if total_images == 1 else "images"} in {(t1 - t0):.2f} seconds ({total_steps / (t1 - t0):.2f} steps/s, seed {seed})')
 
         yield all_images
+        clear_torch_cache()
 
     except Exception as e:
         logger.error(f"Image generation failed: {e}")
         traceback.print_exc()
         yield []
+        clear_torch_cache()
 
 
 def load_image_model_wrapper(model_name, dtype, attn_backend, cpu_offload, compile_model, quant_method):
