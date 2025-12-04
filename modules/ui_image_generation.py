@@ -370,6 +370,19 @@ def create_ui():
                             lines=3,
                             value=shared.settings['image_neg_prompt']
                         )
+                        shared.gradio['image_llm_variations'] = gr.Checkbox(
+                            value=shared.settings['image_llm_variations'],
+                            label='LLM Prompt Variations',
+                            elem_id="llm-prompt-variations",
+                        )
+                        shared.gradio['image_llm_variations_prompt'] = gr.Textbox(
+                            value=shared.settings['image_llm_variations_prompt'],
+                            label='Variation Prompt',
+                            lines=3,
+                            placeholder='Instructions for generating prompt variations...',
+                            visible=shared.settings['image_llm_variations'],
+                            info='Use the loaded LLM to generate creative prompt variations for each sequential batch.'
+                        )
 
                         shared.gradio['image_generate_btn'] = gr.Button("Generate", variant="primary", size="lg")
                         shared.gradio['image_stop_btn'] = gr.Button("Stop", size="lg", visible=False)
@@ -410,21 +423,6 @@ def create_ui():
                             with gr.Column():
                                 shared.gradio['image_batch_size'] = gr.Slider(1, 32, value=shared.settings['image_batch_size'], step=1, label="Batch Size (VRAM Heavy)", info="Generates N images at once.")
                                 shared.gradio['image_batch_count'] = gr.Slider(1, 128, value=shared.settings['image_batch_count'], step=1, label="Sequential Count (Loop)", info="Repeats the generation N times.")
-
-                        gr.Markdown("### LLM Variations")
-                        shared.gradio['image_llm_variations'] = gr.Checkbox(
-                            value=shared.settings['image_llm_variations'],
-                            label='Activate',
-                            info='Use the loaded LLM to generate creative prompt variations for each sequential batch.'
-                        )
-                        shared.gradio['image_llm_variations_prompt'] = gr.Textbox(
-                            value=shared.settings['image_llm_variations_prompt'],
-                            label='Variation Prompt',
-                            lines=3,
-                            placeholder='Instructions for generating prompt variations...',
-                            visible=shared.settings['image_llm_variations'],
-                            info='The instruction given to the LLM for generating variations.'
-                        )
 
                     with gr.Column(scale=6, min_width=500):
                         with gr.Column(elem_classes=["viewport-container"]):
@@ -735,7 +733,7 @@ def generate_prompt_variation(state):
         variation = variation[1:-1]
 
     if variation:
-        logger.info(f"Prompt variation: {variation}...")
+        logger.info(f"Prompt variation: {variation}")
         return variation
 
     return prompt

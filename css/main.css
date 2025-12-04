@@ -1791,3 +1791,9 @@ button#swap-height-width {
 .dark #image-progress .image-ai-progress-text {
     color: #888;
 }
+
+#llm-prompt-variations {
+    position: absolute;
+    top: 0;
+    left: calc(100% - 174px);
+}
