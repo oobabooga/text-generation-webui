@@ -7,7 +7,6 @@ from pathlib import Path
 
 import gradio as gr
 import numpy as np
-from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
 from modules import shared, ui, utils
@@ -16,6 +15,7 @@ from modules.image_models import (
     load_image_model,
     unload_image_model
 )
+from modules.image_utils import open_image_safely
 from modules.logging_colors import logger
 from modules.text_generation import stop_everything_event
 from modules.utils import gradio
@@ -159,7 +159,7 @@ def save_generated_images(images, state, actual_seed):
 def read_image_metadata(image_path):
     """Read generation metadata from PNG file."""
     try:
-        with Image.open(image_path) as img:
+        with open_image_safely(image_path) as img:
             if hasattr(img, 'text') and 'image_gen_settings' in img.text:
                 return json.loads(img.text['image_gen_settings'])
     except Exception as e:

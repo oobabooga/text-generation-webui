@@ -3,7 +3,6 @@ import copy
 import functools
 import html
 import json
-import os
 import pprint
 import re
 import shutil
@@ -26,6 +25,7 @@ from modules.html_generator import (
     convert_to_markdown,
     make_thumbnail
 )
+from modules.image_utils import open_image_safely
 from modules.logging_colors import logger
 from modules.text_generation import (
     generate_reply,
@@ -1514,20 +1514,6 @@ def load_character_memoized(character, name1, name2):
 @functools.cache
 def load_instruction_template_memoized(template):
     return load_instruction_template(template)
-
-
-def open_image_safely(path):
-    if path is None or not isinstance(path, str) or not Path(path).exists():
-        return None
-
-    if os.path.islink(path):
-        return None
-
-    try:
-        return Image.open(path)
-    except Exception as e:
-        logger.error(f"Failed to open image file: {path}. Reason: {e}")
-        return None
 
 
 def upload_character(file, img_path, tavern=False):
