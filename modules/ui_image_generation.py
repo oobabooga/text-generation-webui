@@ -485,7 +485,7 @@ def create_ui():
                                     info='bfloat16 recommended for modern GPUs'
                                 )
                                 shared.gradio['image_attn_backend'] = gr.Dropdown(
-                                    choices=['sdpa', 'flash_attention_2', 'flash_attention_3'],
+                                    choices=['sdpa', 'flash_attention_2'],
                                     value=shared.settings['image_attn_backend'],
                                     label='Attention Backend',
                                     info='SDPA is default. Flash Attention requires compatible GPU.'
