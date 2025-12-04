@@ -7,23 +7,24 @@ import traceback
 from collections import deque
 from threading import Thread
 
-import extensions.openai.completions as OAIcompletions
-import extensions.openai.logits as OAIlogits
-import extensions.openai.models as OAImodels
 import uvicorn
-from extensions.openai.tokens import token_count, token_decode, token_encode
-from extensions.openai.utils import _start_cloudflared
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
+from pydub import AudioSegment
+from sse_starlette import EventSourceResponse
+from starlette.concurrency import iterate_in_threadpool
+
+import extensions.openai.completions as OAIcompletions
+import extensions.openai.logits as OAIlogits
+import extensions.openai.models as OAImodels
+from extensions.openai.tokens import token_count, token_decode, token_encode
+from extensions.openai.utils import _start_cloudflared
 from modules import shared
 from modules.logging_colors import logger
 from modules.models import unload_model
 from modules.text_generation import stop_everything_event
-from pydub import AudioSegment
-from sse_starlette import EventSourceResponse
-from starlette.concurrency import iterate_in_threadpool
 
 from .typing import (
     ChatCompletionRequest,
@@ -232,20 +233,7 @@ async def handle_image_generation(request_data: ImageGenerationRequest):
     import extensions.openai.images as OAIimages
 
     async with image_generation_semaphore:
-        width, height = request_data.get_width_height()
-
-        response = await asyncio.to_thread(
-            OAIimages.generations,
-            prompt=request_data.prompt,
-            size=f"{width}x{height}",
-            response_format=request_data.response_format,
-            n=request_data.batch_size,  # <-- use resolved batch_size
-            negative_prompt=request_data.negative_prompt,
-            steps=request_data.steps,
-            seed=request_data.seed,
-            cfg_scale=request_data.cfg_scale,
-            batch_count=request_data.batch_count,
-        )
+        response = await asyncio.to_thread(OAIimages.generations, request_data)
         return JSONResponse(response)
 
 

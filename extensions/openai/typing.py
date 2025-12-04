@@ -264,20 +264,18 @@ class LoadLorasRequest(BaseModel):
     lora_names: List[str]
 
 
-class ImageGenerationRequest(BaseModel):
-    """OpenAI-compatible image generation request with extended parameters."""
-    # Required
+class ImageGenerationRequestParams(BaseModel):
+    """Image-specific parameters for generation."""
     prompt: str
-
-    # Generation parameters
     negative_prompt: str = ""
     size: str = Field(default="1024x1024", description="'WIDTHxHEIGHT'")
     steps: int = Field(default=9, ge=1)
     cfg_scale: float = Field(default=0.0, ge=0.0)
-    seed: int = Field(default=-1, description="-1 for random")
+    image_seed: int = Field(default=-1, description="-1 for random")
     batch_size: int | None = Field(default=None, ge=1, description="Parallel batch size (VRAM heavy)")
     n: int = Field(default=1, ge=1, description="Alias for batch_size (OpenAI compatibility)")
     batch_count: int = Field(default=1, ge=1, description="Sequential batch count")
+    llm_variations: bool = False
 
     # OpenAI compatibility (unused)
     model: str | None = None
@@ -286,7 +284,6 @@ class ImageGenerationRequest(BaseModel):
 
     @model_validator(mode='after')
     def resolve_batch_size(self):
-        """Use batch_size if provided, otherwise fall back to n."""
         if self.batch_size is None:
             self.batch_size = self.n
         return self
@@ -297,6 +294,10 @@ class ImageGenerationRequest(BaseModel):
             return int(parts[0]), int(parts[1])
         except (ValueError, IndexError):
             return 1024, 1024
+
+
+class ImageGenerationRequest(GenerationOptions, ImageGenerationRequestParams):
+    pass
 
 
 class ImageGenerationResponse(BaseModel):

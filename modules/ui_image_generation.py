@@ -10,7 +10,6 @@ import numpy as np
 from PIL.PngImagePlugin import PngInfo
 
 from modules import shared, ui, utils
-from modules.utils import check_model_loaded
 from modules.image_models import (
     get_pipeline_type,
     load_image_model,
@@ -19,7 +18,7 @@ from modules.image_models import (
 from modules.image_utils import open_image_safely
 from modules.logging_colors import logger
 from modules.text_generation import stop_everything_event
-from modules.utils import gradio
+from modules.utils import check_model_loaded, gradio
 
 ASPECT_RATIOS = {
     "1:1 Square": (1, 1),
@@ -725,13 +724,13 @@ def progress_bar_html(progress=0, text=""):
 
     return f'''<div class="image-ai-progress-wrapper">
         <div class="image-ai-progress-track">
-            <div class="image-ai-progress-fill" style="width: {progress*100:.1f}%;"></div>
+            <div class="image-ai-progress-fill" style="width: {progress * 100:.1f}%;"></div>
         </div>
         <div class="image-ai-progress-text">{text}</div>
     </div>'''
 
 
-def generate(state):
+def generate(state, save_images=True):
     """
     Generate images using the loaded model.
     Automatically adjusts parameters based on pipeline type.
@@ -868,7 +867,8 @@ def generate(state):
             yield all_images, progress_bar_html((batch_idx + 1) / batch_count, f"Batch {batch_idx + 1}/{batch_count} complete")
 
         t1 = time.time()
-        save_generated_images(all_images, state, seed)
+        if save_images:
+            save_generated_images(all_images, state, seed)
 
         total_images = batch_count * int(state['image_batch_size'])
         logger.info(f'Generated {total_images} {"image" if total_images == 1 else "images"} in {(t1 - t0):.2f} seconds ({total_steps / (t1 - t0):.2f} steps/s, seed {seed})')
