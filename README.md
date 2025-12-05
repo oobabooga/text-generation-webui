@@ -28,8 +28,7 @@ A Gradio web UI for Large Language Models.
 - 100% offline and private, with zero telemetry, external resources, or remote update requests.
 - **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
 - **Vision (multimodal models)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Multimodal-Tutorial)).
-Image generation: A dedicated tab for diffusers models like Z-Image-Turbo and Qwen-Image. Features 4-bit/8-bit quantization and a persistent gallery with metadata (tutorial).
-- **Image generation**: A dedicated tab for `diffusers` models like **Z-Image-Turbo** and **Qwen-Image**. Features 4-bit/8-bit quantization and a persistent gallery with metadata ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Image-Generation-Tutorial)).
+- **Image generation**: A dedicated tab for `diffusers` models like **Z-Image-Turbo**. Features 4-bit/8-bit quantization and a persistent gallery with metadata ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Image-Generation-Tutorial)).
 - **Web search**: Optionally search the internet with LLM-generated queries to add context to the conversation.
 - Aesthetic UI with dark and light themes.
 - Syntax highlighting for code blocks and LaTeX rendering for mathematical expressions.

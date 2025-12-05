@@ -43,6 +43,9 @@ def generations(request):
     for images, _ in generate(state, save_images=False):
         pass
 
+    if not images:
+        raise ServiceUnavailableError("Image generation failed or produced no images.")
+
     # Build response
     resp = {'created': int(time.time()), 'data': []}
     for img in images:
