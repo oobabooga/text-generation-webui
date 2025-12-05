@@ -856,7 +856,13 @@ def generate(state, save_images=True):
                         if magic_suffix.strip(", ") not in clean_prompt:
                             gen_kwargs["prompt"] = clean_prompt + magic_suffix
 
-                    result_holder.extend(shared.image_model(**gen_kwargs).images)
+                    batch_results = shared.image_model(**gen_kwargs).images
+
+                    # Store the modified prompt in the metadata
+                    for img in batch_results:
+                        img.info["revised_prompt"] = clean_prompt
+
+                    result_holder.extend(batch_results)
                     gen_kwargs["prompt"] = clean_prompt  # restore
                 except Exception as e:
                     error_holder.append(e)

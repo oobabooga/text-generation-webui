@@ -48,10 +48,16 @@ def generations(request):
     resp = {'created': int(time.time()), 'data': []}
     for img in images:
         b64 = _image_to_base64(img)
+        image_obj = {
+            'revised_prompt': img.info.get('revised_prompt', request.prompt)
+        }
+
         if request.response_format == 'b64_json':
-            resp['data'].append({'b64_json': b64})
+            image_obj['b64_json'] = b64
         else:
-            resp['data'].append({'url': f'data:image/png;base64,{b64}'})
+            image_obj['url'] = f'data:image/png;base64,{b64}'
+
+        resp['data'].append(image_obj)
 
     return resp
 
