@@ -51,6 +51,10 @@ Note: The next time you launch the web UI, the model will get automatically load
 1. While still in the "Image AI" page, go to the "Generate" tab.
 2. Type your prompt and click on the Generate button.
 
+### Model-specific settings
+
+- For Z-Image-Turbo, make sure to keep CFG Scale at 0 and Steps at 9. Do not write a Negative Prompt as it will get ignored with this CFG Scale value.
+
 ### LLM Prompt Variations
 
 To use this feature, you need to load an LLM in the main "Model" tab on the left.
@@ -63,11 +67,6 @@ If you have no idea what to use, do this to get started:
 
 Then go back to the "Image AI" page and check "LLM Prompt Variations".
 
-After that, your prompts will be automatically updated by the LLM each time you generate an image. If you use sequential batch count value greater than 1, a new prompt will be created for each sequential batch.
+After that, your prompts will be automatically updated by the LLM each time you generate an image. If you use a "Sequential Count" value greater than 1, a new prompt will be created for each sequential batch.
 
 The improvement in creativity is striking:
-
-### Model-specific settings
-
-- For Z-Image-Turbo, make sure to keep CFG Scale at 0 and Steps at 9. Do not write a Negative Prompt as it will get ignored with this CFG Scale value.
-
