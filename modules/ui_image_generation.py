@@ -43,6 +43,10 @@ METADATA_SETTINGS_KEYS = [
     'image_cfg_scale',
 ]
 
+# Cache for all image paths
+_image_cache = []
+_cache_timestamp = 0
+
 
 def round_to_step(value, step=STEP):
     return round(value / step) * step
@@ -202,11 +206,18 @@ def format_metadata_for_display(metadata):
     return "\n\n".join(lines)
 
 
-def get_all_history_images():
-    """Get all history images sorted by modification time (newest first)."""
+def get_all_history_images(force_refresh=False):
+    """Get all history images sorted by modification time (newest first). Uses caching."""
+    global _image_cache, _cache_timestamp
+
     output_dir = os.path.join("user_data", "image_outputs")
     if not os.path.exists(output_dir):
         return []
+
+    # Check if we need to refresh cache
+    current_time = time.time()
+    if not force_refresh and _image_cache and (current_time - _cache_timestamp) < 2:
+        return _image_cache
 
     image_files = []
     for root, _, files in os.walk(output_dir):
@@ -216,12 +227,15 @@ def get_all_history_images():
                 image_files.append((full_path, os.path.getmtime(full_path)))
 
     image_files.sort(key=lambda x: x[1], reverse=True)
-    return [x[0] for x in image_files]
+    _image_cache = [x[0] for x in image_files]
+    _cache_timestamp = current_time
+
+    return _image_cache
 
 
-def get_paginated_images(page=0):
+def get_paginated_images(page=0, force_refresh=False):
     """Get images for a specific page."""
-    all_images = get_all_history_images()
+    all_images = get_all_history_images(force_refresh)
     total_images = len(all_images)
     total_pages = max(1, (total_images + IMAGES_PER_PAGE - 1) // IMAGES_PER_PAGE)
 
@@ -244,7 +258,7 @@ def get_initial_page_info():
 
 def refresh_gallery(current_page=0):
     """Refresh gallery with current page."""
-    images, page, total_pages, total_images = get_paginated_images(current_page)
+    images, page, total_pages, total_images = get_paginated_images(current_page, force_refresh=True)
     page_info = f"Page {page + 1} of {total_pages} ({total_images} total images)"
     return images, page, page_info
 
@@ -280,7 +294,10 @@ def on_gallery_select(evt: gr.SelectData, current_page):
     if evt.index is None:
         return "", "Select an image to view its settings"
 
-    all_images = get_all_history_images()
+    if not _image_cache:
+        get_all_history_images()
+
+    all_images = _image_cache
     total_images = len(all_images)
 
     # Calculate the actual index in the full list
