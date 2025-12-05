@@ -322,7 +322,7 @@ settings = {
     'image_batch_size': 1,
     'image_batch_count': 1,
     'image_llm_variations': False,
-    'image_llm_variations_prompt': 'Write a variation of the image generation prompt above. Consider the intent of the user with that prompt and write something that will likely please them, with added details. Your reply should contain the new prompt and nothing else.',
+    'image_llm_variations_prompt': 'Write a variation of the image generation prompt above. Consider the intent of the user with that prompt and write something that will likely please them, with added details. Output only the new prompt. Do not add any explanations, prefixes, or additional text.',
     'image_model_menu': 'None',
     'image_dtype': 'bfloat16',
     'image_attn_backend': 'sdpa',

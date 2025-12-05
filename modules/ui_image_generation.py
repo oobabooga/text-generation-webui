@@ -701,7 +701,7 @@ def generate_prompt_variation(state):
     # Get the custom variation prompt or use default
     variation_instruction = state.get('image_llm_variations_prompt', '')
     if not variation_instruction:
-        variation_instruction = 'Write a variation of the image generation prompt above. Consider the intent of the user with that prompt and write something that will likely please them, with added details. Your reply should contain the new prompt and nothing else.'
+        variation_instruction = 'Write a variation of the image generation prompt above. Consider the intent of the user with that prompt and write something that will likely please them, with added details. Output only the new prompt. Do not add any explanations, prefixes, or additional text.'
 
     augmented_message = f"{prompt}\n\n=====\n\n{variation_instruction}"
 
