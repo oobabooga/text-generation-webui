@@ -725,7 +725,8 @@ def generate_prompt_variation(state):
         variation = variation[1:-1]
 
     if variation:
-        logger.info(f"Prompt variation: {variation}")
+        logger.info("Prompt variation:")
+        print(variation)
         return variation
 
     return prompt
