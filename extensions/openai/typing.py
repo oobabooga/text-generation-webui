@@ -264,7 +264,7 @@ class LoadLorasRequest(BaseModel):
     lora_names: List[str]
 
 
-class ImageGenerationRequestParams(BaseModel):
+class ImageGenerationRequest(BaseModel):
     """Image-specific parameters for generation."""
     prompt: str
     negative_prompt: str = ""
@@ -275,8 +275,6 @@ class ImageGenerationRequestParams(BaseModel):
     batch_size: int | None = Field(default=None, ge=1, description="Parallel batch size (VRAM heavy)")
     n: int = Field(default=1, ge=1, description="Alias for batch_size (OpenAI compatibility)")
     batch_count: int = Field(default=1, ge=1, description="Sequential batch count")
-    llm_variations: bool = False
-    llm_variations_prompt: str | None = None
 
     # OpenAI compatibility (unused)
     model: str | None = None
@@ -295,10 +293,6 @@ class ImageGenerationRequestParams(BaseModel):
             return int(parts[0]), int(parts[1])
         except (ValueError, IndexError):
             return 1024, 1024
-
-
-class ImageGenerationRequest(GenerationOptions, ImageGenerationRequestParams):
-    pass
 
 
 class ImageGenerationResponse(BaseModel):
