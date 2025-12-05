@@ -58,7 +58,7 @@ group = parser.add_argument_group('Image model')
 group.add_argument('--image-model', type=str, help='Name of the image model to select on startup (overrides saved setting).')
 group.add_argument('--image-model-dir', type=str, default='user_data/image_models', help='Path to directory with all the image models.')
 group.add_argument('--image-dtype', type=str, default=None, choices=['bfloat16', 'float16'], help='Data type for image model.')
-group.add_argument('--image-attn-backend', type=str, default=None, choices=['sdpa', 'flash_attention_2'], help='Attention backend for image model.')
+group.add_argument('--image-attn-backend', type=str, default=None, choices=['flash_attention_2', 'sdpa'], help='Attention backend for image model.')
 group.add_argument('--image-cpu-offload', action='store_true', help='Enable CPU offloading for image model.')
 group.add_argument('--image-compile', action='store_true', help='Compile the image model for faster inference.')
 group.add_argument('--image-quant', type=str, default=None,
@@ -325,7 +325,7 @@ settings = {
     'image_llm_variations_prompt': 'Write a variation of the image generation prompt above. Consider the intent of the user with that prompt and write something that will likely please them, with added details. Output only the new prompt. Do not add any explanations, prefixes, or additional text.',
     'image_model_menu': 'None',
     'image_dtype': 'bfloat16',
-    'image_attn_backend': 'sdpa',
+    'image_attn_backend': 'flash_attention_2',
     'image_cpu_offload': False,
     'image_compile': False,
     'image_quant': 'none',
