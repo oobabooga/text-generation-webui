@@ -89,8 +89,9 @@ def get_model_metadata(model):
             else:
                 bos_token = ""
 
-            template = template.replace('eos_token', "'{}'".format(eos_token))
-            template = template.replace('bos_token', "'{}'".format(bos_token))
+
+            shared.bos_token = bos_token
+            shared.eos_token = eos_token
 
             template = re.sub(r"\{\{-?\s*raise_exception\(.*?\)\s*-?\}\}", "", template, flags=re.DOTALL)
             template = re.sub(r'raise_exception\([^)]*\)', "''", template)
@@ -160,13 +161,16 @@ def get_model_metadata(model):
 
         # 4. If a template was found from any source, process it
         if template:
+            shared.bos_token = '<s>'
+            shared.eos_token = '</s>'
+
             for k in ['eos_token', 'bos_token']:
                 if k in metadata:
                     value = metadata[k]
                     if isinstance(value, dict):
                         value = value['content']
 
-                    template = template.replace(k, "'{}'".format(value))
+                    setattr(shared, k, value)
 
             template = re.sub(r"\{\{-?\s*raise_exception\(.*?\)\s*-?\}\}", "", template, flags=re.DOTALL)
             template = re.sub(r'raise_exception\([^)]*\)', "''", template)

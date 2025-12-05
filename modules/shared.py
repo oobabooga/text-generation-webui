@@ -19,6 +19,8 @@ is_seq2seq = False
 is_multimodal = False
 model_dirty_from_training = False
 lora_names = []
+bos_token = '<s>'
+eos_token = '</s>'
 
 # Image model variables
 image_model = None
