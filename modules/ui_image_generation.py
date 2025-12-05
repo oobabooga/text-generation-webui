@@ -40,8 +40,6 @@ METADATA_SETTINGS_KEYS = [
     'image_aspect_ratio',
     'image_steps',
     'image_seed',
-    'image_batch_size',
-    'image_batch_count',
     'image_cfg_scale',
 ]
 
@@ -184,8 +182,6 @@ def format_metadata_for_display(metadata):
         ('image_steps', 'Steps'),
         ('image_cfg_scale', 'CFG Scale'),
         ('image_seed', 'Seed'),
-        ('image_batch_size', 'Batch Size'),
-        ('image_batch_count', 'Batch Count'),
         ('model', 'Model'),
         ('generated_at', 'Generated At'),
     ]
@@ -314,11 +310,11 @@ def on_gallery_select(evt: gr.SelectData, current_page):
 def send_to_generate(selected_image_path):
     """Load settings from selected image and return updates for all Generate tab inputs."""
     if not selected_image_path or not os.path.exists(selected_image_path):
-        return [gr.update()] * 10 + ["No image selected"]
+        return [gr.update()] * 8 + ["No image selected"]
 
     metadata = read_image_metadata(selected_image_path)
     if not metadata:
-        return [gr.update()] * 10 + ["No settings found in this image"]
+        return [gr.update()] * 8 + ["No settings found in this image"]
 
     # Return updates for each input element in order
     updates = [
@@ -329,8 +325,6 @@ def send_to_generate(selected_image_path):
         gr.update(value=metadata.get('image_aspect_ratio', '1:1 Square')),
         gr.update(value=metadata.get('image_steps', 9)),
         gr.update(value=metadata.get('image_seed', -1)),
-        gr.update(value=metadata.get('image_batch_size', 1)),
-        gr.update(value=metadata.get('image_batch_count', 1)),
         gr.update(value=metadata.get('image_cfg_scale', 0.0)),
     ]
 
@@ -661,8 +655,6 @@ def create_event_handlers():
             'image_aspect_ratio',
             'image_steps',
             'image_seed',
-            'image_batch_size',
-            'image_batch_count',
             'image_cfg_scale',
             'image_gallery_status'
         ),
@@ -795,7 +787,7 @@ def generate(state, save_images=True):
         device = get_device()
         if device is None:
             device = "cpu"
-        generator = torch.Generator(device).manual_seed(int(seed))
+        generator = torch.Generator(device)
 
         all_images = []
 
@@ -804,13 +796,7 @@ def generate(state, save_images=True):
         if pipeline_type is None:
             pipeline_type = get_pipeline_type(shared.image_model)
 
-        # Process Prompt
         prompt = state['image_prompt']
-
-        if pipeline_type == 'qwenimage':
-            magic_suffix = ", Ultra HD, 4K, cinematic composition"
-            if magic_suffix.strip(", ") not in prompt:
-                prompt += magic_suffix
 
         shared.stop_everything = False
 
@@ -862,7 +848,15 @@ def generate(state, save_images=True):
 
             def run_batch():
                 try:
+                    # Apply magic suffix only at generation time for qwenimage
+                    clean_prompt = gen_kwargs["prompt"]
+                    if pipeline_type == 'qwenimage':
+                        magic_suffix = ", Ultra HD, 4K, cinematic composition"
+                        if magic_suffix.strip(", ") not in clean_prompt:
+                            gen_kwargs["prompt"] = clean_prompt + magic_suffix
+
                     result_holder.extend(shared.image_model(**gen_kwargs).images)
+                    gen_kwargs["prompt"] = clean_prompt  # restore
                 except Exception as e:
                     error_holder.append(e)
 
@@ -885,12 +879,18 @@ def generate(state, save_images=True):
             if error_holder:
                 raise error_holder[0]
 
+            # Save this batch's images with the actual prompt and seed used
+            if save_images:
+                batch_seed = seed + batch_idx
+                original_prompt = state['image_prompt']
+                state['image_prompt'] = gen_kwargs["prompt"]
+                save_generated_images(result_holder, state, batch_seed)
+                state['image_prompt'] = original_prompt
+
             all_images.extend(result_holder)
             yield all_images, progress_bar_html((batch_idx + 1) / batch_count, f"Batch {batch_idx + 1}/{batch_count} complete")
 
         t1 = time.time()
-        if save_images:
-            save_generated_images(all_images, state, seed)
 
         total_images = batch_count * int(state['image_batch_size'])
         logger.info(f'Generated {total_images} {"image" if total_images == 1 else "images"} in {(t1 - t0):.2f} seconds ({total_steps / (t1 - t0):.2f} steps/s, seed {seed})')
