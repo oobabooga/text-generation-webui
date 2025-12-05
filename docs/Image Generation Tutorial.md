@@ -34,7 +34,15 @@ Select the quantization option in the "Quantization" menu and click "Load".
 
 The memory usage for `Z-Image-Turbo` for each option is:
 
-If you have less GPU memory than _, check the "CPU Offload" option.
+| Quantization Method | VRAM Usage |
+| :--- | :--- |
+| **None (FP16/BF16)** | 25613 MiB |
+| **bnb-8bit** | 16301 MiB |
+| **bnb-8bit + CPU Offload** | 16235 MiB |
+| **bnb-4bit** | 11533 MiB |
+| **bnb-4bit + CPU Offload** | 7677 MiB |
+
+The `torchao` options support `torch.compile` for faster image generation, with `float8wo` specifically providing native hardware acceleration for RTX 40-series and newer GPUs.
 
 Note: The next time you launch the web UI, the model will get automatically loaded with your last settings when you try to generate an image. You do not need to go to the Model tab and click "Load" each time.
 
