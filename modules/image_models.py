@@ -8,17 +8,14 @@ from modules.utils import resolve_model_path
 def get_quantization_config(quant_method):
     """
     Get the appropriate quantization config based on the selected method.
-
-    Args:
-        quant_method: One of 'none', 'bnb-8bit', 'bnb-4bit',
-                      'torchao-int8wo', 'torchao-fp4', 'torchao-float8wo'
-
-    Returns:
-        PipelineQuantizationConfig or None
+    Applies quantization to both the transformer and the text_encoder.
     """
     import torch
-    from diffusers import BitsAndBytesConfig, TorchAoConfig
+    # Import BitsAndBytesConfig from BOTH libraries to be safe
+    from diffusers import BitsAndBytesConfig as DiffusersBnBConfig
+    from diffusers import TorchAoConfig
     from diffusers.quantizers import PipelineQuantizationConfig
+    from transformers import BitsAndBytesConfig as TransformersBnBConfig
 
     if quant_method == 'none' or not quant_method:
         return None
@@ -27,7 +24,10 @@ def get_quantization_config(quant_method):
     elif quant_method == 'bnb-8bit':
         return PipelineQuantizationConfig(
             quant_mapping={
-                "transformer": BitsAndBytesConfig(
+                "transformer": DiffusersBnBConfig(
+                    load_in_8bit=True
+                ),
+                "text_encoder": TransformersBnBConfig(
                     load_in_8bit=True
                 )
             }
@@ -37,7 +37,13 @@ def get_quantization_config(quant_method):
     elif quant_method == 'bnb-4bit':
         return PipelineQuantizationConfig(
             quant_mapping={
-                "transformer": BitsAndBytesConfig(
+                "transformer": DiffusersBnBConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_quant_type="nf4",
+                    bnb_4bit_compute_dtype=torch.bfloat16,
+                    bnb_4bit_use_double_quant=True
+                ),
+                "text_encoder": TransformersBnBConfig(
                     load_in_4bit=True,
                     bnb_4bit_quant_type="nf4",
                     bnb_4bit_compute_dtype=torch.bfloat16,
@@ -50,7 +56,8 @@ def get_quantization_config(quant_method):
     elif quant_method == 'torchao-int8wo':
         return PipelineQuantizationConfig(
             quant_mapping={
-                "transformer": TorchAoConfig("int8wo")
+                "transformer": TorchAoConfig("int8wo"),
+                "text_encoder": TorchAoConfig("int8wo")
             }
         )
 
@@ -58,7 +65,8 @@ def get_quantization_config(quant_method):
     elif quant_method == 'torchao-fp4':
         return PipelineQuantizationConfig(
             quant_mapping={
-                "transformer": TorchAoConfig("fp4_e2m1")
+                "transformer": TorchAoConfig("fp4_e2m1"),
+                "text_encoder": TorchAoConfig("fp4_e2m1")
             }
         )
 
@@ -66,7 +74,8 @@ def get_quantization_config(quant_method):
     elif quant_method == 'torchao-float8wo':
         return PipelineQuantizationConfig(
             quant_mapping={
-                "transformer": TorchAoConfig("float8wo")
+                "transformer": TorchAoConfig("float8wo"),
+                "text_encoder": TorchAoConfig("float8wo")
             }
         )
 
