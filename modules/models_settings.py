@@ -89,7 +89,6 @@ def get_model_metadata(model):
             else:
                 bos_token = ""
 
-
             shared.bos_token = bos_token
             shared.eos_token = eos_token
 
