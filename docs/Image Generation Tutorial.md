@@ -75,3 +75,24 @@ After that, your prompts will be automatically updated by the LLM each time you 
 The improvement in creativity is striking:
 
 <img  alt="comparison_collage" src="https://github.com/user-attachments/assets/67884832-2800-41cb-a146-e88e25af89c4" />
+
+## Generating images over API
+
+It is possible to generate images usign the project's API. Just make sure to start the server with `--api`, either by
+
+1. Passing the `--api` flag to your `start` script, like `./start_linux.sh --api`, or
+2. Writing `--api` to your `user_data/CMD_FLAGS.txt` file and relaunching the web UI.
+
+Here is an API call example:
+
+```
+curl http://127.0.0.1:5000/v1/images/generations \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "an orange tree",
+    "steps": 9,
+    "cfg_scale": 0,
+    "batch_size": 1,
+    "batch_count": 1
+  }'
+```
