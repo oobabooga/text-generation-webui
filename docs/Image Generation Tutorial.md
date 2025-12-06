@@ -2,6 +2,9 @@
 
 This feature allows you to generate images using `diffusers` models like [Tongyi-MAI/Z-Image-Turbo](https://huggingface.co/Tongyi-MAI/Z-Image-Turbo) directly within the web UI.
 
+<img alt="print" src="https://github.com/user-attachments/assets/5108de50-658b-4e93-b2ae-4656d076bc9d" />
+
+
 ## Installation
 
 1. Clone the repository with
@@ -36,11 +39,11 @@ The memory usage for `Z-Image-Turbo` for each option is:
 
 | Quantization Method | VRAM Usage |
 | :--- | :--- |
-| **None (FP16/BF16)** | 25613 MiB |
-| **bnb-8bit** | 16301 MiB |
-| **bnb-8bit + CPU Offload** | 16235 MiB |
-| **bnb-4bit** | 11533 MiB |
-| **bnb-4bit + CPU Offload** | 7677 MiB |
+| None (FP16/BF16) | 25613 MiB |
+| bnb-8bit | 16301 MiB |
+| bnb-8bit + CPU Offload | 16235 MiB |
+| bnb-4bit | 11533 MiB |
+| bnb-4bit + CPU Offload | 7677 MiB |
 
 The `torchao` options support `torch.compile` for faster image generation, with `float8wo` specifically providing native hardware acceleration for RTX 40-series and newer GPUs.
 
@@ -70,3 +73,5 @@ Then go back to the "Image AI" page and check "LLM Prompt Variations".
 After that, your prompts will be automatically updated by the LLM each time you generate an image. If you use a "Sequential Count" value greater than 1, a new prompt will be created for each sequential batch.
 
 The improvement in creativity is striking:
+
+<img  alt="comparison_collage" src="https://github.com/user-attachments/assets/67884832-2800-41cb-a146-e88e25af89c4" />
