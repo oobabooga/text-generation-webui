@@ -130,7 +130,7 @@ class CompletionRequest(GenerationOptions, CompletionRequestParams):
 class CompletionResponse(BaseModel):
     id: str
     choices: List[dict]
-    created: int = int(time.time())
+    created: int = Field(default_factory=lambda: int(time.time()))
     model: str
     object: str = "text_completion"
     usage: dict
@@ -178,7 +178,7 @@ class ChatCompletionRequest(GenerationOptions, ChatCompletionRequestParams):
 class ChatCompletionResponse(BaseModel):
     id: str
     choices: List[dict]
-    created: int = int(time.time())
+    created: int = Field(default_factory=lambda: int(time.time()))
     model: str
     object: str = "chat.completion"
     usage: dict
@@ -296,7 +296,7 @@ class ImageGenerationRequest(BaseModel):
 
 
 class ImageGenerationResponse(BaseModel):
-    created: int = int(time.time())
+    created: int = Field(default_factory=lambda: int(time.time()))
     data: List[dict]
 
 
