@@ -133,9 +133,9 @@ def build_generation_metadata(state, actual_seed):
 
 
 def save_generated_images(images, state, actual_seed):
-    """Save images with generation metadata embedded in PNG."""
+    """Save images with generation metadata embedded in PNG. Returns list of saved file paths."""
     if shared.args.multi_user:
-        return
+        return []
 
     date_str = datetime.now().strftime("%Y-%m-%d")
     folder_path = os.path.join("user_data", "image_outputs", date_str)
@@ -144,6 +144,7 @@ def save_generated_images(images, state, actual_seed):
     metadata = build_generation_metadata(state, actual_seed)
     metadata_json = json.dumps(metadata, ensure_ascii=False)
 
+    saved_paths = []
     for idx, img in enumerate(images):
         timestamp = datetime.now().strftime("%H-%M-%S")
         filename = f"TGW_{timestamp}_{actual_seed:010d}_{idx:03d}.png"
@@ -155,6 +156,9 @@ def save_generated_images(images, state, actual_seed):
 
         # Save with metadata
         img.save(filepath, pnginfo=png_info)
+        saved_paths.append(filepath)
+
+    return saved_paths
 
 
 def read_image_metadata(image_path):
@@ -892,10 +896,14 @@ def generate(state, save_images=True):
                 batch_seed = seed + batch_idx
                 original_prompt = state['image_prompt']
                 state['image_prompt'] = gen_kwargs["prompt"]
-                save_generated_images(result_holder, state, batch_seed)
+                saved_paths = save_generated_images(result_holder, state, batch_seed)
                 state['image_prompt'] = original_prompt
+                # Use file paths so gallery serves actual PNGs with metadata
+                all_images.extend(saved_paths)
+            else:
+                # Fallback to PIL objects if not saving
+                all_images.extend(result_holder)
 
-            all_images.extend(result_holder)
             yield all_images, progress_bar_html((batch_idx + 1) / batch_count, f"Batch {batch_idx + 1}/{batch_count} complete")
 
         t1 = time.time()
