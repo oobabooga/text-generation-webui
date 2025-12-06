@@ -86,7 +86,7 @@ def check_model_loaded():
     return True, None
 
 
-def resolve_model_path(model_name_or_path):
+def resolve_model_path(model_name_or_path, image_model=False):
     """
     Resolves a model path, checking for a direct path
     before the default models directory.
@@ -95,6 +95,8 @@ def resolve_model_path(model_name_or_path):
     path_candidate = Path(model_name_or_path)
     if path_candidate.exists():
         return path_candidate
+    elif image_model:
+        return Path(f'{shared.args.image_model_dir}/{model_name_or_path}')
     else:
         return Path(f'{shared.args.model_dir}/{model_name_or_path}')
 
@@ -151,6 +153,24 @@ def get_available_models():
     model_dirs = sorted(model_dirs, key=natural_keys)
 
     return filtered_gguf_files + model_dirs
+
+
+def get_available_image_models():
+    model_dir = Path(shared.args.image_model_dir)
+    model_dir.mkdir(parents=True, exist_ok=True)
+
+    # Find valid model directories
+    model_dirs = []
+    for item in os.listdir(model_dir):
+        item_path = model_dir / item
+        if not item_path.is_dir():
+            continue
+
+        model_dirs.append(item)
+
+    model_dirs = sorted(model_dirs, key=natural_keys)
+
+    return model_dirs
 
 
 def get_available_ggufs():

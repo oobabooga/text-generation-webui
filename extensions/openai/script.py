@@ -17,10 +17,8 @@ from sse_starlette import EventSourceResponse
 from starlette.concurrency import iterate_in_threadpool
 
 import extensions.openai.completions as OAIcompletions
-import extensions.openai.images as OAIimages
 import extensions.openai.logits as OAIlogits
 import extensions.openai.models as OAImodels
-from extensions.openai.errors import ServiceUnavailableError
 from extensions.openai.tokens import token_count, token_decode, token_encode
 from extensions.openai.utils import _start_cloudflared
 from modules import shared
@@ -40,6 +38,8 @@ from .typing import (
     EmbeddingsResponse,
     EncodeRequest,
     EncodeResponse,
+    ImageGenerationRequest,
+    ImageGenerationResponse,
     LoadLorasRequest,
     LoadModelRequest,
     LogitsRequest,
@@ -54,12 +54,12 @@ from .typing import (
 params = {
     'embedding_device': 'cpu',
     'embedding_model': 'sentence-transformers/all-mpnet-base-v2',
-    'sd_webui_url': '',
     'debug': 0
 }
 
 
 streaming_semaphore = asyncio.Semaphore(1)
+image_generation_semaphore = asyncio.Semaphore(1)
 
 
 def verify_api_key(authorization: str = Header(None)) -> None:
@@ -228,20 +228,13 @@ async def handle_audio_transcription(request: Request):
     return JSONResponse(content=transcription)
 
 
-@app.post('/v1/images/generations', dependencies=check_key)
-async def handle_image_generation(request: Request):
+@app.post('/v1/images/generations', response_model=ImageGenerationResponse, dependencies=check_key)
+async def handle_image_generation(request_data: ImageGenerationRequest):
+    import extensions.openai.images as OAIimages
 
-    if not os.environ.get('SD_WEBUI_URL', params.get('sd_webui_url', '')):
-        raise ServiceUnavailableError("Stable Diffusion not available. SD_WEBUI_URL not set.")
-
-    body = await request.json()
-    prompt = body['prompt']
-    size = body.get('size', '1024x1024')
-    response_format = body.get('response_format', 'url')  # or b64_json
-    n = body.get('n', 1)  # ignore the batch limits of max 10
-
-    response = await OAIimages.generations(prompt=prompt, size=size, response_format=response_format, n=n)
-    return JSONResponse(response)
+    async with image_generation_semaphore:
+        response = await asyncio.to_thread(OAIimages.generations, request_data)
+        return JSONResponse(response)
 
 
 @app.post("/v1/embeddings", response_model=EmbeddingsResponse, dependencies=check_key)

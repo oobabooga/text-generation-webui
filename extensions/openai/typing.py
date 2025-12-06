@@ -130,7 +130,7 @@ class CompletionRequest(GenerationOptions, CompletionRequestParams):
 class CompletionResponse(BaseModel):
     id: str
     choices: List[dict]
-    created: int = int(time.time())
+    created: int = Field(default_factory=lambda: int(time.time()))
     model: str
     object: str = "text_completion"
     usage: dict
@@ -178,7 +178,7 @@ class ChatCompletionRequest(GenerationOptions, ChatCompletionRequestParams):
 class ChatCompletionResponse(BaseModel):
     id: str
     choices: List[dict]
-    created: int = int(time.time())
+    created: int = Field(default_factory=lambda: int(time.time()))
     model: str
     object: str = "chat.completion"
     usage: dict
@@ -262,6 +262,42 @@ class LoraListResponse(BaseModel):
 
 class LoadLorasRequest(BaseModel):
     lora_names: List[str]
+
+
+class ImageGenerationRequest(BaseModel):
+    """Image-specific parameters for generation."""
+    prompt: str
+    negative_prompt: str = ""
+    size: str = Field(default="1024x1024", description="'WIDTHxHEIGHT'")
+    steps: int = Field(default=9, ge=1)
+    cfg_scale: float = Field(default=0.0, ge=0.0)
+    image_seed: int = Field(default=-1, description="-1 for random")
+    batch_size: int | None = Field(default=None, ge=1, description="Parallel batch size (VRAM heavy)")
+    n: int = Field(default=1, ge=1, description="Alias for batch_size (OpenAI compatibility)")
+    batch_count: int = Field(default=1, ge=1, description="Sequential batch count")
+
+    # OpenAI compatibility (unused)
+    model: str | None = None
+    response_format: str = "b64_json"
+    user: str | None = None
+
+    @model_validator(mode='after')
+    def resolve_batch_size(self):
+        if self.batch_size is None:
+            self.batch_size = self.n
+        return self
+
+    def get_width_height(self) -> tuple[int, int]:
+        try:
+            parts = self.size.lower().split('x')
+            return int(parts[0]), int(parts[1])
+        except (ValueError, IndexError):
+            return 1024, 1024
+
+
+class ImageGenerationResponse(BaseModel):
+    created: int = Field(default_factory=lambda: int(time.time()))
+    data: List[dict]
 
 
 def to_json(obj):

@@ -93,11 +93,11 @@ ol li p, ul li p {
     display: inline-block;
 }
 
-#notebook-parent-tab, #chat-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab, #character-tab {
+#notebook-parent-tab, #chat-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab, #character-tab, #image-ai-tab {
     border: 0;
 }
 
-#notebook-parent-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab, #character-tab {
+#notebook-parent-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab, #character-tab, #image-ai-tab {
     padding: 1rem;
 }
 
@@ -244,37 +244,46 @@ button {
     font-size: 100% !important;
 }
 
-.pretty_scrollbar::-webkit-scrollbar {
+.pretty_scrollbar::-webkit-scrollbar,
+#image-history-gallery > :nth-child(2)::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
-.pretty_scrollbar::-webkit-scrollbar-track {
+.pretty_scrollbar::-webkit-scrollbar-track,
+#image-history-gallery > :nth-child(2)::-webkit-scrollbar-track {
     background: transparent;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-thumb,
-.pretty_scrollbar::-webkit-scrollbar-thumb:hover {
+.pretty_scrollbar::-webkit-scrollbar-thumb:hover,
+#image-history-gallery > :nth-child(2)::-webkit-scrollbar-thumb,
+#image-history-gallery > :nth-child(2)::-webkit-scrollbar-thumb:hover {
     background: var(--neutral-300);
     border-radius: 30px;
 }
 
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb,
-.dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
+.dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover,
+.dark #image-history-gallery > :nth-child(2)::-webkit-scrollbar-thumb,
+.dark #image-history-gallery > :nth-child(2)::-webkit-scrollbar-thumb:hover {
     background: rgb(255 255 255 / 6.25%);
     border-radius: 10px;
 }
 
-.pretty_scrollbar::-webkit-resizer {
+.pretty_scrollbar::-webkit-resizer,
+#image-history-gallery > :nth-child(2)::-webkit-resizer {
     background: #c5c5d2;
 }
 
-.dark .pretty_scrollbar::-webkit-resizer {
+.dark .pretty_scrollbar::-webkit-resizer,
+.dark #image-history-gallery > :nth-child(2)::-webkit-resizer {
     background: #ccc;
     border-radius: 10px;
 }
 
-.pretty_scrollbar::-webkit-scrollbar-corner {
+.pretty_scrollbar::-webkit-scrollbar-corner,
+#image-history-gallery > :nth-child(2)::-webkit-scrollbar-corner {
     background: transparent;
 }
 
@@ -1673,4 +1682,118 @@ button:focus {
 
 .dark .sidebar-vertical-separator {
     border-bottom: 1px solid rgb(255 255 255 / 10%);
+}
+
+button#swap-height-width {
+    position: absolute;
+    top: -50px;
+    right: 0;
+    border: 0;
+}
+
+#image-output-gallery, #image-output-gallery > :nth-child(2) {
+    height: calc(100vh - 83px);
+    max-height: calc(100vh - 83px);
+}
+
+#image-history-gallery, #image-history-gallery > :nth-child(2) {
+    height: calc(100vh - 174px);
+    max-height: calc(100vh - 174px);
+}
+
+/* Additional CSS for the paginated image gallery */
+
+/* Page info styling */
+#image-page-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 200px;
+    font-size: 0.9em;
+    color: var(--body-text-color-subdued);
+}
+
+/* Settings display panel */
+#image-ai-tab .settings-display-panel {
+    background: var(--background-fill-secondary);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.9em;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-top: 8px;
+}
+
+/* Gallery status message */
+#image-ai-tab .gallery-status {
+    color: var(--color-accent);
+    font-size: 0.85em;
+    margin-top: 4px;
+}
+
+/* Pagination button row alignment */
+#image-ai-tab .pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Selected image preview container */
+#image-ai-tab .selected-preview-container {
+    border: 1px solid var(--border-color-primary);
+    border-radius: 8px;
+    padding: 8px;
+    background: var(--background-fill-secondary);
+}
+
+/* Fix a gr.Markdown UI glitch when clicking Next in the
+ * Image AI > Gallery tab */
+.min.svelte-1yrv54 {
+    min-height: 0;
+}
+
+/* Image Generation Progress Bar */
+#image-progress .image-ai-separator {
+    height: 24px;
+    margin: 20px 0;
+    border-top: 1px solid var(--input-border-color);
+}
+
+#image-progress .image-ai-progress-wrapper {
+    height: 24px;
+    margin: 20px 0;
+}
+
+#image-progress .image-ai-progress-track {
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    height: 8px;
+}
+
+.dark #image-progress .image-ai-progress-track {
+    background: #333;
+}
+
+#image-progress .image-ai-progress-fill {
+    background: #4a9eff;
+    height: 100%;
+}
+
+#image-progress .image-ai-progress-text {
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.dark #image-progress .image-ai-progress-text {
+    color: #888;
+}
+
+#llm-prompt-variations {
+    position: absolute;
+    top: 0;
+    left: calc(100% - 174px);
 }
