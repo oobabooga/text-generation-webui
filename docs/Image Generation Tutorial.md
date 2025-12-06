@@ -72,7 +72,7 @@ Then go back to the "Image AI" page and check "LLM Prompt Variations".
 
 After that, your prompts will be automatically updated by the LLM each time you generate an image. If you use a "Sequential Count" value greater than 1, a new prompt will be created for each sequential batch.
 
-The improvement in creativity is striking:
+The improvement in creativity is striking (prompt: `Photo of a beautiful woman at night under moonlight`):
 
 <img  alt="comparison_collage" src="https://github.com/user-attachments/assets/67884832-2800-41cb-a146-e88e25af89c4" />
 
