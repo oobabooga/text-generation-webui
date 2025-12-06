@@ -101,6 +101,11 @@ def create_interface():
             auth.extend(x.strip() for line in file for x in line.split(',') if x.strip())
     auth = [tuple(cred.split(':')) for cred in auth]
 
+    # Allowed paths
+    allowed_paths = ["css", "js", "extensions", "user_data/cache"]
+    if not shared.args.multi_user:
+        allowed_paths.append("user_data/image_outputs")
+
     # Import the extensions and execute their setup() functions
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
         extensions_module.load_extensions()
@@ -237,7 +242,7 @@ def create_interface():
             ssl_keyfile=shared.args.ssl_keyfile,
             ssl_certfile=shared.args.ssl_certfile,
             root_path=shared.args.subpath,
-            allowed_paths=["css", "js", "extensions", "user_data/cache"]
+            allowed_paths=allowed_paths,
         )
 
 
