@@ -60,7 +60,7 @@ Note: The next time you launch the web UI, the model will get automatically load
 
 ### LLM Prompt Variations
 
-To use this feature, you need to load an LLM in the main "Model" tab on the left.
+To use this feature, you need to load an LLM in the main "Model" page on the left.
 
 If you have no idea what to use, do this to get started:
 
@@ -78,7 +78,7 @@ The improvement in creativity is striking (prompt: `Photo of a beautiful woman a
 
 ## Generating images over API
 
-It is possible to generate images usign the project's API. Just make sure to start the server with `--api`, either by
+It is possible to generate images using the project's API. Just make sure to start the server with `--api`, either by
 
 1. Passing the `--api` flag to your `start` script, like `./start_linux.sh --api`, or
 2. Writing `--api` to your `user_data/CMD_FLAGS.txt` file and relaunching the web UI.
