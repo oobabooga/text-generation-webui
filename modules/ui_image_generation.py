@@ -848,6 +848,9 @@ def generate(state, save_images=True):
             if shared.stop_everything:
                 break
 
+            if batch_idx > 0:
+                clear_torch_cache()
+
             generator.manual_seed(int(seed + batch_idx))
 
             # Generate prompt variation if enabled
