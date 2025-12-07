@@ -1,12 +1,12 @@
 import json
 import os
+import random
 import time
 import traceback
 from datetime import datetime
 from pathlib import Path
 
 import gradio as gr
-import numpy as np
 from PIL.PngImagePlugin import PngInfo
 
 from modules import shared, ui, utils
@@ -794,7 +794,7 @@ def generate(state, save_images=True):
 
         seed = state['image_seed']
         if seed == -1:
-            seed = np.random.randint(0, 2**32 - 1)
+            seed = random.randint(0, 2**32 - 1)
 
         device = get_device()
         if device is None:
