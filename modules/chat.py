@@ -3,7 +3,6 @@ import copy
 import functools
 import html
 import json
-import os
 import pprint
 import re
 import shutil
@@ -26,6 +25,7 @@ from modules.html_generator import (
     convert_to_markdown,
     make_thumbnail
 )
+from modules.image_utils import open_image_safely
 from modules.logging_colors import logger
 from modules.text_generation import (
     generate_reply,
@@ -112,7 +112,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
         add_generation_prompt=False,
         enable_thinking=state['enable_thinking'],
         reasoning_effort=state['reasoning_effort'],
-        thinking_budget=-1 if state.get('enable_thinking', True) else 0
+        thinking_budget=-1 if state.get('enable_thinking', True) else 0,
+        bos_token=shared.bos_token,
+        eos_token=shared.eos_token,
     )
 
     chat_renderer = partial(
@@ -475,7 +477,7 @@ def get_stopping_strings(state):
 
     if state['mode'] in ['instruct', 'chat-instruct']:
         template = jinja_env.from_string(state['instruction_template_str'])
-        renderer = partial(template.render, add_generation_prompt=False)
+        renderer = partial(template.render, add_generation_prompt=False, bos_token=shared.bos_token, eos_token=shared.eos_token)
         renderers.append(renderer)
 
     if state['mode'] in ['chat']:
@@ -1514,20 +1516,6 @@ def load_character_memoized(character, name1, name2):
 @functools.cache
 def load_instruction_template_memoized(template):
     return load_instruction_template(template)
-
-
-def open_image_safely(path):
-    if path is None or not isinstance(path, str) or not Path(path).exists():
-        return None
-
-    if os.path.islink(path):
-        return None
-
-    try:
-        return Image.open(path)
-    except Exception as e:
-        logger.error(f"Failed to open image file: {path}. Reason: {e}")
-        return None
 
 
 def upload_character(file, img_path, tavern=False):

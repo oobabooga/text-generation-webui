@@ -1,70 +1,69 @@
-import os
+"""
+OpenAI-compatible image generation using local diffusion models.
+"""
+
+import base64
+import io
 import time
 
-import requests
-
 from extensions.openai.errors import ServiceUnavailableError
+from modules import shared
 
 
-def generations(prompt: str, size: str, response_format: str, n: int):
-    # Stable Diffusion callout wrapper for txt2img
-    # Low effort implementation for compatibility. With only "prompt" being passed and assuming DALL-E
-    # the results will be limited and likely poor. SD has hundreds of models and dozens of settings.
-    # If you want high quality tailored results you should just use the Stable Diffusion API directly.
-    # it's too general an API to try and shape the result with specific tags like negative prompts
-    # or "masterpiece", etc. SD configuration is beyond the scope of this API.
-    # At this point I will not add the edits and variations endpoints (ie. img2img) because they
-    # require changing the form data handling to accept multipart form data, also to properly support
-    # url return types will require file management and a web serving files... Perhaps later!
-    base_model_size = 512 if 'SD_BASE_MODEL_SIZE' not in os.environ else int(os.environ.get('SD_BASE_MODEL_SIZE', 512))
-    sd_defaults = {
-        'sampler_name': 'DPM++ 2M Karras',  # vast improvement
-        'steps': 30,
-    }
+def generations(request):
+    """
+    Generate images using the loaded diffusion model.
+    Returns dict with 'created' timestamp and 'data' list of images.
+    """
+    from modules.ui_image_generation import generate
 
-    width, height = [int(x) for x in size.split('x')]  # ignore the restrictions on size
+    if shared.image_model is None:
+        raise ServiceUnavailableError("No image model loaded. Load a model via the UI first.")
 
-    # to hack on better generation, edit default payload.
-    payload = {
-        'prompt': prompt,  # ignore prompt limit of 1000 characters
-        'width': width,
-        'height': height,
-        'batch_size': n,
-    }
-    payload.update(sd_defaults)
+    width, height = request.get_width_height()
 
-    scale = min(width, height) / base_model_size
-    if scale >= 1.2:
-        # for better performance with the default size (1024), and larger res.
-        scaler = {
-            'width': width // scale,
-            'height': height // scale,
-            'hr_scale': scale,
-            'enable_hr': True,
-            'hr_upscaler': 'Latent',
-            'denoising_strength': 0.68,
-        }
-        payload.update(scaler)
+    # Build state dict: GenerationOptions fields + image-specific keys
+    state = request.model_dump()
+    state.update({
+        'image_model_menu': shared.image_model_name,
+        'image_prompt': request.prompt,
+        'image_neg_prompt': request.negative_prompt,
+        'image_width': width,
+        'image_height': height,
+        'image_steps': request.steps,
+        'image_seed': request.image_seed,
+        'image_batch_size': request.batch_size,
+        'image_batch_count': request.batch_count,
+        'image_cfg_scale': request.cfg_scale,
+        'image_llm_variations': False,
+    })
 
-    resp = {
-        'created': int(time.time()),
-        'data': []
-    }
-    from extensions.openai.script import params
+    # Exhaust generator, keep final result
+    images = []
+    for images, _ in generate(state, save_images=False):
+        pass
 
-    # TODO: support SD_WEBUI_AUTH username:password pair.
-    sd_url = f"{os.environ.get('SD_WEBUI_URL', params.get('sd_webui_url', ''))}/sdapi/v1/txt2img"
+    if not images:
+        raise ServiceUnavailableError("Image generation failed or produced no images.")
 
-    response = requests.post(url=sd_url, json=payload)
-    r = response.json()
-    if response.status_code != 200 or 'images' not in r:
-        print(r)
-        raise ServiceUnavailableError(r.get('error', 'Unknown error calling Stable Diffusion'), code=response.status_code, internal_message=r.get('errors', None))
-    # r['parameters']...
-    for b64_json in r['images']:
-        if response_format == 'b64_json':
-            resp['data'].extend([{'b64_json': b64_json}])
+    # Build response
+    resp = {'created': int(time.time()), 'data': []}
+    for img in images:
+        b64 = _image_to_base64(img)
+
+        image_obj = {'revised_prompt': request.prompt}
+
+        if request.response_format == 'b64_json':
+            image_obj['b64_json'] = b64
         else:
-            resp['data'].extend([{'url': f'data:image/png;base64,{b64_json}'}])  # yeah it's lazy. requests.get() will not work with this
+            image_obj['url'] = f'data:image/png;base64,{b64}'
+
+        resp['data'].append(image_obj)
 
     return resp
+
+
+def _image_to_base64(image) -> str:
+    buffered = io.BytesIO()
+    image.save(buffered, format="PNG")
+    return base64.b64encode(buffered.getvalue()).decode('utf-8')

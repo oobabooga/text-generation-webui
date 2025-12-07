@@ -36,3 +36,17 @@ function switch_to_character() {
   document.getElementById("character-tab-button").click();
   scrollToTop();
 }
+
+function switch_to_image_ai_generate() {
+  const container = document.querySelector("#image-ai-tab");
+  const buttons = container.getElementsByTagName("button");
+
+  for (let i = 0; i < buttons.length; i++) {
+    if (buttons[i].textContent.trim() === "Generate") {
+      buttons[i].click();
+      break;
+    }
+  }
+
+  scrollToTop();
+}
