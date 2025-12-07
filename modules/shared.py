@@ -112,7 +112,7 @@ group.add_argument('--no-cache', action='store_true', help='Set use_cache to Fal
 group.add_argument('--trust-remote-code', action='store_true', help='Set trust_remote_code=True while loading the model. Necessary for some models.')
 group.add_argument('--force-safetensors', action='store_true', help='Set use_safetensors=True while loading the model. This prevents arbitrary code execution.')
 group.add_argument('--no_use_fast', action='store_true', help='Set use_fast=False while loading the tokenizer (it\'s True by default). Use this if you have any problems related to use_fast.')
-group.add_argument('--attn-implementation', type=str, default='sdpa', metavar="IMPLEMENTATION", help='Attention implementation. Valid options: sdpa, eager, flash_attention_2.')
+group.add_argument('--attn-implementation', type=str, default='flash_attention_2', metavar="IMPLEMENTATION", help='Attention implementation. Valid options: flash_attention_2, sdpa, eager.')
 
 # bitsandbytes 4-bit
 group = parser.add_argument_group('bitsandbytes 4-bit')
