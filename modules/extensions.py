@@ -81,7 +81,7 @@ def iterator():
 
 
 # Extension functions that map string -> string
-def _apply_string_extensions(function_name, text, state, is_chat=False):
+def _apply_string_extensions(function_name, text, state, is_chat=False, **extra_kwargs):
     for extension, _ in iterator():
         if hasattr(extension, function_name):
             func = getattr(extension, function_name)
@@ -89,22 +89,21 @@ def _apply_string_extensions(function_name, text, state, is_chat=False):
             # Handle old extensions without the 'state' arg or
             # the 'is_chat' kwarg
             count = 0
-            has_chat = False
-            for k in signature(func).parameters:
+            func_params = signature(func).parameters
+            kwargs = {}
+            
+            for k in func_params:
                 if k == 'is_chat':
-                    has_chat = True
+                    kwargs['is_chat'] = is_chat
+                elif k in extra_kwargs:
+                    kwargs[k] = extra_kwargs[k]
                 else:
                     count += 1
 
-            if count == 2:
+            if count >= 2:
                 args = [text, state]
             else:
                 args = [text]
-
-            if has_chat:
-                kwargs = {'is_chat': is_chat}
-            else:
-                kwargs = {}
 
             text = func(*args, **kwargs)
 
@@ -231,6 +230,7 @@ EXTENSION_MAP = {
     "input": partial(_apply_string_extensions, "input_modifier"),
     "output": partial(_apply_string_extensions, "output_modifier"),
     "chat_input": _apply_chat_input_extensions,
+    "output_stream": partial(_apply_string_extensions, "output_stream_modifier"),
     "state": _apply_state_modifier_extensions,
     "history": _apply_history_modifier_extensions,
     "bot_prefix": partial(_apply_string_extensions, "bot_prefix_modifier"),
