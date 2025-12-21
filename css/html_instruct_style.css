@@ -27,6 +27,10 @@
     border-color: #ffffff75 !important;
 }
 
+.dark .prose hr {
+    border-color: #ffffff75 !important;
+}
+
 .chat .message-body :is(p, ul, ol) {
     margin: 1.25em 0 !important;
 }
