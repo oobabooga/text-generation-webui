@@ -2,6 +2,7 @@ accelerate==1.8.*
 audioop-lts<1.0; python_version >= "3.13"
 colorama
 datasets
+diffusers==0.36.*
 einops
 fastapi==0.112.4
 html2text==2025.4.15
@@ -19,13 +20,13 @@ python-docx==1.1.2
 pyyaml
 requests
 rich
-safetensors==0.6.*
+safetensors==0.7.*
 scipy
 sentencepiece
 tensorboard
 torchao==0.14.*
 transformers==4.57.*
-triton-windows==3.5.1.post21; platform_system == "Windows"
+triton-windows==3.5.1.post22; platform_system == "Windows"
 tqdm
 wandb
 
@@ -33,14 +34,11 @@ wandb
 gradio==4.37.*
 https://github.com/oobabooga/gradio/releases/download/custom-build/gradio_client-1.0.2+custom.1-py3-none-any.whl
 
-# Diffusers
-diffusers @ git+https://github.com/huggingface/diffusers.git@edf36f5128abf3e6ecf92b5145115514363c58e6
-
 # API
 flask_cloudflared==0.0.14
 sse-starlette==1.6.5
 tiktoken
 
 # Mac wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.66.0/llama_cpp_binaries-0.66.0-py3-none-macosx_15_0_arm64.whl; platform_system == "Darwin" and platform_release >= "24.0.0"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.66.0/llama_cpp_binaries-0.66.0-py3-none-macosx_14_0_arm64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.71.0/llama_cpp_binaries-0.71.0-py3-none-macosx_15_0_arm64.whl; platform_system == "Darwin" and platform_release >= "24.0.0"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.71.0/llama_cpp_binaries-0.71.0-py3-none-macosx_14_0_arm64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0"
