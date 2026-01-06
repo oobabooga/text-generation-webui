@@ -83,7 +83,11 @@ def get_model_metadata(model):
 
         if 'tokenizer.chat_template' in metadata:
             template = metadata['tokenizer.chat_template']
-            eos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.eos_token_id']]
+            if 'tokenizer.ggml.eos_token_id' in metadata:
+                eos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.eos_token_id']]
+            else:
+                eos_token = ""
+
             if 'tokenizer.ggml.bos_token_id' in metadata:
                 bos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.bos_token_id']]
             else:
