@@ -1799,11 +1799,11 @@ button#swap-height-width {
 }
 
 table {
-  border-collapse: collapse;
+    border-collapse: collapse;
 }
 
 table, tr, td, th, thead {
-  border: 0;
+    border: 0;
 }
 
 td + td,

@@ -26,7 +26,7 @@
 
 .dark .chat .message-body :is(th, td),
 .dark .prose hr {
-    border-color: rgba(255, 255, 255, 0.3) !important;
+    border-color: rgb(255 255 255 / 30%) !important;
 }
 
 .chat .message-body :is(p, ul, ol) {
