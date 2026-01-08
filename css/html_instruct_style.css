@@ -19,12 +19,14 @@
     color: #d1d5db !important;
 }
 
-.chat .message-body :is(th, td) {
+.chat .message-body :is(th, td),
+.prose hr {
     border-color: #40404096 !important;
 }
 
-.dark .chat .message-body :is(th, td) {
-    border-color: #ffffff75 !important;
+.dark .chat .message-body :is(th, td),
+.dark .prose hr {
+    border-color: rgb(255 255 255 / 30%) !important;
 }
 
 .chat .message-body :is(p, ul, ol) {
