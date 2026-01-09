@@ -48,6 +48,17 @@ loaders_and_params = OrderedDict({
         'use_double_quant',
         'bf16',
         'no_use_fast',
+    ],    
+    'ktransformers': [
+        'ctx_size',
+        'gpu_split',
+        'cache_type',
+        'cpu',            # CPU-Offload (HF accelerate)
+        'disk',           # Disk-Offload (HF accelerate)
+        'cpu_memory',     # z.B. "48GiB" (String)
+        'quant_type',     # falls du 4/8-bit via bitsandbytes/awq testen willst
+        'compute_dtype',  # bf16/fp16 perhaps torch_dtype would be better here ???
+        'attn_implementation',  # sdpa/flash_attention_2 (je nach Build)
     ],
     'ExLlamav3_HF': [
         'ctx_size',
@@ -165,6 +176,15 @@ def transformers_samplers():
 
 loaders_samplers = {
     'Transformers': transformers_samplers(),
+    'ktransformers': {
+        'temperature',
+        'top_p',
+        'top_k',
+        'repetition_penalty',
+        'presence_penalty',
+        'frequency_penalty',
+        'seed',
+    },
     'ExLlamav3_HF': {
         'temperature',
         'dynatemp_low',
