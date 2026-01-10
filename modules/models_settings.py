@@ -215,6 +215,12 @@ def infer_loader(model_name, model_settings, hf_quant_method=None):
         loader = 'llama.cpp'
     elif re.match(r'.*\.gguf', model_name.lower()):
         loader = 'llama.cpp'
+    elif hf_quant_method == 'mlx':
+        loader = 'MLX'
+    elif re.match(r'.*\.mlx', model_name.lower()):
+        loader = 'MLX'
+    elif model_name.lower().startswith('mlx-community'):
+        loader = 'MLX'
     elif hf_quant_method == 'exl3':
         loader = 'ExLlamav3'
     elif hf_quant_method in ['exl2', 'gptq']:

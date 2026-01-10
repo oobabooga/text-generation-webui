@@ -105,6 +105,9 @@ loaders_and_params = OrderedDict({
         'ctx_size',
         'cpp_runner',
         'tensorrt_llm_info',
+    ],
+    'MLX': [
+        'ctx_size',
     ]
 })
 
@@ -359,6 +362,26 @@ loaders_samplers = {
         'presence_penalty',
         'auto_max_new_tokens',
         'ban_eos_token',
+    },
+    'MLX': {
+        'temperature',
+        'dynatemp_low',
+        'dynatemp_high',
+        'dynatemp_exponent',
+        'top_p',
+        'top_k',
+        'min_p',
+        'xtc_threshold',
+        'xtc_probability',
+        'repetition_penalty',
+        'repetition_penalty_range',
+        'auto_max_new_tokens',
+        'ban_eos_token',
+        'add_bos_token',
+        'skip_special_tokens',
+        'dynamic_temperature',
+        'seed',
+        'sampler_priority',
     }
 }
 
