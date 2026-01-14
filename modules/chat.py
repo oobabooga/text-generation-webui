@@ -32,7 +32,12 @@ from modules.text_generation import (
     get_encoded_length,
     get_max_prompt_length
 )
-from modules.utils import delete_file, get_available_characters, get_available_users, save_file
+from modules.utils import (
+    delete_file,
+    get_available_characters,
+    get_available_users,
+    save_file
+)
 from modules.web_search import add_web_search_attachments
 
 
