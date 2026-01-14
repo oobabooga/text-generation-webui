@@ -1645,7 +1645,7 @@ button:focus {
 }
 
 #user-description textarea {
-    height: calc(100vh - 231px) !important;
+    height: calc(100vh - 334px) !important;
     min-height: 90px !important;
 }
 

@@ -219,6 +219,13 @@ def get_available_characters():
     return sorted(set((k.stem for k in paths)), key=natural_keys)
 
 
+def get_available_users():
+    users_dir = Path('user_data/users')
+    users_dir.mkdir(parents=True, exist_ok=True)
+    paths = (x for x in users_dir.iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
+    return sorted(set((k.stem for k in paths)), key=natural_keys)
+
+
 def get_available_instruction_templates():
     path = "user_data/instruction-templates"
     paths = []
