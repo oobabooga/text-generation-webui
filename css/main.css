@@ -1797,3 +1797,20 @@ button#swap-height-width {
     top: 0;
     left: calc(100% - 174px);
 }
+
+table {
+    border-collapse: collapse;
+}
+
+table, tr, td, th, thead {
+    border: 0;
+}
+
+td + td,
+th + th { border-left: 1px solid; }
+
+tr + tr td,
+tr + tr th { border-top: 1px solid; }
+
+thead + tbody tr:first-child td,
+thead + tbody tr:first-child th { border-top: 1px solid; }

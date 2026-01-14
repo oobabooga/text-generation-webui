@@ -24,7 +24,7 @@ safetensors==0.7.*
 scipy
 sentencepiece
 tensorboard
-torchao==0.14.*
+torchao==0.15.*
 transformers==4.57.*
 triton-windows==3.5.1.post22; platform_system == "Windows"
 tqdm
@@ -40,5 +40,5 @@ sse-starlette==1.6.5
 tiktoken
 
 # llama.cpp (CPU only, AVX2)
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.71.0/llama_cpp_binaries-0.71.0+cpuavx2-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.71.0/llama_cpp_binaries-0.71.0+cpuavx2-py3-none-win_amd64.whl; platform_system == "Windows"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.74.0/llama_cpp_binaries-0.74.0+cpuavx2-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.74.0/llama_cpp_binaries-0.74.0+cpuavx2-py3-none-win_amd64.whl; platform_system == "Windows"
