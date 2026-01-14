@@ -1683,7 +1683,9 @@ def load_user(user_name, name1, user_bio):
         logger.error(f"Could not find the user \"{user_name}\" inside user_data/users. No user has been loaded.")
         raise ValueError
 
-    file_contents = open(filepath, 'r', encoding='utf-8').read()
+    with open(filepath, 'r', encoding='utf-8') as f:
+        file_contents = f.read()
+
     extension = filepath.suffix[1:]  # Remove the leading dot
     data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
 
