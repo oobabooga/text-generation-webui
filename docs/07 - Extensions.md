@@ -40,12 +40,13 @@ The extensions framework is based on special functions and variables that you ca
 | Function        | Description |
 |-------------|-------------|
 | `def setup()` | Is executed when the extension gets imported. |
-| `def ui()` | Creates custom gradio elements when the UI is launched. | 
+| `def ui()` | Creates custom gradio elements when the UI is launched. |
 | `def custom_css()` | Returns custom CSS as a string. It is applied whenever the web UI is loaded. |
 | `def custom_js()` | Same as above but for javascript. |
 | `def input_modifier(string, state, is_chat=False)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
 | `def output_modifier(string, state, is_chat=False)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
 | `def chat_input_modifier(text, visible_text, state)` | Modifies both the visible and internal inputs in chat mode. Can be used to hijack the chat input with custom content. |
+| `def output_stream_modifier(string, state, is_chat=False, is_final=False)` | Overrides the full text mid-stream. Called for each partial token/chunk while the UI is streaming output. Includes the last generated token (is_final). |
 | `def bot_prefix_modifier(string, state)`  | Applied in chat mode to the prefix for the bot's reply. |
 | `def state_modifier(state)`  | Modifies the dictionary containing the UI input parameters before it is used by the text generation functions. |
 | `def history_modifier(history)`  | Modifies the chat history before the text generation in chat mode begins. |
@@ -206,6 +207,12 @@ def output_modifier(string, state, is_chat=False):
 
     In chat mode, the modified version goes into history['visible'],
     and the original version goes into history['internal'].
+    """
+    return string
+
+def output_stream_modifier(string, state, is_chat=False, is_final=False):
+    """
+    Modifies the text stream of the LLM output in realtime.
     """
     return string
 
