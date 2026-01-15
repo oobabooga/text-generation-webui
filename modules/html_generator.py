@@ -108,91 +108,64 @@ def replace_blockquote(m):
     return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
 
+# Thinking block format definitions: (start_tag, end_tag, content_start_tag)
+# Use None for start_tag to match from beginning (end-only formats should be listed last)
+THINKING_FORMATS = [
+    ('<think>', '</think>', None),
+    ('<|channel|>analysis<|message|>', '<|end|>', '<|start|>assistant<|channel|>final<|message|>'),
+    ('<seed:think>', '</seed:think>', None),
+    ('<|think|>', '<|end|>', '<|content|>'),  # Solar Open
+    (None, '</think>', None),  # End-only variant (e.g., Qwen3-next)
+]
+
+
 def extract_thinking_block(string):
     """Extract thinking blocks from the beginning of a string."""
     if not string:
         return None, string
 
-    THINK_START_TAG = "&lt;think&gt;"
-    THINK_END_TAG = "&lt;/think&gt;"
+    for start_tag, end_tag, content_tag in THINKING_FORMATS:
+        end_esc = html.escape(end_tag)
+        content_esc = html.escape(content_tag) if content_tag else None
 
-    # Look for think tag first
-    start_pos = string.find(THINK_START_TAG)
-    end_pos = string.find(THINK_END_TAG)
-
-    # If think tags found, use existing logic
-    if start_pos != -1 or end_pos != -1:
-        # handle missing start or end tags
-        if start_pos == -1:
+        if start_tag is None:
+            # End-only format: require end tag, start from beginning
+            end_pos = string.find(end_esc)
+            if end_pos == -1:
+                continue
             thought_start = 0
         else:
-            thought_start = start_pos + len(THINK_START_TAG)
+            # Normal format: require start tag
+            start_esc = html.escape(start_tag)
+            start_pos = string.find(start_esc)
+            if start_pos == -1:
+                continue
+            thought_start = start_pos + len(start_esc)
+            end_pos = string.find(end_esc, thought_start)
+
         if end_pos == -1:
-            thought_end = len(string)
-            content_start = len(string)
-        else:
-            thought_end = end_pos
-            content_start = end_pos + len(THINK_END_TAG)
-        thinking_content = string[thought_start:thought_end]
-        remaining_content = string[content_start:]
-        return thinking_content, remaining_content
-
-    # If think tags not found, try GPT-OSS alternative format
-    ALT_START = "&lt;|channel|&gt;analysis&lt;|message|&gt;"
-    ALT_END = "&lt;|end|&gt;"
-    ALT_CONTENT_START = "&lt;|start|&gt;assistant&lt;|channel|&gt;final&lt;|message|&gt;"
-
-    alt_start_pos = string.find(ALT_START)
-    alt_end_pos = string.find(ALT_END)
-    alt_content_pos = string.find(ALT_CONTENT_START)
-
-    if alt_start_pos != -1 or alt_end_pos != -1:
-        if alt_start_pos == -1:
-            thought_start = 0
-        else:
-            thought_start = alt_start_pos + len(ALT_START)
-
-        # If no explicit end tag but content start exists, use content start as end
-        if alt_end_pos == -1:
-            if alt_content_pos != -1:
-                thought_end = alt_content_pos
-                content_start = alt_content_pos + len(ALT_CONTENT_START)
+            # End tag missing - check if content tag can serve as fallback
+            if content_esc:
+                content_pos = string.find(content_esc, thought_start)
+                if content_pos != -1:
+                    thought_end = content_pos
+                    content_start = content_pos + len(content_esc)
+                else:
+                    thought_end = len(string)
+                    content_start = len(string)
             else:
                 thought_end = len(string)
                 content_start = len(string)
         else:
-            thought_end = alt_end_pos
-            content_start = alt_content_pos + len(ALT_CONTENT_START) if alt_content_pos != -1 else alt_end_pos + len(ALT_END)
+            thought_end = end_pos
+            if content_esc:
+                content_pos = string.find(content_esc, end_pos)
+                content_start = content_pos + len(content_esc) if content_pos != -1 else end_pos + len(end_esc)
+            else:
+                content_start = end_pos + len(end_esc)
 
-        thinking_content = string[thought_start:thought_end]
-        remaining_content = string[content_start:]
-        return thinking_content, remaining_content
+        return string[thought_start:thought_end], string[content_start:]
 
-    # Try seed:think format
-    SEED_START = "&lt;seed:think&gt;"
-    SEED_END = "&lt;/seed:think&gt;"
-
-    seed_start_pos = string.find(SEED_START)
-    seed_end_pos = string.find(SEED_END)
-
-    if seed_start_pos != -1 or seed_end_pos != -1:
-        if seed_start_pos == -1:
-            thought_start = 0
-        else:
-            thought_start = seed_start_pos + len(SEED_START)
-
-        if seed_end_pos == -1:
-            thought_end = len(string)
-            content_start = len(string)
-        else:
-            thought_end = seed_end_pos
-            content_start = seed_end_pos + len(SEED_END)
-
-        thinking_content = string[thought_start:thought_end]
-        remaining_content = string[content_start:]
-        return thinking_content, remaining_content
-
-    # Return if no format is found
     return None, string
 
 
