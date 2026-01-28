@@ -26,7 +26,7 @@ sentencepiece
 tensorboard
 torchao==0.15.*
 transformers==4.57.*
-triton-windows==3.5.1.post22; platform_system == "Windows"
+triton-windows==3.5.1.post24; platform_system == "Windows"
 tqdm
 wandb
 
