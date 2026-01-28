@@ -298,10 +298,24 @@ class LlamaServer:
         if "bos_token" in response:
             self.bos_token = response["bos_token"]
 
-    def _find_available_port(self):
-        """Find an available port by letting the OS assign one."""
+    def _is_port_available(self, port):
+        """Check if a port is available for use."""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('', 0))  # Bind to port 0 to get an available port
+            try:
+                s.bind(('', port))
+                return True
+            except OSError:
+                return False
+
+    def _find_available_port(self):
+        """Find an available port, preferring main port + 1."""
+        preferred_port = shared.args.api_port + 1
+        if self._is_port_available(preferred_port):
+            return preferred_port
+
+        # Fall back to OS-assigned random port
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
             return s.getsockname()[1]
 
     def _start_server(self):
