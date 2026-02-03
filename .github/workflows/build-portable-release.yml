@@ -87,13 +87,13 @@ jobs:
       PCKGVER: ${{ inputs.version }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           repository: 'oobabooga/text-generation-webui'
           ref: ${{ inputs.version }}
           submodules: 'recursive'
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.pyver }}
 
