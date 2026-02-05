@@ -41,6 +41,7 @@ def create_ui():
                     gr.Markdown("## Main options")
                     with gr.Row():
                         with gr.Column():
+                            shared.gradio['lock_model_settings'] = gr.Checkbox(label="Lock settings", value=False, info='Prevent automatic changes to loader settings')
                             shared.gradio['gpu_layers'] = gr.Slider(label="gpu-layers", minimum=0, maximum=get_initial_gpu_layers_max(), step=1, value=shared.args.gpu_layers, info='Must be greater than 0 for the GPU to be used. ⚠️ Lower this value if you can\'t load the model.')
                             shared.gradio['ctx_size'] = gr.Slider(label='ctx-size', minimum=256, maximum=131072, step=256, value=shared.args.ctx_size, info='Context length. Common values: 4096, 8192, 16384, 32768, 65536, 131072.')
                             shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info='Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7')
@@ -146,7 +147,7 @@ def create_event_handlers():
     # with the model defaults (if any), and then the model is loaded
     shared.gradio['model_menu'].change(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        handle_load_model_event_initial, gradio('model_menu', 'interface_state'), gradio(ui.list_interface_input_elements()) + gradio('interface_state') + gradio('vram_info'), show_progress=False).then(
+        handle_load_model_event_initial, gradio('model_menu', 'interface_state', 'lock_model_settings'), gradio(ui.list_interface_input_elements()) + gradio('interface_state') + gradio('vram_info'), show_progress=False).then(
         partial(load_model_wrapper, autoload=False), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=True).success(
         handle_load_model_event_final, gradio('truncation_length', 'loader', 'interface_state'), gradio('truncation_length', 'filter_by_loader'), show_progress=False)
 
@@ -157,7 +158,7 @@ def create_event_handlers():
         handle_load_model_event_final, gradio('truncation_length', 'loader', 'interface_state'), gradio('truncation_length', 'filter_by_loader'), show_progress=False)
 
     shared.gradio['unload_model'].click(handle_unload_model_click, None, gradio('model_status'), show_progress=False).then(
-        partial(update_gpu_layers_and_vram, auto_adjust=True), gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type'), gradio('vram_info', 'gpu_layers'), show_progress=False)
+        partial(update_gpu_layers_and_vram, auto_adjust=True), gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type', 'lock_model_settings'), gradio('vram_info', 'gpu_layers'), show_progress=False)
 
     shared.gradio['save_model_settings'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
@@ -167,7 +168,7 @@ def create_event_handlers():
     for param in ['ctx_size', 'cache_type']:
         shared.gradio[param].change(
             partial(update_gpu_layers_and_vram, auto_adjust=True),
-            gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type'),
+            gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type', 'lock_model_settings'),
             gradio('vram_info', 'gpu_layers'), show_progress=False)
 
     # For manual gpu_layers changes - only update VRAM
@@ -175,6 +176,12 @@ def create_event_handlers():
         partial(update_gpu_layers_and_vram, auto_adjust=False),
         gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type'),
         gradio('vram_info'), show_progress=False)
+
+    # When lock is unchecked, apply settings for current model
+    shared.gradio['lock_model_settings'].change(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        handle_unlock_settings, gradio('model_menu', 'interface_state', 'lock_model_settings'),
+        gradio(ui.list_interface_input_elements()) + gradio('interface_state') + gradio('vram_info'), show_progress=False)
 
     if not shared.args.portable:
         shared.gradio['lora_menu_apply'].click(load_lora_wrapper, gradio('lora_menu'), gradio('model_status'), show_progress=False)
@@ -401,13 +408,23 @@ def get_initial_gpu_layers_max():
     return 256
 
 
-def handle_load_model_event_initial(model, state):
-    state = apply_model_settings_to_state(model, state)
+def handle_load_model_event_initial(model, state, lock_settings):
+    if not lock_settings:
+        state = apply_model_settings_to_state(model, state)
     output = ui.apply_interface_values(state)
     update_model_parameters(state)  # This updates the command-line flags
 
     vram_info = state.get('vram_info', "<div id=\"vram-info\"'>Estimated VRAM to load the model:</div>")
     return output + [state] + [vram_info]
+
+
+def handle_unlock_settings(model, state, lock_settings):
+    if not lock_settings:
+        state = apply_model_settings_to_state(model, state)
+        output = ui.apply_interface_values(state)
+        vram_info = state.get('vram_info', "<div id=\"vram-info\"'>Estimated VRAM to load the model:</div>")
+        return output + [state] + [vram_info]
+    return [gr.update()] * len(ui.list_interface_input_elements()) + [state, gr.update()]
 
 
 def handle_load_model_event_final(truncation_length, loader, state):

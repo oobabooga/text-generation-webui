@@ -26,6 +26,23 @@ def get_fallback_settings():
     }
 
 
+def get_loader_defaults():
+    '''
+    Returns default values for all loader parameters from shared.args_defaults.
+    Used to reset UI when switching to a model without saved settings.
+    '''
+    defaults = {}
+    for param in loaders.get_all_params():
+        if hasattr(shared.args_defaults, param):
+            value = getattr(shared.args_defaults, param)
+            if value is None and param in ('tensor_split', 'gpu_split', 'extra_flags', 'device_draft'):
+                value = ''
+            elif value is None and param in ('model_draft', 'mmproj'):
+                value = 'None'
+            defaults[param] = value
+    return defaults
+
+
 def get_model_metadata(model):
     model_path = resolve_model_path(model)
     model_settings = {}
@@ -253,6 +270,12 @@ def apply_model_settings_to_state(model, state):
     '''
     UI: update the state variable with the model settings
     '''
+    # Reset loader parameters to defaults before applying model-specific settings
+    loader_defaults = get_loader_defaults()
+    for k, v in loader_defaults.items():
+        if k in state:
+            state[k] = v
+
     model_settings = get_model_metadata(model)
     if 'loader' in model_settings:
         loader = model_settings.pop('loader')
@@ -472,7 +495,7 @@ def get_nvidia_vram(return_free=True):
         return -1
 
 
-def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type, auto_adjust=False, for_ui=True):
+def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type, lock_settings=False, auto_adjust=False, for_ui=True):
     """
     Unified function to handle GPU layers and VRAM updates.
 
@@ -483,12 +506,16 @@ def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type, 
         - If for_ui=True: (vram_info_update, gpu_layers_update) or just vram_info_update
         - If for_ui=False: (vram_usage, adjusted_layers) or just vram_usage
     """
+    should_adjust = auto_adjust
+    if lock_settings and should_adjust:
+        should_adjust = False
+
     if loader != 'llama.cpp' or model in ["None", None] or not model.endswith(".gguf"):
         vram_info = "<div id=\"vram-info\"'>Estimated VRAM to load the model:</div>"
         if for_ui:
             return (vram_info, gr.update()) if auto_adjust else vram_info
         else:
-            return (0, gpu_layers) if auto_adjust else 0
+            return (0, gpu_layers) if should_adjust else 0
 
     # Get model settings including user preferences
     model_settings = get_model_metadata(model)
@@ -496,7 +523,7 @@ def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type, 
     current_layers = gpu_layers
     max_layers = model_settings.get('max_gpu_layers', 256)
 
-    if auto_adjust:
+    if should_adjust:
         # Check if this is a user-saved setting
         user_config = shared.user_config
         model_regex = Path(model).name + '$'
@@ -521,7 +548,10 @@ def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type, 
     if for_ui:
         vram_info = f"<div id=\"vram-info\"'>Estimated VRAM to load the model: <span class=\"value\">{vram_usage:.0f} MiB</span></div>"
         if auto_adjust:
-            return vram_info, gr.update(value=current_layers, maximum=max_layers)
+            if should_adjust:
+                return vram_info, gr.update(value=current_layers, maximum=max_layers)
+            else:
+                return vram_info, gr.update()
         else:
             return vram_info
     else:
