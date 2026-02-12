@@ -298,6 +298,7 @@ settings = {
 
     # Character settings
     'character': 'Assistant',
+    'user': 'Default',
     'name1': 'You',
     'name2': 'AI',
     'user_bio': '',
