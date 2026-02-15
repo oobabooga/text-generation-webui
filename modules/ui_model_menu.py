@@ -21,94 +21,95 @@ from modules.models_settings import (
     update_model_parameters
 )
 from modules.utils import gradio
+from modules.i18n import t
 
 
 def create_ui():
     mu = shared.args.multi_user
 
-    with gr.Tab("Model", elem_id="model-tab"):
+    with gr.Tab(t("Model"), elem_id="model-tab"):
         with gr.Row():
             with gr.Column():
                 with gr.Row():
-                    shared.gradio['model_menu'] = gr.Dropdown(choices=utils.get_available_models(), value=lambda: shared.model_name, label='Model', elem_classes='slim-dropdown', interactive=not mu)
+                    shared.gradio['model_menu'] = gr.Dropdown(choices=utils.get_available_models(), value=lambda: shared.model_name, label=t('Model'), elem_classes='slim-dropdown', interactive=not mu)
                     ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': utils.get_available_models()}, 'refresh-button', interactive=not mu)
-                    shared.gradio['load_model'] = gr.Button("Load", elem_classes='refresh-button', interactive=not mu)
-                    shared.gradio['unload_model'] = gr.Button("Unload", elem_classes='refresh-button', interactive=not mu)
-                    shared.gradio['save_model_settings'] = gr.Button("Save settings", elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['load_model'] = gr.Button(t("Load"), elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['unload_model'] = gr.Button(t("Unload"), elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['save_model_settings'] = gr.Button(t("Save settings"), elem_classes='refresh-button', interactive=not mu)
 
-                shared.gradio['loader'] = gr.Dropdown(label="Model loader", choices=loaders.loaders_and_params.keys() if not shared.args.portable else ['llama.cpp'], value=None)
+                shared.gradio['loader'] = gr.Dropdown(label=t("Model loader"), choices=loaders.loaders_and_params.keys() if not shared.args.portable else ['llama.cpp'], value=None)
                 with gr.Blocks():
-                    gr.Markdown("## Main options")
+                    gr.Markdown(t("## Main options"))
                     with gr.Row():
                         with gr.Column():
-                            shared.gradio['gpu_layers'] = gr.Slider(label="gpu-layers", minimum=0, maximum=get_initial_gpu_layers_max(), step=1, value=shared.args.gpu_layers, info='Must be greater than 0 for the GPU to be used. ⚠️ Lower this value if you can\'t load the model.')
-                            shared.gradio['ctx_size'] = gr.Slider(label='ctx-size', minimum=256, maximum=131072, step=256, value=shared.args.ctx_size, info='Context length. Common values: 4096, 8192, 16384, 32768, 65536, 131072.')
-                            shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info='Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7')
-                            shared.gradio['attn_implementation'] = gr.Dropdown(label="attn-implementation", choices=['sdpa', 'eager', 'flash_attention_2'], value=shared.args.attn_implementation, info='Attention implementation.')
-                            shared.gradio['cache_type'] = gr.Dropdown(label="cache-type", choices=['fp16', 'q8_0', 'q4_0', 'fp8', 'q8', 'q7', 'q6', 'q5', 'q4', 'q3', 'q2'], value=shared.args.cache_type, allow_custom_value=True, info='Valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8. For ExLlamaV3, you can type custom combinations for separate k/v bits (e.g. q4_q8).')
-                            shared.gradio['tp_backend'] = gr.Dropdown(label="tp-backend", choices=['native', 'nccl'], value=shared.args.tp_backend, info='The backend for tensor parallelism.')
+                            shared.gradio['gpu_layers'] = gr.Slider(label=t("gpu-layers"), minimum=0, maximum=get_initial_gpu_layers_max(), step=1, value=shared.args.gpu_layers, info=t("Must be greater than 0 for the GPU to be used. ⚠️ Lower this value if you can't load the model."))
+                            shared.gradio['ctx_size'] = gr.Slider(label=t('ctx-size'), minimum=256, maximum=131072, step=256, value=shared.args.ctx_size, info=t('Context length. Common values: 4096, 8192, 16384, 32768, 65536, 131072.'))
+                            shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info=t('Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7'))
+                            shared.gradio['attn_implementation'] = gr.Dropdown(label="attn-implementation", choices=['sdpa', 'eager', 'flash_attention_2'], value=shared.args.attn_implementation, info=t('Attention implementation.'))
+                            shared.gradio['cache_type'] = gr.Dropdown(label=t("cache-type"), choices=['fp16', 'q8_0', 'q4_0', 'fp8', 'q8', 'q7', 'q6', 'q5', 'q4', 'q3', 'q2'], value=shared.args.cache_type, allow_custom_value=True, info=t('Valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8. For ExLlamaV3, you can type custom combinations for separate k/v bits (e.g. q4_q8).'))
+                            shared.gradio['tp_backend'] = gr.Dropdown(label="tp-backend", choices=['native', 'nccl'], value=shared.args.tp_backend, info=t('The backend for tensor parallelism.'))
 
                         with gr.Column():
                             shared.gradio['vram_info'] = gr.HTML(value=get_initial_vram_info())
-                            shared.gradio['cpu_moe'] = gr.Checkbox(label="cpu-moe", value=shared.args.cpu_moe, info='Move the experts to the CPU. Saves VRAM on MoE models.')
-                            shared.gradio['streaming_llm'] = gr.Checkbox(label="streaming-llm", value=shared.args.streaming_llm, info='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
+                            shared.gradio['cpu_moe'] = gr.Checkbox(label=t("cpu-moe"), value=shared.args.cpu_moe, info=t('Move the experts to the CPU. Saves VRAM on MoE models.'))
+                            shared.gradio['streaming_llm'] = gr.Checkbox(label=t("streaming-llm"), value=shared.args.streaming_llm, info=t('Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.'))
                             shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
                             shared.gradio['load_in_4bit'] = gr.Checkbox(label="load-in-4bit", value=shared.args.load_in_4bit)
-                            shared.gradio['use_double_quant'] = gr.Checkbox(label="use_double_quant", value=shared.args.use_double_quant, info='Used by load-in-4bit.')
-                            shared.gradio['autosplit'] = gr.Checkbox(label="autosplit", value=shared.args.autosplit, info='Automatically split the model tensors across the available GPUs.')
-                            shared.gradio['enable_tp'] = gr.Checkbox(label="enable_tp", value=shared.args.enable_tp, info='Enable tensor parallelism (TP).')
-                            shared.gradio['cpp_runner'] = gr.Checkbox(label="cpp-runner", value=shared.args.cpp_runner, info='Enable inference with ModelRunnerCpp, which is faster than the default ModelRunner.')
-                            shared.gradio['tensorrt_llm_info'] = gr.Markdown('* TensorRT-LLM has to be installed manually in a separate Python 3.10 environment at the moment. For a guide, consult the description of [this PR](https://github.com/oobabooga/text-generation-webui/pull/5715). \n\n* `ctx_size` is only used when `cpp-runner` is checked.\n\n* `cpp_runner` does not support streaming at the moment.')
+                            shared.gradio['use_double_quant'] = gr.Checkbox(label="use_double_quant", value=shared.args.use_double_quant, info=t('Used by load-in-4bit.'))
+                            shared.gradio['autosplit'] = gr.Checkbox(label="autosplit", value=shared.args.autosplit, info=t('Automatically split the model tensors across the available GPUs.'))
+                            shared.gradio['enable_tp'] = gr.Checkbox(label="enable_tp", value=shared.args.enable_tp, info=t('Enable tensor parallelism (TP).'))
+                            shared.gradio['cpp_runner'] = gr.Checkbox(label="cpp-runner", value=shared.args.cpp_runner, info=t('Enable inference with ModelRunnerCpp, which is faster than the default ModelRunner.'))
+                            shared.gradio['tensorrt_llm_info'] = gr.Markdown(t('* TensorRT-LLM has to be installed manually in a separate Python 3.10 environment at the moment. For a guide, consult the description of [this PR](https://github.com/oobabooga/text-generation-webui/pull/5715). \n\n* `ctx_size` is only used when `cpp-runner` is checked.\n\n* `cpp_runner` does not support streaming at the moment.'))
 
                             # Multimodal
-                            with gr.Accordion("Multimodal (vision)", open=False, elem_classes='tgw-accordion') as shared.gradio['mmproj_accordion']:
+                            with gr.Accordion(t("Multimodal (vision)"), open=False, elem_classes='tgw-accordion') as shared.gradio['mmproj_accordion']:
                                 with gr.Row():
-                                    shared.gradio['mmproj'] = gr.Dropdown(label="mmproj file", choices=utils.get_available_mmproj(), value=lambda: shared.args.mmproj or 'None', elem_classes='slim-dropdown', info='Select a file that matches your model. Must be placed in user_data/mmproj/', interactive=not mu)
+                                    shared.gradio['mmproj'] = gr.Dropdown(label=t("mmproj file"), choices=utils.get_available_mmproj(), value=lambda: shared.args.mmproj or 'None', elem_classes='slim-dropdown', info=t('Select a file that matches your model. Must be placed in user_data/mmproj/'), interactive=not mu)
                                     ui.create_refresh_button(shared.gradio['mmproj'], lambda: None, lambda: {'choices': utils.get_available_mmproj()}, 'refresh-button', interactive=not mu)
 
                             # Speculative decoding
-                            with gr.Accordion("Speculative decoding", open=False, elem_classes='tgw-accordion') as shared.gradio['speculative_decoding_accordion']:
+                            with gr.Accordion(t("Speculative decoding"), open=False, elem_classes='tgw-accordion') as shared.gradio['speculative_decoding_accordion']:
                                 with gr.Row():
-                                    shared.gradio['model_draft'] = gr.Dropdown(label="model-draft", choices=['None'] + utils.get_available_models(), value=lambda: shared.args.model_draft, elem_classes='slim-dropdown', info='Draft model. Speculative decoding only works with models sharing the same vocabulary (e.g., same model family).', interactive=not mu)
+                                    shared.gradio['model_draft'] = gr.Dropdown(label="model-draft", choices=['None'] + utils.get_available_models(), value=lambda: shared.args.model_draft, elem_classes='slim-dropdown', info=t('Draft model. Speculative decoding only works with models sharing the same vocabulary (e.g., same model family).'), interactive=not mu)
                                     ui.create_refresh_button(shared.gradio['model_draft'], lambda: None, lambda: {'choices': ['None'] + utils.get_available_models()}, 'refresh-button', interactive=not mu)
 
-                                shared.gradio['gpu_layers_draft'] = gr.Slider(label="gpu-layers-draft", minimum=0, maximum=256, value=shared.args.gpu_layers_draft, info='Number of layers to offload to the GPU for the draft model.')
-                                shared.gradio['draft_max'] = gr.Number(label="draft-max", precision=0, step=1, value=shared.args.draft_max, info='Number of tokens to draft for speculative decoding. Recommended value: 4.')
-                                shared.gradio['device_draft'] = gr.Textbox(label="device-draft", value=shared.args.device_draft, info='Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1')
-                                shared.gradio['ctx_size_draft'] = gr.Number(label="ctx-size-draft", precision=0, step=256, value=shared.args.ctx_size_draft, info='Size of the prompt context for the draft model. If 0, uses the same as the main model.')
+                                shared.gradio['gpu_layers_draft'] = gr.Slider(label="gpu-layers-draft", minimum=0, maximum=256, value=shared.args.gpu_layers_draft, info=t('Number of layers to offload to the GPU for the draft model.'))
+                                shared.gradio['draft_max'] = gr.Number(label="draft-max", precision=0, step=1, value=shared.args.draft_max, info=t('Number of tokens to draft for speculative decoding. Recommended value: 4.'))
+                                shared.gradio['device_draft'] = gr.Textbox(label="device-draft", value=shared.args.device_draft, info=t('Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1'))
+                                shared.gradio['ctx_size_draft'] = gr.Number(label="ctx-size-draft", precision=0, step=256, value=shared.args.ctx_size_draft, info=t('Size of the prompt context for the draft model. If 0, uses the same as the main model.'))
 
-                    gr.Markdown("## Other options")
-                    with gr.Accordion("See more options", open=False, elem_classes='tgw-accordion'):
+                    gr.Markdown(t("## Other options"))
+                    with gr.Accordion(t("See more options"), open=False, elem_classes='tgw-accordion'):
                         with gr.Row():
                             with gr.Column():
-                                shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=256, value=shared.args.threads)
-                                shared.gradio['threads_batch'] = gr.Slider(label="threads_batch", minimum=0, step=1, maximum=256, value=shared.args.threads_batch)
-                                shared.gradio['batch_size'] = gr.Slider(label="batch_size", minimum=1, maximum=4096, step=1, value=shared.args.batch_size)
-                                shared.gradio['ubatch_size'] = gr.Slider(label="ubatch_size", minimum=1, maximum=4096, step=1, value=shared.args.ubatch_size)
-                                shared.gradio['tensor_split'] = gr.Textbox(label='tensor_split', info='List of proportions to split the model across multiple GPUs. Example: 60,40')
-                                shared.gradio['extra_flags'] = gr.Textbox(label='extra-flags', info='Additional flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"', value=shared.args.extra_flags)
-                                shared.gradio['cpu_memory'] = gr.Number(label="Maximum CPU memory in GiB. Use this for CPU offloading.", value=shared.args.cpu_memory)
-                                shared.gradio['alpha_value'] = gr.Number(label='alpha_value', value=shared.args.alpha_value, precision=2, info='Positional embeddings alpha factor for NTK RoPE scaling. Recommended values (NTKv1): 1.75 for 1.5x context, 2.5 for 2x context. Use either this or compress_pos_emb, not both.')
-                                shared.gradio['rope_freq_base'] = gr.Number(label='rope_freq_base', value=shared.args.rope_freq_base, precision=0, info='Positional embeddings frequency base for NTK RoPE scaling. Related to alpha_value by rope_freq_base = 10000 * alpha_value ^ (64 / 63). 0 = from model.')
-                                shared.gradio['compress_pos_emb'] = gr.Number(label='compress_pos_emb', value=shared.args.compress_pos_emb, precision=2, info='Positional embeddings compression factor. Should be set to (context length) / (model\'s original context length). Equal to 1/rope_freq_scale.')
-                                shared.gradio['compute_dtype'] = gr.Dropdown(label="compute_dtype", choices=["bfloat16", "float16", "float32"], value=shared.args.compute_dtype, info='Used by load-in-4bit.')
-                                shared.gradio['quant_type'] = gr.Dropdown(label="quant_type", choices=["nf4", "fp4"], value=shared.args.quant_type, info='Used by load-in-4bit.')
-                                shared.gradio['num_experts_per_token'] = gr.Number(label="Number of experts per token", value=shared.args.num_experts_per_token, info='Only applies to MoE models like Mixtral.')
+                                shared.gradio['threads'] = gr.Slider(label=t("threads"), minimum=0, step=1, maximum=256, value=shared.args.threads)
+                                shared.gradio['threads_batch'] = gr.Slider(label=t("threads_batch"), minimum=0, step=1, maximum=256, value=shared.args.threads_batch)
+                                shared.gradio['batch_size'] = gr.Slider(label=t("batch_size"), minimum=1, maximum=4096, step=1, value=shared.args.batch_size)
+                                shared.gradio['ubatch_size'] = gr.Slider(label=t("ubatch_size"), minimum=1, maximum=4096, step=1, value=shared.args.ubatch_size)
+                                shared.gradio['tensor_split'] = gr.Textbox(label=t('tensor_split'), info=t('List of proportions to split the model across multiple GPUs. Example: 60,40'))
+                                shared.gradio['extra_flags'] = gr.Textbox(label=t('extra-flags'), info=t('Additional flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"'), value=shared.args.extra_flags)
+                                shared.gradio['cpu_memory'] = gr.Number(label=t("Maximum CPU memory in GiB. Use this for CPU offloading."), value=shared.args.cpu_memory)
+                                shared.gradio['alpha_value'] = gr.Number(label='alpha_value', value=shared.args.alpha_value, precision=2, info=t('Positional embeddings alpha factor for NTK RoPE scaling. Recommended values (NTKv1): 1.75 for 1.5x context, 2.5 for 2x context. Use either this or compress_pos_emb, not both.'))
+                                shared.gradio['rope_freq_base'] = gr.Number(label=t('rope_freq_base'), value=shared.args.rope_freq_base, precision=0, info=t('Positional embeddings frequency base for NTK RoPE scaling. Related to alpha_value by rope_freq_base = 10000 * alpha_value ^ (64 / 63). 0 = from model.'))
+                                shared.gradio['compress_pos_emb'] = gr.Number(label=t('compress_pos_emb'), value=shared.args.compress_pos_emb, precision=2, info=t("Positional embeddings compression factor. Should be set to (context length) / (model's original context length). Equal to 1/rope_freq_scale."))
+                                shared.gradio['compute_dtype'] = gr.Dropdown(label=t("compute_dtype"), choices=["bfloat16", "float16", "float32"], value=shared.args.compute_dtype, info=t('Used by load-in-4bit.'))
+                                shared.gradio['quant_type'] = gr.Dropdown(label=t("quant_type"), choices=["nf4", "fp4"], value=shared.args.quant_type, info=t('Used by load-in-4bit.'))
+                                shared.gradio['num_experts_per_token'] = gr.Number(label=t("Number of experts per token"), value=shared.args.num_experts_per_token, info=t('Only applies to MoE models like Mixtral.'))
 
                             with gr.Column():
-                                shared.gradio['cpu'] = gr.Checkbox(label="cpu", value=shared.args.cpu, info='Use PyTorch in CPU mode.')
-                                shared.gradio['disk'] = gr.Checkbox(label="disk", value=shared.args.disk)
-                                shared.gradio['row_split'] = gr.Checkbox(label="row_split", value=shared.args.row_split, info='Split the model by rows across GPUs. This may improve multi-gpu performance.')
-                                shared.gradio['no_kv_offload'] = gr.Checkbox(label="no_kv_offload", value=shared.args.no_kv_offload, info='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
-                                shared.gradio['no_mmap'] = gr.Checkbox(label="no-mmap", value=shared.args.no_mmap)
-                                shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
-                                shared.gradio['numa'] = gr.Checkbox(label="numa", value=shared.args.numa, info='NUMA support can help on some systems with non-uniform memory access.')
-                                shared.gradio['bf16'] = gr.Checkbox(label="bf16", value=shared.args.bf16)
-                                shared.gradio['no_flash_attn'] = gr.Checkbox(label="no_flash_attn", value=shared.args.no_flash_attn)
-                                shared.gradio['no_xformers'] = gr.Checkbox(label="no_xformers", value=shared.args.no_xformers)
-                                shared.gradio['no_sdpa'] = gr.Checkbox(label="no_sdpa", value=shared.args.no_sdpa)
-                                shared.gradio['cfg_cache'] = gr.Checkbox(label="cfg-cache", value=shared.args.cfg_cache, info='Necessary to use CFG with this loader.')
-                                shared.gradio['no_use_fast'] = gr.Checkbox(label="no_use_fast", value=shared.args.no_use_fast, info='Set use_fast=False while loading the tokenizer.')
+                                shared.gradio['cpu'] = gr.Checkbox(label=t("cpu"), value=shared.args.cpu, info=t('Use PyTorch in CPU mode.'))
+                                shared.gradio['disk'] = gr.Checkbox(label=t("disk"), value=shared.args.disk)
+                                shared.gradio['row_split'] = gr.Checkbox(label=t("row_split"), value=shared.args.row_split, info=t('Split the model by rows across GPUs. This may improve multi-gpu performance.'))
+                                shared.gradio['no_kv_offload'] = gr.Checkbox(label=t("no_kv_offload"), value=shared.args.no_kv_offload, info=t('Do not offload the K, Q, V to the GPU. This saves VRAM but reduces the performance.'))
+                                shared.gradio['no_mmap'] = gr.Checkbox(label=t("no-mmap"), value=shared.args.no_mmap)
+                                shared.gradio['mlock'] = gr.Checkbox(label=t("mlock"), value=shared.args.mlock)
+                                shared.gradio['numa'] = gr.Checkbox(label=t("numa"), value=shared.args.numa, info=t('NUMA support can help on some systems with non-uniform memory access.'))
+                                shared.gradio['bf16'] = gr.Checkbox(label=t("bf16"), value=shared.args.bf16)
+                                shared.gradio['no_flash_attn'] = gr.Checkbox(label=t("no_flash_attn"), value=shared.args.no_flash_attn)
+                                shared.gradio['no_xformers'] = gr.Checkbox(label=t("no_xformers"), value=shared.args.no_xformers)
+                                shared.gradio['no_sdpa'] = gr.Checkbox(label=t("no_sdpa"), value=shared.args.no_sdpa)
+                                shared.gradio['cfg_cache'] = gr.Checkbox(label=t("cfg-cache"), value=shared.args.cfg_cache, info=t('Necessary to use CFG with this loader.'))
+                                shared.gradio['no_use_fast'] = gr.Checkbox(label="no_use_fast", value=shared.args.no_use_fast, info=t('Set use_fast=False while loading the tokenizer.'))
                                 if not shared.args.portable:
                                     with gr.Row():
                                         shared.gradio['lora_menu'] = gr.Dropdown(multiselect=True, choices=utils.get_available_loras(), value=shared.lora_names, label='LoRA(s)', elem_classes='slim-dropdown', interactive=not mu)
@@ -116,23 +117,23 @@ def create_ui():
                                         shared.gradio['lora_menu_apply'] = gr.Button(value='Apply LoRAs', elem_classes='refresh-button', interactive=not mu)
 
             with gr.Column():
-                with gr.Tab("Download"):
-                    shared.gradio['custom_model_menu'] = gr.Textbox(label="Download model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main. To download a single file, enter its name in the second box.", interactive=not mu)
-                    shared.gradio['download_specific_file'] = gr.Textbox(placeholder="File name (for GGUF models)", show_label=False, max_lines=1, interactive=not mu)
+                with gr.Tab(t("Download")):
+                    shared.gradio['custom_model_menu'] = gr.Textbox(label=t("Download model or LoRA"), info=t("Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main. To download a single file, enter its name in the second box."), interactive=not mu)
+                    shared.gradio['download_specific_file'] = gr.Textbox(placeholder=t("File name (for GGUF models)"), show_label=False, max_lines=1, interactive=not mu)
                     with gr.Row():
-                        shared.gradio['download_model_button'] = gr.Button("Download", variant='primary', interactive=not mu)
-                        shared.gradio['get_file_list'] = gr.Button("Get file list", interactive=not mu)
+                        shared.gradio['download_model_button'] = gr.Button(t("Download"), variant='primary', interactive=not mu)
+                        shared.gradio['get_file_list'] = gr.Button(t("Get file list"), interactive=not mu)
 
-                with gr.Tab("Customize instruction template"):
+                with gr.Tab(t("Customize instruction template")):
                     with gr.Row():
-                        shared.gradio['customized_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), value='None', label='Select the desired instruction template', elem_classes='slim-dropdown')
+                        shared.gradio['customized_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), value='None', label=t('Select the desired instruction template'), elem_classes='slim-dropdown')
                         ui.create_refresh_button(shared.gradio['customized_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button', interactive=not mu)
 
-                    shared.gradio['customized_template_submit'] = gr.Button("Submit", variant="primary", interactive=not mu)
-                    gr.Markdown("This allows you to set a customized template for the model currently selected in the \"Model loader\" menu. Whenever the model gets loaded, this template will be used in place of the template specified in the model's medatada, which sometimes is wrong.")
+                    shared.gradio['customized_template_submit'] = gr.Button(t("Submit"), variant="primary", interactive=not mu)
+                    gr.Markdown(t("This allows you to set a customized template for the model currently selected in the \"Model loader\" menu. Whenever the model gets loaded, this template will be used in place of the template specified in the model's medatada, which sometimes is wrong."))
 
                 with gr.Row():
-                    shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
+                    shared.gradio['model_status'] = gr.Markdown(t('No model is loaded') if shared.model_name == 'None' else t('Ready'))
 
 
 def create_event_handlers():
@@ -244,7 +245,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
                 return
 
         if not repo_id:
-            yield "Please enter a model path."
+            yield t("Please enter a model path.")
             progress(0.0)
             return
 
@@ -329,7 +330,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
                     specific_file=specific_file
                 )
                 update_queue.put(("COMPLETED", f"Model successfully saved to `{output_folder}/`."))
-            except Exception as e:
+            except Exception:
                 tb_str = traceback.format_exc().replace('\n', '\n\n')
                 update_queue.put(("ERROR", tb_str))
 
@@ -364,7 +365,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
 
         download_thread.join()
 
-    except Exception as e:
+    except Exception:
         progress(0.0)
         tb_str = traceback.format_exc().replace('\n', '\n\n')
         yield tb_str
