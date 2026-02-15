@@ -343,7 +343,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
                     specific_file=specific_file
                 )
                 update_queue.put(("COMPLETED", f"Model successfully saved to `{output_folder}/`."))
-            except Exception as e:
+            except Exception:
                 tb_str = traceback.format_exc().replace('\n', '\n\n')
                 update_queue.put(("ERROR", tb_str))
 
@@ -378,7 +378,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
 
         download_thread.join()
 
-    except Exception as e:
+    except Exception:
         progress(0.0)
         tb_str = traceback.format_exc().replace('\n', '\n\n')
         yield tb_str
