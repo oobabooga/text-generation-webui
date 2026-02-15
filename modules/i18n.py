@@ -95,7 +95,7 @@ _ZH_TW = {
     "Send to notebook": "發送到筆記本",
     "Send to Notebook": "發送到筆記本",
     "Chat template": "聊天模板",
-    "Send": "傳送",
+    # duplicate key removed; keep single mapping for "Send"
     "Regenerate (Ctrl + Enter)": "重新生成（Ctrl + Enter）",
     "Continue (Alt + Enter)": "繼續（Alt + Enter）",
     "Remove last reply (Ctrl + Shift + Backspace)": "移除上一則回覆（Ctrl + Shift + Backspace）",
@@ -250,7 +250,7 @@ _ZH_TW = {
     "top_k": "top_k Top-k",
     "typical_p": "typical_p Typical-p",
     "dry_multiplier": "dry 乘數",
-    "dry_allowed_length": "允許重複長度",
+    # duplicate key removed; keep prefixed form above
     "Good morning!": "早安！",
     "Good afternoon!": "午安！",
     "Good evening!": "晚安！",
