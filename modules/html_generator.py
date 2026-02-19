@@ -462,12 +462,13 @@ def format_message_attachments(history, role, index):
         attachments_html = '<div class="message-attachments">'
         for attachment in attachments:
             name = html.escape(attachment["name"])
+            mime_type = attachment.get("type")
 
-            if attachment.get("type") == "image":
+            if mime_type.startswith("image"):
                 image_data = attachment.get("image_data", "")
                 attachments_html += (
                     f'<div class="attachment-box image-attachment">'
-                    f'<img src="{image_data}" alt="{name}" class="image-preview" />'
+                    f'<img src="{image_data}" alt="{name}" type="{mime_type}" class="image-preview" />'
                     f'<div class="attachment-name">{name}</div>'
                     f'</div>'
                 )
