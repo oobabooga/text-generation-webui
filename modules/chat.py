@@ -609,6 +609,8 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
                 | 'image/webp'
                 | 'image/bmp'
                 | 'image/gif'
+                | 'image/tiff'
+                | 'image/avif'
             ):
                 # Handle image files
                 # Convert image to base64
