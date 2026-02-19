@@ -7,12 +7,14 @@ import pprint
 import re
 import shutil
 import time
+import mimetypes
 from datetime import datetime
 from functools import partial
 from pathlib import Path
 
 import gradio as gr
 import yaml
+import magic
 from jinja2.ext import loopcontrols
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 from PIL import Image
@@ -239,7 +241,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 image_refs = ""
 
                 for attachment in metadata[user_key]["attachments"]:
-                    if attachment.get("type") == "image":
+                    if attachment.get("type").startswith("image"):
                         # Add image reference for multimodal models
                         image_refs += "<__media__>"
                     elif state.get('include_past_attachments', True):
@@ -280,7 +282,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                     image_refs = ""
 
                     for attachment in metadata[user_key]["attachments"]:
-                        if attachment.get("type") == "image":
+                        if attachment.get("type").startswith("image"):
                             image_refs += "<__media__>"
                         else:
                             filename = attachment.get("name", "file")
@@ -590,63 +592,67 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
     # Get file info using pathlib
     path = Path(file_path)
     filename = path.name
-    file_extension = path.suffix.lower()
+    
+    # Get MIME type from path
+    mime_type: str | None
+    mime_type, _ = mimetypes.guess_file_type(path)
+    
+    # Get MIME type from file
+    if mime_type is None:
+        mime_type = magic.from_file(path, mime=True)
 
     try:
-        # Handle image files
-        if file_extension in ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif']:
-            # Convert image to base64
-            with open(path, 'rb') as f:
-                image_data = base64.b64encode(f.read()).decode('utf-8')
+        match mime_type:
+            case (
+                'image/jpeg'
+                | 'image/png'
+                | 'image/webp'
+                | 'image/bmp'
+                | 'image/gif'
+            ):
+                # Handle image files
+                # Convert image to base64
+                with open(path, 'rb') as f:
+                    image_data = base64.b64encode(f.read()).decode('utf-8')
 
-            # Determine MIME type from extension
-            mime_type_map = {
-                '.jpg': 'image/jpeg',
-                '.jpeg': 'image/jpeg',
-                '.png': 'image/png',
-                '.webp': 'image/webp',
-                '.bmp': 'image/bmp',
-                '.gif': 'image/gif'
-            }
-            mime_type = mime_type_map.get(file_extension, 'image/jpeg')
+                # Format as data URL
+                data_url = f"data:{mime_type};base64,{image_data}"
 
-            # Format as data URL
-            data_url = f"data:{mime_type};base64,{image_data}"
+                # Generate unique image ID
+                image_id = len([att for att in history['metadata'][key]["attachments"] if att.get("type").startswith("image")]) + 1
 
-            # Generate unique image ID
-            image_id = len([att for att in history['metadata'][key]["attachments"] if att.get("type") == "image"]) + 1
+                attachment = {
+                    "name": filename,
+                    "type": mime_type,
+                    "image_data": data_url,
+                    "image_id": image_id,
+                }
+            case 'application/pdf':
+                # Process PDF file
+                content = extract_pdf_text(path)
+                attachment = {
+                    "name": filename,
+                    "type": mime_type,
+                    "content": content,
+                }
+            case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                # Process .docx file
+                content = extract_docx_text(path)
+                attachment = {
+                    "name": filename,
+                    "type": mime_type,
+                    "content": content,
+                }
+            case _:
+                # Default handling for text files
+                with open(path, 'r', encoding='utf-8') as f:
+                    content = f.read()
 
-            attachment = {
-                "name": filename,
-                "type": "image",
-                "image_data": data_url,
-                "image_id": image_id,
-            }
-        elif file_extension == '.pdf':
-            # Process PDF file
-            content = extract_pdf_text(path)
-            attachment = {
-                "name": filename,
-                "type": "application/pdf",
-                "content": content,
-            }
-        elif file_extension == '.docx':
-            content = extract_docx_text(path)
-            attachment = {
-                "name": filename,
-                "type": "application/docx",
-                "content": content,
-            }
-        else:
-            # Default handling for text files
-            with open(path, 'r', encoding='utf-8') as f:
-                content = f.read()
-
-            attachment = {
-                "name": filename,
-                "type": "text/plain",
-                "content": content,
-            }
+                attachment = {
+                    "name": filename,
+                    "type": mime_type,
+                    "content": content,
+                }
 
         history['metadata'][key]["attachments"].append(attachment)
         return attachment  # Return the attachment for reuse
@@ -858,7 +864,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             user_key = f"user_{i}"
             if user_key in output['metadata'] and "attachments" in output['metadata'][user_key]:
                 for attachment in output['metadata'][user_key]["attachments"]:
-                    if attachment.get("type") == "image":
+                    if attachment.get("type").startswith("image"):
                         all_image_attachments.append(attachment)
 
     # Add all collected image attachments to state for the generation

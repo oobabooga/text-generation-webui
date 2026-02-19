@@ -97,7 +97,7 @@ def convert_image_attachments_to_pil(image_attachments: List[dict]) -> List[Imag
     """Convert webui image_attachments format to PIL Images."""
     pil_images = []
     for attachment in image_attachments:
-        if attachment.get('type') == 'image' and 'image_data' in attachment:
+        if attachment.get('type').startswith("image") and 'image_data' in attachment:
             try:
                 image = decode_base64_image(attachment['image_data'])
                 if image.mode != 'RGB':
