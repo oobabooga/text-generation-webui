@@ -137,6 +137,7 @@ def is_mime_type_vision_supported(mime_type: str) -> bool:
         'image/vnd.zbrush.pcx',
         'image/x-portable-pixmap',
         'image/qoi',
+        'image/x-qoi',
         'image/x-sgi',
         'image/x-tga',
         'image/x-xbitmap',
