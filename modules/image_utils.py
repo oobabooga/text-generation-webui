@@ -129,8 +129,10 @@ def is_mime_type_vision_supported(mime_type: str) -> bool:
         'image/avif',
         # Uncommon pillow readable mime types
         'image/x-dds',
+        'image/dds',
         'image/x-eps',
         'image/x-icns',
+        'image/x-icon',
         'vnd.microsoft.icon',
         'image/jp2',
         'image/x-jp2-codestream',

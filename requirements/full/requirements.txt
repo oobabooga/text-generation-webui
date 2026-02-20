@@ -6,6 +6,7 @@ datasets
 diffusers==0.36.*
 einops
 fastapi==0.112.4
+filetype==1.2.0
 flash-linear-attention==0.4.*
 html2text==2025.4.15
 huggingface-hub==0.36.0

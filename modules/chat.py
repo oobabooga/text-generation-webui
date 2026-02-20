@@ -12,6 +12,7 @@ from datetime import datetime
 from functools import partial
 from pathlib import Path
 
+import filetype
 import gradio as gr
 import yaml
 from jinja2.ext import loopcontrols
@@ -596,6 +597,10 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
     mime_type: str | None
     mime_type, _ = mimetypes.guess_file_type(path)
 
+    # Get MIME type from file
+    if mime_type is None:
+        mime_type = filetype.guess_mime(path)
+
     try:
         if is_mime_type_vision_supported(mime_type):
             # Handle image files
@@ -638,7 +643,7 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
 
             attachment = {
                 "name": filename,
-                "type": mime_type,
+                "type": mime_type or "text/plain",
                 "content": content,
             }
 
