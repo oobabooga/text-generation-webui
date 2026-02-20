@@ -97,7 +97,7 @@ def convert_image_attachments_to_pil(image_attachments: List[dict]) -> List[Imag
     """Convert webui image_attachments format to PIL Images."""
     pil_images = []
     for attachment in image_attachments:
-        if attachment.get('type').startswith("image") and 'image_data' in attachment:
+        if is_mime_type_vision_supported(attachment.get('type')) and 'image_data' in attachment:
             try:
                 image = decode_base64_image(attachment['image_data'])
                 if image.mode != 'RGB':
@@ -116,3 +116,38 @@ def convert_openai_messages_to_images(messages: List[dict]) -> List[Image.Image]
             _, images = process_message_content(message['content'])
             all_images.extend(images)
     return all_images
+
+def is_mime_type_vision_supported(mime_type: str) -> bool:
+    return mime_type in {
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/bmp',
+        'image/gif',
+        'image/tiff',
+        'image/avif',
+        # Uncommon pillow readable mime types
+        'image/x-dds',
+        'image/x-eps',
+        'image/x-icns',
+        'vnd.microsoft.icon',
+        'image/jp2',
+        'image/x-jp2-codestream',
+        'image/jpx',
+        'image/vnd.zbrush.pcx',
+        'image/x-portable-pixmap',
+        'image/qoi',
+        'image/x-sgi',
+        'image/x-tga',
+        'image/x-xbitmap',
+        'image/x-win-bitmap',
+        'image/fits',
+        'image/vnd.fpx',
+        'image/x-fpx',
+        'image/x-photo-cd',
+        'image/vnd.adobe.photoshop',
+        'image/x-sun-raster',
+        'image/emf',
+        'image/wmf',
+        'image/x-xpixmap',
+    }

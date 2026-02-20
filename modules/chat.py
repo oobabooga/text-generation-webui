@@ -27,7 +27,7 @@ from modules.html_generator import (
     convert_to_markdown,
     make_thumbnail
 )
-from modules.image_utils import open_image_safely
+from modules.image_utils import is_mime_type_vision_supported, open_image_safely
 from modules.logging_colors import logger
 from modules.text_generation import (
     generate_reply,
@@ -241,7 +241,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 image_refs = ""
 
                 for attachment in metadata[user_key]["attachments"]:
-                    if attachment.get("type").startswith("image"):
+                    if is_mime_type_vision_supported(attachment.get("type")):
                         # Add image reference for multimodal models
                         image_refs += "<__media__>"
                     elif state.get('include_past_attachments', True):
@@ -282,7 +282,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                     image_refs = ""
 
                     for attachment in metadata[user_key]["attachments"]:
-                        if attachment.get("type").startswith("image"):
+                        if is_mime_type_vision_supported(attachment.get("type")):
                             image_refs += "<__media__>"
                         else:
                             filename = attachment.get("name", "file")
@@ -602,83 +602,50 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
         mime_type = magic.from_file(path, mime=True)
 
     try:
-        match mime_type:
-            case (
-                'image/jpeg'
-                | 'image/png'
-                | 'image/webp'
-                | 'image/bmp'
-                | 'image/gif'
-                | 'image/tiff'
-                | 'image/avif'
-                # Uncommon pillow readable mime types
-                | 'image/x-dds'
-                | 'image/x-eps'
-                | 'image/x-icns'
-                | 'vnd.microsoft.icon'
-                | 'image/jp2'
-                | 'image/x-jp2-codestream'
-                | 'image/jpx'
-                | 'image/vnd.zbrush.pcx'
-                | 'image/x-portable-pixmap'
-                | 'image/qoi'
-                | 'image/x-sgi'
-                | 'image/x-tga'
-                | 'image/x-xbitmap'
-                | 'image/x-win-bitmap'
-                | 'image/fits'
-                | 'image/vnd.fpx'
-                | 'image/x-fpx'
-                | 'image/x-photo-cd'
-                | 'image/vnd.adobe.photoshop'
-                | 'image/x-sun-raster'
-                | 'image/emf'
-                | 'image/wmf'
-                | 'image/x-xpixmap'
-            ):
-                # Handle image files
-                # Convert image to base64
-                with open(path, 'rb') as f:
-                    image_data = base64.b64encode(f.read()).decode('utf-8')
+        if is_mime_type_vision_supported(mime_type):
+            # Handle image files
+            # Convert image to base64
+            with open(path, 'rb') as f:
+                image_data = base64.b64encode(f.read()).decode('utf-8')
 
-                # Format as data URL
-                data_url = f"data:{mime_type};base64,{image_data}"
+            # Format as data URL
+            data_url = f"data:{mime_type};base64,{image_data}"
 
-                # Generate unique image ID
-                image_id = len([att for att in history['metadata'][key]["attachments"] if att.get("type").startswith("image")]) + 1
+            # Generate unique image ID
+            image_id = len([att for att in history['metadata'][key]["attachments"] if is_mime_type_vision_supported(att.get("type"))]) + 1
 
-                attachment = {
-                    "name": filename,
-                    "type": mime_type,
-                    "image_data": data_url,
-                    "image_id": image_id,
-                }
-            case 'application/pdf':
-                # Process PDF file
-                content = extract_pdf_text(path)
-                attachment = {
-                    "name": filename,
-                    "type": mime_type,
-                    "content": content,
-                }
-            case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-                # Process .docx file
-                content = extract_docx_text(path)
-                attachment = {
-                    "name": filename,
-                    "type": mime_type,
-                    "content": content,
-                }
-            case _:
-                # Default handling for text files
-                with open(path, 'r', encoding='utf-8') as f:
-                    content = f.read()
+            attachment = {
+                "name": filename,
+                "type": mime_type,
+                "image_data": data_url,
+                "image_id": image_id,
+            }
+        elif mime_type == 'application/pdf':
+            # Process PDF file
+            content = extract_pdf_text(path)
+            attachment = {
+                "name": filename,
+                "type": mime_type,
+                "content": content,
+            }
+        elif mime_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+            # Process .docx file
+            content = extract_docx_text(path)
+            attachment = {
+                "name": filename,
+                "type": mime_type,
+                "content": content,
+            }
+        else:
+            # Default handling for text files
+            with open(path, 'r', encoding='utf-8') as f:
+                content = f.read()
 
-                attachment = {
-                    "name": filename,
-                    "type": mime_type,
-                    "content": content,
-                }
+            attachment = {
+                "name": filename,
+                "type": mime_type,
+                "content": content,
+            }
 
         history['metadata'][key]["attachments"].append(attachment)
         return attachment  # Return the attachment for reuse
@@ -890,7 +857,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             user_key = f"user_{i}"
             if user_key in output['metadata'] and "attachments" in output['metadata'][user_key]:
                 for attachment in output['metadata'][user_key]["attachments"]:
-                    if attachment.get("type").startswith("image"):
+                    if is_mime_type_vision_supported(attachment.get("type")):
                         all_image_attachments.append(attachment)
 
     # Add all collected image attachments to state for the generation
