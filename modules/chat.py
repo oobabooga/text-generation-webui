@@ -14,7 +14,6 @@ from pathlib import Path
 
 import gradio as gr
 import yaml
-import magic
 from jinja2.ext import loopcontrols
 from jinja2.sandbox import ImmutableSandboxedEnvironment
 from PIL import Image
@@ -592,14 +591,10 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
     # Get file info using pathlib
     path = Path(file_path)
     filename = path.name
-    
+
     # Get MIME type from path
     mime_type: str | None
     mime_type, _ = mimetypes.guess_file_type(path)
-    
-    # Get MIME type from file
-    if mime_type is None:
-        mime_type = magic.from_file(path, mime=True)
 
     try:
         if is_mime_type_vision_supported(mime_type):

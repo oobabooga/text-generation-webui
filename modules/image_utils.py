@@ -117,6 +117,7 @@ def convert_openai_messages_to_images(messages: List[dict]) -> List[Image.Image]
             all_images.extend(images)
     return all_images
 
+
 def is_mime_type_vision_supported(mime_type: str) -> bool:
     return mime_type in {
         'image/jpeg',
