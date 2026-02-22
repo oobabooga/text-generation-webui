@@ -10,6 +10,7 @@ import markdown
 from PIL import Image, ImageOps
 
 from modules import shared
+from modules.image_utils import is_mime_type_vision_supported
 from modules.sane_markdown_lists import SaneListExtension
 from modules.utils import get_available_chat_styles
 
@@ -462,12 +463,13 @@ def format_message_attachments(history, role, index):
         attachments_html = '<div class="message-attachments">'
         for attachment in attachments:
             name = html.escape(attachment["name"])
+            mime_type = attachment.get("type")
 
-            if attachment.get("type") == "image":
+            if is_mime_type_vision_supported(mime_type):
                 image_data = attachment.get("image_data", "")
                 attachments_html += (
                     f'<div class="attachment-box image-attachment">'
-                    f'<img src="{image_data}" alt="{name}" class="image-preview" />'
+                    f'<img src="{image_data}" alt="{name}" type="{mime_type}" class="image-preview" />'
                     f'<div class="attachment-name">{name}</div>'
                     f'</div>'
                 )

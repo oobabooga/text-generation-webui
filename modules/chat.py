@@ -7,10 +7,12 @@ import pprint
 import re
 import shutil
 import time
+import mimetypes
 from datetime import datetime
 from functools import partial
 from pathlib import Path
 
+import filetype
 import gradio as gr
 import yaml
 from jinja2.ext import loopcontrols
@@ -25,7 +27,7 @@ from modules.html_generator import (
     convert_to_markdown,
     make_thumbnail
 )
-from modules.image_utils import open_image_safely
+from modules.image_utils import is_mime_type_vision_supported, open_image_safely
 from modules.logging_colors import logger
 from modules.text_generation import (
     generate_reply,
@@ -239,7 +241,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 image_refs = ""
 
                 for attachment in metadata[user_key]["attachments"]:
-                    if attachment.get("type") == "image":
+                    if is_mime_type_vision_supported(attachment.get("type")):
                         # Add image reference for multimodal models
                         image_refs += "<__media__>"
                     elif state.get('include_past_attachments', True):
@@ -280,7 +282,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                     image_refs = ""
 
                     for attachment in metadata[user_key]["attachments"]:
-                        if attachment.get("type") == "image":
+                        if is_mime_type_vision_supported(attachment.get("type")):
                             image_refs += "<__media__>"
                         else:
                             filename = attachment.get("name", "file")
@@ -590,51 +592,48 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
     # Get file info using pathlib
     path = Path(file_path)
     filename = path.name
-    file_extension = path.suffix.lower()
+
+    # Get MIME type from path
+    mime_type: str | None
+    mime_type, _ = mimetypes.guess_file_type(path)
+
+    # Get MIME type from file
+    if mime_type is None:
+        mime_type = filetype.guess_mime(path)
 
     try:
-        # Handle image files
-        if file_extension in ['.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif']:
+        if is_mime_type_vision_supported(mime_type):
+            # Handle image files
             # Convert image to base64
             with open(path, 'rb') as f:
                 image_data = base64.b64encode(f.read()).decode('utf-8')
-
-            # Determine MIME type from extension
-            mime_type_map = {
-                '.jpg': 'image/jpeg',
-                '.jpeg': 'image/jpeg',
-                '.png': 'image/png',
-                '.webp': 'image/webp',
-                '.bmp': 'image/bmp',
-                '.gif': 'image/gif'
-            }
-            mime_type = mime_type_map.get(file_extension, 'image/jpeg')
 
             # Format as data URL
             data_url = f"data:{mime_type};base64,{image_data}"
 
             # Generate unique image ID
-            image_id = len([att for att in history['metadata'][key]["attachments"] if att.get("type") == "image"]) + 1
+            image_id = len([att for att in history['metadata'][key]["attachments"] if is_mime_type_vision_supported(att.get("type"))]) + 1
 
             attachment = {
                 "name": filename,
-                "type": "image",
+                "type": mime_type,
                 "image_data": data_url,
                 "image_id": image_id,
             }
-        elif file_extension == '.pdf':
+        elif mime_type == 'application/pdf':
             # Process PDF file
             content = extract_pdf_text(path)
             attachment = {
                 "name": filename,
-                "type": "application/pdf",
+                "type": mime_type,
                 "content": content,
             }
-        elif file_extension == '.docx':
+        elif mime_type == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+            # Process .docx file
             content = extract_docx_text(path)
             attachment = {
                 "name": filename,
-                "type": "application/docx",
+                "type": mime_type,
                 "content": content,
             }
         else:
@@ -644,7 +643,7 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
 
             attachment = {
                 "name": filename,
-                "type": "text/plain",
+                "type": mime_type or "text/plain",
                 "content": content,
             }
 
@@ -858,7 +857,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             user_key = f"user_{i}"
             if user_key in output['metadata'] and "attachments" in output['metadata'][user_key]:
                 for attachment in output['metadata'][user_key]["attachments"]:
-                    if attachment.get("type") == "image":
+                    if is_mime_type_vision_supported(attachment.get("type")):
                         all_image_attachments.append(attachment)
 
     # Add all collected image attachments to state for the generation
