@@ -58,9 +58,8 @@ class SaneListIndentProcessor(ListIndentProcessor):
     def test(self, parent: etree.Element, block: str) -> bool:
         return block.startswith(' ' * MIN_NESTED_LIST_INDENT) and \
             not self.parser.state.isstate('detabbed') and \
-            (parent.tag in self.ITEM_TYPES or
-                (len(parent) and parent[-1] is not None and
-                    (parent[-1].tag in self.LIST_TYPES)))
+            (parent.tag in self.ITEM_TYPES or (len(parent) and parent[-1] is not None and (parent[-1].tag in
+                                                                                           self.LIST_TYPES)))
 
     def get_level(self, parent: etree.Element, block: str) -> tuple[int, etree.Element]:
         """ Get level of indentation based on list level. """
@@ -79,8 +78,7 @@ class SaneListIndentProcessor(ListIndentProcessor):
         # Step through children of tree to find matching indent level.
         while indent_level > level:
             child = self.lastChild(parent)
-            if (child is not None and
-                    (child.tag in self.LIST_TYPES or child.tag in self.ITEM_TYPES)):
+            if child is not None and (child.tag in self.LIST_TYPES or child.tag in self.ITEM_TYPES):
                 if child.tag in self.LIST_TYPES:
                     level += 1
                 parent = child
