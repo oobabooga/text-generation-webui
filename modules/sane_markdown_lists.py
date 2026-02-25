@@ -122,8 +122,6 @@ class SaneOListProcessor(OListProcessor):
 
     def __init__(self, parser: blockparser.BlockParser):
         super().__init__(parser)
-        # This restriction stems from the 'CodeBlockProcessor' class,
-        # which automatically matches blocks with an indent = self.tab_length
         max_list_start_indent = self.tab_length
         # Detect an item (e.g., `1. item`)
         self.RE = re.compile(r'^[ ]{0,%d}[\*_]{0,2}\d+\.[ ]+(.*)' % max_list_start_indent)
