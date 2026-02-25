@@ -434,7 +434,7 @@ class LlamaServer:
                 response = self.session.get(health_url)
                 if response.status_code == 200:
                     break
-            except:
+            except Exception:
                 pass
 
             time.sleep(1)
@@ -527,5 +527,5 @@ def filter_stderr_with_progress(process_stderr):
     finally:
         try:
             process_stderr.close()
-        except:
+        except Exception:
             pass

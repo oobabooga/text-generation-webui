@@ -79,7 +79,7 @@ def signal_handler(sig, frame):
     if shared.model and shared.model.__class__.__name__ == 'LlamaServer':
         try:
             shared.model.stop()
-        except:
+        except Exception:
             pass
 
     sys.exit(0)

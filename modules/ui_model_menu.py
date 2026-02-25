@@ -209,7 +209,7 @@ def load_model_wrapper(selected_model, loader, autoload=False):
                 yield f"Successfully loaded `{selected_model}`."
             else:
                 yield f"Failed to load `{selected_model}`."
-        except:
+        except Exception:
             exc = traceback.format_exc()
             logger.error('Failed to load the model.')
             print(exc)

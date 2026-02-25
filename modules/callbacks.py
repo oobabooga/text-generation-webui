@@ -37,7 +37,7 @@ class Iteratorize:
                 ret = self.mfunc(callback=_callback, *args, **self.kwargs)
             except StopNowException:
                 pass
-            except:
+            except Exception:
                 traceback.print_exc()
                 pass
 

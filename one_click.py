@@ -70,7 +70,7 @@ def cpu_has_avx2():
         import cpuinfo
         info = cpuinfo.get_cpu_info()
         return 'avx2' in info['flags']
-    except:
+    except Exception:
         return True
 
 
@@ -79,7 +79,7 @@ def cpu_has_amx():
         import cpuinfo
         info = cpuinfo.get_cpu_info()
         return 'amx' in info['flags']
-    except:
+    except Exception:
         return True
 
 
@@ -89,7 +89,7 @@ def load_state():
         try:
             with open(state_file, 'r') as f:
                 return json.load(f)
-        except:
+        except Exception:
             return {}
     return {}
 
