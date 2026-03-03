@@ -59,7 +59,6 @@ jobs:
           $matrix = @{
               'os' = @('ubuntu-22.04', 'windows-2022', 'macos-14')
               'pyver' = @("3.13")
-              'avx' = @("AVX2")
           }
 
           if ($env:CONFIGIN -ne 'Default') {$env:CONFIGIN.split(';').foreach({$matrix[$_.split(':')[0]] = $_.split(':')[1].split(',')})}
@@ -74,7 +73,7 @@ jobs:
           Write-Output ('matrix=' + $matrixOut) >> $env:GITHUB_OUTPUT
 
   build_wheels:
-    name: ${{ matrix.os }} ${{ matrix.pyver }} CPU ${{ matrix.avx }}
+    name: ${{ matrix.os }} ${{ matrix.pyver }}
     needs: define_matrix
     runs-on: ${{ matrix.os }}
     strategy:
@@ -83,7 +82,6 @@ jobs:
       run:
         shell: pwsh
     env:
-      AVXVER: ${{ matrix.avx }}
       PCKGVER: ${{ inputs.version }}
 
     steps:
@@ -111,7 +109,6 @@ jobs:
             find extensions/ -mindepth 1 -maxdepth 1 -type d | grep -v -E "$(printf '%s|' "${allowed[@]}" | sed 's/|$//')" | xargs rm -rf
 
             # Define common variables
-            AVX_SUPPORT="${{ matrix.avx }}"
             VERSION="${{ inputs.version }}"
             OS_TYPE="${{ matrix.os }}"
 
@@ -151,7 +148,7 @@ jobs:
             tar -xzf python-build.tar.gz
             mv python "text-generation-webui-${VERSION_CLEAN}/portable_env"
 
-            # 3. Prepare requirements file based on platform and AVX
+            # 3. Prepare requirements file based on platform
             cd "text-generation-webui-${VERSION_CLEAN}"
 
             # Select requirements file based on platform
@@ -162,12 +159,7 @@ jobs:
                     REQ_FILE="requirements/portable/requirements_apple_silicon.txt"
                 fi
             else
-                # For Windows and Linux, check AVX support
-                if [[ "$AVX_SUPPORT" == "AVX2" ]]; then
-                    REQ_FILE="requirements/portable/requirements_cpu_only.txt"
-                else
-                    REQ_FILE="requirements/portable/requirements_cpu_only_noavx2.txt"
-                fi
+                REQ_FILE="requirements/portable/requirements_cpu_only.txt"
             fi
 
             echo "Using requirements file: $REQ_FILE"

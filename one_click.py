@@ -65,24 +65,6 @@ def is_installed():
         return os.path.isdir(conda_env_path)
 
 
-def cpu_has_avx2():
-    try:
-        import cpuinfo
-        info = cpuinfo.get_cpu_info()
-        return 'avx2' in info['flags']
-    except:
-        return True
-
-
-def cpu_has_amx():
-    try:
-        import cpuinfo
-        info = cpuinfo.get_cpu_info()
-        return 'amx' in info['flags']
-    except:
-        return True
-
-
 def load_state():
     """Load installer state from JSON file"""
     if os.path.exists(state_file):
@@ -172,13 +154,13 @@ def get_requirements_file(gpu_choice):
     requirements_base = os.path.join("requirements", "full")
 
     if gpu_choice == "NVIDIA_CUDA128":
-        file_name = f"requirements{'_noavx2' if not cpu_has_avx2() else ''}.txt"
+        file_name = "requirements.txt"
     elif gpu_choice == "AMD":
-        file_name = f"requirements_amd{'_noavx2' if not cpu_has_avx2() else ''}.txt"
+        file_name = "requirements_amd.txt"
     elif gpu_choice == "APPLE":
         file_name = f"requirements_apple_{'intel' if is_x86_64() else 'silicon'}.txt"
     elif gpu_choice in ["INTEL", "NONE"]:
-        file_name = f"requirements_cpu_only{'_noavx2' if not cpu_has_avx2() else ''}.txt"
+        file_name = "requirements_cpu_only.txt"
     else:
         raise ValueError(f"Unknown GPU choice: {gpu_choice}")
 
@@ -327,7 +309,7 @@ def install_webui():
     elif any((is_windows(), is_linux())) and gpu_choice == "NVIDIA_CUDA128":
         print("CUDA: 12.8")
 
-    # No PyTorch for AMD on Windows (?)
+    # No PyTorch for AMD on Windows
     elif is_windows() and gpu_choice == "AMD":
         print("PyTorch setup on Windows is not implemented yet. Exiting...")
         sys.exit(1)
@@ -335,7 +317,7 @@ def install_webui():
     # Install Git and then Pytorch
     print_big_message("Installing PyTorch.")
     install_pytorch = get_pytorch_install_command(gpu_choice)
-    run_cmd(f"conda install -y ninja git && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
+    run_cmd(f"conda install -y ninja git && {install_pytorch}", assert_success=True, environment=True)
 
     if gpu_choice == "INTEL":
         # Install oneAPI dependencies via conda
