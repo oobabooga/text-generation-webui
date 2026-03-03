@@ -16,7 +16,7 @@ import sys
 # os.environ["HCC_AMDGPU_TARGET"] = 'gfx1030'
 
 # Define the required versions
-TORCH_VERSION = "2.7.1"
+TORCH_VERSION = "2.9.1"
 PYTHON_VERSION = "3.13"
 LIBSTDCXX_VERSION_LINUX = "12.1.0"
 
@@ -114,7 +114,7 @@ def get_gpu_choice():
                 "What is your GPU?",
                 {
                     'A': 'NVIDIA',
-                    'B': 'AMD - Linux/macOS only, requires ROCm 6.2.4',
+                    'B': 'AMD - Linux/macOS only, requires ROCm 6.4',
                     'C': 'Apple M Series',
                     'D': 'Intel Arc (beta)',
                     'N': 'CPU mode'
@@ -138,7 +138,7 @@ def get_pytorch_install_command(gpu_choice):
     if gpu_choice == "NVIDIA_CUDA128":
         return base_cmd + "--index-url https://download.pytorch.org/whl/cu128"
     elif gpu_choice == "AMD":
-        return base_cmd + "--index-url https://download.pytorch.org/whl/rocm6.2.4"
+        return base_cmd + "--index-url https://download.pytorch.org/whl/rocm6.4"
     elif gpu_choice in ["APPLE", "NONE"]:
         return base_cmd + "--index-url https://download.pytorch.org/whl/cpu"
     elif gpu_choice == "INTEL":
@@ -157,7 +157,7 @@ def get_pytorch_update_command(gpu_choice):
     if gpu_choice == "NVIDIA_CUDA128":
         return f"{base_cmd} --index-url https://download.pytorch.org/whl/cu128"
     elif gpu_choice == "AMD":
-        return f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.2.4"
+        return f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.4"
     elif gpu_choice in ["APPLE", "NONE"]:
         return f"{base_cmd} --index-url https://download.pytorch.org/whl/cpu"
     elif gpu_choice == "INTEL":
@@ -291,7 +291,7 @@ def update_pytorch_and_python():
 
 
 def clean_outdated_pytorch_cuda_dependencies():
-    patterns = ["cu121", "cu122", "torch2.4", "torchvision", "torchaudio"]
+    patterns = ["cu121", "cu122", "torch2.4", "torch2.6", "torch2.7", "torchvision", "torchaudio"]
     result = run_cmd("python -m pip list --format=freeze", capture_output=True, environment=True)
     matching_packages = []
 
