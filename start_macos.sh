@@ -30,7 +30,7 @@ esac
 INSTALL_DIR="$(pwd)/installer_files"
 CONDA_ROOT_PREFIX="$(pwd)/installer_files/conda"
 INSTALL_ENV_DIR="$(pwd)/installer_files/env"
-MINIFORGE_DOWNLOAD_URL="https://github.com/conda-forge/miniforge/releases/download/25.3.0-3/Miniforge3-25.3.0-3-MacOSX-${OS_ARCH}.sh"
+MINIFORGE_DOWNLOAD_URL="https://github.com/conda-forge/miniforge/releases/download/26.1.0-0/Miniforge3-26.1.0-0-MacOSX-${OS_ARCH}.sh"
 conda_exists="F"
 
 # figure out whether git and conda needs to be installed
