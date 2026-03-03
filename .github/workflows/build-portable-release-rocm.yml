@@ -58,7 +58,7 @@ jobs:
         run: |
           $matrix = @{
               'os' = @('ubuntu-22.04')
-              'pyver' = @("3.11")
+              'pyver' = @("3.13")
               'avx' = @("AVX2")
           }
 
@@ -116,9 +116,9 @@ jobs:
 
             # 1. Set platform-specific variables (Linux only for ROCm)
             PLATFORM="linux"
-            PYTHON_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20250409/cpython-3.11.12+20250409-x86_64-unknown-linux-gnu-install_only.tar.gz"
+            PYTHON_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20260303/cpython-3.13.12+20260303-x86_64-unknown-linux-gnu-install_only.tar.gz"
             PIP_PATH="portable_env/bin/python -m pip"
-            PACKAGES_PATH="portable_env/lib/python3.11/site-packages"
+            PACKAGES_PATH="portable_env/lib/python3.13/site-packages"
             rm start_macos.sh start_windows.bat
 
             # 2. Download and extract Python

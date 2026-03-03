@@ -32,7 +32,12 @@ from modules.text_generation import (
     get_encoded_length,
     get_max_prompt_length
 )
-from modules.utils import delete_file, get_available_characters, save_file
+from modules.utils import (
+    delete_file,
+    get_available_characters,
+    get_available_users,
+    save_file
+)
 from modules.web_search import add_web_search_attachments
 
 
@@ -1645,6 +1650,150 @@ def delete_character(name, instruct=False):
     # Check for character image files
     for extension in ["png", "jpg", "jpeg"]:
         delete_file(Path(f'user_data/characters/{name}.{extension}'))
+
+
+def generate_user_pfp_cache(user):
+    """Generate cached profile picture for user"""
+    cache_folder = Path(shared.args.disk_cache_dir)
+    if not cache_folder.exists():
+        cache_folder.mkdir()
+
+    for path in [Path(f"user_data/users/{user}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
+        if path.exists():
+            original_img = Image.open(path)
+            # Define file paths
+            pfp_path = Path(f'{cache_folder}/pfp_me.png')
+
+            # Save thumbnail
+            thumb = make_thumbnail(original_img)
+            thumb.save(pfp_path, format='PNG')
+            logger.info(f'User profile picture cached to "{pfp_path}"')
+
+            return str(pfp_path)
+
+    return None
+
+
+def load_user(user_name, name1, user_bio):
+    """Load user profile from YAML file"""
+    picture = None
+
+    filepath = None
+    for extension in ["yml", "yaml", "json"]:
+        filepath = Path(f'user_data/users/{user_name}.{extension}')
+        if filepath.exists():
+            break
+
+    if filepath is None or not filepath.exists():
+        logger.error(f"Could not find the user \"{user_name}\" inside user_data/users. No user has been loaded.")
+        raise ValueError
+
+    with open(filepath, 'r', encoding='utf-8') as f:
+        file_contents = f.read()
+
+    extension = filepath.suffix[1:]  # Remove the leading dot
+    data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
+
+    # Clear existing user picture cache
+    cache_folder = Path(shared.args.disk_cache_dir)
+    pfp_path = Path(f"{cache_folder}/pfp_me.png")
+    if pfp_path.exists():
+        pfp_path.unlink()
+
+    # Generate new picture cache
+    picture = generate_user_pfp_cache(user_name)
+
+    # Get user name
+    if 'name' in data and data['name'] != '':
+        name1 = data['name']
+
+    # Get user bio
+    if 'user_bio' in data:
+        user_bio = data['user_bio']
+
+    return name1, user_bio, picture
+
+
+def generate_user_yaml(name, user_bio):
+    """Generate YAML content for user profile"""
+    data = {
+        'name': name,
+        'user_bio': user_bio,
+    }
+
+    return yaml.dump(data, sort_keys=False, width=float("inf"))
+
+
+def save_user(name, user_bio, picture, filename):
+    """Save user profile to YAML file"""
+    if filename == "":
+        logger.error("The filename is empty, so the user will not be saved.")
+        return
+
+    # Ensure the users directory exists
+    users_dir = Path('user_data/users')
+    users_dir.mkdir(parents=True, exist_ok=True)
+
+    data = generate_user_yaml(name, user_bio)
+    filepath = Path(f'user_data/users/{filename}.yaml')
+    save_file(filepath, data)
+
+    path_to_img = Path(f'user_data/users/{filename}.png')
+    if picture is not None:
+        # Copy the image file from its source path to the users folder
+        shutil.copy(picture, path_to_img)
+        logger.info(f'Saved user profile picture to {path_to_img}.')
+
+
+def delete_user(name):
+    """Delete user profile files"""
+    # Check for user data files
+    for extension in ["yml", "yaml", "json"]:
+        delete_file(Path(f'user_data/users/{name}.{extension}'))
+
+    # Check for user image files
+    for extension in ["png", "jpg", "jpeg"]:
+        delete_file(Path(f'user_data/users/{name}.{extension}'))
+
+
+def update_user_menu_after_deletion(idx):
+    """Update user menu after a user is deleted"""
+    users = get_available_users()
+    if len(users) == 0:
+        # Create a default user if none exist
+        save_user('You', '', None, 'Default')
+        users = get_available_users()
+
+    idx = min(int(idx), len(users) - 1)
+    idx = max(0, idx)
+    return gr.update(choices=users, value=users[idx])
+
+
+def handle_user_menu_change(state):
+    """Handle user menu selection change"""
+    try:
+        name1, user_bio, picture = load_user(state['user_menu'], state['name1'], state['user_bio'])
+
+        return [
+            name1,
+            user_bio,
+            picture
+        ]
+    except Exception as e:
+        logger.error(f"Failed to load user '{state['user_menu']}': {e}")
+        return [
+            state['name1'],
+            state['user_bio'],
+            None
+        ]
+
+
+def handle_save_user_click(name1):
+    """Handle save user button click"""
+    return [
+        name1,
+        gr.update(visible=True)
+    ]
 
 
 def jinja_template_from_old_format(params, verbose=False):

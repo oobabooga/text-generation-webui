@@ -251,6 +251,7 @@ def list_interface_input_elements():
         'chat_style',
         'chat-instruct_command',
         'character_menu',
+        'user_menu',
         'name2',
         'context',
         'greeting',
@@ -353,6 +354,8 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
     output['preset'] = preset
     output['prompt-notebook'] = state['prompt_menu-default'] if state['show_two_notebook_columns'] else state['prompt_menu-notebook']
     output['character'] = state['character_menu']
+    if 'user_menu' in state and state['user_menu']:
+        output['user'] = state['user_menu']
     output['seed'] = int(output['seed'])
     output['show_controls'] = show_controls
     output['dark_theme'] = True if theme_state == 'dark' else False
@@ -457,6 +460,7 @@ def setup_auto_save():
         'chat_style',
         'chat-instruct_command',
         'character_menu',
+        'user_menu',
         'name1',
         'name2',
         'context',

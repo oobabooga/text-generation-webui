@@ -1,4 +1,4 @@
-accelerate==1.8.*
+accelerate==1.12.*
 audioop-lts<1.0; python_version >= "3.13"
 bitsandbytes==0.49.*
 colorama
@@ -8,7 +8,7 @@ einops
 fastapi==0.112.4
 flash-linear-attention==0.4.*
 html2text==2025.4.15
-huggingface-hub==0.36.0
+huggingface-hub==1.5.*
 jinja2==3.1.6
 markdown
 numpy==2.2.*
@@ -27,8 +27,8 @@ scipy
 sentencepiece
 tensorboard
 torchao==0.15.*
-transformers==4.57.*
-triton-windows==3.5.1.post22; platform_system == "Windows"
+transformers==5.2.*
+triton-windows==3.5.1.post24; platform_system == "Windows"
 tqdm
 wandb
 
@@ -44,10 +44,10 @@ tiktoken
 # CUDA wheels
 https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.74.0/llama_cpp_binaries-0.74.0+cu124avx-py3-none-win_amd64.whl; platform_system == "Windows"
 https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.74.0/llama_cpp_binaries-0.74.0+cu124avx-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
-https://github.com/turboderp-org/exllamav3/releases/download/v0.0.18/exllamav3-0.0.18+cu128.torch2.7.0-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
-https://github.com/turboderp-org/exllamav3/releases/download/v0.0.18/exllamav3-0.0.18+cu128.torch2.7.0-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
-https://github.com/turboderp-org/exllamav2/releases/download/v0.3.2/exllamav2-0.3.2+cu128.torch2.7.0-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
-https://github.com/turboderp-org/exllamav2/releases/download/v0.3.2/exllamav2-0.3.2+cu128.torch2.7.0-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/turboderp-org/exllamav3/releases/download/v0.0.22/exllamav3-0.0.22+cu128.torch2.9.0-cp313-cp313-win_amd64.whl; platform_system == "Windows" and python_version == "3.13"
+https://github.com/turboderp-org/exllamav3/releases/download/v0.0.22/exllamav3-0.0.22+cu128.torch2.9.0-cp313-cp313-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.13"
+https://github.com/turboderp-org/exllamav2/releases/download/v0.3.2/exllamav2-0.3.2+cu128.torch2.9.0-cp313-cp313-win_amd64.whl; platform_system == "Windows" and python_version == "3.13"
+https://github.com/turboderp-org/exllamav2/releases/download/v0.3.2/exllamav2-0.3.2+cu128.torch2.9.0-cp313-cp313-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.13"
 https://github.com/turboderp-org/exllamav2/releases/download/v0.3.2/exllamav2-0.3.2-py3-none-any.whl; platform_system == "Linux" and platform_machine != "x86_64"
-https://github.com/kingbri1/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu128torch2.7.0cxx11abiFALSE-cp311-cp311-win_amd64.whl; platform_system == "Windows" and python_version == "3.11"
-https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.7cxx11abiFALSE-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/kingbri1/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu128torch2.9.0cxx11abiFALSE-cp313-cp313-win_amd64.whl; platform_system == "Windows" and python_version == "3.13"
+https://github.com/kingbri1/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu128torch2.9.0cxx11abiFALSE-cp313-cp313-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.13"
