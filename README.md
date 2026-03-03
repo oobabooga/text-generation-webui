@@ -138,7 +138,7 @@ For other platforms, download from: https://github.com/conda-forge/miniforge/rel
 #### 1. Create a new conda environment
 
 ```
-conda create -n textgen python=3.11
+conda create -n textgen python=3.13
 conda activate textgen
 ```
 

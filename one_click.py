@@ -17,7 +17,7 @@ import sys
 
 # Define the required versions
 TORCH_VERSION = "2.7.1"
-PYTHON_VERSION = "3.11"
+PYTHON_VERSION = "3.13"
 LIBSTDCXX_VERSION_LINUX = "12.1.0"
 
 # Environment
@@ -358,6 +358,18 @@ def update_requirements(initial_installation=False, pull=True):
             environment=True,
             assert_success=True
         )
+
+    # Check for outdated Python version and refuse to update
+    if '.'.join(map(str, sys.version_info[:2])) != PYTHON_VERSION:
+        print_big_message(
+            "Your current installation uses Python {}.{}, which is outdated.\n"
+            "Python {} is now required. A clean installation is needed.\n\n"
+            "INSTRUCTIONS:\n"
+            "1. Delete the 'installer_files' folder in your text-generation-webui directory.\n"
+            "2. Run the start script again (e.g., start_windows.bat).\n\n"
+            "This will create a fresh environment with the latest software.".format(*sys.version_info[:2], PYTHON_VERSION)
+        )
+        sys.exit(0)
 
     # Check for outdated CUDA 12.4 installs and refuse to update
     state = load_state()
