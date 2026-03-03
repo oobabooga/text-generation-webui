@@ -59,7 +59,7 @@ jobs:
           $matrix = @{
               'os' = @('ubuntu-22.04', 'windows-2022')
               'pyver' = @("3.13")
-              'cuda' = @("12.4")
+              'cuda' = @("12.4", "13.1")
           }
 
           if ($env:CONFIGIN -ne 'Default') {$env:CONFIGIN.split(';').foreach({$matrix[$_.split(':')[0]] = $_.split(':')[1].split(',')})}
@@ -135,9 +135,13 @@ jobs:
             tar -xzf python-build.tar.gz
             mv python "text-generation-webui-${VERSION_CLEAN}/portable_env"
 
-            # 3. Prepare requirements file
+            # 3. Prepare requirements file based on CUDA version
             cd "text-generation-webui-${VERSION_CLEAN}"
-            REQ_FILE="requirements/portable/requirements.txt"
+            if [[ "$CUDA_VERSION" == "13.1" ]]; then
+                REQ_FILE="requirements/portable/requirements_cuda131.txt"
+            else
+                REQ_FILE="requirements/portable/requirements.txt"
+            fi
 
             # 4. Install packages
             echo "Installing Python packages from $REQ_FILE..."
