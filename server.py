@@ -3,6 +3,11 @@ import shutil
 import warnings
 from pathlib import Path
 
+# Monkey-patch HfFolder for gradio 4.x compatibility with huggingface-hub 1.x
+import huggingface_hub
+if not hasattr(huggingface_hub, 'HfFolder'):
+    huggingface_hub.HfFolder = type('HfFolder', (), {'get_token': staticmethod(huggingface_hub.get_token)})
+
 from modules import shared
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.image_models import load_image_model
