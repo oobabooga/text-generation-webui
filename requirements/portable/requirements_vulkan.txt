@@ -18,7 +18,7 @@ gradio==4.37.*
 https://github.com/oobabooga/gradio/releases/download/custom-build/gradio_client-1.0.2+custom.1-py3-none-any.whl
 
 # API
-flask_cloudflared==0.0.14
+flask_cloudflared==0.0.15
 sse-starlette==1.6.5
 tiktoken
 
