@@ -25,7 +25,7 @@ scipy
 sentencepiece
 tensorboard
 torchao==0.15.*
-transformers==5.2.*
+transformers==5.3.*
 tqdm
 wandb
 
