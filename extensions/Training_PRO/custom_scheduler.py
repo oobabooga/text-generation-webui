@@ -27,7 +27,7 @@ def custom_scheduler_global_setup(trigger_loss: float, ramp_down_ratio: float):
 
     # calculates the total num steps after trigger
     custom_scheduler_params.update({'calc_num_training_steps': 0})
-    #calculates steps when the ramp_down trigger occured
+    #calculates steps when the ramp_down trigger occurred
     custom_scheduler_params.update({'calc_ramp_down_at_step': 0})
     # triggers scheduler stopping after it reached calc_num_training_steps
     custom_scheduler_params.update({'dynamic_scheduler_stop': False})
