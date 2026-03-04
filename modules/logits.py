@@ -84,6 +84,7 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
 
             state['max_new_tokens'] = 1
             state['auto_max_new_tokens'] = False
+            state.setdefault('stream', True)
             for _ in generate_reply(prompt, state):
                 pass
 
