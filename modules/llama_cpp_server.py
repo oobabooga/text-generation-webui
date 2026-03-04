@@ -119,9 +119,9 @@ class LlamaServer:
                     penalty_found = True
 
             # Move temperature to the end if temperature_last is true and temperature exists in the list
-            if state["temperature_last"] and "temperature" in samplers:
-                samplers.remove("temperature")
-                samplers.append("temperature")
+            if state["temperature_last"] and "temperature" in filtered_samplers:
+                filtered_samplers.remove("temperature")
+                filtered_samplers.append("temperature")
 
             payload["samplers"] = filtered_samplers
 
