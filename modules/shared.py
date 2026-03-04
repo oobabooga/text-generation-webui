@@ -84,7 +84,7 @@ group.add_argument('--ctx-size-draft', type=int, default=0, help='Size of the pr
 
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
-group.add_argument('--gpu-layers', '--n-gpu-layers', type=int, default=256, metavar='N', help='Number of layers to offload to the GPU.')
+group.add_argument('--gpu-layers', '--n-gpu-layers', type=int, default=0, metavar='N', help='Number of layers to offload to the GPU. 0 means auto (llama.cpp decides via --fit).')
 group.add_argument('--cpu-moe', action='store_true', help='Move the experts to the CPU (for MoE models).')
 group.add_argument('--mmproj', type=str, default=None, help='Path to the mmproj file for vision models.')
 group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')

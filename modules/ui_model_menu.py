@@ -41,7 +41,7 @@ def create_ui():
                     gr.Markdown("## Main options")
                     with gr.Row():
                         with gr.Column():
-                            shared.gradio['gpu_layers'] = gr.Slider(label="gpu-layers", minimum=0, maximum=get_initial_gpu_layers_max(), step=1, value=shared.args.gpu_layers, info='Must be greater than 0 for the GPU to be used. ⚠️ Lower this value if you can\'t load the model.')
+                            shared.gradio['gpu_layers'] = gr.Slider(label="gpu-layers", minimum=0, maximum=get_initial_gpu_layers_max(), step=1, value=shared.args.gpu_layers, info='0 = auto (llama.cpp decides via --fit). Set manually to override.')
                             shared.gradio['ctx_size'] = gr.Slider(label='ctx-size', minimum=256, maximum=131072, step=256, value=shared.args.ctx_size, info='Context length. Common values: 4096, 8192, 16384, 32768, 65536, 131072.')
                             shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info='Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7')
                             shared.gradio['attn_implementation'] = gr.Dropdown(label="attn-implementation", choices=['sdpa', 'eager', 'flash_attention_2'], value=shared.args.attn_implementation, info='Attention implementation.')
@@ -157,22 +157,22 @@ def create_event_handlers():
         handle_load_model_event_final, gradio('truncation_length', 'loader', 'interface_state'), gradio('truncation_length', 'filter_by_loader'), show_progress=False)
 
     shared.gradio['unload_model'].click(handle_unload_model_click, None, gradio('model_status'), show_progress=False).then(
-        partial(update_gpu_layers_and_vram, auto_adjust=True), gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type'), gradio('vram_info', 'gpu_layers'), show_progress=False)
+        update_gpu_layers_and_vram, gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type'), gradio('vram_info'), show_progress=False)
 
     shared.gradio['save_model_settings'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         save_model_settings, gradio('model_menu', 'interface_state'), gradio('model_status'), show_progress=False)
 
-    # For ctx_size and cache_type - auto-adjust GPU layers
+    # For ctx_size and cache_type - update VRAM display
     for param in ['ctx_size', 'cache_type']:
         shared.gradio[param].change(
-            partial(update_gpu_layers_and_vram, auto_adjust=True),
+            update_gpu_layers_and_vram,
             gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type'),
-            gradio('vram_info', 'gpu_layers'), show_progress=False)
+            gradio('vram_info'), show_progress=False)
 
     # For manual gpu_layers changes - only update VRAM
     shared.gradio['gpu_layers'].change(
-        partial(update_gpu_layers_and_vram, auto_adjust=False),
+        update_gpu_layers_and_vram,
         gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type'),
         gradio('vram_info'), show_progress=False)
 
@@ -386,8 +386,6 @@ def get_initial_vram_info():
             shared.args.gpu_layers,
             shared.args.ctx_size,
             shared.args.cache_type,
-            auto_adjust=False,
-            for_ui=True
         )
 
     return "<div id=\"vram-info\"'>Estimated VRAM to load the model:</div>"
@@ -396,7 +394,7 @@ def get_initial_vram_info():
 def get_initial_gpu_layers_max():
     if shared.model_name != 'None' and shared.args.loader == 'llama.cpp':
         model_settings = get_model_metadata(shared.model_name)
-        return model_settings.get('max_gpu_layers', model_settings.get('gpu_layers', 256))
+        return model_settings.get('max_gpu_layers', 256)
 
     return 256
 

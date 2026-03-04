@@ -329,13 +329,17 @@ class LlamaServer:
             self.server_path,
             "--model", self.model_path,
             "--ctx-size", str(shared.args.ctx_size),
-            "--gpu-layers", str(shared.args.gpu_layers),
             "--batch-size", str(shared.args.batch_size),
             "--ubatch-size", str(shared.args.ubatch_size),
             "--port", str(self.port),
             "--no-webui",
             "--flash-attn", "on",
         ]
+
+        if shared.args.gpu_layers > 0:
+            cmd += ["--gpu-layers", str(shared.args.gpu_layers), "--fit", "off"]
+        else:
+            cmd += ["--fit", "on"]
 
         if shared.args.threads > 0:
             cmd += ["--threads", str(shared.args.threads)]
