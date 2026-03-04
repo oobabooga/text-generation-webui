@@ -22,6 +22,8 @@ class GenerationOptions(BaseModel):
     tfs: float = 1
     top_a: float = 0
     top_n_sigma: float = 0
+    adaptive_target: float = 0
+    adaptive_decay: float = 0.9
     dry_multiplier: float = 0
     dry_allowed_length: int = 2
     dry_base: float = 1.75
@@ -48,7 +50,7 @@ class GenerationOptions(BaseModel):
     static_cache: bool = False
     truncation_length: int = 0
     seed: int = -1
-    sampler_priority: List[str] | str | None = Field(default=None, description="List of samplers where the first items will appear first in the stack. Example: [\"top_k\", \"temperature\", \"top_p\"].")
+    sampler_priority: List[str] | str | None = Field(default=['repetition_penalty', 'presence_penalty', 'frequency_penalty', 'dry', 'top_n_sigma', 'temperature', 'dynamic_temperature', 'quadratic_sampling', 'top_k', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'tfs', 'top_a', 'min_p', 'adaptive_p', 'mirostat', 'xtc', 'encoder_repetition_penalty', 'no_repeat_ngram'], description="List of samplers where the first items will appear first in the stack. Example: [\"top_k\", \"temperature\", \"top_p\"].")
     custom_token_bans: str = ""
     negative_prompt: str = ''
     dry_sequence_breakers: str = '"\\n", ":", "\\"", "*"'

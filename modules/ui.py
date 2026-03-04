@@ -168,6 +168,10 @@ def list_model_elements():
         'gpu_layers_draft',
         'device_draft',
         'ctx_size_draft',
+        'spec_type',
+        'spec_ngram_size_n',
+        'spec_ngram_size_m',
+        'spec_ngram_min_hits',
         'mmproj',
     ]
 
@@ -193,6 +197,8 @@ def list_interface_input_elements():
         'tfs',
         'top_a',
         'top_n_sigma',
+        'adaptive_target',
+        'adaptive_decay',
         'dry_multiplier',
         'dry_allowed_length',
         'dry_base',
@@ -488,6 +494,8 @@ def setup_auto_save():
         'tfs',
         'top_a',
         'top_n_sigma',
+        'adaptive_target',
+        'adaptive_decay',
         'dry_multiplier',
         'dry_allowed_length',
         'dry_base',

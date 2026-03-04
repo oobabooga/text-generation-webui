@@ -75,6 +75,8 @@ class LlamaServer:
             "top_p": state["top_p"],
             "min_p": state["min_p"],
             "top_n_sigma": state["top_n_sigma"] if state["top_n_sigma"] > 0 else -1,
+            "adaptive_target": state["adaptive_target"] if state["adaptive_target"] > 0 else -1,
+            "adaptive_decay": state["adaptive_decay"],
             "typical_p": state["typical_p"],
             "repeat_penalty": state["repetition_penalty"],
             "repeat_last_n": state["repetition_penalty_range"],
@@ -122,6 +124,12 @@ class LlamaServer:
             if state["temperature_last"] and "temperature" in filtered_samplers:
                 filtered_samplers.remove("temperature")
                 filtered_samplers.append("temperature")
+
+            # adaptive-p replaces the default dist sampler; llama.cpp always
+            # places it at the end of the chain regardless of position, so we
+            # activate it based on the parameter value rather than sampler order.
+            if state.get("adaptive_target", 0) > 0:
+                filtered_samplers.append("adaptive-p")
 
             payload["samplers"] = filtered_samplers
 
@@ -391,6 +399,16 @@ class LlamaServer:
                 cmd += ["--device-draft", shared.args.device_draft]
             if shared.args.ctx_size_draft > 0:
                 cmd += ["--ctx-size-draft", str(shared.args.ctx_size_draft)]
+        if shared.args.spec_type != 'none':
+            cmd += ["--spec-type", shared.args.spec_type]
+            if shared.args.draft_max > 0:
+                cmd += ["--draft-max", str(shared.args.draft_max)]
+            if shared.args.spec_ngram_size_n != 12:
+                cmd += ["--spec-ngram-size-n", str(shared.args.spec_ngram_size_n)]
+            if shared.args.spec_ngram_size_m != 48:
+                cmd += ["--spec-ngram-size-m", str(shared.args.spec_ngram_size_m)]
+            if shared.args.spec_ngram_min_hits != 1:
+                cmd += ["--spec-ngram-min-hits", str(shared.args.spec_ngram_min_hits)]
         if shared.args.streaming_llm:
             cmd += ["--cache-reuse", "1"]
             cmd += ["--swa-full"]

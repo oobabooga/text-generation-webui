@@ -81,6 +81,10 @@ group.add_argument('--draft-max', type=int, default=4, help='Number of tokens to
 group.add_argument('--gpu-layers-draft', type=int, default=256, help='Number of layers to offload to the GPU for the draft model.')
 group.add_argument('--device-draft', type=str, default=None, help='Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1')
 group.add_argument('--ctx-size-draft', type=int, default=0, help='Size of the prompt context for the draft model. If 0, uses the same as the main model.')
+group.add_argument('--spec-type', type=str, default='none', choices=['none', 'ngram-cache', 'ngram-simple', 'ngram-map-k', 'ngram-map-k4v', 'ngram-mod'], help='Speculative decoding type for draftless speculation.')
+group.add_argument('--spec-ngram-size-n', type=int, default=12, help='N-gram lookup size for ngram speculative decoding.')
+group.add_argument('--spec-ngram-size-m', type=int, default=48, help='Draft n-gram size for ngram speculative decoding.')
+group.add_argument('--spec-ngram-min-hits', type=int, default=1, help='Minimum n-gram hits for ngram-map speculative decoding.')
 
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
@@ -269,6 +273,8 @@ settings = {
     'tfs': neutral_samplers['tfs'],
     'top_a': neutral_samplers['top_a'],
     'top_n_sigma': neutral_samplers['top_n_sigma'],
+    'adaptive_target': neutral_samplers['adaptive_target'],
+    'adaptive_decay': neutral_samplers['adaptive_decay'],
 
     # Generation parameters - Repetition suppression
     'dry_multiplier': neutral_samplers['dry_multiplier'],
