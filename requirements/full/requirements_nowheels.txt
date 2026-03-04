@@ -24,7 +24,7 @@ safetensors==0.7.*
 scipy
 sentencepiece
 tensorboard
-torchao==0.15.*
+torchao==0.16.*
 transformers==5.2.*
 tqdm
 wandb
