@@ -3,13 +3,7 @@ import shutil
 import warnings
 from pathlib import Path
 
-# Monkey-patch HfFolder for gradio 4.x compatibility with huggingface-hub 1.x
-import huggingface_hub
-if not hasattr(huggingface_hub, 'HfFolder'):
-    huggingface_hub.HfFolder = type('HfFolder', (), {'get_token': staticmethod(huggingface_hub.get_token)})
-
 from modules import shared
-from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.image_models import load_image_model
 from modules.logging_colors import logger
 from modules.prompts import load_prompt
@@ -32,9 +26,7 @@ warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_na
 warnings.filterwarnings('ignore', category=UserWarning, message='The value passed into gr.Dropdown()')
 warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_names" has conflict')
 
-with RequestBlocker():
-    from modules import gradio_hijack
-    import gradio as gr
+import gradio as gr
 
 import matplotlib
 
@@ -148,7 +140,24 @@ def create_interface():
     # Interface state elements
     shared.input_elements = ui.list_interface_input_elements()
 
-    with gr.Blocks(css=css, analytics_enabled=False, title=title, theme=ui.theme) as shared.gradio['interface']:
+    # Head HTML for font preloads, KaTeX, highlight.js, morphdom, and global JS
+    head_html = '\n'.join([
+        '<link rel="preload" href="file/css/Inter/Inter-VariableFont_opsz,wght.ttf" as="font" type="font/ttf" crossorigin>',
+        '<link rel="preload" href="file/css/Inter/Inter-Italic-VariableFont_opsz,wght.ttf" as="font" type="font/ttf" crossorigin>',
+        '<link rel="preload" href="file/css/NotoSans/NotoSans-Medium.woff2" as="font" type="font/woff2" crossorigin>',
+        '<link rel="preload" href="file/css/NotoSans/NotoSans-MediumItalic.woff2" as="font" type="font/woff2" crossorigin>',
+        '<link rel="preload" href="file/css/NotoSans/NotoSans-Bold.woff2" as="font" type="font/woff2" crossorigin>',
+        '<script src="file/js/katex/katex.min.js"></script>',
+        '<script src="file/js/katex/auto-render.min.js"></script>',
+        '<script src="file/js/highlightjs/highlight.min.js"></script>',
+        '<script src="file/js/highlightjs/highlightjs-copy.min.js"></script>',
+        '<script src="file/js/morphdom/morphdom-umd.min.js"></script>',
+        f'<link id="highlight-css" rel="stylesheet" href="file/css/highlightjs/{"github-dark" if shared.settings["dark_theme"] else "github"}.min.css">',
+        '<script>hljs.addPlugin(new CopyButtonPlugin());</script>',
+        f'<script>{ui.global_scope_js}</script>',
+    ])
+
+    with gr.Blocks(css=css, analytics_enabled=False, title=title, theme=ui.theme, head=head_html) as shared.gradio['interface']:
 
         # Interface state
         shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
@@ -234,21 +243,20 @@ def create_interface():
 
     # Launch the interface
     shared.gradio['interface'].queue()
-    with OpenMonkeyPatch():
-        shared.gradio['interface'].launch(
-            max_threads=64,
-            prevent_thread_lock=True,
-            share=shared.args.share,
-            server_name=None if not shared.args.listen else (shared.args.listen_host or '0.0.0.0'),
-            server_port=shared.args.listen_port,
-            inbrowser=shared.args.auto_launch,
-            auth=auth or None,
-            ssl_verify=False if (shared.args.ssl_keyfile or shared.args.ssl_certfile) else True,
-            ssl_keyfile=shared.args.ssl_keyfile,
-            ssl_certfile=shared.args.ssl_certfile,
-            root_path=shared.args.subpath,
-            allowed_paths=allowed_paths,
-        )
+    shared.gradio['interface'].launch(
+        max_threads=64,
+        prevent_thread_lock=True,
+        share=shared.args.share,
+        server_name=None if not shared.args.listen else (shared.args.listen_host or '0.0.0.0'),
+        server_port=shared.args.listen_port,
+        inbrowser=shared.args.auto_launch,
+        auth=auth or None,
+        ssl_verify=False if (shared.args.ssl_keyfile or shared.args.ssl_certfile) else True,
+        ssl_keyfile=shared.args.ssl_keyfile,
+        ssl_certfile=shared.args.ssl_certfile,
+        root_path=shared.args.subpath,
+        allowed_paths=allowed_paths,
+    )
 
 
 if __name__ == "__main__":
