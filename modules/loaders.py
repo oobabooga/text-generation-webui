@@ -276,6 +276,8 @@ loaders_samplers = {
         'min_p',
         'top_p',
         'top_k',
+        'adaptive_target',
+        'adaptive_decay',
         'repetition_penalty',
         'frequency_penalty',
         'presence_penalty',
