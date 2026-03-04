@@ -3,7 +3,7 @@ import shutil
 import warnings
 from pathlib import Path
 
-from modules import shared
+from modules import shared, ui  # ui must be imported early to avoid circular imports
 from modules.image_models import load_image_model
 from modules.logging_colors import logger
 from modules.prompts import load_prompt
