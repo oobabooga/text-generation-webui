@@ -401,14 +401,10 @@ class LlamaServer:
                 cmd += ["--ctx-size-draft", str(shared.args.ctx_size_draft)]
         if shared.args.spec_type != 'none':
             cmd += ["--spec-type", shared.args.spec_type]
-            if shared.args.draft_max > 0:
-                cmd += ["--draft-max", str(shared.args.draft_max)]
-            if shared.args.spec_ngram_size_n != 12:
-                cmd += ["--spec-ngram-size-n", str(shared.args.spec_ngram_size_n)]
-            if shared.args.spec_ngram_size_m != 48:
-                cmd += ["--spec-ngram-size-m", str(shared.args.spec_ngram_size_m)]
-            if shared.args.spec_ngram_min_hits != 1:
-                cmd += ["--spec-ngram-min-hits", str(shared.args.spec_ngram_min_hits)]
+            cmd += ["--draft-max", str(shared.args.draft_max)]
+            cmd += ["--spec-ngram-size-n", str(shared.args.spec_ngram_size_n)]
+            cmd += ["--spec-ngram-size-m", str(shared.args.spec_ngram_size_m)]
+            cmd += ["--spec-ngram-min-hits", str(shared.args.spec_ngram_min_hits)]
         if shared.args.streaming_llm:
             cmd += ["--cache-reuse", "1"]
             cmd += ["--swa-full"]

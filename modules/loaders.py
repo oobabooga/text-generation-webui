@@ -28,6 +28,7 @@ loaders_and_params = OrderedDict({
         'gpu_layers_draft',
         'device_draft',
         'ctx_size_draft',
+        'ngram_header',
         'spec_type',
         'spec_ngram_size_n',
         'spec_ngram_size_m',
