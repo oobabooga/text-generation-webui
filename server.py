@@ -147,7 +147,7 @@ def create_interface():
         '<link rel="preload" href="file/css/NotoSans/NotoSans-MediumItalic.woff2" as="font" type="font/woff2" crossorigin>',
         '<link rel="preload" href="file/css/NotoSans/NotoSans-Bold.woff2" as="font" type="font/woff2" crossorigin>',
         '<script src="file/js/katex/katex.min.js"></script>',
-        '<script src="file/js/katex/auto-render.min.js"></script>',
+        '<script src="file/js/katex/auto-render.js"></script>',
         '<script src="file/js/highlightjs/highlight.min.js"></script>',
         '<script src="file/js/highlightjs/highlightjs-copy.min.js"></script>',
         '<script src="file/js/morphdom/morphdom-umd.min.js"></script>',
