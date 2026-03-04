@@ -323,7 +323,6 @@ loaders_samplers = {
         'enable_thinking',
         'reasoning_effort',
         'skip_special_tokens',
-        'seed',
         'custom_token_bans',
         'dry_sequence_breakers',
     },
