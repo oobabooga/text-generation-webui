@@ -13,7 +13,7 @@
 
 # Text Generation Web UI
 
-A Gradio web UI for Large Language Models.
+Run AI chatbots like ChatGPT on your own computer. **100% private and offline** – no subscriptions, no API fees, zero telemetry. Just download, unzip, and run.
 
 [Try the Deep Reason extension](https://oobabooga.gumroad.com/l/deep_reason)
 
@@ -21,30 +21,27 @@ A Gradio web UI for Large Language Models.
 |:---:|:---:|
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/DEFAULT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/PARAMETERS-3.5.png) |
 
-## 🔥 News
-
-- The project now supports **image generation**! Including Z-Image-Turbo, 4bit/8bit quantization, `torch.compile`, and LLM-generated prompt variations ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Image-Generation-Tutorial)).
-
 ## Features
 
-- Supports multiple local text generation backends, including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), [ExLlamaV2](https://github.com/turboderp-org/exllamav2), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) (the latter via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile)).
-- Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory.
 - 100% offline and private, with zero telemetry, external resources, or remote update requests.
 - **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
 - **Vision (multimodal models)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Multimodal-Tutorial)).
 - **Image generation**: A dedicated tab for `diffusers` models like **Z-Image-Turbo**. Features 4-bit/8-bit quantization and a persistent gallery with metadata ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Image-Generation-Tutorial)).
 - **Web search**: Optionally search the internet with LLM-generated queries to add context to the conversation.
-- Aesthetic UI with dark and light themes.
-- Syntax highlighting for code blocks and LaTeX rendering for mathematical expressions.
+- Aesthetic UI with dark/light themes, syntax highlighting, and LaTeX rendering.
+- Edit messages, navigate between message versions, and branch conversations at any point.
+- Switch between models without restarting, with automatic GPU layer allocation.
+- Free-form text generation in the Notebook tab without being limited to chat turns.
 - `instruct` mode for instruction-following (like ChatGPT), and `chat-instruct`/`chat` modes for talking to custom characters.
 - Automatic prompt formatting using Jinja2 templates. You don't need to ever worry about prompt formats.
-- Edit messages, navigate between message versions, and branch conversations at any point.
 - Multiple sampling parameters and generation options for sophisticated text generation control.
-- Switch between different models in the UI without restarting.
-- Automatic GPU layers for GGUF models (on NVIDIA GPUs).
-- Free-form text generation in the Notebook tab without being limited to chat turns.
+- Supports multiple backends including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), [ExLlamaV2](https://github.com/turboderp-org/exllamav2), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM).
 - OpenAI-compatible API with Chat and Completions endpoints, including tool-calling support – see [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
 - Extension support, with numerous built-in and user-contributed extensions available. See the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
+
+## 🔥 News
+
+- The project now supports **image generation**! Including Z-Image-Turbo, 4bit/8bit quantization, `torch.compile`, and LLM-generated prompt variations ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Image-Generation-Tutorial)).
 
 ## How to install
 
@@ -52,7 +49,7 @@ A Gradio web UI for Large Language Models.
 
 No installation needed – just download, unzip and run. All dependencies included.
 
-Compatible with GGUF (llama.cpp) models on Windows, Linux, and macOS.
+Compatible with GGUF (llama.cpp) models on Windows, Linux, and macOS. [Check what models fit your hardware](https://huggingface.co/spaces/oobabooga/accurate-gguf-vram-calculator).
 
 Download from here: **https://github.com/oobabooga/text-generation-webui/releases**
 
@@ -141,7 +138,7 @@ For other platforms, download from: https://github.com/conda-forge/miniforge/rel
 #### 1. Create a new conda environment
 
 ```
-conda create -n textgen python=3.11
+conda create -n textgen python=3.13
 conda activate textgen
 ```
 
@@ -149,12 +146,12 @@ conda activate textgen
 
 | System | GPU | Command |
 |--------|---------|---------|
-| Linux/WSL | NVIDIA | `pip3 install torch==2.7.1 --index-url https://download.pytorch.org/whl/cu128` |
-| Linux/WSL | CPU only | `pip3 install torch==2.7.1 --index-url https://download.pytorch.org/whl/cpu` |
-| Linux | AMD | `pip3 install torch==2.7.1 --index-url https://download.pytorch.org/whl/rocm6.2.4` |
-| MacOS + MPS | Any | `pip3 install torch==2.7.1` |
-| Windows | NVIDIA | `pip3 install torch==2.7.1 --index-url https://download.pytorch.org/whl/cu128` |
-| Windows | CPU only | `pip3 install torch==2.7.1` |
+| Linux/WSL | NVIDIA | `pip3 install torch==2.9.1 --index-url https://download.pytorch.org/whl/cu128` |
+| Linux/WSL | CPU only | `pip3 install torch==2.9.1 --index-url https://download.pytorch.org/whl/cpu` |
+| Linux | AMD | `pip3 install torch==2.9.1 --index-url https://download.pytorch.org/whl/rocm6.4` |
+| MacOS + MPS | Any | `pip3 install torch==2.9.1` |
+| Windows | NVIDIA | `pip3 install torch==2.9.1 --index-url https://download.pytorch.org/whl/cu128` |
+| Windows | CPU only | `pip3 install torch==2.9.1` |
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/.
 
@@ -174,16 +171,13 @@ pip install -r requirements/full/<requirements file according to table below>
 
 Requirements file to use:
 
-| GPU | CPU | requirements file to use |
-|--------|---------|---------|
-| NVIDIA | has AVX2 | `requirements.txt` |
-| NVIDIA | no AVX2 | `requirements_noavx2.txt` |
-| AMD | has AVX2 | `requirements_amd.txt` |
-| AMD | no AVX2 | `requirements_amd_noavx2.txt` |
-| CPU only | has AVX2 | `requirements_cpu_only.txt` |
-| CPU only | no AVX2 | `requirements_cpu_only_noavx2.txt` |
-| Apple | Intel | `requirements_apple_intel.txt` |
-| Apple | Apple Silicon | `requirements_apple_silicon.txt` |
+| GPU | requirements file to use |
+|--------|---------|
+| NVIDIA | `requirements.txt` |
+| AMD | `requirements_amd.txt` |
+| CPU only | `requirements_cpu_only.txt` |
+| Apple Intel | `requirements_apple_intel.txt` |
+| Apple Silicon | `requirements_apple_silicon.txt` |
 
 ### Start the web UI
 

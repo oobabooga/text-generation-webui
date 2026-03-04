@@ -75,6 +75,8 @@ class LlamaServer:
             "top_p": state["top_p"],
             "min_p": state["min_p"],
             "top_n_sigma": state["top_n_sigma"] if state["top_n_sigma"] > 0 else -1,
+            "adaptive_target": state["adaptive_target"] if state["adaptive_target"] > 0 else -1,
+            "adaptive_decay": state["adaptive_decay"],
             "typical_p": state["typical_p"],
             "repeat_penalty": state["repetition_penalty"],
             "repeat_last_n": state["repetition_penalty_range"],
@@ -119,9 +121,15 @@ class LlamaServer:
                     penalty_found = True
 
             # Move temperature to the end if temperature_last is true and temperature exists in the list
-            if state["temperature_last"] and "temperature" in samplers:
-                samplers.remove("temperature")
-                samplers.append("temperature")
+            if state["temperature_last"] and "temperature" in filtered_samplers:
+                filtered_samplers.remove("temperature")
+                filtered_samplers.append("temperature")
+
+            # adaptive-p replaces the default dist sampler; llama.cpp always
+            # places it at the end of the chain regardless of position, so we
+            # activate it based on the parameter value rather than sampler order.
+            if state.get("adaptive_target", 0) > 0:
+                filtered_samplers.append("adaptive-p")
 
             payload["samplers"] = filtered_samplers
 
@@ -298,10 +306,24 @@ class LlamaServer:
         if "bos_token" in response:
             self.bos_token = response["bos_token"]
 
-    def _find_available_port(self):
-        """Find an available port by letting the OS assign one."""
+    def _is_port_available(self, port):
+        """Check if a port is available for use."""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('', 0))  # Bind to port 0 to get an available port
+            try:
+                s.bind(('', port))
+                return True
+            except OSError:
+                return False
+
+    def _find_available_port(self):
+        """Find an available port, preferring main port + 1."""
+        preferred_port = shared.args.api_port + 1
+        if self._is_port_available(preferred_port):
+            return preferred_port
+
+        # Fall back to OS-assigned random port
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
             return s.getsockname()[1]
 
     def _start_server(self):
@@ -315,13 +337,17 @@ class LlamaServer:
             self.server_path,
             "--model", self.model_path,
             "--ctx-size", str(shared.args.ctx_size),
-            "--gpu-layers", str(shared.args.gpu_layers),
             "--batch-size", str(shared.args.batch_size),
             "--ubatch-size", str(shared.args.ubatch_size),
             "--port", str(self.port),
             "--no-webui",
             "--flash-attn", "on",
         ]
+
+        if shared.args.gpu_layers > 0:
+            cmd += ["--gpu-layers", str(shared.args.gpu_layers), "--fit", "off"]
+        else:
+            cmd += ["--fit", "on"]
 
         if shared.args.threads > 0:
             cmd += ["--threads", str(shared.args.threads)]
@@ -373,6 +399,12 @@ class LlamaServer:
                 cmd += ["--device-draft", shared.args.device_draft]
             if shared.args.ctx_size_draft > 0:
                 cmd += ["--ctx-size-draft", str(shared.args.ctx_size_draft)]
+        if shared.args.spec_type != 'none':
+            cmd += ["--spec-type", shared.args.spec_type]
+            cmd += ["--draft-max", str(shared.args.draft_max)]
+            cmd += ["--spec-ngram-size-n", str(shared.args.spec_ngram_size_n)]
+            cmd += ["--spec-ngram-size-m", str(shared.args.spec_ngram_size_m)]
+            cmd += ["--spec-ngram-min-hits", str(shared.args.spec_ngram_min_hits)]
         if shared.args.streaming_llm:
             cmd += ["--cache-reuse", "1"]
             cmd += ["--swa-full"]

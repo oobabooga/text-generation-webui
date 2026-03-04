@@ -3,8 +3,7 @@ import shutil
 import warnings
 from pathlib import Path
 
-from modules import shared
-from modules.block_requests import OpenMonkeyPatch, RequestBlocker
+from modules import shared, ui  # ui must be imported early to avoid circular imports
 from modules.image_models import load_image_model
 from modules.logging_colors import logger
 from modules.prompts import load_prompt
@@ -27,9 +26,7 @@ warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_na
 warnings.filterwarnings('ignore', category=UserWarning, message='The value passed into gr.Dropdown()')
 warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_names" has conflict')
 
-with RequestBlocker():
-    from modules import gradio_hijack
-    import gradio as gr
+import gradio as gr
 
 import matplotlib
 
@@ -65,7 +62,6 @@ from modules.models import load_model, unload_model_if_idle
 from modules.models_settings import (
     get_fallback_settings,
     get_model_metadata,
-    update_gpu_layers_and_vram,
     update_model_parameters
 )
 from modules.shared import do_cmd_flags_warnings
@@ -143,7 +139,24 @@ def create_interface():
     # Interface state elements
     shared.input_elements = ui.list_interface_input_elements()
 
-    with gr.Blocks(css=css, analytics_enabled=False, title=title, theme=ui.theme) as shared.gradio['interface']:
+    # Head HTML for font preloads, KaTeX, highlight.js, morphdom, and global JS
+    head_html = '\n'.join([
+        '<link rel="preload" href="file/css/Inter/Inter-VariableFont_opsz,wght.ttf" as="font" type="font/ttf" crossorigin>',
+        '<link rel="preload" href="file/css/Inter/Inter-Italic-VariableFont_opsz,wght.ttf" as="font" type="font/ttf" crossorigin>',
+        '<link rel="preload" href="file/css/NotoSans/NotoSans-Medium.woff2" as="font" type="font/woff2" crossorigin>',
+        '<link rel="preload" href="file/css/NotoSans/NotoSans-MediumItalic.woff2" as="font" type="font/woff2" crossorigin>',
+        '<link rel="preload" href="file/css/NotoSans/NotoSans-Bold.woff2" as="font" type="font/woff2" crossorigin>',
+        '<script src="file/js/katex/katex.min.js"></script>',
+        '<script src="file/js/katex/auto-render.min.js"></script>',
+        '<script src="file/js/highlightjs/highlight.min.js"></script>',
+        '<script src="file/js/highlightjs/highlightjs-copy.min.js"></script>',
+        '<script src="file/js/morphdom/morphdom-umd.min.js"></script>',
+        f'<link id="highlight-css" rel="stylesheet" href="file/css/highlightjs/{"github-dark" if shared.settings["dark_theme"] else "github"}.min.css">',
+        '<script>hljs.addPlugin(new CopyButtonPlugin());</script>',
+        f'<script>{ui.global_scope_js}</script>',
+    ])
+
+    with gr.Blocks(css=css, analytics_enabled=False, title=title, theme=ui.theme, head=head_html, dark_theme=shared.settings['dark_theme']) as shared.gradio['interface']:
 
         # Interface state
         shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
@@ -195,27 +208,6 @@ def create_interface():
             gradio('show_controls'),
             None,
             js=f"""(x) => {{
-                // Check if this is first visit or if localStorage is out of sync
-                const savedTheme = localStorage.getItem('theme');
-                const serverTheme = {str(shared.settings['dark_theme']).lower()} ? 'dark' : 'light';
-
-                // If no saved theme or mismatch with server on first load, use server setting
-                if (!savedTheme || !sessionStorage.getItem('theme_synced')) {{
-                    localStorage.setItem('theme', serverTheme);
-                    sessionStorage.setItem('theme_synced', 'true');
-                    if (serverTheme === 'dark') {{
-                        document.getElementsByTagName('body')[0].classList.add('dark');
-                    }} else {{
-                        document.getElementsByTagName('body')[0].classList.remove('dark');
-                    }}
-                }} else {{
-                    // Use localStorage for subsequent reloads
-                    if (savedTheme === 'dark') {{
-                        document.getElementsByTagName('body')[0].classList.add('dark');
-                    }} else {{
-                        document.getElementsByTagName('body')[0].classList.remove('dark');
-                    }}
-                }}
                 {js}
                 {ui.show_controls_js}
                 toggle_controls(x);
@@ -229,21 +221,20 @@ def create_interface():
 
     # Launch the interface
     shared.gradio['interface'].queue()
-    with OpenMonkeyPatch():
-        shared.gradio['interface'].launch(
-            max_threads=64,
-            prevent_thread_lock=True,
-            share=shared.args.share,
-            server_name=None if not shared.args.listen else (shared.args.listen_host or '0.0.0.0'),
-            server_port=shared.args.listen_port,
-            inbrowser=shared.args.auto_launch,
-            auth=auth or None,
-            ssl_verify=False if (shared.args.ssl_keyfile or shared.args.ssl_certfile) else True,
-            ssl_keyfile=shared.args.ssl_keyfile,
-            ssl_certfile=shared.args.ssl_certfile,
-            root_path=shared.args.subpath,
-            allowed_paths=allowed_paths,
-        )
+    shared.gradio['interface'].launch(
+        max_threads=64,
+        prevent_thread_lock=True,
+        share=shared.args.share,
+        server_name=None if not shared.args.listen else (shared.args.listen_host or '0.0.0.0'),
+        server_port=shared.args.listen_port,
+        inbrowser=shared.args.auto_launch,
+        auth=auth or None,
+        ssl_verify=False if (shared.args.ssl_keyfile or shared.args.ssl_certfile) else True,
+        ssl_keyfile=shared.args.ssl_keyfile,
+        ssl_certfile=shared.args.ssl_certfile,
+        root_path=shared.args.subpath,
+        allowed_paths=allowed_paths,
+    )
 
 
 if __name__ == "__main__":
@@ -322,20 +313,6 @@ if __name__ == "__main__":
     if shared.model_name != 'None':
         model_settings = get_model_metadata(shared.model_name)
         update_model_parameters(model_settings, initial=True)  # hijack the command-line arguments
-
-        # Auto-adjust GPU layers if not provided by user and it's a llama.cpp model
-        if 'gpu_layers' not in shared.provided_arguments and shared.args.loader == 'llama.cpp' and 'gpu_layers' in model_settings:
-            vram_usage, adjusted_layers = update_gpu_layers_and_vram(
-                shared.args.loader,
-                shared.model_name,
-                model_settings['gpu_layers'],
-                shared.args.ctx_size,
-                shared.args.cache_type,
-                auto_adjust=True,
-                for_ui=False
-            )
-
-            shared.args.gpu_layers = adjusted_layers
 
         # Load the model
         shared.model, shared.tokenizer = load_model(shared.model_name)
