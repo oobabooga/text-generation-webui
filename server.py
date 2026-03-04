@@ -209,9 +209,6 @@ def create_interface():
             gradio('show_controls'),
             None,
             js=f"""(x) => {{
-                if (!localStorage.getItem('theme')) {{
-                    localStorage.setItem('theme', {str(shared.settings['dark_theme']).lower()} ? 'dark' : 'light');
-                }}
                 {js}
                 {ui.show_controls_js}
                 toggle_controls(x);
