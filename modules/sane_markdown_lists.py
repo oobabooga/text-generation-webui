@@ -58,9 +58,8 @@ class SaneListIndentProcessor(ListIndentProcessor):
     def test(self, parent: etree.Element, block: str) -> bool:
         return block.startswith(' ' * MIN_NESTED_LIST_INDENT) and \
             not self.parser.state.isstate('detabbed') and \
-            (parent.tag in self.ITEM_TYPES or
-                (len(parent) and parent[-1] is not None and
-                    (parent[-1].tag in self.LIST_TYPES)))
+            (parent.tag in self.ITEM_TYPES or (len(parent) and parent[-1] is not None and (parent[-1].tag in
+                                                                                           self.LIST_TYPES)))
 
     def get_level(self, parent: etree.Element, block: str) -> tuple[int, etree.Element]:
         """ Get level of indentation based on list level. """
@@ -79,8 +78,7 @@ class SaneListIndentProcessor(ListIndentProcessor):
         # Step through children of tree to find matching indent level.
         while indent_level > level:
             child = self.lastChild(parent)
-            if (child is not None and
-                    (child.tag in self.LIST_TYPES or child.tag in self.ITEM_TYPES)):
+            if child is not None and (child.tag in self.LIST_TYPES or child.tag in self.ITEM_TYPES):
                 if child.tag in self.LIST_TYPES:
                     level += 1
                 parent = child
@@ -124,16 +122,14 @@ class SaneOListProcessor(OListProcessor):
 
     def __init__(self, parser: blockparser.BlockParser):
         super().__init__(parser)
-        # This restriction stems from the 'CodeBlockProcessor' class,
-        # which automatically matches blocks with an indent = self.tab_length
-        max_list_start_indent = self.tab_length - 1
+        max_list_start_indent = self.tab_length
         # Detect an item (e.g., `1. item`)
         self.RE = re.compile(r'^[ ]{0,%d}[\*_]{0,2}\d+\.[ ]+(.*)' % max_list_start_indent)
         # Detect items on secondary lines. they can be of either list type.
         self.CHILD_RE = re.compile(r'^[ ]{0,%d}([\*_]{0,2})((\d+\.))[ ]+(.*)' % (MIN_NESTED_LIST_INDENT - 1))
         # Detect indented (nested) items of either type
         self.INDENT_RE = re.compile(r'^[ ]{%d,%d}[\*_]{0,2}((\d+\.)|[*+-])[ ]+.*' %
-                                    (MIN_NESTED_LIST_INDENT, self.tab_length * 2 - 1))
+                                    (MIN_NESTED_LIST_INDENT, self.tab_length * 2))
 
     def run(self, parent: etree.Element, blocks: list[str]) -> None:
         # Check for multiple items in one block.
@@ -242,7 +238,7 @@ class SaneUListProcessor(SaneOListProcessor):
     def __init__(self, parser: blockparser.BlockParser):
         super().__init__(parser)
         # Detect an item (e.g., `- item` or `+ item` or `* item`).
-        max_list_start_indent = self.tab_length - 1
+        max_list_start_indent = self.tab_length
         self.RE = re.compile(r'^[ ]{0,%d}[*+-][ ]+(.*)' % max_list_start_indent)
         self.CHILD_RE = re.compile(r'^[ ]{0,%d}(([*+-]))[ ]+(.*)' % (MIN_NESTED_LIST_INDENT - 1))
 
@@ -275,7 +271,7 @@ class SaneParagraphProcessor(ParagraphProcessor):
 
     def __init__(self, parser: BlockParser):
         super().__init__(parser)
-        max_list_start_indent = self.tab_length - 1
+        max_list_start_indent = self.tab_length
         self.LIST_RE = re.compile(r"\s{2}\n(\s{0,%d}[\d+*-])" % max_list_start_indent)
 
     def run(self, parent: etree.Element, blocks: list[str]) -> None:
@@ -330,6 +326,9 @@ class SaneListExtension(Extension):
         md.parser.blockprocessors.register(SaneOListProcessor(md.parser), 'olist', 40)
         md.parser.blockprocessors.register(SaneUListProcessor(md.parser), 'ulist', 30)
         md.parser.blockprocessors.register(SaneParagraphProcessor(md.parser), 'paragraph', 10)
+
+        # Disable uncommon indented codeblocks (as opposed to fenced codeblocks delimited by "```")
+        md.parser.blockprocessors.deregister('code')
 
 
 def makeExtension(**kwargs):  # pragma: no cover
