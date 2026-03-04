@@ -86,7 +86,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
                 update_model_parameters(model_settings)  # hijacking the command-line arguments
                 unload_model()
                 shared.model, shared.tokenizer = load_model(model)
-            except:
+            except Exception:
                 cumulative_log += f"Failed to load `{model}`. Moving on.\n\n"
                 yield cumulative_log
                 continue

@@ -33,5 +33,5 @@ def count_tokens(text):
     try:
         tokens = get_encoded_length(text)
         return str(tokens)
-    except:
+    except Exception:
         return '0'

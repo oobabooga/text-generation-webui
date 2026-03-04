@@ -71,7 +71,7 @@ def load_state():
         try:
             with open(state_file, 'r') as f:
                 return json.load(f)
-        except:
+        except Exception:
             return {}
     return {}
 

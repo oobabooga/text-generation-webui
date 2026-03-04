@@ -121,7 +121,7 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
                 if isinstance(key, bytes):
                     try:
                         key = key.decode()
-                    except:
+                    except Exception:
                         key = key.decode('latin')
 
                 output[key] = row[0]

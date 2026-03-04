@@ -357,7 +357,7 @@ async def handle_load_model(request_data: LoadModelRequest):
     try:
         OAImodels._load_model(to_dict(request_data))
         return JSONResponse(content="OK")
-    except:
+    except Exception:
         traceback.print_exc()
         return HTTPException(status_code=400, detail="Failed to load the model.")
 
@@ -378,7 +378,7 @@ async def handle_load_loras(request_data: LoadLorasRequest):
     try:
         OAImodels.load_loras(request_data.lora_names)
         return JSONResponse(content="OK")
-    except:
+    except Exception:
         traceback.print_exc()
         return HTTPException(status_code=400, detail="Failed to apply the LoRA(s).")
 
