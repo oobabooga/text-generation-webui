@@ -67,6 +67,8 @@ def create_ui():
                             shared.gradio['mirostat_mode'] = gr.Slider(0, 2, step=1, value=shared.settings['mirostat_mode'], label='mirostat_mode', info='mode=1 is for llama.cpp only.')
                             shared.gradio['mirostat_tau'] = gr.Slider(0, 10, step=0.01, value=shared.settings['mirostat_tau'], label='mirostat_tau')
                             shared.gradio['mirostat_eta'] = gr.Slider(0, 1, step=0.01, value=shared.settings['mirostat_eta'], label='mirostat_eta')
+                            shared.gradio['adaptive_target'] = gr.Slider(0.0, 1.0, value=shared.settings['adaptive_target'], step=0.01, label='adaptive_target', info='Target probability for adaptive-p sampling. Tokens near this probability are favored. 0 disables.')
+                            shared.gradio['adaptive_decay'] = gr.Slider(0.0, 0.99, value=shared.settings['adaptive_decay'], step=0.01, label='adaptive_decay', info='EMA decay rate for adaptive-p. Controls history window (~1/(1-decay) tokens). Default: 0.9.')
 
                             gr.Markdown('## Other options')
                             shared.gradio['do_sample'] = gr.Checkbox(value=shared.settings['do_sample'], label='do_sample')

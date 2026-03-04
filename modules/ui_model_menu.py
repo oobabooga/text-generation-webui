@@ -41,7 +41,7 @@ def create_ui():
                     gr.Markdown("## Main options")
                     with gr.Row():
                         with gr.Column():
-                            shared.gradio['gpu_layers'] = gr.Slider(label="gpu-layers", minimum=0, maximum=get_initial_gpu_layers_max(), step=1, value=shared.args.gpu_layers, info='Must be greater than 0 for the GPU to be used. ⚠️ Lower this value if you can\'t load the model.')
+                            shared.gradio['gpu_layers'] = gr.Slider(label="gpu-layers", minimum=0, maximum=get_initial_gpu_layers_max(), step=1, value=shared.args.gpu_layers, info='0 = auto (llama.cpp decides via --fit). Set manually to override.')
                             shared.gradio['ctx_size'] = gr.Slider(label='ctx-size', minimum=256, maximum=131072, step=256, value=shared.args.ctx_size, info='Context length. Common values: 4096, 8192, 16384, 32768, 65536, 131072.')
                             shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info='Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7')
                             shared.gradio['attn_implementation'] = gr.Dropdown(label="attn-implementation", choices=['sdpa', 'eager', 'flash_attention_2'], value=shared.args.attn_implementation, info='Attention implementation.')
@@ -68,14 +68,22 @@ def create_ui():
 
                             # Speculative decoding
                             with gr.Accordion("Speculative decoding", open=False, elem_classes='tgw-accordion') as shared.gradio['speculative_decoding_accordion']:
+                                shared.gradio['draft_max'] = gr.Number(label="draft-max", precision=0, step=1, value=shared.args.draft_max, info='Maximum number of tokens to draft for speculative decoding. Recommended: 4 for draft model, 64 for n-gram.')
+
+                                gr.Markdown('#### Draft model')
                                 with gr.Row():
-                                    shared.gradio['model_draft'] = gr.Dropdown(label="model-draft", choices=['None'] + utils.get_available_models(), value=lambda: shared.args.model_draft, elem_classes='slim-dropdown', info='Draft model. Speculative decoding only works with models sharing the same vocabulary (e.g., same model family).', interactive=not mu)
+                                    shared.gradio['model_draft'] = gr.Dropdown(label="model-draft", choices=['None'] + utils.get_available_models(), value=lambda: shared.args.model_draft, elem_classes='slim-dropdown', info='Draft model. Must share the same vocabulary as the main model.', interactive=not mu)
                                     ui.create_refresh_button(shared.gradio['model_draft'], lambda: None, lambda: {'choices': ['None'] + utils.get_available_models()}, 'refresh-button', interactive=not mu)
 
                                 shared.gradio['gpu_layers_draft'] = gr.Slider(label="gpu-layers-draft", minimum=0, maximum=256, value=shared.args.gpu_layers_draft, info='Number of layers to offload to the GPU for the draft model.')
-                                shared.gradio['draft_max'] = gr.Number(label="draft-max", precision=0, step=1, value=shared.args.draft_max, info='Number of tokens to draft for speculative decoding. Recommended value: 4.')
                                 shared.gradio['device_draft'] = gr.Textbox(label="device-draft", value=shared.args.device_draft, info='Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1')
                                 shared.gradio['ctx_size_draft'] = gr.Number(label="ctx-size-draft", precision=0, step=256, value=shared.args.ctx_size_draft, info='Size of the prompt context for the draft model. If 0, uses the same as the main model.')
+
+                                shared.gradio['ngram_header'] = gr.Markdown('#### N-gram (draftless)')
+                                shared.gradio['spec_type'] = gr.Dropdown(label="spec-type", choices=['none', 'ngram-mod', 'ngram-simple', 'ngram-map-k', 'ngram-map-k4v', 'ngram-cache'], value=shared.args.spec_type, info='Draftless speculative decoding type. Recommended: ngram-mod.')
+                                shared.gradio['spec_ngram_size_n'] = gr.Number(label="spec-ngram-size-n", precision=0, step=1, value=shared.args.spec_ngram_size_n, info='N-gram lookup size for speculative decoding.', visible=shared.args.spec_type != 'none')
+                                shared.gradio['spec_ngram_size_m'] = gr.Number(label="spec-ngram-size-m", precision=0, step=1, value=shared.args.spec_ngram_size_m, info='Draft n-gram size for speculative decoding.', visible=shared.args.spec_type != 'none')
+                                shared.gradio['spec_ngram_min_hits'] = gr.Number(label="spec-ngram-min-hits", precision=0, step=1, value=shared.args.spec_ngram_min_hits, info='Minimum n-gram hits for ngram-map speculative decoding.', visible=shared.args.spec_type != 'none')
 
                     gr.Markdown("## Other options")
                     with gr.Accordion("See more options", open=False, elem_classes='tgw-accordion'):
@@ -157,27 +165,34 @@ def create_event_handlers():
         handle_load_model_event_final, gradio('truncation_length', 'loader', 'interface_state'), gradio('truncation_length', 'filter_by_loader'), show_progress=False)
 
     shared.gradio['unload_model'].click(handle_unload_model_click, None, gradio('model_status'), show_progress=False).then(
-        partial(update_gpu_layers_and_vram, auto_adjust=True), gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type'), gradio('vram_info', 'gpu_layers'), show_progress=False)
+        update_gpu_layers_and_vram, gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type'), gradio('vram_info'), show_progress=False)
 
     shared.gradio['save_model_settings'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         save_model_settings, gradio('model_menu', 'interface_state'), gradio('model_status'), show_progress=False)
 
-    # For ctx_size and cache_type - auto-adjust GPU layers
+    # For ctx_size and cache_type - update VRAM display
     for param in ['ctx_size', 'cache_type']:
         shared.gradio[param].change(
-            partial(update_gpu_layers_and_vram, auto_adjust=True),
+            update_gpu_layers_and_vram,
             gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type'),
-            gradio('vram_info', 'gpu_layers'), show_progress=False)
+            gradio('vram_info'), show_progress=False)
 
     # For manual gpu_layers changes - only update VRAM
     shared.gradio['gpu_layers'].change(
-        partial(update_gpu_layers_and_vram, auto_adjust=False),
+        update_gpu_layers_and_vram,
         gradio('loader', 'model_menu', 'gpu_layers', 'ctx_size', 'cache_type'),
         gradio('vram_info'), show_progress=False)
 
     if not shared.args.portable:
         shared.gradio['lora_menu_apply'].click(load_lora_wrapper, gradio('lora_menu'), gradio('model_status'), show_progress=False)
+
+    shared.gradio['spec_type'].change(
+        lambda x: [gr.update(visible=x != 'none')] * 3,
+        gradio('spec_type'),
+        gradio('spec_ngram_size_n', 'spec_ngram_size_m', 'spec_ngram_min_hits'),
+        show_progress=False
+    )
 
     shared.gradio['download_model_button'].click(download_model_wrapper, gradio('custom_model_menu', 'download_specific_file'), gradio('model_status'), show_progress=True)
     shared.gradio['get_file_list'].click(partial(download_model_wrapper, return_links=True), gradio('custom_model_menu', 'download_specific_file'), gradio('model_status'), show_progress=True)
@@ -386,8 +401,6 @@ def get_initial_vram_info():
             shared.args.gpu_layers,
             shared.args.ctx_size,
             shared.args.cache_type,
-            auto_adjust=False,
-            for_ui=True
         )
 
     return "<div id=\"vram-info\"'>Estimated VRAM to load the model:</div>"
@@ -396,7 +409,7 @@ def get_initial_vram_info():
 def get_initial_gpu_layers_max():
     if shared.model_name != 'None' and shared.args.loader == 'llama.cpp':
         model_settings = get_model_metadata(shared.model_name)
-        return model_settings.get('max_gpu_layers', model_settings.get('gpu_layers', 256))
+        return model_settings.get('max_gpu_layers', 256)
 
     return 256
 
