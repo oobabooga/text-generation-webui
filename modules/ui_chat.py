@@ -19,7 +19,7 @@ def create_ui():
 
     shared.gradio['Chat input'] = gr.State()
     shared.gradio['history'] = gr.State({'internal': [], 'visible': [], 'metadata': {}})
-    shared.gradio['display'] = gr.JSON(value={}, visible=False)  # Hidden buffer
+    shared.gradio['display'] = gr.Headless(value={})
 
     with gr.Tab('Chat', elem_id='chat-tab'):
         with gr.Row(elem_id='past-chats-row', elem_classes=['pretty_scrollbar']):
