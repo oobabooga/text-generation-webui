@@ -6,8 +6,6 @@
 | Transformers   |      ✅       |       ✅       |    ✅\*\*  |           ✅          |
 | ExLlamav3_HF   |      ❌       |       ❌       |    ❌      |           ✅          |
 | ExLlamav3      |      ❌       |       ❌       |    ✅      |           ❌          |
-| ExLlamav2_HF   |      ✅       |       ❌       |    ❌      |           ✅          |
-| ExLlamav2      |      ✅       |       ❌       |    ❌      |           ❌          |
 | TensorRT-LLM   |      ❌       |       ❌       |    ❌      |           ❌          |
 
 ❌ = not supported

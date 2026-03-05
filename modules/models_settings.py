@@ -216,12 +216,8 @@ def infer_loader(model_name, model_settings, hf_quant_method=None):
         loader = 'llama.cpp'
     elif hf_quant_method == 'exl3':
         loader = 'ExLlamav3'
-    elif hf_quant_method in ['exl2', 'gptq']:
-        loader = 'ExLlamav2_HF'
     elif re.match(r'.*exl3', model_name.lower()):
         loader = 'ExLlamav3'
-    elif re.match(r'.*exl2', model_name.lower()):
-        loader = 'ExLlamav2_HF'
     else:
         loader = 'Transformers'
 
@@ -255,7 +251,7 @@ def apply_model_settings_to_state(model, state):
     model_settings = get_model_metadata(model)
     if 'loader' in model_settings:
         loader = model_settings.pop('loader')
-        if not ((loader == 'ExLlamav2_HF' and state['loader'] == 'ExLlamav2') or (loader == 'ExLlamav3_HF' and state['loader'] == 'ExLlamav3')):
+        if not (loader == 'ExLlamav3_HF' and state['loader'] == 'ExLlamav3'):
             state['loader'] = loader
 
     for k in model_settings:

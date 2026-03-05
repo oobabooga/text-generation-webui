@@ -23,7 +23,7 @@ A Gradio web UI for running Large Language Models locally. 100% private, offline
 
 ## Features
 
-- Supports multiple local text generation backends, including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), [ExLlamaV2](https://github.com/turboderp-org/exllamav2), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) (the latter via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile)).
+- Supports multiple local text generation backends, including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) (the latter via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile)).
 - Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory.
 - 100% offline and private, with zero telemetry, external resources, or remote update requests.
 - `instruct` mode for instruction-following (like ChatGPT), and `chat-instruct`/`chat` modes for talking to custom characters. Prompts are automatically formatted with Jinja2 templates.
@@ -245,7 +245,7 @@ usage: server.py [-h] [--multi-user] [--model MODEL] [--lora LORA [LORA ...]] [-
                  [--row-split] [--no-mmap] [--mlock] [--no-kv-offload] [--batch-size BATCH_SIZE] [--ubatch-size UBATCH_SIZE] [--threads THREADS] [--threads-batch THREADS_BATCH] [--numa]
                  [--extra-flags EXTRA_FLAGS] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code]
                  [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE]
-                 [--enable-tp] [--tp-backend TP_BACKEND] [--gpu-split GPU_SPLIT] [--autosplit] [--cfg-cache] [--no_flash_attn] [--no_xformers] [--no_sdpa] [--num_experts_per_token N] [--cpp-runner]
+                 [--gpu-split GPU_SPLIT] [--enable-tp] [--tp-backend TP_BACKEND] [--cfg-cache] [--cpp-runner]
                  [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE] [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share]
                  [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE] [--subpath SUBPATH] [--old-colors]
                  [--portable] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6] [--api-disable-ipv4]
@@ -280,13 +280,12 @@ Image model:
                                                        Quantization method for image model.
 
 Model loader:
-  --loader LOADER                                      Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav2_HF,
-                                                       ExLlamav2, TensorRT-LLM.
+  --loader LOADER                                      Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav3,
+                                                       TensorRT-LLM.
 
 Context and cache:
   --ctx-size N, --n_ctx N, --max_seq_len N             Context size in tokens. llama.cpp: 0 = auto if gpu-layers is also -1.
-  --cache-type N, --cache_type N                       KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and
-                                                       v_bits separately, e.g. q4_q8).
+  --cache-type N, --cache_type N                       KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).
 
 Speculative decoding:
   --model-draft MODEL_DRAFT                            Path to the draft model for speculative decoding.
@@ -337,17 +336,10 @@ bitsandbytes 4-bit:
   --quant_type QUANT_TYPE                              quant_type for 4-bit. Valid options: nf4, fp4.
 
 ExLlamaV3:
+  --gpu-split GPU_SPLIT                                Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.
   --enable-tp, --enable_tp                             Enable Tensor Parallelism (TP) to split the model across GPUs.
   --tp-backend TP_BACKEND                              The backend for tensor parallelism. Valid options: native, nccl. Default: native.
-
-ExLlamaV2:
-  --gpu-split GPU_SPLIT                                Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.
-  --autosplit                                          Autosplit the model tensors across the available GPUs. This causes --gpu-split to be ignored.
-  --cfg-cache                                          ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.
-  --no_flash_attn                                      Force flash-attention to not be used.
-  --no_xformers                                        Force xformers to not be used.
-  --no_sdpa                                            Force Torch SDPA to not be used.
-  --num_experts_per_token N                            Number of experts to use for generation. Applies to MoE models like Mixtral.
+  --cfg-cache                                          Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.
 
 TensorRT-LLM:
   --cpp-runner                                         Use the ModelRunnerCpp runner, which is faster than the default ModelRunner.

@@ -70,18 +70,12 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
         from modules import sampler_hijack
         from modules.torch_utils import get_device
 
-        is_non_hf_exllamav2 = shared.model.__class__.__name__ == 'Exllamav2Model'
         is_non_hf_exllamav3 = shared.model.__class__.__name__ == 'Exllamav3Model'
 
         if not use_samplers:
             state = {'stream': True}
 
         if use_samplers:
-            if is_non_hf_exllamav2:
-                # sampling is all done in C++ for exllama, so it is really hard to hijack
-                logger.error("Sampler hijacking is not supported non-Huggingface loaders.")
-                return 'Error: Sampler hijacking is not supported non-Huggingface loaders. Please disable the "Use samplers" option.', previous
-
             state['max_new_tokens'] = 1
             state['auto_max_new_tokens'] = False
             state.setdefault('stream', True)
@@ -90,7 +84,7 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
 
             scores = sampler_hijack.global_scores[-1]
         else:
-            if is_non_hf_exllamav2 or is_non_hf_exllamav3:
+            if is_non_hf_exllamav3:
                 device = get_device()
                 tokens = shared.tokenizer.encode(prompt)
                 if device:

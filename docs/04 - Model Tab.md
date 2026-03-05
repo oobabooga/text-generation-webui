@@ -29,7 +29,7 @@ Example: https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF
 
 ### Transformers
 
-Loads: full precision (16-bit or 32-bit) models, as well as bitsandbytes-quantized models. The repository usually has a clean name without GGUF, EXL2, or EXL3 in its name, and the model files are named `model.safetensors` or split into parts like `model-00001-of-00004.safetensors`.
+Loads: full precision (16-bit or 32-bit) models, as well as bitsandbytes-quantized models. The repository usually has a clean name without GGUF or EXL3 in its name, and the model files are named `model.safetensors` or split into parts like `model-00001-of-00004.safetensors`.
 
 Example: [https://huggingface.co/lmsys/vicuna-7b-v1.5](https://huggingface.co/lmsys/vicuna-7b-v1.5).
 
@@ -77,33 +77,6 @@ The same as ExLlamav3_HF but using the internal samplers of ExLlamaV3 instead of
 * **gpu_split**: Same as ExLlamav3_HF.
 * **enable_tp**: Enable Tensor Parallelism (TP) to split the model across GPUs.
 * **tp_backend**: The backend for tensor parallelism. Valid options: `native`, `nccl`. Default: `native`.
-
-### ExLlamav2_HF
-
-Loads: GPTQ and EXL2 models. EXL2 models usually have "EXL2" in the model name, while GPTQ models usually have GPTQ in the model name, or alternatively something like "-4bit-128g" in the name.
-
-Examples:
-
-* https://huggingface.co/turboderp/Llama2-70B-exl2
-* https://huggingface.co/TheBloke/Llama-2-13B-chat-GPTQ
-
-* **ctx_size**: Context length of the model. In ExLlamaV2, the cache is preallocated, so the higher this value, the higher the VRAM. It is automatically set to the maximum sequence length for the model based on its metadata, but you may need to lower this value to fit the model into your GPU. After loading the model, the "Truncate the prompt up to this length" parameter under "Parameters" > "Generation" is automatically set to your chosen "ctx_size" so that you don't have to set the same thing twice.
-* **cache_type**: KV cache quantization type. Valid options: `fp16`, `fp8`, `q8`, `q6`, `q4`. Lower quantization saves VRAM at the cost of some quality.
-* **gpu_split**: Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: `20,7,7`. Make sure to set a lower value for the first GPU, as that's where the cache is allocated.
-* **alpha_value**: Used to extend the context length of a model with a minor loss in quality. Same as the Transformers parameter.
-* **compress_pos_emb**: Positional embeddings compression factor. Same as the Transformers parameter.
-* **num_experts_per_token**: Number of experts to use for generation. Applies to MoE models like Mixtral.
-* **autosplit**: Autosplit the model tensors across the available GPUs. This causes gpu_split to be ignored.
-* **enable_tp**: Enable Tensor Parallelism (TP) to split the model across GPUs.
-* **no_flash_attn**: Disables flash attention. Otherwise, it is automatically used as long as the library is installed.
-* **no_xformers**: Force xformers to not be used.
-* **no_sdpa**: Force Torch SDPA to not be used.
-* **cfg_cache**: Creates a second cache to hold the CFG negative prompts. You need to set this if and only if you intend to use CFG in the "Parameters" > "Generation" tab. Checking this parameter doubles the cache VRAM usage.
-* **no_use_fast**: Do not use the "fast" version of the tokenizer.
-
-### ExLlamav2
-
-The same as ExLlamav2_HF but using the internal samplers of ExLlamaV2 instead of the ones in the Transformers library. Supports speculative decoding with a draft model.
 
 ### TensorRT-LLM
 

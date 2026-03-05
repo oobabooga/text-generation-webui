@@ -46,10 +46,6 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
         logger.error("Perplexity evaluation is not implemented for the llama.cpp loader.")
         raise ValueError
 
-    if shared.args.loader == "ExLlamav2":
-        logger.error("ExLlamav2_HF is required for perplexity evaluation with EXL2 models. Please reload the model with ExLlamav2_HF instead of ExLlamav2.")
-        raise ValueError
-
     if not shared.args.no_use_fast:
         logger.warning("--no_use_fast is not set. If tokenizing the input dataset takes a long time, try reloading the model with that option set/checked.")
 

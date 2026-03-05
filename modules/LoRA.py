@@ -5,10 +5,7 @@ from modules.logging_colors import logger
 
 
 def add_lora_to_model(lora_names):
-    if shared.model.__class__.__name__ in ['Exllamav2Model', 'Exllamav2HF'] or shared.args.loader in ['ExLlamav2', 'ExLlamav2_HF']:
-        add_lora_exllamav2(lora_names)
-    else:
-        add_lora_transformers(lora_names)
+    add_lora_transformers(lora_names)
 
 
 def get_lora_path(lora_name):
@@ -17,32 +14,6 @@ def get_lora_path(lora_name):
         lora_name = p.parts[-1]
 
     return Path(f"{shared.args.lora_dir}/{lora_name}")
-
-
-def add_lora_exllamav2(lora_names):
-
-    from exllamav2 import ExLlamaV2Lora
-
-    if isinstance(shared.model.loras, list):
-        for lora in shared.model.loras:
-            lora.unload()
-
-    if len(lora_names) > 0:
-        logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join(lora_names)))
-        shared.model.loras = []
-        for lora_name in lora_names:
-            lora_path = get_lora_path(lora_name)
-            if shared.model.__class__.__name__ == 'Exllamav2Model':
-                lora = ExLlamaV2Lora.from_directory(shared.model.model, str(lora_path))
-            else:
-                lora = ExLlamaV2Lora.from_directory(shared.model.ex_model, str(lora_path))
-
-            shared.model.loras.append(lora)
-
-        shared.lora_names = lora_names
-    else:
-        shared.lora_names = []
-        shared.model.loras = None
 
 
 def add_lora_transformers(lora_names):

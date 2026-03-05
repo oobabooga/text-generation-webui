@@ -59,7 +59,7 @@ class Exllamav3Model:
             logger.warning(f"max_num_tokens must be a multiple of 256. Adjusting from {max_tokens} to {adjusted_tokens}")
             max_tokens = adjusted_tokens
 
-        # Parse cache type (ExLlamaV2 pattern)
+        # Parse cache type
         cache_type = shared.args.cache_type.lower()
         cache_kwargs = {}
         if cache_type == 'fp16':
