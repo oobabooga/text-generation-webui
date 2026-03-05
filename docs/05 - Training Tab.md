@@ -8,9 +8,8 @@ The WebUI seeks to make training your own LoRAs as easy as possible. It comes do
 
 ### **Step 2**: Gather a dataset.
 - If you use a dataset similar to the [Alpaca](https://github.com/gururise/AlpacaDataCleaned/blob/main/alpaca_data_cleaned.json) format, that is natively supported by the `Formatted Dataset` input in the WebUI, with premade formatter options.
-- If you use a dataset that isn't matched to Alpaca's format, but uses the same basic JSON structure, you can make your own format file by copying `training/formats/alpaca-format.json` to a new file and [editing its content](#format-files).
-- If you can get the dataset into a simple text file, that works too! You can train using the `Raw text file` input option.
-    - This means you can for example just copy/paste a chatlog/documentation page/whatever you want, shove it in a plain text file, and train on it.
+- If you use a dataset that isn't matched to Alpaca's format, but uses the same basic JSON structure, you can make your own format file by copying `user_data/training/formats/alpaca-format.json` to a new file and [editing its content](#format-files).
+- For pretraining-style training on raw text, use the `Text Dataset` tab with a JSON file where each row has a `"text"` key.
 - If you use a structured dataset not in this format, you may have to find an external way to convert it - or open an issue to request native support.
 
 ### **Step 3**: Do the training.
@@ -74,10 +73,22 @@ So for example if a dataset has `"instruction": "answer my question"`, then the 
 
 If you have different sets of key inputs, you can make your own format file to match it. This format-file is designed to be as simple as possible to enable easy editing to match your needs.
 
-## Raw Text File Settings
+## Text Dataset
 
-When using raw text files as your dataset, the text is split into sections by the `Hard Cut String` (default `\n\n\n`), tokenized, concatenated into one long token sequence, and then split into non-overlapping chunks of exactly `Cutoff Length` tokens (any remainder shorter than the cutoff is dropped). This is the standard concatenate-and-split approach used by HuggingFace `run_clm.py`.
-- `Hard Cut String` sets a string that indicates a boundary between unrelated sections of text. This defaults to `\n\n\n`, meaning 3 newlines. When `Add EOS token` is enabled, an EOS token is appended after each section before concatenation. This allows you to insert unrelated sections of text in the same text file, ensuring the model learns proper boundaries between them.
+For pretraining-style training on raw text, use the **Text Dataset** tab. Your dataset should be a JSON file with one document per row, each with a `"text"` key:
+
+```json
+[
+  {"text": "First document content..."},
+  {"text": "Second document content..."}
+]
+```
+
+This is the standard format used by most pretraining datasets (The Pile, RedPajama, etc.).
+
+Each document is tokenized (with BOS token), concatenated into one long token sequence, and split into chunks of `Cutoff Length` tokens. The final chunk is padded if shorter than the cutoff length. When `Add EOS token` is enabled, an EOS token is appended after each document before concatenation, helping the model learn document boundaries.
+
+- `Stride Length` controls the overlap between consecutive chunks in tokens. Set to 0 for non-overlapping chunks (the standard concatenate-and-split approach). Values like 256 or 512 create overlapping chunks that help the model learn context across chunk boundaries, at the cost of more training samples.
 
 ## Chat Template Format
 
