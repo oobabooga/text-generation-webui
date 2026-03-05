@@ -393,7 +393,7 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
     def tokenize_conversation(data_point):
         """Tokenize using apply_chat_template() with assistant-only label masking."""
         messages = normalize_messages(data_point)
-        full_ids = shared.tokenizer.apply_chat_template(messages, tokenize=True)
+        full_ids = list(shared.tokenizer.apply_chat_template(messages, tokenize=True, return_dict=False))
 
         # Build labels: -100 for everything, then unmask assistant turns.
         # This assumes apply_chat_template(messages[:i]) is a token-for-token
@@ -404,11 +404,11 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
             if msg["role"] == "assistant":
                 # Tokens up to where this assistant turn starts
                 header_ids = shared.tokenizer.apply_chat_template(
-                    messages[:i], tokenize=True, add_generation_prompt=True
+                    messages[:i], tokenize=True, return_dict=False, add_generation_prompt=True
                 )
                 # Tokens through end of this assistant turn
                 through_ids = shared.tokenizer.apply_chat_template(
-                    messages[:i + 1], tokenize=True
+                    messages[:i + 1], tokenize=True, return_dict=False
                 )
                 # Unmask assistant tokens
                 start = len(header_ids)
