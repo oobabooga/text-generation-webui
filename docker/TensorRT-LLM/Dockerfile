@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:2.2.1-cuda12.1-cudnn8-runtime
+FROM pytorch/pytorch:2.9.1-cuda12.8-cudnn9-runtime
 
 # Install Git
 RUN apt update && apt install -y git
@@ -12,7 +12,7 @@ WORKDIR /app
 # Install text-generation-webui
 RUN git clone https://github.com/oobabooga/text-generation-webui
 WORKDIR /app/text-generation-webui
-RUN pip install -r requirements.txt
+RUN pip install -r requirements/full/requirements.txt
 
 # This is needed to avoid an error about "Failed to build mpi4py" in the next command
 ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
