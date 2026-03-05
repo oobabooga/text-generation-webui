@@ -1,4 +1,0 @@
-{
-    "modelanswer,userprompt,systemprompt": "<s>[INST] <<SYS>>\n%systemprompt%\n<</SYS>>\n\n%userprompt%[/INST] %modelanswer%</s>",
-    "modelanswer,userprompt": "<s>[INST] <<SYS>>\n\n<</SYS>>\n\n%userprompt%[/INST] %modelanswer%</s>"
-}

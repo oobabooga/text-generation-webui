@@ -14,6 +14,7 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
+import yaml
 import gradio as gr
 
 from modules import shared, ui, utils
@@ -25,7 +26,7 @@ from modules.evaluate import (
 from modules.logging_colors import logger
 from modules.models import reload_model
 
-PARAMETERS = ["lora_name", "always_override", "all_linear", "q_proj_en", "v_proj_en", "k_proj_en", "o_proj_en", "gate_proj_en", "down_proj_en", "up_proj_en", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "text_dataset", "higher_rank_limit", "warmup_steps", "optimizer", "stride_length", "train_only_after", "stop_at_loss", "add_eos_token", "report_to"]
+PARAMETERS = ["lora_name", "always_override", "all_linear", "q_proj_en", "v_proj_en", "k_proj_en", "o_proj_en", "gate_proj_en", "down_proj_en", "up_proj_en", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "text_dataset", "higher_rank_limit", "warmup_steps", "optimizer", "stride_length", "stop_at_loss", "add_eos_token", "report_to"]
 WANT_INTERRUPT = False
 
 train_log = {}
@@ -96,9 +97,8 @@ def create_ui():
 
                             with gr.Column():
                                 warmup_steps = gr.Number(label='Warmup Steps', value=100, info='For this many steps at the start, the learning rate will be lower than normal. This helps the trainer prepare the model and precompute statistics to improve the quality of training after the start.')
-                                train_only_after = gr.Textbox(label='Train Only After', value='', info='Only consider text *after* this string in any given chunk for training. For Alpaca datasets, use "### Response:" to only train the response and ignore the input.')
 
-                                add_eos_token = gr.Checkbox(label='Add EOS token', value=False, info="Adds EOS token for each dataset item. In case of raw text, the EOS will be added at the Hard Cut")
+                                add_eos_token = gr.Checkbox(label='Add EOS token', value=False, info="Adds EOS token for each document in text datasets.")
 
                                 higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
                                 report_to = gr.Radio(label="Save detailed logs with", value="None", choices=["None", "wandb", "tensorboard"], interactive=True)
@@ -106,8 +106,8 @@ def create_ui():
                 with gr.Column():
                     with gr.Tab(label='Formatted Dataset'):
                         with gr.Row():
-                            format = gr.Dropdown(choices=['None', 'Chat Template'] + [x for x in utils.get_datasets('user_data/training/formats', 'json') if x != 'None'], value='None', label='Data Format', info='The format file used to decide how to format the dataset input. "Chat Template" uses the model\'s built-in chat template via apply_chat_template().', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(format, lambda: None, lambda: {'choices': ['None', 'Chat Template'] + [x for x in utils.get_datasets('user_data/training/formats', 'json') if x != 'None']}, 'refresh-button', interactive=not mu)
+                            format = gr.Dropdown(choices=get_instruction_templates(), value='None', label='Data Format', info='Select an instruction template for formatting the dataset, or "Chat Template" to use the model\'s built-in chat template.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(format, lambda: None, lambda: {'choices': get_instruction_templates()}, 'refresh-button', interactive=not mu)
 
                         with gr.Row():
                             dataset = gr.Dropdown(choices=utils.get_datasets('user_data/training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
@@ -158,7 +158,7 @@ def create_ui():
                 refresh_table = gr.Button('Refresh the table', elem_classes="small-button", interactive=not mu)
 
     # Training events
-    all_params = [lora_name, always_override, all_linear, q_proj_en, v_proj_en, k_proj_en, o_proj_en, gate_proj_en, down_proj_en, up_proj_en, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, text_dataset, higher_rank_limit, warmup_steps, optimizer, stride_length, train_only_after, stop_at_loss, add_eos_token, report_to]
+    all_params = [lora_name, always_override, all_linear, q_proj_en, v_proj_en, k_proj_en, o_proj_en, gate_proj_en, down_proj_en, up_proj_en, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, text_dataset, higher_rank_limit, warmup_steps, optimizer, stride_length, stop_at_loss, add_eos_token, report_to]
 
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
@@ -222,6 +222,29 @@ def clean_path(base_path: str, path: str):
     return f'{Path(base_path).absolute()}/{path}'
 
 
+def get_instruction_templates():
+    path = Path('user_data/instruction-templates')
+    names = set()
+    for ext in ['yaml', 'yml', 'jinja']:
+        for f in path.glob(f'*.{ext}'):
+            names.add(f.stem)
+    return ['None', 'Chat Template'] + sorted(names, key=utils.natural_keys)
+
+
+def load_template(name):
+    """Load a Jinja2 template string from user_data/instruction-templates/."""
+    path = Path('user_data/instruction-templates')
+    for ext in ['jinja', 'yaml', 'yml']:
+        filepath = path / f'{name}.{ext}'
+        if filepath.exists():
+            if ext == 'jinja':
+                return filepath.read_text(encoding='utf-8')
+            else:
+                data = yaml.safe_load(filepath.read_text(encoding='utf-8'))
+                return data.get('instruction_template', '')
+    return ''
+
+
 def backup_adapter(input_folder):
     # Get the creation date of the adapter file (safetensors or bin)
     try:
@@ -269,7 +292,7 @@ def calc_trainable_parameters(model):
     return trainable_params, all_param
 
 
-def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en: bool, v_proj_en: bool, k_proj_en: bool, o_proj_en: bool, gate_proj_en: bool, down_proj_en: bool, up_proj_en: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, text_dataset: str, higher_rank_limit: bool, warmup_steps: int, optimizer: str, stride_length: int, train_only_after: str, stop_at_loss: float, add_eos_token: bool, report_to: str):
+def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en: bool, v_proj_en: bool, k_proj_en: bool, o_proj_en: bool, gate_proj_en: bool, down_proj_en: bool, up_proj_en: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, text_dataset: str, higher_rank_limit: bool, warmup_steps: int, optimizer: str, stride_length: int, stop_at_loss: float, add_eos_token: bool, report_to: str):
 
     import torch
     import transformers
@@ -324,47 +347,6 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
         }.items() if enabled]
         return target_mods
 
-    def encode(text, add_bos_token):
-        result = shared.tokenizer.encode(text, truncation=True, max_length=cutoff_len)
-        # Check if the first two tokens are BOS
-        if len(result) >= 2 and result[:2] == [shared.tokenizer.bos_token_id, shared.tokenizer.bos_token_id]:
-            result = result[1:]
-
-        if not add_bos_token and result[0] == shared.tokenizer.bos_token_id:
-            result = result[1:]
-        return result
-
-    def tokenize(prompt, append_eos_token=False):
-
-        if train_only_after == '' or train_only_after not in prompt:
-            input_ids = encode(prompt, True)
-
-            if append_eos_token and input_ids[-1] != shared.tokenizer.eos_token_id and len(input_ids) < cutoff_len:
-                input_ids.append(shared.tokenizer.eos_token_id)
-
-            labels = list(input_ids)
-
-        else:
-            ind = prompt.index(train_only_after) + len(train_only_after)
-            before_tokens = encode(prompt[:ind], True)
-            after_tokens = encode(prompt[ind:], False)
-
-            if append_eos_token and len(after_tokens) > 0 and after_tokens[-1] != shared.tokenizer.eos_token_id:
-                after_tokens.append(shared.tokenizer.eos_token_id)
-
-            full_length = len(after_tokens) + len(before_tokens)
-            if full_length > cutoff_len:
-                after_tokens = after_tokens[:cutoff_len - len(before_tokens)]
-
-            input_ids = before_tokens + after_tokens
-            labels = [-100] * len(before_tokens) + list(after_tokens)
-
-        return {
-            "input_ids": input_ids,
-            "labels": labels,
-            "attention_mask": [1] * len(input_ids),
-        }
-
     def normalize_messages(data_point):
         """Convert a dataset row to OpenAI messages format for apply_chat_template()."""
         if "messages" in data_point:
@@ -377,16 +359,8 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
                 for turn in data_point["conversations"]
             ]
 
-        if "instruction" in data_point and "output" in data_point:
-            messages = []
-            if data_point.get("system", "").strip():
-                messages.append({"role": "system", "content": data_point["system"]})
-            messages.append({"role": "user", "content": data_point["instruction"]})
-            messages.append({"role": "assistant", "content": data_point["output"]})
-            return messages
-
         raise RuntimeError(
-            f'Dataset row must contain "messages", "conversations", or "instruction"/"output" keys. '
+            f'Dataset row must contain "messages" or "conversations" key. '
             f'Found: {list(data_point.keys())}'
         )
 
@@ -492,72 +466,45 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
             return
 
         if format == 'Chat Template':
-            # Use the model's built-in chat template via apply_chat_template()
             if not getattr(shared.tokenizer, 'chat_template', None):
-                yield "Error: this model's tokenizer does not have a chat template. Use a format file instead, or load an instruct/chat model."
+                yield "Error: this model's tokenizer does not have a chat template. Select an instruction template instead, or load an instruct/chat model."
                 return
-
-            train_template["template_type"] = "chat_template"
-
-            logger.info("Loading JSON dataset with Chat Template format")
-            data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{dataset}.json'))
-
-            # Validate the first row
-            try:
-                normalize_messages(data['train'][0])
-            except (RuntimeError, KeyError, IndexError) as e:
-                yield f"Error: {e}"
+        else:
+            # Load custom instruction template and set on tokenizer
+            template_str = load_template(format)
+            if not template_str:
+                yield f"Error: could not load instruction template '{format}'."
                 return
+            shared.tokenizer.chat_template = template_str
 
-            train_data = data['train'].map(
+        # Unified path — both cases use tokenize_conversation()
+        train_template["template_type"] = "chat_template"
+
+        logger.info("Loading JSON dataset with chat template format")
+        data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{dataset}.json'))
+
+        # Validate the first row
+        try:
+            normalize_messages(data['train'][0])
+        except (RuntimeError, KeyError, IndexError) as e:
+            yield f"Error: {e}"
+            return
+
+        train_data = data['train'].map(
+            tokenize_conversation,
+            remove_columns=data['train'].column_names,
+            new_fingerprint='%030x' % random.randrange(16**30)
+        )
+
+        if eval_dataset == 'None':
+            eval_data = None
+        else:
+            eval_data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{eval_dataset}.json'))
+            eval_data = eval_data['train'].map(
                 tokenize_conversation,
-                remove_columns=data['train'].column_names,
+                remove_columns=eval_data['train'].column_names,
                 new_fingerprint='%030x' % random.randrange(16**30)
             )
-
-            if eval_dataset == 'None':
-                eval_data = None
-            else:
-                eval_data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{eval_dataset}.json'))
-                eval_data = eval_data['train'].map(
-                    tokenize_conversation,
-                    remove_columns=eval_data['train'].column_names,
-                    new_fingerprint='%030x' % random.randrange(16**30)
-                )
-        else:
-            # Use format file for prompt generation
-            train_template["template_type"] = "dataset"
-
-            with open(clean_path('user_data/training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
-                format_data: dict[str, str] = json.load(formatFile)
-
-            # == store training prompt ==
-            for _, value in format_data.items():
-                prompt_key = f"template_{len(train_template)}"
-                train_template[prompt_key] = value
-
-            def generate_prompt(data_point: dict[str, str]):
-                for options, data in format_data.items():
-                    if set(options.split(',')) == set(x[0] for x in data_point.items() if (type(x[1]) is str and len(x[1].strip()) > 0)):
-                        for key, val in data_point.items():
-                            if type(val) is str:
-                                data = data.replace(f'%{key}%', val)
-                        return data
-                raise RuntimeError(f'Data-point "{data_point}" has no keyset match within format "{list(format_data.keys())}"')
-
-            def generate_and_tokenize_prompt(data_point):
-                prompt = generate_prompt(data_point)
-                return tokenize(prompt, add_eos_token)
-
-            logger.info("Loading JSON datasets")
-            data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{dataset}.json'))
-            train_data = data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
-
-            if eval_dataset == 'None':
-                eval_data = None
-            else:
-                eval_data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{eval_dataset}.json'))
-                eval_data = eval_data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
 
     # == We MUST reload model if it went through any previous training, even failed one ==
     if shared.model_dirty_from_training:

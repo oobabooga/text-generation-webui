@@ -7,8 +7,7 @@ The WebUI seeks to make training your own LoRAs as easy as possible. It comes do
 - What are you training it on? Do you want it to learn real information, a simple format, ...?
 
 ### **Step 2**: Gather a dataset.
-- If you use a dataset similar to the [Alpaca](https://github.com/gururise/AlpacaDataCleaned/blob/main/alpaca_data_cleaned.json) format, that is natively supported by the `Formatted Dataset` input in the WebUI, with premade formatter options.
-- If you use a dataset that isn't matched to Alpaca's format, but uses the same basic JSON structure, you can make your own format file by copying `user_data/training/formats/alpaca-format.json` to a new file and [editing its content](#format-files).
+- For instruction/chat training, prepare a JSON dataset in one of the [supported formats](#instruction-templates) (OpenAI messages or ShareGPT).
 - For pretraining-style training on raw text, use the `Text Dataset` tab with a JSON file where each row has a `"text"` key.
 - If you use a structured dataset not in this format, you may have to find an external way to convert it - or open an issue to request native support.
 
@@ -38,40 +37,52 @@ The WebUI seeks to make training your own LoRAs as easy as possible. It comes do
 - If your model isn't learning detailed information but you want it to, you might need to just run more epochs, or you might need a higher Rank.
 - If your model is enforcing a format you didn't want, you may need to tweak your dataset, or start over and not train as far.
 
-## Format Files
+## Instruction Templates
 
-If using JSON formatted datasets, they are presumed to be in the following approximate format:
+All instruction/chat training uses `apply_chat_template()` with Jinja2 templates. You have two options in the **Data Format** dropdown:
 
+- **Chat Template**: Uses the model's built-in chat template from its tokenizer. Works with instruct/chat models that ship with a chat template (Llama 3, Qwen, Mistral, etc.).
+- **Named template** (e.g. ChatML, Alpaca, Llama-v3, etc.): Loads a Jinja2 template from `user_data/instruction-templates/`. This is useful for base models that don't have a built-in template, or when you want to override the model's default template.
+
+Both options are functionally identical — the only difference is where the Jinja2 template string comes from. In both cases:
+- The dataset is tokenized via `apply_chat_template()`
+- Labels are automatically masked so only assistant responses are trained on
+- Multi-turn conversations are supported natively
+- Special tokens are handled correctly by the template
+
+The WebUI ships with 50+ templates in `user_data/instruction-templates/`. You can also add your own by creating a `.yaml` file with an `instruction_template` key containing a Jinja2 template string, or a plain `.jinja` file.
+
+**Dataset formats:** Your JSON dataset can use either of these structures:
+
+OpenAI messages format:
 ```json
 [
-    {
-        "somekey": "somevalue",
-        "key2": "value2"
-    },
-    {
-        // etc
-    }
+  {
+    "messages": [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": "What is Python?"},
+      {"role": "assistant", "content": "A programming language."},
+      {"role": "user", "content": "What's it used for?"},
+      {"role": "assistant", "content": "Web dev, data science, scripting, and more."}
+    ]
+  }
 ]
 ```
 
-Where the keys (eg `somekey`, `key2` above) are standardized, and relatively consistent across the dataset, and the values (eg `somevalue`, `value2`) contain the content actually intended to be trained.
-
-For Alpaca, the keys are `instruction`, `input`, and `output`, wherein `input` is sometimes blank.
-
-A simple format file for Alpaca to be used as a chat bot is:
-
+ShareGPT format (`conversations` key with `from`/`value` fields):
 ```json
-{
-    "instruction,output": "User: %instruction%\nAssistant: %output%",
-    "instruction,input,output": "User: %instruction%: %input%\nAssistant: %output%"
-}
+[
+  {
+    "conversations": [
+      {"from": "system", "value": "You are a helpful assistant."},
+      {"from": "human", "value": "What is Python?"},
+      {"from": "gpt", "value": "A programming language."},
+      {"from": "human", "value": "What's it used for?"},
+      {"from": "gpt", "value": "Web dev, data science, scripting, and more."}
+    ]
+  }
+]
 ```
-
-Note that the keys (eg `instruction,output`) are a comma-separated list of dataset keys, and the values are a simple string that use those keys with `%%`.
-
-So for example if a dataset has `"instruction": "answer my question"`, then the format file's `User: %instruction%\n` will be automatically filled in as `User: answer my question\n`.
-
-If you have different sets of key inputs, you can make your own format file to match it. This format-file is designed to be as simple as possible to enable easy editing to match your needs.
 
 ## Text Dataset
 
@@ -89,54 +100,6 @@ This is the standard format used by most pretraining datasets (The Pile, RedPaja
 Each document is tokenized (with BOS token), concatenated into one long token sequence, and split into chunks of `Cutoff Length` tokens. The final chunk is padded if shorter than the cutoff length. When `Add EOS token` is enabled, an EOS token is appended after each document before concatenation, helping the model learn document boundaries.
 
 - `Stride Length` controls the overlap between consecutive chunks in tokens. Set to 0 for non-overlapping chunks (the standard concatenate-and-split approach). Values like 256 or 512 create overlapping chunks that help the model learn context across chunk boundaries, at the cost of more training samples.
-
-## Chat Template Format
-
-Select **Chat Template** as the Data Format to use the model's built-in chat template (via `apply_chat_template()`) instead of a format file. This works with instruct/chat models that ship with a chat template in their tokenizer (Llama 3, Qwen, Mistral, etc.).
-
-**Advantages over format files:**
-- Special tokens are handled correctly by the tokenizer itself
-- Multi-turn conversations are supported natively
-- Labels are automatically masked so only assistant responses are trained on (no need for `Train Only After`)
-
-**Dataset formats:** Your JSON dataset can use any of these structures:
-
-OpenAI messages format (multi-turn):
-```json
-[
-  {
-    "messages": [
-      {"role": "system", "content": "You are a helpful assistant."},
-      {"role": "user", "content": "What is Python?"},
-      {"role": "assistant", "content": "A programming language."},
-      {"role": "user", "content": "What's it used for?"},
-      {"role": "assistant", "content": "Web dev, data science, scripting, and more."}
-    ]
-  }
-]
-```
-
-The conversation gets tokenized with the model's own chat template (correct special tokens), and the labels are automatically masked so the model only trains on the assistant responses — the system prompt and user turns get `-100` labels and contribute no gradient.
-
-ShareGPT format (`conversations` key with `from`/`value` fields):
-```json
-[
-  {
-    "conversations": [
-      {"from": "system", "value": "You are a helpful assistant."},
-      {"from": "human", "value": "What is Python?"},
-      {"from": "gpt", "value": "A programming language."},
-      {"from": "human", "value": "What's it used for?"},
-      {"from": "gpt", "value": "Web dev, data science, scripting, and more."}
-    ]
-  }
-]
-```
-
-Simple instruction/output format (auto-converted to a single-turn conversation):
-```json
-[{"instruction": "What is 2+2?", "output": "4"}]
-```
 
 ## Target Modules
 

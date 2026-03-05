@@ -1,0 +1,10 @@
+[
+    {"conversations": [{"from": "human", "value": "What is the capital of France?"}, {"from": "gpt", "value": "The capital of France is Paris."}]},
+    {"conversations": [{"from": "human", "value": "What is 2+2?"}, {"from": "gpt", "value": "2+2 equals 4."}]},
+    {"conversations": [{"from": "system", "value": "You are a helpful assistant."}, {"from": "human", "value": "Name a color."}, {"from": "gpt", "value": "Blue is a color."}, {"from": "human", "value": "Another one?"}, {"from": "gpt", "value": "Red is also a color."}]},
+    {"conversations": [{"from": "human", "value": "What is the sun?"}, {"from": "gpt", "value": "The sun is a star at the center of our solar system."}]},
+    {"conversations": [{"from": "human", "value": "Say hello."}, {"from": "gpt", "value": "Hello! How can I help you today?"}]},
+    {"conversations": [{"from": "human", "value": "What is water?"}, {"from": "gpt", "value": "Water is a chemical compound with the formula H2O."}]},
+    {"conversations": [{"from": "human", "value": "Name a fruit."}, {"from": "gpt", "value": "An apple is a fruit."}]},
+    {"conversations": [{"from": "human", "value": "What is gravity?"}, {"from": "gpt", "value": "Gravity is a fundamental force that attracts objects with mass toward each other."}]}
+]
