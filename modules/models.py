@@ -54,7 +54,8 @@ def load_model(model_name, loader=None):
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
     if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt') or loader == 'llama.cpp':
-        shared.settings['truncation_length'] = shared.args.ctx_size
+        if shared.args.ctx_size > 0:
+            shared.settings['truncation_length'] = shared.args.ctx_size
 
     shared.is_multimodal = False
     if loader.lower() in ('exllamav3', 'llama.cpp') and hasattr(model, 'is_multimodal'):

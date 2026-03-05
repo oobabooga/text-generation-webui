@@ -418,7 +418,7 @@ def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type):
     Compute the estimated VRAM usage for the given GPU layers and return
     an HTML string for the UI display.
     """
-    if loader != 'llama.cpp' or model in ["None", None] or not model.endswith(".gguf") or gpu_layers < 0:
+    if loader != 'llama.cpp' or model in ["None", None] or not model.endswith(".gguf") or gpu_layers < 0 or ctx_size == 0:
         return "<div id=\"vram-info\"'>Estimated VRAM to load the model:</div>"
 
     vram_usage = estimate_vram(model, gpu_layers, ctx_size, cache_type)

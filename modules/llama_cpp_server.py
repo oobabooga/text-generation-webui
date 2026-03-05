@@ -339,13 +339,15 @@ class LlamaServer:
         cmd = [
             self.server_path,
             "--model", self.model_path,
-            "--ctx-size", str(shared.args.ctx_size),
             "--batch-size", str(shared.args.batch_size),
             "--ubatch-size", str(shared.args.ubatch_size),
             "--port", str(self.port),
             "--no-webui",
             "--flash-attn", "on",
         ]
+
+        if shared.args.ctx_size > 0:
+            cmd += ["--ctx-size", str(shared.args.ctx_size)]
 
         if shared.args.gpu_layers >= 0:
             cmd += ["--gpu-layers", str(shared.args.gpu_layers), "--fit", "off"]
@@ -449,7 +451,8 @@ class LlamaServer:
             print()
 
         gpu_layers_str = "auto" if shared.args.gpu_layers < 0 else str(shared.args.gpu_layers)
-        logger.info(f"Using gpu_layers={gpu_layers_str} | ctx_size={shared.args.ctx_size} | cache_type={cache_type}")
+        ctx_size_str = "auto" if shared.args.ctx_size == 0 else str(shared.args.ctx_size)
+        logger.info(f"Using gpu_layers={gpu_layers_str} | ctx_size={ctx_size_str} | cache_type={cache_type}")
         # Start the server with pipes for output
         self.process = subprocess.Popen(
             cmd,

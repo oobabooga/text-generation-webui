@@ -128,7 +128,7 @@ def create_event_handlers():
 
 
 def get_truncation_length():
-    if 'ctx_size' in shared.provided_arguments or shared.args.ctx_size != shared.args_defaults.ctx_size:
+    if shared.args.ctx_size > 0 and ('ctx_size' in shared.provided_arguments or shared.args.ctx_size != shared.args_defaults.ctx_size):
         return shared.args.ctx_size
     else:
         return shared.settings['truncation_length']

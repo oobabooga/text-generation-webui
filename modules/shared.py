@@ -71,7 +71,7 @@ group.add_argument('--loader', type=str, help='Choose the model loader manually,
 
 # Cache
 group = parser.add_argument_group('Context and cache')
-group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=8192, metavar='N', help='Context size in tokens.')
+group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=8192, metavar='N', help='Context size in tokens. llama.cpp: 0 = auto if gpu-layers is also -1.')
 group.add_argument('--cache-type', '--cache_type', type=str, default='fp16', metavar='N', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).')
 
 # Speculative decoding
@@ -88,7 +88,7 @@ group.add_argument('--spec-ngram-min-hits', type=int, default=1, help='Minimum n
 
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
-group.add_argument('--gpu-layers', '--n-gpu-layers', type=int, default=-1, metavar='N', help='Number of layers to offload to the GPU. Set to -1 for auto mode, where llama.cpp decides via --fit.')
+group.add_argument('--gpu-layers', '--n-gpu-layers', type=int, default=-1, metavar='N', help='Number of layers to offload to the GPU. -1 = auto.')
 group.add_argument('--cpu-moe', action='store_true', help='Move the experts to the CPU (for MoE models).')
 group.add_argument('--mmproj', type=str, default=None, help='Path to the mmproj file for vision models.')
 group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
