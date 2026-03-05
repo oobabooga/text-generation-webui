@@ -347,7 +347,7 @@ class LlamaServer:
             "--flash-attn", "on",
         ]
 
-        if shared.args.gpu_layers > 0:
+        if shared.args.gpu_layers >= 0:
             cmd += ["--gpu-layers", str(shared.args.gpu_layers), "--fit", "off"]
         else:
             cmd += ["--fit", "on"]
@@ -448,7 +448,8 @@ class LlamaServer:
             print(' '.join(str(item) for item in cmd[1:]))
             print()
 
-        logger.info(f"Using gpu_layers={shared.args.gpu_layers} | ctx_size={shared.args.ctx_size} | cache_type={cache_type}")
+        gpu_layers_str = "auto" if shared.args.gpu_layers < 0 else str(shared.args.gpu_layers)
+        logger.info(f"Using gpu_layers={gpu_layers_str} | ctx_size={shared.args.ctx_size} | cache_type={cache_type}")
         # Start the server with pipes for output
         self.process = subprocess.Popen(
             cmd,

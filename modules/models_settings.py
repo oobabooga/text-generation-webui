@@ -77,7 +77,7 @@ def get_model_metadata(model):
             elif k.endswith('rope.scaling.factor'):
                 model_settings['compress_pos_emb'] = metadata[k]
             elif k.endswith('.block_count'):
-                model_settings['gpu_layers'] = 0
+                model_settings['gpu_layers'] = -1
                 model_settings['max_gpu_layers'] = metadata[k] + 1
 
         if 'tokenizer.chat_template' in metadata:
@@ -264,7 +264,7 @@ def apply_model_settings_to_state(model, state):
 
     # Handle GPU layers and VRAM update for llama.cpp
     if state['loader'] == 'llama.cpp' and 'gpu_layers' in model_settings:
-        gpu_layers = model_settings['gpu_layers']  # 0 (auto) by default, or user-saved value
+        gpu_layers = model_settings['gpu_layers']  # -1 (auto) by default, or user-saved value
         max_layers = model_settings.get('max_gpu_layers', 256)
         state['gpu_layers'] = gr.update(value=gpu_layers, maximum=max_layers)
 
@@ -418,7 +418,7 @@ def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type):
     Compute the estimated VRAM usage for the given GPU layers and return
     an HTML string for the UI display.
     """
-    if loader != 'llama.cpp' or model in ["None", None] or not model.endswith(".gguf"):
+    if loader != 'llama.cpp' or model in ["None", None] or not model.endswith(".gguf") or gpu_layers < 0:
         return "<div id=\"vram-info\"'>Estimated VRAM to load the model:</div>"
 
     vram_usage = estimate_vram(model, gpu_layers, ctx_size, cache_type)
