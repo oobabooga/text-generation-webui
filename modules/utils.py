@@ -268,6 +268,39 @@ def get_datasets(path: str, ext: str):
     return ['None'] + sorted(set([k.stem for k in Path(path).glob(f'*.{ext}') if k.stem != 'put-trainer-datasets-here']), key=natural_keys)
 
 
+def get_chat_datasets(path: str):
+    """List JSON datasets that contain chat conversations (messages or ShareGPT format)."""
+    return ['None'] + sorted(set([k.stem for k in Path(path).glob('*.json') if k.stem != 'put-trainer-datasets-here' and _is_chat_dataset(k)]), key=natural_keys)
+
+
+def get_text_datasets(path: str):
+    """List JSON datasets that contain raw text ({"text": ...} format)."""
+    return ['None'] + sorted(set([k.stem for k in Path(path).glob('*.json') if k.stem != 'put-trainer-datasets-here' and _is_text_dataset(k)]), key=natural_keys)
+
+
+def _peek_json_keys(filepath):
+    """Read the first object in a JSON array file and return its keys."""
+    import json
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+            return set(data[0].keys())
+    except Exception:
+        pass
+    return set()
+
+
+def _is_chat_dataset(filepath):
+    keys = _peek_json_keys(filepath)
+    return bool(keys & {'messages', 'conversations'})
+
+
+def _is_text_dataset(filepath):
+    keys = _peek_json_keys(filepath)
+    return 'text' in keys
+
+
 def get_available_chat_styles():
     return sorted(set(('-'.join(k.stem.split('-')[1:]) for k in Path('css').glob('chat_style*.css'))), key=natural_keys)
 
