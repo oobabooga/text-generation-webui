@@ -26,7 +26,7 @@ from modules.logging_colors import logger
 from modules.models import reload_model
 from modules.utils import natural_keys
 
-PARAMETERS = ["lora_name", "always_override", "q_proj_en", "v_proj_en", "k_proj_en", "o_proj_en", "gate_proj_en", "down_proj_en", "up_proj_en", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
+PARAMETERS = ["lora_name", "always_override", "all_linear", "q_proj_en", "v_proj_en", "k_proj_en", "o_proj_en", "gate_proj_en", "down_proj_en", "up_proj_en", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
 WANT_INTERRUPT = False
 
 train_log = {}
@@ -53,7 +53,8 @@ def create_ui():
                             always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
 
                     with gr.Accordion(label='Target Modules', open=False, elem_classes='tgw-accordion'):
-                        gr.Markdown("Selects which modules to target in training. Targeting more modules is closer to a full fine-tune at the cost of increased VRAM requirements and adapter size.\nNOTE: Only works for model_id='llama', other types will retain default training behavior and not use these settings.")
+                        gr.Markdown("Selects which modules to target in training. Targeting more modules is closer to a full fine-tune at the cost of increased VRAM requirements and adapter size.\n\"Target all linear layers\" uses peft's `all-linear` option, which targets every `nn.Linear` layer except `lm_head` and works for any model architecture. Uncheck it to manually select individual projection modules below.")
+                        all_linear = gr.Checkbox(label='Target all linear layers', value=True, info='Targets every nn.Linear layer except lm_head. Works for any model architecture.', elem_classes=['no-background'])
                         with gr.Row():
                             with gr.Column():
                                 q_proj_en = gr.Checkbox(label='Enable q_proj', value=True)
@@ -124,14 +125,8 @@ def create_ui():
                             raw_text_file = gr.Dropdown(choices=utils.get_datasets('user_data/training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
                             ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('user_data/training/datasets', 'txt')}, 'refresh-button', interactive=not mu)
 
-                        with gr.Row():
-                            with gr.Column():
-                                overlap_len = gr.Slider(label='Overlap Length', minimum=0, maximum=512, value=128, step=16, info='How many tokens from the prior chunk of text to include into the next chunk. (The chunks themselves will be of a size determined by Cutoff Length). Setting overlap to exactly half the cutoff length may be ideal.')
-                                newline_favor_len = gr.Slider(label='Prefer Newline Cut Length', minimum=0, maximum=512, value=128, step=16, info='Length (in characters, not tokens) of the maximum distance to shift an overlap cut by to ensure chunks cut at newlines. If too low, cuts may occur in the middle of lines.')
-
-                            with gr.Column():
-                                hard_cut_string = gr.Textbox(label='Hard Cut String', value='\\n\\n\\n', info='String that indicates a hard cut between text parts. Helps prevent unwanted overlap.')
-                                min_chars = gr.Number(label='Ignore small blocks', value=0, info='Ignore Hard Cut blocks that have less or equal characters than this number')
+                        hard_cut_string = gr.Textbox(label='Hard Cut String', value='\\n\\n\\n', info='String that indicates a hard cut between text parts. Helps prevent unwanted overlap.')
+                        min_chars = gr.Number(label='Ignore small blocks', value=0, info='Ignore Hard Cut blocks that have less or equal characters than this number')
 
                     with gr.Row():
                         start_button = gr.Button("Start LoRA Training", variant='primary', interactive=not mu)
@@ -165,7 +160,7 @@ def create_ui():
                 refresh_table = gr.Button('Refresh the table', elem_classes="small-button", interactive=not mu)
 
     # Training events
-    all_params = [lora_name, always_override, q_proj_en, v_proj_en, k_proj_en, o_proj_en, gate_proj_en, down_proj_en, up_proj_en, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]
+    all_params = [lora_name, always_override, all_linear, q_proj_en, v_proj_en, k_proj_en, o_proj_en, gate_proj_en, down_proj_en, up_proj_en, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]
 
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
@@ -230,9 +225,11 @@ def clean_path(base_path: str, path: str):
 
 
 def backup_adapter(input_folder):
-    # Get the creation date of the file adapter_model.bin
+    # Get the creation date of the adapter file (safetensors or bin)
     try:
-        adapter_file = Path(f"{input_folder}/adapter_model.bin")
+        adapter_file = Path(f"{input_folder}/adapter_model.safetensors")
+        if not adapter_file.is_file():
+            adapter_file = Path(f"{input_folder}/adapter_model.bin")
         if adapter_file.is_file():
 
             logger.info("Backing up existing LoRA adapter")
@@ -244,7 +241,7 @@ def backup_adapter(input_folder):
             subfolder_path.mkdir(parents=True, exist_ok=True)
 
             # Check if the file already exists in the subfolder
-            backup_adapter_file = Path(f"{input_folder}/{creation_date_str}/adapter_model.bin")
+            backup_adapter_file = subfolder_path / adapter_file.name
             if backup_adapter_file.is_file():
                 print(" - Backup already exists. Skipping backup process.")
                 return
@@ -274,7 +271,7 @@ def calc_trainable_parameters(model):
     return trainable_params, all_param
 
 
-def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: bool, k_proj_en: bool, o_proj_en: bool, gate_proj_en: bool, down_proj_en: bool, up_proj_en: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
+def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en: bool, v_proj_en: bool, k_proj_en: bool, o_proj_en: bool, gate_proj_en: bool, down_proj_en: bool, up_proj_en: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
 
     import torch
     import transformers
@@ -285,15 +282,6 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
         prepare_model_for_kbit_training,
         set_peft_model_state_dict
     )
-    from peft.utils.other import \
-        TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
-        model_to_lora_modules
-    from transformers import is_torch_xpu_available
-    from transformers.models.auto.modeling_auto import (
-        MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
-    )
-
-    MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
 
     global WANT_INTERRUPT
     WANT_INTERRUPT = False
@@ -309,20 +297,13 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     actual_lr = float(learning_rate)
     model_type = type(shared.model).__name__
 
-    if model_type in MODEL_CLASSES:
-        model_id = MODEL_CLASSES[model_type]
-    else:
-        model_id = "llama"
-        if model_type == "PeftModelForCausalLM":
-            if len(shared.lora_names) > 0:
-                yield "You are trying to train a LoRA while you already have another LoRA loaded. This will work, but may have unexpected effects. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
-                logger.warning("Training LoRA over top of another LoRA. May have unexpected effects.")
-            else:
-                yield "Model ID not matched due to LoRA loading. Consider reloading base model. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
-                logger.warning("Model ID not matched due to LoRA loading. Consider reloading base model.")
+    if model_type == "PeftModelForCausalLM":
+        if len(shared.lora_names) > 0:
+            yield "You are trying to train a LoRA while you already have another LoRA loaded. This will work, but may have unexpected effects. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
+            logger.warning("Training LoRA over top of another LoRA. May have unexpected effects.")
         else:
-            yield "LoRA training has only currently been validated for LLaMA, OPT, GPT-J, and GPT-NeoX models. Unexpected errors may follow. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
-            logger.warning(f"LoRA training has only currently been validated for LLaMA, OPT, GPT-J, and GPT-NeoX models. (Found model type: {model_type})")
+            yield "Model ID not matched due to LoRA loading. Consider reloading base model. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
+            logger.warning("Model ID not matched due to LoRA loading. Consider reloading base model.")
 
         time.sleep(5)
 
@@ -331,24 +312,18 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
         return
 
     gradient_accumulation_steps = batch_size // micro_batch_size
-    shared.tokenizer.pad_token_id = 0
+    if shared.tokenizer.pad_token_id is None:
+        shared.tokenizer.pad_token_id = shared.tokenizer.eos_token_id
     shared.tokenizer.padding_side = "left"
 
-    # Populate target_modules list with chosen X_proj modules. Llama-based models only atm, non-llama will revert to default behavior.
-    def list_target_modules(model_id):
-        if model_id != "llama" and model_id != "mistral":
-            return model_to_lora_modules[model_id]
+    def list_target_modules():
+        if all_linear:
+            return "all-linear"
 
-        available_modules = {
-            "gate": gate_proj_en,
-            "down": down_proj_en,
-            "up": up_proj_en,
-            "q": q_proj_en,
-            "v": v_proj_en,
-            "k": k_proj_en,
-            "o": o_proj_en,
-        }
-        target_mods = [f"{name}_proj" for name, enabled in available_modules.items() if enabled]
+        target_mods = [f"{name}_proj" for name, enabled in {
+            "q": q_proj_en, "k": k_proj_en, "v": v_proj_en, "o": o_proj_en,
+            "gate": gate_proj_en, "down": down_proj_en, "up": up_proj_en,
+        }.items() if enabled]
         return target_mods
 
     def encode(text, add_bos_token):
@@ -369,8 +344,9 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
             if append_eos_token and input_ids[-1] != shared.tokenizer.eos_token_id and len(input_ids) < cutoff_len:
                 input_ids.append(shared.tokenizer.eos_token_id)
 
-            input_ids = [shared.tokenizer.pad_token_id] * (cutoff_len - len(input_ids)) + input_ids
-            labels = [1] * len(input_ids)
+            pad_len = cutoff_len - len(input_ids)
+            labels = [-100] * pad_len + list(input_ids)
+            input_ids = [shared.tokenizer.pad_token_id] * pad_len + input_ids
 
         else:
             ind = prompt.index(train_only_after) + len(train_only_after)
@@ -387,13 +363,12 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
                 before_tokens = [shared.tokenizer.pad_token_id] * (cutoff_len - full_length) + before_tokens
 
             input_ids = before_tokens + after_tokens
-            labels = [-100] * len(before_tokens) + [1] * len(after_tokens)
+            labels = [-100] * len(before_tokens) + list(after_tokens)
 
-        input_ids = torch.tensor(input_ids)
         return {
             "input_ids": input_ids,
             "labels": labels,
-            "attention_mask": input_ids.ne(shared.tokenizer.pad_token_id),
+            "attention_mask": [0 if t == shared.tokenizer.pad_token_id else 1 for t in input_ids],
         }
 
     train_template.clear()
@@ -420,7 +395,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
 
         cut_string = hard_cut_string.replace('\\n', '\n')
         eos_added = 0
-        out_tokens = []
+        all_tokens = []
         for text_part in raw_text.split(cut_string):
             if len(text_part.strip()) <= min_chars:
                 continue
@@ -430,24 +405,28 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
                 tokens.append(shared.tokenizer.eos_token_id)
                 eos_added += 1
 
-            step = cutoff_len - overlap_len
-            if step <= 0:
-                yield f"Error: overlap_len ({overlap_len}) cannot be greater than or equal to cutoff_len ({cutoff_len})"
-                return
-
-            out_tokens.extend(split_chunks(tokens, cutoff_len, step))
+            all_tokens.extend(tokens)
 
         if eos_added > 0:
             print(f"EOS added to {eos_added} text blocks")
 
         del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
-        text_chunks = [shared.tokenizer.decode(x) for x in out_tokens]
-        del out_tokens
-        if newline_favor_len > 0:
-            text_chunks = [cut_chunk_for_newline(x, newline_favor_len) for x in text_chunks]
 
-        train_data = Dataset.from_list([tokenize(x) for x in text_chunks])
-        del text_chunks
+        # Concatenate-and-split: non-overlapping chunks of exactly cutoff_len
+        num_chunks = len(all_tokens) // cutoff_len
+        if num_chunks == 0:
+            yield "Error: text is too short to fill even one chunk of the given cutoff length."
+            return
+
+        train_data = Dataset.from_list([
+            {
+                "input_ids": all_tokens[i * cutoff_len:(i + 1) * cutoff_len],
+                "labels": all_tokens[i * cutoff_len:(i + 1) * cutoff_len],
+                "attention_mask": [1] * cutoff_len,
+            }
+            for i in range(num_chunks)
+        ])
+        del all_tokens
         eval_data = None
     else:
         if dataset in ['None', '']:
@@ -519,10 +498,15 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     shared.model_dirty_from_training = True
 
     logger.info("Preparing for training")
+    target_modules = list_target_modules()
+    if not target_modules:
+        yield "No target modules selected. Enable at least one module or check 'Target all linear layers'."
+        return
+
     config = LoraConfig(
         r=lora_rank,
         lora_alpha=lora_alpha,
-        target_modules=list_target_modules(model_id),
+        target_modules=target_modules,
         lora_dropout=lora_dropout,
         bias="none",
         task_type="CAUSAL_LM"
@@ -538,10 +522,18 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     try:
         logger.info("Creating LoRA model")
         lora_model = get_peft_model(shared.model, config)
-        if not always_override and Path(f"{lora_file_path}/adapter_model.bin").is_file():
-            logger.info("Loading existing LoRA data")
-            state_dict_peft = torch.load(f"{lora_file_path}/adapter_model.bin", weights_only=True)
-            set_peft_model_state_dict(lora_model, state_dict_peft)
+        if not always_override:
+            safetensors_path = Path(f"{lora_file_path}/adapter_model.safetensors")
+            bin_path = Path(f"{lora_file_path}/adapter_model.bin")
+            if safetensors_path.is_file():
+                logger.info("Loading existing LoRA data (safetensors)")
+                from safetensors.torch import load_file
+                state_dict_peft = load_file(str(safetensors_path))
+                set_peft_model_state_dict(lora_model, state_dict_peft)
+            elif bin_path.is_file():
+                logger.info("Loading existing LoRA data (bin)")
+                state_dict_peft = torch.load(str(bin_path), weights_only=True)
+                set_peft_model_state_dict(lora_model, state_dict_peft)
     except Exception:
         yield traceback.format_exc().replace('\n', '\n\n')
         return
@@ -596,12 +588,27 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
         if param.requires_grad:
             param.data = param.data.float()
 
+    lora_model.config.use_cache = False
+
+    if sys.platform != "win32":
+        lora_model = torch.compile(lora_model)
+
+    def collate_fn(batch):
+        input_ids = torch.stack([torch.as_tensor(item['input_ids']) for item in batch])
+        labels = torch.stack([torch.as_tensor(item['labels']) for item in batch])
+        attention_mask = torch.stack([torch.as_tensor(item['attention_mask']) for item in batch])
+        return {
+            'input_ids': input_ids,
+            'labels': labels,
+            'attention_mask': attention_mask,
+        }
+
     trainer = transformers.Trainer(
         model=lora_model,
         train_dataset=train_data,
         eval_dataset=eval_data,
         args=transformers.TrainingArguments(
-            report_to=report_to if report_to != "None" else None,
+            report_to=report_to if report_to != "None" else "none",
             per_device_train_batch_size=micro_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
             warmup_steps=math.ceil(warmup_steps / gradient_accumulation_steps),
@@ -619,17 +626,12 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
             load_best_model_at_end=eval_data is not None,
             # TODO: Enable multi-device support
             ddp_find_unused_parameters=None,
-            no_cuda=shared.args.cpu,
-            # use_ipex=True if is_torch_xpu_available() and not shared.args.cpu else False
+            use_cpu=shared.args.cpu,
+            remove_unused_columns=False,
         ),
-        data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
+        data_collator=collate_fn,
         callbacks=list([Callbacks()])
     )
-
-    lora_model.config.use_cache = False
-
-    if torch.__version__ >= "2" and sys.platform != "win32":
-        lora_model = torch.compile(lora_model)
 
     # == Save parameters for reuse ==
     with open(f"{lora_file_path}/training_parameters.json", 'w', encoding='utf-8') as file:
@@ -646,9 +648,12 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
 
     lora_trainable_param, lora_all_param = calc_trainable_parameters(lora_model)
 
-    projections_string = ", ".join([projection.replace("_proj", "") for projection in list_target_modules(model_id)])
+    if target_modules == "all-linear":
+        projections_string = "all-linear"
+    else:
+        projections_string = ", ".join([projection.replace("_proj", "") for projection in target_modules])
 
-    print(f"Training '{model_id}' model using ({projections_string}) projections")
+    print(f"Training '{model_type}' model using ({projections_string}) projections")
 
     if lora_all_param > 0:
         print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
@@ -689,6 +694,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
         trainer.train()
         # Note: save in the thread in case the gradio thread breaks (eg browser closed)
         lora_model.save_pretrained(lora_file_path)
+        tracked.did_save = True
         logger.info("LoRA training run is completed and saved.")
         # Save log
         with open(f"{lora_file_path}/training_log.json", 'w', encoding='utf-8') as file:
@@ -732,29 +738,6 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     else:
         logger.info("Training complete!")
         yield f"Done! LoRA saved to `{lora_file_path}`.\n\nBefore testing your new LoRA, make sure to first reload the model, as it is currently dirty from training."
-
-
-def split_chunks(arr, size, step):
-    for i in range(0, len(arr), step):
-        yield arr[i:i + size]
-
-
-def cut_chunk_for_newline(chunk: str, max_length: int):
-    if '\n' not in chunk:
-        return chunk
-
-    first_newline = chunk.index('\n')
-    if first_newline < max_length:
-        chunk = chunk[first_newline + 1:]
-
-    if '\n' not in chunk:
-        return chunk
-
-    last_newline = chunk.rindex('\n')
-    if len(chunk) - last_newline < max_length:
-        chunk = chunk[:last_newline]
-
-    return chunk
 
 
 def format_time(seconds: float):

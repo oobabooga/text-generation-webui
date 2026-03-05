@@ -32,7 +32,7 @@ The WebUI seeks to make training your own LoRAs as easy as possible. It comes do
 - Make sure to unload the LoRA before training it.
 - You can simply resume a prior run - use `Copy parameters from` to select your LoRA, and edit parameters. Note that you cannot change the `Rank` of an already created LoRA.
     - If you want to resume from a checkpoint saved along the way, simply copy the contents of the checkpoint folder into the LoRA's folder.
-    - (Note: `adapter_model.bin` is the important file that holds the actual LoRA content).
+    - (Note: `adapter_model.safetensors` or `adapter_model.bin` is the important file that holds the actual LoRA content).
     - This will start Learning Rate and Steps back to the start. If you want to resume as if you were midway through, you can adjust your Learning Rate to the last reported LR in logs and reduce your epochs.
 - Or, you can start over entirely if you prefer.
 - If your model is producing corrupted outputs, you probably need to start over and use a lower Learning Rate.
@@ -76,10 +76,14 @@ If you have different sets of key inputs, you can make your own format file to m
 
 ## Raw Text File Settings
 
-When using raw text files as your dataset, the text is automatically split into chunks based on your `Cutoff Length` you get a few basic options to configure them.
-- `Overlap Length` is how much to overlap chunks by. Overlapping chunks helps prevent the model from learning strange mid-sentence cuts, and instead learn continual sentences that flow from earlier text.
-- `Prefer Newline Cut Length` sets a maximum distance in characters to shift the chunk cut towards newlines. Doing this helps prevent lines from starting or ending mid-sentence, preventing the model from learning to cut off sentences randomly.
-- `Hard Cut String` sets a string that indicates there must be a hard cut without overlap. This defaults to `\n\n\n`, meaning 3 newlines. No trained chunk will ever contain this string. This allows you to insert unrelated sections of text in the same text file, but still ensure the model won't be taught to randomly change the subject.
+When using raw text files as your dataset, the text is split into sections by the `Hard Cut String` (default `\n\n\n`), tokenized, concatenated into one long token sequence, and then split into non-overlapping chunks of exactly `Cutoff Length` tokens (any remainder shorter than the cutoff is dropped). This is the standard concatenate-and-split approach used by HuggingFace `run_clm.py`.
+- `Hard Cut String` sets a string that indicates a boundary between unrelated sections of text. This defaults to `\n\n\n`, meaning 3 newlines. When `Add EOS token` is enabled, an EOS token is appended after each section before concatenation. This allows you to insert unrelated sections of text in the same text file, ensuring the model learns proper boundaries between them.
+
+## Target Modules
+
+By default, **Target all linear layers** is enabled. This uses peft's `all-linear` mode, which applies LoRA to every `nn.Linear` layer in the model except the output head (`lm_head`). It works for any model architecture.
+
+If you uncheck it, you can manually select individual projection modules (`q_proj`, `k_proj`, `v_proj`, `o_proj`, `gate_proj`, `down_proj`, `up_proj`). Targeting fewer modules reduces VRAM usage and adapter size, but also reduces how much the model can learn. The default selection of `q_proj` + `v_proj` is the minimum for basic style/format training.
 
 ## Parameters
 
@@ -91,7 +95,7 @@ That said, here's a guide to the most important parameter choices you should con
 
 - First, you must consider your VRAM availability.
     - Generally, under default settings, VRAM usage for training with default parameters is very close to when generating text (with 1000+ tokens of context) (ie, if you can generate text, you can train LoRAs).
-        - Note: worse by default in the 4-bit monkeypatch currently. Reduce `Micro Batch Size` to `1` to restore this to expectations.
+        - Note: VRAM usage is higher when training 4-bit quantized models. Reduce `Micro Batch Size` to `1` to compensate.
     - If you have VRAM to spare, setting higher batch sizes will use more VRAM and get you better quality training in exchange.
     - If you have large data, setting a higher cutoff length may be beneficial, but will cost significant VRAM. If you can spare some, set your batch size to `1` and see how high you can push your cutoff length.
     - If you're low on VRAM, reducing batch size or cutoff length will of course improve that.
@@ -129,11 +133,3 @@ In practice, a good LLM should have a very complex variable range of ideas runni
 So, in effect, Loss is a balancing game: you want to get it low enough that it understands your data, but high enough that it isn't forgetting everything else. Generally, if it goes below `1.0`, it's going to start forgetting its prior memories, and you should stop training. In some cases you may prefer to take it as low as `0.5` (if you want it to be very very predictable). Different goals have different needs, so don't be afraid to experiment and see what works best for you.
 
 Note: if you see Loss start at or suddenly jump to exactly `0`, it is likely something has gone wrong in your training process (eg model corruption).
-
-## Note: 4-Bit Monkeypatch
-
-The [4-bit LoRA monkeypatch](GPTQ-models-(4-bit-mode).md#using-loras-in-4-bit-mode) works for training, but has side effects:
-- VRAM usage is higher currently. You can reduce the `Micro Batch Size` to `1` to compensate.
-- Models do funky things. LoRAs apply themselves, or refuse to apply, or spontaneously error out, or etc. It can be helpful to reload base model or restart the WebUI between training/usage to minimize chances of anything going haywire.
-- Loading or working with multiple LoRAs at the same time doesn't currently work.
-- Generally, recognize and treat the monkeypatch as the dirty temporary hack it is - it works, but isn't very stable. It will get better in time when everything is merged upstream for full official support.
