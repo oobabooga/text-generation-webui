@@ -209,6 +209,12 @@ def get_available_prompts():
     notebook_dir.mkdir(parents=True, exist_ok=True)
 
     prompt_files = list(notebook_dir.glob('*.txt'))
+    if not prompt_files:
+        new_name = current_time()
+        new_path = notebook_dir / f"{new_name}.txt"
+        new_path.write_text("In this story,", encoding='utf-8')
+        prompt_files = [new_path]
+
     sorted_files = sorted(prompt_files, key=lambda x: x.stat().st_mtime, reverse=True)
     prompts = [file.stem for file in sorted_files]
     return prompts

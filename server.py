@@ -109,12 +109,14 @@ def create_interface():
         'filter_by_loader': (shared.args.loader or 'All') if not shared.args.portable else 'llama.cpp'
     })
 
-    if shared.settings['prompt-notebook']:
-        prompt = load_prompt(shared.settings['prompt-notebook'])
-        shared.persistent_interface_state.update({
-            'textbox-default': prompt,
-            'textbox-notebook': prompt
-        })
+    if not shared.settings['prompt-notebook']:
+        shared.settings['prompt-notebook'] = utils.get_available_prompts()[0]
+
+    prompt = load_prompt(shared.settings['prompt-notebook'])
+    shared.persistent_interface_state.update({
+        'textbox-default': prompt,
+        'textbox-notebook': prompt
+    })
 
     # Clear existing cache files
     for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
