@@ -28,10 +28,6 @@ warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_na
 
 import gradio as gr
 
-import matplotlib
-
-matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
-
 import os
 import signal
 import sys
