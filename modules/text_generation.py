@@ -372,8 +372,6 @@ def generate_reply_HF(question, original_question, state, stopping_strings=None,
         generate_params['negative_prompt_ids'] = encode(state['negative_prompt'])
 
     generate_params.update({'use_cache': not shared.args.no_cache})
-    if shared.args.deepspeed:
-        generate_params.update({'synced_gpus': True})
 
     # Encode the input
     input_ids = encode(question, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
