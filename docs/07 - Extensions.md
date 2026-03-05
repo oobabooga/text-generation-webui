@@ -21,7 +21,6 @@ If you create an extension, you are welcome to host it in a GitHub repository an
 |Extension|Description|
 |---------|-----------|
 |[openai](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/openai)| Creates an API that mimics the OpenAI API and can be used as a drop-in replacement. |
-|[Training_PRO](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/Training_PRO)| Advanced LoRA training with support for model and LoRA merging. |
 |[superboogav2](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/superboogav2)| Enhanced RAG extension with support for PDF, DOCX, and PPTX files. |
 |[send_pictures](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/send_pictures/)| Creates an image upload field that can be used to send images to the bot in chat mode. Captions are automatically generated using BLIP. |
 |[coqui_tts](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/coqui_tts)| Text-to-speech extension using Coqui XTTS v2. |
