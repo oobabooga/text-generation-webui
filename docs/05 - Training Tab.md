@@ -79,6 +79,54 @@ If you have different sets of key inputs, you can make your own format file to m
 When using raw text files as your dataset, the text is split into sections by the `Hard Cut String` (default `\n\n\n`), tokenized, concatenated into one long token sequence, and then split into non-overlapping chunks of exactly `Cutoff Length` tokens (any remainder shorter than the cutoff is dropped). This is the standard concatenate-and-split approach used by HuggingFace `run_clm.py`.
 - `Hard Cut String` sets a string that indicates a boundary between unrelated sections of text. This defaults to `\n\n\n`, meaning 3 newlines. When `Add EOS token` is enabled, an EOS token is appended after each section before concatenation. This allows you to insert unrelated sections of text in the same text file, ensuring the model learns proper boundaries between them.
 
+## Chat Template Format
+
+Select **Chat Template** as the Data Format to use the model's built-in chat template (via `apply_chat_template()`) instead of a format file. This works with instruct/chat models that ship with a chat template in their tokenizer (Llama 3, Qwen, Mistral, etc.).
+
+**Advantages over format files:**
+- Special tokens are handled correctly by the tokenizer itself
+- Multi-turn conversations are supported natively
+- Labels are automatically masked so only assistant responses are trained on (no need for `Train Only After`)
+
+**Dataset formats:** Your JSON dataset can use any of these structures:
+
+OpenAI messages format (multi-turn):
+```json
+[
+  {
+    "messages": [
+      {"role": "system", "content": "You are a helpful assistant."},
+      {"role": "user", "content": "What is Python?"},
+      {"role": "assistant", "content": "A programming language."},
+      {"role": "user", "content": "What's it used for?"},
+      {"role": "assistant", "content": "Web dev, data science, scripting, and more."}
+    ]
+  }
+]
+```
+
+The conversation gets tokenized with the model's own chat template (correct special tokens), and the labels are automatically masked so the model only trains on the assistant responses — the system prompt and user turns get `-100` labels and contribute no gradient.
+
+ShareGPT format (`conversations` key with `from`/`value` fields):
+```json
+[
+  {
+    "conversations": [
+      {"from": "system", "value": "You are a helpful assistant."},
+      {"from": "human", "value": "What is Python?"},
+      {"from": "gpt", "value": "A programming language."},
+      {"from": "human", "value": "What's it used for?"},
+      {"from": "gpt", "value": "Web dev, data science, scripting, and more."}
+    ]
+  }
+]
+```
+
+Simple instruction/output format (auto-converted to a single-turn conversation):
+```json
+[{"instruction": "What is 2+2?", "output": "4"}]
+```
+
 ## Target Modules
 
 By default, **Target all linear layers** is enabled. This uses peft's `all-linear` mode, which applies LoRA to every `nn.Linear` layer in the model except the output head (`lm_head`). It works for any model architecture.
