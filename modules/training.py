@@ -569,21 +569,30 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
     # == get model trainable params
     model_trainable_params, model_all_params = calc_trainable_parameters(shared.model)
 
+    # == Determine if we can resume from a checkpoint ==
+    resume_checkpoint = None
     try:
         logger.info("Creating LoRA model")
         lora_model = get_peft_model(shared.model, config)
-        if not always_override:
-            safetensors_path = Path(f"{lora_file_path}/adapter_model.safetensors")
-            bin_path = Path(f"{lora_file_path}/adapter_model.bin")
-            if safetensors_path.is_file():
-                logger.info("Loading existing LoRA data (safetensors)")
-                from safetensors.torch import load_file
-                state_dict_peft = load_file(str(safetensors_path))
-                set_peft_model_state_dict(lora_model, state_dict_peft)
-            elif bin_path.is_file():
-                logger.info("Loading existing LoRA data (bin)")
-                state_dict_peft = torch.load(str(bin_path), weights_only=True)
-                set_peft_model_state_dict(lora_model, state_dict_peft)
+        if not always_override and Path(lora_file_path).exists():
+            # Look for HF Trainer checkpoint dirs (full resumption)
+            checkpoints = sorted(Path(lora_file_path).glob("checkpoint-*"), key=os.path.getmtime)
+            if checkpoints:
+                resume_checkpoint = str(checkpoints[-1])
+                logger.info(f"Will resume from checkpoint: {resume_checkpoint}")
+            else:
+                # Legacy fallback: load bare adapter weights only
+                safetensors_path = Path(f"{lora_file_path}/adapter_model.safetensors")
+                bin_path = Path(f"{lora_file_path}/adapter_model.bin")
+                if safetensors_path.is_file():
+                    logger.info("Loading existing LoRA data (safetensors)")
+                    from safetensors.torch import load_file
+                    state_dict_peft = load_file(str(safetensors_path))
+                    set_peft_model_state_dict(lora_model, state_dict_peft)
+                elif bin_path.is_file():
+                    logger.info("Loading existing LoRA data (bin)")
+                    state_dict_peft = torch.load(str(bin_path), weights_only=True)
+                    set_peft_model_state_dict(lora_model, state_dict_peft)
     except Exception:
         yield traceback.format_exc().replace('\n', '\n\n')
         return
@@ -604,14 +613,6 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
             if WANT_INTERRUPT:
                 control.should_epoch_stop = True
                 control.should_training_stop = True
-            elif state.global_step > 0 and actual_save_steps > 0 and state.global_step % actual_save_steps == 0:
-                lora_model.save_pretrained(f"{lora_file_path}/checkpoint-{tracked.current_steps}/")
-                # Save log
-                with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_log.json", 'w', encoding='utf-8') as file:
-                    json.dump(train_log, file, indent=2)
-                # == Save training prompt ==
-                with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_prompt.json", 'w', encoding='utf-8') as file:
-                    json.dump(train_template, file, indent=2)
 
         def on_substep_end(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
             tracked.current_steps += 1
@@ -632,6 +633,14 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
                     control.should_epoch_stop = True
                     control.should_training_stop = True
                     print(f"\033[1;31;1mStop Loss {stop_at_loss} reached.\033[0;37;0m")
+
+        def on_save(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
+            checkpoint_dir = Path(args.output_dir) / f"checkpoint-{state.global_step}"
+            if checkpoint_dir.exists():
+                with open(checkpoint_dir / "training_log.json", 'w', encoding='utf-8') as file:
+                    json.dump(train_log, file, indent=2)
+                with open(checkpoint_dir / "training_prompt.json", 'w', encoding='utf-8') as file:
+                    json.dump(train_template, file, indent=2)
 
     # Fix training for mixed precision models
     for param in shared.model.parameters():
@@ -674,7 +683,8 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
             logging_steps=1,
             eval_strategy="steps" if eval_data is not None else "no",
             eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
-            save_strategy="steps" if eval_data is not None else "no",
+            save_strategy="steps" if save_steps > 0 or eval_data is not None else "no",
+            save_steps=actual_save_steps if save_steps > 0 else None,
             output_dir=lora_file_path,
             lr_scheduler_type=lr_scheduler_type,
             load_best_model_at_end=eval_data is not None,
@@ -745,7 +755,7 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
 
     def threaded_run():
         log_train_dataset(trainer)
-        trainer.train()
+        trainer.train(resume_from_checkpoint=resume_checkpoint)
         # Note: save in the thread in case the gradio thread breaks (eg browser closed)
         lora_model.save_pretrained(lora_file_path)
         tracked.did_save = True
