@@ -1,6 +1,15 @@
 Here you can restart the UI with new settings.
 
-* **Available extensions**: shows a list of extensions available under `text-generation-webui/extensions`.
+## Settings
+
+* **Toggle light/dark theme**: switches between light and dark mode.
+* **Show two columns in the Notebook tab**: toggles between the two-column Default layout and the single-column Notebook layout.
+* **Turn long pasted text into attachments in the Chat tab**: when enabled, long pasted text is automatically converted into file attachments.
+* **Include attachments/search results from previous messages in the chat prompt**: when enabled, attachments and web search results from earlier messages are included in subsequent prompts.
+
+## Extensions & flags
+
+* **Available extensions**: shows a list of extensions available under `text-generation-webui/extensions` and `text-generation-webui/user_data/extensions`. Note that some of these extensions may require manually installing Python requirements through the command: `pip install -r extensions/extension_name/requirements.txt`.
 * **Boolean command-line flags**: shows command-line flags of bool (true/false) type.
 
 After selecting your desired flags and extensions, you can restart the UI by clicking on **Apply flags/extensions and restart**.
@@ -27,6 +36,6 @@ If you used the one-click installer, this command should be executed in the term
 
 ## Saving UI defaults
 
-The **Save UI defaults to settings.yaml** button gathers the visible values in the UI and saves them to settings.yaml so that your settings will persist across multiple restarts of the UI.
+The **Save extensions settings to user_data/settings.yaml** button gathers the visible values in the UI and saves them to `user_data/settings.yaml` so that your settings will persist across multiple restarts of the UI.
 
 Note that preset parameters like temperature are not individually saved, so you need to first save your preset and select it in the preset menu before saving the defaults.
