@@ -142,7 +142,7 @@ group.add_argument('--num_experts_per_token', type=int, default=2, metavar='N', 
 
 # TensorRT-LLM
 group = parser.add_argument_group('TensorRT-LLM')
-group.add_argument('--cpp-runner', action='store_true', help='Use the ModelRunnerCpp runner, which is faster than the default ModelRunner but doesn\'t support streaming yet.')
+group.add_argument('--cpp-runner', action='store_true', help='Use the ModelRunnerCpp runner, which is faster than the default ModelRunner.')
 
 # RoPE
 group = parser.add_argument_group('RoPE')
