@@ -354,6 +354,8 @@ class LlamaServer:
             cmd += ["--gpu-layers", str(shared.args.gpu_layers), "--fit", "off"]
         else:
             cmd += ["--fit", "on"]
+            if shared.args.fit_target:
+                cmd += ["--fit-target", shared.args.fit_target]
 
         if shared.args.threads > 0:
             cmd += ["--threads", str(shared.args.threads)]
