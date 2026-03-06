@@ -388,83 +388,93 @@ headers = {
 
 in any of the examples above.
 
-#### Tool/Function Calling Example
+#### Tool/Function calling
 
-You need to use a model with tools support. The prompt will be automatically formatted using the model's Jinja2 template.
+Use a model with tool calling support (Qwen, Mistral, GPT-OSS, etc). Tools are passed via the `tools` parameter and the prompt is automatically formatted using the model's Jinja2 template.
 
-Request:
+When the model decides to call a tool, the response will have `finish_reason: "tool_calls"` and a `tool_calls` array with structured function names and arguments. You then execute the tool, send the result back as a `role: "tool"` message, and continue until the model responds with `finish_reason: "stop"`.
 
-```
-curl http://127.0.0.1:5000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messages": [
-      {
-        "role": "system",
-        "content": "You are a helpful assistant."
-      },
-      {
-        "role": "user",
-        "content": "What time is it currently in New York City?"
-      }
-    ],
-    "tools": [
-      {
+Some models call multiple tools in parallel (Qwen, Mistral), while others call one at a time (GPT-OSS). The loop below handles both styles.
+
+```python
+import json
+import requests
+
+url = "http://127.0.0.1:5000/v1/chat/completions"
+
+# Define your tools
+tools = [
+    {
         "type": "function",
         "function": {
-          "name": "get_current_time",
-          "description": "Get current time in a specific timezones",
-          "parameters": {
-            "type": "object",
-            "required": ["timezone"],
-            "properties": {
-              "timezone": {
-                "type": "string",
-                "description": "IANA timezone name (e.g., America/New_York, Europe/London). Use Europe/Berlin as local timezone if no timezone provided by the user."
-              }
+            "name": "get_weather",
+            "description": "Get the current weather for a given location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {"type": "string", "description": "City name"},
+                },
+                "required": ["location"]
             }
-          }
         }
-      }
-    ]
-  }'
-```
-
-Sample response:
-
-```
-{
-    "id": "chatcmpl-1746532051477984256",
-    "object": "chat.completion",
-    "created": 1746532051,
-    "model": "qwen2.5-coder-14b-instruct-q4_k_m.gguf",
-    "choices": [
-        {
-            "index": 0,
-            "finish_reason": "tool_calls",
-            "message": {
-                "role": "assistant",
-                "content": "```xml\n<function>\n{\n  \"name\": \"get_current_time\",\n  \"arguments\": {\n    \"timezone\": \"America/New_York\"\n  }\n}\n</function>\n```"
-            },
-            "tool_calls": [
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "get_current_time",
-                        "arguments": "{\"timezone\": \"America/New_York\"}"
-                    },
-                    "id": "call_52ij07mh",
-                    "index": "0"
-                }
-            ]
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_time",
+            "description": "Get the current time in a given timezone",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "timezone": {"type": "string", "description": "IANA timezone string"},
+                },
+                "required": ["timezone"]
+            }
         }
-    ],
-    "usage": {
-        "prompt_tokens": 224,
-        "completion_tokens": 38,
-        "total_tokens": 262
-    }
-}
+    },
+]
+
+
+def execute_tool(name, arguments):
+    """Replace this with your actual tool implementations."""
+    if name == "get_weather":
+        return {"temperature": 22, "condition": "sunny", "humidity": 45}
+    elif name == "get_time":
+        return {"time": "2:30 PM", "timezone": "JST"}
+    return {"error": f"Unknown tool: {name}"}
+
+
+messages = [{"role": "user", "content": "What time is it in Tokyo and what's the weather like there?"}]
+
+# Tool-calling loop: keep going until the model gives a final answer
+for _ in range(10):
+    response = requests.post(url, json={"messages": messages, "tools": tools}).json()
+    choice = response["choices"][0]
+
+    if choice["finish_reason"] == "tool_calls":
+        # Add the assistant's response (with tool_calls) to history
+        messages.append({
+            "role": "assistant",
+            "content": choice["message"]["content"],
+            "tool_calls": choice["tool_calls"],
+        })
+
+        # Execute each tool and add results to history
+        for tool_call in choice["tool_calls"]:
+            name = tool_call["function"]["name"]
+            arguments = json.loads(tool_call["function"]["arguments"])
+            result = execute_tool(name, arguments)
+
+            print(f"Tool call: {name}({arguments}) => {result}")
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tool_call["id"],
+                "content": json.dumps(result),
+            })
+    else:
+        # Final answer
+        print(f"\nAssistant: {choice['message']['content']}")
+        break
 ```
 
 ### Environment variables
