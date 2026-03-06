@@ -413,6 +413,26 @@ if __name__ == '__main__':
         sys.exit()
 
     downloader = ModelDownloader(max_retries=args.max_retries)
+
+    # Handle direct file URLs (e.g. https://huggingface.co/org/repo/resolve/branch/file.gguf)
+    if '/resolve/' in model:
+        url = model if model.startswith('http') else f'{base}/{model}'
+        url = url.split('?')[0]
+        filename = url.split('/')[-1]
+
+        if args.output:
+            output_folder = Path(args.output)
+        elif args.model_dir:
+            output_folder = Path(args.model_dir)
+        else:
+            user_data_dir = Path(args.user_data_dir) if args.user_data_dir else resolve_user_data_dir()
+            output_folder = user_data_dir / 'models'
+
+        output_folder.mkdir(parents=True, exist_ok=True)
+        print(f"Downloading {filename} to {output_folder}")
+        downloader.get_single_file(url, output_folder, start_from_scratch=args.clean)
+        sys.exit()
+
     # Clean up the model/branch names
     try:
         model, branch = downloader.sanitize_model_and_branch_names(model, branch)
