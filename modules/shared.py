@@ -215,6 +215,7 @@ group.add_argument('--sampler-priority', type=str, default=_d['sampler_priority'
 group.add_argument('--dry-sequence-breakers', type=str, default=_d['dry_sequence_breakers'], metavar='N', help='DRY sequence breakers')
 group.add_argument('--enable-thinking', action=argparse.BooleanOptionalAction, default=True, help='Enable thinking')
 group.add_argument('--reasoning-effort', type=str, default='medium', metavar='N', help='Reasoning effort')
+group.add_argument('--chat-template-file', type=str, default=None, help='Path to a chat template file (.jinja, .jinja2, or .yaml) to use as the default instruction template for API requests. Overrides the model\'s built-in template.')
 
 # Handle CMD_FLAGS.txt
 cmd_flags_path = user_data_dir / "CMD_FLAGS.txt"
@@ -376,6 +377,11 @@ default_settings = copy.deepcopy(settings)
 
 
 def do_cmd_flags_warnings():
+    # Validate --chat-template-file
+    if args.chat_template_file and not Path(args.chat_template_file).is_file():
+        logger.error(f"--chat-template-file: file not found: {args.chat_template_file}")
+        sys.exit(1)
+
     # Security warnings
     if args.trust_remote_code:
         logger.warning(

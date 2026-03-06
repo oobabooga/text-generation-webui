@@ -1,9 +1,12 @@
 import copy
+import functools
 import json
 import time
 from collections import deque
+from pathlib import Path
 
 import tiktoken
+import yaml
 from pydantic import ValidationError
 
 from extensions.openai.errors import InvalidRequestError
@@ -20,6 +23,18 @@ from modules.image_utils import convert_openai_messages_to_images
 from modules.logging_colors import logger
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
+
+
+@functools.cache
+def load_chat_template_file(filepath):
+    """Load a chat template from a file path (.jinja, .jinja2, or .yaml/.yml)."""
+    filepath = Path(filepath)
+    ext = filepath.suffix.lower()
+    text = filepath.read_text(encoding='utf-8')
+    if ext in ['.yaml', '.yml']:
+        data = yaml.safe_load(text)
+        return data.get('instruction_template', '')
+    return text
 
 
 def convert_logprobs_to_tiktoken(model, logprobs):
@@ -234,6 +249,8 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         instruction_template = body['instruction_template']
         instruction_template = "Alpaca" if instruction_template == "None" else instruction_template
         instruction_template_str = load_instruction_template_memoized(instruction_template)
+    elif shared.args.chat_template_file:
+        instruction_template_str = load_chat_template_file(shared.args.chat_template_file)
     else:
         instruction_template_str = shared.settings['instruction_template_str']
 

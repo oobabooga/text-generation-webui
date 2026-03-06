@@ -226,7 +226,7 @@ def clean_path(base_path: str, path: str):
 def get_instruction_templates():
     path = shared.user_data_dir / 'instruction-templates'
     names = set()
-    for ext in ['yaml', 'yml', 'jinja']:
+    for ext in ['yaml', 'yml', 'jinja', 'jinja2']:
         for f in path.glob(f'*.{ext}'):
             names.add(f.stem)
     return ['None', 'Chat Template'] + sorted(names, key=utils.natural_keys)
@@ -235,10 +235,10 @@ def get_instruction_templates():
 def load_template(name):
     """Load a Jinja2 template string from {user_data_dir}/instruction-templates/."""
     path = shared.user_data_dir / 'instruction-templates'
-    for ext in ['jinja', 'yaml', 'yml']:
+    for ext in ['jinja', 'jinja2', 'yaml', 'yml']:
         filepath = path / f'{name}.{ext}'
         if filepath.exists():
-            if ext == 'jinja':
+            if ext in ['jinja', 'jinja2']:
                 return filepath.read_text(encoding='utf-8')
             else:
                 data = yaml.safe_load(filepath.read_text(encoding='utf-8'))
