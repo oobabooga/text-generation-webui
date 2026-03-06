@@ -3,7 +3,7 @@ import traceback
 import gradio as gr
 
 from modules import chat, presets, shared, ui, utils
-from modules.utils import gradio
+from modules.utils import gradio, sanitize_filename
 
 
 def create_ui():
@@ -91,6 +91,7 @@ def create_event_handlers():
 
 def handle_save_preset_confirm_click(filename, contents):
     try:
+        filename = sanitize_filename(filename)
         utils.save_file(str(shared.user_data_dir / "presets" / f"{filename}.yaml"), contents)
         available_presets = utils.get_available_presets()
         output = gr.update(choices=available_presets, value=filename)
@@ -106,6 +107,7 @@ def handle_save_preset_confirm_click(filename, contents):
 
 def handle_save_confirm_click(root, filename, contents):
     try:
+        filename = sanitize_filename(filename)
         utils.save_file(root + filename, contents)
     except Exception:
         traceback.print_exc()
@@ -115,6 +117,7 @@ def handle_save_confirm_click(root, filename, contents):
 
 def handle_delete_confirm_click(root, filename):
     try:
+        filename = sanitize_filename(filename)
         utils.delete_file(root + filename)
     except Exception:
         traceback.print_exc()

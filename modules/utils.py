@@ -15,6 +15,17 @@ def gradio(*keys):
     return [shared.gradio[k] for k in keys]
 
 
+def sanitize_filename(name):
+    """Strip path traversal components from a filename.
+
+    Returns only the final path component with leading dots removed,
+    preventing directory traversal via '../' or absolute paths.
+    """
+    name = Path(name).name  # drop all directory components
+    name = name.lstrip('.')  # remove leading dots
+    return name
+
+
 def _is_path_allowed(abs_path_str):
     """Check if a path is under the project root or the configured user_data directory."""
     abs_path = Path(abs_path_str).resolve()

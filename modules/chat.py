@@ -36,6 +36,7 @@ from modules.utils import (
     delete_file,
     get_available_characters,
     get_available_users,
+    sanitize_filename,
     save_file
 )
 from modules.web_search import add_web_search_attachments
@@ -1557,12 +1558,12 @@ def upload_character(file, img_path, tavern=False):
         data = yaml.safe_load(decoded_file)
 
     if 'char_name' in data:
-        name = data['char_name']
+        name = sanitize_filename(data['char_name'])
         greeting = data['char_greeting']
         context = build_pygmalion_style_context(data)
         yaml_data = generate_character_yaml(name, greeting, context)
     else:
-        name = data['name']
+        name = sanitize_filename(data['name'])
         yaml_data = generate_character_yaml(data['name'], data['greeting'], data['context'])
 
     outfile_name = name
@@ -1653,6 +1654,7 @@ def generate_instruction_template_yaml(instruction_template):
 
 
 def save_character(name, greeting, context, picture, filename):
+    filename = sanitize_filename(filename)
     if filename == "":
         logger.error("The filename is empty, so the character will not be saved.")
         return
@@ -1668,6 +1670,7 @@ def save_character(name, greeting, context, picture, filename):
 
 
 def delete_character(name, instruct=False):
+    name = sanitize_filename(name)
     # Check for character data files
     for extension in ["yml", "yaml", "json"]:
         delete_file(shared.user_data_dir / 'characters' / f'{name}.{extension}')
@@ -1751,6 +1754,7 @@ def generate_user_yaml(name, user_bio):
 
 def save_user(name, user_bio, picture, filename):
     """Save user profile to YAML file"""
+    filename = sanitize_filename(filename)
     if filename == "":
         logger.error("The filename is empty, so the user will not be saved.")
         return
@@ -1772,6 +1776,7 @@ def save_user(name, user_bio, picture, filename):
 
 def delete_user(name):
     """Delete user profile files"""
+    name = sanitize_filename(name)
     # Check for user data files
     for extension in ["yml", "yaml", "json"]:
         delete_file(shared.user_data_dir / 'users' / f'{name}.{extension}')
