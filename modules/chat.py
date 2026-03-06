@@ -106,6 +106,50 @@ yaml.add_representer(str, str_presenter)
 yaml.representer.SafeRepresenter.add_representer(str, str_presenter)
 
 
+class _JsonDict(dict):
+    """A dict that serializes as JSON when used in string concatenation.
+
+    Some Jinja2 templates (Qwen, GLM) iterate arguments with .items(),
+    requiring a dict.  Others (DeepSeek) concatenate arguments as a
+    string, requiring JSON.  This class satisfies both.
+    """
+
+    def __str__(self):
+        return json.dumps(self, ensure_ascii=False)
+
+    def __add__(self, other):
+        return str(self) + other
+
+    def __radd__(self, other):
+        return other + str(self)
+
+
+def _deserialize_tool_call_arguments(tool_calls):
+    """Convert tool_call arguments from JSON strings to _JsonDict.
+
+    The OpenAI API spec sends arguments as a JSON string, but Jinja2
+    templates may need a dict (.items()) or a string (concatenation).
+    _JsonDict handles both transparently.
+    """
+    result = []
+    for tc in tool_calls:
+        tc = copy.copy(tc)
+        func = tc.get('function', {})
+        if isinstance(func, dict):
+            func = dict(func)
+            args = func.get('arguments')
+            if isinstance(args, str):
+                try:
+                    func['arguments'] = _JsonDict(json.loads(args))
+                except (json.JSONDecodeError, ValueError):
+                    pass
+            elif isinstance(args, dict) and not isinstance(args, _JsonDict):
+                func['arguments'] = _JsonDict(args)
+            tc['function'] = func
+        result.append(tc)
+    return result
+
+
 def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs.get('impersonate', False)
     _continue = kwargs.get('_continue', False)
@@ -172,7 +216,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
         if not assistant_msg and entry_meta.get('tool_calls'):
             # Assistant message with only tool_calls and no text content
-            messages.insert(insert_pos, {"role": "assistant", "content": "", "tool_calls": entry_meta['tool_calls']})
+            messages.insert(insert_pos, {"role": "assistant", "content": "", "tool_calls": _deserialize_tool_call_arguments(entry_meta['tool_calls'])})
         elif assistant_msg:
             # Handle GPT-OSS as a special case
             if '<|channel|>analysis<|message|>' in assistant_msg or '<|channel|>final<|message|>' in assistant_msg:
@@ -250,7 +294,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
             # Attach tool_calls metadata to the assistant message if present
             if entry_meta.get('tool_calls') and messages[insert_pos].get('role') == 'assistant':
-                messages[insert_pos]['tool_calls'] = entry_meta['tool_calls']
+                messages[insert_pos]['tool_calls'] = _deserialize_tool_call_arguments(entry_meta['tool_calls'])
 
         if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
             # Check for user message attachments in metadata

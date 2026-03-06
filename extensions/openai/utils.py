@@ -83,6 +83,39 @@ def checkAndSanitizeToolCallCandidate(candidate_dict: dict, tool_names: list[str
     return None
 
 
+def _extractBalancedJson(text: str, start: int) -> str | None:
+    """Extract a balanced JSON object from text starting at the given position.
+
+    Walks through the string tracking brace depth and string boundaries
+    to correctly handle arbitrary nesting levels.
+    """
+    if start >= len(text) or text[start] != '{':
+        return None
+    depth = 0
+    in_string = False
+    escape_next = False
+    for i in range(start, len(text)):
+        c = text[i]
+        if escape_next:
+            escape_next = False
+            continue
+        if c == '\\' and in_string:
+            escape_next = True
+            continue
+        if c == '"':
+            in_string = not in_string
+            continue
+        if in_string:
+            continue
+        if c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+            if depth == 0:
+                return text[start:i + 1]
+    return None
+
+
 def _parseChannelToolCalls(answer: str, tool_names: list[str]):
     """Parse channel-based tool calls used by GPT-OSS and similar models.
 
@@ -91,14 +124,17 @@ def _parseChannelToolCalls(answer: str, tool_names: list[str]):
     """
     matches = []
     for m in re.finditer(
-        r'<\|channel\|>commentary to=functions\.([^<\s]+)\s*(?:<\|constrain\|>json)?<\|message\|>(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})',
+        r'<\|channel\|>commentary to=functions\.([^<\s]+)\s*(?:<\|constrain\|>json)?<\|message\|>',
         answer
     ):
         func_name = m.group(1).strip()
         if func_name not in tool_names:
             continue
+        json_str = _extractBalancedJson(answer, m.end())
+        if json_str is None:
+            continue
         try:
-            arguments = json.loads(m.group(2))
+            arguments = json.loads(json_str)
             matches.append({
                 "type": "function",
                 "function": {
@@ -119,27 +155,33 @@ def _parseBareNameToolCalls(answer: str, tool_names: list[str]):
     Multiple calls are concatenated directly or separated by whitespace.
     """
     matches = []
-    # Build pattern that matches any known tool name followed by a JSON object
+    # Match tool name followed by opening brace, then extract balanced JSON
     escaped_names = [re.escape(name) for name in tool_names]
-    pattern = r'(?:' + '|'.join(escaped_names) + r')\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+    pattern = r'(?:' + '|'.join(escaped_names) + r')\s*\{'
     for match in re.finditer(pattern, answer):
         text = match.group(0)
-        # Split into function name and JSON arguments
-        for name in tool_names:
-            if text.startswith(name):
-                json_str = text[len(name):].strip()
-                try:
-                    arguments = json.loads(json_str)
-                    matches.append({
-                        "type": "function",
-                        "function": {
-                            "name": name,
-                            "arguments": arguments
-                        }
-                    })
-                except json.JSONDecodeError:
-                    pass
+        name = None
+        for n in tool_names:
+            if text.startswith(n):
+                name = n
                 break
+        if not name:
+            continue
+        brace_start = match.end() - 1
+        json_str = _extractBalancedJson(answer, brace_start)
+        if json_str is None:
+            continue
+        try:
+            arguments = json.loads(json_str)
+            matches.append({
+                "type": "function",
+                "function": {
+                    "name": name,
+                    "arguments": arguments
+                }
+            })
+        except json.JSONDecodeError:
+            pass
     return matches
 
 
@@ -171,6 +213,149 @@ def _parseXmlParamToolCalls(answer: str, tool_names: list[str]):
             except (json.JSONDecodeError, ValueError):
                 pass  # keep as string
             arguments[param_name] = param_value
+        matches.append({
+            "type": "function",
+            "function": {
+                "name": func_name,
+                "arguments": arguments
+            }
+        })
+    return matches
+
+
+def _parseKimiToolCalls(answer: str, tool_names: list[str]):
+    """Parse Kimi-K2-style tool calls using pipe-delimited tokens.
+
+    Format:
+        <|tool_calls_section_begin|>
+        <|tool_call_begin|>functions.func_name:index<|tool_call_argument_begin|>{"arg": "value"}<|tool_call_end|>
+        <|tool_calls_section_end|>
+    """
+    matches = []
+    for m in re.finditer(
+        r'<\|tool_call_begin\|>\s*(?:functions\.)?(\S+?)(?::\d+)?\s*<\|tool_call_argument_begin\|>\s*',
+        answer
+    ):
+        func_name = m.group(1).strip()
+        if func_name not in tool_names:
+            continue
+        json_str = _extractBalancedJson(answer, m.end())
+        if json_str is None:
+            continue
+        try:
+            arguments = json.loads(json_str)
+            matches.append({
+                "type": "function",
+                "function": {
+                    "name": func_name,
+                    "arguments": arguments
+                }
+            })
+        except json.JSONDecodeError:
+            pass
+    return matches
+
+
+def _parseMiniMaxToolCalls(answer: str, tool_names: list[str]):
+    """Parse MiniMax-style tool calls using invoke/parameter XML tags.
+
+    Format:
+        <minimax:tool_call>
+        <invoke name="function_name">
+        <parameter name="param_name">value</parameter>
+        </invoke>
+        </minimax:tool_call>
+    """
+    matches = []
+    for tc_match in re.finditer(r'<minimax:tool_call>\s*(.*?)\s*</minimax:tool_call>', answer, re.DOTALL):
+        tc_content = tc_match.group(1)
+        # Split on <invoke> to handle multiple parallel calls in one block
+        for invoke_match in re.finditer(r'<invoke\s+name="([^"]+)">(.*?)</invoke>', tc_content, re.DOTALL):
+            func_name = invoke_match.group(1).strip()
+            if func_name not in tool_names:
+                continue
+            invoke_body = invoke_match.group(2)
+            arguments = {}
+            for param_match in re.finditer(r'<parameter\s+name="([^"]+)">\s*(.*?)\s*</parameter>', invoke_body, re.DOTALL):
+                param_name = param_match.group(1).strip()
+                param_value = param_match.group(2).strip()
+                try:
+                    param_value = json.loads(param_value)
+                except (json.JSONDecodeError, ValueError):
+                    pass  # keep as string
+                arguments[param_name] = param_value
+            matches.append({
+                "type": "function",
+                "function": {
+                    "name": func_name,
+                    "arguments": arguments
+                }
+            })
+    return matches
+
+
+def _parseDeepSeekToolCalls(answer: str, tool_names: list[str]):
+    """Parse DeepSeek-style tool calls using fullwidth Unicode token delimiters.
+
+    Format:
+        <｜tool▁calls▁begin｜><｜tool▁call▁begin｜>func_name<｜tool▁sep｜>{"arg": "value"}<｜tool▁call▁end｜><｜tool▁calls▁end｜>
+    """
+    matches = []
+    for m in re.finditer(
+        r'<｜tool▁call▁begin｜>\s*(\S+?)\s*<｜tool▁sep｜>\s*',
+        answer
+    ):
+        func_name = m.group(1).strip()
+        if func_name not in tool_names:
+            continue
+        json_str = _extractBalancedJson(answer, m.end())
+        if json_str is None:
+            continue
+        try:
+            arguments = json.loads(json_str)
+            matches.append({
+                "type": "function",
+                "function": {
+                    "name": func_name,
+                    "arguments": arguments
+                }
+            })
+        except json.JSONDecodeError:
+            pass
+    return matches
+
+
+def _parseGlmToolCalls(answer: str, tool_names: list[str]):
+    """Parse GLM-style tool calls using arg_key/arg_value XML pairs.
+
+    Format:
+        <tool_call>function_name
+        <arg_key>key1</arg_key>
+        <arg_value>value1</arg_value>
+        </tool_call>
+    """
+    matches = []
+    for tc_match in re.finditer(r'<tool_call>\s*(.*?)\s*</tool_call>', answer, re.DOTALL):
+        tc_content = tc_match.group(1)
+        # First non-tag text is the function name
+        name_match = re.match(r'([^<\s]+)', tc_content.strip())
+        if not name_match:
+            continue
+        func_name = name_match.group(1).strip()
+        if func_name not in tool_names:
+            continue
+        # Extract arg_key/arg_value pairs
+        keys = [k.group(1).strip() for k in re.finditer(r'<arg_key>\s*(.*?)\s*</arg_key>', tc_content, re.DOTALL)]
+        vals = [v.group(1).strip() for v in re.finditer(r'<arg_value>\s*(.*?)\s*</arg_value>', tc_content, re.DOTALL)]
+        if len(keys) != len(vals):
+            continue
+        arguments = {}
+        for k, v in zip(keys, vals):
+            try:
+                v = json.loads(v)
+            except (json.JSONDecodeError, ValueError):
+                pass  # keep as string
+            arguments[k] = v
         matches.append({
             "type": "function",
             "function": {
@@ -244,8 +429,28 @@ def parseToolCall(answer: str, tool_names: list[str]):
     if len(answer) < 10:
         return matches
 
+    # Check for DeepSeek-style tool calls (fullwidth Unicode token delimiters)
+    matches = _parseDeepSeekToolCalls(answer, tool_names)
+    if matches:
+        return matches
+
+    # Check for Kimi-K2-style tool calls (pipe-delimited tokens)
+    matches = _parseKimiToolCalls(answer, tool_names)
+    if matches:
+        return matches
+
     # Check for channel-based tool calls (e.g. GPT-OSS format)
     matches = _parseChannelToolCalls(answer, tool_names)
+    if matches:
+        return matches
+
+    # Check for MiniMax-style tool calls (invoke/parameter XML tags)
+    matches = _parseMiniMaxToolCalls(answer, tool_names)
+    if matches:
+        return matches
+
+    # Check for GLM-style tool calls (arg_key/arg_value XML pairs)
+    matches = _parseGlmToolCalls(answer, tool_names)
     if matches:
         return matches
 
