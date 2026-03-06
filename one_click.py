@@ -395,6 +395,7 @@ def update_requirements(initial_installation=False, pull=True):
 
         # Perform the git pull
         run_cmd("git pull --autostash", assert_success=True, environment=True)
+        current_commit = get_current_commit()
 
         # Check hashes after pulling
         after_hashes = {file: calculate_file_hash(file) for file in files_to_check}
@@ -411,16 +412,11 @@ def update_requirements(initial_installation=False, pull=True):
 
                 # Save state before exiting
                 state = load_state()
+                state['last_installed_commit'] = current_commit
                 if wheels_changed:
                     state['wheels_changed'] = True
                 save_state(state)
                 sys.exit(1)
-
-    # Save current state
-    state = load_state()
-    state['last_installed_commit'] = current_commit
-    state.pop('wheels_changed', None)  # Remove wheels_changed flag
-    save_state(state)
 
     if os.environ.get("INSTALL_EXTENSIONS", "").lower() in ("yes", "y", "true", "1", "t", "on"):
         install_extensions_requirements()
@@ -455,6 +451,12 @@ def update_requirements(initial_installation=False, pull=True):
 
     # Install/update the project requirements
     run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
+
+    # Save state after successful installation
+    state = load_state()
+    state['last_installed_commit'] = current_commit
+    state.pop('wheels_changed', None)
+    save_state(state)
 
     # Clean up
     os.remove('temp_requirements.txt')
