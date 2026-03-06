@@ -135,7 +135,7 @@ def get_truncation_length():
 
 
 def load_grammar(name):
-    p = Path(f'user_data/grammars/{name}')
+    p = shared.user_data_dir / 'grammars' / name
     if p.exists():
         return open(p, 'r', encoding='utf-8').read()
     else:

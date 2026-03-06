@@ -138,7 +138,7 @@ def save_generated_images(images, state, actual_seed):
         return []
 
     date_str = datetime.now().strftime("%Y-%m-%d")
-    folder_path = os.path.join("user_data", "image_outputs", date_str)
+    folder_path = str(shared.user_data_dir / "image_outputs" / date_str)
     os.makedirs(folder_path, exist_ok=True)
 
     metadata = build_generation_metadata(state, actual_seed)
@@ -214,7 +214,7 @@ def get_all_history_images(force_refresh=False):
     """Get all history images sorted by modification time (newest first). Uses caching."""
     global _image_cache, _cache_timestamp
 
-    output_dir = os.path.join("user_data", "image_outputs")
+    output_dir = str(shared.user_data_dir / "image_outputs")
     if not os.path.exists(output_dir):
         return []
 

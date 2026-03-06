@@ -175,7 +175,7 @@ def create_character_settings_ui():
 
             with gr.Column(scale=1):
                 shared.gradio['character_picture'] = gr.Image(label='Character picture', type='filepath', interactive=not mu)
-                shared.gradio['your_picture'] = gr.Image(label='Your picture', type='filepath', value=Image.open(Path('user_data/cache/pfp_me.png')) if Path('user_data/cache/pfp_me.png').exists() else None, interactive=not mu)
+                shared.gradio['your_picture'] = gr.Image(label='Your picture', type='filepath', value=Image.open(shared.user_data_dir / 'cache' / 'pfp_me.png') if (shared.user_data_dir / 'cache' / 'pfp_me.png').exists() else None, interactive=not mu)
 
 
 def create_chat_settings_ui():

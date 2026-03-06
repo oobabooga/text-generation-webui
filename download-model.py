@@ -24,6 +24,8 @@ from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, RequestException, Timeout
 from tqdm.contrib.concurrent import thread_map
 
+from modules.paths import resolve_user_data_dir
+
 base = os.environ.get("HF_ENDPOINT") or "https://huggingface.co"
 
 
@@ -182,11 +184,13 @@ class ModelDownloader:
         is_llamacpp = has_gguf and specific_file is not None
         return links, sha256, is_lora, is_llamacpp, file_sizes
 
-    def get_output_folder(self, model, branch, is_lora, is_llamacpp=False, model_dir=None):
+    def get_output_folder(self, model, branch, is_lora, is_llamacpp=False, model_dir=None, user_data_dir=None):
         if model_dir:
             base_folder = model_dir
         else:
-            base_folder = 'user_data/models' if not is_lora else 'user_data/loras'
+            if user_data_dir is None:
+                user_data_dir = resolve_user_data_dir()
+            base_folder = str(user_data_dir / 'models') if not is_lora else str(user_data_dir / 'loras')
 
         # If the model is of type GGUF, save directly in the base_folder
         if is_llamacpp:
@@ -392,7 +396,8 @@ if __name__ == '__main__':
     parser.add_argument('--specific-file', type=str, default=None, help='Name of the specific file to download (if not provided, downloads all).')
     parser.add_argument('--exclude-pattern', type=str, default=None, help='Regex pattern to exclude files from download.')
     parser.add_argument('--output', type=str, default=None, help='Save the model files to this folder.')
-    parser.add_argument('--model-dir', type=str, default=None, help='Save the model files to a subfolder of this folder instead of the default one (text-generation-webui/user_data/models).')
+    parser.add_argument('--model-dir', type=str, default=None, help='Save the model files to a subfolder of this folder instead of the default one (user_data/models).')
+    parser.add_argument('--user-data-dir', type=str, default=None, help='Path to the user data directory. Overrides auto-detection.')
     parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
     parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
     parser.add_argument('--max-retries', type=int, default=7, help='Max retries count when get error in download time.')
@@ -421,10 +426,11 @@ if __name__ == '__main__':
     )
 
     # Get the output folder
+    user_data_dir = Path(args.user_data_dir) if args.user_data_dir else None
     if args.output:
         output_folder = Path(args.output)
     else:
-        output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp, model_dir=args.model_dir)
+        output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp, model_dir=args.model_dir, user_data_dir=user_data_dir)
 
     if args.check:
         # Check previously downloaded files

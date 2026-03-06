@@ -65,7 +65,7 @@ def create_ui():
                             # Multimodal
                             with gr.Accordion("Multimodal (vision)", open=False, elem_classes='tgw-accordion') as shared.gradio['mmproj_accordion']:
                                 with gr.Row():
-                                    shared.gradio['mmproj'] = gr.Dropdown(label="mmproj file", choices=utils.get_available_mmproj(), value=lambda: shared.args.mmproj or 'None', elem_classes='slim-dropdown', info='Select a file that matches your model. Must be placed in user_data/mmproj/', interactive=not mu)
+                                    shared.gradio['mmproj'] = gr.Dropdown(label="mmproj file", choices=utils.get_available_mmproj(), value=lambda: shared.args.mmproj or 'None', elem_classes='slim-dropdown', info=f'Select a file that matches your model. Must be placed in {shared.user_data_dir}/mmproj/', interactive=not mu)
                                     ui.create_refresh_button(shared.gradio['mmproj'], lambda: None, lambda: {'choices': utils.get_available_mmproj()}, 'refresh-button', interactive=not mu)
 
                             # Speculative decoding
@@ -317,9 +317,9 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
             model_dir=shared.args.model_dir if shared.args.model_dir != shared.args_defaults.model_dir else None
         )
 
-        if output_folder == Path("user_data/models"):
+        if output_folder == shared.user_data_dir / "models":
             output_folder = Path(shared.args.model_dir)
-        elif output_folder == Path("user_data/loras"):
+        elif output_folder == shared.user_data_dir / "loras":
             output_folder = Path(shared.args.lora_dir)
 
         if check:

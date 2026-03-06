@@ -159,7 +159,7 @@ def handle_new_prompt():
     new_name = utils.current_time()
 
     # Create the new prompt file
-    prompt_path = Path("user_data/logs/notebook") / f"{new_name}.txt"
+    prompt_path = shared.user_data_dir / "logs" / "notebook" / f"{new_name}.txt"
     prompt_path.parent.mkdir(parents=True, exist_ok=True)
     prompt_path.write_text("In this story,", encoding='utf-8')
 
@@ -170,15 +170,15 @@ def handle_delete_prompt_confirm_default(prompt_name):
     available_prompts = utils.get_available_prompts()
     current_index = available_prompts.index(prompt_name) if prompt_name in available_prompts else 0
 
-    (Path("user_data/logs/notebook") / f"{prompt_name}.txt").unlink(missing_ok=True)
+    (shared.user_data_dir / "logs" / "notebook" / f"{prompt_name}.txt").unlink(missing_ok=True)
     available_prompts = utils.get_available_prompts()
 
     if available_prompts:
         new_value = available_prompts[min(current_index, len(available_prompts) - 1)]
     else:
         new_value = utils.current_time()
-        Path("user_data/logs/notebook").mkdir(parents=True, exist_ok=True)
-        (Path("user_data/logs/notebook") / f"{new_value}.txt").write_text("In this story,")
+        (shared.user_data_dir / "logs" / "notebook").mkdir(parents=True, exist_ok=True)
+        (shared.user_data_dir / "logs" / "notebook" / f"{new_value}.txt").write_text("In this story,")
         available_prompts = [new_value]
 
     return [
@@ -199,8 +199,8 @@ def handle_rename_prompt_click_default(current_name):
 
 
 def handle_rename_prompt_confirm_default(new_name, current_name):
-    old_path = Path("user_data/logs/notebook") / f"{current_name}.txt"
-    new_path = Path("user_data/logs/notebook") / f"{new_name}.txt"
+    old_path = shared.user_data_dir / "logs" / "notebook" / f"{current_name}.txt"
+    new_path = shared.user_data_dir / "logs" / "notebook" / f"{new_name}.txt"
 
     if old_path.exists() and not new_path.exists():
         old_path.rename(new_path)

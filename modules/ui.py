@@ -113,7 +113,7 @@ if not shared.args.old_colors:
         block_radius='0',
     )
 
-if Path("user_data/notification.mp3").exists():
+if (shared.user_data_dir / "notification.mp3").exists():
     audio_notification_js = "document.querySelector('#audio_notification audio')?.play();"
 else:
     audio_notification_js = ""
@@ -381,7 +381,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
                             output[_id] = params[param]
     else:
         # Preserve existing extensions and extension parameters during autosave
-        settings_path = Path('user_data') / 'settings.yaml'
+        settings_path = shared.user_data_dir / 'settings.yaml'
         if settings_path.exists():
             try:
                 with open(settings_path, 'r', encoding='utf-8') as f:
@@ -436,7 +436,7 @@ def _perform_debounced_save():
     try:
         if _last_interface_state is not None:
             contents = save_settings(_last_interface_state, _last_preset, _last_extensions, _last_show_controls, _last_theme_state, manual_save=False)
-            settings_path = Path('user_data') / 'settings.yaml'
+            settings_path = shared.user_data_dir / 'settings.yaml'
             settings_path.parent.mkdir(exist_ok=True)
             with open(settings_path, 'w', encoding='utf-8') as f:
                 f.write(contents)

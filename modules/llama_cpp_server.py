@@ -384,7 +384,7 @@ class LlamaServer:
         if shared.args.mmproj not in [None, 'None']:
             path = Path(shared.args.mmproj)
             if not path.exists():
-                path = Path('user_data/mmproj') / shared.args.mmproj
+                path = shared.user_data_dir / 'mmproj' / shared.args.mmproj
 
             if path.exists():
                 cmd += ["--mmproj", str(path)]

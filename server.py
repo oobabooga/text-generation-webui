@@ -9,7 +9,7 @@ from modules.logging_colors import logger
 from modules.prompts import load_prompt
 
 # Set up Gradio temp directory path
-gradio_temp_path = Path('user_data') / 'cache' / 'gradio'
+gradio_temp_path = shared.user_data_dir / 'cache' / 'gradio'
 shutil.rmtree(gradio_temp_path, ignore_errors=True)
 gradio_temp_path.mkdir(parents=True, exist_ok=True)
 
@@ -94,9 +94,9 @@ def create_interface():
     auth = [tuple(cred.split(':')) for cred in auth]
 
     # Allowed paths
-    allowed_paths = ["css", "js", "extensions", "user_data/cache"]
+    allowed_paths = ["css", "js", "extensions", str(shared.user_data_dir / "cache")]
     if not shared.args.multi_user:
-        allowed_paths.append("user_data/image_outputs")
+        allowed_paths.append(str(shared.user_data_dir / "image_outputs"))
 
     # Import the extensions and execute their setup() functions
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
@@ -120,7 +120,7 @@ def create_interface():
 
     # Clear existing cache files
     for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
-        cache_path = Path(f"user_data/cache/{cache_file}")
+        cache_path = shared.user_data_dir / "cache" / cache_file
         if cache_path.exists():
             cache_path.unlink()
 
@@ -160,8 +160,8 @@ def create_interface():
         shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
 
         # Audio notification
-        if Path("user_data/notification.mp3").exists():
-            shared.gradio['audio_notification'] = gr.Audio(interactive=False, value="user_data/notification.mp3", elem_id="audio_notification", visible=False)
+        if (shared.user_data_dir / "notification.mp3").exists():
+            shared.gradio['audio_notification'] = gr.Audio(interactive=False, value=str(shared.user_data_dir / "notification.mp3"), elem_id="audio_notification", visible=False)
 
         # Floating menus for saving/deleting files
         ui_file_saving.create_ui()
@@ -244,8 +244,8 @@ if __name__ == "__main__":
     settings_file = None
     if shared.args.settings is not None and Path(shared.args.settings).exists():
         settings_file = Path(shared.args.settings)
-    elif Path('user_data/settings.yaml').exists():
-        settings_file = Path('user_data/settings.yaml')
+    elif (shared.user_data_dir / 'settings.yaml').exists():
+        settings_file = shared.user_data_dir / 'settings.yaml'
 
     if settings_file is not None:
         logger.info(f"Loading settings from \"{settings_file}\"")

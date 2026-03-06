@@ -107,8 +107,8 @@ def create_ui():
                 with gr.Column():
                     with gr.Tab(label='Chat Dataset'):
                         with gr.Row():
-                            dataset = gr.Dropdown(choices=utils.get_chat_datasets('user_data/training/datasets'), value='None', label='Dataset File', info='A JSON file with chat conversations (messages or ShareGPT format). Each row is one conversation.', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(dataset, lambda: None, lambda: {'choices': utils.get_chat_datasets('user_data/training/datasets')}, 'refresh-button', interactive=not mu)
+                            dataset = gr.Dropdown(choices=utils.get_chat_datasets(str(shared.user_data_dir / 'training/datasets')), value='None', label='Dataset File', info='A JSON file with chat conversations (messages or ShareGPT format). Each row is one conversation.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(dataset, lambda: None, lambda: {'choices': utils.get_chat_datasets(str(shared.user_data_dir / 'training/datasets'))}, 'refresh-button', interactive=not mu)
 
                         with gr.Row():
                             format = gr.Dropdown(choices=get_instruction_templates(), value='None', label='Instruction Template', info='Select an instruction template for formatting the dataset, or "Chat Template" to use the model\'s built-in chat template.', elem_classes=['slim-dropdown'], interactive=not mu)
@@ -116,14 +116,14 @@ def create_ui():
 
                     with gr.Tab(label="Text Dataset"):
                         with gr.Row():
-                            text_dataset = gr.Dropdown(choices=utils.get_text_datasets('user_data/training/datasets'), value='None', label='Dataset File', info='A JSON file with a "text" key per row, for pretraining-style training. Each row is one document.', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(text_dataset, lambda: None, lambda: {'choices': utils.get_text_datasets('user_data/training/datasets')}, 'refresh-button', interactive=not mu)
+                            text_dataset = gr.Dropdown(choices=utils.get_text_datasets(str(shared.user_data_dir / 'training/datasets')), value='None', label='Dataset File', info='A JSON file with a "text" key per row, for pretraining-style training. Each row is one document.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(text_dataset, lambda: None, lambda: {'choices': utils.get_text_datasets(str(shared.user_data_dir / 'training/datasets'))}, 'refresh-button', interactive=not mu)
 
                         stride_length = gr.Slider(label='Stride Length', minimum=0, maximum=2048, value=256, step=32, info='Overlap between chunks in tokens. 0 = no overlap. Values like 256 or 512 help preserve context across chunk boundaries.')
 
                     with gr.Row():
-                        eval_dataset = gr.Dropdown(choices=utils.get_datasets('user_data/training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'], interactive=not mu)
-                        ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': utils.get_datasets('user_data/training/datasets', 'json')}, 'refresh-button', interactive=not mu)
+                        eval_dataset = gr.Dropdown(choices=utils.get_datasets(str(shared.user_data_dir / 'training/datasets'), 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'], interactive=not mu)
+                        ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': utils.get_datasets(str(shared.user_data_dir / 'training/datasets'), 'json')}, 'refresh-button', interactive=not mu)
 
                     eval_steps = gr.Number(label='Evaluate every n steps', value=100, info='If an evaluation dataset is given, test it every time this many steps pass.')
 
@@ -137,7 +137,7 @@ def create_ui():
             with gr.Row():
                 with gr.Column():
                     models = gr.Dropdown(utils.get_available_models(), label='Models', multiselect=True, interactive=not mu)
-                    evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + utils.get_datasets('user_data/training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under user_data/training/datasets.', interactive=not mu)
+                    evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + utils.get_datasets(str(shared.user_data_dir / 'training/datasets'), 'txt')[1:], value='wikitext', label='Input dataset', info=f'The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under {shared.user_data_dir}/training/datasets.', interactive=not mu)
                     with gr.Row():
                         with gr.Column():
                             stride_length = gr.Slider(label='Stride', minimum=0, maximum=32768, value=512, step=256, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
@@ -224,7 +224,7 @@ def clean_path(base_path: str, path: str):
 
 
 def get_instruction_templates():
-    path = Path('user_data/instruction-templates')
+    path = shared.user_data_dir / 'instruction-templates'
     names = set()
     for ext in ['yaml', 'yml', 'jinja']:
         for f in path.glob(f'*.{ext}'):
@@ -233,8 +233,8 @@ def get_instruction_templates():
 
 
 def load_template(name):
-    """Load a Jinja2 template string from user_data/instruction-templates/."""
-    path = Path('user_data/instruction-templates')
+    """Load a Jinja2 template string from {user_data_dir}/instruction-templates/."""
+    path = shared.user_data_dir / 'instruction-templates'
     for ext in ['jinja', 'yaml', 'yml']:
         filepath = path / f'{name}.{ext}'
         if filepath.exists():
@@ -453,7 +453,7 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
     if has_text_dataset:
         train_template["template_type"] = "text_dataset"
         logger.info("Loading text dataset")
-        data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{text_dataset}.json'))
+        data = load_dataset("json", data_files=clean_path(str(shared.user_data_dir / 'training/datasets'), f'{text_dataset}.json'))
 
         if "text" not in data['train'].column_names:
             yield "Error: text dataset must have a \"text\" key per row."
@@ -467,7 +467,7 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
         if eval_dataset == 'None':
             eval_data = None
         else:
-            eval_raw = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{eval_dataset}.json'))
+            eval_raw = load_dataset("json", data_files=clean_path(str(shared.user_data_dir / 'training/datasets'), f'{eval_dataset}.json'))
             if "text" not in eval_raw['train'].column_names:
                 yield "Error: evaluation dataset must have a \"text\" key per row."
                 return
@@ -496,7 +496,7 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
         train_template["template_type"] = "chat_template"
 
         logger.info("Loading JSON dataset with chat template format")
-        data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{dataset}.json'))
+        data = load_dataset("json", data_files=clean_path(str(shared.user_data_dir / 'training/datasets'), f'{dataset}.json'))
 
         # Validate the first row
         try:
@@ -522,7 +522,7 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
         if eval_dataset == 'None':
             eval_data = None
         else:
-            eval_data = load_dataset("json", data_files=clean_path('user_data/training/datasets', f'{eval_dataset}.json'))
+            eval_data = load_dataset("json", data_files=clean_path(str(shared.user_data_dir / 'training/datasets'), f'{eval_dataset}.json'))
             eval_data = eval_data['train'].map(
                 tokenize_conversation,
                 remove_columns=eval_data['train'].column_names,
@@ -757,11 +757,11 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
                 decoded_entries.append({"value": decoded_text})
 
             # Write the log file
-            Path('user_data/logs').mkdir(exist_ok=True)
-            with open(Path('user_data/logs/train_dataset_sample.json'), 'w') as json_file:
+            (shared.user_data_dir / 'logs').mkdir(exist_ok=True)
+            with open(shared.user_data_dir / 'logs' / 'train_dataset_sample.json', 'w') as json_file:
                 json.dump(decoded_entries, json_file, indent=4)
 
-            logger.info("Log file 'train_dataset_sample.json' created in the 'user_data/logs' directory.")
+            logger.info(f"Log file 'train_dataset_sample.json' created in the '{shared.user_data_dir}/logs' directory.")
         except Exception as e:
             logger.error(f"Failed to create log file due to error: {e}")
 

@@ -9,7 +9,11 @@ from pathlib import Path
 import yaml
 
 from modules.logging_colors import logger
+from modules.paths import resolve_user_data_dir
 from modules.presets import default_preset
+
+# Resolve user_data directory early (before argparse defaults are set)
+user_data_dir = resolve_user_data_dir()
 
 # Text model variables
 model = None
@@ -42,11 +46,12 @@ parser = argparse.ArgumentParser(description="Text Generation Web UI", conflict_
 
 # Basic settings
 group = parser.add_argument_group('Basic settings')
+group.add_argument('--user-data-dir', type=str, default=str(user_data_dir), help='Path to the user data directory. Default: auto-detected.')
 group.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.')
 group.add_argument('--model', type=str, help='Name of the model to load by default.')
 group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
-group.add_argument('--model-dir', type=str, default='user_data/models', help='Path to directory with all the models.')
-group.add_argument('--lora-dir', type=str, default='user_data/loras', help='Path to directory with all the loras.')
+group.add_argument('--model-dir', type=str, default=str(user_data_dir / 'models'), help='Path to directory with all the models.')
+group.add_argument('--lora-dir', type=str, default=str(user_data_dir / 'loras'), help='Path to directory with all the loras.')
 group.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
 group.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See user_data/settings-template.yaml for an example. If you create a file called user_data/settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
@@ -56,7 +61,7 @@ group.add_argument('--idle-timeout', type=int, default=0, help='Unload model aft
 # Image generation
 group = parser.add_argument_group('Image model')
 group.add_argument('--image-model', type=str, help='Name of the image model to select on startup (overrides saved setting).')
-group.add_argument('--image-model-dir', type=str, default='user_data/image_models', help='Path to directory with all the image models.')
+group.add_argument('--image-model-dir', type=str, default=str(user_data_dir / 'image_models'), help='Path to directory with all the image models.')
 group.add_argument('--image-dtype', type=str, default=None, choices=['bfloat16', 'float16'], help='Data type for image model.')
 group.add_argument('--image-attn-backend', type=str, default=None, choices=['flash_attention_2', 'sdpa'], help='Attention backend for image model.')
 group.add_argument('--image-cpu-offload', action='store_true', help='Enable CPU offloading for image model.')
@@ -110,7 +115,7 @@ group = parser.add_argument_group('Transformers/Accelerate')
 group.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
 group.add_argument('--cpu-memory', type=float, default=0, help='Maximum CPU memory in GiB. Use this for CPU offloading.')
 group.add_argument('--disk', action='store_true', help='If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.')
-group.add_argument('--disk-cache-dir', type=str, default='user_data/cache', help='Directory to save the disk cache to. Defaults to "user_data/cache".')
+group.add_argument('--disk-cache-dir', type=str, default=str(user_data_dir / 'cache'), help='Directory to save the disk cache to.')
 group.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision (using bitsandbytes).')
 group.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
 group.add_argument('--no-cache', action='store_true', help='Set use_cache to False while generating text. This reduces VRAM usage slightly, but it comes at a performance cost.')
@@ -167,7 +172,7 @@ group.add_argument('--api-disable-ipv4', action='store_true', help='Disable IPv4
 group.add_argument('--nowebui', action='store_true', help='Do not launch the Gradio UI. Useful for launching the API in standalone mode.')
 
 # Handle CMD_FLAGS.txt
-cmd_flags_path = Path(__file__).parent.parent / "user_data" / "CMD_FLAGS.txt"
+cmd_flags_path = user_data_dir / "CMD_FLAGS.txt"
 if cmd_flags_path.exists():
     with cmd_flags_path.open('r', encoding='utf-8') as f:
         cmd_flags = ' '.join(
@@ -182,6 +187,7 @@ if cmd_flags_path.exists():
 
 
 args = parser.parse_args()
+user_data_dir = Path(args.user_data_dir)  # Update from parsed args (may differ from pre-parse)
 original_args = copy.deepcopy(args)
 args_defaults = parser.parse_args([])
 
@@ -212,7 +218,7 @@ settings = {
     'enable_web_search': False,
     'web_search_pages': 3,
     'prompt-notebook': '',
-    'preset': 'Qwen3 - Thinking' if Path('user_data/presets/Qwen3 - Thinking.yaml').exists() else None,
+    'preset': 'Qwen3 - Thinking' if (user_data_dir / 'presets/Qwen3 - Thinking.yaml').exists() else None,
     'max_new_tokens': 512,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
