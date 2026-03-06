@@ -134,24 +134,32 @@ def convert_history(history):
             user_input_last = True
 
             if current_message:
-                chat_dialogue.append([current_message, '', ''])
+                chat_dialogue.append([current_message, '', '', {}])
                 current_message = ""
 
             current_message = content
         elif role == "assistant":
-            if "tool_calls" in entry and isinstance(entry["tool_calls"], list) and len(entry["tool_calls"]) > 0 and content.strip() == "":
-                continue  # skip tool calls
+            meta = {}
+            tool_calls = entry.get("tool_calls")
+            if tool_calls and isinstance(tool_calls, list) and len(tool_calls) > 0:
+                meta["tool_calls"] = tool_calls
+                if content.strip() == "":
+                    content = ""  # keep empty content, don't skip
+
             current_reply = content
             user_input_last = False
             if current_message:
-                chat_dialogue.append([current_message, current_reply, ''])
+                chat_dialogue.append([current_message, current_reply, '', meta])
                 current_message = ""
                 current_reply = ""
             else:
-                chat_dialogue.append(['', current_reply, ''])
+                chat_dialogue.append(['', current_reply, '', meta])
         elif role == "tool":
             user_input_last = False
-            chat_dialogue.append(['', '', content])
+            meta = {}
+            if "tool_call_id" in entry:
+                meta["tool_call_id"] = entry["tool_call_id"]
+            chat_dialogue.append(['', '', content, meta])
         elif role == "system":
             system_message += f"\n{content}" if system_message else content
 

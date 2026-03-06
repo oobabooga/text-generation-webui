@@ -83,11 +83,124 @@ def checkAndSanitizeToolCallCandidate(candidate_dict: dict, tool_names: list[str
     return None
 
 
+def _parseChannelToolCalls(answer: str, tool_names: list[str]):
+    """Parse channel-based tool calls used by GPT-OSS and similar models.
+
+    Format:
+        <|channel|>commentary to=functions.func_name <|constrain|>json<|message|>{"arg": "value"}
+    """
+    matches = []
+    for m in re.finditer(
+        r'<\|channel\|>commentary to=functions\.([^<\s]+)\s*(?:<\|constrain\|>json)?<\|message\|>(\{[^}]*(?:\{[^}]*\}[^}]*)*\})',
+        answer
+    ):
+        func_name = m.group(1).strip()
+        if func_name not in tool_names:
+            continue
+        try:
+            arguments = json.loads(m.group(2))
+            matches.append({
+                "type": "function",
+                "function": {
+                    "name": func_name,
+                    "arguments": arguments
+                }
+            })
+        except json.JSONDecodeError:
+            pass
+    return matches
+
+
+def _parseBareNameToolCalls(answer: str, tool_names: list[str]):
+    """Parse bare function-name style tool calls used by Mistral and similar models.
+
+    Format:
+        functionName{"arg": "value"}
+    Multiple calls are concatenated directly or separated by whitespace.
+    """
+    matches = []
+    # Build pattern that matches any known tool name followed by a JSON object
+    escaped_names = [re.escape(name) for name in tool_names]
+    pattern = r'(?:' + '|'.join(escaped_names) + r')\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+    for match in re.finditer(pattern, answer):
+        text = match.group(0)
+        # Split into function name and JSON arguments
+        for name in tool_names:
+            if text.startswith(name):
+                json_str = text[len(name):].strip()
+                try:
+                    arguments = json.loads(json_str)
+                    matches.append({
+                        "type": "function",
+                        "function": {
+                            "name": name,
+                            "arguments": arguments
+                        }
+                    })
+                except json.JSONDecodeError:
+                    pass
+                break
+    return matches
+
+
+def _parseXmlParamToolCalls(answer: str, tool_names: list[str]):
+    """Parse XML-parameter style tool calls used by Qwen3.5 and similar models.
+
+    Format:
+        <tool_call>
+        <function=function_name>
+        <parameter=param_name>value</parameter>
+        </function>
+        </tool_call>
+    """
+    matches = []
+    for tc_match in re.finditer(r'<tool_call>\s*(.*?)\s*</tool_call>', answer, re.DOTALL):
+        tc_content = tc_match.group(1)
+        func_match = re.search(r'<function=([^>]+)>', tc_content)
+        if not func_match:
+            continue
+        func_name = func_match.group(1).strip()
+        if func_name not in tool_names:
+            continue
+        arguments = {}
+        for param_match in re.finditer(r'<parameter=([^>]+)>\s*(.*?)\s*</parameter>', tc_content, re.DOTALL):
+            param_name = param_match.group(1).strip()
+            param_value = param_match.group(2).strip()
+            try:
+                param_value = json.loads(param_value)
+            except (json.JSONDecodeError, ValueError):
+                pass  # keep as string
+            arguments[param_name] = param_value
+        matches.append({
+            "type": "function",
+            "function": {
+                "name": func_name,
+                "arguments": arguments
+            }
+        })
+    return matches
+
+
 def parseToolCall(answer: str, tool_names: list[str]):
     matches = []
 
     # abort on very short answers to save computation cycles
     if len(answer) < 10:
+        return matches
+
+    # Check for channel-based tool calls (e.g. GPT-OSS format)
+    matches = _parseChannelToolCalls(answer, tool_names)
+    if matches:
+        return matches
+
+    # Check for XML-parameter style tool calls (e.g. Qwen3.5 format)
+    matches = _parseXmlParamToolCalls(answer, tool_names)
+    if matches:
+        return matches
+
+    # Check for bare function-name style tool calls (e.g. Mistral format)
+    matches = _parseBareNameToolCalls(answer, tool_names)
+    if matches:
         return matches
 
     # Define the regex pattern to find the JSON content wrapped in <function>, <tools>, <tool_call>, and other tags observed from various models

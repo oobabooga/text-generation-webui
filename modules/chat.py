@@ -159,13 +159,20 @@ def generate_chat_prompt(user_input, state, **kwargs):
         user_msg = entry[0].strip()
         assistant_msg = entry[1].strip()
         tool_msg = entry[2].strip() if len(entry) > 2 else ''
+        entry_meta = entry[3] if len(entry) > 3 else {}
 
         row_idx = len(history) - i - 1
 
         if tool_msg:
-            messages.insert(insert_pos, {"role": "tool", "content": tool_msg})
+            tool_message = {"role": "tool", "content": tool_msg}
+            if "tool_call_id" in entry_meta:
+                tool_message["tool_call_id"] = entry_meta["tool_call_id"]
+            messages.insert(insert_pos, tool_message)
 
-        if assistant_msg:
+        if not assistant_msg and entry_meta.get('tool_calls'):
+            # Assistant message with only tool_calls and no text content
+            messages.insert(insert_pos, {"role": "assistant", "content": "", "tool_calls": entry_meta['tool_calls']})
+        elif assistant_msg:
             # Handle GPT-OSS as a special case
             if '<|channel|>analysis<|message|>' in assistant_msg or '<|channel|>final<|message|>' in assistant_msg:
                 thinking_content = ""
@@ -239,6 +246,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
             else:
                 # Default case (used by all other models)
                 messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
+
+            # Attach tool_calls metadata to the assistant message if present
+            if entry_meta.get('tool_calls') and messages[insert_pos].get('role') == 'assistant':
+                messages[insert_pos]['tool_calls'] = entry_meta['tool_calls']
 
         if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
             # Check for user message attachments in metadata
