@@ -603,6 +603,12 @@ def validateTools(tools: list[dict]):
         tool = tools[idx]
         try:
             tool_definition = ToolDefinition(**tool)
+            # Backfill defaults so Jinja2 templates don't crash on missing fields
+            func = tool.get("function", {})
+            if "description" not in func:
+                func["description"] = ""
+            if "parameters" not in func:
+                func["parameters"] = {"type": "object", "properties": {}}
             if valid_tools is None:
                 valid_tools = []
             valid_tools.append(tool)

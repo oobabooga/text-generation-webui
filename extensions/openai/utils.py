@@ -91,7 +91,7 @@ def _parseChannelToolCalls(answer: str, tool_names: list[str]):
     """
     matches = []
     for m in re.finditer(
-        r'<\|channel\|>commentary to=functions\.([^<\s]+)\s*(?:<\|constrain\|>json)?<\|message\|>(\{[^}]*(?:\{[^}]*\}[^}]*)*\})',
+        r'<\|channel\|>commentary to=functions\.([^<\s]+)\s*(?:<\|constrain\|>json)?<\|message\|>(\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\})',
         answer
     ):
         func_name = m.group(1).strip()
@@ -181,6 +181,62 @@ def _parseXmlParamToolCalls(answer: str, tool_names: list[str]):
     return matches
 
 
+def _parsePythonicToolCalls(answer: str, tool_names: list[str]):
+    """Parse pythonic-style tool calls used by Llama 4 and similar models.
+
+    Format:
+        [func_name(param1="value1", param2="value2"), func_name2(...)]
+    """
+    matches = []
+    # Match a bracketed list of function calls
+    bracket_match = re.search(r'\[([^\[\]]+)\]', answer)
+    if not bracket_match:
+        return matches
+
+    inner = bracket_match.group(1)
+
+    # Build pattern for known tool names
+    escaped_names = [re.escape(name) for name in tool_names]
+    name_pattern = '|'.join(escaped_names)
+
+    for call_match in re.finditer(
+        r'(' + name_pattern + r')\(([^)]*)\)',
+        inner
+    ):
+        func_name = call_match.group(1)
+        params_str = call_match.group(2).strip()
+        arguments = {}
+
+        if params_str:
+            # Parse key="value" pairs, handling commas inside quoted values
+            for param_match in re.finditer(
+                r'(\w+)\s*=\s*("(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\'|[^,\)]+)',
+                params_str
+            ):
+                param_name = param_match.group(1)
+                param_value = param_match.group(2).strip()
+                # Strip surrounding quotes
+                if (param_value.startswith('"') and param_value.endswith('"')) or \
+                   (param_value.startswith("'") and param_value.endswith("'")):
+                    param_value = param_value[1:-1]
+                # Try to parse as JSON for numeric/bool/null values
+                try:
+                    param_value = json.loads(param_value)
+                except (json.JSONDecodeError, ValueError):
+                    pass
+                arguments[param_name] = param_value
+
+        matches.append({
+            "type": "function",
+            "function": {
+                "name": func_name,
+                "arguments": arguments
+            }
+        })
+
+    return matches
+
+
 def parseToolCall(answer: str, tool_names: list[str]):
     matches = []
 
@@ -200,6 +256,11 @@ def parseToolCall(answer: str, tool_names: list[str]):
 
     # Check for bare function-name style tool calls (e.g. Mistral format)
     matches = _parseBareNameToolCalls(answer, tool_names)
+    if matches:
+        return matches
+
+    # Check for pythonic-style tool calls (e.g. Llama 4 format)
+    matches = _parsePythonicToolCalls(answer, tool_names)
     if matches:
         return matches
 
