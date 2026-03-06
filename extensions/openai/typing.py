@@ -1,8 +1,8 @@
 import json
 import time
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, model_validator, validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, validator
 
 from modules import shared
 
@@ -65,21 +65,19 @@ class ToolDefinition(BaseModel):
 
 
 class ToolFunction(BaseModel):
+    model_config = ConfigDict(extra='allow')
     description: str
     name: str
     parameters: 'ToolParameters'
 
 
 class ToolParameters(BaseModel):
-    properties: Optional[Dict[str, 'ToolProperty']] = None
+    model_config = ConfigDict(extra='allow')
+    properties: Optional[Dict[str, Any]] = None
     required: Optional[list[str]] = None
     type: str
     description: Optional[str] = None
 
-
-class ToolProperty(BaseModel):
-    description: Optional[str] = None
-    type: Optional[str] = None  # we are faced with definitions like anyOf, e.g. {'type': 'function', 'function': {'name': 'git_create_branch', 'description': 'Creates a new branch from an optional base branch', 'parameters': {'type': 'object', 'properties': {'repo_path': {'title': 'Repo Path', 'type': 'string'}, 'branch_name': {'title': 'Branch Name', 'type': 'string'}, 'base_branch': {'anyOf': [{'type': 'string'}, {'type': 'null'}], 'default': None, 'title': 'Base Branch'}}, 'required': ['repo_path', 'branch_name'], 'title': 'GitCreateBranch'}}}
 
 
 class FunctionCall(BaseModel):

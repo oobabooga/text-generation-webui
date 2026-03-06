@@ -197,7 +197,11 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         # Handle multimodal content validation
         content = m.get('content')
         if content is None:
-            raise InvalidRequestError(message="messages: missing content", param='messages')
+            # OpenAI allows content: null on assistant messages when tool_calls is present
+            if m['role'] == 'assistant' and m.get('tool_calls'):
+                m['content'] = ''
+            else:
+                raise InvalidRequestError(message="messages: missing content", param='messages')
 
         # Validate multimodal content structure
         if isinstance(content, list):
