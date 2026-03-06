@@ -1,7 +1,6 @@
 accelerate==1.12.*
 audioop-lts<1.0; python_version >= "3.13"
 bitsandbytes==0.49.*
-colorama
 datasets
 diffusers==0.36.*
 einops
@@ -15,7 +14,6 @@ numpy==2.2.*
 pandas
 peft==0.18.*
 Pillow>=9.5.0
-psutil
 pydantic==2.11.0
 pymupdf==1.27.1
 python-docx==1.1.2
