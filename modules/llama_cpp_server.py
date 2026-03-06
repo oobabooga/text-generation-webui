@@ -520,6 +520,8 @@ def filter_stderr_with_progress(process_stderr):
     inline (overwriting the same line) until completion.
     """
     progress_re = re.compile(r'slot update_slots: id.*progress = (\d+\.\d+)')
+    ansi_re = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]')
+    log_prefix_re = re.compile(r'^[IWED] ')
     last_was_progress = False
 
     try:
@@ -538,6 +540,7 @@ def filter_stderr_with_progress(process_stderr):
                 line_bytes, buffer = buffer.split(b'\n', 1)
                 try:
                     line = line_bytes.decode('utf-8', errors='replace').strip('\r\n')
+                    line = log_prefix_re.sub('', ansi_re.sub('', line))
                     if line:  # Process non-empty lines
                         match = progress_re.search(line)
 
