@@ -422,7 +422,7 @@ def update_requirements(initial_installation=False, pull=True):
         install_extensions_requirements()
 
     if is_linux():
-        run_cmd(f"conda install -y -c conda-forge libstdcxx-ng=={LIBSTDCXX_VERSION_LINUX}", assert_success=True, environment=True)
+        run_cmd(f"conda install -y -c conda-forge 'libstdcxx-ng>={LIBSTDCXX_VERSION_LINUX}'", assert_success=True, environment=True)
 
     # Update PyTorch
     if not initial_installation:
