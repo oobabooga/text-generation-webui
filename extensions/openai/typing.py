@@ -66,9 +66,9 @@ class ToolDefinition(BaseModel):
 
 class ToolFunction(BaseModel):
     model_config = ConfigDict(extra='allow')
-    description: str
+    description: Optional[str] = None
     name: str
-    parameters: 'ToolParameters'
+    parameters: Optional['ToolParameters'] = None
 
 
 class ToolParameters(BaseModel):
