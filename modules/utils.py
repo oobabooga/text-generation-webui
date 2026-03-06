@@ -298,11 +298,38 @@ def get_text_datasets(path: str):
 def _peek_json_keys(filepath):
     """Read the first object in a JSON array file and return its keys."""
     import json
+    decoder = json.JSONDecoder()
+    WS = ' \t\n\r'
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
-            return set(data[0].keys())
+            buf = ''
+            obj_start = None
+            while len(buf) < 1 << 20:  # Read up to 1MB
+                chunk = f.read(8192)
+                if not chunk:
+                    break
+                buf += chunk
+                if obj_start is None:
+                    idx = 0
+                    while idx < len(buf) and buf[idx] in WS:
+                        idx += 1
+                    if idx >= len(buf):
+                        continue
+                    if buf[idx] != '[':
+                        return set()
+                    idx += 1
+                    while idx < len(buf) and buf[idx] in WS:
+                        idx += 1
+                    if idx >= len(buf):
+                        continue
+                    obj_start = idx
+                try:
+                    obj, _ = decoder.raw_decode(buf, obj_start)
+                    if isinstance(obj, dict):
+                        return set(obj.keys())
+                    return set()
+                except json.JSONDecodeError:
+                    continue
     except Exception:
         pass
     return set()
