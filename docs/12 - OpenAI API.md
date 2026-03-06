@@ -456,11 +456,11 @@ for _ in range(10):
         messages.append({
             "role": "assistant",
             "content": choice["message"]["content"],
-            "tool_calls": choice["tool_calls"],
+            "tool_calls": choice["message"]["tool_calls"],
         })
 
         # Execute each tool and add results to history
-        for tool_call in choice["tool_calls"]:
+        for tool_call in choice["message"]["tool_calls"]:
             name = tool_call["function"]["name"]
             arguments = json.loads(tool_call["function"]["arguments"])
             result = execute_tool(name, arguments)

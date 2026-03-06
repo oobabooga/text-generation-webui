@@ -370,8 +370,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             resp_list: [{
                 "index": 0,
                 "finish_reason": stop_reason,
-                "message": {"role": "assistant", "content": answer},
-                "tool_calls": tool_calls
+                "message": {"role": "assistant", "content": answer, "tool_calls": tool_calls},
             }],
             "usage": {
                 "prompt_tokens": token_count,
@@ -389,7 +388,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
 
 
 def completions_common(body: dict, is_legacy: bool = False, stream=False, stop_event=None):
-    object_type = 'text_completion.chunk' if stream else 'text_completion'
+    object_type = 'text_completion'
     created_time = int(time.time())
     cmpl_id = "conv-%d" % (int(time.time() * 1000000000))
     resp_list = 'data' if is_legacy else 'choices'
