@@ -113,7 +113,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
                 last_update = time.monotonic()
 
         stop_event = state.get('stop_event')
-        if stop_found or (state['max_tokens_second'] > 0 and shared.stop_everything) or (stop_event and stop_event.is_set()):
+        if stop_found or shared.stop_everything or (stop_event and stop_event.is_set()):
             break
 
     if not is_chat:
