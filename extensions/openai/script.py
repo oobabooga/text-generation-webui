@@ -125,7 +125,7 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
                 stop_event.set()
                 response.close()
 
-        return EventSourceResponse(generator())  # SSE streaming
+        return EventSourceResponse(generator(), sep="\n")  # SSE streaming
 
     else:
         stop_event = threading.Event()
@@ -160,7 +160,7 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
                 stop_event.set()
                 response.close()
 
-        return EventSourceResponse(generator())  # SSE streaming
+        return EventSourceResponse(generator(), sep="\n")  # SSE streaming
 
     else:
         stop_event = threading.Event()
