@@ -10,7 +10,7 @@ import yaml
 
 from modules.logging_colors import logger
 from modules.paths import resolve_user_data_dir
-from modules.presets import default_preset
+from modules.presets import default_preset, default_preset_values
 
 # Resolve user_data directory early (before argparse defaults are set)
 user_data_dir = resolve_user_data_dir()
@@ -170,6 +170,50 @@ group.add_argument('--admin-key', type=str, default='', help='API authentication
 group.add_argument('--api-enable-ipv6', action='store_true', help='Enable IPv6 for the API')
 group.add_argument('--api-disable-ipv4', action='store_true', help='Disable IPv4 for the API')
 group.add_argument('--nowebui', action='store_true', help='Do not launch the Gradio UI. Useful for launching the API in standalone mode.')
+
+# API generation defaults
+_d = default_preset_values
+group = parser.add_argument_group('API generation defaults')
+group.add_argument('--temperature', type=float, default=_d['temperature'])
+group.add_argument('--dynatemp-low', type=float, default=_d['dynatemp_low'])
+group.add_argument('--dynatemp-high', type=float, default=_d['dynatemp_high'])
+group.add_argument('--dynatemp-exponent', type=float, default=_d['dynatemp_exponent'])
+group.add_argument('--smoothing-factor', type=float, default=_d['smoothing_factor'])
+group.add_argument('--smoothing-curve', type=float, default=_d['smoothing_curve'])
+group.add_argument('--min-p', type=float, default=_d['min_p'])
+group.add_argument('--top-p', type=float, default=_d['top_p'])
+group.add_argument('--top-k', type=int, default=_d['top_k'])
+group.add_argument('--typical-p', type=float, default=_d['typical_p'])
+group.add_argument('--xtc-threshold', type=float, default=_d['xtc_threshold'])
+group.add_argument('--xtc-probability', type=float, default=_d['xtc_probability'])
+group.add_argument('--epsilon-cutoff', type=float, default=_d['epsilon_cutoff'])
+group.add_argument('--eta-cutoff', type=float, default=_d['eta_cutoff'])
+group.add_argument('--tfs', type=float, default=_d['tfs'])
+group.add_argument('--top-a', type=float, default=_d['top_a'])
+group.add_argument('--top-n-sigma', type=float, default=_d['top_n_sigma'])
+group.add_argument('--adaptive-target', type=float, default=_d['adaptive_target'])
+group.add_argument('--adaptive-decay', type=float, default=_d['adaptive_decay'])
+group.add_argument('--dry-multiplier', type=float, default=_d['dry_multiplier'])
+group.add_argument('--dry-allowed-length', type=int, default=_d['dry_allowed_length'])
+group.add_argument('--dry-base', type=float, default=_d['dry_base'])
+group.add_argument('--repetition-penalty', type=float, default=_d['repetition_penalty'])
+group.add_argument('--frequency-penalty', type=float, default=_d['frequency_penalty'])
+group.add_argument('--presence-penalty', type=float, default=_d['presence_penalty'])
+group.add_argument('--encoder-repetition-penalty', type=float, default=_d['encoder_repetition_penalty'])
+group.add_argument('--no-repeat-ngram-size', type=int, default=_d['no_repeat_ngram_size'])
+group.add_argument('--repetition-penalty-range', type=int, default=_d['repetition_penalty_range'])
+group.add_argument('--penalty-alpha', type=float, default=_d['penalty_alpha'])
+group.add_argument('--guidance-scale', type=float, default=_d['guidance_scale'])
+group.add_argument('--mirostat-mode', type=int, default=_d['mirostat_mode'])
+group.add_argument('--mirostat-tau', type=float, default=_d['mirostat_tau'])
+group.add_argument('--mirostat-eta', type=float, default=_d['mirostat_eta'])
+group.add_argument('--do-sample', action=argparse.BooleanOptionalAction, default=_d['do_sample'])
+group.add_argument('--dynamic-temperature', action=argparse.BooleanOptionalAction, default=_d['dynamic_temperature'])
+group.add_argument('--temperature-last', action=argparse.BooleanOptionalAction, default=_d['temperature_last'])
+group.add_argument('--sampler-priority', type=str, default=_d['sampler_priority'])
+group.add_argument('--dry-sequence-breakers', type=str, default=_d['dry_sequence_breakers'])
+group.add_argument('--enable-thinking', action=argparse.BooleanOptionalAction, default=True)
+group.add_argument('--reasoning-effort', type=str, default='medium')
 
 # Handle CMD_FLAGS.txt
 cmd_flags_path = user_data_dir / "CMD_FLAGS.txt"
