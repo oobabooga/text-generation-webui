@@ -288,8 +288,8 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         return chunk
 
     # generate reply #######################################
-    prompt = generate_chat_prompt(user_input, generate_params, _continue=continue_)
     if prompt_only:
+        prompt = generate_chat_prompt(user_input, generate_params, _continue=continue_)
         yield {'prompt': prompt}
         return
 
@@ -335,7 +335,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         if len(tool_calls) > 0:
             break
 
-    token_count = len(encode(prompt)[0])
+    token_count = shared.model.last_prompt_token_count if hasattr(shared.model, 'last_prompt_token_count') else 0
     completion_token_count = len(encode(answer)[0])
     stop_reason = "stop"
     if len(tool_calls) > 0:
