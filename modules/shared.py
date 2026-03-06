@@ -133,10 +133,6 @@ group.add_argument('--enable-tp', '--enable_tp', action='store_true', help='Enab
 group.add_argument('--tp-backend', type=str, default='native', help='The backend for tensor parallelism. Valid options: native, nccl. Default: native.')
 group.add_argument('--cfg-cache', action='store_true', help='Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.')
 
-# TensorRT-LLM
-group = parser.add_argument_group('TensorRT-LLM')
-group.add_argument('--cpp-runner', action='store_true', help='Use the ModelRunnerCpp runner, which is faster than the default ModelRunner.')
-
 # RoPE
 group = parser.add_argument_group('RoPE')
 group.add_argument('--alpha_value', type=float, default=1, help='Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both.')

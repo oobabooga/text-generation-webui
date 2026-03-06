@@ -77,7 +77,6 @@ loaders_and_params = OrderedDict({
     ],
     'TensorRT-LLM': [
         'ctx_size',
-        'cpp_runner',
         'tensorrt_llm_info',
     ]
 })
@@ -252,11 +251,16 @@ loaders_samplers = {
         'temperature',
         'top_p',
         'top_k',
+        'min_p',
         'repetition_penalty',
         'frequency_penalty',
         'presence_penalty',
+        'no_repeat_ngram_size',
         'auto_max_new_tokens',
         'ban_eos_token',
+        'add_bos_token',
+        'skip_special_tokens',
+        'seed',
     }
 }
 

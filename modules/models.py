@@ -114,7 +114,7 @@ def TensorRT_LLM_loader(model_name):
         raise ModuleNotFoundError("Failed to import 'tensorrt_llm'. Please install it manually following the instructions in the TensorRT-LLM GitHub repository.")
 
     model = TensorRTLLMModel.from_pretrained(model_name)
-    return model
+    return model, model.tokenizer
 
 
 def unload_model(keep_model_name=False):
@@ -124,7 +124,7 @@ def unload_model(keep_model_name=False):
     model_class_name = shared.model.__class__.__name__
     is_llamacpp = (model_class_name == 'LlamaServer')
 
-    if model_class_name in ['Exllamav3Model', 'Exllamav3HF']:
+    if model_class_name in ['Exllamav3Model', 'Exllamav3HF', 'TensorRTLLMModel']:
         shared.model.unload()
 
     shared.model = shared.tokenizer = None

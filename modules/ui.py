@@ -157,7 +157,6 @@ def list_model_elements():
         'enable_tp',
         'tp_backend',
         'cfg_cache',
-        'cpp_runner',
         'no_use_fast',
         'model_draft',
         'draft_max',
