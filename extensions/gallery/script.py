@@ -2,6 +2,7 @@ from pathlib import Path
 
 import gradio as gr
 
+import modules.shared as shared
 from modules.html_generator import get_image_cache
 from modules.shared import gradio
 
@@ -72,13 +73,13 @@ def generate_html():
     global cards
     cards = []
     # Iterate through files in image folder
-    for file in sorted(Path("user_data/characters").glob("*")):
+    for file in sorted((shared.user_data_dir / "characters").glob("*")):
         if file.suffix in [".json", ".yml", ".yaml"]:
             character = file.stem
             container_html = '<div class="character-container">'
             image_html = "<div class='placeholder'></div>"
 
-            for path in [Path(f"user_data/characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
+            for path in [shared.user_data_dir / "characters" / f"{character}.{extension}" for extension in ['png', 'jpg', 'jpeg']]:
                 if path.exists():
                     image_html = f'<img src="file/{get_image_cache(path)}">'
                     break
