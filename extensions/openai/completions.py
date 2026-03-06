@@ -343,7 +343,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             if len(tool_call) > 0:
                 for tc in tool_call:
                     tc["id"] = getToolCallId()
-                    tc["index"] = str(len(tool_calls))
+                    tc["index"] = len(tool_calls)
                     tc["function"]["arguments"] = json.dumps(tc["function"]["arguments"])
                     tool_calls.append(tc)
                 end_last_tool_call = len(answer)
@@ -391,7 +391,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             resp_list: [{
                 "index": 0,
                 "finish_reason": stop_reason,
-                "message": {"role": "assistant", "content": answer, "tool_calls": tool_calls},
+                "message": {"role": "assistant", "content": answer, **({"tool_calls": tool_calls} if tool_calls else {})},
             }],
             "usage": {
                 "prompt_tokens": token_count,

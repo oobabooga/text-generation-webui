@@ -126,6 +126,8 @@ def unload_model(keep_model_name=False):
 
     if model_class_name in ['Exllamav3Model', 'Exllamav3HF', 'TensorRTLLMModel']:
         shared.model.unload()
+    elif model_class_name == 'LlamaServer':
+        shared.model.stop()
 
     shared.model = shared.tokenizer = None
     shared.lora_names = []

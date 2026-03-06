@@ -333,7 +333,8 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
         yield "Cannot input zeroes."
         return
 
-    gradient_accumulation_steps = batch_size // micro_batch_size
+    gradient_accumulation_steps = max(1, batch_size // micro_batch_size)
+    original_chat_template = getattr(shared.tokenizer, 'chat_template', None)
     if shared.tokenizer.pad_token_id is None:
         shared.tokenizer.pad_token_id = shared.tokenizer.eos_token_id
     shared.tokenizer.padding_side = "right"
@@ -819,6 +820,10 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
     if not tracked.did_save:
         logger.info("Training complete, saving")
         lora_model.save_pretrained(lora_file_path)
+
+    # Restore the original chat_template if we changed it for training
+    if shared.tokenizer is not None and hasattr(shared.tokenizer, 'chat_template'):
+        shared.tokenizer.chat_template = original_chat_template
 
     if WANT_INTERRUPT:
         logger.info("Training interrupted.")
