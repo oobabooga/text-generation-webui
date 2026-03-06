@@ -923,7 +923,9 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         visible_reply = html.escape(visible_reply)
 
         if shared.stop_everything:
-            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+            if not state.get('_skip_output_extensions'):
+                output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+
             yield output
             return
 
@@ -956,9 +958,11 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             full_visible = full_internal
 
         full_visible = html.escape(full_visible)
-        output['visible'][-1][1] = apply_extensions('output', full_visible, state, is_chat=True)
+        if not state.get('_skip_output_extensions'):
+            output['visible'][-1][1] = apply_extensions('output', full_visible, state, is_chat=True)
     else:
-        output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+        if not state.get('_skip_output_extensions'):
+            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
 
     # Final sync for version metadata (in case streaming was disabled)
     if regenerate:
