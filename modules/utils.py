@@ -27,21 +27,14 @@ def sanitize_filename(name):
 
 
 def _is_path_allowed(abs_path_str):
-    """Check if a path is under the project root or the configured user_data directory."""
+    """Check if a path is under the configured user_data directory."""
     abs_path = Path(abs_path_str).resolve()
-    root_folder = Path(__file__).resolve().parent.parent
     user_data_resolved = shared.user_data_dir.resolve()
-    try:
-        abs_path.relative_to(root_folder)
-        return True
-    except ValueError:
-        pass
     try:
         abs_path.relative_to(user_data_resolved)
         return True
     except ValueError:
-        pass
-    return False
+        return False
 
 
 def save_file(fname, contents):

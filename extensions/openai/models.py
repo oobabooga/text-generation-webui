@@ -48,8 +48,9 @@ def _load_model(data):
     # Update shared.args with custom model loading settings
     # Security: only allow keys that correspond to model loading
     # parameters exposed in the UI. Never allow security-sensitive
-    # flags like trust_remote_code to be set via the API.
-    allowed_keys = set(ui.list_model_elements())
+    # flags like trust_remote_code or extra_flags to be set via the API.
+    blocked_keys = {'extra_flags'}
+    allowed_keys = set(ui.list_model_elements()) - blocked_keys
     if args:
         for k in args:
             if k in allowed_keys and hasattr(shared.args, k):
