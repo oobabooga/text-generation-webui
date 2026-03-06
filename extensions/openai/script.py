@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import socket
+import threading
 import traceback
 from collections import deque
 from threading import Thread
@@ -24,7 +25,7 @@ from extensions.openai.utils import _start_cloudflared
 from modules import shared
 from modules.logging_colors import logger
 from modules.models import unload_model
-from modules.text_generation import stop_everything_event
+from modules.text_generation import stop_everything_event  # used by /v1/internal/stop-generation
 
 from .typing import (
     ChatCompletionRequest,
@@ -56,10 +57,6 @@ params = {
     'embedding_model': 'sentence-transformers/all-mpnet-base-v2',
     'debug': 0
 }
-
-
-streaming_semaphore = asyncio.Semaphore(1)
-image_generation_semaphore = asyncio.Semaphore(1)
 
 
 def verify_api_key(authorization: str = Header(None)) -> None:
@@ -113,28 +110,30 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
     is_legacy = "/generate" in path
 
     if request_data.stream:
-        async def generator():
-            async with streaming_semaphore:
-                try:
-                    response = OAIcompletions.stream_completions(to_dict(request_data), is_legacy=is_legacy)
-                    async for resp in iterate_in_threadpool(response):
-                        disconnected = await request.is_disconnected()
-                        if disconnected:
-                            break
+        stop_event = threading.Event()
 
-                        yield {"data": json.dumps(resp)}
-                finally:
-                    stop_everything_event()
-                    response.close()
-                    return
+        async def generator():
+            response = OAIcompletions.stream_completions(to_dict(request_data), is_legacy=is_legacy, stop_event=stop_event)
+            try:
+                async for resp in iterate_in_threadpool(response):
+                    disconnected = await request.is_disconnected()
+                    if disconnected:
+                        break
+
+                    yield {"data": json.dumps(resp)}
+            finally:
+                stop_event.set()
+                response.close()
 
         return EventSourceResponse(generator())  # SSE streaming
 
     else:
+        stop_event = threading.Event()
         response = await asyncio.to_thread(
             OAIcompletions.completions,
             to_dict(request_data),
-            is_legacy=is_legacy
+            is_legacy=is_legacy,
+            stop_event=stop_event
         )
 
         return JSONResponse(response)
@@ -146,28 +145,30 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
     is_legacy = "/generate" in path
 
     if request_data.stream:
-        async def generator():
-            async with streaming_semaphore:
-                try:
-                    response = OAIcompletions.stream_chat_completions(to_dict(request_data), is_legacy=is_legacy)
-                    async for resp in iterate_in_threadpool(response):
-                        disconnected = await request.is_disconnected()
-                        if disconnected:
-                            break
+        stop_event = threading.Event()
 
-                        yield {"data": json.dumps(resp)}
-                finally:
-                    stop_everything_event()
-                    response.close()
-                    return
+        async def generator():
+            response = OAIcompletions.stream_chat_completions(to_dict(request_data), is_legacy=is_legacy, stop_event=stop_event)
+            try:
+                async for resp in iterate_in_threadpool(response):
+                    disconnected = await request.is_disconnected()
+                    if disconnected:
+                        break
+
+                    yield {"data": json.dumps(resp)}
+            finally:
+                stop_event.set()
+                response.close()
 
         return EventSourceResponse(generator())  # SSE streaming
 
     else:
+        stop_event = threading.Event()
         response = await asyncio.to_thread(
             OAIcompletions.chat_completions,
             to_dict(request_data),
-            is_legacy=is_legacy
+            is_legacy=is_legacy,
+            stop_event=stop_event
         )
 
         return JSONResponse(response)
@@ -232,9 +233,8 @@ async def handle_audio_transcription(request: Request):
 async def handle_image_generation(request_data: ImageGenerationRequest):
     import extensions.openai.images as OAIimages
 
-    async with image_generation_semaphore:
-        response = await asyncio.to_thread(OAIimages.generations, request_data)
-        return JSONResponse(response)
+    response = await asyncio.to_thread(OAIimages.generations, request_data)
+    return JSONResponse(response)
 
 
 @app.post("/v1/embeddings", response_model=EmbeddingsResponse, dependencies=check_key)

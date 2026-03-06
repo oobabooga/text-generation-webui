@@ -1,3 +1,5 @@
+import queue
+import threading
 import traceback
 from pathlib import Path
 from typing import Any, List, Tuple
@@ -32,6 +34,55 @@ try:
 except Exception:
     logger.warning('Failed to load flash-attention due to the following error:\n')
     traceback.print_exc()
+
+
+class ConcurrentGenerator:
+    def __init__(self, generator):
+        self.generator = generator
+        self.lock = threading.Lock()
+        self.job_queues = {}
+        self.active = True
+        self.has_jobs = threading.Event()
+        self.thread = threading.Thread(target=self._iterate_loop, daemon=True)
+        self.thread.start()
+
+    def _iterate_loop(self):
+        while self.active:
+            self.has_jobs.wait(timeout=0.5)
+            with self.lock:
+                if self.generator.num_remaining_jobs() == 0:
+                    self.has_jobs.clear()
+                    continue
+                results = self.generator.iterate()
+            for result in results:
+                job = result["job"]
+                q = self.job_queues.get(job)
+                if q:
+                    q.put(result)
+                    if result.get("eos"):
+                        self.job_queues.pop(job, None)
+            if not self.job_queues:
+                self.has_jobs.clear()
+
+    def submit(self, job) -> queue.Queue:
+        q = queue.Queue()
+        with self.lock:
+            self.job_queues[job] = q
+            self.generator.enqueue(job)
+        self.has_jobs.set()
+        return q
+
+    def cancel(self, job):
+        with self.lock:
+            if job in self.job_queues:
+                self.generator.cancel(job)
+                self.job_queues[job].put(None)
+                del self.job_queues[job]
+
+    def stop(self):
+        self.active = False
+        self.has_jobs.set()
+        self.thread.join(timeout=5)
 
 
 class Exllamav3Model:
@@ -167,6 +218,7 @@ class Exllamav3Model:
         result.cache = cache
         result.tokenizer = tokenizer
         result.generator = generator
+        result.parallel_generator = ConcurrentGenerator(generator)
         result.config = config
         result.max_tokens = max_tokens
         result.vision_model = vision_model
@@ -346,27 +398,47 @@ class Exllamav3Model:
         )
 
         # Stream generation
-        self.generator.enqueue(job)
-
         response_text = ""
+        stop_event = state.get('stop_event')
 
-        try:
-            while self.generator.num_remaining_jobs():
-                if shared.stop_everything:
-                    break
-
-                results = self.generator.iterate()
-                for result in results:
-                    if "eos" in result and result["eos"]:
+        if stop_event:
+            # Concurrent path for API requests
+            result_queue = self.parallel_generator.submit(job)
+            try:
+                while True:
+                    if stop_event.is_set() or shared.stop_everything:
                         break
-
+                    try:
+                        result = result_queue.get(timeout=0.1)
+                    except queue.Empty:
+                        continue
+                    if result is None or result.get("eos"):
+                        break
                     chunk = result.get("text", "")
                     if chunk:
                         response_text += chunk
                         yield response_text
+            finally:
+                self.parallel_generator.cancel(job)
+        else:
+            # Original single-request path (WebUI)
+            self.generator.enqueue(job)
+            try:
+                while self.generator.num_remaining_jobs():
+                    if shared.stop_everything:
+                        break
 
-        finally:
-            self.generator.clear_queue()
+                    results = self.generator.iterate()
+                    for result in results:
+                        if "eos" in result and result["eos"]:
+                            break
+
+                        chunk = result.get("text", "")
+                        if chunk:
+                            response_text += chunk
+                            yield response_text
+            finally:
+                self.generator.clear_queue()
 
     def generate(self, prompt, state):
         output = ""
@@ -428,6 +500,13 @@ class Exllamav3Model:
 
     def unload(self):
         logger.info("Unloading ExLlamaV3 model components...")
+
+        if hasattr(self, 'parallel_generator') and self.parallel_generator is not None:
+            try:
+                self.parallel_generator.stop()
+            except Exception as e:
+                logger.warning(f"Error stopping parallel generator: {e}")
+            self.parallel_generator = None
 
         if hasattr(self, 'vision_model') and self.vision_model is not None:
             try:

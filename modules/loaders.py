@@ -23,6 +23,7 @@ loaders_and_params = OrderedDict({
         'no_mmap',
         'mlock',
         'numa',
+        'parallel',
         'model_draft',
         'draft_max',
         'gpu_layers_draft',

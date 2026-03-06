@@ -338,6 +338,35 @@ for event in client.events():
 print()
 ```
 
+#### Python parallel requests example
+
+The API supports handling multiple requests in parallel. For ExLlamaV3, this works out of the box. For llama.cpp, you need to pass `--parallel N` to set the number of concurrent slots.
+
+```python
+import concurrent.futures
+import requests
+
+url = "http://127.0.0.1:5000/v1/chat/completions"
+prompts = [
+    "Write a haiku about the ocean.",
+    "Explain quantum computing in simple terms.",
+    "Tell me a joke about programmers.",
+]
+
+def send_request(prompt):
+    response = requests.post(url, json={
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 200,
+    })
+    return response.json()["choices"][0]["message"]["content"]
+
+with concurrent.futures.ThreadPoolExecutor() as executor:
+    results = list(executor.map(send_request, prompts))
+
+for prompt, result in zip(prompts, results):
+    print(f"Q: {prompt}\nA: {result}\n")
+```
+
 #### Python example with API key
 
 Replace

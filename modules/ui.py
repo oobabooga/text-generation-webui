@@ -151,6 +151,7 @@ def list_model_elements():
         'no_mmap',
         'mlock',
         'numa',
+        'parallel',
         'use_double_quant',
         'bf16',
         'enable_tp',

@@ -102,6 +102,7 @@ group.add_argument('--ubatch-size', type=int, default=1024, help='Maximum number
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
 group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
+group.add_argument('--parallel', type=int, default=1, help='Number of parallel request slots. The context size is divided equally among slots. For example, to have 4 slots with 8192 context each, set ctx_size to 32768.')
 group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"')
 
 # Transformers/Accelerate

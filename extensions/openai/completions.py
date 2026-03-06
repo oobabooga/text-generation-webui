@@ -165,7 +165,7 @@ def convert_history(history):
     }
 
 
-def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, prompt_only=False) -> dict:
+def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, prompt_only=False, stop_event=None) -> dict:
     if body.get('functions', []):
         raise InvalidRequestError(message="functions is not supported.", param='functions')
 
@@ -211,6 +211,8 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
 
     # generation parameters
     generate_params = process_parameters(body, is_legacy=is_legacy)
+    if stop_event is not None:
+        generate_params['stop_event'] = stop_event
     continue_ = body['continue_']
 
     # Instruction template
@@ -378,7 +380,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         yield resp
 
 
-def completions_common(body: dict, is_legacy: bool = False, stream=False):
+def completions_common(body: dict, is_legacy: bool = False, stream=False, stop_event=None):
     object_type = 'text_completion.chunk' if stream else 'text_completion'
     created_time = int(time.time())
     cmpl_id = "conv-%d" % (int(time.time() * 1000000000))
@@ -411,6 +413,8 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
     generate_params = process_parameters(body, is_legacy=is_legacy)
     max_tokens = generate_params['max_new_tokens']
     generate_params['stream'] = stream
+    if stop_event is not None:
+        generate_params['stop_event'] = stop_event
     requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
     suffix = body['suffix'] if body['suffix'] else ''
@@ -561,23 +565,23 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
         yield chunk
 
 
-def chat_completions(body: dict, is_legacy: bool = False) -> dict:
-    generator = chat_completions_common(body, is_legacy, stream=False)
+def chat_completions(body: dict, is_legacy: bool = False, stop_event=None) -> dict:
+    generator = chat_completions_common(body, is_legacy, stream=False, stop_event=stop_event)
     return deque(generator, maxlen=1).pop()
 
 
-def stream_chat_completions(body: dict, is_legacy: bool = False):
-    for resp in chat_completions_common(body, is_legacy, stream=True):
+def stream_chat_completions(body: dict, is_legacy: bool = False, stop_event=None):
+    for resp in chat_completions_common(body, is_legacy, stream=True, stop_event=stop_event):
         yield resp
 
 
-def completions(body: dict, is_legacy: bool = False) -> dict:
-    generator = completions_common(body, is_legacy, stream=False)
+def completions(body: dict, is_legacy: bool = False, stop_event=None) -> dict:
+    generator = completions_common(body, is_legacy, stream=False, stop_event=stop_event)
     return deque(generator, maxlen=1).pop()
 
 
-def stream_completions(body: dict, is_legacy: bool = False):
-    for resp in completions_common(body, is_legacy, stream=True):
+def stream_completions(body: dict, is_legacy: bool = False, stop_event=None):
+    for resp in completions_common(body, is_legacy, stream=True, stop_event=stop_event):
         yield resp
 
 

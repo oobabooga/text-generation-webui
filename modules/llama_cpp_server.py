@@ -217,8 +217,9 @@ class LlamaServer:
             full_text = ""
 
             # Process the streaming response
+            stop_event = state.get('stop_event')
             for line in response.iter_lines():
-                if shared.stop_everything:
+                if shared.stop_everything or (stop_event and stop_event.is_set()):
                     break
 
                 if not line:
@@ -410,6 +411,7 @@ class LlamaServer:
             cmd += ["--spec-ngram-size-n", str(shared.args.spec_ngram_size_n)]
             cmd += ["--spec-ngram-size-m", str(shared.args.spec_ngram_size_m)]
             cmd += ["--spec-ngram-min-hits", str(shared.args.spec_ngram_min_hits)]
+        cmd += ["--parallel", str(shared.args.parallel)]
         if shared.args.streaming_llm:
             cmd += ["--cache-reuse", "1"]
             cmd += ["--swa-full"]
