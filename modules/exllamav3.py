@@ -50,7 +50,7 @@ class ConcurrentGenerator:
         while self.active:
             self.has_jobs.wait(timeout=0.5)
             with self.lock:
-                if self.generator.num_remaining_jobs() == 0:
+                if not self.job_queues:
                     self.has_jobs.clear()
                     continue
                 results = self.generator.iterate()
@@ -406,44 +406,23 @@ class Exllamav3Model:
         response_text = ""
         stop_event = state.get('stop_event')
 
-        if stop_event:
-            # Concurrent path for API requests
-            result_queue = self.parallel_generator.submit(job)
-            try:
-                while True:
-                    if stop_event.is_set() or shared.stop_everything:
-                        break
-                    try:
-                        result = result_queue.get(timeout=0.1)
-                    except queue.Empty:
-                        continue
-                    if result is None or result.get("eos"):
-                        break
-                    chunk = result.get("text", "")
-                    if chunk:
-                        response_text += chunk
-                        yield response_text
-            finally:
-                self.parallel_generator.cancel(job)
-        else:
-            # Original single-request path (WebUI)
-            self.generator.enqueue(job)
-            try:
-                while self.generator.num_remaining_jobs():
-                    if shared.stop_everything:
-                        break
-
-                    results = self.generator.iterate()
-                    for result in results:
-                        if "eos" in result and result["eos"]:
-                            break
-
-                        chunk = result.get("text", "")
-                        if chunk:
-                            response_text += chunk
-                            yield response_text
-            finally:
-                self.generator.clear_queue()
+        result_queue = self.parallel_generator.submit(job)
+        try:
+            while True:
+                if shared.stop_everything or (stop_event and stop_event.is_set()):
+                    break
+                try:
+                    result = result_queue.get(timeout=0.1)
+                except queue.Empty:
+                    continue
+                if result is None or result.get("eos"):
+                    break
+                chunk = result.get("text", "")
+                if chunk:
+                    response_text += chunk
+                    yield response_text
+        finally:
+            self.parallel_generator.cancel(job)
 
     def generate(self, prompt, state):
         output = ""
