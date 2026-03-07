@@ -10,11 +10,6 @@ import site
 import subprocess
 import sys
 
-# Remove the '# ' from the following lines as needed for your AMD GPU on Linux
-# os.environ["ROCM_PATH"] = '/opt/rocm'
-# os.environ["HSA_OVERRIDE_GFX_VERSION"] = '10.3.0'
-# os.environ["HCC_AMDGPU_TARGET"] = 'gfx1030'
-
 # Define the required versions
 TORCH_VERSION = "2.9.1"
 PYTHON_VERSION = "3.13"
