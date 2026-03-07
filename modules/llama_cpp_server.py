@@ -320,8 +320,8 @@ class LlamaServer:
                 return False
 
     def _find_available_port(self):
-        """Find an available port, preferring main port + 1."""
-        preferred_port = shared.args.api_port + 1
+        """Find an available port, preferring main port + 5."""
+        preferred_port = shared.args.api_port + 5
         if self._is_port_available(preferred_port):
             return preferred_port
 
@@ -510,6 +510,7 @@ class LlamaServer:
                 self.process.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 self.process.kill()
+                self.process.wait(timeout=5)
 
             self.process = None
 
@@ -560,7 +561,7 @@ def filter_stderr_with_progress(process_stderr):
                             last_was_progress = (progress < 1.0)
 
                         # skip noise lines
-                        elif not (line.startswith(('srv ', 'slot ')) or 'log_server_r: request: GET /health' in line):
+                        elif not (line.startswith(('srv ', 'slot ')) or 'log_server_r: request: GET /health' in line or 'No parser definition detected' in line):
                             # if we were in progress, finish that line first
                             if last_was_progress:
                                 print(file=sys.stderr)
