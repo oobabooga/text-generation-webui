@@ -6,7 +6,7 @@ def resolve_user_data_dir():
     """
     Resolve the user_data directory path. Order of precedence:
     1. --user-data-dir CLI flag (pre-parsed from sys.argv before argparse)
-    2. Auto-detect: if ./user_data doesn't exist but ../user_data does, use ../user_data
+    2. In --portable mode, prefer ../user_data if it exists
     3. Default: 'user_data'
     """
     script_dir = Path(__file__).resolve().parent.parent
@@ -18,11 +18,11 @@ def resolve_user_data_dir():
         elif arg.startswith('--user-data-dir='):
             return Path(arg.split('=', 1)[1])
 
-    # Auto-detect: check if user_data exists locally vs one folder up
-    local_path = script_dir / 'user_data'
-    parent_path = script_dir.parent / 'user_data'
-
-    if not local_path.exists() and parent_path.exists():
-        return parent_path
+    # In portable mode, prefer ../user_data if it exists
+    is_portable = '--portable' in sys.argv
+    if is_portable:
+        parent_path = script_dir.parent / 'user_data'
+        if parent_path.exists():
+            return parent_path
 
     return Path('user_data')
