@@ -1,9 +1,12 @@
 import copy
+import functools
 import json
 import time
 from collections import deque
+from pathlib import Path
 
 import tiktoken
+import yaml
 from pydantic import ValidationError
 
 from extensions.openai.errors import InvalidRequestError
@@ -20,6 +23,18 @@ from modules.image_utils import convert_openai_messages_to_images
 from modules.logging_colors import logger
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
+
+
+@functools.cache
+def load_chat_template_file(filepath):
+    """Load a chat template from a file path (.jinja, .jinja2, or .yaml/.yml)."""
+    filepath = Path(filepath)
+    ext = filepath.suffix.lower()
+    text = filepath.read_text(encoding='utf-8')
+    if ext in ['.yaml', '.yml']:
+        data = yaml.safe_load(text)
+        return data.get('instruction_template', '')
+    return text
 
 
 def convert_logprobs_to_tiktoken(model, logprobs):
@@ -134,24 +149,32 @@ def convert_history(history):
             user_input_last = True
 
             if current_message:
-                chat_dialogue.append([current_message, '', ''])
+                chat_dialogue.append([current_message, '', '', {}])
                 current_message = ""
 
             current_message = content
         elif role == "assistant":
-            if "tool_calls" in entry and isinstance(entry["tool_calls"], list) and len(entry["tool_calls"]) > 0 and content.strip() == "":
-                continue  # skip tool calls
+            meta = {}
+            tool_calls = entry.get("tool_calls")
+            if tool_calls and isinstance(tool_calls, list) and len(tool_calls) > 0:
+                meta["tool_calls"] = tool_calls
+                if content.strip() == "":
+                    content = ""  # keep empty content, don't skip
+
             current_reply = content
             user_input_last = False
             if current_message:
-                chat_dialogue.append([current_message, current_reply, ''])
+                chat_dialogue.append([current_message, current_reply, '', meta])
                 current_message = ""
                 current_reply = ""
             else:
-                chat_dialogue.append(['', current_reply, ''])
+                chat_dialogue.append(['', current_reply, '', meta])
         elif role == "tool":
             user_input_last = False
-            chat_dialogue.append(['', '', content])
+            meta = {}
+            if "tool_call_id" in entry:
+                meta["tool_call_id"] = entry["tool_call_id"]
+            chat_dialogue.append(['', '', content, meta])
         elif role == "system":
             system_message += f"\n{content}" if system_message else content
 
@@ -165,7 +188,7 @@ def convert_history(history):
     }
 
 
-def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, prompt_only=False) -> dict:
+def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, prompt_only=False, stop_event=None) -> dict:
     if body.get('functions', []):
         raise InvalidRequestError(message="functions is not supported.", param='functions')
 
@@ -189,7 +212,11 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         # Handle multimodal content validation
         content = m.get('content')
         if content is None:
-            raise InvalidRequestError(message="messages: missing content", param='messages')
+            # OpenAI allows content: null on assistant messages when tool_calls is present
+            if m['role'] == 'assistant' and m.get('tool_calls'):
+                m['content'] = ''
+            else:
+                raise InvalidRequestError(message="messages: missing content", param='messages')
 
         # Validate multimodal content structure
         if isinstance(content, list):
@@ -211,6 +238,8 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
 
     # generation parameters
     generate_params = process_parameters(body, is_legacy=is_legacy)
+    if stop_event is not None:
+        generate_params['stop_event'] = stop_event
     continue_ = body['continue_']
 
     # Instruction template
@@ -220,6 +249,8 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         instruction_template = body['instruction_template']
         instruction_template = "Alpaca" if instruction_template == "None" else instruction_template
         instruction_template_str = load_instruction_template_memoized(instruction_template)
+    elif shared.args.chat_template_file:
+        instruction_template_str = load_chat_template_file(shared.args.chat_template_file)
     else:
         instruction_template_str = shared.settings['instruction_template_str']
 
@@ -286,8 +317,8 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         return chunk
 
     # generate reply #######################################
-    prompt = generate_chat_prompt(user_input, generate_params, _continue=continue_)
     if prompt_only:
+        prompt = generate_chat_prompt(user_input, generate_params, _continue=continue_)
         yield {'prompt': prompt}
         return
 
@@ -312,7 +343,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             if len(tool_call) > 0:
                 for tc in tool_call:
                     tc["id"] = getToolCallId()
-                    tc["index"] = str(len(tool_calls))
+                    tc["index"] = len(tool_calls)
                     tc["function"]["arguments"] = json.dumps(tc["function"]["arguments"])
                     tool_calls.append(tc)
                 end_last_tool_call = len(answer)
@@ -333,7 +364,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         if len(tool_calls) > 0:
             break
 
-    token_count = len(encode(prompt)[0])
+    token_count = shared.model.last_prompt_token_count if hasattr(shared.model, 'last_prompt_token_count') else 0
     completion_token_count = len(encode(answer)[0])
     stop_reason = "stop"
     if len(tool_calls) > 0:
@@ -360,8 +391,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             resp_list: [{
                 "index": 0,
                 "finish_reason": stop_reason,
-                "message": {"role": "assistant", "content": answer},
-                "tool_calls": tool_calls
+                "message": {"role": "assistant", "content": answer, **({"tool_calls": tool_calls} if tool_calls else {})},
             }],
             "usage": {
                 "prompt_tokens": token_count,
@@ -378,8 +408,8 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         yield resp
 
 
-def completions_common(body: dict, is_legacy: bool = False, stream=False):
-    object_type = 'text_completion.chunk' if stream else 'text_completion'
+def completions_common(body: dict, is_legacy: bool = False, stream=False, stop_event=None):
+    object_type = 'text_completion'
     created_time = int(time.time())
     cmpl_id = "conv-%d" % (int(time.time() * 1000000000))
     resp_list = 'data' if is_legacy else 'choices'
@@ -411,6 +441,8 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
     generate_params = process_parameters(body, is_legacy=is_legacy)
     max_tokens = generate_params['max_new_tokens']
     generate_params['stream'] = stream
+    if stop_event is not None:
+        generate_params['stop_event'] = stop_event
     requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
     suffix = body['suffix'] if body['suffix'] else ''
@@ -561,23 +593,23 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
         yield chunk
 
 
-def chat_completions(body: dict, is_legacy: bool = False) -> dict:
-    generator = chat_completions_common(body, is_legacy, stream=False)
+def chat_completions(body: dict, is_legacy: bool = False, stop_event=None) -> dict:
+    generator = chat_completions_common(body, is_legacy, stream=False, stop_event=stop_event)
     return deque(generator, maxlen=1).pop()
 
 
-def stream_chat_completions(body: dict, is_legacy: bool = False):
-    for resp in chat_completions_common(body, is_legacy, stream=True):
+def stream_chat_completions(body: dict, is_legacy: bool = False, stop_event=None):
+    for resp in chat_completions_common(body, is_legacy, stream=True, stop_event=stop_event):
         yield resp
 
 
-def completions(body: dict, is_legacy: bool = False) -> dict:
-    generator = completions_common(body, is_legacy, stream=False)
+def completions(body: dict, is_legacy: bool = False, stop_event=None) -> dict:
+    generator = completions_common(body, is_legacy, stream=False, stop_event=stop_event)
     return deque(generator, maxlen=1).pop()
 
 
-def stream_completions(body: dict, is_legacy: bool = False):
-    for resp in completions_common(body, is_legacy, stream=True):
+def stream_completions(body: dict, is_legacy: bool = False, stop_event=None):
+    for resp in completions_common(body, is_legacy, stream=True, stop_event=stop_event):
         yield resp
 
 
@@ -588,6 +620,12 @@ def validateTools(tools: list[dict]):
         tool = tools[idx]
         try:
             tool_definition = ToolDefinition(**tool)
+            # Backfill defaults so Jinja2 templates don't crash on missing fields
+            func = tool.get("function", {})
+            if "description" not in func:
+                func["description"] = ""
+            if "parameters" not in func:
+                func["parameters"] = {"type": "object", "properties": {}}
             if valid_tools is None:
                 valid_tools = []
             valid_tools.append(tool)

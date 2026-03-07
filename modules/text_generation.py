@@ -22,13 +22,23 @@ def generate_reply(*args, **kwargs):
         from modules.models import load_model
         shared.model, shared.tokenizer = load_model(shared.model_name)
 
-    shared.generation_lock.acquire()
+    state = args[1] if len(args) > 1 else kwargs.get('state', {})
+    use_parallel = (
+        state.get('stop_event') is not None
+        and shared.model.__class__.__name__ in ['Exllamav3Model', 'LlamaServer', 'TensorRTLLMModel']
+        and (shared.model.__class__.__name__ != 'LlamaServer' or shared.args.parallel > 1)
+    )
+
+    if not use_parallel:
+        shared.generation_lock.acquire()
+
     try:
         for result in _generate_reply(*args, **kwargs):
             yield result
     finally:
         models.last_generation_time = time.time()
-        shared.generation_lock.release()
+        if not use_parallel:
+            shared.generation_lock.release()
 
 
 def _generate_reply(question, state, stopping_strings=None, is_chat=False, escape_html=False, for_ui=False):
@@ -40,7 +50,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             yield ''
             return
 
-        if shared.model.__class__.__name__ in ['LlamaServer', 'Exllamav2Model', 'Exllamav3Model', 'TensorRTLLMModel']:
+        if shared.model.__class__.__name__ in ['LlamaServer', 'Exllamav3Model', 'TensorRTLLMModel']:
             generate_func = generate_reply_custom
         else:
             generate_func = generate_reply_HF
@@ -68,7 +78,10 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
     reply = ''
     is_stream = state['stream']
     if len(all_stop_strings) > 0 and not state['stream']:
+        stop_event_ref = state.pop('stop_event', None)
         state = copy.deepcopy(state)
+        if stop_event_ref is not None:
+            state['stop_event'] = stop_event_ref
         state['stream'] = True
 
     # Generate
@@ -99,7 +112,8 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
                     yield reply
                 last_update = time.monotonic()
 
-        if stop_found or (state['max_tokens_second'] > 0 and shared.stop_everything):
+        stop_event = state.get('stop_event')
+        if stop_found or shared.stop_everything or (stop_event and stop_event.is_set()):
             break
 
     if not is_chat:
@@ -128,9 +142,9 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
 
         from modules.torch_utils import get_device
 
-        if shared.model.__class__.__name__ in ['Exllamav2Model', 'Exllamav3Model', 'TensorRTLLMModel']:
+        if shared.model.__class__.__name__ in ['Exllamav3Model', 'TensorRTLLMModel']:
             input_ids = shared.tokenizer.encode(str(prompt))
-            if shared.model.__class__.__name__ not in ['Exllamav2Model', 'Exllamav3Model']:
+            if shared.model.__class__.__name__ not in ['Exllamav3Model']:
                 input_ids = np.array(input_ids).reshape(1, len(input_ids))
         else:
             input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', add_special_tokens=add_special_tokens)
@@ -148,7 +162,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
         if truncation_length is not None:
             input_ids = input_ids[:, -truncation_length:]
 
-        if shared.model.__class__.__name__ in ['Exllamav2Model', 'Exllamav3Model', 'TensorRTLLMModel'] or shared.args.cpu:
+        if shared.model.__class__.__name__ in ['Exllamav3Model', 'TensorRTLLMModel'] or shared.args.cpu:
             return input_ids
         else:
             device = get_device()
@@ -317,6 +331,8 @@ def generate_reply_HF(question, original_question, state, stopping_strings=None,
         'tfs',
         'top_a',
         'top_n_sigma',
+        'adaptive_target',
+        'adaptive_decay',
         'dry_multiplier',
         'dry_allowed_length',
         'dry_base',
@@ -370,8 +386,6 @@ def generate_reply_HF(question, original_question, state, stopping_strings=None,
         generate_params['negative_prompt_ids'] = encode(state['negative_prompt'])
 
     generate_params.update({'use_cache': not shared.args.no_cache})
-    if shared.args.deepspeed:
-        generate_params.update({'synced_gpus': True})
 
     # Encode the input
     input_ids = encode(question, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
@@ -474,7 +488,10 @@ def generate_reply_custom(question, original_question, state, stopping_strings=N
     For models that do not use the transformers library for sampling
     """
 
+    stop_event_ref = state.pop('stop_event', None)
     state = copy.deepcopy(state)
+    if stop_event_ref is not None:
+        state['stop_event'] = stop_event_ref
     state['seed'] = set_manual_seed(state['seed'])
     t0 = time.time()
     reply = ''

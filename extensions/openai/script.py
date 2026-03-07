@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import socket
+import threading
 import traceback
 from collections import deque
 from threading import Thread
@@ -24,7 +25,7 @@ from extensions.openai.utils import _start_cloudflared
 from modules import shared
 from modules.logging_colors import logger
 from modules.models import unload_model
-from modules.text_generation import stop_everything_event
+from modules.text_generation import stop_everything_event  # used by /v1/internal/stop-generation
 
 from .typing import (
     ChatCompletionRequest,
@@ -58,8 +59,13 @@ params = {
 }
 
 
-streaming_semaphore = asyncio.Semaphore(1)
-image_generation_semaphore = asyncio.Semaphore(1)
+async def _wait_for_disconnect(request: Request, stop_event: threading.Event):
+    """Block until the client disconnects, then signal the stop_event."""
+    while True:
+        message = await request.receive()
+        if message["type"] == "http.disconnect":
+            stop_event.set()
+            return
 
 
 def verify_api_key(authorization: str = Header(None)) -> None:
@@ -113,29 +119,36 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
     is_legacy = "/generate" in path
 
     if request_data.stream:
+        stop_event = threading.Event()
+
         async def generator():
-            async with streaming_semaphore:
-                try:
-                    response = OAIcompletions.stream_completions(to_dict(request_data), is_legacy=is_legacy)
-                    async for resp in iterate_in_threadpool(response):
-                        disconnected = await request.is_disconnected()
-                        if disconnected:
-                            break
+            response = OAIcompletions.stream_completions(to_dict(request_data), is_legacy=is_legacy, stop_event=stop_event)
+            try:
+                async for resp in iterate_in_threadpool(response):
+                    disconnected = await request.is_disconnected()
+                    if disconnected:
+                        break
 
-                        yield {"data": json.dumps(resp)}
-                finally:
-                    stop_everything_event()
-                    response.close()
-                    return
+                    yield {"data": json.dumps(resp)}
+            finally:
+                stop_event.set()
+                response.close()
 
-        return EventSourceResponse(generator())  # SSE streaming
+        return EventSourceResponse(generator(), sep="\n")  # SSE streaming
 
     else:
-        response = await asyncio.to_thread(
-            OAIcompletions.completions,
-            to_dict(request_data),
-            is_legacy=is_legacy
-        )
+        stop_event = threading.Event()
+        monitor = asyncio.create_task(_wait_for_disconnect(request, stop_event))
+        try:
+            response = await asyncio.to_thread(
+                OAIcompletions.completions,
+                to_dict(request_data),
+                is_legacy=is_legacy,
+                stop_event=stop_event
+            )
+        finally:
+            stop_event.set()
+            monitor.cancel()
 
         return JSONResponse(response)
 
@@ -146,29 +159,36 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
     is_legacy = "/generate" in path
 
     if request_data.stream:
+        stop_event = threading.Event()
+
         async def generator():
-            async with streaming_semaphore:
-                try:
-                    response = OAIcompletions.stream_chat_completions(to_dict(request_data), is_legacy=is_legacy)
-                    async for resp in iterate_in_threadpool(response):
-                        disconnected = await request.is_disconnected()
-                        if disconnected:
-                            break
+            response = OAIcompletions.stream_chat_completions(to_dict(request_data), is_legacy=is_legacy, stop_event=stop_event)
+            try:
+                async for resp in iterate_in_threadpool(response):
+                    disconnected = await request.is_disconnected()
+                    if disconnected:
+                        break
 
-                        yield {"data": json.dumps(resp)}
-                finally:
-                    stop_everything_event()
-                    response.close()
-                    return
+                    yield {"data": json.dumps(resp)}
+            finally:
+                stop_event.set()
+                response.close()
 
-        return EventSourceResponse(generator())  # SSE streaming
+        return EventSourceResponse(generator(), sep="\n")  # SSE streaming
 
     else:
-        response = await asyncio.to_thread(
-            OAIcompletions.chat_completions,
-            to_dict(request_data),
-            is_legacy=is_legacy
-        )
+        stop_event = threading.Event()
+        monitor = asyncio.create_task(_wait_for_disconnect(request, stop_event))
+        try:
+            response = await asyncio.to_thread(
+                OAIcompletions.chat_completions,
+                to_dict(request_data),
+                is_legacy=is_legacy,
+                stop_event=stop_event
+            )
+        finally:
+            stop_event.set()
+            monitor.cancel()
 
         return JSONResponse(response)
 
@@ -232,9 +252,8 @@ async def handle_audio_transcription(request: Request):
 async def handle_image_generation(request_data: ImageGenerationRequest):
     import extensions.openai.images as OAIimages
 
-    async with image_generation_semaphore:
-        response = await asyncio.to_thread(OAIimages.generations, request_data)
-        return JSONResponse(response)
+    response = await asyncio.to_thread(OAIimages.generations, request_data)
+    return JSONResponse(response)
 
 
 @app.post("/v1/embeddings", response_model=EmbeddingsResponse, dependencies=check_key)
@@ -357,9 +376,9 @@ async def handle_load_model(request_data: LoadModelRequest):
     try:
         OAImodels._load_model(to_dict(request_data))
         return JSONResponse(content="OK")
-    except:
+    except Exception:
         traceback.print_exc()
-        return HTTPException(status_code=400, detail="Failed to load the model.")
+        raise HTTPException(status_code=400, detail="Failed to load the model.")
 
 
 @app.post("/v1/internal/model/unload", dependencies=check_admin_key)
@@ -378,9 +397,9 @@ async def handle_load_loras(request_data: LoadLorasRequest):
     try:
         OAImodels.load_loras(request_data.lora_names)
         return JSONResponse(content="OK")
-    except:
+    except Exception:
         traceback.print_exc()
-        return HTTPException(status_code=400, detail="Failed to apply the LoRA(s).")
+        raise HTTPException(status_code=400, detail="Failed to apply the LoRA(s).")
 
 
 @app.post("/v1/internal/lora/unload", dependencies=check_admin_key)

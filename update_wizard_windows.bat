@@ -28,7 +28,7 @@ set "CUDA_HOME=%CUDA_PATH%"
 call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo Miniforge hook not found. && goto end )
 
 @rem update installer env
-call python one_click.py --update-wizard && (
+call "%INSTALL_ENV_DIR%\python.exe" one_click.py --update-wizard && (
     echo.
     echo Have a great day!
 )

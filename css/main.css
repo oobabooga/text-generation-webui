@@ -715,7 +715,7 @@ audio {
 .hover-menu {
     display: none;
     position: absolute;
-    bottom: 80%;
+    bottom: 100%;
     left: 0;
     box-shadow: 0 0 5px rgb(0 0 0 / 25%);
     z-index: 10000;
@@ -1645,7 +1645,7 @@ button:focus {
 }
 
 #user-description textarea {
-    height: calc(100vh - 231px) !important;
+    height: calc(100vh - 334px) !important;
     min-height: 90px !important;
 }
 

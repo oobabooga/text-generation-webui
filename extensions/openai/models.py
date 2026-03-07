@@ -1,4 +1,4 @@
-from modules import shared
+from modules import shared, ui
 from modules.logging_colors import logger
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
@@ -46,9 +46,14 @@ def _load_model(data):
     update_model_parameters(model_settings)
 
     # Update shared.args with custom model loading settings
+    # Security: only allow keys that correspond to model loading
+    # parameters exposed in the UI. Never allow security-sensitive
+    # flags like trust_remote_code or extra_flags to be set via the API.
+    blocked_keys = {'extra_flags'}
+    allowed_keys = set(ui.list_model_elements()) - blocked_keys
     if args:
         for k in args:
-            if hasattr(shared.args, k):
+            if k in allowed_keys and hasattr(shared.args, k):
                 setattr(shared.args, k, args[k])
 
     shared.model, shared.tokenizer = load_model(model_name)

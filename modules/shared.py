@@ -9,7 +9,11 @@ from pathlib import Path
 import yaml
 
 from modules.logging_colors import logger
-from modules.presets import default_preset
+from modules.paths import resolve_user_data_dir
+from modules.presets import default_preset, default_preset_values
+
+# Resolve user_data directory early (before argparse defaults are set)
+user_data_dir = resolve_user_data_dir()
 
 # Text model variables
 model = None
@@ -42,11 +46,12 @@ parser = argparse.ArgumentParser(description="Text Generation Web UI", conflict_
 
 # Basic settings
 group = parser.add_argument_group('Basic settings')
+group.add_argument('--user-data-dir', type=str, default=str(user_data_dir), help='Path to the user data directory. Default: auto-detected.')
 group.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.')
 group.add_argument('--model', type=str, help='Name of the model to load by default.')
 group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
-group.add_argument('--model-dir', type=str, default='user_data/models', help='Path to directory with all the models.')
-group.add_argument('--lora-dir', type=str, default='user_data/loras', help='Path to directory with all the loras.')
+group.add_argument('--model-dir', type=str, default=str(user_data_dir / 'models'), help='Path to directory with all the models.')
+group.add_argument('--lora-dir', type=str, default=str(user_data_dir / 'loras'), help='Path to directory with all the loras.')
 group.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
 group.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See user_data/settings-template.yaml for an example. If you create a file called user_data/settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
@@ -56,7 +61,7 @@ group.add_argument('--idle-timeout', type=int, default=0, help='Unload model aft
 # Image generation
 group = parser.add_argument_group('Image model')
 group.add_argument('--image-model', type=str, help='Name of the image model to select on startup (overrides saved setting).')
-group.add_argument('--image-model-dir', type=str, default='user_data/image_models', help='Path to directory with all the image models.')
+group.add_argument('--image-model-dir', type=str, default=str(user_data_dir / 'image_models'), help='Path to directory with all the image models.')
 group.add_argument('--image-dtype', type=str, default=None, choices=['bfloat16', 'float16'], help='Data type for image model.')
 group.add_argument('--image-attn-backend', type=str, default=None, choices=['flash_attention_2', 'sdpa'], help='Attention backend for image model.')
 group.add_argument('--image-cpu-offload', action='store_true', help='Enable CPU offloading for image model.')
@@ -67,12 +72,12 @@ group.add_argument('--image-quant', type=str, default=None,
 
 # Model loader
 group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav2_HF, ExLlamav2, TensorRT-LLM.')
+group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav3, TensorRT-LLM.')
 
 # Cache
 group = parser.add_argument_group('Context and cache')
-group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=8192, metavar='N', help='Context size in tokens.')
-group.add_argument('--cache-type', '--cache_type', type=str, default='fp16', metavar='N', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV2 - fp16, fp8, q8, q6, q4; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).')
+group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=8192, metavar='N', help='Context size in tokens. llama.cpp: 0 = auto if gpu-layers is also -1.')
+group.add_argument('--cache-type', '--cache_type', type=str, default='fp16', metavar='N', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).')
 
 # Speculative decoding
 group = parser.add_argument_group('Speculative decoding')
@@ -81,10 +86,14 @@ group.add_argument('--draft-max', type=int, default=4, help='Number of tokens to
 group.add_argument('--gpu-layers-draft', type=int, default=256, help='Number of layers to offload to the GPU for the draft model.')
 group.add_argument('--device-draft', type=str, default=None, help='Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1')
 group.add_argument('--ctx-size-draft', type=int, default=0, help='Size of the prompt context for the draft model. If 0, uses the same as the main model.')
+group.add_argument('--spec-type', type=str, default='none', choices=['none', 'ngram-mod', 'ngram-simple', 'ngram-map-k', 'ngram-map-k4v', 'ngram-cache'], help='Draftless speculative decoding type. Recommended: ngram-mod.')
+group.add_argument('--spec-ngram-size-n', type=int, default=24, help='N-gram lookup size for ngram speculative decoding.')
+group.add_argument('--spec-ngram-size-m', type=int, default=48, help='Draft n-gram size for ngram speculative decoding.')
+group.add_argument('--spec-ngram-min-hits', type=int, default=1, help='Minimum n-gram hits for ngram-map speculative decoding.')
 
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
-group.add_argument('--gpu-layers', '--n-gpu-layers', type=int, default=256, metavar='N', help='Number of layers to offload to the GPU.')
+group.add_argument('--gpu-layers', '--n-gpu-layers', type=int, default=-1, metavar='N', help='Number of layers to offload to the GPU. -1 = auto.')
 group.add_argument('--cpu-moe', action='store_true', help='Move the experts to the CPU (for MoE models).')
 group.add_argument('--mmproj', type=str, default=None, help='Path to the mmproj file for vision models.')
 group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
@@ -98,6 +107,8 @@ group.add_argument('--ubatch-size', type=int, default=1024, help='Maximum number
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
 group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
+group.add_argument('--parallel', type=int, default=1, help='Number of parallel request slots. The context size is divided equally among slots. For example, to have 4 slots with 8192 context each, set ctx_size to 32768.')
+group.add_argument('--fit-target', type=str, default='1024', help='Target VRAM margin per device for auto GPU layers, comma-separated list of values in MiB. A single value is broadcast across all devices. Default: 1024.')
 group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"')
 
 # Transformers/Accelerate
@@ -105,7 +116,7 @@ group = parser.add_argument_group('Transformers/Accelerate')
 group.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
 group.add_argument('--cpu-memory', type=float, default=0, help='Maximum CPU memory in GiB. Use this for CPU offloading.')
 group.add_argument('--disk', action='store_true', help='If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.')
-group.add_argument('--disk-cache-dir', type=str, default='user_data/cache', help='Directory to save the disk cache to. Defaults to "user_data/cache".')
+group.add_argument('--disk-cache-dir', type=str, default=str(user_data_dir / 'cache'), help='Directory to save the disk cache to.')
 group.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision (using bitsandbytes).')
 group.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
 group.add_argument('--no-cache', action='store_true', help='Set use_cache to False while generating text. This reduces VRAM usage slightly, but it comes at a performance cost.')
@@ -123,28 +134,10 @@ group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for
 
 # ExLlamaV3
 group = parser.add_argument_group('ExLlamaV3')
+group.add_argument('--gpu-split', type=str, help='Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.')
 group.add_argument('--enable-tp', '--enable_tp', action='store_true', help='Enable Tensor Parallelism (TP) to split the model across GPUs.')
 group.add_argument('--tp-backend', type=str, default='native', help='The backend for tensor parallelism. Valid options: native, nccl. Default: native.')
-
-# ExLlamaV2
-group = parser.add_argument_group('ExLlamaV2')
-group.add_argument('--gpu-split', type=str, help='Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.')
-group.add_argument('--autosplit', action='store_true', help='Autosplit the model tensors across the available GPUs. This causes --gpu-split to be ignored.')
-group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.')
-group.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
-group.add_argument('--no_xformers', action='store_true', help='Force xformers to not be used.')
-group.add_argument('--no_sdpa', action='store_true', help='Force Torch SDPA to not be used.')
-group.add_argument('--num_experts_per_token', type=int, default=2, metavar='N', help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
-
-# TensorRT-LLM
-group = parser.add_argument_group('TensorRT-LLM')
-group.add_argument('--cpp-runner', action='store_true', help='Use the ModelRunnerCpp runner, which is faster than the default ModelRunner but doesn\'t support streaming yet.')
-
-# DeepSpeed
-group = parser.add_argument_group('DeepSpeed')
-group.add_argument('--deepspeed', action='store_true', help='Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.')
-group.add_argument('--nvme-offload-dir', type=str, help='DeepSpeed: Directory to use for ZeRO-3 NVME offloading.')
-group.add_argument('--local_rank', type=int, default=0, help='DeepSpeed: Optional argument for distributed setups.')
+group.add_argument('--cfg-cache', action='store_true', help='Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.')
 
 # RoPE
 group = parser.add_argument_group('RoPE')
@@ -179,8 +172,53 @@ group.add_argument('--api-enable-ipv6', action='store_true', help='Enable IPv6 f
 group.add_argument('--api-disable-ipv4', action='store_true', help='Disable IPv4 for the API')
 group.add_argument('--nowebui', action='store_true', help='Do not launch the Gradio UI. Useful for launching the API in standalone mode.')
 
+# API generation defaults
+_d = default_preset_values
+group = parser.add_argument_group('API generation defaults')
+group.add_argument('--temperature', type=float, default=_d['temperature'], metavar='N', help='Temperature')
+group.add_argument('--dynatemp-low', type=float, default=_d['dynatemp_low'], metavar='N', help='Dynamic temperature low')
+group.add_argument('--dynatemp-high', type=float, default=_d['dynatemp_high'], metavar='N', help='Dynamic temperature high')
+group.add_argument('--dynatemp-exponent', type=float, default=_d['dynatemp_exponent'], metavar='N', help='Dynamic temperature exponent')
+group.add_argument('--smoothing-factor', type=float, default=_d['smoothing_factor'], metavar='N', help='Smoothing factor')
+group.add_argument('--smoothing-curve', type=float, default=_d['smoothing_curve'], metavar='N', help='Smoothing curve')
+group.add_argument('--min-p', type=float, default=_d['min_p'], metavar='N', help='Min P')
+group.add_argument('--top-p', type=float, default=_d['top_p'], metavar='N', help='Top P')
+group.add_argument('--top-k', type=int, default=_d['top_k'], metavar='N', help='Top K')
+group.add_argument('--typical-p', type=float, default=_d['typical_p'], metavar='N', help='Typical P')
+group.add_argument('--xtc-threshold', type=float, default=_d['xtc_threshold'], metavar='N', help='XTC threshold')
+group.add_argument('--xtc-probability', type=float, default=_d['xtc_probability'], metavar='N', help='XTC probability')
+group.add_argument('--epsilon-cutoff', type=float, default=_d['epsilon_cutoff'], metavar='N', help='Epsilon cutoff')
+group.add_argument('--eta-cutoff', type=float, default=_d['eta_cutoff'], metavar='N', help='Eta cutoff')
+group.add_argument('--tfs', type=float, default=_d['tfs'], metavar='N', help='TFS')
+group.add_argument('--top-a', type=float, default=_d['top_a'], metavar='N', help='Top A')
+group.add_argument('--top-n-sigma', type=float, default=_d['top_n_sigma'], metavar='N', help='Top N Sigma')
+group.add_argument('--adaptive-target', type=float, default=_d['adaptive_target'], metavar='N', help='Adaptive target')
+group.add_argument('--adaptive-decay', type=float, default=_d['adaptive_decay'], metavar='N', help='Adaptive decay')
+group.add_argument('--dry-multiplier', type=float, default=_d['dry_multiplier'], metavar='N', help='DRY multiplier')
+group.add_argument('--dry-allowed-length', type=int, default=_d['dry_allowed_length'], metavar='N', help='DRY allowed length')
+group.add_argument('--dry-base', type=float, default=_d['dry_base'], metavar='N', help='DRY base')
+group.add_argument('--repetition-penalty', type=float, default=_d['repetition_penalty'], metavar='N', help='Repetition penalty')
+group.add_argument('--frequency-penalty', type=float, default=_d['frequency_penalty'], metavar='N', help='Frequency penalty')
+group.add_argument('--presence-penalty', type=float, default=_d['presence_penalty'], metavar='N', help='Presence penalty')
+group.add_argument('--encoder-repetition-penalty', type=float, default=_d['encoder_repetition_penalty'], metavar='N', help='Encoder repetition penalty')
+group.add_argument('--no-repeat-ngram-size', type=int, default=_d['no_repeat_ngram_size'], metavar='N', help='No repeat ngram size')
+group.add_argument('--repetition-penalty-range', type=int, default=_d['repetition_penalty_range'], metavar='N', help='Repetition penalty range')
+group.add_argument('--penalty-alpha', type=float, default=_d['penalty_alpha'], metavar='N', help='Penalty alpha')
+group.add_argument('--guidance-scale', type=float, default=_d['guidance_scale'], metavar='N', help='Guidance scale')
+group.add_argument('--mirostat-mode', type=int, default=_d['mirostat_mode'], metavar='N', help='Mirostat mode')
+group.add_argument('--mirostat-tau', type=float, default=_d['mirostat_tau'], metavar='N', help='Mirostat tau')
+group.add_argument('--mirostat-eta', type=float, default=_d['mirostat_eta'], metavar='N', help='Mirostat eta')
+group.add_argument('--do-sample', action=argparse.BooleanOptionalAction, default=_d['do_sample'], help='Do sample')
+group.add_argument('--dynamic-temperature', action=argparse.BooleanOptionalAction, default=_d['dynamic_temperature'], help='Dynamic temperature')
+group.add_argument('--temperature-last', action=argparse.BooleanOptionalAction, default=_d['temperature_last'], help='Temperature last')
+group.add_argument('--sampler-priority', type=str, default=_d['sampler_priority'], metavar='N', help='Sampler priority')
+group.add_argument('--dry-sequence-breakers', type=str, default=_d['dry_sequence_breakers'], metavar='N', help='DRY sequence breakers')
+group.add_argument('--enable-thinking', action=argparse.BooleanOptionalAction, default=True, help='Enable thinking')
+group.add_argument('--reasoning-effort', type=str, default='medium', metavar='N', help='Reasoning effort')
+group.add_argument('--chat-template-file', type=str, default=None, help='Path to a chat template file (.jinja, .jinja2, or .yaml) to use as the default instruction template for API requests. Overrides the model\'s built-in template.')
+
 # Handle CMD_FLAGS.txt
-cmd_flags_path = Path(__file__).parent.parent / "user_data" / "CMD_FLAGS.txt"
+cmd_flags_path = user_data_dir / "CMD_FLAGS.txt"
 if cmd_flags_path.exists():
     with cmd_flags_path.open('r', encoding='utf-8') as f:
         cmd_flags = ' '.join(
@@ -195,6 +233,7 @@ if cmd_flags_path.exists():
 
 
 args = parser.parse_args()
+user_data_dir = Path(args.user_data_dir)  # Update from parsed args (may differ from pre-parse)
 original_args = copy.deepcopy(args)
 args_defaults = parser.parse_args([])
 
@@ -225,7 +264,7 @@ settings = {
     'enable_web_search': False,
     'web_search_pages': 3,
     'prompt-notebook': '',
-    'preset': 'Qwen3 - Thinking' if Path('user_data/presets/Qwen3 - Thinking.yaml').exists() else None,
+    'preset': 'Qwen3 - Thinking' if (user_data_dir / 'presets/Qwen3 - Thinking.yaml').exists() else None,
     'max_new_tokens': 512,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
@@ -269,6 +308,8 @@ settings = {
     'tfs': neutral_samplers['tfs'],
     'top_a': neutral_samplers['top_a'],
     'top_n_sigma': neutral_samplers['top_n_sigma'],
+    'adaptive_target': neutral_samplers['adaptive_target'],
+    'adaptive_decay': neutral_samplers['adaptive_decay'],
 
     # Generation parameters - Repetition suppression
     'dry_multiplier': neutral_samplers['dry_multiplier'],
@@ -298,6 +339,7 @@ settings = {
 
     # Character settings
     'character': 'Assistant',
+    'user': 'Default',
     'name1': 'You',
     'name2': 'AI',
     'user_bio': '',
@@ -335,6 +377,11 @@ default_settings = copy.deepcopy(settings)
 
 
 def do_cmd_flags_warnings():
+    # Validate --chat-template-file
+    if args.chat_template_file and not Path(args.chat_template_file).is_file():
+        logger.error(f"--chat-template-file: file not found: {args.chat_template_file}")
+        sys.exit(1)
+
     # Security warnings
     if args.trust_remote_code:
         logger.warning(
@@ -378,10 +425,6 @@ def fix_loader_name(name):
         return 'llama.cpp'
     elif name in ['transformers', 'huggingface', 'hf', 'hugging_face', 'hugging face']:
         return 'Transformers'
-    elif name in ['exllamav2', 'exllama-v2', 'ex_llama-v2', 'exlamav2', 'exlama-v2', 'exllama2', 'exllama-2']:
-        return 'ExLlamav2'
-    elif name in ['exllamav2-hf', 'exllamav2_hf', 'exllama-v2-hf', 'exllama_v2_hf', 'exllama-v2_hf', 'exllama2-hf', 'exllama2_hf', 'exllama-2-hf', 'exllama_2_hf', 'exllama-2_hf']:
-        return 'ExLlamav2_HF'
     elif name in ['exllamav3-hf', 'exllamav3_hf', 'exllama-v3-hf', 'exllama_v3_hf', 'exllama-v3_hf', 'exllama3-hf', 'exllama3_hf', 'exllama-3-hf', 'exllama_3_hf', 'exllama-3_hf']:
         return 'ExLlamav3_HF'
     elif name in ['exllamav3']:

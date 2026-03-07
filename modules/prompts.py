@@ -8,7 +8,7 @@ def load_prompt(fname):
     if not fname:
         # Create new file
         new_name = utils.current_time()
-        prompt_path = Path("user_data/logs/notebook") / f"{new_name}.txt"
+        prompt_path = shared.user_data_dir / "logs" / "notebook" / f"{new_name}.txt"
         prompt_path.parent.mkdir(parents=True, exist_ok=True)
         initial_content = "In this story,"
         prompt_path.write_text(initial_content, encoding='utf-8')
@@ -18,7 +18,7 @@ def load_prompt(fname):
 
         return initial_content
 
-    file_path = Path(f'user_data/logs/notebook/{fname}.txt')
+    file_path = shared.user_data_dir / 'logs' / 'notebook' / f'{fname}.txt'
     if file_path.exists():
         with open(file_path, 'r', encoding='utf-8') as f:
             text = f.read()
@@ -33,5 +33,5 @@ def count_tokens(text):
     try:
         tokens = get_encoded_length(text)
         return str(tokens)
-    except:
+    except Exception:
         return '0'

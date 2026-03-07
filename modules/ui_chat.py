@@ -19,7 +19,7 @@ def create_ui():
 
     shared.gradio['Chat input'] = gr.State()
     shared.gradio['history'] = gr.State({'internal': [], 'visible': [], 'metadata': {}})
-    shared.gradio['display'] = gr.JSON(value={}, visible=False)  # Hidden buffer
+    shared.gradio['display'] = gr.Headless(value={})
 
     with gr.Tab('Chat', elem_id='chat-tab'):
         with gr.Row(elem_id='past-chats-row', elem_classes=['pretty_scrollbar']):
@@ -137,6 +137,12 @@ def create_character_settings_ui():
                     shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=5, label='Greeting', elem_classes=['add_scrollbar'], elem_id="character-greeting")
 
                 with gr.Tab("User"):
+                    with gr.Row():
+                        shared.gradio['user_menu'] = gr.Dropdown(value=shared.settings['user'], choices=utils.get_available_users(), label='User', elem_id='user-menu', info='Select a user profile.', elem_classes='slim-dropdown')
+                        ui.create_refresh_button(shared.gradio['user_menu'], lambda: None, lambda: {'choices': utils.get_available_users()}, 'refresh-button', interactive=not mu)
+                        shared.gradio['save_user'] = gr.Button('💾', elem_classes='refresh-button', elem_id="save-user", interactive=not mu)
+                        shared.gradio['delete_user'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
+
                     shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Name')
                     shared.gradio['user_bio'] = gr.Textbox(value=shared.settings['user_bio'], lines=10, label='Description', info='Here you can optionally write a description of yourself.', placeholder='{{user}}\'s personality: ...', elem_classes=['add_scrollbar'], elem_id="user-description")
 
@@ -169,7 +175,7 @@ def create_character_settings_ui():
 
             with gr.Column(scale=1):
                 shared.gradio['character_picture'] = gr.Image(label='Character picture', type='filepath', interactive=not mu)
-                shared.gradio['your_picture'] = gr.Image(label='Your picture', type='filepath', value=Image.open(Path('user_data/cache/pfp_me.png')) if Path('user_data/cache/pfp_me.png').exists() else None, interactive=not mu)
+                shared.gradio['your_picture'] = gr.Image(label='Your picture', type='filepath', value=Image.open(shared.user_data_dir / 'cache' / 'pfp_me.png') if (shared.user_data_dir / 'cache' / 'pfp_me.png').exists() else None, interactive=not mu)
 
 
 def create_chat_settings_ui():
@@ -372,3 +378,11 @@ def create_event_handlers():
         gradio('enable_web_search'),
         gradio('web_search_row')
     )
+
+    # User menu event handlers
+    shared.gradio['user_menu'].change(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.handle_user_menu_change, gradio('interface_state'), gradio('name1', 'user_bio', 'your_picture'), show_progress=False)
+
+    shared.gradio['save_user'].click(chat.handle_save_user_click, gradio('name1'), gradio('save_user_filename', 'user_saver'), show_progress=False)
+    shared.gradio['delete_user'].click(lambda: gr.update(visible=True), None, gradio('user_deleter'), show_progress=False)

@@ -75,6 +75,8 @@ class LlamaServer:
             "top_p": state["top_p"],
             "min_p": state["min_p"],
             "top_n_sigma": state["top_n_sigma"] if state["top_n_sigma"] > 0 else -1,
+            "adaptive_target": state["adaptive_target"] if state["adaptive_target"] > 0 else -1,
+            "adaptive_decay": state["adaptive_decay"],
             "typical_p": state["typical_p"],
             "repeat_penalty": state["repetition_penalty"],
             "repeat_last_n": state["repetition_penalty_range"],
@@ -119,9 +121,15 @@ class LlamaServer:
                     penalty_found = True
 
             # Move temperature to the end if temperature_last is true and temperature exists in the list
-            if state["temperature_last"] and "temperature" in samplers:
-                samplers.remove("temperature")
-                samplers.append("temperature")
+            if state["temperature_last"] and "temperature" in filtered_samplers:
+                filtered_samplers.remove("temperature")
+                filtered_samplers.append("temperature")
+
+            # adaptive-p replaces the default dist sampler; llama.cpp always
+            # places it at the end of the chain regardless of position, so we
+            # activate it based on the parameter value rather than sampler order.
+            if state.get("adaptive_target", 0) > 0:
+                filtered_samplers.append("adaptive-p")
 
             payload["samplers"] = filtered_samplers
 
@@ -200,16 +208,18 @@ class LlamaServer:
         # Make the generation request
         response = self.session.post(url, json=payload, stream=True)
         try:
-            if response.status_code == 400 and response.json()["error"]["type"] == "exceed_context_size_error":
+            if response.status_code == 400 and response.json().get("error", {}).get("type") == "exceed_context_size_error":
                 logger.error("The request exceeds the available context size, try increasing it")
+                return
             else:
                 response.raise_for_status()  # Raise an exception for HTTP errors
 
             full_text = ""
 
             # Process the streaming response
+            stop_event = state.get('stop_event')
             for line in response.iter_lines():
-                if shared.stop_everything:
+                if shared.stop_everything or (stop_event and stop_event.is_set()):
                     break
 
                 if not line:
@@ -278,6 +288,8 @@ class LlamaServer:
                     return result["completion_probabilities"][0]["top_probs"]
                 else:
                     return result["completion_probabilities"][0]["top_logprobs"]
+
+            time.sleep(0.05)
         else:
             raise Exception(f"Unexpected response format: 'completion_probabilities' not found in {result}")
 
@@ -298,10 +310,24 @@ class LlamaServer:
         if "bos_token" in response:
             self.bos_token = response["bos_token"]
 
-    def _find_available_port(self):
-        """Find an available port by letting the OS assign one."""
+    def _is_port_available(self, port):
+        """Check if a port is available for use."""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('', 0))  # Bind to port 0 to get an available port
+            try:
+                s.bind(('', port))
+                return True
+            except OSError:
+                return False
+
+    def _find_available_port(self):
+        """Find an available port, preferring main port + 5."""
+        preferred_port = shared.args.api_port + 5
+        if self._is_port_available(preferred_port):
+            return preferred_port
+
+        # Fall back to OS-assigned random port
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('', 0))
             return s.getsockname()[1]
 
     def _start_server(self):
@@ -314,14 +340,22 @@ class LlamaServer:
         cmd = [
             self.server_path,
             "--model", self.model_path,
-            "--ctx-size", str(shared.args.ctx_size),
-            "--gpu-layers", str(shared.args.gpu_layers),
             "--batch-size", str(shared.args.batch_size),
             "--ubatch-size", str(shared.args.ubatch_size),
             "--port", str(self.port),
             "--no-webui",
             "--flash-attn", "on",
         ]
+
+        if shared.args.ctx_size > 0:
+            cmd += ["--ctx-size", str(shared.args.ctx_size)]
+
+        if shared.args.gpu_layers >= 0:
+            cmd += ["--gpu-layers", str(shared.args.gpu_layers), "--fit", "off"]
+        else:
+            cmd += ["--fit", "on"]
+            if shared.args.fit_target:
+                cmd += ["--fit-target", shared.args.fit_target]
 
         if shared.args.threads > 0:
             cmd += ["--threads", str(shared.args.threads)]
@@ -352,7 +386,7 @@ class LlamaServer:
         if shared.args.mmproj not in [None, 'None']:
             path = Path(shared.args.mmproj)
             if not path.exists():
-                path = Path('user_data/mmproj') / shared.args.mmproj
+                path = shared.user_data_dir / 'mmproj' / shared.args.mmproj
 
             if path.exists():
                 cmd += ["--mmproj", str(path)]
@@ -364,7 +398,7 @@ class LlamaServer:
             else:
                 model_file = sorted(path.glob('*.gguf'))[0]
 
-            cmd += ["--model-draft", model_file]
+            cmd += ["--model-draft", str(model_file)]
             if shared.args.draft_max > 0:
                 cmd += ["--draft-max", str(shared.args.draft_max)]
             if shared.args.gpu_layers_draft > 0:
@@ -373,6 +407,13 @@ class LlamaServer:
                 cmd += ["--device-draft", shared.args.device_draft]
             if shared.args.ctx_size_draft > 0:
                 cmd += ["--ctx-size-draft", str(shared.args.ctx_size_draft)]
+        if shared.args.spec_type != 'none':
+            cmd += ["--spec-type", shared.args.spec_type]
+            cmd += ["--draft-max", str(shared.args.draft_max)]
+            cmd += ["--spec-ngram-size-n", str(shared.args.spec_ngram_size_n)]
+            cmd += ["--spec-ngram-size-m", str(shared.args.spec_ngram_size_m)]
+            cmd += ["--spec-ngram-min-hits", str(shared.args.spec_ngram_min_hits)]
+        cmd += ["--parallel", str(shared.args.parallel)]
         if shared.args.streaming_llm:
             cmd += ["--cache-reuse", "1"]
             cmd += ["--swa-full"]
@@ -385,8 +426,11 @@ class LlamaServer:
                 extra_flags = extra_flags[1:-1].strip()
 
             for flag_item in extra_flags.split(','):
+                flag_item = flag_item.strip()
                 if '=' in flag_item:
                     flag, value = flag_item.split('=', 1)
+                    flag = flag.strip()
+                    value = value.strip()
                     if len(flag) <= 3:
                         cmd += [f"-{flag}", value]
                     else:
@@ -410,7 +454,9 @@ class LlamaServer:
             print(' '.join(str(item) for item in cmd[1:]))
             print()
 
-        logger.info(f"Using gpu_layers={shared.args.gpu_layers} | ctx_size={shared.args.ctx_size} | cache_type={cache_type}")
+        gpu_layers_str = "auto" if shared.args.gpu_layers < 0 else str(shared.args.gpu_layers)
+        ctx_size_str = "auto" if shared.args.ctx_size == 0 else str(shared.args.ctx_size)
+        logger.info(f"Using gpu_layers={gpu_layers_str} | ctx_size={ctx_size_str} | cache_type={cache_type}")
         # Start the server with pipes for output
         self.process = subprocess.Popen(
             cmd,
@@ -434,7 +480,7 @@ class LlamaServer:
                 response = self.session.get(health_url)
                 if response.status_code == 200:
                     break
-            except:
+            except Exception:
                 pass
 
             time.sleep(1)
@@ -464,6 +510,7 @@ class LlamaServer:
                 self.process.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 self.process.kill()
+                self.process.wait(timeout=5)
 
             self.process = None
 
@@ -474,6 +521,8 @@ def filter_stderr_with_progress(process_stderr):
     inline (overwriting the same line) until completion.
     """
     progress_re = re.compile(r'slot update_slots: id.*progress = (\d+\.\d+)')
+    ansi_re = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]')
+    log_prefix_re = re.compile(r'^[IWED] ')
     last_was_progress = False
 
     try:
@@ -492,6 +541,7 @@ def filter_stderr_with_progress(process_stderr):
                 line_bytes, buffer = buffer.split(b'\n', 1)
                 try:
                     line = line_bytes.decode('utf-8', errors='replace').strip('\r\n')
+                    line = log_prefix_re.sub('', ansi_re.sub('', line))
                     if line:  # Process non-empty lines
                         match = progress_re.search(line)
 
@@ -511,7 +561,7 @@ def filter_stderr_with_progress(process_stderr):
                             last_was_progress = (progress < 1.0)
 
                         # skip noise lines
-                        elif not (line.startswith(('srv ', 'slot ')) or 'log_server_r: request: GET /health' in line):
+                        elif not (line.startswith(('srv ', 'slot ')) or 'log_server_r: request: GET /health' in line or 'No parser definition detected' in line):
                             # if we were in progress, finish that line first
                             if last_was_progress:
                                 print(file=sys.stderr)
@@ -527,5 +577,5 @@ def filter_stderr_with_progress(process_stderr):
     finally:
         try:
             process_stderr.close()
-        except:
+        except Exception:
             pass

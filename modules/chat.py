@@ -32,7 +32,13 @@ from modules.text_generation import (
     get_encoded_length,
     get_max_prompt_length
 )
-from modules.utils import delete_file, get_available_characters, save_file
+from modules.utils import (
+    delete_file,
+    get_available_characters,
+    get_available_users,
+    sanitize_filename,
+    save_file
+)
 from modules.web_search import add_web_search_attachments
 
 
@@ -71,6 +77,18 @@ jinja_env = ImmutableSandboxedEnvironment(
 )
 jinja_env.globals["strftime_now"] = strftime_now
 
+_template_cache = {}
+
+
+def get_compiled_template(template_str):
+    """Cache compiled Jinja2 templates keyed by their source string."""
+    compiled = _template_cache.get(template_str)
+    if compiled is None:
+        compiled = jinja_env.from_string(template_str)
+        _template_cache[template_str] = compiled
+
+    return compiled
+
 
 def str_presenter(dumper, data):
     """
@@ -88,6 +106,50 @@ yaml.add_representer(str, str_presenter)
 yaml.representer.SafeRepresenter.add_representer(str, str_presenter)
 
 
+class _JsonDict(dict):
+    """A dict that serializes as JSON when used in string concatenation.
+
+    Some Jinja2 templates (Qwen, GLM) iterate arguments with .items(),
+    requiring a dict.  Others (DeepSeek) concatenate arguments as a
+    string, requiring JSON.  This class satisfies both.
+    """
+
+    def __str__(self):
+        return json.dumps(self, ensure_ascii=False)
+
+    def __add__(self, other):
+        return str(self) + other
+
+    def __radd__(self, other):
+        return other + str(self)
+
+
+def _deserialize_tool_call_arguments(tool_calls):
+    """Convert tool_call arguments from JSON strings to _JsonDict.
+
+    The OpenAI API spec sends arguments as a JSON string, but Jinja2
+    templates may need a dict (.items()) or a string (concatenation).
+    _JsonDict handles both transparently.
+    """
+    result = []
+    for tc in tool_calls:
+        tc = copy.copy(tc)
+        func = tc.get('function', {})
+        if isinstance(func, dict):
+            func = dict(func)
+            args = func.get('arguments')
+            if isinstance(args, str):
+                try:
+                    func['arguments'] = _JsonDict(json.loads(args))
+                except (json.JSONDecodeError, ValueError):
+                    pass
+            elif isinstance(args, dict) and not isinstance(args, _JsonDict):
+                func['arguments'] = _JsonDict(args)
+            tc['function'] = func
+        result.append(tc)
+    return result
+
+
 def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs.get('impersonate', False)
     _continue = kwargs.get('_continue', False)
@@ -101,8 +163,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
     if state['mode'] != 'instruct':
         chat_template_str = replace_character_names(chat_template_str, state['name1'], state['name2'])
 
-    instruction_template = jinja_env.from_string(state['instruction_template_str'])
-    chat_template = jinja_env.from_string(chat_template_str)
+    instruction_template = get_compiled_template(state['instruction_template_str'])
+    chat_template = get_compiled_template(chat_template_str)
 
     instruct_renderer = partial(
         instruction_template.render,
@@ -142,13 +204,20 @@ def generate_chat_prompt(user_input, state, **kwargs):
         user_msg = entry[0].strip()
         assistant_msg = entry[1].strip()
         tool_msg = entry[2].strip() if len(entry) > 2 else ''
+        entry_meta = entry[3] if len(entry) > 3 else {}
 
         row_idx = len(history) - i - 1
 
         if tool_msg:
-            messages.insert(insert_pos, {"role": "tool", "content": tool_msg})
+            tool_message = {"role": "tool", "content": tool_msg}
+            if "tool_call_id" in entry_meta:
+                tool_message["tool_call_id"] = entry_meta["tool_call_id"]
+            messages.insert(insert_pos, tool_message)
 
-        if assistant_msg:
+        if not assistant_msg and entry_meta.get('tool_calls'):
+            # Assistant message with only tool_calls and no text content
+            messages.insert(insert_pos, {"role": "assistant", "content": "", "tool_calls": _deserialize_tool_call_arguments(entry_meta['tool_calls'])})
+        elif assistant_msg:
             # Handle GPT-OSS as a special case
             if '<|channel|>analysis<|message|>' in assistant_msg or '<|channel|>final<|message|>' in assistant_msg:
                 thinking_content = ""
@@ -222,6 +291,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
             else:
                 # Default case (used by all other models)
                 messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
+
+            # Attach tool_calls metadata to the assistant message if present
+            if entry_meta.get('tool_calls') and messages[insert_pos].get('role') == 'assistant':
+                messages[insert_pos]['tool_calls'] = _deserialize_tool_call_arguments(entry_meta['tool_calls'])
 
         if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
             # Check for user message attachments in metadata
@@ -476,12 +549,12 @@ def get_stopping_strings(state):
     renderers = []
 
     if state['mode'] in ['instruct', 'chat-instruct']:
-        template = jinja_env.from_string(state['instruction_template_str'])
+        template = get_compiled_template(state['instruction_template_str'])
         renderer = partial(template.render, add_generation_prompt=False, bos_token=shared.bos_token, eos_token=shared.eos_token)
         renderers.append(renderer)
 
     if state['mode'] in ['chat']:
-        template = jinja_env.from_string(state['chat_template_str'])
+        template = get_compiled_template(state['chat_template_str'])
         renderer = partial(template.render, add_generation_prompt=False, name1=state['name1'], name2=state['name2'])
         renderers.append(renderer)
 
@@ -652,15 +725,13 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
 
 def extract_pdf_text(pdf_path):
     """Extract text from a PDF file"""
-    import PyPDF2
+    import pymupdf
 
     text = ""
     try:
-        with open(pdf_path, 'rb') as file:
-            pdf_reader = PyPDF2.PdfReader(file)
-            for page_num in range(len(pdf_reader.pages)):
-                page = pdf_reader.pages[page_num]
-                text += page.extract_text() + "\n\n"
+        with pymupdf.open(pdf_path) as doc:
+            for page in doc:
+                text += page.get_text() + "\n\n"
 
         return text.strip()
     except Exception as e:
@@ -897,7 +968,9 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         visible_reply = html.escape(visible_reply)
 
         if shared.stop_everything:
-            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+            if not state.get('_skip_output_extensions'):
+                output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+
             yield output
             return
 
@@ -930,9 +1003,11 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             full_visible = full_internal
 
         full_visible = html.escape(full_visible)
-        output['visible'][-1][1] = apply_extensions('output', full_visible, state, is_chat=True)
+        if not state.get('_skip_output_extensions'):
+            output['visible'][-1][1] = apply_extensions('output', full_visible, state, is_chat=True)
     else:
-        output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+        if not state.get('_skip_output_extensions'):
+            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
 
     # Final sync for version metadata (in case streaming was disabled)
     if regenerate:
@@ -1111,9 +1186,9 @@ def start_new_chat(state):
 
 def get_history_file_path(unique_id, character, mode):
     if mode == 'instruct':
-        p = Path(f'user_data/logs/instruct/{unique_id}.json')
+        p = shared.user_data_dir / 'logs' / 'instruct' / f'{unique_id}.json'
     else:
-        p = Path(f'user_data/logs/chat/{character}/{unique_id}.json')
+        p = shared.user_data_dir / 'logs' / 'chat' / character / f'{unique_id}.json'
 
     return p
 
@@ -1149,13 +1224,13 @@ def rename_history(old_id, new_id, character, mode):
 
 def get_paths(state):
     if state['mode'] == 'instruct':
-        return Path('user_data/logs/instruct').glob('*.json')
+        return (shared.user_data_dir / 'logs' / 'instruct').glob('*.json')
     else:
         character = state['character_menu']
 
         # Handle obsolete filenames and paths
-        old_p = Path(f'user_data/logs/{character}_persistent.json')
-        new_p = Path(f'user_data/logs/persistent_{character}.json')
+        old_p = shared.user_data_dir / 'logs' / f'{character}_persistent.json'
+        new_p = shared.user_data_dir / 'logs' / f'persistent_{character}.json'
         if old_p.exists():
             logger.warning(f"Renaming \"{old_p}\" to \"{new_p}\"")
             old_p.rename(new_p)
@@ -1167,7 +1242,7 @@ def get_paths(state):
             p.parent.mkdir(exist_ok=True)
             new_p.rename(p)
 
-        return Path(f'user_data/logs/chat/{character}').glob('*.json')
+        return (shared.user_data_dir / 'logs' / 'chat' / character).glob('*.json')
 
 
 def find_all_histories(state):
@@ -1292,12 +1367,12 @@ def get_chat_state_key(character, mode):
 
 def load_last_chat_state():
     """Load the last chat state from file"""
-    state_file = Path('user_data/logs/chat_state.json')
+    state_file = shared.user_data_dir / 'logs' / 'chat_state.json'
     if state_file.exists():
         try:
             with open(state_file, 'r', encoding='utf-8') as f:
                 return json.loads(f.read())
-        except:
+        except Exception:
             pass
 
     return {"last_chats": {}}
@@ -1312,7 +1387,7 @@ def save_last_chat_state(character, mode, unique_id):
     key = get_chat_state_key(character, mode)
     state["last_chats"][key] = unique_id
 
-    state_file = Path('user_data/logs/chat_state.json')
+    state_file = shared.user_data_dir / 'logs' / 'chat_state.json'
     state_file.parent.mkdir(exist_ok=True)
     with open(state_file, 'w', encoding='utf-8') as f:
         f.write(json.dumps(state, indent=2))
@@ -1369,7 +1444,7 @@ def load_history_json(file, history):
                     update_message_metadata(history['metadata'], "assistant", i, timestamp="")
 
         return history
-    except:
+    except Exception:
         return history
 
 
@@ -1388,7 +1463,7 @@ def generate_pfp_cache(character):
     if not cache_folder.exists():
         cache_folder.mkdir()
 
-    for path in [Path(f"user_data/characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
+    for path in [shared.user_data_dir / 'characters' / f"{character}.{extension}" for extension in ['png', 'jpg', 'jpeg']]:
         if path.exists():
             original_img = Image.open(path)
             # Define file paths
@@ -1413,12 +1488,12 @@ def load_character(character, name1, name2):
 
     filepath = None
     for extension in ["yml", "yaml", "json"]:
-        filepath = Path(f'user_data/characters/{character}.{extension}')
+        filepath = shared.user_data_dir / 'characters' / f'{character}.{extension}'
         if filepath.exists():
             break
 
     if filepath is None or not filepath.exists():
-        logger.error(f"Could not find the character \"{character}\" inside user_data/characters. No character has been loaded.")
+        logger.error(f"Could not find the character \"{character}\" inside {shared.user_data_dir}/characters. No character has been loaded.")
         raise ValueError
 
     file_contents = open(filepath, 'r', encoding='utf-8').read()
@@ -1494,7 +1569,7 @@ def load_instruction_template(template):
     if template == 'None':
         return ''
 
-    for filepath in [Path(f'user_data/instruction-templates/{template}.yaml'), Path('user_data/instruction-templates/Alpaca.yaml')]:
+    for filepath in [shared.user_data_dir / 'instruction-templates' / f'{template}.yaml', shared.user_data_dir / 'instruction-templates' / 'Alpaca.yaml']:
         if filepath.exists():
             break
     else:
@@ -1523,31 +1598,31 @@ def upload_character(file, img_path, tavern=False):
     decoded_file = file if isinstance(file, str) else file.decode('utf-8')
     try:
         data = json.loads(decoded_file)
-    except:
+    except Exception:
         data = yaml.safe_load(decoded_file)
 
     if 'char_name' in data:
-        name = data['char_name']
+        name = sanitize_filename(data['char_name'])
         greeting = data['char_greeting']
         context = build_pygmalion_style_context(data)
         yaml_data = generate_character_yaml(name, greeting, context)
     else:
-        name = data['name']
+        name = sanitize_filename(data['name'])
         yaml_data = generate_character_yaml(data['name'], data['greeting'], data['context'])
 
     outfile_name = name
     i = 1
-    while Path(f'user_data/characters/{outfile_name}.yaml').exists():
+    while (shared.user_data_dir / 'characters' / f'{outfile_name}.yaml').exists():
         outfile_name = f'{name}_{i:03d}'
         i += 1
 
-    with open(Path(f'user_data/characters/{outfile_name}.yaml'), 'w', encoding='utf-8') as f:
+    with open(shared.user_data_dir / 'characters' / f'{outfile_name}.yaml', 'w', encoding='utf-8') as f:
         f.write(yaml_data)
 
     if img is not None:
-        img.save(Path(f'user_data/characters/{outfile_name}.png'))
+        img.save(shared.user_data_dir / 'characters' / f'{outfile_name}.png')
 
-    logger.info(f'New character saved to "user_data/characters/{outfile_name}.yaml".')
+    logger.info(f'New character saved to "{shared.user_data_dir}/characters/{outfile_name}.yaml".')
     return gr.update(value=outfile_name, choices=get_available_characters())
 
 
@@ -1623,14 +1698,15 @@ def generate_instruction_template_yaml(instruction_template):
 
 
 def save_character(name, greeting, context, picture, filename):
+    filename = sanitize_filename(filename)
     if filename == "":
         logger.error("The filename is empty, so the character will not be saved.")
         return
 
     data = generate_character_yaml(name, greeting, context)
-    filepath = Path(f'user_data/characters/{filename}.yaml')
+    filepath = shared.user_data_dir / 'characters' / f'{filename}.yaml'
     save_file(filepath, data)
-    path_to_img = Path(f'user_data/characters/{filename}.png')
+    path_to_img = shared.user_data_dir / 'characters' / f'{filename}.png'
     if picture is not None:
         # Copy the image file from its source path to the character folder
         shutil.copy(picture, path_to_img)
@@ -1638,13 +1714,160 @@ def save_character(name, greeting, context, picture, filename):
 
 
 def delete_character(name, instruct=False):
+    name = sanitize_filename(name)
     # Check for character data files
     for extension in ["yml", "yaml", "json"]:
-        delete_file(Path(f'user_data/characters/{name}.{extension}'))
+        delete_file(shared.user_data_dir / 'characters' / f'{name}.{extension}')
 
     # Check for character image files
     for extension in ["png", "jpg", "jpeg"]:
-        delete_file(Path(f'user_data/characters/{name}.{extension}'))
+        delete_file(shared.user_data_dir / 'characters' / f'{name}.{extension}')
+
+
+def generate_user_pfp_cache(user):
+    """Generate cached profile picture for user"""
+    cache_folder = Path(shared.args.disk_cache_dir)
+    if not cache_folder.exists():
+        cache_folder.mkdir()
+
+    for path in [shared.user_data_dir / 'users' / f"{user}.{extension}" for extension in ['png', 'jpg', 'jpeg']]:
+        if path.exists():
+            original_img = Image.open(path)
+            # Define file paths
+            pfp_path = Path(f'{cache_folder}/pfp_me.png')
+
+            # Save thumbnail
+            thumb = make_thumbnail(original_img)
+            thumb.save(pfp_path, format='PNG')
+            logger.info(f'User profile picture cached to "{pfp_path}"')
+
+            return str(pfp_path)
+
+    return None
+
+
+def load_user(user_name, name1, user_bio):
+    """Load user profile from YAML file"""
+    picture = None
+
+    filepath = None
+    for extension in ["yml", "yaml", "json"]:
+        filepath = shared.user_data_dir / 'users' / f'{user_name}.{extension}'
+        if filepath.exists():
+            break
+
+    if filepath is None or not filepath.exists():
+        logger.error(f"Could not find the user \"{user_name}\" inside {shared.user_data_dir}/users. No user has been loaded.")
+        raise ValueError
+
+    with open(filepath, 'r', encoding='utf-8') as f:
+        file_contents = f.read()
+
+    extension = filepath.suffix[1:]  # Remove the leading dot
+    data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
+
+    # Clear existing user picture cache
+    cache_folder = Path(shared.args.disk_cache_dir)
+    pfp_path = Path(f"{cache_folder}/pfp_me.png")
+    if pfp_path.exists():
+        pfp_path.unlink()
+
+    # Generate new picture cache
+    picture = generate_user_pfp_cache(user_name)
+
+    # Get user name
+    if 'name' in data and data['name'] != '':
+        name1 = data['name']
+
+    # Get user bio
+    if 'user_bio' in data:
+        user_bio = data['user_bio']
+
+    return name1, user_bio, picture
+
+
+def generate_user_yaml(name, user_bio):
+    """Generate YAML content for user profile"""
+    data = {
+        'name': name,
+        'user_bio': user_bio,
+    }
+
+    return yaml.dump(data, sort_keys=False, width=float("inf"))
+
+
+def save_user(name, user_bio, picture, filename):
+    """Save user profile to YAML file"""
+    filename = sanitize_filename(filename)
+    if filename == "":
+        logger.error("The filename is empty, so the user will not be saved.")
+        return
+
+    # Ensure the users directory exists
+    users_dir = shared.user_data_dir / 'users'
+    users_dir.mkdir(parents=True, exist_ok=True)
+
+    data = generate_user_yaml(name, user_bio)
+    filepath = shared.user_data_dir / 'users' / f'{filename}.yaml'
+    save_file(filepath, data)
+
+    path_to_img = shared.user_data_dir / 'users' / f'{filename}.png'
+    if picture is not None:
+        # Copy the image file from its source path to the users folder
+        shutil.copy(picture, path_to_img)
+        logger.info(f'Saved user profile picture to {path_to_img}.')
+
+
+def delete_user(name):
+    """Delete user profile files"""
+    name = sanitize_filename(name)
+    # Check for user data files
+    for extension in ["yml", "yaml", "json"]:
+        delete_file(shared.user_data_dir / 'users' / f'{name}.{extension}')
+
+    # Check for user image files
+    for extension in ["png", "jpg", "jpeg"]:
+        delete_file(shared.user_data_dir / 'users' / f'{name}.{extension}')
+
+
+def update_user_menu_after_deletion(idx):
+    """Update user menu after a user is deleted"""
+    users = get_available_users()
+    if len(users) == 0:
+        # Create a default user if none exist
+        save_user('You', '', None, 'Default')
+        users = get_available_users()
+
+    idx = min(int(idx), len(users) - 1)
+    idx = max(0, idx)
+    return gr.update(choices=users, value=users[idx])
+
+
+def handle_user_menu_change(state):
+    """Handle user menu selection change"""
+    try:
+        name1, user_bio, picture = load_user(state['user_menu'], state['name1'], state['user_bio'])
+
+        return [
+            name1,
+            user_bio,
+            picture
+        ]
+    except Exception as e:
+        logger.error(f"Failed to load user '{state['user_menu']}': {e}")
+        return [
+            state['name1'],
+            state['user_bio'],
+            None
+        ]
+
+
+def handle_save_user_click(name1):
+    """Handle save user button click"""
+    return [
+        name1,
+        gr.update(visible=True)
+    ]
 
 
 def jinja_template_from_old_format(params, verbose=False):
@@ -2065,7 +2288,7 @@ def handle_save_template_click(instruction_template_str):
     contents = generate_instruction_template_yaml(instruction_template_str)
     return [
         "My Template.yaml",
-        "user_data/instruction-templates/",
+        str(shared.user_data_dir / 'instruction-templates') + '/',
         contents,
         gr.update(visible=True)
     ]
@@ -2074,7 +2297,7 @@ def handle_save_template_click(instruction_template_str):
 def handle_delete_template_click(template):
     return [
         f"{template}.yaml",
-        "user_data/instruction-templates/",
+        str(shared.user_data_dir / 'instruction-templates') + '/',
         gr.update(visible=False)
     ]
 

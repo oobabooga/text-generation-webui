@@ -1,3 +1,5 @@
+import queue
+import threading
 import traceback
 from pathlib import Path
 from typing import Any, List, Tuple
@@ -9,6 +11,7 @@ from exllamav3.cache import CacheLayer_fp16, CacheLayer_quant
 from exllamav3.generator import Job
 from exllamav3.generator.sampler import (
     CustomSampler,
+    SS_AdaptiveP,
     SS_Argmax,
     SS_MinP,
     SS_PresFreqP,
@@ -31,6 +34,55 @@ try:
 except Exception:
     logger.warning('Failed to load flash-attention due to the following error:\n')
     traceback.print_exc()
+
+
+class ConcurrentGenerator:
+    def __init__(self, generator):
+        self.generator = generator
+        self.lock = threading.Lock()
+        self.job_queues = {}
+        self.active = True
+        self.has_jobs = threading.Event()
+        self.thread = threading.Thread(target=self._iterate_loop, daemon=True)
+        self.thread.start()
+
+    def _iterate_loop(self):
+        while self.active:
+            self.has_jobs.wait(timeout=0.5)
+            with self.lock:
+                if not self.job_queues:
+                    self.has_jobs.clear()
+                    continue
+                results = self.generator.iterate()
+            for result in results:
+                job = result["job"]
+                q = self.job_queues.get(job)
+                if q:
+                    q.put(result)
+                    if result.get("eos"):
+                        self.job_queues.pop(job, None)
+            if not self.job_queues:
+                self.has_jobs.clear()
+
+    def submit(self, job) -> queue.Queue:
+        q = queue.Queue()
+        with self.lock:
+            self.job_queues[job] = q
+            self.generator.enqueue(job)
+        self.has_jobs.set()
+        return q
+
+    def cancel(self, job):
+        with self.lock:
+            if job in self.job_queues:
+                self.generator.cancel(job)
+                self.job_queues[job].put(None)
+                del self.job_queues[job]
+
+    def stop(self):
+        self.active = False
+        self.has_jobs.set()
+        self.thread.join(timeout=5)
 
 
 class Exllamav3Model:
@@ -58,7 +110,7 @@ class Exllamav3Model:
             logger.warning(f"max_num_tokens must be a multiple of 256. Adjusting from {max_tokens} to {adjusted_tokens}")
             max_tokens = adjusted_tokens
 
-        # Parse cache type (ExLlamaV2 pattern)
+        # Parse cache type
         cache_type = shared.args.cache_type.lower()
         cache_kwargs = {}
         if cache_type == 'fp16':
@@ -158,7 +210,7 @@ class Exllamav3Model:
             tokenizer=tokenizer,
             draft_model=draft_model,
             draft_cache=draft_cache,
-            num_speculative_tokens=shared.args.draft_max if draft_model is not None else 0,
+            num_draft_tokens=shared.args.draft_max if draft_model is not None else 0,
         )
 
         result = cls()
@@ -166,6 +218,7 @@ class Exllamav3Model:
         result.cache = cache
         result.tokenizer = tokenizer
         result.generator = generator
+        result.parallel_generator = ConcurrentGenerator(generator)
         result.config = config
         result.max_tokens = max_tokens
         result.vision_model = vision_model
@@ -286,10 +339,15 @@ class Exllamav3Model:
 
             # 3. Get the priority list and handle temperature_last
             default_priority = ['repetition_penalty', 'presence_frequency_penalty', 'top_k', 'top_p', 'min_p', 'temperature']
-            sampler_priority = state.get('sampler_priority') or default_priority
+            sampler_priority = list(state.get('sampler_priority') or default_priority)
 
             if state['temperature_last'] and 'temperature' in sampler_priority:
                 sampler_priority.append(sampler_priority.pop(sampler_priority.index('temperature')))
+
+            # The preset system uses separate 'presence_penalty' and
+            # 'frequency_penalty', but ExLlamaV3 has a single combined
+            # SS_PresFreqP sampler. Normalize to the combined name.
+            sampler_priority = ['presence_frequency_penalty' if x in ('presence_penalty', 'frequency_penalty') else x for x in sampler_priority]
 
             # 4. Sort the unordered list based on the priority list
             def custom_sort_key(sampler_obj):
@@ -302,7 +360,11 @@ class Exllamav3Model:
             ordered_samplers = sorted(unordered_samplers, key=custom_sort_key)
 
             # 5. Add the final sampling stage and build the sampler
-            ordered_samplers.append(SS_Sample())
+            if state.get('adaptive_target', 0) > 0:
+                ordered_samplers.append(SS_AdaptiveP(state['adaptive_target'], state['adaptive_decay']))
+            else:
+                ordered_samplers.append(SS_Sample())
+
             sampler = CustomSampler(ordered_samplers)
 
         # Encode prompt with embeddings (ExLlamaV3-specific)
@@ -329,37 +391,38 @@ class Exllamav3Model:
             if hasattr(self.tokenizer, 'eos_token_id') and self.tokenizer.eos_token_id is not None:
                 stop_conditions.append(self.tokenizer.eos_token_id)
 
+        seed = state.get('seed', -1)
         job = Job(
             input_ids=input_ids,
             max_new_tokens=max_new_tokens,
             decode_special_tokens=not state['skip_special_tokens'],
             embeddings=image_embeddings if image_embeddings else None,
             sampler=sampler,
+            seed=seed if seed >= 0 else None,
             stop_conditions=stop_conditions if stop_conditions else None,
         )
 
         # Stream generation
-        self.generator.enqueue(job)
-
         response_text = ""
+        stop_event = state.get('stop_event')
 
+        result_queue = self.parallel_generator.submit(job)
         try:
-            while self.generator.num_remaining_jobs():
-                if shared.stop_everything:
+            while True:
+                if shared.stop_everything or (stop_event and stop_event.is_set()):
                     break
-
-                results = self.generator.iterate()
-                for result in results:
-                    if "eos" in result and result["eos"]:
-                        break
-
-                    chunk = result.get("text", "")
-                    if chunk:
-                        response_text += chunk
-                        yield response_text
-
+                try:
+                    result = result_queue.get(timeout=0.1)
+                except queue.Empty:
+                    continue
+                if result is None or result.get("eos"):
+                    break
+                chunk = result.get("text", "")
+                if chunk:
+                    response_text += chunk
+                    yield response_text
         finally:
-            self.generator.clear_queue()
+            self.parallel_generator.cancel(job)
 
     def generate(self, prompt, state):
         output = ""
@@ -421,6 +484,13 @@ class Exllamav3Model:
 
     def unload(self):
         logger.info("Unloading ExLlamaV3 model components...")
+
+        if hasattr(self, 'parallel_generator') and self.parallel_generator is not None:
+            try:
+                self.parallel_generator.stop()
+            except Exception as e:
+                logger.warning(f"Error stopping parallel generator: {e}")
+            self.parallel_generator = None
 
         if hasattr(self, 'vision_model') and self.vision_model is not None:
             try:
