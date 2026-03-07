@@ -120,7 +120,7 @@ jobs:
                 PACKAGES_PATH="portable_env/Lib/site-packages"
                 rm start_linux.sh start_macos.sh
             elif [[ "$RUNNER_OS" == "macOS" ]]; then
-                if [[ "$OS_TYPE" == "macos-13" ]]; then
+                if [[ "$OS_TYPE" == "macos-15-intel" ]]; then
                     PLATFORM="macos-x86_64"
                     PYTHON_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20260303/cpython-3.13.12+20260303-x86_64-apple-darwin-install_only.tar.gz"
                     REQ_TYPE="apple_intel"
@@ -153,7 +153,7 @@ jobs:
 
             # Select requirements file based on platform
             if [[ "$RUNNER_OS" == "macOS" ]]; then
-                if [[ "$OS_TYPE" == "macos-13" ]]; then
+                if [[ "$OS_TYPE" == "macos-15-intel" ]]; then
                     REQ_FILE="requirements/portable/requirements_apple_intel.txt"
                 else
                     REQ_FILE="requirements/portable/requirements_apple_silicon.txt"
