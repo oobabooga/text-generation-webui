@@ -120,7 +120,7 @@ jobs:
                 PACKAGES_PATH="portable_env/Lib/site-packages"
                 rm start_linux.sh start_macos.sh
             elif [[ "$RUNNER_OS" == "macOS" ]]; then
-                if [[ "$OS_TYPE" == "macos-13" ]]; then
+                if [[ "$OS_TYPE" == "macos-15-intel" ]]; then
                     PLATFORM="macos-x86_64"
                     PYTHON_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20260303/cpython-3.13.12+20260303-x86_64-apple-darwin-install_only.tar.gz"
                     REQ_TYPE="apple_intel"
@@ -153,7 +153,7 @@ jobs:
 
             # Select requirements file based on platform
             if [[ "$RUNNER_OS" == "macOS" ]]; then
-                if [[ "$OS_TYPE" == "macos-13" ]]; then
+                if [[ "$OS_TYPE" == "macos-15-intel" ]]; then
                     REQ_FILE="requirements/portable/requirements_apple_intel.txt"
                 else
                     REQ_FILE="requirements/portable/requirements_apple_silicon.txt"
@@ -171,15 +171,16 @@ jobs:
             # 5. Clean up
             rm -rf .git cmd* update_wizard* Colab-TextGen-GPU.ipynb docker setup.cfg .github .gitignore requirements/ one_click.py
 
-            # 6. Create ZIP file
+            # 6. Create archive
             cd ..
-            ZIP_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}.zip"
-            echo "Creating archive: $ZIP_NAME"
-
             if [[ "$RUNNER_OS" == "Windows" ]]; then
-                powershell -Command "Compress-Archive -Path text-generation-webui-${VERSION_CLEAN} -DestinationPath $ZIP_NAME"
+                ARCHIVE_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}.zip"
+                echo "Creating archive: $ARCHIVE_NAME"
+                powershell -Command "Compress-Archive -Path text-generation-webui-${VERSION_CLEAN} -DestinationPath $ARCHIVE_NAME"
             else
-                zip -r "$ZIP_NAME" "text-generation-webui-${VERSION_CLEAN}"
+                ARCHIVE_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}.tar.gz"
+                echo "Creating archive: $ARCHIVE_NAME"
+                tar czf "$ARCHIVE_NAME" "text-generation-webui-${VERSION_CLEAN}"
             fi
 
       - name: Upload files to a GitHub release
@@ -188,7 +189,7 @@ jobs:
         continue-on-error: true
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ../textgen-portable-*.zip
+          file: ../textgen-portable-*
           tag: ${{ inputs.version }}
           file_glob: true
           make_latest: false

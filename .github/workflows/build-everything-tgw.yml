@@ -67,4 +67,4 @@ jobs:
     uses: ./.github/workflows/build-portable-release.yml
     with:
       version: ${{ inputs.version }}
-      config: 'os:macos-13,macos-14'
+      config: 'os:macos-15-intel,macos-14'
