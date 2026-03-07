@@ -415,7 +415,7 @@ def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type):
     an HTML string for the UI display.
     """
     if loader != 'llama.cpp' or model in ["None", None] or not model.endswith(".gguf") or gpu_layers < 0 or ctx_size == 0:
-        return "<div id=\"vram-info\"'>Estimated VRAM to load the model:</div>"
+        return f"<div id=\"vram-info\"'>Estimated VRAM to load the model: <span class=\"value\">auto</span></div>"
 
     vram_usage = estimate_vram(model, gpu_layers, ctx_size, cache_type)
     return f"<div id=\"vram-info\"'>Estimated VRAM to load the model: <span class=\"value\">{vram_usage:.0f} MiB</span></div>"
