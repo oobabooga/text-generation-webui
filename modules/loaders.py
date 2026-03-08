@@ -71,7 +71,6 @@ loaders_and_params = OrderedDict({
         'gpu_split',
         'model_draft',
         'draft_max',
-        'ctx_size_draft',
         'speculative_decoding_accordion',
         'enable_tp',
         'tp_backend',
