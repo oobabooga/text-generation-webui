@@ -53,7 +53,16 @@ class ConcurrentGenerator:
                 if not self.job_queues:
                     self.has_jobs.clear()
                     continue
-                results = self.generator.iterate()
+                try:
+                    results = self.generator.iterate()
+                except Exception:
+                    logger.error("Exception in ConcurrentGenerator iterate loop:\n" + traceback.format_exc())
+                    for q in self.job_queues.values():
+                        q.put(None)
+                    self.job_queues.clear()
+                    self.generator.clear_queue()
+                    self.has_jobs.clear()
+                    continue
             for result in results:
                 job = result["job"]
                 q = self.job_queues.get(job)
