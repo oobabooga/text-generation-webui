@@ -201,7 +201,7 @@ ln -s docker/{nvidia/Dockerfile,nvidia/docker-compose.yml,.dockerignore} .
 For AMD GPU:
 ln -s docker/{amd/Dockerfile,amd/docker-compose.yml,.dockerignore} .
 For Intel GPU:
-ln -s docker/{intel/Dockerfile,amd/docker-compose.yml,.dockerignore} .
+ln -s docker/{intel/Dockerfile,intel/docker-compose.yml,.dockerignore} .
 For CPU only
 ln -s docker/{cpu/Dockerfile,cpu/docker-compose.yml,.dockerignore} .
 cp docker/.env.example .env
@@ -365,7 +365,7 @@ Gradio:
 
 API:
   --api                                                Enable the API extension.
-  --public-api                                         Create a public URL for the API using Cloudfare.
+  --public-api                                         Create a public URL for the API using Cloudflare.
   --public-api-id PUBLIC_API_ID                        Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.
   --api-port API_PORT                                  The listening port for the API.
   --api-key API_KEY                                    API authentication key.

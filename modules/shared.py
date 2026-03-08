@@ -163,7 +163,7 @@ group.add_argument('--portable', action='store_true', help='Hide features not av
 # API
 group = parser.add_argument_group('API')
 group.add_argument('--api', action='store_true', help='Enable the API extension.')
-group.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
+group.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudflare.')
 group.add_argument('--public-api-id', type=str, help='Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.', default=None)
 group.add_argument('--api-port', type=int, default=5000, help='The listening port for the API.')
 group.add_argument('--api-key', type=str, default='', help='API authentication key.')
