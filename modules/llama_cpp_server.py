@@ -129,7 +129,7 @@ class LlamaServer:
             # places it at the end of the chain regardless of position, so we
             # activate it based on the parameter value rather than sampler order.
             if state.get("adaptive_target", 0) > 0:
-                filtered_samplers.append("adaptive-p")
+                filtered_samplers.append("adaptive_p")
 
             payload["samplers"] = filtered_samplers
 
