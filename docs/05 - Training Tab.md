@@ -4,7 +4,7 @@ A LoRA is tied to a specific model architecture — a LoRA trained on Llama 3 8B
 
 ### Quick Start
 
-1. Load your base model (no LoRAs loaded).
+1. Load your base model with the **Transformers** loader (no LoRAs loaded).
 2. Open the **Training** tab > **Train LoRA**.
 3. Pick a dataset and configure parameters (see [below](#parameters)).
 4. Click **Start LoRA Training** and monitor the [loss](#loss).
