@@ -119,10 +119,7 @@ def get_pytorch_install_command(gpu_choice):
     elif gpu_choice in ["APPLE", "NONE"]:
         return base_cmd + "--index-url https://download.pytorch.org/whl/cpu"
     elif gpu_choice == "INTEL":
-        if is_linux():
-            return "python -m pip install torch==2.1.0a0 intel-extension-for-pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
-        else:
-            return "python -m pip install torch==2.1.0a0 intel-extension-for-pytorch==2.1.10 --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
+        return base_cmd + "--index-url https://download.pytorch.org/whl/xpu"
     else:
         return base_cmd
 
@@ -138,8 +135,7 @@ def get_pytorch_update_command(gpu_choice):
     elif gpu_choice in ["APPLE", "NONE"]:
         return f"{base_cmd} --index-url https://download.pytorch.org/whl/cpu"
     elif gpu_choice == "INTEL":
-        intel_extension = "intel-extension-for-pytorch==2.1.10+xpu" if is_linux() else "intel-extension-for-pytorch==2.1.10"
-        return f"{base_cmd} {intel_extension} --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
+        return f"{base_cmd} --index-url https://download.pytorch.org/whl/xpu"
     else:
         return base_cmd
 
@@ -315,13 +311,6 @@ def install_webui():
     print_big_message("Installing PyTorch.")
     install_pytorch = get_pytorch_install_command(gpu_choice)
     run_cmd(f"conda install -y ninja git && {install_pytorch}", assert_success=True, environment=True)
-
-    if gpu_choice == "INTEL":
-        # Install oneAPI dependencies via conda
-        print_big_message("Installing Intel oneAPI runtime libraries.")
-        run_cmd("conda install -y -c https://software.repos.intel.com/python/conda/ -c conda-forge dpcpp-cpp-rt=2024.0 mkl-dpcpp=2024.0", environment=True)
-        # Install libuv required by Intel-patched torch
-        run_cmd("conda install -y libuv", environment=True)
 
     # Install the webui requirements
     update_requirements(initial_installation=True, pull=False)
