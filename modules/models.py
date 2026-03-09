@@ -1,10 +1,10 @@
 import sys
 import time
-from pathlib import Path
 
 import modules.shared as shared
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
+from modules.utils import resolve_model_path
 
 last_generation_time = time.time()
 
@@ -20,8 +20,6 @@ def load_model(model_name, loader=None):
         'Transformers': transformers_loader,
         'ExLlamav3_HF': ExLlamav3_HF_loader,
         'ExLlamav3': ExLlamav3_loader,
-        'ExLlamav2_HF': ExLlamav2_HF_loader,
-        'ExLlamav2': ExLlamav2_loader,
         'TensorRT-LLM': TensorRT_LLM_loader,
         'MLX': MLX_loader,
     }
@@ -46,18 +44,20 @@ def load_model(model_name, loader=None):
         model, tokenizer = output
     else:
         model = output
-        if model is None:
-            return None, None
-        else:
+        if model is not None:
             from modules.transformers_loader import load_tokenizer
             tokenizer = load_tokenizer(model_name)
 
+    if model is None:
+        return None, None
+
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
     if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt') or loader == 'llama.cpp' or loader == 'MLX':
-        shared.settings['truncation_length'] = shared.args.ctx_size
+        if shared.args.ctx_size > 0:
+            shared.settings['truncation_length'] = shared.args.ctx_size
 
     shared.is_multimodal = False
-    if loader.lower() in ('exllamav3', 'llama.cpp'):
+    if loader.lower() in ('exllamav3', 'llama.cpp') and hasattr(model, 'is_multimodal'):
         shared.is_multimodal = model.is_multimodal()
 
     logger.info(f"Loaded \"{model_name}\" in {(time.time()-t0):.2f} seconds.")
@@ -70,17 +70,24 @@ def load_model(model_name, loader=None):
 def llama_cpp_server_loader(model_name):
     from modules.llama_cpp_server import LlamaServer
 
-    path = Path(f'{shared.args.model_dir}/{model_name}')
+    path = resolve_model_path(model_name)
+
     if path.is_file():
         model_file = path
     else:
-        model_file = sorted(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0]
+        gguf_files = sorted(path.glob('*.gguf'))
+        if not gguf_files:
+            logger.error(f"No .gguf models found in the directory: {path}")
+            return None, None
+
+        model_file = gguf_files[0]
 
     try:
         model = LlamaServer(model_file)
         return model, model
     except Exception as e:
         logger.error(f"Error loading the model with llama.cpp: {str(e)}")
+        return None, None
 
 
 def transformers_loader(model_name):
@@ -97,21 +104,7 @@ def ExLlamav3_HF_loader(model_name):
 def ExLlamav3_loader(model_name):
     from modules.exllamav3 import Exllamav3Model
 
-    model = Exllamav3Model.from_pretrained(model_name)
-    tokenizer = model.tokenizer
-    return model, tokenizer
-
-
-def ExLlamav2_HF_loader(model_name):
-    from modules.exllamav2_hf import Exllamav2HF
-
-    return Exllamav2HF.from_pretrained(model_name)
-
-
-def ExLlamav2_loader(model_name):
-    from modules.exllamav2 import Exllamav2Model
-
-    model, tokenizer = Exllamav2Model.from_pretrained(model_name)
+    model, tokenizer = Exllamav3Model.from_pretrained(model_name)
     return model, tokenizer
 
 
@@ -122,7 +115,7 @@ def TensorRT_LLM_loader(model_name):
         raise ModuleNotFoundError("Failed to import 'tensorrt_llm'. Please install it manually following the instructions in the TensorRT-LLM GitHub repository.")
 
     model = TensorRTLLMModel.from_pretrained(model_name)
-    return model
+    return model, model.tokenizer
 
 
 def MLX_loader(model_name):
@@ -145,11 +138,11 @@ def unload_model(keep_model_name=False):
     model_class_name = shared.model.__class__.__name__
     is_llamacpp = (model_class_name == 'LlamaServer')
 
-    if model_class_name in ['Exllamav3Model', 'Exllamav3HF']:
+    if model_class_name in ['Exllamav3Model', 'Exllamav3HF', 'TensorRTLLMModel']:
         shared.model.unload()
-    elif model_class_name in ['Exllamav2Model', 'Exllamav2HF'] and hasattr(shared.model, 'unload'):
-        shared.model.unload()
-    elif shared.model.__class__.__name__ == 'MLXModel':
+    elif model_class_name == 'LlamaServer':
+        shared.model.stop()
+    elif model_class_name == 'MLXModel':
         shared.model.unload()
 
     shared.model = shared.tokenizer = None

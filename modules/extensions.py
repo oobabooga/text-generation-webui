@@ -1,4 +1,6 @@
 import importlib
+import importlib.util
+import sys
 import traceback
 from functools import partial
 from inspect import signature
@@ -38,9 +40,15 @@ def load_extensions():
 
         try:
             # Prefer user extension, fall back to system extension
-            user_script_path = Path(f'user_data/extensions/{name}/script.py')
+            user_script_path = shared.user_data_dir / 'extensions' / name / 'script.py'
             if user_script_path.exists():
-                extension = importlib.import_module(f"user_data.extensions.{name}.script")
+                spec = importlib.util.spec_from_file_location(
+                    f"user_ext_{name}",
+                    str(user_script_path)
+                )
+                extension = importlib.util.module_from_spec(spec)
+                sys.modules[spec.name] = extension
+                spec.loader.exec_module(extension)
             else:
                 extension = importlib.import_module(f"extensions.{name}.script")
 
@@ -53,7 +61,7 @@ def load_extensions():
             state[name] = [True, i, extension]  # Store extension object
 
         except ModuleNotFoundError:
-            extension_location = Path('user_data/extensions') / name if user_script_path.exists() else Path('extensions') / name
+            extension_location = shared.user_data_dir / 'extensions' / name if user_script_path.exists() else Path('extensions') / name
             windows_path = str(extension_location).replace('/', '\\')
             logger.error(
                 f"Could not import the requirements for '{name}'. Make sure to install the requirements for the extension.\n\n"

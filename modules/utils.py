@@ -15,16 +15,35 @@ def gradio(*keys):
     return [shared.gradio[k] for k in keys]
 
 
+def sanitize_filename(name):
+    """Strip path traversal components from a filename.
+
+    Returns only the final path component with leading dots removed,
+    preventing directory traversal via '../' or absolute paths.
+    """
+    name = Path(name).name  # drop all directory components
+    name = name.lstrip('.')  # remove leading dots
+    return name
+
+
+def _is_path_allowed(abs_path_str):
+    """Check if a path is under the configured user_data directory."""
+    abs_path = Path(abs_path_str).resolve()
+    user_data_resolved = shared.user_data_dir.resolve()
+    try:
+        abs_path.relative_to(user_data_resolved)
+        return True
+    except ValueError:
+        return False
+
+
 def save_file(fname, contents):
     if fname == '':
         logger.error('File name is empty!')
         return
 
-    root_folder = Path(__file__).resolve().parent.parent
     abs_path_str = os.path.abspath(fname)
-    rel_path_str = os.path.relpath(abs_path_str, root_folder)
-    rel_path = Path(rel_path_str)
-    if rel_path.parts[0] == '..':
+    if not _is_path_allowed(abs_path_str):
         logger.error(f'Invalid file path: \"{fname}\"')
         return
 
@@ -39,16 +58,14 @@ def delete_file(fname):
         logger.error('File name is empty!')
         return
 
-    root_folder = Path(__file__).resolve().parent.parent
     abs_path_str = os.path.abspath(fname)
-    rel_path_str = os.path.relpath(abs_path_str, root_folder)
-    rel_path = Path(rel_path_str)
-    if rel_path.parts[0] == '..':
+    if not _is_path_allowed(abs_path_str):
         logger.error(f'Invalid file path: \"{fname}\"')
         return
 
-    if rel_path.exists():
-        rel_path.unlink()
+    p = Path(abs_path_str)
+    if p.exists():
+        p.unlink()
         logger.info(f'Deleted \"{fname}\".')
 
 
@@ -75,7 +92,7 @@ def natural_keys(text):
 def check_model_loaded():
     if shared.model_name == 'None' or shared.model is None:
         if len(get_available_models()) == 0:
-            error_msg = "No model is loaded.\n\nTo get started:\n1) Place a GGUF file in your user_data/models folder\n2) Go to the Model tab and select it"
+            error_msg = f"No model is loaded.\n\nTo get started:\n1) Place a GGUF file in your {shared.user_data_dir}/models folder\n2) Go to the Model tab and select it"
             logger.error(error_msg)
             return False, error_msg
         else:
@@ -84,6 +101,21 @@ def check_model_loaded():
             return False, error_msg
 
     return True, None
+
+
+def resolve_model_path(model_name_or_path, image_model=False):
+    """
+    Resolves a model path, checking for a direct path
+    before the default models directory.
+    """
+
+    path_candidate = Path(model_name_or_path)
+    if path_candidate.exists():
+        return path_candidate
+    elif image_model:
+        return Path(f'{shared.args.image_model_dir}/{model_name_or_path}')
+    else:
+        return Path(f'{shared.args.model_dir}/{model_name_or_path}')
 
 
 def get_available_models():
@@ -140,6 +172,24 @@ def get_available_models():
     return filtered_gguf_files + model_dirs
 
 
+def get_available_image_models():
+    model_dir = Path(shared.args.image_model_dir)
+    model_dir.mkdir(parents=True, exist_ok=True)
+
+    # Find valid model directories
+    model_dirs = []
+    for item in os.listdir(model_dir):
+        item_path = model_dir / item
+        if not item_path.is_dir():
+            continue
+
+        model_dirs.append(item)
+
+    model_dirs = sorted(model_dirs, key=natural_keys)
+
+    return model_dirs
+
+
 def get_available_ggufs():
     model_list = []
     model_dir = Path(shared.args.model_dir)
@@ -155,7 +205,7 @@ def get_available_ggufs():
 
 
 def get_available_mmproj():
-    mmproj_dir = Path('user_data/mmproj')
+    mmproj_dir = shared.user_data_dir / 'mmproj'
     if not mmproj_dir.exists():
         return ['None']
 
@@ -168,26 +218,39 @@ def get_available_mmproj():
 
 
 def get_available_presets():
-    return sorted(set((k.stem for k in Path('user_data/presets').glob('*.yaml'))), key=natural_keys)
+    return sorted(set((k.stem for k in (shared.user_data_dir / 'presets').glob('*.yaml'))), key=natural_keys)
 
 
 def get_available_prompts():
-    notebook_dir = Path('user_data/logs/notebook')
+    notebook_dir = shared.user_data_dir / 'logs' / 'notebook'
     notebook_dir.mkdir(parents=True, exist_ok=True)
 
     prompt_files = list(notebook_dir.glob('*.txt'))
+    if not prompt_files:
+        new_name = current_time()
+        new_path = notebook_dir / f"{new_name}.txt"
+        new_path.write_text("In this story,", encoding='utf-8')
+        prompt_files = [new_path]
+
     sorted_files = sorted(prompt_files, key=lambda x: x.stat().st_mtime, reverse=True)
     prompts = [file.stem for file in sorted_files]
     return prompts
 
 
 def get_available_characters():
-    paths = (x for x in Path('user_data/characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
+    paths = (x for x in (shared.user_data_dir / 'characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
+    return sorted(set((k.stem for k in paths)), key=natural_keys)
+
+
+def get_available_users():
+    users_dir = shared.user_data_dir / 'users'
+    users_dir.mkdir(parents=True, exist_ok=True)
+    paths = (x for x in users_dir.iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
     return sorted(set((k.stem for k in paths)), key=natural_keys)
 
 
 def get_available_instruction_templates():
-    path = "user_data/instruction-templates"
+    path = str(shared.user_data_dir / "instruction-templates")
     paths = []
     if os.path.exists(path):
         paths = (x for x in Path(path).iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
@@ -198,13 +261,13 @@ def get_available_instruction_templates():
 def get_available_extensions():
     # User extensions (higher priority)
     user_extensions = []
-    user_ext_path = Path('user_data/extensions')
+    user_ext_path = shared.user_data_dir / 'extensions'
     if user_ext_path.exists():
-        user_exts = map(lambda x: x.parts[2], user_ext_path.glob('*/script.py'))
+        user_exts = map(lambda x: x.parent.name, user_ext_path.glob('*/script.py'))
         user_extensions = sorted(set(user_exts), key=natural_keys)
 
     # System extensions (excluding those overridden by user extensions)
-    system_exts = map(lambda x: x.parts[1], Path('extensions').glob('*/script.py'))
+    system_exts = map(lambda x: x.parent.name, Path('extensions').glob('*/script.py'))
     system_extensions = sorted(set(system_exts) - set(user_extensions), key=natural_keys)
 
     return user_extensions + system_extensions
@@ -222,9 +285,69 @@ def get_datasets(path: str, ext: str):
     return ['None'] + sorted(set([k.stem for k in Path(path).glob(f'*.{ext}') if k.stem != 'put-trainer-datasets-here']), key=natural_keys)
 
 
+def get_chat_datasets(path: str):
+    """List JSON datasets that contain chat conversations (messages or ShareGPT format)."""
+    return ['None'] + sorted(set([k.stem for k in Path(path).glob('*.json') if k.stem != 'put-trainer-datasets-here' and _is_chat_dataset(k)]), key=natural_keys)
+
+
+def get_text_datasets(path: str):
+    """List JSON datasets that contain raw text ({"text": ...} format)."""
+    return ['None'] + sorted(set([k.stem for k in Path(path).glob('*.json') if k.stem != 'put-trainer-datasets-here' and _is_text_dataset(k)]), key=natural_keys)
+
+
+def _peek_json_keys(filepath):
+    """Read the first object in a JSON array file and return its keys."""
+    import json
+    decoder = json.JSONDecoder()
+    WS = ' \t\n\r'
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            buf = ''
+            obj_start = None
+            while len(buf) < 1 << 20:  # Read up to 1MB
+                chunk = f.read(8192)
+                if not chunk:
+                    break
+                buf += chunk
+                if obj_start is None:
+                    idx = 0
+                    while idx < len(buf) and buf[idx] in WS:
+                        idx += 1
+                    if idx >= len(buf):
+                        continue
+                    if buf[idx] != '[':
+                        return set()
+                    idx += 1
+                    while idx < len(buf) and buf[idx] in WS:
+                        idx += 1
+                    if idx >= len(buf):
+                        continue
+                    obj_start = idx
+                try:
+                    obj, _ = decoder.raw_decode(buf, obj_start)
+                    if isinstance(obj, dict):
+                        return set(obj.keys())
+                    return set()
+                except json.JSONDecodeError:
+                    continue
+    except Exception:
+        pass
+    return set()
+
+
+def _is_chat_dataset(filepath):
+    keys = _peek_json_keys(filepath)
+    return bool(keys & {'messages', 'conversations'})
+
+
+def _is_text_dataset(filepath):
+    keys = _peek_json_keys(filepath)
+    return 'text' in keys
+
+
 def get_available_chat_styles():
     return sorted(set(('-'.join(k.stem.split('-')[1:]) for k in Path('css').glob('chat_style*.css'))), key=natural_keys)
 
 
 def get_available_grammars():
-    return ['None'] + sorted([item.name for item in list(Path('user_data/grammars').glob('*.gbnf'))], key=natural_keys)
+    return ['None'] + sorted([item.name for item in list((shared.user_data_dir / 'grammars').glob('*.gbnf'))], key=natural_keys)

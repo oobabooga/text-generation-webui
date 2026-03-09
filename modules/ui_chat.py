@@ -19,7 +19,7 @@ def create_ui():
 
     shared.gradio['Chat input'] = gr.State()
     shared.gradio['history'] = gr.State({'internal': [], 'visible': [], 'metadata': {}})
-    shared.gradio['display'] = gr.JSON(value={}, visible=False)  # Hidden buffer
+    shared.gradio['display'] = gr.Headless(value={})
 
     with gr.Tab('Chat', elem_id='chat-tab'):
         with gr.Row(elem_id='past-chats-row', elem_classes=['pretty_scrollbar']):
@@ -78,21 +78,21 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'], elem_classes=['add_scrollbar'])
 
-                gr.HTML("<div style='margin: 0; border-bottom: 1px solid rgba(255,255,255,0.1);'></div>")
+                gr.HTML("<div class='sidebar-vertical-separator'></div>")
 
                 shared.gradio['reasoning_effort'] = gr.Dropdown(value=shared.settings['reasoning_effort'], choices=['low', 'medium', 'high'], label='Reasoning effort', info='Used by GPT-OSS.')
-                shared.gradio['enable_thinking'] = gr.Checkbox(value=shared.settings['enable_thinking'], label='Enable thinking', info='Used by pre-2507 Qwen3.')
+                shared.gradio['enable_thinking'] = gr.Checkbox(value=shared.settings['enable_thinking'], label='Enable thinking', info='Used by Seed-OSS and pre-2507 Qwen3.')
 
-                gr.HTML("<div style='margin: 0; border-bottom: 1px solid rgba(255,255,255,0.1);'></div>")
+                gr.HTML("<div class='sidebar-vertical-separator'></div>")
 
                 shared.gradio['enable_web_search'] = gr.Checkbox(value=shared.settings.get('enable_web_search', False), label='Activate web search', elem_id='web-search')
                 with gr.Row(visible=shared.settings.get('enable_web_search', False)) as shared.gradio['web_search_row']:
                     shared.gradio['web_search_pages'] = gr.Number(value=shared.settings.get('web_search_pages', 3), precision=0, label='Number of pages to download', minimum=1, maximum=10)
 
-                gr.HTML("<div style='margin: 0; border-bottom: 1px solid rgba(255,255,255,0.1);'></div>")
+                gr.HTML("<div class='sidebar-vertical-separator'></div>")
 
                 with gr.Row():
-                    shared.gradio['mode'] = gr.Radio(choices=['instruct', 'chat-instruct', 'chat'], value=None, label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template Parameters > Instruction template is used.', elem_id='chat-mode')
+                    shared.gradio['mode'] = gr.Radio(choices=['instruct', 'chat-instruct', 'chat'], value=None, label='Mode', info='In instruct and chat-instruct modes, the template under Parameters > Instruction template is used.', elem_id='chat-mode')
 
                 with gr.Row():
                     shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
@@ -100,7 +100,7 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=12, label='Command for chat-instruct mode', info='<|character|> and <|prompt|> get replaced with the bot name and the regular chat prompt respectively.', visible=shared.settings['mode'] == 'chat-instruct', elem_classes=['add_scrollbar'])
 
-                gr.HTML("<div style='margin: 0; border-bottom: 1px solid rgba(255,255,255,0.1);'></div>")
+                gr.HTML("<div class='sidebar-vertical-separator'></div>")
 
                 with gr.Row():
                     shared.gradio['count_tokens'] = gr.Button('Count tokens', size='sm')
@@ -137,6 +137,12 @@ def create_character_settings_ui():
                     shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=5, label='Greeting', elem_classes=['add_scrollbar'], elem_id="character-greeting")
 
                 with gr.Tab("User"):
+                    with gr.Row():
+                        shared.gradio['user_menu'] = gr.Dropdown(value=shared.settings['user'], choices=utils.get_available_users(), label='User', elem_id='user-menu', info='Select a user profile.', elem_classes='slim-dropdown')
+                        ui.create_refresh_button(shared.gradio['user_menu'], lambda: None, lambda: {'choices': utils.get_available_users()}, 'refresh-button', interactive=not mu)
+                        shared.gradio['save_user'] = gr.Button('💾', elem_classes='refresh-button', elem_id="save-user", interactive=not mu)
+                        shared.gradio['delete_user'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
+
                     shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Name')
                     shared.gradio['user_bio'] = gr.Textbox(value=shared.settings['user_bio'], lines=10, label='Description', info='Here you can optionally write a description of yourself.', placeholder='{{user}}\'s personality: ...', elem_classes=['add_scrollbar'], elem_id="user-description")
 
@@ -152,14 +158,14 @@ def create_character_settings_ui():
                     with gr.Tab('YAML or JSON'):
                         with gr.Row():
                             shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json', '.yaml'], label='JSON or YAML File', interactive=not mu)
-                            shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='Profile Picture (optional)', interactive=not mu)
+                            shared.gradio['upload_img_bot'] = gr.Image(type='filepath', label='Profile Picture (optional)', interactive=not mu)
 
                         shared.gradio['Submit character'] = gr.Button(value='Submit', interactive=False)
 
                     with gr.Tab('TavernAI PNG'):
                         with gr.Row():
                             with gr.Column():
-                                shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG File', elem_id='upload_img_tavern', interactive=not mu)
+                                shared.gradio['upload_img_tavern'] = gr.Image(type='filepath', label='TavernAI PNG File', elem_id='upload_img_tavern', interactive=not mu)
                                 shared.gradio['tavern_json'] = gr.State()
                             with gr.Column():
                                 shared.gradio['tavern_name'] = gr.Textbox(value='', lines=1, label='Name', interactive=False)
@@ -168,8 +174,8 @@ def create_character_settings_ui():
                         shared.gradio['Submit tavern character'] = gr.Button(value='Submit', interactive=False)
 
             with gr.Column(scale=1):
-                shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil', interactive=not mu)
-                shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('user_data/cache/pfp_me.png')) if Path('user_data/cache/pfp_me.png').exists() else None, interactive=not mu)
+                shared.gradio['character_picture'] = gr.Image(label='Character picture', type='filepath', interactive=not mu)
+                shared.gradio['your_picture'] = gr.Image(label='Your picture', type='filepath', value=Image.open(shared.user_data_dir / 'cache' / 'pfp_me.png') if (shared.user_data_dir / 'cache' / 'pfp_me.png').exists() else None, interactive=not mu)
 
 
 def create_chat_settings_ui():
@@ -372,3 +378,11 @@ def create_event_handlers():
         gradio('enable_web_search'),
         gradio('web_search_row')
     )
+
+    # User menu event handlers
+    shared.gradio['user_menu'].change(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.handle_user_menu_change, gradio('interface_state'), gradio('name1', 'user_bio', 'your_picture'), show_progress=False)
+
+    shared.gradio['save_user'].click(chat.handle_save_user_click, gradio('name1'), gradio('save_user_filename', 'user_saver'), show_progress=False)
+    shared.gradio['delete_user'].click(lambda: gr.update(visible=True), None, gradio('user_deleter'), show_progress=False)

@@ -24,6 +24,8 @@ from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, RequestException, Timeout
 from tqdm.contrib.concurrent import thread_map
 
+from modules.paths import resolve_user_data_dir
+
 base = os.environ.get("HF_ENDPOINT") or "https://huggingface.co"
 
 
@@ -182,11 +184,13 @@ class ModelDownloader:
         is_llamacpp = has_gguf and specific_file is not None
         return links, sha256, is_lora, is_llamacpp, file_sizes
 
-    def get_output_folder(self, model, branch, is_lora, is_llamacpp=False, model_dir=None):
+    def get_output_folder(self, model, branch, is_lora, is_llamacpp=False, model_dir=None, user_data_dir=None):
         if model_dir:
             base_folder = model_dir
         else:
-            base_folder = 'user_data/models' if not is_lora else 'user_data/loras'
+            if user_data_dir is None:
+                user_data_dir = resolve_user_data_dir()
+            base_folder = str(user_data_dir / 'models') if not is_lora else str(user_data_dir / 'loras')
 
         # If the model is of type GGUF, save directly in the base_folder
         if is_llamacpp:
@@ -242,9 +246,19 @@ class ModelDownloader:
                 try:
                     if output_path.exists() and not start_from_scratch:
                         current_file_size_on_disk = output_path.stat().st_size
-                        r_head = session.head(url, timeout=20)
-                        r_head.raise_for_status()
-                        total_size = int(r_head.headers.get('content-length', 0))
+
+                        # Make a HEAD request without following redirects to get metadata first
+                        r_head = session.head(url, timeout=20, allow_redirects=True)
+                        r_head.raise_for_status()  # Will raise an error for 4xx or 5xx status codes
+
+                        # Check for the new 'x-linked-size' header from Hugging Face
+                        if 'x-linked-size' in r_head.headers:
+                            total_size = int(r_head.headers['x-linked-size'])
+                        # Fallback to the old 'content-length' just in case
+                        elif 'content-length' in r_head.headers:
+                            total_size = int(r_head.headers.get('content-length', 0))
+                        else:
+                            total_size = 0
 
                         if current_file_size_on_disk >= total_size and total_size > 0:
                             if self.progress_queue is not None and total_size > 0:
@@ -382,7 +396,8 @@ if __name__ == '__main__':
     parser.add_argument('--specific-file', type=str, default=None, help='Name of the specific file to download (if not provided, downloads all).')
     parser.add_argument('--exclude-pattern', type=str, default=None, help='Regex pattern to exclude files from download.')
     parser.add_argument('--output', type=str, default=None, help='Save the model files to this folder.')
-    parser.add_argument('--model-dir', type=str, default=None, help='Save the model files to a subfolder of this folder instead of the default one (text-generation-webui/user_data/models).')
+    parser.add_argument('--model-dir', type=str, default=None, help='Save the model files to a subfolder of this folder instead of the default one (user_data/models).')
+    parser.add_argument('--user-data-dir', type=str, default=None, help='Path to the user data directory. Overrides auto-detection.')
     parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
     parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
     parser.add_argument('--max-retries', type=int, default=7, help='Max retries count when get error in download time.')
@@ -398,6 +413,26 @@ if __name__ == '__main__':
         sys.exit()
 
     downloader = ModelDownloader(max_retries=args.max_retries)
+
+    # Handle direct file URLs (e.g. https://huggingface.co/org/repo/resolve/branch/file.gguf)
+    if '/resolve/' in model:
+        url = model if model.startswith('http') else f'{base}/{model}'
+        url = url.split('?')[0]
+        filename = url.split('/')[-1]
+
+        if args.output:
+            output_folder = Path(args.output)
+        elif args.model_dir:
+            output_folder = Path(args.model_dir)
+        else:
+            user_data_dir = Path(args.user_data_dir) if args.user_data_dir else resolve_user_data_dir()
+            output_folder = user_data_dir / 'models'
+
+        output_folder.mkdir(parents=True, exist_ok=True)
+        print(f"Downloading {filename} to {output_folder}")
+        downloader.get_single_file(url, output_folder, start_from_scratch=args.clean)
+        sys.exit()
+
     # Clean up the model/branch names
     try:
         model, branch = downloader.sanitize_model_and_branch_names(model, branch)
@@ -411,10 +446,11 @@ if __name__ == '__main__':
     )
 
     # Get the output folder
+    user_data_dir = Path(args.user_data_dir) if args.user_data_dir else None
     if args.output:
         output_folder = Path(args.output)
     else:
-        output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp, model_dir=args.model_dir)
+        output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp, model_dir=args.model_dir, user_data_dir=user_data_dir)
 
     if args.check:
         # Check previously downloaded files

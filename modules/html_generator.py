@@ -108,116 +108,134 @@ def replace_blockquote(m):
     return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
 
+# Thinking block format definitions: (start_tag, end_tag, content_start_tag)
+# Use None for start_tag to match from beginning (end-only formats should be listed last)
+THINKING_FORMATS = [
+    ('<think>', '</think>', None),
+    ('<|channel|>analysis<|message|>', '<|end|>', '<|start|>assistant<|channel|>final<|message|>'),
+    ('<seed:think>', '</seed:think>', None),
+    ('<|think|>', '<|end|>', '<|content|>'),  # Solar Open
+    ('Thinking Process:', '</think>', None),  # Qwen3.5 verbose thinking outside tags
+    (None, '</think>', None),  # End-only variant (e.g., Qwen3-next)
+]
+
+
 def extract_thinking_block(string):
     """Extract thinking blocks from the beginning of a string."""
     if not string:
         return None, string
 
-    THINK_START_TAG = "&lt;think&gt;"
-    THINK_END_TAG = "&lt;/think&gt;"
+    for start_tag, end_tag, content_tag in THINKING_FORMATS:
+        end_esc = html.escape(end_tag)
+        content_esc = html.escape(content_tag) if content_tag else None
 
-    # Look for think tag first
-    start_pos = string.find(THINK_START_TAG)
-    end_pos = string.find(THINK_END_TAG)
-
-    # If think tags found, use existing logic
-    if start_pos != -1 or end_pos != -1:
-        # handle missing start or end tags
-        if start_pos == -1:
+        if start_tag is None:
+            # End-only format: require end tag, start from beginning
+            end_pos = string.find(end_esc)
+            if end_pos == -1:
+                continue
             thought_start = 0
         else:
-            thought_start = start_pos + len(THINK_START_TAG)
+            # Normal format: require start tag
+            start_esc = html.escape(start_tag)
+            start_pos = string.find(start_esc)
+            if start_pos == -1:
+                continue
+            thought_start = start_pos + len(start_esc)
+            end_pos = string.find(end_esc, thought_start)
+
         if end_pos == -1:
-            thought_end = len(string)
-            content_start = len(string)
-        else:
-            thought_end = end_pos
-            content_start = end_pos + len(THINK_END_TAG)
-        thinking_content = string[thought_start:thought_end]
-        remaining_content = string[content_start:]
-        return thinking_content, remaining_content
-
-    # If think tags not found, try alternative format
-    ALT_START = "&lt;|channel|&gt;analysis&lt;|message|&gt;"
-    ALT_END = "&lt;|end|&gt;"
-    ALT_CONTENT_START = "&lt;|start|&gt;assistant&lt;|channel|&gt;final&lt;|message|&gt;"
-
-    alt_start_pos = string.find(ALT_START)
-    alt_end_pos = string.find(ALT_END)
-    alt_content_pos = string.find(ALT_CONTENT_START)
-
-    if alt_start_pos != -1 or alt_end_pos != -1:
-        if alt_start_pos == -1:
-            thought_start = 0
-        else:
-            thought_start = alt_start_pos + len(ALT_START)
-
-        # If no explicit end tag but content start exists, use content start as end
-        if alt_end_pos == -1:
-            if alt_content_pos != -1:
-                thought_end = alt_content_pos
-                content_start = alt_content_pos + len(ALT_CONTENT_START)
+            # End tag missing - check if content tag can serve as fallback
+            if content_esc:
+                content_pos = string.find(content_esc, thought_start)
+                if content_pos != -1:
+                    thought_end = content_pos
+                    content_start = content_pos + len(content_esc)
+                else:
+                    thought_end = len(string)
+                    content_start = len(string)
             else:
                 thought_end = len(string)
                 content_start = len(string)
         else:
-            thought_end = alt_end_pos
-            content_start = alt_content_pos + len(ALT_CONTENT_START) if alt_content_pos != -1 else alt_end_pos + len(ALT_END)
+            thought_end = end_pos
+            if content_esc:
+                content_pos = string.find(content_esc, end_pos)
+                content_start = content_pos + len(content_esc) if content_pos != -1 else end_pos + len(end_esc)
+            else:
+                content_start = end_pos + len(end_esc)
 
-        thinking_content = string[thought_start:thought_end]
-        remaining_content = string[content_start:]
-        return thinking_content, remaining_content
+        return string[thought_start:thought_end], string[content_start:]
 
-    # Return if neither format is found
     return None, string
 
 
-@functools.lru_cache(maxsize=None)
-def convert_to_markdown(string, message_id=None):
-    if not string:
+def build_thinking_block(thinking_content, message_id, has_remaining_content):
+    """Build HTML for a thinking block."""
+    if thinking_content is None:
+        return None
+
+    # Process the thinking content through markdown
+    thinking_html = process_markdown_content(thinking_content)
+
+    # Generate unique ID for the thinking block
+    block_id = f"thinking-{message_id}-0"
+
+    # Check if thinking is complete or still in progress
+    is_streaming = not has_remaining_content
+    title_text = "Thinking..." if is_streaming else "Thought"
+
+    return f'''
+    <details class="thinking-block" data-block-id="{block_id}" data-streaming="{str(is_streaming).lower()}">
+        <summary class="thinking-header">
+            {info_svg_small}
+            <span class="thinking-title">{title_text}</span>
+        </summary>
+        <div class="thinking-content pretty_scrollbar">{thinking_html}</div>
+    </details>
+    '''
+
+
+def build_main_content_block(content):
+    """Build HTML for the main content block."""
+    if not content:
         return ""
 
-    # Use a default message ID if none provided
-    if message_id is None:
-        message_id = "unknown"
-
-    # Extract thinking block if present
-    thinking_content, remaining_content = extract_thinking_block(string)
-
-    # Process the main content
-    html_output = process_markdown_content(remaining_content)
-
-    # If thinking content was found, process it using the same function
-    if thinking_content is not None:
-        thinking_html = process_markdown_content(thinking_content)
-
-        # Generate unique ID for the thinking block
-        block_id = f"thinking-{message_id}-0"
-
-        # Check if thinking is complete or still in progress
-        is_streaming = not remaining_content
-        title_text = "Thinking..." if is_streaming else "Thought"
-
-        thinking_block = f'''
-        <details class="thinking-block" data-block-id="{block_id}" data-streaming="{str(is_streaming).lower()}">
-            <summary class="thinking-header">
-                {info_svg_small}
-                <span class="thinking-title">{title_text}</span>
-            </summary>
-            <div class="thinking-content pretty_scrollbar">{thinking_html}</div>
-        </details>
-        '''
-
-        # Prepend the thinking block to the message HTML
-        html_output = thinking_block + html_output
-
-    return html_output
+    return process_markdown_content(content)
 
 
 def process_markdown_content(string):
-    """Process a string through the markdown conversion pipeline."""
+    """
+    Process a string through the markdown conversion pipeline.
+    Uses robust manual parsing to ensure correct LaTeX and Code Block rendering.
+    """
     if not string:
         return ""
+
+    # Define unique placeholders for LaTeX asterisks and underscores
+    LATEX_ASTERISK_PLACEHOLDER = "LATEXASTERISKPLACEHOLDER"
+    LATEX_UNDERSCORE_PLACEHOLDER = "LATEXUNDERSCOREPLACEHOLDER"
+
+    def protect_asterisks_underscores_in_latex(match):
+        """A replacer function for re.sub to protect asterisks and underscores in multiple LaTeX formats."""
+        # Check which delimiter group was captured
+        if match.group(1) is not None:  # Content from $$...$$
+            content = match.group(1)
+            modified_content = content.replace('*', LATEX_ASTERISK_PLACEHOLDER)
+            modified_content = modified_content.replace('_', LATEX_UNDERSCORE_PLACEHOLDER)
+            return f'{modified_content}'
+        elif match.group(2) is not None:  # Content from \[...\]
+            content = match.group(2)
+            modified_content = content.replace('*', LATEX_ASTERISK_PLACEHOLDER)
+            modified_content = modified_content.replace('_', LATEX_UNDERSCORE_PLACEHOLDER)
+            return f'\\[{modified_content}\\]'
+        elif match.group(3) is not None:  # Content from \(...\)
+            content = match.group(3)
+            modified_content = content.replace('*', LATEX_ASTERISK_PLACEHOLDER)
+            modified_content = modified_content.replace('_', LATEX_UNDERSCORE_PLACEHOLDER)
+            return f'\\({modified_content}\\)'
+
+        return match.group(0)  # Fallback
 
     # Make \[ \]  LaTeX equations inline
     pattern = r'^\s*\\\[\s*\n([\s\S]*?)\n\s*\\\]\s*$'
@@ -235,7 +253,7 @@ def process_markdown_content(string):
     pattern = re.compile(r'\\begin{blockquote}(.*?)\\end{blockquote}', re.DOTALL)
     string = pattern.sub(replace_blockquote, string)
 
-    # Code
+    # Code block standardization
     string = string.replace('\\begin{code}', '```')
     string = string.replace('\\end{code}', '```')
     string = string.replace('\\begin{align*}', '$$')
@@ -248,20 +266,26 @@ def process_markdown_content(string):
     string = string.replace('\\end{equation*}', '$$')
     string = re.sub(r"(.)```", r"\1\n```", string)
 
+    # Protect asterisks and underscores within all LaTeX blocks before markdown conversion
+    latex_pattern = re.compile(r'((?:^|[\r\n\s])\$\$[^`]*?\$\$)|\\\[(.*?)\\\]|\\\((.*?)\\\)',
+                               re.DOTALL)
+    string = latex_pattern.sub(protect_asterisks_underscores_in_latex, string)
+
     result = ''
     is_code = False
     is_latex = False
 
+    # Manual line iteration for robust structure parsing
     for line in string.split('\n'):
         stripped_line = line.strip()
 
         if stripped_line.startswith('```'):
             is_code = not is_code
-        elif stripped_line.startswith('$$'):
+        elif stripped_line.startswith('$$') and (stripped_line == "$$" or not stripped_line.endswith('$$')):
             is_latex = not is_latex
         elif stripped_line.endswith('$$'):
             is_latex = False
-        elif stripped_line.startswith('\\\\['):
+        elif stripped_line.startswith('\\\\[') and not stripped_line.endswith('\\\\]'):
             is_latex = True
         elif stripped_line.startswith('\\\\]'):
             is_latex = False
@@ -306,6 +330,10 @@ def process_markdown_content(string):
         # Convert to HTML using markdown
         html_output = markdown.markdown(result, extensions=['fenced_code', 'tables', SaneListExtension()])
 
+    # Restore the LaTeX asterisks and underscores after markdown conversion
+    html_output = html_output.replace(LATEX_ASTERISK_PLACEHOLDER, '*')
+    html_output = html_output.replace(LATEX_UNDERSCORE_PLACEHOLDER, '_')
+
     # Remove extra newlines before </code>
     html_output = re.sub(r'\s*</code>', '</code>', html_output)
 
@@ -317,6 +345,39 @@ def process_markdown_content(string):
     html_output = html_output.replace('\\\\', '\\')
 
     return html_output
+
+
+@functools.lru_cache(maxsize=None)
+def convert_to_markdown(string, message_id=None):
+    """
+    Convert a string to markdown HTML with support for multiple block types.
+    Blocks are assembled in order: thinking, main content, etc.
+    """
+    if not string:
+        return ""
+
+    # Use a default message ID if none provided
+    if message_id is None:
+        message_id = "unknown"
+
+    # Extract different components from the string
+    thinking_content, remaining_content = extract_thinking_block(string)
+
+    # Build individual HTML blocks
+    blocks = []
+
+    # Add thinking block if present
+    thinking_html = build_thinking_block(thinking_content, message_id, bool(remaining_content))
+    if thinking_html:
+        blocks.append(thinking_html)
+
+    # Add main content block
+    main_html = build_main_content_block(remaining_content)
+    if main_html:
+        blocks.append(main_html)
+
+    # Assemble all blocks into final HTML
+    return ''.join(blocks)
 
 
 def convert_to_markdown_wrapped(string, message_id=None, use_cache=True):
@@ -567,10 +628,10 @@ def generate_instruct_html(history, last_message_only=False):
 
 def get_character_image_with_cache_buster():
     """Get character image URL with cache busting based on file modification time"""
-    cache_path = Path("user_data/cache/pfp_character_thumb.png")
+    cache_path = shared.user_data_dir / "cache" / "pfp_character_thumb.png"
     if cache_path.exists():
         mtime = int(cache_path.stat().st_mtime)
-        return f'<img src="file/user_data/cache/pfp_character_thumb.png?{mtime}" class="pfp_character">'
+        return f'<img src="file/{shared.user_data_dir}/cache/pfp_character_thumb.png?{mtime}" class="pfp_character">'
 
     return ''
 
@@ -594,8 +655,8 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
 
         # Get appropriate image
         if role == "user":
-            img = (f'<img src="file/user_data/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
-                   if Path("user_data/cache/pfp_me.png").exists() else '')
+            img = (f'<img src="file/{shared.user_data_dir}/cache/pfp_me.png?{time.time() if reset_cache else ""}">'
+                   if (shared.user_data_dir / "cache" / "pfp_me.png").exists() else '')
         else:
             img = img_bot
 

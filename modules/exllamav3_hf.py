@@ -4,8 +4,6 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import torch
-from exllamav3 import Cache, Config, Model
-from exllamav3.cache import CacheLayer_fp16, CacheLayer_quant
 from torch.nn import CrossEntropyLoss
 from transformers import (
     GenerationConfig,
@@ -15,6 +13,8 @@ from transformers import (
 )
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
+from exllamav3 import Cache, Config, Model
+from exllamav3.cache import CacheLayer_fp16, CacheLayer_quant
 from modules import shared
 from modules.logging_colors import logger
 
@@ -27,11 +27,13 @@ except Exception:
 
 class Exllamav3HF(PreTrainedModel, GenerationMixin):
     def __init__(self, model_dir):
-        super().__init__(PretrainedConfig())
-        self.generation_config = GenerationConfig()
+        hf_config = PretrainedConfig.from_pretrained(model_dir)
+        super().__init__(hf_config)
 
-        config = Config.from_directory(model_dir)
-        self.ex_model = Model.from_config(config)
+        exl3_config = Config.from_directory(model_dir)
+
+        self.generation_config = GenerationConfig()
+        self.ex_model = Model.from_config(exl3_config)
 
         # Calculate the closest multiple of 256 at or above the chosen value
         max_tokens = shared.args.ctx_size
@@ -82,6 +84,12 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
         self.ex_model.load(**load_params)
         self.past_seq = None
         self.max_tokens = max_tokens
+        self.layer_type = layer_type
+        self.cache_kwargs = cache_kwargs
+
+        if shared.args.cfg_cache:
+            self.ex_cache_negative = Cache(self.ex_model, max_num_tokens=max_tokens, layer_type=layer_type, **cache_kwargs)
+            self.past_seq_negative = None
 
     def _validate_model_class(self):
         pass
@@ -124,7 +132,7 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
         reset = True
 
         # Maximum number of tokens to process in a single forward pass
-        max_chunk_size = 256
+        max_chunk_size = 2048
 
         # Make the forward call
         if labels is None:
@@ -145,17 +153,16 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
                         # Process tokens from longest_prefix to second-to-last token
                         tokens_to_process = seq_tensor[longest_prefix:-1]
 
-                        # Process in chunks if the number of tokens is large
+                        # Use prefill() to fill the cache without computing logits
                         for i in range(0, tokens_to_process.shape[0], max_chunk_size):
                             chunk = tokens_to_process[i:i + max_chunk_size]
-                            self.ex_model.forward(
+                            self.ex_model.prefill(
                                 input_ids=chunk.view(1, -1),
                                 params={
                                     "attn_mode": "flash_attn",
                                     "cache": ex_cache,
                                     "past_len": longest_prefix + i,
                                     "batch_shape": (1, self.max_tokens),
-                                    "reconstruct": False  # Force memory-efficient path
                                 }
                             )
 
@@ -166,18 +173,17 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
                     # Process all tokens except the last one
                     tokens_to_process = seq_tensor[:-1]
 
-                    # Process in chunks if the number of tokens is large
+                    # Use prefill() to fill the cache without computing logits
                     current_len = 0
                     for i in range(0, tokens_to_process.shape[0], max_chunk_size):
                         chunk = tokens_to_process[i:i + max_chunk_size]
-                        self.ex_model.forward(
+                        self.ex_model.prefill(
                             input_ids=chunk.view(1, -1),
                             params={
                                 "attn_mode": "flash_attn",
                                 "cache": ex_cache,
                                 "past_len": current_len,
                                 "batch_shape": (1, self.max_tokens),
-                                "reconstruct": False  # Force memory-efficient path
                             }
                         )
                         current_len += chunk.shape[0]
@@ -192,7 +198,6 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
                     "cache": ex_cache,
                     "past_len": current_len,
                     "batch_shape": (1, self.max_tokens),
-                    "reconstruct": False  # Force memory-efficient path
                 }
             ).to(input_ids.device).float()
         else:
@@ -206,8 +211,7 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
                 chunk_logits = self.ex_model.forward(
                     input_ids=chunk.view(1, -1),
                     params={
-                        "attn_mode": "flash_attn_nc",  # No caching for training
-                        "reconstruct": False  # Force memory-efficient path
+                        "attn_mode": "flash_attn_nc",
                     }
                 ).float()
 

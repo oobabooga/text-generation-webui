@@ -1,14 +1,26 @@
-"""
-Shared image processing utilities for multimodal support.
-Used by both ExLlamaV3 and llama.cpp implementations.
-"""
 import base64
 import io
+import os
+from pathlib import Path
 from typing import Any, List, Tuple
 
 from PIL import Image
 
 from modules.logging_colors import logger
+
+
+def open_image_safely(path):
+    if path is None or not isinstance(path, str) or not Path(path).exists():
+        return None
+
+    if os.path.islink(path):
+        return None
+
+    try:
+        return Image.open(path)
+    except Exception as e:
+        logger.error(f"Failed to open image file: {path}. Reason: {e}")
+        return None
 
 
 def convert_pil_to_base64(image: Image.Image) -> str:

@@ -206,7 +206,13 @@ const observer = new MutationObserver(function(mutations) {
       // Add padding to the messages container to create room for the last message.
       // The purpose of this is to avoid constant scrolling during streaming in
       // instruct mode.
-      const bufferHeight = Math.max(0, Math.max(0.7 * window.innerHeight, window.innerHeight - prevSibling.offsetHeight - 84) - lastChild.offsetHeight);
+      let bufferHeight = Math.max(0, Math.max(window.innerHeight - 128 - 84, window.innerHeight - prevSibling.offsetHeight - 84) - lastChild.offsetHeight);
+
+      // Subtract header height when screen width is <= 924px
+      if (window.innerWidth <= 924) {
+        bufferHeight = Math.max(0, bufferHeight - 32);
+      }
+
       messagesContainer.style.paddingBottom = `${bufferHeight}px`;
     }
   }
@@ -243,39 +249,47 @@ function doSyntaxHighlighting() {
   if (messageBodies.length > 0) {
     observer.disconnect();
 
-    let hasSeenVisible = false;
+    try {
+      let hasSeenVisible = false;
 
-    // Go from last message to first
-    for (let i = messageBodies.length - 1; i >= 0; i--) {
-      const messageBody = messageBodies[i];
+      // Go from last message to first
+      for (let i = messageBodies.length - 1; i >= 0; i--) {
+        const messageBody = messageBodies[i];
 
-      if (isElementVisibleOnScreen(messageBody)) {
-        hasSeenVisible = true;
+        if (isElementVisibleOnScreen(messageBody)) {
+          hasSeenVisible = true;
 
-        // Handle both code and math in a single pass through each message
-        const codeBlocks = messageBody.querySelectorAll("pre code:not([data-highlighted])");
-        codeBlocks.forEach((codeBlock) => {
-          hljs.highlightElement(codeBlock);
-          codeBlock.setAttribute("data-highlighted", "true");
-          codeBlock.classList.add("pretty_scrollbar");
-        });
+          // Handle both code and math in a single pass through each message
+          const codeBlocks = messageBody.querySelectorAll("pre code:not([data-highlighted])");
+          codeBlocks.forEach((codeBlock) => {
+            hljs.highlightElement(codeBlock);
+            codeBlock.setAttribute("data-highlighted", "true");
+            codeBlock.classList.add("pretty_scrollbar");
+          });
 
-        renderMathInElement(messageBody, {
-          delimiters: [
-            { left: "$$", right: "$$", display: true },
-            { left: "$", right: "$", display: false },
-            { left: "\\(", right: "\\)", display: false },
-            { left: "\\[", right: "\\]", display: true },
-          ],
-        });
-      } else if (hasSeenVisible) {
+          // Only render math in visible elements
+          const mathContainers = messageBody.querySelectorAll("p, span, li, td, th, h1, h2, h3, h4, h5, h6, blockquote, figcaption, caption, dd, dt");
+          mathContainers.forEach(container => {
+            if (isElementVisibleOnScreen(container)) {
+              renderMathInElement(container, {
+                delimiters: [
+                  { left: "$$", right: "$$", display: true },
+                  { left: "$", right: "$", display: false },
+                  { left: "\\(", right: "\\)", display: false },
+                  { left: "\\[", right: "\\]", display: true },
+                ],
+              });
+            }
+          });
+        } else if (hasSeenVisible) {
         // We've seen visible messages but this one is not visible
         // Since we're going from last to first, we can break
-        break;
+          break;
+        }
       }
+    } finally {
+      observer.observe(targetElement, config);
     }
-
-    observer.observe(targetElement, config);
   }
 }
 
@@ -1065,3 +1079,30 @@ document.fonts.addEventListener("loadingdone", (event) => {
     }
   }, 50);
 });
+
+(function() {
+  const chatParent = document.querySelector(".chat-parent");
+  const chatInputRow = document.querySelector("#chat-input-row");
+  const originalMarginBottom = 75;
+  let originalHeight = chatInputRow.offsetHeight;
+
+  function updateMargin() {
+    const currentHeight = chatInputRow.offsetHeight;
+    const heightDifference = currentHeight - originalHeight;
+    chatParent.style.marginBottom = `${originalMarginBottom + heightDifference}px`;
+  }
+
+  // Watch for changes that might affect height
+  const observer = new MutationObserver(updateMargin);
+  observer.observe(chatInputRow, {
+    childList: true,
+    subtree: true,
+    attributes: true
+  });
+
+  // Also listen for window resize
+  window.addEventListener("resize", updateMargin);
+
+  // Initial call to set the margin based on current state
+  updateMargin();
+})();

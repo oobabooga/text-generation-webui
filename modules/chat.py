@@ -5,6 +5,7 @@ import html
 import json
 import pprint
 import re
+import shutil
 import time
 from datetime import datetime
 from functools import partial
@@ -24,13 +25,20 @@ from modules.html_generator import (
     convert_to_markdown,
     make_thumbnail
 )
+from modules.image_utils import open_image_safely
 from modules.logging_colors import logger
 from modules.text_generation import (
     generate_reply,
     get_encoded_length,
     get_max_prompt_length
 )
-from modules.utils import delete_file, get_available_characters, save_file
+from modules.utils import (
+    delete_file,
+    get_available_characters,
+    get_available_users,
+    sanitize_filename,
+    save_file
+)
 from modules.web_search import add_web_search_attachments
 
 
@@ -69,6 +77,18 @@ jinja_env = ImmutableSandboxedEnvironment(
 )
 jinja_env.globals["strftime_now"] = strftime_now
 
+_template_cache = {}
+
+
+def get_compiled_template(template_str):
+    """Cache compiled Jinja2 templates keyed by their source string."""
+    compiled = _template_cache.get(template_str)
+    if compiled is None:
+        compiled = jinja_env.from_string(template_str)
+        _template_cache[template_str] = compiled
+
+    return compiled
+
 
 def str_presenter(dumper, data):
     """
@@ -86,72 +106,48 @@ yaml.add_representer(str, str_presenter)
 yaml.representer.SafeRepresenter.add_representer(str, str_presenter)
 
 
-def get_generation_prompt(renderer, impersonate=False, strip_trailing_spaces=True):
-    '''
-    Given a Jinja template, reverse-engineers the prefix and the suffix for
-    an assistant message (if impersonate=False) or an user message
-    (if impersonate=True)
-    '''
+class _JsonDict(dict):
+    """A dict that serializes as JSON when used in string concatenation.
 
-    if impersonate:
-        messages = [
-            {"role": "user", "content": "<<|user-message-1|>>"},
-            {"role": "user", "content": "<<|user-message-2|>>"},
-        ]
-    else:
-        messages = [
-            {"role": "assistant", "content": "<<|user-message-1|>>"},
-            {"role": "assistant", "content": "<<|user-message-2|>>"},
-        ]
-
-    prompt = renderer(messages=messages)
-
-    suffix_plus_prefix = prompt.split("<<|user-message-1|>>")[1].split("<<|user-message-2|>>")[0]
-    suffix = prompt.split("<<|user-message-2|>>")[1]
-    prefix = suffix_plus_prefix[len(suffix):]
-
-    if strip_trailing_spaces:
-        prefix = prefix.rstrip(' ')
-
-    return prefix, suffix
-
-
-def get_thinking_suppression_string(template):
-    """
-    Determines what string needs to be added to suppress thinking mode
-    by comparing template renderings with thinking enabled vs disabled.
+    Some Jinja2 templates (Qwen, GLM) iterate arguments with .items(),
+    requiring a dict.  Others (DeepSeek) concatenate arguments as a
+    string, requiring JSON.  This class satisfies both.
     """
 
-    # Render with thinking enabled
-    with_thinking = template.render(
-        messages=[{'role': 'user', 'content': ''}],
-        builtin_tools=None,
-        tools=None,
-        tools_in_user_message=False,
-        add_generation_prompt=True,
-        enable_thinking=True
-    )
+    def __str__(self):
+        return json.dumps(self, ensure_ascii=False)
 
-    # Render with thinking disabled
-    without_thinking = template.render(
-        messages=[{'role': 'user', 'content': ''}],
-        builtin_tools=None,
-        tools=None,
-        tools_in_user_message=False,
-        add_generation_prompt=True,
-        enable_thinking=False
-    )
+    def __add__(self, other):
+        return str(self) + other
 
-    # Find the difference (what gets added to suppress thinking)
-    i = 0
-    while i < min(len(with_thinking), len(without_thinking)) and with_thinking[i] == without_thinking[i]:
-        i += 1
+    def __radd__(self, other):
+        return other + str(self)
 
-    j = 0
-    while j < min(len(with_thinking), len(without_thinking)) - i and with_thinking[-1 - j] == without_thinking[-1 - j]:
-        j += 1
 
-    return without_thinking[i:len(without_thinking) - j if j else None]
+def _deserialize_tool_call_arguments(tool_calls):
+    """Convert tool_call arguments from JSON strings to _JsonDict.
+
+    The OpenAI API spec sends arguments as a JSON string, but Jinja2
+    templates may need a dict (.items()) or a string (concatenation).
+    _JsonDict handles both transparently.
+    """
+    result = []
+    for tc in tool_calls:
+        tc = copy.copy(tc)
+        func = tc.get('function', {})
+        if isinstance(func, dict):
+            func = dict(func)
+            args = func.get('arguments')
+            if isinstance(args, str):
+                try:
+                    func['arguments'] = _JsonDict(json.loads(args))
+                except (json.JSONDecodeError, ValueError):
+                    pass
+            elif isinstance(args, dict) and not isinstance(args, _JsonDict):
+                func['arguments'] = _JsonDict(args)
+            tc['function'] = func
+        result.append(tc)
+    return result
 
 
 def generate_chat_prompt(user_input, state, **kwargs):
@@ -167,8 +163,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
     if state['mode'] != 'instruct':
         chat_template_str = replace_character_names(chat_template_str, state['name1'], state['name2'])
 
-    instruction_template = jinja_env.from_string(state['instruction_template_str'])
-    chat_template = jinja_env.from_string(chat_template_str)
+    instruction_template = get_compiled_template(state['instruction_template_str'])
+    chat_template = get_compiled_template(chat_template_str)
 
     instruct_renderer = partial(
         instruction_template.render,
@@ -176,7 +172,11 @@ def generate_chat_prompt(user_input, state, **kwargs):
         tools=state['tools'] if 'tools' in state else None,
         tools_in_user_message=False,
         add_generation_prompt=False,
-        reasoning_effort=state['reasoning_effort']
+        enable_thinking=state['enable_thinking'],
+        reasoning_effort=state['reasoning_effort'],
+        thinking_budget=-1 if state.get('enable_thinking', True) else 0,
+        bos_token=shared.bos_token,
+        eos_token=shared.eos_token,
     )
 
     chat_renderer = partial(
@@ -204,22 +204,27 @@ def generate_chat_prompt(user_input, state, **kwargs):
         user_msg = entry[0].strip()
         assistant_msg = entry[1].strip()
         tool_msg = entry[2].strip() if len(entry) > 2 else ''
+        entry_meta = entry[3] if len(entry) > 3 else {}
 
         row_idx = len(history) - i - 1
 
         if tool_msg:
-            messages.insert(insert_pos, {"role": "tool", "content": tool_msg})
+            tool_message = {"role": "tool", "content": tool_msg}
+            if "tool_call_id" in entry_meta:
+                tool_message["tool_call_id"] = entry_meta["tool_call_id"]
+            messages.insert(insert_pos, tool_message)
 
-        if assistant_msg:
+        if not assistant_msg and entry_meta.get('tool_calls'):
+            # Assistant message with only tool_calls and no text content
+            messages.insert(insert_pos, {"role": "assistant", "content": "", "tool_calls": _deserialize_tool_call_arguments(entry_meta['tool_calls'])})
+        elif assistant_msg:
             # Handle GPT-OSS as a special case
             if '<|channel|>analysis<|message|>' in assistant_msg or '<|channel|>final<|message|>' in assistant_msg:
-
                 thinking_content = ""
                 final_content = ""
 
                 # Extract analysis content if present
                 if '<|channel|>analysis<|message|>' in assistant_msg:
-                    # Split the message by the analysis tag to isolate the content that follows
                     parts = assistant_msg.split('<|channel|>analysis<|message|>', 1)
                     if len(parts) > 1:
                         # The content is everything after the tag
@@ -240,7 +245,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 # Extract final content if present
                 final_tag_to_find = '<|channel|>final<|message|>'
                 if final_tag_to_find in assistant_msg:
-                    # Split the message by the final tag to isolate the content that follows
                     parts = assistant_msg.split(final_tag_to_find, 1)
                     if len(parts) > 1:
                         # The content is everything after the tag
@@ -260,8 +264,37 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
                 messages.insert(insert_pos, msg_dict)
 
+            # Handle Seed-OSS
+            elif '<seed:think>' in assistant_msg:
+                thinking_content = ""
+                final_content = assistant_msg
+
+                # Extract thinking content if present
+                if '<seed:think>' in assistant_msg:
+                    parts = assistant_msg.split('<seed:think>', 1)
+                    if len(parts) > 1:
+                        potential_content = parts[1]
+                        if '</seed:think>' in potential_content:
+                            thinking_content = potential_content.split('</seed:think>', 1)[0].strip()
+                            final_content = parts[0] + potential_content.split('</seed:think>', 1)[1]
+                        else:
+                            thinking_content = potential_content.strip()
+                            final_content = parts[0]
+
+                # Insert as structured message
+                msg_dict = {"role": "assistant", "content": final_content.strip()}
+                if thinking_content:
+                    msg_dict["reasoning_content"] = thinking_content
+
+                messages.insert(insert_pos, msg_dict)
+
             else:
+                # Default case (used by all other models)
                 messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
+
+            # Attach tool_calls metadata to the assistant message if present
+            if entry_meta.get('tool_calls') and messages[insert_pos].get('role') == 'assistant':
+                messages[insert_pos]['tool_calls'] = _deserialize_tool_call_arguments(entry_meta['tool_calls'])
 
         if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
             # Check for user message attachments in metadata
@@ -286,125 +319,120 @@ def generate_chat_prompt(user_input, state, **kwargs):
                         else:
                             attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
-                if image_refs or attachments_text:
-                    enhanced_user_msg = user_msg
-                    if image_refs:
-                        enhanced_user_msg = f"{image_refs}\n\n{enhanced_user_msg}"
-                    if attachments_text:
-                        enhanced_user_msg += f"\n\nATTACHMENTS:\n{attachments_text}"
+                if image_refs:
+                    enhanced_user_msg = f"{image_refs}\n\n{enhanced_user_msg}"
+                if attachments_text:
+                    enhanced_user_msg += f"\n\nATTACHMENTS:\n{attachments_text}"
 
             messages.insert(insert_pos, {"role": "user", "content": enhanced_user_msg})
 
+    # Handle the current user input
     user_input = user_input.strip()
 
-    # Check if we have attachments even with empty input
-    has_attachments = False
-    if not impersonate and not _continue and len(history_data.get('metadata', {})) > 0:
-        current_row_idx = len(history)
-        user_key = f"user_{current_row_idx}"
-        has_attachments = user_key in metadata and "attachments" in metadata[user_key]
-
-    if (user_input or has_attachments) and not impersonate and not _continue:
-        # For the current user input being processed, check if we need to add attachments
-        if not impersonate and not _continue and len(history_data.get('metadata', {})) > 0:
+    # Check if we have attachments
+    if not (impersonate or _continue):
+        has_attachments = False
+        if len(history_data.get('metadata', {})) > 0:
             current_row_idx = len(history)
             user_key = f"user_{current_row_idx}"
+            has_attachments = user_key in metadata and "attachments" in metadata[user_key]
 
-            if user_key in metadata and "attachments" in metadata[user_key]:
-                attachments_text = ""
-                image_refs = ""
+        if user_input or has_attachments:
+            # For the current user input being processed, check if we need to add attachments
+            if len(history_data.get('metadata', {})) > 0:
+                current_row_idx = len(history)
+                user_key = f"user_{current_row_idx}"
 
-                for attachment in metadata[user_key]["attachments"]:
-                    if attachment.get("type") == "image":
-                        image_refs += "<__media__>"
-                    else:
-                        filename = attachment.get("name", "file")
-                        content = attachment.get("content", "")
-                        if attachment.get("type") == "text/html" and attachment.get("url"):
-                            attachments_text += f"\nName: {filename}\nURL: {attachment['url']}\nContents:\n\n=====\n{content}\n=====\n\n"
+                if user_key in metadata and "attachments" in metadata[user_key]:
+                    attachments_text = ""
+                    image_refs = ""
+
+                    for attachment in metadata[user_key]["attachments"]:
+                        if attachment.get("type") == "image":
+                            image_refs += "<__media__>"
                         else:
-                            attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
+                            filename = attachment.get("name", "file")
+                            content = attachment.get("content", "")
+                            if attachment.get("type") == "text/html" and attachment.get("url"):
+                                attachments_text += f"\nName: {filename}\nURL: {attachment['url']}\nContents:\n\n=====\n{content}\n=====\n\n"
+                            else:
+                                attachments_text += f"\nName: {filename}\nContents:\n\n=====\n{content}\n=====\n\n"
 
-                if image_refs or attachments_text:
-                    user_input = user_input
                     if image_refs:
                         user_input = f"{image_refs}\n\n{user_input}"
                     if attachments_text:
                         user_input += f"\n\nATTACHMENTS:\n{attachments_text}"
 
-        messages.append({"role": "user", "content": user_input})
+            messages.append({"role": "user", "content": user_input})
+
+    if impersonate and state['mode'] != 'chat-instruct':
+        messages.append({"role": "user", "content": "fake user message replace me"})
 
     def make_prompt(messages):
-        if state['mode'] == 'chat-instruct' and _continue:
-            prompt = renderer(messages=messages[:-1])
+        last_message = messages[-1].copy()
+        if _continue:
+            if state['mode'] == 'chat-instruct':
+                messages = messages[:-1]
+            else:
+                messages[-1]["content"] = "fake assistant message replace me"
+                messages.append({"role": "assistant", "content": "this will get deleted"})
+
+        if state['mode'] != 'chat-instruct':
+            add_generation_prompt = (not _continue and not impersonate)
         else:
-            prompt = renderer(messages=messages)
+            add_generation_prompt = False
+
+        prompt = renderer(
+            messages=messages,
+            add_generation_prompt=add_generation_prompt
+        )
 
         if state['mode'] == 'chat-instruct':
-            outer_messages = []
-            if state['custom_system_message'].strip() != '':
-                outer_messages.append({"role": "system", "content": state['custom_system_message']})
-
             command = state['chat-instruct_command']
             command = command.replace('<|character|>', state['name2'] if not impersonate else state['name1'])
             command = command.replace('<|prompt|>', prompt)
             command = replace_character_names(command, state['name1'], state['name2'])
 
-            if _continue:
-                prefix = get_generation_prompt(renderer, impersonate=impersonate, strip_trailing_spaces=False)[0]
-                prefix += messages[-1]["content"]
-            else:
-                prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
-                if not impersonate:
-                    prefix = apply_extensions('bot_prefix', prefix, state)
+            outer_messages = []
+            if state['custom_system_message'].strip() != '':
+                outer_messages.append({"role": "system", "content": state['custom_system_message']})
 
             outer_messages.append({"role": "user", "content": command})
-            outer_messages.append({"role": "assistant", "content": prefix})
+            if _continue:
+                outer_messages.append(last_message.copy())
+                outer_messages[-1]["content"] = "fake assistant message replace me"
+                outer_messages.append({"role": "assistant", "content": "this will get deleted"})
 
-            prompt = instruct_renderer(messages=outer_messages)
-            suffix = get_generation_prompt(instruct_renderer, impersonate=False)[1]
-            if len(suffix) > 0:
-                prompt = prompt[:-len(suffix)]
-        else:
-            # Handle GPT-OSS as a special case when continuing
-            if _continue and '<|channel|>final<|message|>' in state['instruction_template_str']:
-                last_message_to_continue = messages[-1]
-                prompt = renderer(messages=messages[:-1])
+            prompt = instruct_renderer(
+                messages=outer_messages,
+                add_generation_prompt=not _continue
+            )
 
-                # Start the assistant turn wrapper
-                assistant_reply_so_far = "<|start|>assistant"
+        if _continue:
+            prompt = prompt.split("fake assistant message replace me", 1)[0]
 
-                if 'thinking' in last_message_to_continue:
-                    assistant_reply_so_far += f"<|channel|>analysis<|message|>{last_message_to_continue['thinking']}<|end|>"
+            content = last_message.get("content", "")
+            partial_thought = last_message.get("thinking", "") or last_message.get("reasoning_content", "")
 
-                assistant_reply_so_far += f"<|channel|>final<|message|>{last_message_to_continue.get('content', '')}"
-
-                prompt += assistant_reply_so_far
-
-            else:
-                prompt = renderer(messages=messages)
-                if _continue:
-                    suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
-                    if len(suffix) > 0:
-                        prompt = prompt[:-len(suffix)]
+            # Handle partial thinking blocks (GPT-OSS and Seed-OSS)
+            if not content and partial_thought and partial_thought.strip():
+                search_string = partial_thought.strip()
+                index = prompt.rfind(search_string)
+                if index != -1:
+                    prompt = prompt[:index] + partial_thought
                 else:
-                    prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
+                    # Fallback if search fails: just append the thought
+                    prompt += partial_thought
+            else:
+                # All other cases
+                prompt += content
 
-                    # Handle GPT-OSS as a special case when not continuing
-                    if '<|channel|>final<|message|>' in state['instruction_template_str']:
-                        if prefix.endswith("<|channel|>final<|message|>"):
-                            prefix = prefix[:-len("<|channel|>final<|message|>")]
+        if impersonate:
+            prompt = prompt.split("fake user message replace me", 1)[0]
+            prompt += user_input
 
-                        if impersonate:
-                            prefix += "<|message|>"
-
-                    if state['mode'] == 'chat' and not impersonate:
-                        prefix = apply_extensions('bot_prefix', prefix, state)
-
-                    prompt += prefix
-
-        if state['mode'] == 'instruct' and 'enable_thinking' in state['instruction_template_str'] and not any((_continue, impersonate, state['enable_thinking'])):
-            prompt += get_thinking_suppression_string(instruction_template)
+        if state['mode'] in ['chat', 'chat-instruct'] and not impersonate and not _continue:
+            prompt += apply_extensions('bot_prefix', "", state)
 
         return prompt
 
@@ -521,33 +549,52 @@ def get_stopping_strings(state):
     renderers = []
 
     if state['mode'] in ['instruct', 'chat-instruct']:
-        template = jinja_env.from_string(state['instruction_template_str'])
-        renderer = partial(template.render, add_generation_prompt=False)
+        template = get_compiled_template(state['instruction_template_str'])
+        renderer = partial(template.render, add_generation_prompt=False, bos_token=shared.bos_token, eos_token=shared.eos_token)
         renderers.append(renderer)
 
-    if state['mode'] in ['chat', 'chat-instruct']:
-        template = jinja_env.from_string(state['chat_template_str'])
+    if state['mode'] in ['chat']:
+        template = get_compiled_template(state['chat_template_str'])
         renderer = partial(template.render, add_generation_prompt=False, name1=state['name1'], name2=state['name2'])
         renderers.append(renderer)
 
-    for renderer in renderers:
-        prefix_bot, suffix_bot = get_generation_prompt(renderer, impersonate=False)
-        prefix_user, suffix_user = get_generation_prompt(renderer, impersonate=True)
+    fake_messages = [
+        {"role": "user", "content": "first user message"},
+        {"role": "assistant", "content": "first assistant message"},
+        {"role": "user", "content": "second user message"},
+        {"role": "assistant", "content": "second assistant message"},
+    ]
 
-        stopping_strings += [
-            suffix_user + prefix_bot,
-            suffix_user + prefix_user,
-            suffix_bot + prefix_bot,
-            suffix_bot + prefix_user,
+    stopping_strings = []
+    for renderer in renderers:
+        prompt = renderer(messages=fake_messages)
+
+        # Find positions of each message content
+        first_user_end = prompt.find("first user message") + len("first user message")
+        first_assistant_start = prompt.find("first assistant message")
+        first_assistant_end = prompt.find("first assistant message") + len("first assistant message")
+        second_user_start = prompt.find("second user message")
+        second_assistant_end = prompt.find("second assistant message") + len("second assistant message")
+
+        # Extract pieces of text potentially containing unique stopping strings
+        texts = [
+            prompt[first_user_end:first_assistant_start],
+            prompt[first_assistant_end:second_user_start],
+            prompt[second_assistant_end:]
         ]
 
-    # Try to find the EOT token
-    for item in stopping_strings.copy():
-        item = item.strip()
-        if item.startswith("<") and ">" in item:
-            stopping_strings.append(item.split(">")[0] + ">")
-        elif item.startswith("[") and "]" in item:
-            stopping_strings.append(item.split("]")[0] + "]")
+        for text in texts:
+            stripped_text = text.strip()
+            if stripped_text.startswith("<") and ">" in stripped_text:
+                stopping_strings.append(stripped_text.split(">")[0] + ">")
+            elif stripped_text.startswith("[") and "]" in stripped_text:
+                stopping_strings.append(stripped_text.split("]")[0] + "]")
+            elif stripped_text.startswith("(") and ")" in stripped_text:
+                stopping_strings.append(stripped_text.split(")")[0] + ")")
+            elif stripped_text.startswith("{") and "}" in stripped_text:
+                stopping_strings.append(stripped_text.split("}")[0] + "}")
+            elif ":" in text:
+                stopping_strings.append(text.split(":")[0] + ":")
 
     if 'stopping_strings' in state and isinstance(state['stopping_strings'], list):
         stopping_strings += state.pop('stopping_strings')
@@ -678,15 +725,13 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
 
 def extract_pdf_text(pdf_path):
     """Extract text from a PDF file"""
-    import PyPDF2
+    import pymupdf
 
     text = ""
     try:
-        with open(pdf_path, 'rb') as file:
-            pdf_reader = PyPDF2.PdfReader(file)
-            for page_num in range(len(pdf_reader.pages)):
-                page = pdf_reader.pages[page_num]
-                text += page.extract_text() + "\n\n"
+        with pymupdf.open(pdf_path) as doc:
+            for page in doc:
+                text += page.get_text() + "\n\n"
 
         return text.strip()
     except Exception as e:
@@ -765,6 +810,8 @@ def generate_search_query(user_message, state):
         query = query.rsplit("</think>", 1)[1]
     elif "<|start|>assistant<|channel|>final<|message|>" in query:
         query = query.rsplit("<|start|>assistant<|channel|>final<|message|>", 1)[1]
+    elif "</seed:think>" in query:
+        query = query.rsplit("</seed:think>", 1)[1]
 
     # Strip and remove surrounding quotes if present
     query = query.strip()
@@ -906,6 +953,14 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
         # Extract the reply
         if state['mode'] in ['chat', 'chat-instruct']:
+            if not _continue:
+                reply = reply.lstrip()
+
+            if reply.startswith(state['name2'] + ':'):
+                reply = reply[len(state['name2'] + ':'):]
+            elif reply.startswith(state['name1'] + ':'):
+                reply = reply[len(state['name1'] + ':'):]
+
             visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
         else:
             visible_reply = reply
@@ -913,7 +968,9 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         visible_reply = html.escape(visible_reply)
 
         if shared.stop_everything:
-            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+            if not state.get('_skip_output_extensions'):
+                output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+
             yield output
             return
 
@@ -946,9 +1003,11 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             full_visible = full_internal
 
         full_visible = html.escape(full_visible)
-        output['visible'][-1][1] = apply_extensions('output', full_visible, state, is_chat=True)
+        if not state.get('_skip_output_extensions'):
+            output['visible'][-1][1] = apply_extensions('output', full_visible, state, is_chat=True)
     else:
-        output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+        if not state.get('_skip_output_extensions'):
+            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
 
     # Final sync for version metadata (in case streaming was disabled)
     if regenerate:
@@ -1127,9 +1186,9 @@ def start_new_chat(state):
 
 def get_history_file_path(unique_id, character, mode):
     if mode == 'instruct':
-        p = Path(f'user_data/logs/instruct/{unique_id}.json')
+        p = shared.user_data_dir / 'logs' / 'instruct' / f'{unique_id}.json'
     else:
-        p = Path(f'user_data/logs/chat/{character}/{unique_id}.json')
+        p = shared.user_data_dir / 'logs' / 'chat' / character / f'{unique_id}.json'
 
     return p
 
@@ -1165,13 +1224,13 @@ def rename_history(old_id, new_id, character, mode):
 
 def get_paths(state):
     if state['mode'] == 'instruct':
-        return Path('user_data/logs/instruct').glob('*.json')
+        return (shared.user_data_dir / 'logs' / 'instruct').glob('*.json')
     else:
         character = state['character_menu']
 
         # Handle obsolete filenames and paths
-        old_p = Path(f'user_data/logs/{character}_persistent.json')
-        new_p = Path(f'user_data/logs/persistent_{character}.json')
+        old_p = shared.user_data_dir / 'logs' / f'{character}_persistent.json'
+        new_p = shared.user_data_dir / 'logs' / f'persistent_{character}.json'
         if old_p.exists():
             logger.warning(f"Renaming \"{old_p}\" to \"{new_p}\"")
             old_p.rename(new_p)
@@ -1183,7 +1242,7 @@ def get_paths(state):
             p.parent.mkdir(exist_ok=True)
             new_p.rename(p)
 
-        return Path(f'user_data/logs/chat/{character}').glob('*.json')
+        return (shared.user_data_dir / 'logs' / 'chat' / character).glob('*.json')
 
 
 def find_all_histories(state):
@@ -1216,7 +1275,7 @@ def find_all_histories_with_first_prompts(state):
         if re.match(r'^[0-9]{8}-[0-9]{2}-[0-9]{2}-[0-9]{2}$', filename):
             first_prompt = ""
             if data and 'visible' in data and len(data['visible']) > 0:
-                if data['internal'][0][0] == '<|BEGIN-VISIBLE-CHAT|>':
+                if len(data['internal']) > 0 and data['internal'][0][0] == '<|BEGIN-VISIBLE-CHAT|>':
                     if len(data['visible']) > 1:
                         first_prompt = html.unescape(data['visible'][1][0])
                     elif i == 0:
@@ -1308,12 +1367,12 @@ def get_chat_state_key(character, mode):
 
 def load_last_chat_state():
     """Load the last chat state from file"""
-    state_file = Path('user_data/logs/chat_state.json')
+    state_file = shared.user_data_dir / 'logs' / 'chat_state.json'
     if state_file.exists():
         try:
             with open(state_file, 'r', encoding='utf-8') as f:
                 return json.loads(f.read())
-        except:
+        except Exception:
             pass
 
     return {"last_chats": {}}
@@ -1328,7 +1387,7 @@ def save_last_chat_state(character, mode, unique_id):
     key = get_chat_state_key(character, mode)
     state["last_chats"][key] = unique_id
 
-    state_file = Path('user_data/logs/chat_state.json')
+    state_file = shared.user_data_dir / 'logs' / 'chat_state.json'
     state_file.parent.mkdir(exist_ok=True)
     with open(state_file, 'w', encoding='utf-8') as f:
         f.write(json.dumps(state, indent=2))
@@ -1385,7 +1444,7 @@ def load_history_json(file, history):
                     update_message_metadata(history['metadata'], "assistant", i, timestamp="")
 
         return history
-    except:
+    except Exception:
         return history
 
 
@@ -1404,15 +1463,20 @@ def generate_pfp_cache(character):
     if not cache_folder.exists():
         cache_folder.mkdir()
 
-    for path in [Path(f"user_data/characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
+    for path in [shared.user_data_dir / 'characters' / f"{character}.{extension}" for extension in ['png', 'jpg', 'jpeg']]:
         if path.exists():
             original_img = Image.open(path)
-            original_img.save(Path(f'{cache_folder}/pfp_character.png'), format='PNG')
+            # Define file paths
+            pfp_path = Path(f'{cache_folder}/pfp_character.png')
+            thumb_path = Path(f'{cache_folder}/pfp_character_thumb.png')
 
+            # Save main picture and thumbnail
+            original_img.save(pfp_path, format='PNG')
             thumb = make_thumbnail(original_img)
-            thumb.save(Path(f'{cache_folder}/pfp_character_thumb.png'), format='PNG')
+            thumb.save(thumb_path, format='PNG')
 
-            return thumb
+            # Return the path to the thumbnail, not the in-memory PIL Image object.
+            return str(thumb_path)
 
     return None
 
@@ -1424,12 +1488,12 @@ def load_character(character, name1, name2):
 
     filepath = None
     for extension in ["yml", "yaml", "json"]:
-        filepath = Path(f'user_data/characters/{character}.{extension}')
+        filepath = shared.user_data_dir / 'characters' / f'{character}.{extension}'
         if filepath.exists():
             break
 
     if filepath is None or not filepath.exists():
-        logger.error(f"Could not find the character \"{character}\" inside user_data/characters. No character has been loaded.")
+        logger.error(f"Could not find the character \"{character}\" inside {shared.user_data_dir}/characters. No character has been loaded.")
         raise ValueError
 
     file_contents = open(filepath, 'r', encoding='utf-8').read()
@@ -1505,7 +1569,7 @@ def load_instruction_template(template):
     if template == 'None':
         return ''
 
-    for filepath in [Path(f'user_data/instruction-templates/{template}.yaml'), Path('user_data/instruction-templates/Alpaca.yaml')]:
+    for filepath in [shared.user_data_dir / 'instruction-templates' / f'{template}.yaml', shared.user_data_dir / 'instruction-templates' / 'Alpaca.yaml']:
         if filepath.exists():
             break
     else:
@@ -1529,35 +1593,36 @@ def load_instruction_template_memoized(template):
     return load_instruction_template(template)
 
 
-def upload_character(file, img, tavern=False):
+def upload_character(file, img_path, tavern=False):
+    img = open_image_safely(img_path)
     decoded_file = file if isinstance(file, str) else file.decode('utf-8')
     try:
         data = json.loads(decoded_file)
-    except:
+    except Exception:
         data = yaml.safe_load(decoded_file)
 
     if 'char_name' in data:
-        name = data['char_name']
+        name = sanitize_filename(data['char_name'])
         greeting = data['char_greeting']
         context = build_pygmalion_style_context(data)
         yaml_data = generate_character_yaml(name, greeting, context)
     else:
-        name = data['name']
+        name = sanitize_filename(data['name'])
         yaml_data = generate_character_yaml(data['name'], data['greeting'], data['context'])
 
     outfile_name = name
     i = 1
-    while Path(f'user_data/characters/{outfile_name}.yaml').exists():
+    while (shared.user_data_dir / 'characters' / f'{outfile_name}.yaml').exists():
         outfile_name = f'{name}_{i:03d}'
         i += 1
 
-    with open(Path(f'user_data/characters/{outfile_name}.yaml'), 'w', encoding='utf-8') as f:
+    with open(shared.user_data_dir / 'characters' / f'{outfile_name}.yaml', 'w', encoding='utf-8') as f:
         f.write(yaml_data)
 
     if img is not None:
-        img.save(Path(f'user_data/characters/{outfile_name}.png'))
+        img.save(shared.user_data_dir / 'characters' / f'{outfile_name}.png')
 
-    logger.info(f'New character saved to "user_data/characters/{outfile_name}.yaml".')
+    logger.info(f'New character saved to "{shared.user_data_dir}/characters/{outfile_name}.yaml".')
     return gr.update(value=outfile_name, choices=get_available_characters())
 
 
@@ -1576,12 +1641,17 @@ def build_pygmalion_style_context(data):
     return context
 
 
-def upload_tavern_character(img, _json):
+def upload_tavern_character(img_path, _json):
     _json = {'char_name': _json['name'], 'char_persona': _json['description'], 'char_greeting': _json['first_mes'], 'example_dialogue': _json['mes_example'], 'world_scenario': _json['scenario']}
-    return upload_character(json.dumps(_json), img, tavern=True)
+    return upload_character(json.dumps(_json), img_path, tavern=True)
 
 
-def check_tavern_character(img):
+def check_tavern_character(img_path):
+    img = open_image_safely(img_path)
+
+    if img is None:
+        return "Invalid or disallowed image file.", None, None, gr.update(interactive=False)
+
     if "chara" not in img.info:
         return "Not a TavernAI card", None, None, gr.update(interactive=False)
 
@@ -1593,7 +1663,8 @@ def check_tavern_character(img):
     return _json['name'], _json['description'], _json, gr.update(interactive=True)
 
 
-def upload_your_profile_picture(img):
+def upload_your_profile_picture(img_path):
+    img = open_image_safely(img_path)
     cache_folder = Path(shared.args.disk_cache_dir)
     if not cache_folder.exists():
         cache_folder.mkdir()
@@ -1627,24 +1698,176 @@ def generate_instruction_template_yaml(instruction_template):
 
 
 def save_character(name, greeting, context, picture, filename):
+    filename = sanitize_filename(filename)
     if filename == "":
         logger.error("The filename is empty, so the character will not be saved.")
         return
 
     data = generate_character_yaml(name, greeting, context)
-    filepath = Path(f'user_data/characters/{filename}.yaml')
+    filepath = shared.user_data_dir / 'characters' / f'{filename}.yaml'
     save_file(filepath, data)
-    path_to_img = Path(f'user_data/characters/{filename}.png')
+    path_to_img = shared.user_data_dir / 'characters' / f'{filename}.png'
     if picture is not None:
-        picture.save(path_to_img)
+        # Copy the image file from its source path to the character folder
+        shutil.copy(picture, path_to_img)
         logger.info(f'Saved {path_to_img}.')
 
 
 def delete_character(name, instruct=False):
+    name = sanitize_filename(name)
+    # Check for character data files
     for extension in ["yml", "yaml", "json"]:
-        delete_file(Path(f'user_data/characters/{name}.{extension}'))
+        delete_file(shared.user_data_dir / 'characters' / f'{name}.{extension}')
 
-    delete_file(Path(f'user_data/characters/{name}.png'))
+    # Check for character image files
+    for extension in ["png", "jpg", "jpeg"]:
+        delete_file(shared.user_data_dir / 'characters' / f'{name}.{extension}')
+
+
+def generate_user_pfp_cache(user):
+    """Generate cached profile picture for user"""
+    cache_folder = Path(shared.args.disk_cache_dir)
+    if not cache_folder.exists():
+        cache_folder.mkdir()
+
+    for path in [shared.user_data_dir / 'users' / f"{user}.{extension}" for extension in ['png', 'jpg', 'jpeg']]:
+        if path.exists():
+            original_img = Image.open(path)
+            # Define file paths
+            pfp_path = Path(f'{cache_folder}/pfp_me.png')
+
+            # Save thumbnail
+            thumb = make_thumbnail(original_img)
+            thumb.save(pfp_path, format='PNG')
+            logger.info(f'User profile picture cached to "{pfp_path}"')
+
+            return str(pfp_path)
+
+    return None
+
+
+def load_user(user_name, name1, user_bio):
+    """Load user profile from YAML file"""
+    picture = None
+
+    filepath = None
+    for extension in ["yml", "yaml", "json"]:
+        filepath = shared.user_data_dir / 'users' / f'{user_name}.{extension}'
+        if filepath.exists():
+            break
+
+    if filepath is None or not filepath.exists():
+        logger.error(f"Could not find the user \"{user_name}\" inside {shared.user_data_dir}/users. No user has been loaded.")
+        raise ValueError
+
+    with open(filepath, 'r', encoding='utf-8') as f:
+        file_contents = f.read()
+
+    extension = filepath.suffix[1:]  # Remove the leading dot
+    data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
+
+    # Clear existing user picture cache
+    cache_folder = Path(shared.args.disk_cache_dir)
+    pfp_path = Path(f"{cache_folder}/pfp_me.png")
+    if pfp_path.exists():
+        pfp_path.unlink()
+
+    # Generate new picture cache
+    picture = generate_user_pfp_cache(user_name)
+
+    # Get user name
+    if 'name' in data and data['name'] != '':
+        name1 = data['name']
+
+    # Get user bio
+    if 'user_bio' in data:
+        user_bio = data['user_bio']
+
+    return name1, user_bio, picture
+
+
+def generate_user_yaml(name, user_bio):
+    """Generate YAML content for user profile"""
+    data = {
+        'name': name,
+        'user_bio': user_bio,
+    }
+
+    return yaml.dump(data, sort_keys=False, width=float("inf"))
+
+
+def save_user(name, user_bio, picture, filename):
+    """Save user profile to YAML file"""
+    filename = sanitize_filename(filename)
+    if filename == "":
+        logger.error("The filename is empty, so the user will not be saved.")
+        return
+
+    # Ensure the users directory exists
+    users_dir = shared.user_data_dir / 'users'
+    users_dir.mkdir(parents=True, exist_ok=True)
+
+    data = generate_user_yaml(name, user_bio)
+    filepath = shared.user_data_dir / 'users' / f'{filename}.yaml'
+    save_file(filepath, data)
+
+    path_to_img = shared.user_data_dir / 'users' / f'{filename}.png'
+    if picture is not None:
+        # Copy the image file from its source path to the users folder
+        shutil.copy(picture, path_to_img)
+        logger.info(f'Saved user profile picture to {path_to_img}.')
+
+
+def delete_user(name):
+    """Delete user profile files"""
+    name = sanitize_filename(name)
+    # Check for user data files
+    for extension in ["yml", "yaml", "json"]:
+        delete_file(shared.user_data_dir / 'users' / f'{name}.{extension}')
+
+    # Check for user image files
+    for extension in ["png", "jpg", "jpeg"]:
+        delete_file(shared.user_data_dir / 'users' / f'{name}.{extension}')
+
+
+def update_user_menu_after_deletion(idx):
+    """Update user menu after a user is deleted"""
+    users = get_available_users()
+    if len(users) == 0:
+        # Create a default user if none exist
+        save_user('You', '', None, 'Default')
+        users = get_available_users()
+
+    idx = min(int(idx), len(users) - 1)
+    idx = max(0, idx)
+    return gr.update(choices=users, value=users[idx])
+
+
+def handle_user_menu_change(state):
+    """Handle user menu selection change"""
+    try:
+        name1, user_bio, picture = load_user(state['user_menu'], state['name1'], state['user_bio'])
+
+        return [
+            name1,
+            user_bio,
+            picture
+        ]
+    except Exception as e:
+        logger.error(f"Failed to load user '{state['user_menu']}': {e}")
+        return [
+            state['name1'],
+            state['user_bio'],
+            None
+        ]
+
+
+def handle_save_user_click(name1):
+    """Handle save user button click"""
+    return [
+        name1,
+        gr.update(visible=True)
+    ]
 
 
 def jinja_template_from_old_format(params, verbose=False):
@@ -1821,6 +2044,10 @@ def handle_branch_chat_click(state):
         history = state['history']
         history['visible'] = history['visible'][:branch_from_index + 1]
         history['internal'] = history['internal'][:branch_from_index + 1]
+        # Prune the metadata dictionary to remove entries beyond the branch point
+        if 'metadata' in history:
+            history['metadata'] = {k: v for k, v in history['metadata'].items() if int(k.split('_')[-1]) <= branch_from_index}
+
     new_unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
     save_history(history, new_unique_id, state['character_menu'], state['mode'])
 
@@ -1996,8 +2223,9 @@ def handle_character_menu_change(state):
     ]
 
 
-def handle_character_picture_change(picture):
+def handle_character_picture_change(picture_path):
     """Update or clear cache when character picture changes"""
+    picture = open_image_safely(picture_path)
     cache_folder = Path(shared.args.disk_cache_dir)
     if not cache_folder.exists():
         cache_folder.mkdir()
@@ -2060,7 +2288,7 @@ def handle_save_template_click(instruction_template_str):
     contents = generate_instruction_template_yaml(instruction_template_str)
     return [
         "My Template.yaml",
-        "user_data/instruction-templates/",
+        str(shared.user_data_dir / 'instruction-templates') + '/',
         contents,
         gr.update(visible=True)
     ]
@@ -2069,7 +2297,7 @@ def handle_save_template_click(instruction_template_str):
 def handle_delete_template_click(template):
     return [
         f"{template}.yaml",
-        "user_data/instruction-templates/",
+        str(shared.user_data_dir / 'instruction-templates') + '/',
         gr.update(visible=False)
     ]
 

@@ -8,11 +8,10 @@ from modules import shared
 
 
 def get_device():
-    if torch.cuda.is_available():
+    if hasattr(shared.model, 'device'):
+        return shared.model.device
+    elif torch.cuda.is_available():
         return torch.device('cuda')
-    elif shared.args.deepspeed:
-        import deepspeed
-        return deepspeed.get_accelerator().current_device_name()
     elif torch.backends.mps.is_available():
         return torch.device('mps')
     elif is_torch_xpu_available():

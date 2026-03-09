@@ -1,22 +1,26 @@
+audioop-lts<1.0; python_version >= "3.13"
 fastapi==0.112.4
-gradio==4.37.*
 html2text==2025.4.15
+huggingface-hub==1.5.*
 jinja2==3.1.6
 markdown
 numpy==2.2.*
-pydantic==2.8.2
-PyPDF2==3.0.1
+pydantic==2.11.0
+pymupdf==1.27.1
 python-docx==1.1.2
 pyyaml
 requests
 rich
 tqdm
 
+# Gradio
+https://github.com/oobabooga/gradio/releases/download/4.37.2-custom.9/gradio-4.37.2+custom.9-py3-none-any.whl
+https://github.com/oobabooga/gradio/releases/download/4.37.2-custom.9/gradio_client-1.0.2+custom.9-py3-none-any.whl
+
 # API
-flask_cloudflared==0.0.14
+flask_cloudflared==0.0.15
 sse-starlette==1.6.5
 tiktoken
 
 # Mac wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.37.0/llama_cpp_binaries-0.37.0-py3-none-macosx_15_0_x86_64.whl; platform_system == "Darwin" and platform_release >= "24.0.0" and platform_release < "25.0.0"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.37.0/llama_cpp_binaries-0.37.0-py3-none-macosx_14_0_x86_64.whl; platform_system == "Darwin" and platform_release >= "23.0.0" and platform_release < "24.0.0"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.87.0/llama_cpp_binaries-0.87.0-py3-none-macosx_13_0_x86_64.whl; platform_system == "Darwin"

@@ -3,12 +3,13 @@ import shutil
 import warnings
 from pathlib import Path
 
-from modules import shared
-from modules.block_requests import OpenMonkeyPatch, RequestBlocker
+from modules import shared, ui  # ui must be imported early to avoid circular imports
+from modules.image_models import load_image_model
 from modules.logging_colors import logger
+from modules.prompts import load_prompt
 
 # Set up Gradio temp directory path
-gradio_temp_path = Path('user_data') / 'cache' / 'gradio'
+gradio_temp_path = shared.user_data_dir / 'cache' / 'gradio'
 shutil.rmtree(gradio_temp_path, ignore_errors=True)
 gradio_temp_path.mkdir(parents=True, exist_ok=True)
 
@@ -25,13 +26,7 @@ warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_na
 warnings.filterwarnings('ignore', category=UserWarning, message='The value passed into gr.Dropdown()')
 warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_names" has conflict')
 
-with RequestBlocker():
-    from modules import gradio_hijack
-    import gradio as gr
-
-import matplotlib
-
-matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
+import gradio as gr
 
 import os
 import signal
@@ -49,6 +44,7 @@ from modules import (
     ui_chat,
     ui_default,
     ui_file_saving,
+    ui_image_generation,
     ui_model_menu,
     ui_notebook,
     ui_parameters,
@@ -62,7 +58,6 @@ from modules.models import load_model, unload_model_if_idle
 from modules.models_settings import (
     get_fallback_settings,
     get_model_metadata,
-    update_gpu_layers_and_vram,
     update_model_parameters
 )
 from modules.shared import do_cmd_flags_warnings
@@ -70,24 +65,25 @@ from modules.utils import gradio
 
 
 def signal_handler(sig, frame):
-    logger.info("Received Ctrl+C. Shutting down Text generation web UI gracefully.")
+    logger.info("Received Ctrl+C. Shutting down Text Generation Web UI gracefully.")
 
     # Explicitly stop LlamaServer to avoid __del__ cleanup issues during shutdown
     if shared.model and shared.model.__class__.__name__ == 'LlamaServer':
         try:
             shared.model.stop()
-        except:
+        except Exception:
             pass
 
     sys.exit(0)
 
 
 signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 
 def create_interface():
 
-    title = 'Text generation web UI'
+    title = 'Text Generation Web UI'
 
     # Password authentication
     auth = []
@@ -97,6 +93,11 @@ def create_interface():
         with open(shared.args.gradio_auth_path, 'r', encoding="utf8") as file:
             auth.extend(x.strip() for line in file for x in line.split(',') if x.strip())
     auth = [tuple(cred.split(':')) for cred in auth]
+
+    # Allowed paths
+    allowed_paths = ["css", "js", "extensions", str(shared.user_data_dir / "cache")]
+    if not shared.args.multi_user:
+        allowed_paths.append(str(shared.user_data_dir / "image_outputs"))
 
     # Import the extensions and execute their setup() functions
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
@@ -109,9 +110,18 @@ def create_interface():
         'filter_by_loader': (shared.args.loader or 'All') if not shared.args.portable else 'llama.cpp'
     })
 
+    if not shared.settings['prompt-notebook']:
+        shared.settings['prompt-notebook'] = utils.get_available_prompts()[0]
+
+    prompt = load_prompt(shared.settings['prompt-notebook'])
+    shared.persistent_interface_state.update({
+        'textbox-default': prompt,
+        'textbox-notebook': prompt
+    })
+
     # Clear existing cache files
     for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
-        cache_path = Path(f"user_data/cache/{cache_file}")
+        cache_path = shared.user_data_dir / "cache" / cache_file
         if cache_path.exists():
             cache_path.unlink()
 
@@ -128,14 +138,31 @@ def create_interface():
     # Interface state elements
     shared.input_elements = ui.list_interface_input_elements()
 
-    with gr.Blocks(css=css, analytics_enabled=False, title=title, theme=ui.theme) as shared.gradio['interface']:
+    # Head HTML for font preloads, KaTeX, highlight.js, morphdom, and global JS
+    head_html = '\n'.join([
+        '<link rel="preload" href="file/css/Inter/Inter-VariableFont_opsz,wght.ttf" as="font" type="font/ttf" crossorigin>',
+        '<link rel="preload" href="file/css/Inter/Inter-Italic-VariableFont_opsz,wght.ttf" as="font" type="font/ttf" crossorigin>',
+        '<link rel="preload" href="file/css/NotoSans/NotoSans-Medium.woff2" as="font" type="font/woff2" crossorigin>',
+        '<link rel="preload" href="file/css/NotoSans/NotoSans-MediumItalic.woff2" as="font" type="font/woff2" crossorigin>',
+        '<link rel="preload" href="file/css/NotoSans/NotoSans-Bold.woff2" as="font" type="font/woff2" crossorigin>',
+        '<script src="file/js/katex/katex.min.js"></script>',
+        '<script src="file/js/katex/auto-render.js"></script>',
+        '<script src="file/js/highlightjs/highlight.min.js"></script>',
+        '<script src="file/js/highlightjs/highlightjs-copy.min.js"></script>',
+        '<script src="file/js/morphdom/morphdom-umd.min.js"></script>',
+        f'<link id="highlight-css" rel="stylesheet" href="file/css/highlightjs/{"github-dark" if shared.settings["dark_theme"] else "github"}.min.css">',
+        '<script>hljs.addPlugin(new CopyButtonPlugin());</script>',
+        f'<script>{ui.global_scope_js}</script>',
+    ])
+
+    with gr.Blocks(css=css, analytics_enabled=False, title=title, theme=ui.theme, head=head_html, dark_theme=shared.settings['dark_theme']) as shared.gradio['interface']:
 
         # Interface state
         shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
 
         # Audio notification
-        if Path("user_data/notification.mp3").exists():
-            shared.gradio['audio_notification'] = gr.Audio(interactive=False, value="user_data/notification.mp3", elem_id="audio_notification", visible=False)
+        if (shared.user_data_dir / "notification.mp3").exists():
+            shared.gradio['audio_notification'] = gr.Audio(interactive=False, value=str(shared.user_data_dir / "notification.mp3"), elem_id="audio_notification", visible=False)
 
         # Floating menus for saving/deleting files
         ui_file_saving.create_ui()
@@ -155,6 +182,7 @@ def create_interface():
         ui_chat.create_character_settings_ui()  # Character tab
         ui_model_menu.create_ui()  # Model tab
         if not shared.args.portable:
+            ui_image_generation.create_ui()  # Image generation tab
             training.create_ui()  # Training tab
         ui_session.create_ui()  # Session tab
 
@@ -162,6 +190,8 @@ def create_interface():
         ui_chat.create_event_handlers()
         ui_default.create_event_handlers()
         ui_notebook.create_event_handlers()
+        if not shared.args.portable:
+            ui_image_generation.create_event_handlers()
 
         # Other events
         ui_file_saving.create_event_handlers()
@@ -177,27 +207,6 @@ def create_interface():
             gradio('show_controls'),
             None,
             js=f"""(x) => {{
-                // Check if this is first visit or if localStorage is out of sync
-                const savedTheme = localStorage.getItem('theme');
-                const serverTheme = {str(shared.settings['dark_theme']).lower()} ? 'dark' : 'light';
-
-                // If no saved theme or mismatch with server on first load, use server setting
-                if (!savedTheme || !sessionStorage.getItem('theme_synced')) {{
-                    localStorage.setItem('theme', serverTheme);
-                    sessionStorage.setItem('theme_synced', 'true');
-                    if (serverTheme === 'dark') {{
-                        document.getElementsByTagName('body')[0].classList.add('dark');
-                    }} else {{
-                        document.getElementsByTagName('body')[0].classList.remove('dark');
-                    }}
-                }} else {{
-                    // Use localStorage for subsequent reloads
-                    if (savedTheme === 'dark') {{
-                        document.getElementsByTagName('body')[0].classList.add('dark');
-                    }} else {{
-                        document.getElementsByTagName('body')[0].classList.remove('dark');
-                    }}
-                }}
                 {js}
                 {ui.show_controls_js}
                 toggle_controls(x);
@@ -211,34 +220,33 @@ def create_interface():
 
     # Launch the interface
     shared.gradio['interface'].queue()
-    with OpenMonkeyPatch():
-        shared.gradio['interface'].launch(
-            max_threads=64,
-            prevent_thread_lock=True,
-            share=shared.args.share,
-            server_name=None if not shared.args.listen else (shared.args.listen_host or '0.0.0.0'),
-            server_port=shared.args.listen_port,
-            inbrowser=shared.args.auto_launch,
-            auth=auth or None,
-            ssl_verify=False if (shared.args.ssl_keyfile or shared.args.ssl_certfile) else True,
-            ssl_keyfile=shared.args.ssl_keyfile,
-            ssl_certfile=shared.args.ssl_certfile,
-            root_path=shared.args.subpath,
-            allowed_paths=["css", "js", "extensions", "user_data/cache"]
-        )
+    shared.gradio['interface'].launch(
+        max_threads=64,
+        prevent_thread_lock=True,
+        share=shared.args.share,
+        server_name=None if not shared.args.listen else (shared.args.listen_host or '0.0.0.0'),
+        server_port=shared.args.listen_port,
+        inbrowser=shared.args.auto_launch,
+        auth=auth or None,
+        ssl_verify=False if (shared.args.ssl_keyfile or shared.args.ssl_certfile) else True,
+        ssl_keyfile=shared.args.ssl_keyfile,
+        ssl_certfile=shared.args.ssl_certfile,
+        root_path=shared.args.subpath,
+        allowed_paths=allowed_paths,
+    )
 
 
 if __name__ == "__main__":
 
-    logger.info("Starting Text generation web UI")
+    logger.info("Starting Text Generation Web UI")
     do_cmd_flags_warnings()
 
     # Load custom settings
     settings_file = None
     if shared.args.settings is not None and Path(shared.args.settings).exists():
         settings_file = Path(shared.args.settings)
-    elif Path('user_data/settings.yaml').exists():
-        settings_file = Path('user_data/settings.yaml')
+    elif (shared.user_data_dir / 'settings.yaml').exists():
+        settings_file = shared.user_data_dir / 'settings.yaml'
 
     if settings_file is not None:
         logger.info(f"Loading settings from \"{settings_file}\"")
@@ -247,6 +255,9 @@ if __name__ == "__main__":
 
         if new_settings:
             shared.settings.update(new_settings)
+
+    # Apply CLI overrides for image model settings (CLI flags take precedence over saved settings)
+    shared.apply_image_model_cli_overrides()
 
     # Fallback settings for models
     shared.model_config['.*'] = get_fallback_settings()
@@ -258,6 +269,22 @@ if __name__ == "__main__":
         shared.args.extensions = shared.args.extensions or []
         if extension not in shared.args.extensions:
             shared.args.extensions.append(extension)
+
+    # Load image model if specified via CLI
+    if shared.args.image_model:
+        logger.info(f"Loading image model: {shared.args.image_model}")
+        result = load_image_model(
+            shared.args.image_model,
+            dtype=shared.settings.get('image_dtype', 'bfloat16'),
+            attn_backend=shared.settings.get('image_attn_backend', 'sdpa'),
+            cpu_offload=shared.settings.get('image_cpu_offload', False),
+            compile_model=shared.settings.get('image_compile', False),
+            quant_method=shared.settings.get('image_quant', 'none')
+        )
+        if result is not None:
+            shared.image_model_name = shared.args.image_model
+        else:
+            logger.error(f"Failed to load image model: {shared.args.image_model}")
 
     available_models = utils.get_available_models()
 
@@ -283,32 +310,11 @@ if __name__ == "__main__":
 
     # If any model has been selected, load it
     if shared.model_name != 'None':
-        p = Path(shared.model_name)
-        if p.exists():
-            model_name = p.parts[-1]
-            shared.model_name = model_name
-        else:
-            model_name = shared.model_name
-
-        model_settings = get_model_metadata(model_name)
+        model_settings = get_model_metadata(shared.model_name)
         update_model_parameters(model_settings, initial=True)  # hijack the command-line arguments
 
-        # Auto-adjust GPU layers if not provided by user and it's a llama.cpp model
-        if 'gpu_layers' not in shared.provided_arguments and shared.args.loader == 'llama.cpp' and 'gpu_layers' in model_settings:
-            vram_usage, adjusted_layers = update_gpu_layers_and_vram(
-                shared.args.loader,
-                model_name,
-                model_settings['gpu_layers'],
-                shared.args.ctx_size,
-                shared.args.cache_type,
-                auto_adjust=True,
-                for_ui=False
-            )
-
-            shared.args.gpu_layers = adjusted_layers
-
         # Load the model
-        shared.model, shared.tokenizer = load_model(model_name)
+        shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
             add_lora_to_model(shared.args.lora)
 

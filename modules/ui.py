@@ -113,7 +113,7 @@ if not shared.args.old_colors:
         block_radius='0',
     )
 
-if Path("user_data/notification.mp3").exists():
+if (shared.user_data_dir / "notification.mp3").exists():
     audio_notification_js = "document.querySelector('#audio_notification audio')?.play();"
 else:
     audio_notification_js = ""
@@ -125,9 +125,12 @@ def list_model_elements():
         'loader',
         'cpu_memory',
         'gpu_layers',
+        'fit_target',
+        'cpu_moe',
         'threads',
         'threads_batch',
         'batch_size',
+        'ubatch_size',
         'ctx_size',
         'cache_type',
         'tensor_split',
@@ -139,10 +142,8 @@ def list_model_elements():
         'compress_pos_emb',
         'compute_dtype',
         'quant_type',
-        'num_experts_per_token',
         'load_in_8bit',
         'load_in_4bit',
-        'flash_attn',
         'attn_implementation',
         'cpu',
         'disk',
@@ -151,23 +152,22 @@ def list_model_elements():
         'no_mmap',
         'mlock',
         'numa',
+        'parallel',
         'use_double_quant',
         'bf16',
-        'autosplit',
         'enable_tp',
         'tp_backend',
-        'no_flash_attn',
-        'no_xformers',
-        'no_sdpa',
         'cfg_cache',
-        'cpp_runner',
-        'trust_remote_code',
         'no_use_fast',
         'model_draft',
         'draft_max',
         'gpu_layers_draft',
         'device_draft',
         'ctx_size_draft',
+        'spec_type',
+        'spec_ngram_size_n',
+        'spec_ngram_size_m',
+        'spec_ngram_min_hits',
         'mmproj',
     ]
 
@@ -193,6 +193,8 @@ def list_interface_input_elements():
         'tfs',
         'top_a',
         'top_n_sigma',
+        'adaptive_target',
+        'adaptive_decay',
         'dry_multiplier',
         'dry_allowed_length',
         'dry_base',
@@ -251,6 +253,7 @@ def list_interface_input_elements():
         'chat_style',
         'chat-instruct_command',
         'character_menu',
+        'user_menu',
         'name2',
         'context',
         'greeting',
@@ -279,6 +282,29 @@ def list_interface_input_elements():
         'paste_to_attachment',
         'include_past_attachments',
     ]
+
+    if not shared.args.portable:
+        # Image generation elements
+        elements += [
+            'image_prompt',
+            'image_neg_prompt',
+            'image_width',
+            'image_height',
+            'image_aspect_ratio',
+            'image_steps',
+            'image_cfg_scale',
+            'image_seed',
+            'image_batch_size',
+            'image_batch_count',
+            'image_llm_variations',
+            'image_llm_variations_prompt',
+            'image_model_menu',
+            'image_dtype',
+            'image_attn_backend',
+            'image_compile',
+            'image_cpu_offload',
+            'image_quant',
+        ]
 
     return elements
 
@@ -330,6 +356,8 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
     output['preset'] = preset
     output['prompt-notebook'] = state['prompt_menu-default'] if state['show_two_notebook_columns'] else state['prompt_menu-notebook']
     output['character'] = state['character_menu']
+    if 'user_menu' in state and state['user_menu']:
+        output['user'] = state['user_menu']
     output['seed'] = int(output['seed'])
     output['show_controls'] = show_controls
     output['dark_theme'] = True if theme_state == 'dark' else False
@@ -354,7 +382,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
                             output[_id] = params[param]
     else:
         # Preserve existing extensions and extension parameters during autosave
-        settings_path = Path('user_data') / 'settings.yaml'
+        settings_path = shared.user_data_dir / 'settings.yaml'
         if settings_path.exists():
             try:
                 with open(settings_path, 'r', encoding='utf-8') as f:
@@ -409,7 +437,7 @@ def _perform_debounced_save():
     try:
         if _last_interface_state is not None:
             contents = save_settings(_last_interface_state, _last_preset, _last_extensions, _last_show_controls, _last_theme_state, manual_save=False)
-            settings_path = Path('user_data') / 'settings.yaml'
+            settings_path = shared.user_data_dir / 'settings.yaml'
             settings_path.parent.mkdir(exist_ok=True)
             with open(settings_path, 'w', encoding='utf-8') as f:
                 f.write(contents)
@@ -434,6 +462,7 @@ def setup_auto_save():
         'chat_style',
         'chat-instruct_command',
         'character_menu',
+        'user_menu',
         'name1',
         'name2',
         'context',
@@ -461,6 +490,8 @@ def setup_auto_save():
         'tfs',
         'top_a',
         'top_n_sigma',
+        'adaptive_target',
+        'adaptive_decay',
         'dry_multiplier',
         'dry_allowed_length',
         'dry_base',
@@ -509,8 +540,32 @@ def setup_auto_save():
         'theme_state',
         'show_two_notebook_columns',
         'paste_to_attachment',
-        'include_past_attachments'
+        'include_past_attachments',
+
     ]
+
+    if not shared.args.portable:
+        # Image generation tab (ui_image_generation.py)
+        change_elements += [
+            'image_prompt',
+            'image_neg_prompt',
+            'image_width',
+            'image_height',
+            'image_aspect_ratio',
+            'image_steps',
+            'image_cfg_scale',
+            'image_seed',
+            'image_batch_size',
+            'image_batch_count',
+            'image_llm_variations',
+            'image_llm_variations_prompt',
+            'image_model_menu',
+            'image_dtype',
+            'image_attn_backend',
+            'image_compile',
+            'image_cpu_offload',
+            'image_quant',
+        ]
 
     for element_name in change_elements:
         if element_name in shared.gradio:

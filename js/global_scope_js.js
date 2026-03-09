@@ -11,7 +11,11 @@ function copyToClipboard(element) {
   const rawText = messageElement.getAttribute("data-raw");
   if (!rawText) return;
 
-  navigator.clipboard.writeText(rawText).then(function() {
+  const copyPromise = navigator.clipboard && window.isSecureContext
+    ? navigator.clipboard.writeText(rawText)
+    : fallbackCopyToClipboard(rawText);
+
+  copyPromise.then(function() {
     const originalSvg = element.innerHTML;
     element.innerHTML = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"text-green-500 dark:text-green-400\"><path d=\"M5 12l5 5l10 -10\"></path></svg>";
     setTimeout(() => {
@@ -19,6 +23,27 @@ function copyToClipboard(element) {
     }, 1000);
   }).catch(function(err) {
     console.error("Failed to copy text: ", err);
+  });
+}
+
+function fallbackCopyToClipboard(text) {
+  return new Promise((resolve, reject) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    textArea.style.top = "-9999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textArea);
+      successful ? resolve() : reject();
+    } catch (err) {
+      document.body.removeChild(textArea);
+      reject(err);
+    }
   });
 }
 
@@ -351,24 +376,3 @@ function handleMorphdomUpdate(data) {
     }
   });
 }
-
-// Wait for Gradio to finish setting its styles, then force dark theme
-const observer = new MutationObserver((mutations) => {
-  mutations.forEach((mutation) => {
-    if (mutation.type === "attributes" &&
-        mutation.target.tagName === "GRADIO-APP" &&
-        mutation.attributeName === "style") {
-
-      // Gradio just set its styles, now force dark theme
-      document.body.classList.add("dark");
-      observer.disconnect();
-    }
-  });
-});
-
-// Start observing
-observer.observe(document.documentElement, {
-  attributes: true,
-  subtree: true,
-  attributeFilter: ["style"]
-});
