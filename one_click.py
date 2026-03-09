@@ -365,8 +365,10 @@ def update_requirements(initial_installation=False, pull=True):
 
     current_commit = get_current_commit()
     wheels_changed = not os.path.exists(state_file)
+    installed_wheels = set()
     if not wheels_changed:
         state = load_state()
+        installed_wheels = set(state.get('installed_wheels', []))
         if 'wheels_changed' in state or state.get('last_installed_commit') != current_commit:
             wheels_changed = True
 
@@ -431,9 +433,17 @@ def update_requirements(initial_installation=False, pull=True):
 
     # Prepare the requirements file
     textgen_requirements = open(requirements_file).read().splitlines()
+    all_whl_lines = [line.strip() for line in textgen_requirements if '.whl' in line]
 
-    if not initial_installation and not wheels_changed:
-        textgen_requirements = [line for line in textgen_requirements if '.whl' not in line]
+    if not initial_installation:
+        if installed_wheels:
+            # Per-wheel comparison: only re-download wheels that changed
+            textgen_requirements = [
+                line for line in textgen_requirements
+                if '.whl' not in line or line.strip() not in installed_wheels
+            ]
+        elif not wheels_changed:
+            textgen_requirements = [line for line in textgen_requirements if '.whl' not in line]
 
     with open('temp_requirements.txt', 'w') as file:
         file.write('\n'.join(textgen_requirements))
@@ -452,6 +462,7 @@ def update_requirements(initial_installation=False, pull=True):
     # Save state after successful installation
     state = load_state()
     state['last_installed_commit'] = current_commit
+    state['installed_wheels'] = all_whl_lines
     state.pop('wheels_changed', None)
     save_state(state)
 
