@@ -21,6 +21,7 @@ def load_model(model_name, loader=None):
         'ExLlamav3_HF': ExLlamav3_HF_loader,
         'ExLlamav3': ExLlamav3_loader,
         'TensorRT-LLM': TensorRT_LLM_loader,
+        'MLX': MLX_loader,
     }
 
     metadata = get_model_metadata(model_name)
@@ -51,7 +52,7 @@ def load_model(model_name, loader=None):
         return None, None
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
-    if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt') or loader == 'llama.cpp':
+    if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt') or loader == 'llama.cpp' or loader == 'MLX':
         if shared.args.ctx_size > 0:
             shared.settings['truncation_length'] = shared.args.ctx_size
 
@@ -117,6 +118,19 @@ def TensorRT_LLM_loader(model_name):
     return model, model.tokenizer
 
 
+def MLX_loader(model_name):
+    try:
+        from modules.mlx_loader import MLXModel
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("Failed to import MLX loader. Please install mlx-lm: pip install mlx-lm")
+
+    result = MLXModel.from_pretrained(model_name)
+    if result is None:
+        raise RuntimeError(f"Failed to load MLX model: {model_name}. Check the logs above for specific error details.")
+    
+    return result
+
+
 def unload_model(keep_model_name=False):
     if shared.model is None:
         return
@@ -128,6 +142,8 @@ def unload_model(keep_model_name=False):
         shared.model.unload()
     elif model_class_name == 'LlamaServer':
         shared.model.stop()
+    elif model_class_name == 'MLXModel':
+        shared.model.unload()
 
     shared.model = shared.tokenizer = None
     shared.lora_names = []

@@ -31,3 +31,17 @@ wandb
 /docker-compose.yml
 /Dockerfile
 .env
+
+
+# START Ruler Generated Files
+/.codex/config.toml
+/.codex/config.toml.bak
+/.mcp.json
+/.mcp.json.bak
+/.vscode/mcp.json
+/.vscode/mcp.json.bak
+/AGENTS.md
+/AGENTS.md.bak
+/CLAUDE.md
+/CLAUDE.md.bak
+# END Ruler Generated Files
