@@ -82,6 +82,7 @@ loaders_and_params = OrderedDict({
     ],
     'MLX': [
         'ctx_size',
+        'cache_type',
     ]
 })
 

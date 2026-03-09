@@ -5,8 +5,20 @@ import modules.shared as shared
 from modules.logging_colors import logger
 
 # Constants for MLX configuration
-MLX_TOP_P_DISABLED = 0.0  # MLX expects 0.0 to disable top_p
 DEFAULT_MAX_TOKENS = 512  # Default maximum tokens for generation
+
+# Mapping from webui cache_type values to mlx-lm kv_bits
+CACHE_TYPE_TO_KV_BITS = {
+    'q2': 2,
+    'q3': 3,
+    'q4_0': 4,
+    'q4': 4,
+    'q5': 5,
+    'q6': 6,
+    'q7': 7,
+    'q8_0': 8,
+    'q8': 8,
+}
 
 
 def is_apple_silicon():
@@ -19,6 +31,7 @@ class MLXModel:
         self.model = None
         self.tokenizer = None
         self.model_name = None
+        self.last_prompt_token_count = 0
 
     @classmethod
     def from_pretrained(cls, model_name):
@@ -126,7 +139,7 @@ class MLXModel:
             # Create the sampler
             sampler = make_sampler(
                 temp=temperature,
-                top_p=top_p if top_p < 1.0 else MLX_TOP_P_DISABLED,
+                top_p=top_p if top_p < 1.0 else 0.0,
                 top_k=int(top_k) if top_k > 0 else 0,
                 min_p=min_p,
                 min_tokens_to_keep=1,
@@ -145,7 +158,7 @@ class MLXModel:
             return None
 
     def _create_logits_processors(self, state):
-        """Create logits processors for repetition penalty, etc."""
+        """Create logits processors for repetition penalty, ban_eos_token, etc."""
         processors = []
 
         try:
@@ -165,6 +178,21 @@ class MLXModel:
             logger.warning("MLX repetition penalty not available")
         except Exception as e:
             logger.error(f"Failed to create repetition penalty processor: {e}")
+
+        # Ban EOS token
+        if state.get('ban_eos_token', False) and self.tokenizer is not None:
+            eos_token_id = getattr(self.tokenizer, 'eos_token_id', None)
+            if eos_token_id is not None:
+                try:
+                    import mlx.core as mx
+
+                    def ban_eos_processor(tokens, logits):
+                        logits[..., eos_token_id] = -float('inf')
+                        return logits
+
+                    processors.append(ban_eos_processor)
+                except ImportError:
+                    pass
 
         return processors if processors else None
 
@@ -188,6 +216,17 @@ class MLXModel:
         if logits_processors:
             mlx_params['logits_processors'] = logits_processors
 
+        # Context size -> max_kv_size
+        ctx_size = getattr(shared.args, 'ctx_size', 0)
+        if ctx_size > 0:
+            mlx_params['max_kv_size'] = ctx_size
+
+        # KV cache quantization from cache_type
+        cache_type = getattr(shared.args, 'cache_type', 'fp16')
+        kv_bits = CACHE_TYPE_TO_KV_BITS.get(cache_type)
+        if kv_bits is not None:
+            mlx_params['kv_bits'] = kv_bits
+
         # Seed handling
         seed = state.get('seed', -1)
         if seed != -1:
@@ -199,28 +238,10 @@ class MLXModel:
 
         return mlx_params
 
-    def _prepare_prompt(self, prompt):
-        """Prepare prompt with chat template if available"""
-        if self.tokenizer.chat_template is not None:
-            messages = [{"role": "user", "content": prompt}]
-            formatted_prompt = self.tokenizer.apply_chat_template(
-                messages, add_generation_prompt=True, tokenize=False
-            )
-            return formatted_prompt
-        return prompt
-
-    @staticmethod
-    def _extract_token_id(token):
-        """Extract integer token ID from MLX array or direct integer."""
-        if hasattr(token, 'item'):
-            return int(token.item())
-        return int(token)
-
     def generate(self, prompt, state):
-        """Non-streaming generation with advanced sampling"""
+        """Non-streaming generation using stream_generate"""
         try:
-            from mlx_lm.generate import generate_step
-            import mlx.core as mx
+            from mlx_lm import stream_generate
         except ImportError:
             logger.error("mlx-lm not found. Please install with: pip install mlx-lm")
             return ""
@@ -230,30 +251,28 @@ class MLXModel:
             return ""
 
         try:
-            formatted_prompt = self._prepare_prompt(prompt)
-            prompt_tokens = self.tokenizer.encode(formatted_prompt)
-            prompt_array = mx.array(prompt_tokens)
-
             mlx_params = self._map_parameters(state)
-            max_tokens = mlx_params.pop('max_tokens', DEFAULT_MAX_TOKENS)
 
-            generated_tokens = []
+            # Track prompt token count for stats
+            prompt_tokens = self.tokenizer.encode(prompt)
+            self.last_prompt_token_count = len(prompt_tokens)
 
-            for token, logprobs in generate_step(
-                prompt_array,
+            # Auto max new tokens
+            if state.get('auto_max_new_tokens', False):
+                mlx_params['max_tokens'] = state.get('truncation_length', 2048) - self.last_prompt_token_count
+
+            result_text = ""
+            for response in stream_generate(
                 self.model,
-                max_tokens=max_tokens,
+                self.tokenizer,
+                prompt=prompt,
                 **mlx_params
             ):
-                token_id = self._extract_token_id(token)
-                generated_tokens.append(token_id)
-
                 if self._is_stopped(state):
                     break
+                result_text += response.text
 
-            if generated_tokens:
-                return self.tokenizer.decode(generated_tokens)
-            return ""
+            return result_text
 
         except Exception as e:
             logger.error(f"MLX generation failed: {str(e)}")
@@ -261,15 +280,13 @@ class MLXModel:
             return ""
 
     def generate_with_streaming(self, prompt, state):
-        """True streaming generation using MLX generate_step.
+        """Streaming generation using stream_generate.
 
-        Uses full decode of accumulated tokens on each step to correctly
-        handle multi-byte characters (e.g., CJK, emoji) that span multiple
-        tokens.
+        Uses the high-level stream_generate API which handles multi-byte
+        characters, prompt caching, and generation statistics natively.
         """
         try:
-            from mlx_lm.generate import generate_step
-            import mlx.core as mx
+            from mlx_lm import stream_generate
         except ImportError:
             logger.error("mlx-lm not found. Please install with: pip install mlx-lm")
             yield ""
@@ -281,43 +298,28 @@ class MLXModel:
             return
 
         try:
-            formatted_prompt = self._prepare_prompt(prompt)
-            prompt_tokens = self.tokenizer.encode(formatted_prompt)
-            prompt_array = mx.array(prompt_tokens)
-
             mlx_params = self._map_parameters(state)
-            max_tokens = mlx_params.pop('max_tokens', DEFAULT_MAX_TOKENS)
 
-            generated_tokens = []
-            prev_text = ""
+            # Track prompt token count for stats
+            prompt_tokens = self.tokenizer.encode(prompt)
+            self.last_prompt_token_count = len(prompt_tokens)
 
-            for token, logprobs in generate_step(
-                prompt_array,
+            # Auto max new tokens
+            if state.get('auto_max_new_tokens', False):
+                mlx_params['max_tokens'] = state.get('truncation_length', 2048) - self.last_prompt_token_count
+
+            cumulative_text = ""
+            for response in stream_generate(
                 self.model,
-                max_tokens=max_tokens,
+                self.tokenizer,
+                prompt=prompt,
                 **mlx_params
             ):
-                token_id = self._extract_token_id(token)
-                generated_tokens.append(token_id)
-
-                # Decode all accumulated tokens to properly handle
-                # multi-byte characters that span token boundaries
-                current_text = self.tokenizer.decode(generated_tokens)
-
-                # Only yield when new text is available (avoids yielding
-                # on partial multi-byte sequences)
-                if current_text != prev_text:
-                    prev_text = current_text
-                    yield current_text
-
                 if self._is_stopped(state):
                     break
 
-            # Final yield with complete text
-            if generated_tokens:
-                final_text = self.tokenizer.decode(generated_tokens)
-                if final_text != prev_text:
-                    yield final_text
+                cumulative_text += response.text
+                yield cumulative_text
 
         except Exception as e:
             logger.error(f"MLX streaming generation failed: {str(e)}")
@@ -341,13 +343,13 @@ class MLXModel:
             import torch
             return torch.tensor([[]], dtype=torch.long)
 
-    def decode(self, token_ids, **kwargs):
+    def decode(self, token_ids, skip_special_tokens=True, **kwargs):
         """Decode tokens to text"""
         if self.tokenizer is None:
             return ""
 
         try:
-            text = self.tokenizer.decode(token_ids)
+            text = self.tokenizer.decode(token_ids, skip_special_tokens=skip_special_tokens)
             return text
         except Exception as e:
             logger.error(f"MLX detokenization failed: {str(e)}")
@@ -357,4 +359,11 @@ class MLXModel:
         """Unload the model to free memory"""
         self.model = None
         self.tokenizer = None
+
+        try:
+            import mlx.core as mx
+            mx.metal.clear_cache()
+        except Exception:
+            pass
+
         logger.info("MLX model unloaded")
