@@ -236,20 +236,25 @@ List of command-line flags
 </summary>
 
 ```txt
-usage: server.py [-h] [--multi-user] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--model-menu] [--settings SETTINGS]
+usage: server.py [-h] [--user-data-dir USER_DATA_DIR] [--multi-user] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--model-menu] [--settings SETTINGS]
                  [--extensions EXTENSIONS [EXTENSIONS ...]] [--verbose] [--idle-timeout IDLE_TIMEOUT] [--image-model IMAGE_MODEL] [--image-model-dir IMAGE_MODEL_DIR] [--image-dtype {bfloat16,float16}]
                  [--image-attn-backend {flash_attention_2,sdpa}] [--image-cpu-offload] [--image-compile] [--image-quant {none,bnb-8bit,bnb-4bit,torchao-int8wo,torchao-fp4,torchao-float8wo}]
                  [--loader LOADER] [--ctx-size N] [--cache-type N] [--model-draft MODEL_DRAFT] [--draft-max DRAFT_MAX] [--gpu-layers-draft GPU_LAYERS_DRAFT] [--device-draft DEVICE_DRAFT]
                  [--ctx-size-draft CTX_SIZE_DRAFT] [--spec-type {none,ngram-mod,ngram-simple,ngram-map-k,ngram-map-k4v,ngram-cache}] [--spec-ngram-size-n SPEC_NGRAM_SIZE_N]
                  [--spec-ngram-size-m SPEC_NGRAM_SIZE_M] [--spec-ngram-min-hits SPEC_NGRAM_MIN_HITS] [--gpu-layers N] [--cpu-moe] [--mmproj MMPROJ] [--streaming-llm] [--tensor-split TENSOR_SPLIT]
                  [--row-split] [--no-mmap] [--mlock] [--no-kv-offload] [--batch-size BATCH_SIZE] [--ubatch-size UBATCH_SIZE] [--threads THREADS] [--threads-batch THREADS_BATCH] [--numa]
-                 [--extra-flags EXTRA_FLAGS] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code]
-                 [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE]
-                 [--gpu-split GPU_SPLIT] [--enable-tp] [--tp-backend TP_BACKEND] [--cfg-cache] [--cpp-runner]
-                 [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE] [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share]
-                 [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE] [--subpath SUBPATH] [--old-colors]
-                 [--portable] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6] [--api-disable-ipv4]
-                 [--nowebui]
+                 [--parallel PARALLEL] [--fit-target FIT_TARGET] [--extra-flags EXTRA_FLAGS] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16]
+                 [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE]
+                 [--quant_type QUANT_TYPE] [--gpu-split GPU_SPLIT] [--enable-tp] [--tp-backend TP_BACKEND] [--cfg-cache] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE]
+                 [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH]
+                 [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE] [--subpath SUBPATH] [--old-colors] [--portable] [--api] [--public-api]
+                 [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6] [--api-disable-ipv4] [--nowebui] [--temperature N]
+                 [--dynatemp-low N] [--dynatemp-high N] [--dynatemp-exponent N] [--smoothing-factor N] [--smoothing-curve N] [--min-p N] [--top-p N] [--top-k N] [--typical-p N] [--xtc-threshold N]
+                 [--xtc-probability N] [--epsilon-cutoff N] [--eta-cutoff N] [--tfs N] [--top-a N] [--top-n-sigma N] [--adaptive-target N] [--adaptive-decay N] [--dry-multiplier N]
+                 [--dry-allowed-length N] [--dry-base N] [--repetition-penalty N] [--frequency-penalty N] [--presence-penalty N] [--encoder-repetition-penalty N] [--no-repeat-ngram-size N]
+                 [--repetition-penalty-range N] [--penalty-alpha N] [--guidance-scale N] [--mirostat-mode N] [--mirostat-tau N] [--mirostat-eta N] [--do-sample | --no-do-sample]
+                 [--dynamic-temperature | --no-dynamic-temperature] [--temperature-last | --no-temperature-last] [--sampler-priority N] [--dry-sequence-breakers N]
+                 [--enable-thinking | --no-enable-thinking] [--reasoning-effort N] [--chat-template-file CHAT_TEMPLATE_FILE]
 
 Text Generation Web UI
 
@@ -257,6 +262,7 @@ options:
   -h, --help                                           show this help message and exit
 
 Basic settings:
+  --user-data-dir USER_DATA_DIR                        Path to the user data directory. Default: auto-detected.
   --multi-user                                         Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.
   --model MODEL                                        Name of the model to load by default.
   --lora LORA [LORA ...]                               The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.
@@ -280,12 +286,12 @@ Image model:
                                                        Quantization method for image model.
 
 Model loader:
-  --loader LOADER                                      Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav3,
-                                                       TensorRT-LLM.
+  --loader LOADER                                      Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav3, TensorRT-
+                                                       LLM.
 
 Context and cache:
-  --ctx-size N, --n_ctx N, --max_seq_len N             Context size in tokens. llama.cpp: 0 = auto if gpu-layers is also -1.
-  --cache-type N, --cache_type N                       KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).
+  --ctx-size, --n_ctx, --max_seq_len N                 Context size in tokens. llama.cpp: 0 = auto if gpu-layers is also -1.
+  --cache-type, --cache_type N                         KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).
 
 Speculative decoding:
   --model-draft MODEL_DRAFT                            Path to the draft model for speculative decoding.
@@ -300,7 +306,7 @@ Speculative decoding:
   --spec-ngram-min-hits SPEC_NGRAM_MIN_HITS            Minimum n-gram hits for ngram-map speculative decoding.
 
 llama.cpp:
-  --gpu-layers N, --n-gpu-layers N                     Number of layers to offload to the GPU. -1 = auto.
+  --gpu-layers, --n-gpu-layers N                       Number of layers to offload to the GPU. -1 = auto.
   --cpu-moe                                            Move the experts to the CPU (for MoE models).
   --mmproj MMPROJ                                      Path to the mmproj file for vision models.
   --streaming-llm                                      Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.
@@ -314,13 +320,17 @@ llama.cpp:
   --threads THREADS                                    Number of threads to use.
   --threads-batch THREADS_BATCH                        Number of threads to use for batches/prompt processing.
   --numa                                               Activate NUMA task allocation for llama.cpp.
+  --parallel PARALLEL                                  Number of parallel request slots. The context size is divided equally among slots. For example, to have 4 slots with 8192 context each, set
+                                                       ctx_size to 32768.
+  --fit-target FIT_TARGET                              Target VRAM margin per device for auto GPU layers, comma-separated list of values in MiB. A single value is broadcast across all devices.
+                                                       Default: 1024.
   --extra-flags EXTRA_FLAGS                            Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"
 
 Transformers/Accelerate:
   --cpu                                                Use the CPU to generate text. Warning: Training on CPU is extremely slow.
   --cpu-memory CPU_MEMORY                              Maximum CPU memory in GiB. Use this for CPU offloading.
   --disk                                               If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.
-  --disk-cache-dir DISK_CACHE_DIR                      Directory to save the disk cache to. Defaults to "user_data/cache".
+  --disk-cache-dir DISK_CACHE_DIR                      Directory to save the disk cache to.
   --load-in-8bit                                       Load the model with 8-bit precision (using bitsandbytes).
   --bf16                                               Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.
   --no-cache                                           Set use_cache to False while generating text. This reduces VRAM usage slightly, but it comes at a performance cost.
@@ -340,9 +350,6 @@ ExLlamaV3:
   --enable-tp, --enable_tp                             Enable Tensor Parallelism (TP) to split the model across GPUs.
   --tp-backend TP_BACKEND                              The backend for tensor parallelism. Valid options: native, nccl. Default: native.
   --cfg-cache                                          Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.
-
-TensorRT-LLM:
-  --cpp-runner                                         Use the ModelRunnerCpp runner, which is faster than the default ModelRunner.
 
 RoPE:
   --alpha_value ALPHA_VALUE                            Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both.
@@ -373,6 +380,50 @@ API:
   --api-enable-ipv6                                    Enable IPv6 for the API
   --api-disable-ipv4                                   Disable IPv4 for the API
   --nowebui                                            Do not launch the Gradio UI. Useful for launching the API in standalone mode.
+
+API generation defaults:
+  --temperature N                                      Temperature
+  --dynatemp-low N                                     Dynamic temperature low
+  --dynatemp-high N                                    Dynamic temperature high
+  --dynatemp-exponent N                                Dynamic temperature exponent
+  --smoothing-factor N                                 Smoothing factor
+  --smoothing-curve N                                  Smoothing curve
+  --min-p N                                            Min P
+  --top-p N                                            Top P
+  --top-k N                                            Top K
+  --typical-p N                                        Typical P
+  --xtc-threshold N                                    XTC threshold
+  --xtc-probability N                                  XTC probability
+  --epsilon-cutoff N                                   Epsilon cutoff
+  --eta-cutoff N                                       Eta cutoff
+  --tfs N                                              TFS
+  --top-a N                                            Top A
+  --top-n-sigma N                                      Top N Sigma
+  --adaptive-target N                                  Adaptive target
+  --adaptive-decay N                                   Adaptive decay
+  --dry-multiplier N                                   DRY multiplier
+  --dry-allowed-length N                               DRY allowed length
+  --dry-base N                                         DRY base
+  --repetition-penalty N                               Repetition penalty
+  --frequency-penalty N                                Frequency penalty
+  --presence-penalty N                                 Presence penalty
+  --encoder-repetition-penalty N                       Encoder repetition penalty
+  --no-repeat-ngram-size N                             No repeat ngram size
+  --repetition-penalty-range N                         Repetition penalty range
+  --penalty-alpha N                                    Penalty alpha
+  --guidance-scale N                                   Guidance scale
+  --mirostat-mode N                                    Mirostat mode
+  --mirostat-tau N                                     Mirostat tau
+  --mirostat-eta N                                     Mirostat eta
+  --do-sample, --no-do-sample                          Do sample
+  --dynamic-temperature, --no-dynamic-temperature      Dynamic temperature
+  --temperature-last, --no-temperature-last            Temperature last
+  --sampler-priority N                                 Sampler priority
+  --dry-sequence-breakers N                            DRY sequence breakers
+  --enable-thinking, --no-enable-thinking              Enable thinking
+  --reasoning-effort N                                 Reasoning effort
+  --chat-template-file CHAT_TEMPLATE_FILE              Path to a chat template file (.jinja, .jinja2, or .yaml) to use as the default instruction template for API requests. Overrides the model's
+                                                       built-in template.
 ```
 
 </details>
