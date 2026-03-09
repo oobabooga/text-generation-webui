@@ -111,14 +111,13 @@ def get_gpu_choice():
 def get_pytorch_install_command(gpu_choice):
     """Get PyTorch installation command based on GPU choice"""
     base_cmd = f"python -m pip install torch=={TORCH_VERSION} "
-    pypi_fallback = " --extra-index-url https://pypi.org/simple/"
 
     if gpu_choice == "NVIDIA_CUDA128":
-        return base_cmd + "--index-url https://download.pytorch.org/whl/cu128" + pypi_fallback
+        return base_cmd + "--index-url https://download.pytorch.org/whl/cu128"
     elif gpu_choice == "AMD":
-        return base_cmd + "--index-url https://download.pytorch.org/whl/rocm6.4" + pypi_fallback
+        return base_cmd + "--index-url https://download.pytorch.org/whl/rocm6.4"
     elif gpu_choice in ["APPLE", "NONE"]:
-        return base_cmd + "--index-url https://download.pytorch.org/whl/cpu" + pypi_fallback
+        return base_cmd + "--index-url https://download.pytorch.org/whl/cpu"
     elif gpu_choice == "INTEL":
         if is_linux():
             return "python -m pip install torch==2.1.0a0 intel-extension-for-pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
@@ -131,17 +130,16 @@ def get_pytorch_install_command(gpu_choice):
 def get_pytorch_update_command(gpu_choice):
     """Get PyTorch update command based on GPU choice"""
     base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} "
-    pypi_fallback = " --extra-index-url https://pypi.org/simple/"
 
     if gpu_choice == "NVIDIA_CUDA128":
-        return f"{base_cmd}--index-url https://download.pytorch.org/whl/cu128" + pypi_fallback
+        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cu128"
     elif gpu_choice == "AMD":
-        return f"{base_cmd}--index-url https://download.pytorch.org/whl/rocm6.4" + pypi_fallback
+        return f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.4"
     elif gpu_choice in ["APPLE", "NONE"]:
-        return f"{base_cmd}--index-url https://download.pytorch.org/whl/cpu" + pypi_fallback
+        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cpu"
     elif gpu_choice == "INTEL":
         intel_extension = "intel-extension-for-pytorch==2.1.10+xpu" if is_linux() else "intel-extension-for-pytorch==2.1.10"
-        return f"{base_cmd}{intel_extension} --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
+        return f"{base_cmd} {intel_extension} --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
     else:
         return base_cmd
 
@@ -196,6 +194,8 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
     if environment:
         if is_windows():
             conda_bat_path = os.path.join(script_dir, "installer_files", "conda", "condabin", "conda.bat")
+            python_path = os.path.join(conda_env_path, "python.exe")
+            cmd = cmd.replace("python ", f'"{python_path}" ')
             cmd = f'"{conda_bat_path}" activate "{conda_env_path}" >nul && {cmd}'
         else:
             conda_sh_path = os.path.join(script_dir, "installer_files", "conda", "etc", "profile.d", "conda.sh")
