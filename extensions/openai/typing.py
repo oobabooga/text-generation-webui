@@ -109,7 +109,7 @@ class CompletionRequestParams(BaseModel):
     logit_bias: dict | None = None
     logprobs: int | None = None
     max_tokens: int | None = 512
-    n: int | None = Field(default=1, description="Unused parameter.")
+    n: int | None = Field(default=1, description="Number of completions to generate. Only supported without streaming.")
     presence_penalty: float | None = shared.args.presence_penalty
     stop: str | List[str] | None = None
     stream: bool | None = False

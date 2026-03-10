@@ -119,6 +119,12 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
     is_legacy = "/generate" in path
 
     if request_data.stream:
+        if (request_data.n or 1) > 1:
+            return JSONResponse(
+                status_code=400,
+                content={"error": {"message": "n > 1 is not supported with streaming.", "type": "invalid_request_error", "param": "n", "code": None}}
+            )
+
         stop_event = threading.Event()
 
         async def generator():
