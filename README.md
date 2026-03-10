@@ -429,7 +429,7 @@ API generation defaults:
 
 ## Downloading models
 
-Download a GGUF model file from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=gguf) and place it in the `user_data/models` folder. That's it — the UI will detect it automatically. You can also download models directly from the Model tab in the UI.
+Download a GGUF model file from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=gguf) and place it in the `user_data/models` folder. That's it — the UI will detect it automatically.
 
 Not sure what will fit your GPU? Use the [VRAM Calculator](https://huggingface.co/spaces/oobabooga/accurate-gguf-vram-calculator).
 
