@@ -37,13 +37,13 @@ def load_chat_template_file(filepath):
     return text
 
 
-def get_logprobs_from_llama_cpp():
-    """Read logprobs captured from the llama.cpp server response."""
+def get_logprobs_from_backend():
+    """Read logprobs captured from llama.cpp or ExLlamav3 native backend."""
     if not hasattr(shared.model, 'last_completion_probabilities') or not shared.model.last_completion_probabilities:
         return None
 
-    # Convert llama.cpp format to {token: logprob} dict
-    # llama.cpp returns: [{"token": "text", "logprob": -0.5, "top_logprobs": [{"token": "t", "logprob": -0.1}, ...]}, ...]
+    # Both backends store data in shared.model.last_completion_probabilities
+    # Format: [{"top_logprobs": [{"token": "text", "logprob": -0.5}, ...]}, ...]
     result = {}
     for entry in shared.model.last_completion_probabilities:
         top = entry.get('top_logprobs', entry.get('top_probs', []))
@@ -90,8 +90,8 @@ def process_parameters(body, is_legacy=False):
         elif isinstance(body['stop'], list):
             generate_params['custom_stopping_strings'] = body['stop']
 
-    # For llama.cpp, logit_bias and logprobs are forwarded natively via prepare_payload()
-    if shared.args.loader != 'llama.cpp':
+    # For llama.cpp and ExLlamav3 native, logit_bias and logprobs are forwarded natively
+    if shared.args.loader not in ('llama.cpp', 'ExLlamav3'):
         from transformers import LogitsProcessorList
 
         from modules.transformers_loader import (
@@ -527,9 +527,9 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False, stop_e
 
                 if logprob_proc:
                     completion_logprobs = {'top_logprobs': [logprob_proc.token_alternatives]}
-                elif shared.args.loader == 'llama.cpp':
-                    llama_logprobs = get_logprobs_from_llama_cpp()
-                    completion_logprobs = {'top_logprobs': [llama_logprobs]} if llama_logprobs else None
+                elif shared.args.loader in ('llama.cpp', 'ExLlamav3'):
+                    backend_logprobs = get_logprobs_from_backend()
+                    completion_logprobs = {'top_logprobs': [backend_logprobs]} if backend_logprobs else None
                 else:
                     completion_logprobs = None
 
@@ -576,9 +576,9 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False, stop_e
             # begin streaming
             if logprob_proc:
                 chunk_logprobs = {'top_logprobs': [logprob_proc.token_alternatives]}
-            elif shared.args.loader == 'llama.cpp':
-                llama_logprobs = get_logprobs_from_llama_cpp()
-                chunk_logprobs = {'top_logprobs': [llama_logprobs]} if llama_logprobs else None
+            elif shared.args.loader in ('llama.cpp', 'ExLlamav3'):
+                backend_logprobs = get_logprobs_from_backend()
+                chunk_logprobs = {'top_logprobs': [backend_logprobs]} if backend_logprobs else None
             else:
                 chunk_logprobs = None
 
