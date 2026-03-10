@@ -395,7 +395,7 @@ def do_cmd_flags_warnings():
         if args.share:
             logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
         if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):
-            logger.warning("\nYou are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
+            logger.warning("You are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
     if args.multi_user:
         logger.warning(
             'Multi-user mode is enabled. Known limitations:'
