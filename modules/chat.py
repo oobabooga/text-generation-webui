@@ -11,7 +11,6 @@ from datetime import datetime
 from functools import partial
 from pathlib import Path
 
-import gradio as gr
 import yaml
 from jinja2.ext import loopcontrols
 from jinja2.sandbox import ImmutableSandboxedEnvironment
@@ -1333,6 +1332,7 @@ def load_history_after_deletion(state, idx):
     Loads the latest history for the given character in chat or chat-instruct
     mode, or the latest instruct history for instruct mode.
     '''
+    import gradio as gr
 
     if shared.args.multi_user:
         return start_new_chat(state)
@@ -1351,6 +1351,7 @@ def load_history_after_deletion(state, idx):
 
 
 def update_character_menu_after_deletion(idx):
+    import gradio as gr
     characters = utils.get_available_characters()
     idx = min(int(idx), len(characters) - 1)
     idx = max(0, idx)
@@ -1565,24 +1566,6 @@ def clear_character_for_ui(state):
     return state, state['name2'], state['context'], state['greeting'], None
 
 
-def load_instruction_template(template):
-    if template == 'None':
-        return ''
-
-    for filepath in [shared.user_data_dir / 'instruction-templates' / f'{template}.yaml', shared.user_data_dir / 'instruction-templates' / 'Alpaca.yaml']:
-        if filepath.exists():
-            break
-    else:
-        return ''
-
-    file_contents = open(filepath, 'r', encoding='utf-8').read()
-    data = yaml.safe_load(file_contents)
-    if 'instruction_template' in data:
-        return data['instruction_template']
-    else:
-        return jinja_template_from_old_format(data)
-
-
 @functools.cache
 def load_character_memoized(character, name1, name2):
     return load_character(character, name1, name2)
@@ -1590,10 +1573,12 @@ def load_character_memoized(character, name1, name2):
 
 @functools.cache
 def load_instruction_template_memoized(template):
+    from modules.models_settings import load_instruction_template
     return load_instruction_template(template)
 
 
 def upload_character(file, img_path, tavern=False):
+    import gradio as gr
     img = open_image_safely(img_path)
     decoded_file = file if isinstance(file, str) else file.decode('utf-8')
     try:
@@ -1647,6 +1632,7 @@ def upload_tavern_character(img_path, _json):
 
 
 def check_tavern_character(img_path):
+    import gradio as gr
     img = open_image_safely(img_path)
 
     if img is None:
@@ -1832,6 +1818,7 @@ def delete_user(name):
 
 def update_user_menu_after_deletion(idx):
     """Update user menu after a user is deleted"""
+    import gradio as gr
     users = get_available_users()
     if len(users) == 0:
         # Create a default user if none exist
@@ -1864,91 +1851,11 @@ def handle_user_menu_change(state):
 
 def handle_save_user_click(name1):
     """Handle save user button click"""
+    import gradio as gr
     return [
         name1,
         gr.update(visible=True)
     ]
-
-
-def jinja_template_from_old_format(params, verbose=False):
-    MASTER_TEMPLATE = """
-{%- set ns = namespace(found=false) -%}
-{%- for message in messages -%}
-    {%- if message['role'] == 'system' -%}
-        {%- set ns.found = true -%}
-    {%- endif -%}
-{%- endfor -%}
-{%- if not ns.found -%}
-    {{- '<|PRE-SYSTEM|>' + '<|SYSTEM-MESSAGE|>' + '<|POST-SYSTEM|>' -}}
-{%- endif %}
-{%- for message in messages %}
-    {%- if message['role'] == 'system' -%}
-        {{- '<|PRE-SYSTEM|>' + message['content'] + '<|POST-SYSTEM|>' -}}
-    {%- else -%}
-        {%- if message['role'] == 'user' -%}
-            {{-'<|PRE-USER|>' + message['content'] + '<|POST-USER|>'-}}
-        {%- else -%}
-            {{-'<|PRE-ASSISTANT|>' + message['content'] + '<|POST-ASSISTANT|>' -}}
-        {%- endif -%}
-    {%- endif -%}
-{%- endfor -%}
-{%- if add_generation_prompt -%}
-    {{-'<|PRE-ASSISTANT-GENERATE|>'-}}
-{%- endif -%}
-"""
-
-    if 'context' in params and '<|system-message|>' in params['context']:
-        pre_system = params['context'].split('<|system-message|>')[0]
-        post_system = params['context'].split('<|system-message|>')[1]
-    else:
-        pre_system = ''
-        post_system = ''
-
-    pre_user = params['turn_template'].split('<|user-message|>')[0].replace('<|user|>', params['user'])
-    post_user = params['turn_template'].split('<|user-message|>')[1].split('<|bot|>')[0]
-
-    pre_assistant = '<|bot|>' + params['turn_template'].split('<|bot-message|>')[0].split('<|bot|>')[1]
-    pre_assistant = pre_assistant.replace('<|bot|>', params['bot'])
-    post_assistant = params['turn_template'].split('<|bot-message|>')[1]
-
-    def preprocess(string):
-        return string.replace('\n', '\\n').replace('\'', '\\\'')
-
-    pre_system = preprocess(pre_system)
-    post_system = preprocess(post_system)
-    pre_user = preprocess(pre_user)
-    post_user = preprocess(post_user)
-    pre_assistant = preprocess(pre_assistant)
-    post_assistant = preprocess(post_assistant)
-
-    if verbose:
-        print(
-            '\n',
-            repr(pre_system) + '\n',
-            repr(post_system) + '\n',
-            repr(pre_user) + '\n',
-            repr(post_user) + '\n',
-            repr(pre_assistant) + '\n',
-            repr(post_assistant) + '\n',
-        )
-
-    result = MASTER_TEMPLATE
-    if 'system_message' in params:
-        result = result.replace('<|SYSTEM-MESSAGE|>', preprocess(params['system_message']))
-    else:
-        result = result.replace('<|SYSTEM-MESSAGE|>', '')
-
-    result = result.replace('<|PRE-SYSTEM|>', pre_system)
-    result = result.replace('<|POST-SYSTEM|>', post_system)
-    result = result.replace('<|PRE-USER|>', pre_user)
-    result = result.replace('<|POST-USER|>', post_user)
-    result = result.replace('<|PRE-ASSISTANT|>', pre_assistant)
-    result = result.replace('<|PRE-ASSISTANT-GENERATE|>', pre_assistant.rstrip(' '))
-    result = result.replace('<|POST-ASSISTANT|>', post_assistant)
-
-    result = result.strip()
-
-    return result
 
 
 def my_yaml_output(data):
@@ -2002,6 +1909,7 @@ def handle_unique_id_select(state):
 
 
 def handle_start_new_chat_click(state):
+    import gradio as gr
     history = start_new_chat(state)
     histories = find_all_histories_with_first_prompts(state)
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
@@ -2017,6 +1925,7 @@ def handle_start_new_chat_click(state):
 
 
 def handle_delete_chat_confirm_click(state):
+    import gradio as gr
     filtered_histories = find_all_histories_with_first_prompts(state)
     filtered_ids = [h[1] for h in filtered_histories]
     index = str(filtered_ids.index(state['unique_id']))
@@ -2037,6 +1946,7 @@ def handle_delete_chat_confirm_click(state):
 
 
 def handle_branch_chat_click(state):
+    import gradio as gr
     branch_from_index = state['branch_index']
     if branch_from_index == -1:
         history = state['history']
@@ -2148,6 +2058,7 @@ def handle_navigate_version_click(state):
 
 
 def handle_rename_chat_click():
+    import gradio as gr
     return [
         gr.update(value="My New Chat"),
         gr.update(visible=True),
@@ -2155,6 +2066,7 @@ def handle_rename_chat_click():
 
 
 def handle_rename_chat_confirm(rename_to, state):
+    import gradio as gr
     rename_history(state['unique_id'], rename_to, state['character_menu'], state['mode'])
     histories = find_all_histories_with_first_prompts(state)
 
@@ -2165,11 +2077,13 @@ def handle_rename_chat_confirm(rename_to, state):
 
 
 def handle_search_chat_change(state):
+    import gradio as gr
     histories = find_all_histories_with_first_prompts(state)
     return gr.update(choices=histories)
 
 
 def handle_upload_chat_history(load_chat_history, state):
+    import gradio as gr
     history = start_new_chat(state)
     history = load_history_json(load_chat_history, history)
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
@@ -2192,6 +2106,7 @@ def handle_upload_chat_history(load_chat_history, state):
 
 
 def handle_character_menu_change(state):
+    import gradio as gr
     name1, name2, picture, greeting, context = load_character(state['character_menu'], state['name1'], state['name2'])
 
     state['name1'] = name1
@@ -2244,6 +2159,7 @@ def handle_character_picture_change(picture_path):
 
 
 def handle_mode_change(state):
+    import gradio as gr
     history, loaded_unique_id = load_latest_history(state)
     histories = find_all_histories_with_first_prompts(state)
 
@@ -2270,6 +2186,7 @@ def handle_mode_change(state):
 
 
 def handle_save_character_click(name2):
+    import gradio as gr
     return [
         name2,
         gr.update(visible=True)
@@ -2277,6 +2194,7 @@ def handle_save_character_click(name2):
 
 
 def handle_load_template_click(instruction_template):
+    from modules.models_settings import load_instruction_template
     output = load_instruction_template(instruction_template)
     return [
         output,
@@ -2285,6 +2203,7 @@ def handle_load_template_click(instruction_template):
 
 
 def handle_save_template_click(instruction_template_str):
+    import gradio as gr
     contents = generate_instruction_template_yaml(instruction_template_str)
     return [
         "My Template.yaml",
@@ -2295,6 +2214,7 @@ def handle_save_template_click(instruction_template_str):
 
 
 def handle_delete_template_click(template):
+    import gradio as gr
     return [
         f"{template}.yaml",
         str(shared.user_data_dir / 'instruction-templates') + '/',
@@ -2310,6 +2230,7 @@ def handle_your_picture_change(picture, state):
 
 
 def handle_send_instruction_click(state):
+    import gradio as gr
     state['mode'] = 'instruct'
     state['history'] = {'internal': [], 'visible': [], 'metadata': {}}
 
@@ -2322,6 +2243,7 @@ def handle_send_instruction_click(state):
 
 
 def handle_send_chat_click(state):
+    import gradio as gr
     output = generate_chat_prompt("", state, _continue=True)
 
     if state["show_two_notebook_columns"]:

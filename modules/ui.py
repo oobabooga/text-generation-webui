@@ -120,58 +120,8 @@ else:
 
 
 def list_model_elements():
-    elements = [
-        'filter_by_loader',
-        'loader',
-        'cpu_memory',
-        'gpu_layers',
-        'fit_target',
-        'cpu_moe',
-        'threads',
-        'threads_batch',
-        'batch_size',
-        'ubatch_size',
-        'ctx_size',
-        'cache_type',
-        'tensor_split',
-        'extra_flags',
-        'streaming_llm',
-        'gpu_split',
-        'alpha_value',
-        'rope_freq_base',
-        'compress_pos_emb',
-        'compute_dtype',
-        'quant_type',
-        'load_in_8bit',
-        'load_in_4bit',
-        'attn_implementation',
-        'cpu',
-        'disk',
-        'row_split',
-        'no_kv_offload',
-        'no_mmap',
-        'mlock',
-        'numa',
-        'parallel',
-        'use_double_quant',
-        'bf16',
-        'enable_tp',
-        'tp_backend',
-        'cfg_cache',
-        'no_use_fast',
-        'model_draft',
-        'draft_max',
-        'gpu_layers_draft',
-        'device_draft',
-        'ctx_size_draft',
-        'spec_type',
-        'spec_ngram_size_n',
-        'spec_ngram_size_m',
-        'spec_ngram_min_hits',
-        'mmproj',
-    ]
-
-    return elements
+    from modules.loaders import list_model_elements
+    return list_model_elements()
 
 
 def list_interface_input_elements():

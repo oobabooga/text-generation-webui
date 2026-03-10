@@ -1,58 +1,20 @@
 import os
-import shutil
-import warnings
-from pathlib import Path
-
-from modules import shared, ui  # ui must be imported early to avoid circular imports
-from modules.image_models import load_image_model
-from modules.logging_colors import logger
-from modules.prompts import load_prompt
-
-# Set up Gradio temp directory path
-gradio_temp_path = shared.user_data_dir / 'cache' / 'gradio'
-shutil.rmtree(gradio_temp_path, ignore_errors=True)
-gradio_temp_path.mkdir(parents=True, exist_ok=True)
-
-# Set environment variables
-os.environ.update({
-    'GRADIO_ANALYTICS_ENABLED': 'False',
-    'BITSANDBYTES_NOWELCOME': '1',
-    'GRADIO_TEMP_DIR': str(gradio_temp_path)
-})
-
-warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
-warnings.filterwarnings('ignore', category=UserWarning, message='Using the update method is deprecated')
-warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_name" has conflict')
-warnings.filterwarnings('ignore', category=UserWarning, message='The value passed into gr.Dropdown()')
-warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_names" has conflict')
-
-import gradio as gr
-
-import os
 import signal
 import sys
 import time
+import warnings
 from functools import partial
+from pathlib import Path
 from threading import Lock, Thread
 
 import yaml
 
+from modules import shared, utils
+from modules.image_models import load_image_model
+from modules.logging_colors import logger
+from modules.prompts import load_prompt
+
 import modules.extensions as extensions_module
-from modules import (
-    training,
-    ui,
-    ui_chat,
-    ui_default,
-    ui_file_saving,
-    ui_image_generation,
-    ui_model_menu,
-    ui_notebook,
-    ui_parameters,
-    ui_session,
-    utils
-)
-from modules.chat import generate_pfp_cache
-from modules.extensions import apply_extensions
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model_if_idle
 from modules.models_settings import (
@@ -61,7 +23,13 @@ from modules.models_settings import (
     update_model_parameters
 )
 from modules.shared import do_cmd_flags_warnings
-from modules.utils import gradio
+
+os.environ['BITSANDBYTES_NOWELCOME'] = '1'
+
+warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
+warnings.filterwarnings('ignore', category=UserWarning, message='Using the update method is deprecated')
+warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_name" has conflict')
+warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_names" has conflict')
 
 
 def signal_handler(sig, frame):
@@ -82,6 +50,37 @@ signal.signal(signal.SIGTERM, signal_handler)
 
 
 def create_interface():
+
+    import shutil
+
+    import gradio as gr
+
+    from modules import (
+        training,
+        ui,
+        ui_chat,
+        ui_default,
+        ui_file_saving,
+        ui_image_generation,
+        ui_model_menu,
+        ui_notebook,
+        ui_parameters,
+        ui_session,
+    )
+    from modules.chat import generate_pfp_cache
+    from modules.extensions import apply_extensions
+    from modules.utils import gradio
+
+    warnings.filterwarnings('ignore', category=UserWarning, message='The value passed into gr.Dropdown()')
+
+    # Set up Gradio temp directory path
+    gradio_temp_path = shared.user_data_dir / 'cache' / 'gradio'
+    shutil.rmtree(gradio_temp_path, ignore_errors=True)
+    gradio_temp_path.mkdir(parents=True, exist_ok=True)
+    os.environ.update({
+        'GRADIO_ANALYTICS_ENABLED': 'False',
+        'GRADIO_TEMP_DIR': str(gradio_temp_path)
+    })
 
     title = 'Text Generation Web UI'
 
