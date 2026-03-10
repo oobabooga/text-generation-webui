@@ -201,19 +201,23 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
                 }
             ).to(input_ids.device).float()
         else:
-            # When processing with labels, handle as a complete sequence
-            # Process in chunks if the number of tokens is large
+            # Labels path: use cache for cross-chunk attention.
             tokens_to_process = seq_tensor
             all_logits = None
+            current_len = 0
 
             for i in range(0, tokens_to_process.shape[0], max_chunk_size):
                 chunk = tokens_to_process[i:i + max_chunk_size]
                 chunk_logits = self.ex_model.forward(
                     input_ids=chunk.view(1, -1),
                     params={
-                        "attn_mode": "flash_attn_nc",
+                        "attn_mode": "flash_attn",
+                        "cache": ex_cache,
+                        "past_len": current_len,
+                        "batch_shape": (1, self.max_tokens),
                     }
                 ).float()
+                current_len += chunk.shape[0]
 
                 if all_logits is None:
                     all_logits = chunk_logits

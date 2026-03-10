@@ -158,8 +158,21 @@ class Exllamav3Model:
             load_params['tensor_p'] = True
             load_params['tp_backend'] = shared.args.tp_backend
 
-        model.load(**load_params)
-        tokenizer = Tokenizer.from_config(config)
+        # Load vision and draft before the main model so autosplit
+        # accounts for their VRAM usage.
+
+        # Load vision model component (ExLlamaV3 native)
+        vision_model = None
+        if "vision_config" in config.config_dict:
+            logger.info("Vision component detected in model config. Attempting to load...")
+            try:
+                vision_model = Model.from_config(config, component="vision")
+                vision_model.load(progressbar=True)
+                logger.info("Vision model loaded successfully.")
+            except Exception as e:
+                logger.warning(f"Vision model loading failed (multimodal disabled): {e}")
+        else:
+            logger.info("No vision component in model config. Skipping multimodal setup.")
 
         # Initialize draft model for speculative decoding
         draft_model = None
@@ -185,18 +198,9 @@ class Exllamav3Model:
                 draft_model.load(**draft_load_params)
                 logger.info(f"Draft model loaded successfully. Max speculative tokens: {shared.args.draft_max}")
 
-        # Load vision model component (ExLlamaV3 native)
-        vision_model = None
-        if "vision_config" in config.config_dict:
-            logger.info("Vision component detected in model config. Attempting to load...")
-            try:
-                vision_model = Model.from_config(config, component="vision")
-                vision_model.load(progressbar=True)
-                logger.info("Vision model loaded successfully.")
-            except Exception as e:
-                logger.warning(f"Vision model loading failed (multimodal disabled): {e}")
-        else:
-            logger.info("No vision component in model config. Skipping multimodal setup.")
+        # Load main model last
+        model.load(**load_params)
+        tokenizer = Tokenizer.from_config(config)
 
         generator = Generator(
             model=model,
@@ -379,11 +383,12 @@ class Exllamav3Model:
         else:
             max_new_tokens = state['max_new_tokens']
 
-        # Get stop conditions
+        # Use full EOS token list from config (may contain multiple IDs)
         stop_conditions = []
         if not state['ban_eos_token']:
-            if hasattr(self.tokenizer, 'eos_token_id') and self.tokenizer.eos_token_id is not None:
-                stop_conditions.append(self.tokenizer.eos_token_id)
+            for eos_id in self.config.eos_token_id_list:
+                if eos_id is not None:
+                    stop_conditions.append(eos_id)
 
         seed = state.get('seed', -1)
         job = Job(
