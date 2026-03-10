@@ -13,7 +13,7 @@
 
 # Text Generation Web UI
 
-A Gradio web UI for running Large Language Models locally. 100% private, offline, and free.
+Run large language models locally with full privacy. Supports text generation, vision, image generation, training, tool-calling, and more — across multiple backends including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM). 100% offline, zero telemetry.
 
 [Try the Deep Reason extension](https://oobabooga.gumroad.com/l/deep_reason)
 
@@ -23,22 +23,21 @@ A Gradio web UI for running Large Language Models locally. 100% private, offline
 
 ## Features
 
-- Supports multiple local text generation backends, including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) (the latter via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile)).
-- Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory.
+- **Multiple backends**: [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM). Switch between backends and models without restarting.
+- **Vision (multimodal)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Multimodal-Tutorial)).
+- **Image generation**: A dedicated tab for `diffusers` models like **Z-Image-Turbo**. Features 4-bit/8-bit quantization and a persistent gallery with metadata ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Image-Generation-Tutorial)).
+- **Training**: Fine-tune LoRAs on multi-turn chat or raw text datasets. Supports resuming interrupted runs ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/05-%E2%80%90-Training-Tab)).
+- **OpenAI-compatible API**: Chat and Completions endpoints with tool-calling support — use as a local drop-in replacement for the OpenAI API ([examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples)).
+- **Web search**: Search the internet with LLM-generated queries to add context to conversations.
+- **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
+- **Easy setup**: [Portable builds](https://github.com/oobabooga/text-generation-webui/releases) (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or a one-click installer for the full feature set.
 - 100% offline and private, with zero telemetry, external resources, or remote update requests.
 - `instruct` mode for instruction-following (like ChatGPT), and `chat-instruct`/`chat` modes for talking to custom characters. Prompts are automatically formatted with Jinja2 templates.
-- **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
-- **Vision (multimodal models)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Multimodal-Tutorial)).
-- **Image generation**: A dedicated tab for `diffusers` models like **Z-Image-Turbo**. Features 4-bit/8-bit quantization and a persistent gallery with metadata ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Image-Generation-Tutorial)).
-- **Web search**: Optionally search the internet with LLM-generated queries to add context to the conversation.
-- **Training**: Fine-tune LoRAs on multi-turn chat or raw text datasets. Easy to use, good defaults, and supports resuming interrupted runs ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/05-%E2%80%90-Training-Tab)).
 - Edit messages, navigate between message versions, and branch conversations at any point.
-- Switch between different models in the UI without restarting.
 - Free-form text generation in the Notebook tab without being limited to chat turns.
 - Multiple sampling parameters and generation options for sophisticated text generation control.
 - Aesthetic UI with dark and light themes.
 - Syntax highlighting for code blocks and LaTeX rendering for mathematical expressions.
-- OpenAI-compatible API with Chat and Completions endpoints, including tool-calling support – see [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
 - Extension support, with numerous built-in and user-contributed extensions available. See the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
 
 ## How to install
@@ -430,22 +429,14 @@ API generation defaults:
 
 ## Downloading models
 
-Models should be placed in the folder `text-generation-webui/user_data/models`. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=gguf).
+Download a GGUF model file from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=gguf) and place it in the `user_data/models` folder. That's it — the UI will detect it automatically. You can also download models directly from the Model tab in the UI.
 
-To check if a GGUF model will fit in your hardware before downloading it, you can use this tool I created:
+Not sure what will fit your GPU? Use the [VRAM Calculator](https://huggingface.co/spaces/oobabooga/accurate-gguf-vram-calculator).
 
-[Accurate GGUF VRAM Calculator](https://huggingface.co/spaces/oobabooga/accurate-gguf-vram-calculator)
+<details>
+<summary>Other model types (Transformers, EXL3)</summary>
 
-* GGUF models are a single file and should be placed directly into `user_data/models`. Example:
-
-```
-text-generation-webui
-└── user_data
-    └── models
-        └── llama-2-13b-chat.Q4_K_M.gguf
-```
-
-* The remaining model types (like 16-bit Transformers models and EXL3 models) are made of several files and must be placed in a subfolder. Example:
+Models that consist of multiple files (like 16-bit Transformers models and EXL3 models) should be placed in a subfolder inside `user_data/models`:
 
 ```
 text-generation-webui
@@ -455,30 +446,17 @@ text-generation-webui
             ├── config.json
             ├── generation_config.json
             ├── model-00001-of-00004.safetensors
-            ├── model-00002-of-00004.safetensors
-            ├── model-00003-of-00004.safetensors
-            ├── model-00004-of-00004.safetensors
-            ├── model.safetensors.index.json
-            ├── special_tokens_map.json
+            ├── ...
             ├── tokenizer_config.json
             └── tokenizer.json
 ```
 
-In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download it via the command-line with:
-
-```
-python download-model.py organization/model
-```
-
-Run `python download-model.py --help` to see all the options.
+These formats require the one-click installer (not the portable build).
+</details>
 
 ## Documentation
 
 https://github.com/oobabooga/text-generation-webui/wiki
-
-## Google Colab notebook
-
-https://colab.research.google.com/github/oobabooga/text-generation-webui/blob/main/Colab-TextGen-GPU.ipynb
 
 ## Community
 
