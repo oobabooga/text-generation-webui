@@ -47,7 +47,7 @@ parser = argparse.ArgumentParser(description="Text Generation Web UI", conflict_
 # Basic settings
 group = parser.add_argument_group('Basic settings')
 group.add_argument('--user-data-dir', type=str, default=str(user_data_dir), help='Path to the user data directory. Default: auto-detected.')
-group.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.')
+group.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. Best suited for small trusted teams.')
 group.add_argument('--model', type=str, help='Name of the model to load by default.')
 group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
 group.add_argument('--model-dir', type=str, default=str(user_data_dir / 'models'), help='Path to directory with all the models.')
@@ -396,8 +396,15 @@ def do_cmd_flags_warnings():
             logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
         if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):
             logger.warning("\nYou are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
-            if args.multi_user:
-                logger.warning('\nThe multi-user mode is highly experimental and should not be shared publicly.')
+    if args.multi_user:
+        logger.warning(
+            'Multi-user mode is enabled. Known limitations:'
+            '\n- The Stop button stops generation for all users, not just you.'
+            '\n- Chat history is not saved and will be lost on page refresh.'
+            '\n- Only one user can generate at a time unless using a parallel-capable backend (e.g. llama.cpp with --parallel N for N > 1, or ExLlamaV3).'
+            '\n\nThis mode works best for small trusted teams.'
+            '\n\nDo not expose publicly. Grayed-out actions can easily be bypassed client-side.\n'
+        )
 
 
 def apply_image_model_cli_overrides():
