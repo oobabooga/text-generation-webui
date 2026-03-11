@@ -44,8 +44,8 @@ class Stream(transformers.StoppingCriteria):
 
 
 class LogitsBiasProcessor(LogitsProcessor):
-    def __init__(self, logit_bias={}):
-        self.logit_bias = logit_bias
+    def __init__(self, logit_bias=None):
+        self.logit_bias = logit_bias or {}
         if self.logit_bias:
             self.keys = list([int(key) for key in self.logit_bias.keys()])
             values = [self.logit_bias[str(key)] for key in self.keys]
