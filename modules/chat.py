@@ -6,6 +6,7 @@ import json
 import pprint
 import re
 import shutil
+import threading
 import time
 from datetime import datetime
 from functools import partial
@@ -39,6 +40,8 @@ from modules.utils import (
     save_file
 )
 from modules.web_search import add_web_search_attachments
+
+_history_file_lock = threading.Lock()
 
 
 def strftime_now(format):
@@ -1200,8 +1203,9 @@ def save_history(history, unique_id, character, mode):
     if not p.parent.is_dir():
         p.parent.mkdir(parents=True)
 
-    with open(p, 'w', encoding='utf-8') as f:
-        f.write(json.dumps(history, indent=4, ensure_ascii=False))
+    with _history_file_lock:
+        with open(p, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(history, indent=4, ensure_ascii=False))
 
 
 def rename_history(old_id, new_id, character, mode):

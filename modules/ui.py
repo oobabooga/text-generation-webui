@@ -303,12 +303,16 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
         if k in shared.settings and k not in exclude:
             output[k] = state[k]
 
-    output['preset'] = preset
+    if preset:
+        output['preset'] = preset
     output['prompt-notebook'] = state['prompt_menu-default'] if state['show_two_notebook_columns'] else state['prompt_menu-notebook']
-    output['character'] = state['character_menu']
-    if 'user_menu' in state and state['user_menu']:
+    if state.get('character_menu'):
+        output['character'] = state['character_menu']
+    if state.get('user_menu'):
         output['user'] = state['user_menu']
     output['seed'] = int(output['seed'])
+    output['custom_stopping_strings'] = output.get('custom_stopping_strings') or ''
+    output['custom_token_bans'] = output.get('custom_token_bans') or ''
     output['show_controls'] = show_controls
     output['dark_theme'] = True if theme_state == 'dark' else False
     output.pop('instruction_template_str')
@@ -470,7 +474,6 @@ def setup_auto_save():
         'skip_special_tokens',
         'stream',
         'static_cache',
-        'truncation_length',
         'seed',
         'sampler_priority',
         'custom_stopping_strings',
