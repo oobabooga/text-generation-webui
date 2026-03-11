@@ -99,6 +99,10 @@ class ToolCall(BaseModel):
     function: FunctionCall
 
 
+class StreamOptions(BaseModel):
+    include_usage: bool | None = False
+
+
 class CompletionRequestParams(BaseModel):
     model: str | None = Field(default=None, description="Unused parameter. To change the model, use the /v1/internal/model/load endpoint.")
     prompt: str | List[str] | None = Field(default=None, description="Text prompt for completion. Can also use 'messages' format for multimodal.")
@@ -113,6 +117,7 @@ class CompletionRequestParams(BaseModel):
     presence_penalty: float | None = shared.args.presence_penalty
     stop: str | List[str] | None = None
     stream: bool | None = False
+    stream_options: StreamOptions | None = None
     suffix: str | None = None
     temperature: float | None = shared.args.temperature
     top_p: float | None = shared.args.top_p
@@ -151,6 +156,7 @@ class ChatCompletionRequestParams(BaseModel):
     presence_penalty: float | None = shared.args.presence_penalty
     stop: str | List[str] | None = None
     stream: bool | None = False
+    stream_options: StreamOptions | None = None
     temperature: float | None = shared.args.temperature
     top_p: float | None = shared.args.top_p
     user: str | None = Field(default=None, description="Unused parameter.")
