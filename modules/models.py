@@ -21,6 +21,7 @@ def load_model(model_name, loader=None):
         'ExLlamav3_HF': ExLlamav3_HF_loader,
         'ExLlamav3': ExLlamav3_loader,
         'TensorRT-LLM': TensorRT_LLM_loader,
+        'ktransformers': ktransformers_loader,
     }
 
     metadata = get_model_metadata(model_name)
@@ -115,6 +116,17 @@ def TensorRT_LLM_loader(model_name):
 
     model = TensorRTLLMModel.from_pretrained(model_name)
     return model, model.tokenizer
+
+
+def ktransformers_loader(model_name):
+    try:
+        import ktransformers  # aktiviert die Patches / Beschleuniger
+    except ModuleNotFoundError as e:
+        from modules.logging_colors import logger
+        logger.error("KTransformers ist nicht installiert: pip install ktransformers")
+        raise 
+    from modules.transformers_loader import load_model_HF
+    return load_model_HF(model_name)
 
 
 def unload_model(keep_model_name=False):
