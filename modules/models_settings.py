@@ -38,7 +38,8 @@ def get_model_metadata(model):
 
     path = model_path / 'config.json'
     if path.exists():
-        hf_metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+        with open(path, 'r', encoding='utf-8') as f:
+            hf_metadata = json.loads(f.read())
     else:
         hf_metadata = None
 
@@ -103,7 +104,7 @@ def get_model_metadata(model):
     else:
         # Transformers metadata
         if hf_metadata is not None:
-            metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+            metadata = hf_metadata
             if 'pretrained_config' in metadata:
                 metadata = metadata['pretrained_config']
 
@@ -153,7 +154,8 @@ def get_model_metadata(model):
 
     # 3. Fall back to tokenizer_config.json metadata
     if path.exists():
-        metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+        with open(path, 'r', encoding='utf-8') as f:
+            metadata = json.loads(f.read())
 
         # Only read from metadata if we haven't already loaded from .jinja or .json
         if template is None and 'chat_template' in metadata:
