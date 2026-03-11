@@ -296,11 +296,11 @@ function doSyntaxHighlighting() {
 //------------------------------------------------
 // Add some scrollbars
 //------------------------------------------------
-const textareaElements = document.querySelectorAll(".add_scrollbar textarea");
-for(i = 0; i < textareaElements.length; i++) {
-  textareaElements[i].classList.remove("scroll-hide");
-  textareaElements[i].classList.add("pretty_scrollbar");
-  textareaElements[i].style.resize = "none";
+const scrollbarElements = document.querySelectorAll(".add_scrollbar textarea, .add_scrollbar .drag-drop-list");
+for(i = 0; i < scrollbarElements.length; i++) {
+  scrollbarElements[i].classList.remove("scroll-hide");
+  scrollbarElements[i].classList.add("pretty_scrollbar");
+  scrollbarElements[i].style.resize = "none";
 }
 
 //------------------------------------------------
