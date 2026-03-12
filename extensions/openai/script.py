@@ -21,6 +21,7 @@ import extensions.openai.completions as OAIcompletions
 import extensions.openai.logits as OAIlogits
 import extensions.openai.models as OAImodels
 from extensions.openai.tokens import token_count, token_decode, token_encode
+from extensions.openai.errors import OpenAIError
 from extensions.openai.utils import _start_cloudflared
 from modules import shared
 from modules.logging_colors import logger
@@ -94,6 +95,20 @@ app.add_middleware(
 )
 
 
+@app.exception_handler(OpenAIError)
+async def openai_error_handler(request: Request, exc: OpenAIError):
+    error_type = "server_error" if exc.code >= 500 else "invalid_request_error"
+    return JSONResponse(
+        status_code=exc.code,
+        content={"error": {
+            "message": exc.message,
+            "type": error_type,
+            "param": getattr(exc, 'param', None),
+            "code": None
+        }}
+    )
+
+
 @app.middleware("http")
 async def validate_host_header(request: Request, call_next):
     # Be strict about only approving access to localhost by default
@@ -136,6 +151,8 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
                         break
 
                     yield {"data": json.dumps(resp)}
+
+                yield {"data": "[DONE]"}
             finally:
                 stop_event.set()
                 response.close()
@@ -176,6 +193,8 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
                         break
 
                     yield {"data": json.dumps(resp)}
+
+                yield {"data": "[DONE]"}
             finally:
                 stop_event.set()
                 response.close()

@@ -152,7 +152,10 @@ class ChatCompletionRequestParams(BaseModel):
     tools: List[dict] | None = Field(default=None, description="Tools signatures passed via MCP.")
     tool_choice: str | dict | None = Field(default=None, description="Controls tool use: 'auto', 'none', 'required', or {\"type\": \"function\", \"function\": {\"name\": \"...\"}}.")
     logit_bias: dict | None = None
+    logprobs: bool | None = None
+    top_logprobs: int | None = None
     max_tokens: int | None = None
+    max_completion_tokens: int | None = None
     n: int | None = Field(default=1, description="Unused parameter.")
     presence_penalty: float | None = shared.args.presence_penalty
     stop: str | List[str] | None = None
@@ -161,6 +164,12 @@ class ChatCompletionRequestParams(BaseModel):
     temperature: float | None = shared.args.temperature
     top_p: float | None = shared.args.top_p
     user: str | None = Field(default=None, description="Unused parameter.")
+
+    @model_validator(mode='after')
+    def resolve_max_tokens(self):
+        if self.max_tokens is None and self.max_completion_tokens is not None:
+            self.max_tokens = self.max_completion_tokens
+        return self
 
     mode: str = Field(default='instruct', description="Valid options: instruct, chat, chat-instruct.")
 

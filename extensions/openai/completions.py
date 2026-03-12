@@ -105,6 +105,10 @@ def process_parameters(body, is_legacy=False):
             logits_processor = [LogitsBiasProcessor(logit_bias)]
 
         logprobs = body.get('logprobs', None)
+        top_logprobs = body.get('top_logprobs', None)
+        # For chat completions, logprobs is a bool; use top_logprobs for the count
+        if logprobs is True:
+            logprobs = top_logprobs if top_logprobs and top_logprobs > 0 else 5
         if logprobs is not None and logprobs > 0:
             generate_params['logprob_proc'] = LogprobProcessor(logprobs)
             logits_processor.extend([generate_params['logprob_proc']])
@@ -191,7 +195,7 @@ def convert_history(history):
             if "tool_call_id" in entry:
                 meta["tool_call_id"] = entry["tool_call_id"]
             chat_dialogue.append(['', '', content, meta])
-        elif role == "system":
+        elif role in ("system", "developer"):
             system_message += f"\n{content}" if system_message else content
 
     if not user_input_last:
@@ -339,9 +343,13 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             }],
         }
 
-        if logprob_proc:  # not official for chat yet
+        if logprob_proc:
             top_logprobs = convert_logprobs_to_tiktoken(model=requested_model, logprobs=logprob_proc.token_alternatives)
             chunk[resp_list][0]["logprobs"] = {'top_logprobs': [top_logprobs]}
+        elif shared.args.loader in ('llama.cpp', 'ExLlamav3'):
+            backend_logprobs = get_logprobs_from_backend()
+            if backend_logprobs:
+                chunk[resp_list][0]["logprobs"] = {'top_logprobs': [backend_logprobs]}
 
         return chunk
 
@@ -412,11 +420,12 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
 
     token_count = shared.model.last_prompt_token_count if hasattr(shared.model, 'last_prompt_token_count') else 0
     completion_token_count = len(encode(answer)[0])
-    stop_reason = "stop"
     if len(tool_calls) > 0:
         stop_reason = "tool_calls"
-    if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= generate_params['max_new_tokens']:
+    elif token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= generate_params['max_new_tokens']:
         stop_reason = "length"
+    else:
+        stop_reason = "stop"
 
     if stream:
         chunk = chat_streaming_chunk(chunk_tool_calls=tool_calls)
@@ -441,7 +450,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
                 "usage": usage
             }
         else:
-            chunk['usage'] = usage
             yield chunk
     else:
         resp = {
@@ -462,9 +470,13 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
                 "total_tokens": token_count + completion_token_count
             }
         }
-        if logprob_proc:  # not official for chat yet
+        if logprob_proc:
             top_logprobs = convert_logprobs_to_tiktoken(model=requested_model, logprobs=logprob_proc.token_alternatives)
             resp[resp_list][0]["logprobs"] = {'top_logprobs': [top_logprobs]}
+        elif shared.args.loader in ('llama.cpp', 'ExLlamav3'):
+            backend_logprobs = get_logprobs_from_backend()
+            if backend_logprobs:
+                resp[resp_list][0]["logprobs"] = {'top_logprobs': [backend_logprobs]}
 
         yield resp
 
@@ -702,7 +714,6 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False, stop_e
                 "usage": usage
             }
         else:
-            chunk["usage"] = usage
             yield chunk
 
 
