@@ -1109,13 +1109,15 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     if not character_is_loaded(state):
         return
 
-    # On regenerate, clear old tool_sequence metadata so it gets rebuilt
+    # On regenerate, clear old tool_sequence metadata so it gets rebuilt.
+    # Save it first so it can be stored per-version below.
+    _old_tool_sequence = None
     if regenerate:
         history = state['history']
         meta = history.get('metadata', {})
         row_idx = len(history['internal']) - 1
         if row_idx >= 0:
-            meta.get(f'assistant_{row_idx}', {}).pop('tool_sequence', None)
+            _old_tool_sequence = meta.get(f'assistant_{row_idx}', {}).pop('tool_sequence', None)
 
     if state['start_with'] != '' and not _continue:
         if regenerate:
@@ -1128,6 +1130,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
     # Load tools if any are selected
     selected = state.get('selected_tools', [])
+    parseToolCall = None
     if selected:
         from modules.tool_use import load_tools, execute_tool, generate_tool_call_id
         try:
@@ -1169,6 +1172,16 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
             yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'], last_message_only=(i > 0)), history
 
             if i == 0:
+                # Save old tool_sequence into version 0 (created by chatbot_wrapper
+                # on the first yield).  Only needed on the first regeneration when
+                # versions didn't previously exist.
+                if _old_tool_sequence is not None and _tool_turn == 0:
+                    _ri = len(history['internal']) - 1
+                    _versions = history.get('metadata', {}).get(f'assistant_{_ri}', {}).get('versions', [])
+                    if _versions and 'tool_sequence' not in _versions[0]:
+                        _versions[0]['tool_sequence'] = _old_tool_sequence
+                    _old_tool_sequence = None
+
                 time.sleep(0.125)
 
             current_time = time.monotonic()
@@ -1252,13 +1265,16 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         if 'versions' in meta_entry and 'current_version_index' in meta_entry:
             current_idx = meta_entry['current_version_index']
             if current_idx < len(meta_entry['versions']):
-                meta_entry['versions'][current_idx].update({
+                version_update = {
                     'content': history['internal'][row_idx][1],
                     'visible_content': history['visible'][row_idx][1]
-                })
+                }
+                ts = meta_entry.get('tool_sequence')
+                if ts is not None:
+                    version_update['tool_sequence'] = ts
+                meta_entry['versions'][current_idx].update(version_update)
 
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
-
 
 
 def remove_last_message(history):
@@ -2163,11 +2179,15 @@ def handle_edit_message_click(state):
         original_visible = history['visible'][message_index][role_idx]
         original_timestamp = history['metadata'][key].get('timestamp', get_current_timestamp())
 
-        history['metadata'][key]["versions"] = [{
+        version_entry = {
             "content": original_content,
             "visible_content": original_visible,
             "timestamp": original_timestamp
-        }]
+        }
+        ts = history['metadata'][key].get('tool_sequence')
+        if ts is not None:
+            version_entry['tool_sequence'] = ts
+        history['metadata'][key]["versions"] = [version_entry]
 
     history['internal'][message_index][role_idx] = apply_extensions('input', new_text, state, is_chat=True)
     history['visible'][message_index][role_idx] = html.escape(new_text)
@@ -2215,6 +2235,14 @@ def handle_navigate_version_click(state):
     history['internal'][message_index][msg_content_idx] = version_to_load['content']
     history['visible'][message_index][msg_content_idx] = version_to_load['visible_content']
     metadata['current_version_index'] = new_idx
+
+    # Restore per-version tool_sequence so follow-up prompts see consistent context
+    version_ts = version_to_load.get('tool_sequence')
+    if version_ts is not None:
+        metadata['tool_sequence'] = version_ts
+    else:
+        metadata.pop('tool_sequence', None)
+
     update_message_metadata(history['metadata'], role, message_index, timestamp=version_to_load['timestamp'])
 
     # Redraw and save
