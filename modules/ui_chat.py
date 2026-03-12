@@ -93,6 +93,7 @@ def create_ui():
 
                 from modules.tool_use import get_available_tools
                 shared.gradio['selected_tools'] = gr.CheckboxGroup(choices=get_available_tools(), value=[], label='Tools', info='Functions the model can call during generation.')
+                ui.create_refresh_button(shared.gradio['selected_tools'], lambda: None, lambda: {'choices': get_available_tools()}, 'refresh-button')
 
                 gr.HTML("<div class='sidebar-vertical-separator'></div>")
 

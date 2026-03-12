@@ -1151,7 +1151,9 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     for _tool_turn in range(max_tool_turns):
         history = state['history']
 
-        # Turn 0: use original flags; turns 2+: regenerate into the same entry
+        # Turn 0: use original flags; turns 2+: regenerate into the same entry.
+        # _tool_turn tells chatbot_wrapper to skip version creation/sync so
+        # that intermediate tool-loop regenerations don't pollute swipe history.
         if _tool_turn > 0:
             state['_tool_turn'] = True
 
