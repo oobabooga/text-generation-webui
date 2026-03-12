@@ -98,7 +98,7 @@ def format_chat_logprobs(entries):
             "top_logprobs": top_list
         })
 
-    return {"content": content} if content else None
+    return {"content": content, "refusal": None} if content else None
 
 
 def format_completion_logprobs(entries):
@@ -174,7 +174,7 @@ def process_parameters(body, is_legacy=False):
     logprobs = body.get('logprobs', None)
     top_logprobs = body.get('top_logprobs', None)
     if logprobs is True:
-        logprobs = top_logprobs if top_logprobs and top_logprobs > 0 else 5
+        logprobs = max(top_logprobs, 1) if top_logprobs is not None else 5
         generate_params['logprobs'] = logprobs
 
     # For llama.cpp and ExLlamav3 native, logit_bias and logprobs are forwarded natively
@@ -676,6 +676,9 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False, stop_e
                 # Increment seed for each completion to ensure diversity (matches llama.cpp native behavior)
                 if original_seed >= 0:
                     generate_params['seed'] = original_seed + _n
+
+                if logprob_proc:
+                    logprob_proc.token_alternatives_history.clear()
 
                 # generate reply #######################################
                 debug_msg({'prompt': prompt, 'generate_params': generate_params})
