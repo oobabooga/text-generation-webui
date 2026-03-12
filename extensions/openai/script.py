@@ -453,11 +453,11 @@ def run_server():
             port,
             shared.args.public_api_id,
             max_attempts=3,
-            on_start=lambda url: logger.info(f'OpenAI-compatible API URL:\n\n{url}\n')
+            on_start=lambda url: logger.info(f'OpenAI-compatible API URL:\n\n{url}/v1\n')
         )
     else:
         url_proto = 'https://' if (ssl_certfile and ssl_keyfile) else 'http://'
-        urls = [f'{url_proto}{addr}:{port}' for addr in server_addrs]
+        urls = [f'{url_proto}{addr}:{port}/v1' for addr in server_addrs]
         if len(urls) > 1:
             logger.info('OpenAI-compatible API URLs:\n\n' + '\n'.join(urls) + '\n')
         else:
