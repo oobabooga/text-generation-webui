@@ -36,6 +36,7 @@ class LlamaServer:
         self.process = None
         self.session = requests.Session()
         self.vocabulary_size = None
+        self.n_ctx = None
         self.bos_token = "<s>"
         self.last_prompt_token_count = 0
 
@@ -320,11 +321,16 @@ class LlamaServer:
                 self.vocabulary_size = model_info["meta"]["n_vocab"]
 
     def _get_bos_token(self):
-        """Get and store the model's BOS token."""
+        """Get and store the model's BOS token and context size."""
         url = f"http://127.0.0.1:{self.port}/props"
         response = self.session.get(url).json()
         if "bos_token" in response:
             self.bos_token = response["bos_token"]
+
+        # Get actual n_ctx from the server (important when --fit auto-selects it)
+        n_ctx = response.get("default_generation_settings", {}).get("n_ctx")
+        if n_ctx:
+            self.n_ctx = n_ctx
 
     def _is_port_available(self, port):
         """Check if a port is available for use."""

@@ -388,7 +388,11 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
 def update_truncation_length(current_length, state):
     if 'loader' in state:
         if state['loader'].lower().startswith('exllama') or state['loader'] == 'llama.cpp':
-            return state['ctx_size']
+            if state['ctx_size'] > 0:
+                return state['ctx_size']
+
+            # ctx_size == 0 means auto: use the actual value from the server
+            return shared.settings['truncation_length']
 
     return current_length
 
