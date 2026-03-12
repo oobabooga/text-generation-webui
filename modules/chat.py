@@ -315,7 +315,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
                         "tool_call_id": item.get('tool_call_id', '')
                     })
 
-        if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
+        if entry_meta.get('role') == 'system':
+            if user_msg:
+                messages.insert(insert_pos, {"role": "system", "content": user_msg})
+        elif user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
             # Check for user message attachments in metadata
             user_key = f"user_{row_idx}"
             enhanced_user_msg = user_msg

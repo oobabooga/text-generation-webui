@@ -239,12 +239,14 @@ def convert_history(history):
     user_input = ""
     user_input_last = True
     system_message = ""
+    seen_non_system = False
 
     for entry in history:
         content = entry["content"]
         role = entry["role"]
 
         if role == "user":
+            seen_non_system = True
             # Extract text content (images handled by model-specific code)
             content = process_multimodal_content(content)
             user_input = content
@@ -256,6 +258,7 @@ def convert_history(history):
 
             current_message = content
         elif role == "assistant":
+            seen_non_system = True
             meta = {}
             tool_calls = entry.get("tool_calls")
             if tool_calls and isinstance(tool_calls, list) and len(tool_calls) > 0:
@@ -272,13 +275,22 @@ def convert_history(history):
             else:
                 chat_dialogue.append(['', current_reply, '', meta])
         elif role == "tool":
+            seen_non_system = True
             user_input_last = False
             meta = {}
             if "tool_call_id" in entry:
                 meta["tool_call_id"] = entry["tool_call_id"]
             chat_dialogue.append(['', '', content, meta])
         elif role in ("system", "developer"):
-            system_message += f"\n{content}" if system_message else content
+            if not seen_non_system:
+                # Leading system messages go to custom_system_message (placed at top)
+                system_message += f"\n{content}" if system_message else content
+            else:
+                # Mid-conversation system messages: preserve position in history
+                if current_message:
+                    chat_dialogue.append([current_message, '', '', {}])
+                    current_message = ""
+                chat_dialogue.append([content, '', '', {"role": "system"}])
 
     if not user_input_last:
         user_input = ""
