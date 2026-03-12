@@ -303,6 +303,23 @@ for(i = 0; i < scrollbarElements.length; i++) {
   scrollbarElements[i].style.resize = "none";
 }
 
+
+//------------------------------------------------
+// Tools: inject "Refresh list" link into the label
+//------------------------------------------------
+const toolsTitle = document.querySelector("#tools-group > [data-testid='block-info']");
+const toolsInfo = toolsTitle ? toolsTitle.nextElementSibling : null;
+if (toolsInfo) {
+  const refreshLink = document.createElement("span");
+  refreshLink.textContent = " [Refresh list]";
+  refreshLink.className = "tools-refresh-link";
+  refreshLink.addEventListener("click", function(e) {
+    e.preventDefault();
+    document.querySelector("#tools-refresh-btn").click();
+  });
+  toolsInfo.appendChild(refreshLink);
+}
+
 //------------------------------------------------
 // Remove some backgrounds
 //------------------------------------------------
