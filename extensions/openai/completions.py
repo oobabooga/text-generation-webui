@@ -13,6 +13,7 @@ from extensions.openai.errors import InvalidRequestError
 from extensions.openai.typing import ToolDefinition
 from extensions.openai.utils import debug_msg, getToolCallId, parseToolCall
 from modules import shared
+from modules.reasoning import extract_reasoning
 from modules.chat import (
     generate_chat_prompt,
     generate_chat_reply,
@@ -553,6 +554,14 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         else:
             yield chunk
     else:
+        reasoning, content = extract_reasoning(answer) if not tool_calls else (None, answer)
+        message = {
+            "role": "assistant",
+            "refusal": None,
+            "content": None if tool_calls else content,
+            **({"reasoning_content": reasoning} if reasoning else {}),
+            **({"tool_calls": tool_calls} if tool_calls else {}),
+        }
         resp = {
             "id": cmpl_id,
             "object": object_type,
@@ -562,7 +571,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             resp_list: [{
                 "index": 0,
                 "finish_reason": stop_reason,
-                "message": {"role": "assistant", "refusal": None, "content": None if tool_calls else answer, **({"tool_calls": tool_calls} if tool_calls else {})},
+                "message": message,
                 "logprobs": None,
             }],
             "usage": {

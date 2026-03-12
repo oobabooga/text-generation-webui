@@ -10,6 +10,7 @@ import markdown
 from PIL import Image, ImageOps
 
 from modules import shared
+from modules.reasoning import extract_reasoning
 from modules.sane_markdown_lists import SaneListExtension
 from modules.utils import get_available_chat_styles
 
@@ -108,66 +109,9 @@ def replace_blockquote(m):
     return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
 
-# Thinking block format definitions: (start_tag, end_tag, content_start_tag)
-# Use None for start_tag to match from beginning (end-only formats should be listed last)
-THINKING_FORMATS = [
-    ('<think>', '</think>', None),
-    ('<|channel|>analysis<|message|>', '<|end|>', '<|start|>assistant<|channel|>final<|message|>'),
-    ('<seed:think>', '</seed:think>', None),
-    ('<|think|>', '<|end|>', '<|content|>'),  # Solar Open
-    ('Thinking Process:', '</think>', None),  # Qwen3.5 verbose thinking outside tags
-    (None, '</think>', None),  # End-only variant (e.g., Qwen3-next)
-]
-
-
 def extract_thinking_block(string):
-    """Extract thinking blocks from the beginning of a string."""
-    if not string:
-        return None, string
-
-    for start_tag, end_tag, content_tag in THINKING_FORMATS:
-        end_esc = html.escape(end_tag)
-        content_esc = html.escape(content_tag) if content_tag else None
-
-        if start_tag is None:
-            # End-only format: require end tag, start from beginning
-            end_pos = string.find(end_esc)
-            if end_pos == -1:
-                continue
-            thought_start = 0
-        else:
-            # Normal format: require start tag
-            start_esc = html.escape(start_tag)
-            start_pos = string.find(start_esc)
-            if start_pos == -1:
-                continue
-            thought_start = start_pos + len(start_esc)
-            end_pos = string.find(end_esc, thought_start)
-
-        if end_pos == -1:
-            # End tag missing - check if content tag can serve as fallback
-            if content_esc:
-                content_pos = string.find(content_esc, thought_start)
-                if content_pos != -1:
-                    thought_end = content_pos
-                    content_start = content_pos + len(content_esc)
-                else:
-                    thought_end = len(string)
-                    content_start = len(string)
-            else:
-                thought_end = len(string)
-                content_start = len(string)
-        else:
-            thought_end = end_pos
-            if content_esc:
-                content_pos = string.find(content_esc, end_pos)
-                content_start = content_pos + len(content_esc) if content_pos != -1 else end_pos + len(end_esc)
-            else:
-                content_start = end_pos + len(end_esc)
-
-        return string[thought_start:thought_end], string[content_start:]
-
-    return None, string
+    """Extract thinking blocks from the beginning of an HTML-escaped string."""
+    return extract_reasoning(string, html_escaped=True)
 
 
 def build_thinking_block(thinking_content, message_id, has_remaining_content):
