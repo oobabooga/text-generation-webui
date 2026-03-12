@@ -33,6 +33,10 @@ warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_na
 
 
 def signal_handler(sig, frame):
+    # On second Ctrl+C, force an immediate exit
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+
     logger.info("Received Ctrl+C. Shutting down Text Generation Web UI gracefully.")
 
     # Explicitly stop LlamaServer to avoid __del__ cleanup issues during shutdown
