@@ -65,14 +65,16 @@ class LogprobProcessor(LogitsProcessor):
     def __init__(self, logprobs=None):
         self.logprobs = logprobs
         self.token_alternatives = {}
+        self.token_alternatives_history = []
 
     def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
         if self.logprobs is not None:  # 0-5
             log_e_probabilities = F.log_softmax(logits, dim=1)
-            top_values, top_indices = torch.topk(log_e_probabilities, k=self.logprobs + 1)
+            top_values, top_indices = torch.topk(log_e_probabilities, k=self.logprobs)
             top_tokens = [get_reply_from_output_ids([tok]) for tok in top_indices[0]]
             top_probs = [float(x) for x in top_values[0]]
             self.token_alternatives = dict(zip(top_tokens, top_probs))
+            self.token_alternatives_history.append(self.token_alternatives)
 
         return logits
 

@@ -78,10 +78,13 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
     reply = ''
     is_stream = state['stream']
     if len(all_stop_strings) > 0 and not state['stream']:
+        original_logits_processor = state.get('logits_processor')
         stop_event_ref = state.pop('stop_event', None)
         state = copy.deepcopy(state)
         if stop_event_ref is not None:
             state['stop_event'] = stop_event_ref
+        if original_logits_processor is not None:
+            state['logits_processor'] = original_logits_processor
         state['stream'] = True
 
     # Generate
