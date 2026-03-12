@@ -28,6 +28,7 @@ from modules.html_generator import (
 )
 from modules.image_utils import open_image_safely
 from modules.logging_colors import logger
+from modules.reasoning import THINKING_FORMATS
 from modules.text_generation import (
     generate_reply,
     get_encoded_length,
@@ -986,9 +987,22 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     # Add timestamp for assistant's response at the start of generation
     update_message_metadata(output['metadata'], "assistant", row_idx, timestamp=get_current_timestamp(), model_name=shared.model_name)
 
+    # Detect if the template appended a thinking start tag to the prompt
+    thinking_prefix = None
+    if not _continue:
+        stripped_prompt = prompt.rstrip('\n')
+        for start_tag, end_tag, content_tag in THINKING_FORMATS:
+            if start_tag is not None and stripped_prompt.endswith(start_tag):
+                thinking_prefix = start_tag
+                break
+
     # Generate
     reply = None
     for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True, for_ui=for_ui)):
+
+        # Prepend thinking tag if the template appended it to the prompt
+        if thinking_prefix:
+            reply = thinking_prefix + reply
 
         # Extract the reply
         if state['mode'] in ['chat', 'chat-instruct']:
