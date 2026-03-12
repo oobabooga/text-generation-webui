@@ -91,6 +91,11 @@ def create_ui():
 
                 gr.HTML("<div class='sidebar-vertical-separator'></div>")
 
+                from modules.tool_use import get_available_tools
+                shared.gradio['selected_tools'] = gr.CheckboxGroup(choices=get_available_tools(), value=[], label='Tools', info='Functions the model can call during generation.')
+
+                gr.HTML("<div class='sidebar-vertical-separator'></div>")
+
                 with gr.Row():
                     shared.gradio['mode'] = gr.Radio(choices=['instruct', 'chat-instruct', 'chat'], value=None, label='Mode', info='In instruct and chat-instruct modes, the template under Parameters > Instruction template is used.', elem_id='chat-mode')
 

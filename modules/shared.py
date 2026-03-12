@@ -263,6 +263,7 @@ settings = {
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>". Reply directly, without starting the reply with the character name.\n\n<|prompt|>',
     'enable_web_search': False,
     'web_search_pages': 3,
+    'selected_tools': [],
     'prompt-notebook': '',
     'preset': 'Qwen3 - Thinking' if (user_data_dir / 'presets/Qwen3 - Thinking.yaml').exists() else None,
     'max_new_tokens': 512,

@@ -199,6 +199,7 @@ def list_interface_input_elements():
         'unique_id',
         'textbox',
         'start_with',
+        'selected_tools',
         'mode',
         'chat_style',
         'chat-instruct_command',
@@ -424,6 +425,7 @@ def setup_auto_save():
         'user_bio',
         'custom_system_message',
         'chat_template_str',
+        'selected_tools',
 
         # Parameters tab (ui_parameters.py) - Generation parameters
         'preset_menu',
