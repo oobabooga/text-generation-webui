@@ -23,6 +23,7 @@ from modules.extensions import apply_extensions
 from modules.html_generator import (
     chat_html_wrapper,
     convert_to_markdown,
+    extract_thinking_block,
     make_thumbnail
 )
 from modules.image_utils import open_image_safely
@@ -1168,11 +1169,18 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         cur_text = text if _tool_turn == 0 else ''
 
         for i, history in enumerate(generate_chat_reply(cur_text, state, regen, cont, loading_message=True, for_ui=True)):
-            # Prepend accumulated tool output to visible reply
+            # Prepend accumulated tool output to visible reply for display.
+            # Save and restore the original to prevent the markers from leaking
+            # back into chatbot_wrapper's shared output object, which would cause
+            # duplication on the next yield.
+            _original_visible = history['visible'][-1][1] if visible_prefix else None
             if visible_prefix:
-                history['visible'][-1][1] = '\n\n'.join(visible_prefix + [history['visible'][-1][1]])
+                history['visible'][-1][1] = '\n\n'.join(visible_prefix + [_original_visible])
 
             yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'], last_message_only=(i > 0)), history
+
+            if visible_prefix:
+                history['visible'][-1][1] = _original_visible
 
             if i == 0:
                 # Save old tool_sequence into version 0 (created by chatbot_wrapper
@@ -1196,6 +1204,15 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
             if tool_func_names and parseToolCall(history['internal'][-1][1], tool_func_names):
                 break
 
+        # Save the model's visible output before re-applying visible_prefix,
+        # so we can extract thinking content from just this turn's output.
+        _model_visible = history['visible'][-1][1]
+
+        # Re-apply visible prefix to the final state after streaming completes.
+        # This is safe because we're no longer sharing the object with chatbot_wrapper.
+        if visible_prefix:
+            history['visible'][-1][1] = '\n\n'.join(visible_prefix + [_model_visible])
+
         save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 
         # Check for tool calls
@@ -1203,7 +1220,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
             break
 
         answer = history['internal'][-1][1]
-        parsed_calls = parseToolCall(answer, tool_func_names) if answer else None
+        parsed_calls, content_prefix = parseToolCall(answer, tool_func_names, return_prefix=True) if answer else (None, '')
 
         if not parsed_calls:
             break  # No tool calls — done
@@ -1232,12 +1249,38 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         # Clear internal (raw tool markup)
         history['internal'][-1][1] = ''
 
-        # Add call summary to visible prefix
-        call_summary = ', '.join(f'{tc["function"]["name"]}(...)' for tc in parsed_calls)
-        visible_prefix.append('Calling: ' + call_summary)
+        # Preserve thinking block and intermediate text from this turn.
+        # content_prefix is the raw text before tool call syntax (returned
+        # by parseToolCall); HTML-escape it and extract thinking to get
+        # the content the user should see.
+        content_text = html.escape(content_prefix)
+        thinking_content, intermediate = extract_thinking_block(content_text)
+        if thinking_content:
+            visible_prefix.append(f'&lt;think&gt;\n{thinking_content}\n&lt;/think&gt;')
+        if intermediate and intermediate.strip():
+            visible_prefix.append(intermediate.strip())
 
-        # Execute tools, store results
+        # Build args summaries and show placeholder accordions with "..."
+        # before execution starts (tool calls may be slow, e.g. web search).
+        tc_headers = []
         for tc in parsed_calls:
+            fn_name = tc['function']['name']
+            fn_args = tc['function'].get('arguments', {})
+            if isinstance(fn_args, dict) and fn_args:
+                args_summary = ', '.join(f'{k}={json.dumps(v, ensure_ascii=False)}' for k, v in fn_args.items())
+            elif isinstance(fn_args, dict):
+                args_summary = ''
+            else:
+                args_summary = str(fn_args)
+
+            tc_headers.append(f'{fn_name}({args_summary})')
+
+        pending_placeholders = [f'<tool_call>{h}\n...\n</tool_call>' for h in tc_headers]
+        history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
+        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
+
+        # Execute tools, store results, and replace placeholders with real results
+        for i, tc in enumerate(parsed_calls):
             fn_name = tc['function']['name']
             fn_args = tc['function'].get('arguments', {})
             result = execute_tool(fn_name, fn_args, tool_executors)
@@ -1248,11 +1291,14 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
             except (json.JSONDecodeError, TypeError):
                 pretty_result = result
 
-            visible_prefix.append(f'**{fn_name}**\n```json\n{pretty_result}\n```')
+            # Replace the placeholder with the real result
+            pending_placeholders[i] = f'<tool_call>{tc_headers[i]}\n{pretty_result}\n</tool_call>'
+            history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
+            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
 
-        # Show tool results
+        # Move completed tool calls into visible_prefix for next turns
+        visible_prefix.extend(pending_placeholders)
         history['visible'][-1][1] = '\n\n'.join(visible_prefix)
-        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
         save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 
         state['history'] = history

@@ -114,7 +114,36 @@ def extract_thinking_block(string):
     return extract_reasoning(string, html_escaped=True)
 
 
-def build_thinking_block(thinking_content, message_id, has_remaining_content):
+
+def build_tool_call_block(header, body, message_id, index):
+    """Build HTML for a tool call accordion block."""
+    block_id = f"tool-call-{message_id}-{index}"
+
+    if body == '...':
+        # Pending placeholder — no expandable body, just title with ellipsis
+        return f'''
+        <details class="thinking-block" data-block-id="{block_id}">
+            <summary class="thinking-header">
+                {tool_svg_small}
+                <span class="thinking-title">{html.escape(header)} ...</span>
+            </summary>
+        </details>
+        '''
+
+    # Build a plain <pre> directly to avoid highlight.js auto-detection
+    escaped_body = html.escape(body)
+    return f'''
+    <details class="thinking-block" data-block-id="{block_id}">
+        <summary class="thinking-header">
+            {tool_svg_small}
+            <span class="thinking-title">{html.escape(header)}</span>
+        </summary>
+        <div class="thinking-content pretty_scrollbar"><pre><code class="nohighlight">{escaped_body}</code></pre></div>
+    </details>
+    '''
+
+
+def build_thinking_block(thinking_content, message_id, has_remaining_content, thinking_index=0):
     """Build HTML for a thinking block."""
     if thinking_content is None:
         return None
@@ -123,7 +152,7 @@ def build_thinking_block(thinking_content, message_id, has_remaining_content):
     thinking_html = process_markdown_content(thinking_content)
 
     # Generate unique ID for the thinking block
-    block_id = f"thinking-{message_id}-0"
+    block_id = f"thinking-{message_id}-{thinking_index}"
 
     # Check if thinking is complete or still in progress
     is_streaming = not has_remaining_content
@@ -304,24 +333,64 @@ def convert_to_markdown(string, message_id=None):
     if message_id is None:
         message_id = "unknown"
 
-    # Extract different components from the string
-    thinking_content, remaining_content = extract_thinking_block(string)
+    # Find tool call blocks by position, then process the text segments
+    # between them using extract_thinking_block (which supports all
+    # THINKING_FORMATS, including end-only variants like Qwen's).
+    tool_call_pattern = re.compile(r'<tool_call>(.*?)\n(.*?)\n</tool_call>', re.DOTALL)
+    tool_calls = list(tool_call_pattern.finditer(string))
 
-    # Build individual HTML blocks
-    blocks = []
+    if not tool_calls:
+        # No tool calls — use original single-pass extraction
+        thinking_content, remaining_content = extract_thinking_block(string)
+        blocks = []
+        thinking_html = build_thinking_block(thinking_content, message_id, bool(remaining_content))
+        if thinking_html:
+            blocks.append(thinking_html)
 
-    # Add thinking block if present
-    thinking_html = build_thinking_block(thinking_content, message_id, bool(remaining_content))
-    if thinking_html:
-        blocks.append(thinking_html)
+        main_html = build_main_content_block(remaining_content)
+        if main_html:
+            blocks.append(main_html)
 
-    # Add main content block
-    main_html = build_main_content_block(remaining_content)
-    if main_html:
-        blocks.append(main_html)
+        return ''.join(blocks)
 
-    # Assemble all blocks into final HTML
-    return ''.join(blocks)
+    # Split string into text segments around tool_call blocks and
+    # run extract_thinking_block on each segment for full format support.
+    html_parts = []
+    last_end = 0
+    tool_idx = 0
+    think_idx = 0
+
+    def process_text_segment(text, is_last_segment):
+        """Process a text segment between tool_call blocks for thinking content."""
+        nonlocal think_idx
+        if not text.strip():
+            return
+
+        thinking_content, remaining = extract_thinking_block(text)
+        if thinking_content is not None:
+            has_remaining = bool(remaining.strip()) or not is_last_segment
+            html_parts.append(build_thinking_block(thinking_content, message_id, has_remaining, think_idx))
+            think_idx += 1
+            text = remaining
+
+        if text.strip():
+            html_parts.append(process_markdown_content(text))
+
+    for tc in tool_calls:
+        # Process text before this tool_call
+        process_text_segment(string[last_end:tc.start()], is_last_segment=False)
+
+        # Add tool call accordion
+        header = tc.group(1).strip()
+        body = tc.group(2).strip()
+        html_parts.append(build_tool_call_block(header, body, message_id, tool_idx))
+        tool_idx += 1
+        last_end = tc.end()
+
+    # Process text after the last tool_call
+    process_text_segment(string[last_end:], is_last_segment=True)
+
+    return ''.join(html_parts)
 
 
 def convert_to_markdown_wrapped(string, message_id=None, use_cache=True):
@@ -379,6 +448,7 @@ branch_svg = '''<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24
 edit_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-pencil"><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"></path><path d="M13.5 6.5l4 4"></path></svg>'''
 info_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="thinking-icon tabler-icon tabler-icon-info-circle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 2a10 10 0 0 1 0 20a10 10 0 0 1 0 -20z" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>'''
 info_svg_small = '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="thinking-icon tabler-icon tabler-icon-info-circle"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 2a10 10 0 0 1 0 20a10 10 0 0 1 0 -20z" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>'''
+tool_svg_small = '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="thinking-icon tabler-icon tabler-icon-tool"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5" /></svg>'''
 attachment_svg = '''<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.48-8.48l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>'''
 
 copy_button = f'<button class="footer-button footer-copy-button" title="Copy" onclick="copyToClipboard(this)">{copy_svg}</button>'
