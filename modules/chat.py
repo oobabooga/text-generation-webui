@@ -2191,6 +2191,7 @@ def handle_edit_message_click(state):
 
     history['internal'][message_index][role_idx] = apply_extensions('input', new_text, state, is_chat=True)
     history['visible'][message_index][role_idx] = html.escape(new_text)
+    history['metadata'][key].pop('tool_sequence', None)
 
     add_message_version(history, role, message_index, is_current=True)
 
