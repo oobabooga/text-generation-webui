@@ -126,8 +126,49 @@ def _parseChannelToolCalls(answer: str, tool_names: list[str]):
     """
     matches = []
     start_pos = None
-    for m in re.finditer(
+    # Pattern 1: to=functions.NAME before <|channel|> (GPT-OSS primary format)
+    # Pattern 2: to=functions.NAME after <|channel|> (alternative format)
+    patterns = [
+        r'to=functions\.([^<\s]+)\s*<\|channel\|>[^<]*<\|message\|>',
         r'<\|channel\|>\w+ to=functions\.([^<\s]+).*?<\|message\|>',
+    ]
+    for pattern in patterns:
+        for m in re.finditer(pattern, answer):
+            func_name = m.group(1).strip()
+            if func_name not in tool_names:
+                continue
+            json_str = _extractBalancedJson(answer, m.end())
+            if json_str is None:
+                continue
+            try:
+                arguments = json.loads(json_str)
+                if start_pos is None:
+                    prefix = answer.rfind('<|start|>assistant', 0, m.start())
+                    start_pos = prefix if prefix != -1 else m.start()
+                matches.append({
+                    "type": "function",
+                    "function": {
+                        "name": func_name,
+                        "arguments": arguments
+                    }
+                })
+            except json.JSONDecodeError:
+                pass
+        if matches:
+            break
+    return matches, start_pos
+
+
+def _parseMistralTokenToolCalls(answer: str, tool_names: list[str]):
+    """Parse Mistral/Devstral-style tool calls with [TOOL_CALLS] and [ARGS] special tokens.
+
+    Format:
+        [TOOL_CALLS]func_name[ARGS]{"arg": "value"}
+    """
+    matches = []
+    start_pos = None
+    for m in re.finditer(
+        r'\[TOOL_CALLS\]\s*(\S+?)\s*\[ARGS\]\s*',
         answer
     ):
         func_name = m.group(1).strip()
@@ -139,8 +180,7 @@ def _parseChannelToolCalls(answer: str, tool_names: list[str]):
         try:
             arguments = json.loads(json_str)
             if start_pos is None:
-                prefix = answer.rfind('<|start|>assistant', 0, m.start())
-                start_pos = prefix if prefix != -1 else m.start()
+                start_pos = m.start()
             matches.append({
                 "type": "function",
                 "function": {
@@ -494,6 +534,11 @@ def parseToolCall(answer: str, tool_names: list[str], return_prefix: bool = Fals
 
     # Check for XML-parameter style tool calls (e.g. Qwen3.5 format)
     matches, start_pos = _parseXmlParamToolCalls(answer, tool_names)
+    if matches:
+        return _return(matches, start_pos)
+
+    # Check for Mistral/Devstral-style tool calls ([TOOL_CALLS]name[ARGS]json)
+    matches, start_pos = _parseMistralTokenToolCalls(answer, tool_names)
     if matches:
         return _return(matches, start_pos)
 

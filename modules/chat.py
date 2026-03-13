@@ -177,7 +177,7 @@ def _expand_tool_sequence(tool_seq):
             deserialized = _deserialize_tool_call_arguments(item['tool_calls'])
             messages.append({
                 "role": "assistant",
-                "content": "",
+                "content": item.get('content', ''),
                 "tool_calls": deserialized
             })
             for tc in item['tool_calls']:
@@ -1324,7 +1324,19 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
             tc_headers.append(f'{fn_name}({args_summary})')
 
-        seq.append({'tool_calls': serialized})
+        seq_entry = {'tool_calls': serialized}
+        if content_prefix.strip():
+            # Strip GPT-OSS channel tokens so they don't get double-wrapped
+            # by the template (which adds its own channel markup).
+            clean = content_prefix.strip()
+            if '<|channel|>' in clean and '<|message|>' in clean:
+                inner = clean.split('<|message|>', 1)[1] if '<|message|>' in clean else clean
+                if '<|end|>' in inner:
+                    inner = inner.split('<|end|>', 1)[0]
+                clean = inner.strip()
+            if clean:
+                seq_entry['content'] = clean
+        seq.append(seq_entry)
 
         # Clear internal (raw tool markup)
         history['internal'][-1][1] = ''
