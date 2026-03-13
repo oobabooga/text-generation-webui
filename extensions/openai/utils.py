@@ -120,12 +120,14 @@ def _parseChannelToolCalls(answer: str, tool_names: list[str]):
     """Parse channel-based tool calls used by GPT-OSS and similar models.
 
     Format:
+        <|start|>assistant to=functions.func_name<|channel|>commentary json<|message|>{"arg": "value"}
+    or:
         <|channel|>commentary to=functions.func_name <|constrain|>json<|message|>{"arg": "value"}
     """
     matches = []
     start_pos = None
     for m in re.finditer(
-        r'<\|channel\|>commentary to=functions\.([^<\s]+)\s*(?:<\|constrain\|>json)?<\|message\|>',
+        r'<\|channel\|>\w+ to=functions\.([^<\s]+).*?<\|message\|>',
         answer
     ):
         func_name = m.group(1).strip()
@@ -137,7 +139,8 @@ def _parseChannelToolCalls(answer: str, tool_names: list[str]):
         try:
             arguments = json.loads(json_str)
             if start_pos is None:
-                start_pos = m.start()
+                prefix = answer.rfind('<|start|>assistant', 0, m.start())
+                start_pos = prefix if prefix != -1 else m.start()
             matches.append({
                 "type": "function",
                 "function": {

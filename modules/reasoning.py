@@ -5,6 +5,7 @@ import html as html_module
 THINKING_FORMATS = [
     ('<think>', '</think>', None),
     ('<|channel|>analysis<|message|>', '<|end|>', '<|start|>assistant<|channel|>final<|message|>'),
+    ('<|channel|>commentary<|message|>', '<|end|>', '<|start|>assistant<|channel|>final<|message|>'),
     ('<seed:think>', '</seed:think>', None),
     ('<|think|>', '<|end|>', '<|content|>'),  # Solar Open
     ('Thinking Process:', '</think>', None),  # Qwen3.5 verbose thinking outside tags

@@ -81,6 +81,13 @@ jinja_env = ImmutableSandboxedEnvironment(
 )
 jinja_env.globals["strftime_now"] = strftime_now
 
+
+def _raise_exception(message):
+    raise ValueError(message)
+
+
+jinja_env.globals["raise_exception"] = _raise_exception
+
 _template_cache = {}
 
 
@@ -1048,16 +1055,23 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             yield output
 
     if _continue:
-        # Reprocess the entire internal text for extensions (like translation)
-        full_internal = output['internal'][-1][1]
-        if state['mode'] in ['chat', 'chat-instruct']:
-            full_visible = re.sub("(<USER>|<user>|{{user}})", state['name1'], full_internal)
-        else:
-            full_visible = full_internal
+        # Reprocess the entire internal text for extensions (like translation).
+        # Skip the rebuild when the visible text contains <tool_call> markers,
+        # since those only exist in visible (internal is cleared after each tool
+        # execution) and rebuilding from internal would destroy them.
+        if '<tool_call>' not in output['visible'][-1][1]:
+            full_internal = output['internal'][-1][1]
+            if state['mode'] in ['chat', 'chat-instruct']:
+                full_visible = re.sub("(<USER>|<user>|{{user}})", state['name1'], full_internal)
+            else:
+                full_visible = full_internal
 
-        full_visible = html.escape(full_visible)
-        if not state.get('_skip_output_extensions'):
-            output['visible'][-1][1] = apply_extensions('output', full_visible, state, is_chat=True)
+            full_visible = html.escape(full_visible)
+            if not state.get('_skip_output_extensions'):
+                output['visible'][-1][1] = apply_extensions('output', full_visible, state, is_chat=True)
+        else:
+            if not state.get('_skip_output_extensions'):
+                output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
     else:
         if not state.get('_skip_output_extensions'):
             output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
@@ -1222,6 +1236,18 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         # so we can extract thinking content from just this turn's output.
         _model_visible = history['visible'][-1][1]
 
+        # Recover visible_prefix from existing visible text (e.g. on Continue
+        # after a previous session had tool calls). Extract all <tool_call>
+        # blocks and any text between them (thinking blocks, intermediate text).
+        if not visible_prefix and _model_visible:
+            tc_matches = list(re.finditer(r'<tool_call>.*?</tool_call>', _model_visible, re.DOTALL))
+            if tc_matches:
+                prefix_end = tc_matches[-1].end()
+                prefix = _model_visible[:prefix_end].strip()
+                if prefix:
+                    visible_prefix = [prefix]
+                _model_visible = _model_visible[prefix_end:].strip()
+
         # Re-apply visible prefix to the final state after streaming completes.
         # This is safe because we're no longer sharing the object with chatbot_wrapper.
         if visible_prefix:
@@ -1244,19 +1270,34 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         meta = history.get('metadata', {})
         seq = meta.setdefault(f'assistant_{row_idx}', {}).setdefault('tool_sequence', [])
 
-        # Serialize tool calls
+        def _render():
+            return chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+
+        # Serialize tool calls and build display headers in one pass
         serialized = []
+        tc_headers = []
         for tc in parsed_calls:
             tc['id'] = generate_tool_call_id()
-            args = tc['function'].get('arguments', {})
+            fn_name = tc['function']['name']
+            fn_args = tc['function'].get('arguments', {})
+
             serialized.append({
                 'id': tc['id'],
                 'type': 'function',
                 'function': {
-                    'name': tc['function']['name'],
-                    'arguments': json.dumps(args) if isinstance(args, dict) else args
+                    'name': fn_name,
+                    'arguments': json.dumps(fn_args) if isinstance(fn_args, dict) else fn_args
                 }
             })
+
+            if isinstance(fn_args, dict) and fn_args:
+                args_summary = ', '.join(f'{k}={json.dumps(v, ensure_ascii=False)}' for k, v in fn_args.items())
+            elif isinstance(fn_args, dict):
+                args_summary = ''
+            else:
+                args_summary = str(fn_args)
+
+            tc_headers.append(f'{fn_name}({args_summary})')
 
         seq.append({'tool_calls': serialized})
 
@@ -1274,24 +1315,11 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         if intermediate and intermediate.strip():
             visible_prefix.append(intermediate.strip())
 
-        # Build args summaries and show placeholder accordions with "..."
-        # before execution starts (tool calls may be slow, e.g. web search).
-        tc_headers = []
-        for tc in parsed_calls:
-            fn_name = tc['function']['name']
-            fn_args = tc['function'].get('arguments', {})
-            if isinstance(fn_args, dict) and fn_args:
-                args_summary = ', '.join(f'{k}={json.dumps(v, ensure_ascii=False)}' for k, v in fn_args.items())
-            elif isinstance(fn_args, dict):
-                args_summary = ''
-            else:
-                args_summary = str(fn_args)
-
-            tc_headers.append(f'{fn_name}({args_summary})')
-
+        # Show placeholder accordions with "..." before execution starts
+        # (tool calls may be slow, e.g. web search).
         pending_placeholders = [f'<tool_call>{h}\n...\n</tool_call>' for h in tc_headers]
         history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
-        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
+        yield _render(), history
 
         # Execute tools, store results, and replace placeholders with real results
         for i, tc in enumerate(parsed_calls):
@@ -1308,7 +1336,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
             # Replace the placeholder with the real result
             pending_placeholders[i] = f'<tool_call>{tc_headers[i]}\n{pretty_result}\n</tool_call>'
             history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
-            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
+            yield _render(), history
 
         # Move completed tool calls into visible_prefix for next turns
         visible_prefix.extend(pending_placeholders)
