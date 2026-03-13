@@ -111,14 +111,15 @@ def get_gpu_choice():
 def get_pytorch_install_command(gpu_choice):
     """Get PyTorch installation command based on GPU choice"""
     base_cmd = f"python -m pip install torch=={TORCH_VERSION} "
+    pypi_fallback = " --extra-index-url https://pypi.org/simple/"
 
     if gpu_choice == "NVIDIA_CUDA128":
-        return base_cmd + "--index-url https://download.pytorch.org/whl/cu128"
+        return base_cmd + "--index-url https://download.pytorch.org/whl/cu128" + pypi_fallback
     elif gpu_choice == "AMD":
         py_tag = f"cp{PYTHON_VERSION.replace('.', '')}"
         return f"python -m pip install https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/torch-{TORCH_VERSION}%2Brocm7.2.0.lw.git7e1940d4-{py_tag}-{py_tag}-linux_x86_64.whl"
     elif gpu_choice in ["APPLE", "NONE"]:
-        return base_cmd + "--index-url https://download.pytorch.org/whl/cpu"
+        return base_cmd + "--index-url https://download.pytorch.org/whl/cpu" + pypi_fallback
     elif gpu_choice == "INTEL":
         return base_cmd + "--index-url https://download.pytorch.org/whl/xpu"
     else:
@@ -128,16 +129,17 @@ def get_pytorch_install_command(gpu_choice):
 def get_pytorch_update_command(gpu_choice):
     """Get PyTorch update command based on GPU choice"""
     base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} "
+    pypi_fallback = " --extra-index-url https://pypi.org/simple/"
 
     if gpu_choice == "NVIDIA_CUDA128":
-        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cu128"
+        return f"{base_cmd}--index-url https://download.pytorch.org/whl/cu128" + pypi_fallback
     elif gpu_choice == "AMD":
         py_tag = f"cp{PYTHON_VERSION.replace('.', '')}"
         return f"python -m pip install --upgrade https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/torch-{TORCH_VERSION}%2Brocm7.2.0.lw.git7e1940d4-{py_tag}-{py_tag}-linux_x86_64.whl"
     elif gpu_choice in ["APPLE", "NONE"]:
-        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cpu"
+        return f"{base_cmd}--index-url https://download.pytorch.org/whl/cpu" + pypi_fallback
     elif gpu_choice == "INTEL":
-        return f"{base_cmd} --index-url https://download.pytorch.org/whl/xpu"
+        return f"{base_cmd}--index-url https://download.pytorch.org/whl/xpu"
     else:
         return base_cmd
 
