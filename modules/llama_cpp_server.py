@@ -136,7 +136,7 @@ class LlamaServer:
 
         logit_bias = []
         if state['custom_token_bans']:
-            logit_bias.extend([[int(token_id), False] for token_id in state['custom_token_bans'].split(',')])
+            logit_bias.extend([[int(token_id.strip()), False] for token_id in state['custom_token_bans'].split(',') if token_id.strip()])
 
         if state.get('logit_bias'):
             for token_id_str, bias in state['logit_bias'].items():

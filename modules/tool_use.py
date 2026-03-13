@@ -42,6 +42,9 @@ def load_tools(selected_names):
             continue
 
         func_name = tool_def.get('function', {}).get('name', name)
+        if func_name in executors:
+            logger.warning(f'Tool "{name}" declares function name "{func_name}" which conflicts with an already loaded tool. Skipping.')
+            continue
         tool_defs.append(tool_def)
         executors[func_name] = execute_fn
 

@@ -17,7 +17,7 @@ tool = {
 
 
 def execute(arguments):
-    count = arguments.get("count", 1)
-    sides = arguments.get("sides", 20)
+    count = max(1, min(arguments.get("count", 1), 1000))
+    sides = max(2, min(arguments.get("sides", 20), 1000))
     rolls = [random.randint(1, sides) for _ in range(count)]
     return {"rolls": rolls, "total": sum(rolls)}

@@ -431,7 +431,8 @@ def load_instruction_template(template):
     else:
         return ''
 
-    file_contents = open(filepath, 'r', encoding='utf-8').read()
+    with open(filepath, 'r', encoding='utf-8') as f:
+        file_contents = f.read()
     data = yaml.safe_load(file_contents)
     if 'instruction_template' in data:
         return data['instruction_template']
