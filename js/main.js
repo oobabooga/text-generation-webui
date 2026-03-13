@@ -181,6 +181,13 @@ const observer = new MutationObserver(function() {
     typing.parentNode.classList.add("visible-dots");
     document.getElementById("stop").style.display = "flex";
     document.getElementById("Generate").style.display = "none";
+    // If the user is near the bottom, ensure auto-scroll is enabled
+    // for the new reply. This catches cases where isScrolled was
+    // incorrectly set to true by layout shifts during page load, etc.
+    const diff = targetElement.scrollHeight - targetElement.clientHeight;
+    if (Math.abs(targetElement.scrollTop - diff) <= 10 || diff <= 0) {
+      window.isScrolled = false;
+    }
   } else {
     typing.parentNode.classList.remove("visible-dots");
     document.getElementById("stop").style.display = "none";
