@@ -1,4 +1,4 @@
-from modules.web_search import perform_web_search
+from modules.web_search import perform_web_search, truncate_content_by_tokens
 
 tool = {
     "type": "function",
@@ -22,6 +22,6 @@ def execute(arguments):
     output = []
     for r in results:
         if r and r["content"].strip():
-            output.append({"title": r["title"], "url": r["url"], "content": r["content"][:4000]})
+            output.append({"title": r["title"], "url": r["url"], "content": truncate_content_by_tokens(r["content"])})
 
     return output if output else [{"error": "No results found."}]
