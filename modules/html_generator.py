@@ -369,8 +369,10 @@ def convert_to_markdown(string, message_id=None):
         if not text.strip():
             return
 
-        thinking_content, remaining = extract_thinking_block(text)
-        if thinking_content is not None:
+        while text.strip():
+            thinking_content, remaining = extract_thinking_block(text)
+            if thinking_content is None:
+                break
             has_remaining = bool(remaining.strip()) or not is_last_segment
             html_parts.append(build_thinking_block(thinking_content, message_id, has_remaining, think_idx))
             think_idx += 1
