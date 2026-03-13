@@ -1239,7 +1239,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         # Recover visible_prefix from existing visible text (e.g. on Continue
         # after a previous session had tool calls). Extract all <tool_call>
         # blocks and any text between them (thinking blocks, intermediate text).
-        if not visible_prefix and _model_visible:
+        if tool_func_names and not visible_prefix and _model_visible:
             tc_matches = list(re.finditer(r'<tool_call>.*?</tool_call>', _model_visible, re.DOTALL))
             if tc_matches:
                 prefix_end = tc_matches[-1].end()
@@ -1253,7 +1253,8 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         if visible_prefix:
             history['visible'][-1][1] = '\n\n'.join(visible_prefix + [_model_visible])
 
-        save_history(history, state['unique_id'], state['character_menu'], state['mode'])
+        if tool_func_names:
+            save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 
         # Check for tool calls
         if not tool_func_names or shared.stop_everything:
