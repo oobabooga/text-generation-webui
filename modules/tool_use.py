@@ -4,13 +4,14 @@ import random
 
 from modules import shared
 from modules.logging_colors import logger
+from modules.utils import natural_keys
 
 
 def get_available_tools():
     """Return sorted list of tool script names from user_data/tools/*.py."""
     tools_dir = shared.user_data_dir / 'tools'
     tools_dir.mkdir(parents=True, exist_ok=True)
-    return sorted(p.stem for p in tools_dir.glob('*.py'))
+    return sorted((p.stem for p in tools_dir.glob('*.py')), key=natural_keys)
 
 
 def load_tools(selected_names):

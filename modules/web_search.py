@@ -18,7 +18,7 @@ def get_current_timestamp():
     return datetime.now().strftime('%b %d, %Y %H:%M')
 
 
-def download_web_page(url, timeout=10):
+def download_web_page(url, timeout=10, include_links=False):
     """
     Download a web page and convert its HTML content to structured Markdown text.
     """
@@ -35,7 +35,7 @@ def download_web_page(url, timeout=10):
         h = html2text.HTML2Text()
         h.body_width = 0
         h.ignore_images = True
-        h.ignore_links = True
+        h.ignore_links = not include_links
 
         # Convert the HTML to Markdown
         markdown_text = h.handle(response.text)
