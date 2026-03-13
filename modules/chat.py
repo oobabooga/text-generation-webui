@@ -1214,6 +1214,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         # that intermediate tool-loop regenerations don't pollute swipe history.
         if _tool_turn > 0:
             state['_tool_turn'] = True
+            state['_skip_output_extensions'] = True
 
         regen = regenerate if _tool_turn == 0 else True
         cont = _continue if _tool_turn == 0 else False
@@ -1381,6 +1382,18 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         _tool_turn += 1
 
     state.pop('_tool_turn', None)
+
+    # If output extensions were deferred during tool turns, apply them now
+    # to the final model response only (not to tool call markers).
+    if state.pop('_skip_output_extensions', None):
+        _model_visible = apply_extensions('output', _model_visible, state, is_chat=True)
+        if visible_prefix:
+            history['visible'][-1][1] = '\n\n'.join(visible_prefix + [_model_visible])
+        else:
+            history['visible'][-1][1] = _model_visible
+
+        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
+
     state['history'] = history
 
     # Sync version metadata so swipes show the full visible (with tool prefix)
