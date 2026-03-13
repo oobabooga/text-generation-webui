@@ -1802,8 +1802,7 @@ table {
     border-collapse: collapse;
 }
 
-.message-body table {
-    display: block;
+.table-wrapper {
     overflow-x: auto;
 }
 
