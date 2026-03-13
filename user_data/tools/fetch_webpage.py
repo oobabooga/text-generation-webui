@@ -9,6 +9,7 @@ tool = {
             "type": "object",
             "properties": {
                 "url": {"type": "string", "description": "The URL of the web page to fetch."},
+                "max_tokens": {"type": "integer", "description": "Maximum number of tokens in the returned content (default: 2048)."},
             },
             "required": ["url"]
         }
@@ -18,6 +19,7 @@ tool = {
 
 def execute(arguments):
     url = arguments.get("url", "")
+    max_tokens = arguments.get("max_tokens", 2048)
     if not url:
         return {"error": "No URL provided."}
 
@@ -25,4 +27,4 @@ def execute(arguments):
     if not content or not content.strip():
         return {"error": f"Failed to fetch content from {url}"}
 
-    return {"url": url, "content": truncate_content_by_tokens(content)}
+    return {"url": url, "content": truncate_content_by_tokens(content, max_tokens=max_tokens)}
