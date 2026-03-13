@@ -145,7 +145,8 @@ targetElement.classList.add("pretty_scrollbar");
 targetElement.classList.add("chat-parent");
 window.isScrolled = false;
 let scrollTimeout;
-let isProgrammaticScroll = false;
+let lastScrollTop = 0;
+let lastScrollHeight = 0;
 
 targetElement.addEventListener("scroll", function() {
   let diff = targetElement.scrollHeight - targetElement.clientHeight;
@@ -158,10 +159,11 @@ targetElement.addEventListener("scroll", function() {
 
   if(isAtBottomNow) {
     window.isScrolled = false;
-  } else if (!isProgrammaticScroll) {
+  } else if (targetElement.scrollTop < lastScrollTop && targetElement.scrollHeight >= lastScrollHeight) {
     window.isScrolled = true;
   }
-  isProgrammaticScroll = false;
+  lastScrollTop = targetElement.scrollTop;
+  lastScrollHeight = targetElement.scrollHeight;
 
   // Clear previous timeout and set new one
   clearTimeout(scrollTimeout);
@@ -195,7 +197,6 @@ const observer = new MutationObserver(function(mutations) {
   if (!window.isScrolled && !isScrollingClassOnly) {
     const maxScroll = targetElement.scrollHeight - targetElement.clientHeight;
     if (maxScroll > 0 && targetElement.scrollTop < maxScroll - 1) {
-      isProgrammaticScroll = true;
       targetElement.scrollTop = maxScroll;
     }
   }
@@ -1094,7 +1095,6 @@ document.fonts.addEventListener("loadingdone", (event) => {
     if (!window.isScrolled) {
       const maxScroll = targetElement.scrollHeight - targetElement.clientHeight;
       if (targetElement.scrollTop < maxScroll - 5) {
-        isProgrammaticScroll = true;
         targetElement.scrollTop = maxScroll;
       }
     }
