@@ -49,8 +49,8 @@ def download_web_page(url, timeout=10, include_links=False):
         return ""
 
 
-def perform_web_search(query, num_pages=3, max_workers=5, timeout=10):
-    """Perform web search and return results with content"""
+def perform_web_search(query, num_pages=3, max_workers=5, timeout=10, fetch_content=True):
+    """Perform web search and return results, optionally with page content"""
     try:
         search_url = f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
 
@@ -77,6 +77,16 @@ def perform_web_search(query, num_pages=3, max_workers=5, timeout=10):
             download_tasks.append((url, title, i))
 
         search_results = [None] * len(download_tasks)  # Pre-allocate to maintain order
+
+        if not fetch_content:
+            for url, title, index in download_tasks:
+                search_results[index] = {
+                    'title': title,
+                    'url': url,
+                    'content': ''
+                }
+
+            return search_results
 
         # Download pages in parallel
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:

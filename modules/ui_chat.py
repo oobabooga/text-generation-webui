@@ -96,6 +96,16 @@ def create_ui():
                 shared.gradio['tools_refresh'] = gr.Button('Refresh list', elem_id='tools-refresh-btn', visible=False)
                 shared.gradio['tools_refresh'].click(fn=lambda: gr.update(choices=get_available_tools()), inputs=[], outputs=[shared.gradio['selected_tools']])
 
+                def sync_web_tools(selected):
+                    if 'web_search' in selected and 'fetch_webpage' not in selected:
+                        selected.append('fetch_webpage')
+                    elif 'web_search' not in selected and 'fetch_webpage' in selected:
+                        selected.remove('fetch_webpage')
+
+                    return gr.update(value=selected)
+
+                shared.gradio['selected_tools'].change(fn=sync_web_tools, inputs=[shared.gradio['selected_tools']], outputs=[shared.gradio['selected_tools']], show_progress=False)
+
                 gr.HTML("<div class='sidebar-vertical-separator'></div>")
 
                 with gr.Row():

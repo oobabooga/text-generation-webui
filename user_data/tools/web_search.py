@@ -1,16 +1,15 @@
-from modules.web_search import perform_web_search, truncate_content_by_tokens
+from modules.web_search import perform_web_search
 
 tool = {
     "type": "function",
     "function": {
         "name": "web_search",
-        "description": "Search the web using DuckDuckGo and return page contents.",
+        "description": "Search the web using DuckDuckGo and return a list of result titles and URLs. Use fetch_webpage to read the contents of a specific result.",
         "parameters": {
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "The search query."},
-                "num_pages": {"type": "integer", "description": "Number of search result pages to fetch (default: 3)."},
-                "max_tokens": {"type": "integer", "description": "Maximum number of tokens per page result (default: 2048)."},
+                "num_pages": {"type": "integer", "description": "Number of search results to return (default: 3)."},
             },
             "required": ["query"]
         }
@@ -21,11 +20,10 @@ tool = {
 def execute(arguments):
     query = arguments.get("query", "")
     num_pages = arguments.get("num_pages", 3)
-    max_tokens = arguments.get("max_tokens", 2048)
-    results = perform_web_search(query, num_pages=num_pages)
+    results = perform_web_search(query, num_pages=num_pages, fetch_content=False)
     output = []
     for r in results:
-        if r and r["content"].strip():
-            output.append({"title": r["title"], "url": r["url"], "content": truncate_content_by_tokens(r["content"], max_tokens=max_tokens)})
+        if r:
+            output.append({"title": r["title"], "url": r["url"]})
 
     return output if output else [{"error": "No results found."}]
