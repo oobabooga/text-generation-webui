@@ -269,7 +269,21 @@ function removeLastClick() {
   document.getElementById("Remove-last").click();
 }
 
+let pendingMorphdomData = null;
+let morphdomRafId = null;
+
 function handleMorphdomUpdate(data) {
+  pendingMorphdomData = data;
+  if (!morphdomRafId) {
+    morphdomRafId = requestAnimationFrame(() => {
+      morphdomRafId = null;
+      applyMorphdomUpdate(pendingMorphdomData);
+      pendingMorphdomData = null;
+    });
+  }
+}
+
+function applyMorphdomUpdate(data) {
   // Determine target element and use it as query scope
   var target_element, target_html;
   if (data.last_message_only) {
