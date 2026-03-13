@@ -1802,6 +1802,16 @@ table {
     border-collapse: collapse;
 }
 
+.message-body table {
+    display: block;
+    overflow-x: auto;
+}
+
+.message-body :is(td, th) {
+    word-break: normal;
+    overflow-wrap: normal;
+}
+
 table, tr, td, th, thead {
     border: 0;
 }
