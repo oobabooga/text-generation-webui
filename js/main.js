@@ -147,6 +147,7 @@ window.isScrolled = false;
 let scrollTimeout;
 let lastScrollTop = 0;
 let lastScrollHeight = 0;
+let lastClientHeight = 0;
 
 targetElement.addEventListener("scroll", function() {
   let diff = targetElement.scrollHeight - targetElement.clientHeight;
@@ -159,11 +160,12 @@ targetElement.addEventListener("scroll", function() {
 
   if(isAtBottomNow) {
     window.isScrolled = false;
-  } else if (targetElement.scrollTop < lastScrollTop && targetElement.scrollHeight >= lastScrollHeight) {
+  } else if (targetElement.scrollTop < lastScrollTop && targetElement.scrollHeight >= lastScrollHeight && targetElement.clientHeight <= lastClientHeight) {
     window.isScrolled = true;
   }
   lastScrollTop = targetElement.scrollTop;
   lastScrollHeight = targetElement.scrollHeight;
+  lastClientHeight = targetElement.clientHeight;
 
   // Clear previous timeout and set new one
   clearTimeout(scrollTimeout);
@@ -174,14 +176,7 @@ targetElement.addEventListener("scroll", function() {
 });
 
 // Create a MutationObserver instance
-const observer = new MutationObserver(function(mutations) {
-  // Check if this is just the scrolling class being toggled
-  const isScrollingClassOnly = mutations.every(mutation =>
-    mutation.type === "attributes" &&
-    mutation.attributeName === "class" &&
-    mutation.target === targetElement
-  );
-
+const observer = new MutationObserver(function() {
   if (targetElement.classList.contains("_generating")) {
     typing.parentNode.classList.add("visible-dots");
     document.getElementById("stop").style.display = "flex";
@@ -191,44 +186,11 @@ const observer = new MutationObserver(function(mutations) {
     document.getElementById("stop").style.display = "none";
     document.getElementById("Generate").style.display = "flex";
   }
-
-  doSyntaxHighlighting();
-
-  if (!window.isScrolled && !isScrollingClassOnly) {
-    const maxScroll = targetElement.scrollHeight - targetElement.clientHeight;
-    if (maxScroll > 0 && targetElement.scrollTop < maxScroll - 1) {
-      targetElement.scrollTop = maxScroll;
-    }
-  }
-
-  const chatElement = document.getElementById("chat");
-  if (chatElement && chatElement.getAttribute("data-mode") === "instruct") {
-    const messagesContainer = chatElement.querySelector(".messages");
-    const lastChild = messagesContainer?.lastElementChild;
-    const prevSibling = lastChild?.previousElementSibling;
-    if (lastChild && prevSibling) {
-      // Add padding to the messages container to create room for the last message.
-      // The purpose of this is to avoid constant scrolling during streaming in
-      // instruct mode.
-      let bufferHeight = Math.max(0, Math.max(window.innerHeight - 128 - 84, window.innerHeight - prevSibling.offsetHeight - 84) - lastChild.offsetHeight);
-
-      // Subtract header height when screen width is <= 924px
-      if (window.innerWidth <= 924) {
-        bufferHeight = Math.max(0, bufferHeight - 32);
-      }
-
-      messagesContainer.style.paddingBottom = `${bufferHeight}px`;
-    }
-  }
 });
 
-// Configure the observer to watch for changes in the subtree and attributes
+// Only watch for attribute changes on targetElement (e.g. _generating class)
 const config = {
-  childList: true,
-  subtree: true,
-  characterData: true,
-  attributeOldValue: true,
-  characterDataOldValue: true
+  attributes: true
 };
 
 // Start observing the target element
@@ -247,55 +209,50 @@ function isElementVisibleOnScreen(element) {
   );
 }
 
-function doSyntaxHighlighting() {
+window.doSyntaxHighlighting = function() {
   const messageBodies = document.getElementById("chat").querySelectorAll(".message-body");
 
   if (messageBodies.length > 0) {
-    observer.disconnect();
+    let hasSeenVisible = false;
 
-    try {
-      let hasSeenVisible = false;
+    // Go from last message to first
+    for (let i = messageBodies.length - 1; i >= 0; i--) {
+      const messageBody = messageBodies[i];
 
-      // Go from last message to first
-      for (let i = messageBodies.length - 1; i >= 0; i--) {
-        const messageBody = messageBodies[i];
+      if (isElementVisibleOnScreen(messageBody)) {
+        hasSeenVisible = true;
 
-        if (isElementVisibleOnScreen(messageBody)) {
-          hasSeenVisible = true;
+        // Handle both code and math in a single pass through each message
+        const codeBlocks = messageBody.querySelectorAll("pre code:not([data-highlighted])");
+        codeBlocks.forEach((codeBlock) => {
+          hljs.highlightElement(codeBlock);
+          codeBlock.setAttribute("data-highlighted", "true");
+          codeBlock.classList.add("pretty_scrollbar");
+        });
 
-          // Handle both code and math in a single pass through each message
-          const codeBlocks = messageBody.querySelectorAll("pre code:not([data-highlighted])");
-          codeBlocks.forEach((codeBlock) => {
-            hljs.highlightElement(codeBlock);
-            codeBlock.setAttribute("data-highlighted", "true");
-            codeBlock.classList.add("pretty_scrollbar");
-          });
-
-          // Only render math in visible elements
-          const mathContainers = messageBody.querySelectorAll("p, span, li, td, th, h1, h2, h3, h4, h5, h6, blockquote, figcaption, caption, dd, dt");
-          mathContainers.forEach(container => {
-            if (isElementVisibleOnScreen(container)) {
-              renderMathInElement(container, {
-                delimiters: [
-                  { left: "$$", right: "$$", display: true },
-                  { left: "$", right: "$", display: false },
-                  { left: "\\(", right: "\\)", display: false },
-                  { left: "\\[", right: "\\]", display: true },
-                ],
-              });
-            }
-          });
-        } else if (hasSeenVisible) {
-        // We've seen visible messages but this one is not visible
-        // Since we're going from last to first, we can break
-          break;
-        }
+        // Only render math in visible elements
+        const mathContainers = messageBody.querySelectorAll("p, span, li, td, th, h1, h2, h3, h4, h5, h6, blockquote, figcaption, caption, dd, dt");
+        mathContainers.forEach(container => {
+          if (isElementVisibleOnScreen(container)) {
+            renderMathInElement(container, {
+              delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true },
+              ],
+            });
+          }
+        });
+      } else if (hasSeenVisible) {
+      // We've seen visible messages but this one is not visible
+      // Since we're going from last to first, we can break
+        break;
       }
-    } finally {
-      observer.observe(targetElement, config);
     }
   }
 }
+const doSyntaxHighlighting = window.doSyntaxHighlighting;
 
 //------------------------------------------------
 // Add some scrollbars

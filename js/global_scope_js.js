@@ -269,6 +269,34 @@ function removeLastClick() {
   document.getElementById("Remove-last").click();
 }
 
+function autoScrollToBottom() {
+  if (!window.isScrolled) {
+    const chatParent = document.getElementById("chat")?.parentNode?.parentNode?.parentNode;
+    if (chatParent) {
+      const maxScroll = chatParent.scrollHeight - chatParent.clientHeight;
+      if (maxScroll > 0 && chatParent.scrollTop < maxScroll - 1) {
+        chatParent.scrollTop = maxScroll;
+      }
+    }
+  }
+}
+
+function updateInstructPadding() {
+  const chatElement = document.getElementById("chat");
+  if (chatElement && chatElement.getAttribute("data-mode") === "instruct") {
+    const messagesContainer = chatElement.querySelector(".messages");
+    const lastChild = messagesContainer?.lastElementChild;
+    const prevSibling = lastChild?.previousElementSibling;
+    if (lastChild && prevSibling) {
+      let bufferHeight = Math.max(0, Math.max(window.innerHeight - 128 - 84, window.innerHeight - prevSibling.offsetHeight - 84) - lastChild.offsetHeight);
+      if (window.innerWidth <= 924) {
+        bufferHeight = Math.max(0, bufferHeight - 32);
+      }
+      messagesContainer.style.paddingBottom = `${bufferHeight}px`;
+    }
+  }
+}
+
 let pendingMorphdomData = null;
 let morphdomRafId = null;
 
@@ -373,10 +401,23 @@ function applyMorphdomUpdate(data) {
     }
   );
 
+  // Syntax highlighting and LaTeX
+  if (window.doSyntaxHighlighting) {
+    window.doSyntaxHighlighting();
+  }
+
+  // Auto-scroll runs both before and after padding update.
+  // Before: so content growth isn't hidden by padding absorption.
+  // After: so padding-added space is also scrolled into view.
+  autoScrollToBottom();
+  updateInstructPadding();
+  autoScrollToBottom();
+
   // Add toggle listeners for new blocks
   queryScope.querySelectorAll(".thinking-block").forEach(block => {
     if (!block._hasToggleListener) {
       block.addEventListener("toggle", function(e) {
+        const wasScrolled = window.isScrolled;
         if (this.open) {
           const content = this.querySelector(".thinking-content");
           if (content) {
@@ -385,6 +426,10 @@ function applyMorphdomUpdate(data) {
             }, 0);
           }
         }
+        updateInstructPadding();
+        // Restore scroll state so the browser's layout adjustment
+        // from the toggle doesn't disable auto-scroll
+        window.isScrolled = wasScrolled;
       });
       block._hasToggleListener = true;
     }
