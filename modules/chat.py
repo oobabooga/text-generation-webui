@@ -1330,7 +1330,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
             # by the template (which adds its own channel markup).
             clean = content_prefix.strip()
             if '<|channel|>' in clean and '<|message|>' in clean:
-                inner = clean.split('<|message|>', 1)[1] if '<|message|>' in clean else clean
+                inner = clean.split('<|message|>', 1)[1]
                 if '<|end|>' in inner:
                     inner = inner.split('<|end|>', 1)[0]
                 clean = inner.strip()

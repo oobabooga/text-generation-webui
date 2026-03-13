@@ -99,8 +99,6 @@ def create_ui():
                 def sync_web_tools(selected):
                     if 'web_search' in selected and 'fetch_webpage' not in selected:
                         selected.append('fetch_webpage')
-                    elif 'web_search' not in selected and 'fetch_webpage' in selected:
-                        selected.remove('fetch_webpage')
 
                     return gr.update(value=selected)
 
