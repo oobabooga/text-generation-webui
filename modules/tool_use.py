@@ -1,6 +1,5 @@
 import importlib.util
 import json
-import random
 
 from modules import shared
 from modules.logging_colors import logger
@@ -47,12 +46,6 @@ def load_tools(selected_names):
         executors[func_name] = execute_fn
 
     return tool_defs, executors
-
-
-def generate_tool_call_id():
-    """Generate a unique tool call ID (e.g. 'call_a1b2c3d4')."""
-    chars = "abcdefghijklmnopqrstuvwxyz0123456789"
-    return "call_" + "".join(random.choice(chars) for _ in range(8))
 
 
 def execute_tool(func_name, arguments, executors):
