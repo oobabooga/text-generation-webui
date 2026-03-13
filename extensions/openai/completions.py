@@ -554,7 +554,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         else:
             yield chunk
     else:
-        reasoning, content = extract_reasoning(answer) if not tool_calls else (None, answer)
+        reasoning, content = extract_reasoning(answer)
         message = {
             "role": "assistant",
             "refusal": None,
