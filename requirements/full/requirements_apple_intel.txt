@@ -24,6 +24,7 @@ tensorboard
 torchao==0.15.*
 transformers==5.3.*
 tqdm
+trafilatura==2.0.0
 wandb
 
 # Gradio
