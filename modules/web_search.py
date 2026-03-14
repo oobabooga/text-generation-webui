@@ -7,7 +7,7 @@ import socket
 import urllib.request
 from concurrent.futures import as_completed
 from datetime import datetime
-from urllib.parse import quote_plus, urlparse
+from urllib.parse import quote_plus, urljoin, urlparse
 
 import requests
 
@@ -55,7 +55,7 @@ def download_web_page(url, timeout=10, include_links=False):
         for _ in range(max_redirects):
             response = requests.get(url, headers=headers, timeout=timeout, allow_redirects=False)
             if response.is_redirect and 'Location' in response.headers:
-                url = response.headers['Location']
+                url = urljoin(url, response.headers['Location'])
                 _validate_url(url)
             else:
                 break
