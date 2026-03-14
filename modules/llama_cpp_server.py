@@ -371,6 +371,8 @@ class LlamaServer:
 
         if shared.args.ctx_size > 0:
             cmd += ["--ctx-size", str(shared.args.ctx_size)]
+        elif shared.args.gpu_layers >= 0:
+            cmd += ["--ctx-size", "8192"]
 
         if shared.args.gpu_layers >= 0:
             cmd += ["--gpu-layers", str(shared.args.gpu_layers), "--fit", "off"]
@@ -477,7 +479,7 @@ class LlamaServer:
             print()
 
         gpu_layers_str = "auto" if shared.args.gpu_layers < 0 else str(shared.args.gpu_layers)
-        ctx_size_str = "auto" if shared.args.ctx_size == 0 else str(shared.args.ctx_size)
+        ctx_size_str = "auto" if shared.args.ctx_size == 0 and shared.args.gpu_layers < 0 else str(shared.args.ctx_size or 8192)
         logger.info(f"Using gpu_layers={gpu_layers_str} | ctx_size={ctx_size_str} | cache_type={cache_type}")
         # Start the server with pipes for output
         self.process = subprocess.Popen(

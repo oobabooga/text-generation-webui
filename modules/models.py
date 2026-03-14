@@ -38,6 +38,9 @@ def load_model(model_name, loader=None):
         sampler_hijack.hijack_samplers()
 
     shared.args.loader = loader
+    if loader != 'llama.cpp' and shared.args.ctx_size == 0:
+        shared.args.ctx_size = 8192
+
     output = load_func_map[loader](model_name)
     if type(output) is tuple:
         model, tokenizer = output
