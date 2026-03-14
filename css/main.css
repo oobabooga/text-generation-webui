@@ -400,7 +400,6 @@ audio {
 }
 
 .chat .message {
-    width: min(100%, 48rem);
     margin-left: auto;
     margin-right: auto;
     text-align: start;

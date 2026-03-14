@@ -4,6 +4,7 @@
     display: grid;
     align-items: start;
     grid-template-columns: 60px minmax(0, 1fr);
+    width: min(100%, calc(768px + 60px + 90px));
     padding-bottom: 21px;
     padding-top: 7px;
     font-size: 18px;
