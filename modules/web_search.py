@@ -42,9 +42,9 @@ def get_current_timestamp():
 
 def download_web_page(url, timeout=10, include_links=False):
     """
-    Download a web page and convert its HTML content to structured Markdown text.
+    Download a web page and extract its main content as Markdown text.
     """
-    import html2text
+    import trafilatura
 
     try:
         _validate_url(url)
@@ -62,16 +62,13 @@ def download_web_page(url, timeout=10, include_links=False):
 
         response.raise_for_status()
 
-        # Initialize the HTML to Markdown converter
-        h = html2text.HTML2Text()
-        h.body_width = 0
-        h.ignore_images = True
-        h.ignore_links = not include_links
-
-        # Convert the HTML to Markdown
-        markdown_text = h.handle(response.text)
-
-        return markdown_text
+        result = trafilatura.extract(
+            response.text,
+            include_links=include_links,
+            output_format='markdown',
+            url=url
+        )
+        return result or ""
     except requests.exceptions.RequestException as e:
         logger.error(f"Error downloading {url}: {e}")
         return ""
