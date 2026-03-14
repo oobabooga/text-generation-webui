@@ -9,6 +9,55 @@ def get_tool_call_id() -> str:
     return "call_" + "".join(b).lower()
 
 
+# Known opening markers for tool calls across model formats.
+# Used during streaming to buffer output that might be tool call markup,
+# preventing raw markup from leaking into displayed/streamed content.
+TOOL_CALL_OPENING_MARKERS = [
+    '<tool_call>',
+    '<function_call>',
+    '<minimax:tool_call>',
+    '<|tool_call_begin|>',
+    '<|tool_calls_section_begin|>',
+    '<｜tool▁call▁begin｜>',
+    '<｜tool▁calls▁begin｜>',
+    '[TOOL_CALLS]',
+    'to=functions.',
+    '<|channel|>commentary',
+]
+
+def streaming_tool_buffer_check(text, tool_names=None):
+    '''
+    Check whether streaming output should be withheld because it may
+    contain tool-call markup.
+    '''
+    # Full marker found → buffer permanently
+    for marker in TOOL_CALL_OPENING_MARKERS:
+        if marker in text:
+            return True
+
+    # Bare function-name style (e.g. Devstral): "get_weather{...}"
+    # Only match tool name followed by '{' to avoid false positives on
+    # common words that happen to be tool names (e.g. "get", "search").
+    if tool_names:
+        for name in tool_names:
+            if name + '{' in text or name + ' {' in text:
+                return True
+            # Partial: text ends with tool name (or prefix of it) but '{' hasn't arrived yet
+            if text.endswith(name):
+                return True
+            for prefix_len in range(min(len(name) - 1, len(text)), 0, -1):
+                if text.endswith(name[:prefix_len]):
+                    return True
+
+    # Tail might be a partial marker forming across tokens
+    for marker in TOOL_CALL_OPENING_MARKERS:
+        for prefix_len in range(min(len(marker) - 1, len(text)), 0, -1):
+            if text.endswith(marker[:prefix_len]):
+                return True
+
+    return False
+
+
 def check_and_sanitize_tool_call_candidate(candidate_dict: dict, tool_names: list[str]):
     # check if property 'function' exists and is a dictionary, otherwise adapt dict
     if 'function' not in candidate_dict and 'name' in candidate_dict and isinstance(candidate_dict['name'], str):

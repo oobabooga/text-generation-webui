@@ -1028,6 +1028,13 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
                 thinking_prefix = start_tag
                 break
 
+    # When tools are active, buffer streaming output during potential tool
+    # call generation to prevent raw markup from leaking into the display.
+    _check_tool_markers = bool(state.get('tools'))
+    if _check_tool_markers:
+        from modules.tool_parsing import streaming_tool_buffer_check
+        _tool_names = [t['function']['name'] for t in state['tools'] if 'function' in t and 'name' in t['function']]
+
     # Generate
     reply = None
     for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True, for_ui=for_ui)):
@@ -1077,6 +1084,10 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             })
 
         if is_stream:
+            if _check_tool_markers:
+                if streaming_tool_buffer_check(output['internal'][-1][1], _tool_names):
+                    continue
+
             yield output
 
     if _continue:
