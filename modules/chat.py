@@ -1035,8 +1035,10 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     _check_tool_markers = bool(state.get('tools'))
     _last_visible_before_tool_buffer = None
     if _check_tool_markers:
-        from modules.tool_parsing import streaming_tool_buffer_check
+        from modules.tool_parsing import streaming_tool_buffer_check, detect_tool_call_format
         _tool_names = [t['function']['name'] for t in state['tools'] if 'function' in t and 'name' in t['function']]
+        _template_str = state.get('instruction_template_str', '') if state.get('mode') == 'instruct' else state.get('chat_template_str', '')
+        _, _streaming_markers, _check_bare_names = detect_tool_call_format(_template_str)
 
     # Generate
     reply = None
@@ -1088,7 +1090,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
         if is_stream:
             if _check_tool_markers:
-                if streaming_tool_buffer_check(output['internal'][-1][1], _tool_names):
+                if streaming_tool_buffer_check(output['internal'][-1][1], markers=_streaming_markers, tool_names=_tool_names, check_bare_names=_check_bare_names):
                     continue
                 _last_visible_before_tool_buffer = output['visible'][-1][1]
 
@@ -1128,7 +1130,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     # visible text from before buffering started so raw markup doesn't flash
     # in the UI.  The internal text is left intact so the caller can still
     # parse tool calls from it.
-    if is_stream and _check_tool_markers and streaming_tool_buffer_check(output['internal'][-1][1], _tool_names):
+    if is_stream and _check_tool_markers and streaming_tool_buffer_check(output['internal'][-1][1], markers=_streaming_markers, tool_names=_tool_names, check_bare_names=_check_bare_names):
         output['visible'][-1][1] = _last_visible_before_tool_buffer or ''
 
     yield output
@@ -1210,14 +1212,17 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     # Load tools if any are selected
     selected = state.get('selected_tools', [])
     parse_tool_call = None
+    _tool_parsers = None
     if selected:
         from modules.tool_use import load_tools, execute_tool
-        from modules.tool_parsing import parse_tool_call, get_tool_call_id
+        from modules.tool_parsing import parse_tool_call, get_tool_call_id, detect_tool_call_format
 
     if selected:
         tool_defs, tool_executors = load_tools(selected)
         state['tools'] = tool_defs
         tool_func_names = [t['function']['name'] for t in tool_defs]
+        _template_str = state.get('instruction_template_str', '') if state.get('mode') == 'instruct' else state.get('chat_template_str', '')
+        _tool_parsers, _, _ = detect_tool_call_format(_template_str)
     else:
         tool_func_names = None
 
@@ -1272,7 +1277,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
                 last_save_time = current_time
 
             # Early stop on tool call detection
-            if tool_func_names and parse_tool_call(history['internal'][-1][1], tool_func_names):
+            if tool_func_names and parse_tool_call(history['internal'][-1][1], tool_func_names, parsers=_tool_parsers):
                 break
 
         # Save the model's visible output before re-applying visible_prefix,
@@ -1304,7 +1309,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
             break
 
         answer = history['internal'][-1][1]
-        parsed_calls, content_prefix = parse_tool_call(answer, tool_func_names, return_prefix=True) if answer else (None, '')
+        parsed_calls, content_prefix = parse_tool_call(answer, tool_func_names, return_prefix=True, parsers=_tool_parsers) if answer else (None, '')
 
         if not parsed_calls:
             break  # No tool calls — done

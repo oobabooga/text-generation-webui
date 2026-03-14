@@ -12,7 +12,7 @@ from pydantic import ValidationError
 from extensions.openai.errors import InvalidRequestError
 from extensions.openai.typing import ToolDefinition
 from extensions.openai.utils import debug_msg
-from modules.tool_parsing import get_tool_call_id, parse_tool_call
+from modules.tool_parsing import get_tool_call_id, parse_tool_call, detect_tool_call_format
 from modules import shared
 from modules.reasoning import extract_reasoning
 from modules.chat import (
@@ -484,6 +484,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
     tool_calls = []
     end_last_tool_call = 0
     supported_tools = [x["function"]["name"] for x in tools] if tools is not None else None
+    _tool_parsers = None
 
     # Filter supported_tools when tool_choice specifies a particular function
     if supported_tools and isinstance(tool_choice, dict):
@@ -491,11 +492,15 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         if specified_func and specified_func in supported_tools:
             supported_tools = [specified_func]
 
+    if supported_tools is not None:
+        _template_str = generate_params.get('instruction_template_str', '') if generate_params.get('mode') == 'instruct' else generate_params.get('chat_template_str', '')
+        _tool_parsers, _, _ = detect_tool_call_format(_template_str)
+
     for a in generator:
         answer = a['internal'][-1][1]
 
         if supported_tools is not None:
-            tool_call = parse_tool_call(answer[end_last_tool_call:], supported_tools) if len(answer) > 0 else []
+            tool_call = parse_tool_call(answer[end_last_tool_call:], supported_tools, parsers=_tool_parsers) if len(answer) > 0 else []
             if len(tool_call) > 0:
                 for tc in tool_call:
                     tc["id"] = get_tool_call_id()
