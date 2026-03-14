@@ -1075,15 +1075,13 @@ document.fonts.addEventListener("loadingdone", (event) => {
     const currentHeight = chatInputRow.offsetHeight;
     const heightDifference = currentHeight - originalHeight;
     chatParent.style.marginBottom = `${originalMarginBottom + heightDifference}px`;
+    if (!window.isScrolled) {
+      chatParent.scrollTop = chatParent.scrollHeight - chatParent.clientHeight;
+    }
   }
 
-  // Watch for changes that might affect height
-  const observer = new MutationObserver(updateMargin);
-  observer.observe(chatInputRow, {
-    childList: true,
-    subtree: true,
-    attributes: true
-  });
+  // Watch for size changes that affect height
+  new ResizeObserver(updateMargin).observe(chatInputRow);
 
   // Also listen for window resize
   window.addEventListener("resize", updateMargin);
