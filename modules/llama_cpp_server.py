@@ -436,6 +436,8 @@ class LlamaServer:
             cmd += ["--spec-ngram-size-m", str(shared.args.spec_ngram_size_m)]
             cmd += ["--spec-ngram-min-hits", str(shared.args.spec_ngram_min_hits)]
         cmd += ["--parallel", str(shared.args.parallel)]
+        if shared.args.rpc:
+            cmd += ["--rpc", shared.args.rpc]
         if shared.args.streaming_llm:
             cmd += ["--cache-reuse", "1"]
             cmd += ["--swa-full"]
