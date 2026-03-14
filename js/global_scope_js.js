@@ -287,7 +287,7 @@ function updateInstructPadding() {
     const messagesContainer = chatElement.querySelector(".messages");
     const lastChild = messagesContainer?.lastElementChild;
     const prevSibling = lastChild?.previousElementSibling;
-    if (lastChild && prevSibling) {
+    if (lastChild && prevSibling && chatElement.offsetHeight > 0) {
       let bufferHeight = Math.max(0, Math.max(window.innerHeight - 128 - 84, window.innerHeight - prevSibling.offsetHeight - 84) - lastChild.offsetHeight);
       if (window.innerWidth <= 924) {
         bufferHeight = Math.max(0, bufferHeight - 32);
