@@ -882,6 +882,8 @@ def generate_search_query(user_message, state):
         query = query.rsplit("</think>", 1)[1]
     elif "<|start|>assistant<|channel|>final<|message|>" in query:
         query = query.rsplit("<|start|>assistant<|channel|>final<|message|>", 1)[1]
+    elif "<|channel|>final<|message|>" in query:
+        query = query.rsplit("<|channel|>final<|message|>", 1)[1]
     elif "</seed:think>" in query:
         query = query.rsplit("</seed:think>", 1)[1]
 

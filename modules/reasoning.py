@@ -4,8 +4,8 @@ import html as html_module
 # Use None for start_tag to match from beginning (end-only formats should be listed last)
 THINKING_FORMATS = [
     ('<think>', '</think>', None),
-    ('<|channel|>analysis<|message|>', '<|end|>', '<|start|>assistant<|channel|>final<|message|>'),
-    ('<|channel|>commentary<|message|>', '<|end|>', '<|start|>assistant<|channel|>final<|message|>'),
+    ('<|channel|>analysis<|message|>', '<|end|>', '<|channel|>final<|message|>'),
+    ('<|channel|>commentary<|message|>', '<|end|>', '<|channel|>final<|message|>'),
     ('<seed:think>', '</seed:think>', None),
     ('<|think|>', '<|end|>', '<|content|>'),  # Solar Open
     # ('Thinking Process:', '</think>', None),  # Qwen3.5 verbose thinking outside tags -- removed: too prone to false positives in streaming
@@ -80,5 +80,15 @@ def extract_reasoning(text, html_escaped=False):
                 content_start = end_pos + len(end_esc)
 
         return text[thought_start:thought_end], text[content_start:]
+
+    # Handle standalone GPT-OSS final channel marker without a preceding
+    # analysis/commentary block (the model skipped thinking entirely).
+    for marker in ['<|start|>assistant<|channel|>final<|message|>', '<|channel|>final<|message|>']:
+        marker_esc = esc(marker)
+        pos = text.find(marker_esc)
+        if pos != -1:
+            before = text[:pos].strip()
+            after = text[pos + len(marker_esc):]
+            return (before if before else None), after
 
     return None, text
