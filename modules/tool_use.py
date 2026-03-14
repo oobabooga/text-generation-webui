@@ -3,7 +3,7 @@ import json
 
 from modules import shared
 from modules.logging_colors import logger
-from modules.utils import natural_keys
+from modules.utils import natural_keys, sanitize_filename
 
 
 def get_available_tools():
@@ -23,6 +23,10 @@ def load_tools(selected_names):
     tool_defs = []
     executors = {}
     for name in selected_names:
+        name = sanitize_filename(name)
+        if not name:
+            continue
+
         path = shared.user_data_dir / 'tools' / f'{name}.py'
         if not path.exists():
             continue

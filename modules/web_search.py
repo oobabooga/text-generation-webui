@@ -1,16 +1,38 @@
 import concurrent.futures
 import html
+import ipaddress
 import random
 import re
+import socket
 import urllib.request
 from concurrent.futures import as_completed
 from datetime import datetime
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlparse
 
 import requests
 
 from modules import shared
 from modules.logging_colors import logger
+
+
+def _validate_url(url):
+    """Validate that a URL is safe to fetch (not targeting private/internal networks)."""
+    parsed = urlparse(url)
+    if parsed.scheme not in ('http', 'https'):
+        raise ValueError(f"Unsupported URL scheme: {parsed.scheme}")
+
+    hostname = parsed.hostname
+    if not hostname:
+        raise ValueError("No hostname in URL")
+
+    # Resolve hostname and check all returned addresses
+    try:
+        for family, _, _, _, sockaddr in socket.getaddrinfo(hostname, None):
+            ip = ipaddress.ip_address(sockaddr[0])
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+                raise ValueError(f"Access to private/internal address {ip} is blocked")
+    except socket.gaierror:
+        raise ValueError(f"Could not resolve hostname: {hostname}")
 
 
 def get_current_timestamp():
@@ -25,11 +47,20 @@ def download_web_page(url, timeout=10, include_links=False):
     import html2text
 
     try:
+        _validate_url(url)
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        response = requests.get(url, headers=headers, timeout=timeout)
-        response.raise_for_status()  # Raise an exception for bad status codes
+        max_redirects = 5
+        for _ in range(max_redirects):
+            response = requests.get(url, headers=headers, timeout=timeout, allow_redirects=False)
+            if response.is_redirect and 'Location' in response.headers:
+                url = response.headers['Location']
+                _validate_url(url)
+            else:
+                break
+
+        response.raise_for_status()
 
         # Initialize the HTML to Markdown converter
         h = html2text.HTML2Text()

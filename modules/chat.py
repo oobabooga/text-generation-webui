@@ -239,6 +239,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
         name1=state['name1'],
         name2=state['name2'],
         user_bio=replace_character_names(state['user_bio'], state['name1'], state['name2']),
+        tools=state['tools'] if 'tools' in state else None,
     )
 
     messages = []
@@ -1186,14 +1187,10 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
     # Load tools if any are selected
     selected = state.get('selected_tools', [])
-    parseToolCall = None
+    parse_tool_call = None
     if selected:
         from modules.tool_use import load_tools, execute_tool
-        try:
-            from extensions.openai.utils import parseToolCall, getToolCallId
-        except ImportError:
-            logger.warning('Tool calling requires the openai extension for parseToolCall. Disabling tools.')
-            selected = []
+        from modules.tool_parsing import parse_tool_call, get_tool_call_id
 
     if selected:
         tool_defs, tool_executors = load_tools(selected)
@@ -1253,7 +1250,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
                 last_save_time = current_time
 
             # Early stop on tool call detection
-            if tool_func_names and parseToolCall(history['internal'][-1][1], tool_func_names):
+            if tool_func_names and parse_tool_call(history['internal'][-1][1], tool_func_names):
                 break
 
         # Save the model's visible output before re-applying visible_prefix,
@@ -1285,7 +1282,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
             break
 
         answer = history['internal'][-1][1]
-        parsed_calls, content_prefix = parseToolCall(answer, tool_func_names, return_prefix=True) if answer else (None, '')
+        parsed_calls, content_prefix = parse_tool_call(answer, tool_func_names, return_prefix=True) if answer else (None, '')
 
         if not parsed_calls:
             break  # No tool calls — done
@@ -1302,7 +1299,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         serialized = []
         tc_headers = []
         for tc in parsed_calls:
-            tc['id'] = getToolCallId()
+            tc['id'] = get_tool_call_id()
             fn_name = tc['function']['name']
             fn_args = tc['function'].get('arguments', {})
 
@@ -1343,7 +1340,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
         # Preserve thinking block and intermediate text from this turn.
         # content_prefix is the raw text before tool call syntax (returned
-        # by parseToolCall); HTML-escape it and extract thinking to get
+        # by parse_tool_call); HTML-escape it and extract thinking to get
         # the content the user should see.
         content_text = html.escape(content_prefix)
         thinking_content, intermediate = extract_thinking_block(content_text)

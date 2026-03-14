@@ -97,7 +97,7 @@ def create_ui():
                 shared.gradio['tools_refresh'].click(fn=lambda: gr.update(choices=get_available_tools()), inputs=[], outputs=[shared.gradio['selected_tools']])
 
                 def sync_web_tools(selected):
-                    if 'web_search' in selected and 'fetch_webpage' not in selected:
+                    if 'web_search' in selected and 'fetch_webpage' not in selected and 'fetch_webpage' in get_available_tools():
                         selected.append('fetch_webpage')
 
                     return gr.update(value=selected)
