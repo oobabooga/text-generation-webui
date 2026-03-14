@@ -218,6 +218,10 @@ def create_interface():
 
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
 
+        # Sync theme_state with the actual client-side theme so that
+        # autosave always writes the correct dark_theme value.
+        shared.gradio['interface'].load(None, None, gradio('theme_state'), js='() => document.body.classList.contains("dark") ? "dark" : "light"')
+
         extensions_module.create_extensions_tabs()  # Extensions tabs
         extensions_module.create_extensions_block()  # Extensions block
 
