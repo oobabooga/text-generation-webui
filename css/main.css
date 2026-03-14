@@ -430,7 +430,12 @@ audio {
     font-size: 16px;
 }
 
-.dark .message-body :is(h1, h2, h3, h4, h5, h6) {
+.dark .message-body h1,
+.dark .message-body h2,
+.dark .message-body h3,
+.dark .message-body h4,
+.dark .message-body h5,
+.dark .message-body h6 {
     color: white !important;
 }
 
@@ -830,9 +835,20 @@ audio {
     }
 }
 
-.message-body ol, .message-body ul {
+.message-body p, .message-body li {
+    line-height: 1.75 !important;
+}
+
+.message-body p, .message-body ul, .message-body ol {
+    margin: 1.25em 0 !important;
+}
+
+.message-body :is(p, ul, ol):first-child {
     margin-top: 0 !important;
-    margin-bottom: 1.25em !important;
+}
+
+.message-body :is(p, ul, ol):last-child {
+    margin-bottom: 0 !important;
 }
 
 /* ----------------------------------------------

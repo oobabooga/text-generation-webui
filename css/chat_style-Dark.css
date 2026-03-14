@@ -92,9 +92,6 @@
 }
 
 .message-body p {
-    margin-bottom: 0 !important;
-    font-size: 16px !important;
-    line-height: 1.5 !important;
     color: #e0e0e0 !important; /* Light color for text */
 }
 
@@ -123,7 +120,7 @@
     }
 
     .message-body p {
-        font-size: 14px !important; /* Smaller text for mobile */
+        font-size: 14px !important;
     }
 
     .username {
