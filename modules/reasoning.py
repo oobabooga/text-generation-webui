@@ -8,7 +8,7 @@ THINKING_FORMATS = [
     ('<|channel|>commentary<|message|>', '<|end|>', '<|start|>assistant<|channel|>final<|message|>'),
     ('<seed:think>', '</seed:think>', None),
     ('<|think|>', '<|end|>', '<|content|>'),  # Solar Open
-    ('Thinking Process:', '</think>', None),  # Qwen3.5 verbose thinking outside tags
+    # ('Thinking Process:', '</think>', None),  # Qwen3.5 verbose thinking outside tags -- removed: too prone to false positives in streaming
     (None, '</think>', None),  # End-only variant (e.g., Qwen3-next)
 ]
 
@@ -42,6 +42,12 @@ def extract_reasoning(text, html_escaped=False):
             start_esc = esc(start_tag)
             start_pos = text.find(start_esc)
             if start_pos == -1:
+                # During streaming, the start tag may be arriving partially.
+                # If the text is a prefix of a start tag, return empty content
+                # to prevent the partial tag from leaking.
+                stripped = text.strip()
+                if stripped and start_esc.startswith(stripped):
+                    return '', ''
                 continue
             thought_start = start_pos + len(start_esc)
             end_pos = text.find(end_esc, thought_start)
@@ -63,7 +69,13 @@ def extract_reasoning(text, html_escaped=False):
             thought_end = end_pos
             if content_esc:
                 content_pos = text.find(content_esc, end_pos)
-                content_start = content_pos + len(content_esc) if content_pos != -1 else end_pos + len(end_esc)
+                if content_pos != -1:
+                    content_start = content_pos + len(content_esc)
+                else:
+                    # Content tag expected but not yet present (e.g. partial
+                    # streaming) — suppress intermediate tags between end_tag
+                    # and content_tag so they don't leak as content.
+                    content_start = len(text)
             else:
                 content_start = end_pos + len(end_esc)
 

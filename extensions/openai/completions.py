@@ -417,7 +417,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         logprob_proc.token_alternatives_history.clear()
     chat_logprobs_offset = [0]  # mutable for closure access in streaming
 
-    def chat_streaming_chunk(content=None, chunk_tool_calls=None, include_role=False):
+    def chat_streaming_chunk(content=None, chunk_tool_calls=None, include_role=False, reasoning_content=None):
         # begin streaming
         delta = {}
         if include_role:
@@ -425,6 +425,8 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             delta['refusal'] = None
         if content is not None:
             delta['content'] = content
+        if reasoning_content is not None:
+            delta['reasoning_content'] = reasoning_content
         if chunk_tool_calls:
             delta['tool_calls'] = chunk_tool_calls
 
@@ -477,6 +479,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
 
     answer = ''
     seen_content = ''
+    seen_reasoning = ''
 
     tool_calls = []
     end_last_tool_call = 0
@@ -508,17 +511,31 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
             break
 
         if stream:
-            len_seen = len(seen_content)
-            new_content = answer[len_seen:]
+            # Strip reasoning/thinking blocks so only final content is streamed.
+            # Reasoning is emitted separately as reasoning_content deltas.
+            reasoning, content = extract_reasoning(answer)
+            if reasoning is not None:
+                new_reasoning = reasoning[len(seen_reasoning):]
+                new_content = content[len(seen_content):]
+            else:
+                new_reasoning = None
+                new_content = answer[len(seen_content):]
 
-            if not new_content or chr(0xfffd) in new_content:  # partial unicode character, don't send it yet.
+            if (not new_content and not new_reasoning) or chr(0xfffd) in (new_content or '') + (new_reasoning or ''):
                 continue
 
-            chunk = chat_streaming_chunk(new_content)
+            chunk = chat_streaming_chunk(
+                content=new_content if new_content else None,
+                reasoning_content=new_reasoning if new_reasoning else None,
+            )
             if include_usage:
                 chunk['usage'] = None
 
-            seen_content = answer
+            if reasoning is not None:
+                seen_reasoning = reasoning
+                seen_content = content
+            else:
+                seen_content = answer
             yield chunk
 
     token_count = shared.model.last_prompt_token_count if hasattr(shared.model, 'last_prompt_token_count') else 0
