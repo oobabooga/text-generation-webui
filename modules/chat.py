@@ -1033,6 +1033,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     # When tools are active, buffer streaming output during potential tool
     # call generation to prevent raw markup from leaking into the display.
     _check_tool_markers = bool(state.get('tools'))
+    _last_visible_before_tool_buffer = None
     if _check_tool_markers:
         from modules.tool_parsing import streaming_tool_buffer_check
         _tool_names = [t['function']['name'] for t in state['tools'] if 'function' in t and 'name' in t['function']]
@@ -1089,6 +1090,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             if _check_tool_markers:
                 if streaming_tool_buffer_check(output['internal'][-1][1], _tool_names):
                     continue
+                _last_visible_before_tool_buffer = output['visible'][-1][1]
 
             yield output
 
@@ -1121,6 +1123,13 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             'content': output['internal'][row_idx][1],
             'visible_content': output['visible'][row_idx][1]
         })
+
+    # When tool markers were detected during streaming, restore the last
+    # visible text from before buffering started so raw markup doesn't flash
+    # in the UI.  The internal text is left intact so the caller can still
+    # parse tool calls from it.
+    if is_stream and _check_tool_markers and streaming_tool_buffer_check(output['internal'][-1][1], _tool_names):
+        output['visible'][-1][1] = _last_visible_before_tool_buffer or ''
 
     yield output
 
