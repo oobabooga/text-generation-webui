@@ -1388,7 +1388,6 @@ audio {
     overflow-wrap: break-word;
     max-height: 250px;
     overflow-y: scroll;
-    contain: layout;
 }
 
 .chat .message-body .thinking-content p,
