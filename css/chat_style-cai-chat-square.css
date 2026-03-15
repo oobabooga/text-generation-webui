@@ -19,5 +19,5 @@
     padding-bottom: 1.5em;
     padding-top: 0.5em;
     grid-template-columns: 70px minmax(0, 1fr);
-    width: min(100%, calc(768px + 70px));
+    width: min(100%, calc(724px + 70px));
 }

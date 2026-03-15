@@ -2,7 +2,7 @@
     display: grid;
     align-items: start;
     grid-template-columns: 60px minmax(0, 1fr);
-    width: min(100%, calc(768px + 60px));
+    width: min(100%, calc(724px + 60px));
     padding-bottom: 1.5em;
     padding-top: 0.5em;
     font-size: 15px;
