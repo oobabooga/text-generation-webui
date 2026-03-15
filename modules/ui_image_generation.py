@@ -728,6 +728,8 @@ def generate_prompt_variation(state):
         variation = variation.rsplit("</think>", 1)[1]
     elif "<|start|>assistant<|channel|>final<|message|>" in variation:
         variation = variation.rsplit("<|start|>assistant<|channel|>final<|message|>", 1)[1]
+    elif "<|channel|>final<|message|>" in variation:
+        variation = variation.rsplit("<|channel|>final<|message|>", 1)[1]
     elif "</seed:think>" in variation:
         variation = variation.rsplit("</seed:think>", 1)[1]
 

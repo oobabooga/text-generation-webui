@@ -120,58 +120,8 @@ else:
 
 
 def list_model_elements():
-    elements = [
-        'filter_by_loader',
-        'loader',
-        'cpu_memory',
-        'gpu_layers',
-        'fit_target',
-        'cpu_moe',
-        'threads',
-        'threads_batch',
-        'batch_size',
-        'ubatch_size',
-        'ctx_size',
-        'cache_type',
-        'tensor_split',
-        'extra_flags',
-        'streaming_llm',
-        'gpu_split',
-        'alpha_value',
-        'rope_freq_base',
-        'compress_pos_emb',
-        'compute_dtype',
-        'quant_type',
-        'load_in_8bit',
-        'load_in_4bit',
-        'attn_implementation',
-        'cpu',
-        'disk',
-        'row_split',
-        'no_kv_offload',
-        'no_mmap',
-        'mlock',
-        'numa',
-        'parallel',
-        'use_double_quant',
-        'bf16',
-        'enable_tp',
-        'tp_backend',
-        'cfg_cache',
-        'no_use_fast',
-        'model_draft',
-        'draft_max',
-        'gpu_layers_draft',
-        'device_draft',
-        'ctx_size_draft',
-        'spec_type',
-        'spec_ngram_size_n',
-        'spec_ngram_size_m',
-        'spec_ngram_min_hits',
-        'mmproj',
-    ]
-
-    return elements
+    from modules.loaders import list_model_elements
+    return list_model_elements()
 
 
 def list_interface_input_elements():
@@ -249,6 +199,7 @@ def list_interface_input_elements():
         'unique_id',
         'textbox',
         'start_with',
+        'selected_tools',
         'mode',
         'chat_style',
         'chat-instruct_command',
@@ -353,12 +304,16 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
         if k in shared.settings and k not in exclude:
             output[k] = state[k]
 
-    output['preset'] = preset
+    if preset:
+        output['preset'] = preset
     output['prompt-notebook'] = state['prompt_menu-default'] if state['show_two_notebook_columns'] else state['prompt_menu-notebook']
-    output['character'] = state['character_menu']
-    if 'user_menu' in state and state['user_menu']:
+    if state.get('character_menu'):
+        output['character'] = state['character_menu']
+    if state.get('user_menu'):
         output['user'] = state['user_menu']
     output['seed'] = int(output['seed'])
+    output['custom_stopping_strings'] = output.get('custom_stopping_strings') or ''
+    output['custom_token_bans'] = output.get('custom_token_bans') or ''
     output['show_controls'] = show_controls
     output['dark_theme'] = True if theme_state == 'dark' else False
     output.pop('instruction_template_str')
@@ -470,6 +425,7 @@ def setup_auto_save():
         'user_bio',
         'custom_system_message',
         'chat_template_str',
+        'selected_tools',
 
         # Parameters tab (ui_parameters.py) - Generation parameters
         'preset_menu',
@@ -520,7 +476,6 @@ def setup_auto_save():
         'skip_special_tokens',
         'stream',
         'static_cache',
-        'truncation_length',
         'seed',
         'sampler_priority',
         'custom_stopping_strings',

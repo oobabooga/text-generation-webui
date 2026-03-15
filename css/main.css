@@ -400,7 +400,6 @@ audio {
 }
 
 .chat .message {
-    width: min(100%, 48rem);
     margin-left: auto;
     margin-right: auto;
     text-align: start;
@@ -431,8 +430,17 @@ audio {
     font-size: 16px;
 }
 
-.dark .message-body :is(h1, h2, h3, h4, h5, h6) {
+.dark .message-body h1,
+.dark .message-body h2,
+.dark .message-body h3,
+.dark .message-body h4,
+.dark .message-body h5,
+.dark .message-body h6 {
     color: white !important;
+}
+
+.dark .message-body blockquote {
+    border-left-color: rgb(255 255 255 / 30%);
 }
 
 .message-body h1 {
@@ -831,9 +839,20 @@ audio {
     }
 }
 
-.message-body ol, .message-body ul {
+.message-body p, .message-body li {
+    line-height: 1.75 !important;
+}
+
+.message-body p, .message-body ul, .message-body ol {
+    margin: 1.25em 0 !important;
+}
+
+.message-body :is(p, ul, ol):first-child {
     margin-top: 0 !important;
-    margin-bottom: 1.25em !important;
+}
+
+.message-body :is(p, ul, ol):last-child {
+    margin-bottom: 0 !important;
 }
 
 /* ----------------------------------------------
@@ -1373,7 +1392,6 @@ audio {
     overflow-wrap: break-word;
     max-height: 250px;
     overflow-y: scroll;
-    contain: layout;
 }
 
 .chat .message-body .thinking-content p,
@@ -1802,6 +1820,15 @@ table {
     border-collapse: collapse;
 }
 
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.message-body :is(td, th) {
+    word-break: normal;
+    overflow-wrap: normal;
+}
+
 table, tr, td, th, thead {
     border: 0;
 }
@@ -1814,3 +1841,86 @@ tr + tr th { border-top: 1px solid; }
 
 thead + tbody tr:first-child td,
 thead + tbody tr:first-child th { border-top: 1px solid; }
+
+/* ------------------------------------------------
+   Tools CheckboxGroup - vertical DragDrop-like style
+   ------------------------------------------------ */
+
+/* "Refresh list" link in the Tools label */
+.tools-refresh-link {
+    cursor: pointer;
+}
+
+/* Checkbox list container */
+#tools-group {
+    padding: 0 !important;
+    border-width: 0 !important;
+    background: transparent !important;
+    min-height: 0 !important;
+}
+
+#tools-group .wrap {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding: 0;
+    margin-top: var(--spacing-lg);
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+/* Pretty scrollbar for the tools list */
+#tools-group .wrap::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+#tools-group .wrap::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#tools-group .wrap::-webkit-scrollbar-thumb,
+#tools-group .wrap::-webkit-scrollbar-thumb:hover {
+    background: var(--neutral-300);
+    border-radius: 30px;
+}
+
+.dark #tools-group .wrap::-webkit-scrollbar-thumb,
+.dark #tools-group .wrap::-webkit-scrollbar-thumb:hover {
+    background: rgb(255 255 255 / 6.25%);
+    border-radius: 10px;
+}
+
+#tools-group .wrap::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+/* Each checkbox item */
+#tools-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: var(--radius-sm, 4px);
+    background: var(--block-background-fill);
+    border: 1px solid var(--border-color-primary);
+    color: var(--body-text-color);
+    font-size: var(--input-text-size);
+    font-weight: var(--input-text-weight);
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    box-shadow: none;
+}
+
+#tools-group label:hover {
+    border-color: var(--input-border-color-focus);
+}
+
+#tools-group label span {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

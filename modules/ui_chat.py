@@ -91,6 +91,21 @@ def create_ui():
 
                 gr.HTML("<div class='sidebar-vertical-separator'></div>")
 
+                from modules.tool_use import get_available_tools
+                shared.gradio['selected_tools'] = gr.CheckboxGroup(choices=get_available_tools(), value=shared.settings.get('selected_tools', []), label='Tools', info='Functions the model can call during generation.', elem_id='tools-group')
+                shared.gradio['tools_refresh'] = gr.Button('Refresh list', elem_id='tools-refresh-btn', visible=False)
+                shared.gradio['tools_refresh'].click(fn=lambda: gr.update(choices=get_available_tools()), inputs=[], outputs=[shared.gradio['selected_tools']])
+
+                def sync_web_tools(selected):
+                    if 'web_search' in selected and 'fetch_webpage' not in selected and 'fetch_webpage' in get_available_tools():
+                        selected.append('fetch_webpage')
+
+                    return gr.update(value=selected)
+
+                shared.gradio['selected_tools'].change(fn=sync_web_tools, inputs=[shared.gradio['selected_tools']], outputs=[shared.gradio['selected_tools']], show_progress=False)
+
+                gr.HTML("<div class='sidebar-vertical-separator'></div>")
+
                 with gr.Row():
                     shared.gradio['mode'] = gr.Radio(choices=['instruct', 'chat-instruct', 'chat'], value=None, label='Mode', info='In instruct and chat-instruct modes, the template under Parameters > Instruction template is used.', elem_id='chat-mode')
 

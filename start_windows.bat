@@ -5,6 +5,7 @@ setlocal enabledelayedexpansion
 set PYTHONNOUSERSITE=1
 set PYTHONPATH=
 set PYTHONHOME=
+set PYTHONUTF8=1
 
 cd /D "%~dp0"
 

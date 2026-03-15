@@ -1,4 +1,4 @@
-from modules import shared, ui
+from modules import loaders, shared
 from modules.logging_colors import logger
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
@@ -20,10 +20,14 @@ def list_models():
 
 def list_models_openai_format():
     """Returns model list in OpenAI API format"""
-    model_names = get_available_models()
+    if shared.model_name and shared.model_name != 'None':
+        data = [model_info_dict(shared.model_name)]
+    else:
+        data = []
+
     return {
         "object": "list",
-        "data": [model_info_dict(name) for name in model_names]
+        "data": data
     }
 
 
@@ -50,7 +54,7 @@ def _load_model(data):
     # parameters exposed in the UI. Never allow security-sensitive
     # flags like trust_remote_code or extra_flags to be set via the API.
     blocked_keys = {'extra_flags'}
-    allowed_keys = set(ui.list_model_elements()) - blocked_keys
+    allowed_keys = set(loaders.list_model_elements()) - blocked_keys
     if args:
         for k in args:
             if k in allowed_keys and hasattr(shared.args, k):

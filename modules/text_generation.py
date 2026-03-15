@@ -78,10 +78,13 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
     reply = ''
     is_stream = state['stream']
     if len(all_stop_strings) > 0 and not state['stream']:
+        original_logits_processor = state.get('logits_processor')
         stop_event_ref = state.pop('stop_event', None)
         state = copy.deepcopy(state)
         if stop_event_ref is not None:
             state['stop_event'] = stop_event_ref
+        if original_logits_processor is not None:
+            state['logits_processor'] = original_logits_processor
         state['stream'] = True
 
     # Generate
@@ -375,7 +378,7 @@ def generate_reply_HF(question, original_question, state, stopping_strings=None,
         generate_params['sampler_priority'] = [x.strip() for x in state['sampler_priority'].replace('\n', ',').split(',') if x.strip()]
 
     if state['custom_token_bans']:
-        to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
+        to_ban = [int(x.strip()) for x in state['custom_token_bans'].split(',') if x.strip()]
         if len(to_ban) > 0:
             if generate_params.get('suppress_tokens', None):
                 generate_params['suppress_tokens'] += to_ban

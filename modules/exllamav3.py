@@ -1,3 +1,4 @@
+import math
 import queue
 import threading
 import traceback
@@ -9,6 +10,7 @@ import torch
 from exllamav3 import Cache, Config, Generator, Model, Tokenizer
 from exllamav3.cache import CacheLayer_fp16, CacheLayer_quant
 from exllamav3.generator import Job
+from exllamav3.generator.filter import Filter
 from exllamav3.generator.sampler import (
     CustomSampler,
     SS_AdaptiveP,
@@ -36,6 +38,29 @@ except Exception:
     traceback.print_exc()
 
 
+class LogitBiasFilter(Filter):
+    """Filter subclass that applies a static additive logit bias mask."""
+
+    def __init__(self, tokenizer, logit_bias_dict):
+        super().__init__(tokenizer=tokenizer, trigger_token=None, prefix_str=None, eos_after_completed=False)
+        self.logit_bias_dict = logit_bias_dict
+        self._mask = None
+
+    def reset(self): pass
+    def accept_token(self, token): pass
+    def is_completed(self): return False
+    def use_background_worker(self): return False
+
+    def get_next_logit_mask(self):
+        if self._mask is None:
+            self._mask = torch.zeros((1, self.vocab_size), dtype=self.logits_dtype)
+            for token_id_str, bias in self.logit_bias_dict.items():
+                token_id = int(token_id_str)
+                if 0 <= token_id < self.vocab_size:
+                    self._mask[0, token_id] = bias
+        return self._mask
+
+
 class ConcurrentGenerator:
     def __init__(self, generator):
         self.generator = generator
@@ -53,7 +78,16 @@ class ConcurrentGenerator:
                 if not self.job_queues:
                     self.has_jobs.clear()
                     continue
-                results = self.generator.iterate()
+                try:
+                    results = self.generator.iterate()
+                except Exception:
+                    logger.error("Exception in ConcurrentGenerator iterate loop:\n" + traceback.format_exc())
+                    for q in self.job_queues.values():
+                        q.put(None)
+                    self.job_queues.clear()
+                    self.generator.clear_queue()
+                    self.has_jobs.clear()
+                    continue
             for result in results:
                 job = result["job"]
                 q = self.job_queues.get(job)
@@ -88,6 +122,10 @@ class ConcurrentGenerator:
 class Exllamav3Model:
     def __init__(self):
         pass
+
+    @property
+    def device(self) -> torch.device:
+        return torch.device(0)
 
     @classmethod
     def from_pretrained(cls, path_to_model):
@@ -149,8 +187,21 @@ class Exllamav3Model:
             load_params['tensor_p'] = True
             load_params['tp_backend'] = shared.args.tp_backend
 
-        model.load(**load_params)
-        tokenizer = Tokenizer.from_config(config)
+        # Load vision and draft before the main model so autosplit
+        # accounts for their VRAM usage.
+
+        # Load vision model component (ExLlamaV3 native)
+        vision_model = None
+        if "vision_config" in config.config_dict:
+            logger.info("Vision component detected in model config. Attempting to load...")
+            try:
+                vision_model = Model.from_config(config, component="vision")
+                vision_model.load(progressbar=True)
+                logger.info("Vision model loaded successfully.")
+            except Exception as e:
+                logger.warning(f"Vision model loading failed (multimodal disabled): {e}")
+        else:
+            logger.info("No vision component in model config. Skipping multimodal setup.")
 
         # Initialize draft model for speculative decoding
         draft_model = None
@@ -166,23 +217,8 @@ class Exllamav3Model:
                 logger.warning(f"Draft model not found at {draft_path}, speculative decoding disabled.")
             else:
                 draft_config = Config.from_directory(str(draft_path))
-
-                # Set context size for draft model with 256-multiple validation
-                if shared.args.ctx_size_draft > 0:
-                    draft_max_tokens = shared.args.ctx_size_draft
-                else:
-                    draft_max_tokens = shared.args.ctx_size
-
-                # Validate draft model context size is a multiple of 256
-                if draft_max_tokens % 256 != 0:
-                    adjusted_draft_tokens = ((draft_max_tokens // 256) + 1) * 256
-                    logger.warning(f"Draft model max_num_tokens must be a multiple of 256. Adjusting from {draft_max_tokens} to {adjusted_draft_tokens}")
-                    draft_max_tokens = adjusted_draft_tokens
-
-                draft_config.max_seq_len = draft_max_tokens
-
                 draft_model = Model.from_config(draft_config)
-                draft_cache = Cache(draft_model, max_num_tokens=draft_max_tokens, layer_type=layer_type, **cache_kwargs)
+                draft_cache = Cache(draft_model, max_num_tokens=max_tokens, layer_type=layer_type, **cache_kwargs)
 
                 draft_load_params = {'progressbar': True}
                 if split:
@@ -191,18 +227,9 @@ class Exllamav3Model:
                 draft_model.load(**draft_load_params)
                 logger.info(f"Draft model loaded successfully. Max speculative tokens: {shared.args.draft_max}")
 
-        # Load vision model component (ExLlamaV3 native)
-        vision_model = None
-        if "vision_config" in config.config_dict:
-            logger.info("Vision component detected in model config. Attempting to load...")
-            try:
-                vision_model = Model.from_config(config, component="vision")
-                vision_model.load(progressbar=True)
-                logger.info("Vision model loaded successfully.")
-            except Exception as e:
-                logger.warning(f"Vision model loading failed (multimodal disabled): {e}")
-        else:
-            logger.info("No vision component in model config. Skipping multimodal setup.")
+        # Load main model last
+        model.load(**load_params)
+        tokenizer = Tokenizer.from_config(config)
 
         generator = Generator(
             model=model,
@@ -385,11 +412,22 @@ class Exllamav3Model:
         else:
             max_new_tokens = state['max_new_tokens']
 
-        # Get stop conditions
+        # Use full EOS token list from config (may contain multiple IDs)
         stop_conditions = []
         if not state['ban_eos_token']:
-            if hasattr(self.tokenizer, 'eos_token_id') and self.tokenizer.eos_token_id is not None:
-                stop_conditions.append(self.tokenizer.eos_token_id)
+            for eos_id in self.config.eos_token_id_list:
+                if eos_id is not None:
+                    stop_conditions.append(eos_id)
+
+        # Build filters for logit_bias (OpenAI API)
+        filters = []
+        logit_bias = state.get('logit_bias')
+        if logit_bias:
+            filters.append(LogitBiasFilter(self.tokenizer, logit_bias))
+
+        # Logprobs support (OpenAI API)
+        logprobs = state.get('logprobs', 0) or 0
+        return_top_tokens = logprobs if logprobs > 0 else 0
 
         seed = state.get('seed', -1)
         job = Job(
@@ -400,11 +438,15 @@ class Exllamav3Model:
             sampler=sampler,
             seed=seed if seed >= 0 else None,
             stop_conditions=stop_conditions if stop_conditions else None,
+            filters=filters if filters else None,
+            return_top_tokens=return_top_tokens,
+            return_probs=return_top_tokens > 0,
         )
 
         # Stream generation
         response_text = ""
         stop_event = state.get('stop_event')
+        self.last_completion_probabilities = []
 
         result_queue = self.parallel_generator.submit(job)
         try:
@@ -416,13 +458,40 @@ class Exllamav3Model:
                 except queue.Empty:
                     continue
                 if result is None or result.get("eos"):
+                    # Capture logprobs from the final eos result too
+                    if result is not None and return_top_tokens > 0:
+                        self._capture_logprobs(result)
                     break
                 chunk = result.get("text", "")
+
+                # Capture logprobs from streaming results
+                if return_top_tokens > 0:
+                    self._capture_logprobs(result)
+
                 if chunk:
                     response_text += chunk
                     yield response_text
         finally:
             self.parallel_generator.cancel(job)
+
+    def _capture_logprobs(self, result):
+        """Convert ExLlamav3 top-k token data to the shared logprobs format."""
+        top_k_tokens = result.get("top_k_tokens")
+        top_k_probs = result.get("top_k_probs")
+        if top_k_tokens is None or top_k_probs is None:
+            return
+
+        id_to_piece = self.tokenizer.get_id_to_piece_list(True)
+        # top_k_tokens shape: (batch, seq_len, k), top_k_probs same
+        for seq_idx in range(top_k_tokens.shape[1]):
+            entry = {"top_logprobs": []}
+            for k_idx in range(top_k_tokens.shape[2]):
+                token_id = top_k_tokens[0, seq_idx, k_idx].item()
+                prob = top_k_probs[0, seq_idx, k_idx].item()
+                token_str = id_to_piece[token_id] if token_id < len(id_to_piece) else f"<{token_id}>"
+                logprob = math.log(prob) if prob > 0 else float("-inf")
+                entry["top_logprobs"].append({"token": token_str, "logprob": logprob})
+            self.last_completion_probabilities.append(entry)
 
     def generate(self, prompt, state):
         output = ""

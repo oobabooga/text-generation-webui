@@ -47,7 +47,7 @@ parser = argparse.ArgumentParser(description="Text Generation Web UI", conflict_
 # Basic settings
 group = parser.add_argument_group('Basic settings')
 group.add_argument('--user-data-dir', type=str, default=str(user_data_dir), help='Path to the user data directory. Default: auto-detected.')
-group.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.')
+group.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. Best suited for small trusted teams.')
 group.add_argument('--model', type=str, help='Name of the model to load by default.')
 group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
 group.add_argument('--model-dir', type=str, default=str(user_data_dir / 'models'), help='Path to directory with all the models.')
@@ -76,7 +76,7 @@ group.add_argument('--loader', type=str, help='Choose the model loader manually,
 
 # Cache
 group = parser.add_argument_group('Context and cache')
-group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=8192, metavar='N', help='Context size in tokens. llama.cpp: 0 = auto if gpu-layers is also -1.')
+group.add_argument('--ctx-size', '--n_ctx', '--max_seq_len', type=int, default=0, metavar='N', help='Context size in tokens. 0 = auto for llama.cpp (requires gpu-layers=-1), 8192 for other loaders.')
 group.add_argument('--cache-type', '--cache_type', type=str, default='fp16', metavar='N', help='KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).')
 
 # Speculative decoding
@@ -108,7 +108,7 @@ group.add_argument('--threads', type=int, default=0, help='Number of threads to 
 group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
 group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
 group.add_argument('--parallel', type=int, default=1, help='Number of parallel request slots. The context size is divided equally among slots. For example, to have 4 slots with 8192 context each, set ctx_size to 32768.')
-group.add_argument('--fit-target', type=str, default='1024', help='Target VRAM margin per device for auto GPU layers, comma-separated list of values in MiB. A single value is broadcast across all devices. Default: 1024.')
+group.add_argument('--fit-target', type=str, default='512', help='Target VRAM margin per device for auto GPU layers, comma-separated list of values in MiB. A single value is broadcast across all devices.')
 group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"')
 
 # Transformers/Accelerate
@@ -139,12 +139,6 @@ group.add_argument('--enable-tp', '--enable_tp', action='store_true', help='Enab
 group.add_argument('--tp-backend', type=str, default='native', help='The backend for tensor parallelism. Valid options: native, nccl. Default: native.')
 group.add_argument('--cfg-cache', action='store_true', help='Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.')
 
-# RoPE
-group = parser.add_argument_group('RoPE')
-group.add_argument('--alpha_value', type=float, default=1, help='Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both.')
-group.add_argument('--rope_freq_base', type=int, default=0, help='If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63).')
-group.add_argument('--compress_pos_emb', type=int, default=1, help="Positional embeddings compression factor. Should be set to (context length) / (model\'s original context length). Equal to 1/rope_freq_scale.")
-
 # Gradio
 group = parser.add_argument_group('Gradio')
 group.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
@@ -163,7 +157,7 @@ group.add_argument('--portable', action='store_true', help='Hide features not av
 # API
 group = parser.add_argument_group('API')
 group.add_argument('--api', action='store_true', help='Enable the API extension.')
-group.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
+group.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudflare.')
 group.add_argument('--public-api-id', type=str, help='Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.', default=None)
 group.add_argument('--api-port', type=int, default=5000, help='The listening port for the API.')
 group.add_argument('--api-key', type=str, default='', help='API authentication key.')
@@ -181,9 +175,10 @@ group.add_argument('--dynatemp-high', type=float, default=_d['dynatemp_high'], m
 group.add_argument('--dynatemp-exponent', type=float, default=_d['dynatemp_exponent'], metavar='N', help='Dynamic temperature exponent')
 group.add_argument('--smoothing-factor', type=float, default=_d['smoothing_factor'], metavar='N', help='Smoothing factor')
 group.add_argument('--smoothing-curve', type=float, default=_d['smoothing_curve'], metavar='N', help='Smoothing curve')
-group.add_argument('--min-p', type=float, default=_d['min_p'], metavar='N', help='Min P')
 group.add_argument('--top-p', type=float, default=_d['top_p'], metavar='N', help='Top P')
 group.add_argument('--top-k', type=int, default=_d['top_k'], metavar='N', help='Top K')
+group.add_argument('--min-p', type=float, default=_d['min_p'], metavar='N', help='Min P')
+group.add_argument('--top-n-sigma', type=float, default=_d['top_n_sigma'], metavar='N', help='Top N Sigma')
 group.add_argument('--typical-p', type=float, default=_d['typical_p'], metavar='N', help='Typical P')
 group.add_argument('--xtc-threshold', type=float, default=_d['xtc_threshold'], metavar='N', help='XTC threshold')
 group.add_argument('--xtc-probability', type=float, default=_d['xtc_probability'], metavar='N', help='XTC probability')
@@ -191,7 +186,6 @@ group.add_argument('--epsilon-cutoff', type=float, default=_d['epsilon_cutoff'],
 group.add_argument('--eta-cutoff', type=float, default=_d['eta_cutoff'], metavar='N', help='Eta cutoff')
 group.add_argument('--tfs', type=float, default=_d['tfs'], metavar='N', help='TFS')
 group.add_argument('--top-a', type=float, default=_d['top_a'], metavar='N', help='Top A')
-group.add_argument('--top-n-sigma', type=float, default=_d['top_n_sigma'], metavar='N', help='Top N Sigma')
 group.add_argument('--adaptive-target', type=float, default=_d['adaptive_target'], metavar='N', help='Adaptive target')
 group.add_argument('--adaptive-decay', type=float, default=_d['adaptive_decay'], metavar='N', help='Adaptive decay')
 group.add_argument('--dry-multiplier', type=float, default=_d['dry_multiplier'], metavar='N', help='DRY multiplier')
@@ -263,8 +257,9 @@ settings = {
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>". Reply directly, without starting the reply with the character name.\n\n<|prompt|>',
     'enable_web_search': False,
     'web_search_pages': 3,
+    'selected_tools': [],
     'prompt-notebook': '',
-    'preset': 'Qwen3 - Thinking' if (user_data_dir / 'presets/Qwen3 - Thinking.yaml').exists() else None,
+    'preset': 'Top-P' if (user_data_dir / 'presets/Top-P.yaml').exists() else None,
     'max_new_tokens': 512,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
@@ -289,7 +284,7 @@ settings = {
     'include_past_attachments': True,
 
     # Generation parameters - Curve shape
-    'temperature': 0.6,
+    'temperature': neutral_samplers['temperature'],
     'dynatemp_low': neutral_samplers['dynatemp_low'],
     'dynatemp_high': neutral_samplers['dynatemp_high'],
     'dynatemp_exponent': neutral_samplers['dynatemp_exponent'],
@@ -297,9 +292,10 @@ settings = {
     'smoothing_curve': neutral_samplers['smoothing_curve'],
 
     # Generation parameters - Curve cutoff
-    'min_p': neutral_samplers['min_p'],
     'top_p': 0.95,
-    'top_k': 20,
+    'top_k': neutral_samplers['top_k'],
+    'min_p': neutral_samplers['min_p'],
+    'top_n_sigma': neutral_samplers['top_n_sigma'],
     'typical_p': neutral_samplers['typical_p'],
     'xtc_threshold': neutral_samplers['xtc_threshold'],
     'xtc_probability': neutral_samplers['xtc_probability'],
@@ -307,7 +303,6 @@ settings = {
     'eta_cutoff': neutral_samplers['eta_cutoff'],
     'tfs': neutral_samplers['tfs'],
     'top_a': neutral_samplers['top_a'],
-    'top_n_sigma': neutral_samplers['top_n_sigma'],
     'adaptive_target': neutral_samplers['adaptive_target'],
     'adaptive_decay': neutral_samplers['adaptive_decay'],
 
@@ -347,7 +342,7 @@ settings = {
     'greeting': 'How can I help you today?',
     'custom_system_message': '',
     'instruction_template_str': "{%- set ns = namespace(found=false) -%}\n{%- for message in messages -%}\n    {%- if message['role'] == 'system' -%}\n        {%- set ns.found = true -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if not ns.found -%}\n    {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\\n\\n' -}}\n{%- endif %}\n{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- '' + message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{-'### Instruction:\\n' + message['content'] + '\\n\\n'-}}\n        {%- else -%}\n            {{-'### Response:\\n' + message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{-'### Response:\\n'-}}\n{%- endif -%}",
-    'chat_template_str': "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {%- if message['content'] -%}\n            {{- message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n        {%- if user_bio -%}\n            {{- user_bio + '\\n\\n' -}}\n        {%- endif -%}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt %}\n    {{- name2 + ':' -}}\n{%- endif %}",
+    'chat_template_str': "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {%- if message['content'] -%}\n            {{- message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n        {%- if user_bio -%}\n            {{- user_bio + '\\n\\n' -}}\n        {%- endif -%}\n    {%- elif message['role'] == 'tool' -%}\n        {{- '[Tool result: ' + message['content'] + ']\\n' -}}\n    {%- elif message['role'] == 'user' -%}\n        {{- name1 + ': ' + message['content'] + '\\n'-}}\n    {%- elif message['tool_calls'] is defined and message['tool_calls'] -%}\n        {%- for tc in message['tool_calls'] -%}\n            {{- '[Calling: ' + tc['function']['name'] + '(' + tc['function']['arguments'] + ')]\\n' -}}\n        {%- endfor -%}\n    {%- else -%}\n        {{- name2 + ': ' + message['content'] + '\\n' -}}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt %}\n    {{- name2 + ':' -}}\n{%- endif %}",
 
     # Extensions
     'default_extensions': [],
@@ -395,9 +390,16 @@ def do_cmd_flags_warnings():
         if args.share:
             logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
         if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):
-            logger.warning("\nYou are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
-            if args.multi_user:
-                logger.warning('\nThe multi-user mode is highly experimental and should not be shared publicly.')
+            logger.warning("You are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
+    if args.multi_user:
+        logger.warning(
+            'Multi-user mode is enabled. Known limitations:'
+            '\n- The Stop button stops generation for all users, not just you.'
+            '\n- Chat history is not saved and will be lost on page refresh.'
+            '\n- Only one user can generate at a time unless using a parallel-capable backend (e.g. llama.cpp with --parallel N for N > 1, or ExLlamaV3).'
+            '\n\nThis mode works best for small trusted teams.'
+            '\n\nDo not expose publicly. Grayed-out actions can easily be bypassed client-side.\n'
+        )
 
 
 def apply_image_model_cli_overrides():

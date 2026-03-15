@@ -1,11 +1,12 @@
 import concurrent.futures
 import html
+import ipaddress
 import random
 import re
-import urllib.request
+import socket
 from concurrent.futures import as_completed
 from datetime import datetime
-from urllib.parse import quote_plus
+from urllib.parse import parse_qs, quote_plus, urljoin, urlparse
 
 import requests
 
@@ -13,34 +14,60 @@ from modules import shared
 from modules.logging_colors import logger
 
 
+def _validate_url(url):
+    """Validate that a URL is safe to fetch (not targeting private/internal networks)."""
+    parsed = urlparse(url)
+    if parsed.scheme not in ('http', 'https'):
+        raise ValueError(f"Unsupported URL scheme: {parsed.scheme}")
+
+    hostname = parsed.hostname
+    if not hostname:
+        raise ValueError("No hostname in URL")
+
+    # Resolve hostname and check all returned addresses
+    try:
+        for family, _, _, _, sockaddr in socket.getaddrinfo(hostname, None):
+            ip = ipaddress.ip_address(sockaddr[0])
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+                raise ValueError(f"Access to private/internal address {ip} is blocked")
+    except socket.gaierror:
+        raise ValueError(f"Could not resolve hostname: {hostname}")
+
+
 def get_current_timestamp():
     """Returns the current time in 24-hour format"""
     return datetime.now().strftime('%b %d, %Y %H:%M')
 
 
-def download_web_page(url, timeout=10):
+def download_web_page(url, timeout=10, include_links=False):
     """
-    Download a web page and convert its HTML content to structured Markdown text.
+    Download a web page and extract its main content as Markdown text.
     """
-    import html2text
+    import trafilatura
 
     try:
+        _validate_url(url)
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        response = requests.get(url, headers=headers, timeout=timeout)
-        response.raise_for_status()  # Raise an exception for bad status codes
+        max_redirects = 5
+        for _ in range(max_redirects):
+            response = requests.get(url, headers=headers, timeout=timeout, allow_redirects=False)
+            if response.is_redirect and 'Location' in response.headers:
+                url = urljoin(url, response.headers['Location'])
+                _validate_url(url)
+            else:
+                break
 
-        # Initialize the HTML to Markdown converter
-        h = html2text.HTML2Text()
-        h.body_width = 0
-        h.ignore_images = True
-        h.ignore_links = True
+        response.raise_for_status()
 
-        # Convert the HTML to Markdown
-        markdown_text = h.handle(response.text)
-
-        return markdown_text
+        result = trafilatura.extract(
+            response.text,
+            include_links=include_links,
+            output_format='markdown',
+            url=url
+        )
+        return result or ""
     except requests.exceptions.RequestException as e:
         logger.error(f"Error downloading {url}: {e}")
         return ""
@@ -49,8 +76,8 @@ def download_web_page(url, timeout=10):
         return ""
 
 
-def perform_web_search(query, num_pages=3, max_workers=5, timeout=10):
-    """Perform web search and return results with content"""
+def perform_web_search(query, num_pages=3, max_workers=5, timeout=10, fetch_content=True):
+    """Perform web search and return results, optionally with page content"""
     try:
         search_url = f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
 
@@ -59,24 +86,40 @@ def perform_web_search(query, num_pages=3, max_workers=5, timeout=10):
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         ]
 
-        response_text = ""
-        req = urllib.request.Request(search_url, headers={'User-Agent': random.choice(agents)})
-        with urllib.request.urlopen(req, timeout=timeout) as response:
-            response_text = response.read().decode('utf-8')
+        response = requests.get(search_url, headers={'User-Agent': random.choice(agents)}, timeout=timeout)
+        response.raise_for_status()
+        response_text = response.text
 
-        # Extract results with regex
-        titles = re.findall(r'<a[^>]*class="[^"]*result__a[^"]*"[^>]*>(.*?)</a>', response_text, re.DOTALL)
-        urls = re.findall(r'<a[^>]*class="[^"]*result__url[^"]*"[^>]*>(.*?)</a>', response_text, re.DOTALL)
+        # Extract results - title and URL come from the same <a class="result__a"> element
+        result_links = re.findall(r'<a[^>]*class="[^"]*result__a[^"]*"[^>]*>(.*?)</a>', response_text, re.DOTALL)
+        result_tags = re.findall(r'<a([^>]*class="[^"]*result__a[^"]*"[^>]*)>', response_text, re.DOTALL)
 
         # Prepare download tasks
         download_tasks = []
-        for i in range(min(len(titles), len(urls), num_pages)):
-            url = f"https://{urls[i].strip()}"
-            title = re.sub(r'<[^>]+>', '', titles[i]).strip()
-            title = html.unescape(title)
-            download_tasks.append((url, title, i))
+        for i, (tag_attrs, raw_title) in enumerate(zip(result_tags, result_links)):
+            if num_pages is not None and i >= num_pages:
+                break
+            # Extract href and resolve the actual URL from DuckDuckGo's redirect link
+            href_match = re.search(r'href="([^"]*)"', tag_attrs)
+            if not href_match:
+                continue
+            uddg = parse_qs(urlparse(html.unescape(href_match.group(1))).query).get('uddg', [''])[0]
+            if not uddg:
+                continue
+            title = html.unescape(re.sub(r'<[^>]+>', '', raw_title).strip())
+            download_tasks.append((uddg, title, len(download_tasks)))
 
         search_results = [None] * len(download_tasks)  # Pre-allocate to maintain order
+
+        if not fetch_content:
+            for url, title, index in download_tasks:
+                search_results[index] = {
+                    'title': title,
+                    'url': url,
+                    'content': ''
+                }
+
+            return search_results
 
         # Download pages in parallel
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:

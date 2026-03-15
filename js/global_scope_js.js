@@ -269,7 +269,49 @@ function removeLastClick() {
   document.getElementById("Remove-last").click();
 }
 
+function autoScrollToBottom() {
+  if (!window.isScrolled) {
+    const chatParent = document.getElementById("chat")?.parentNode?.parentNode?.parentNode;
+    if (chatParent) {
+      const maxScroll = chatParent.scrollHeight - chatParent.clientHeight;
+      if (maxScroll > 0 && chatParent.scrollTop < maxScroll - 1) {
+        chatParent.scrollTop = maxScroll;
+      }
+    }
+  }
+}
+
+function updateInstructPadding() {
+  const chatElement = document.getElementById("chat");
+  if (chatElement && chatElement.getAttribute("data-mode") === "instruct") {
+    const messagesContainer = chatElement.querySelector(".messages");
+    const lastChild = messagesContainer?.lastElementChild;
+    const prevSibling = lastChild?.previousElementSibling;
+    if (lastChild && prevSibling && chatElement.offsetHeight > 0) {
+      let bufferHeight = Math.max(0, Math.max(window.innerHeight - 128 - 84, window.innerHeight - prevSibling.offsetHeight - 84) - lastChild.offsetHeight);
+      if (window.innerWidth <= 924) {
+        bufferHeight = Math.max(0, bufferHeight - 32);
+      }
+      messagesContainer.style.paddingBottom = `${bufferHeight}px`;
+    }
+  }
+}
+
+let pendingMorphdomData = null;
+let morphdomRafId = null;
+
 function handleMorphdomUpdate(data) {
+  pendingMorphdomData = data;
+  if (!morphdomRafId) {
+    morphdomRafId = requestAnimationFrame(() => {
+      morphdomRafId = null;
+      applyMorphdomUpdate(pendingMorphdomData);
+      pendingMorphdomData = null;
+    });
+  }
+}
+
+function applyMorphdomUpdate(data) {
   // Determine target element and use it as query scope
   var target_element, target_html;
   if (data.last_message_only) {
@@ -283,27 +325,21 @@ function handleMorphdomUpdate(data) {
 
   const queryScope = target_element;
 
-  // Track open blocks
+  // Track open blocks and store their scroll positions
   const openBlocks = new Set();
+  const scrollPositions = {};
   queryScope.querySelectorAll(".thinking-block").forEach(block => {
     const blockId = block.getAttribute("data-block-id");
-    // If block exists and is open, add to open set
     if (blockId && block.hasAttribute("open")) {
       openBlocks.add(blockId);
-    }
-  });
-
-  // Store scroll positions for any open blocks
-  const scrollPositions = {};
-  queryScope.querySelectorAll(".thinking-block[open]").forEach(block => {
-    const content = block.querySelector(".thinking-content");
-    const blockId = block.getAttribute("data-block-id");
-    if (content && blockId) {
-      const isAtBottom = Math.abs((content.scrollHeight - content.scrollTop) - content.clientHeight) < 5;
-      scrollPositions[blockId] = {
-        position: content.scrollTop,
-        isAtBottom: isAtBottom
-      };
+      const content = block.querySelector(".thinking-content");
+      if (content) {
+        const isAtBottom = Math.abs((content.scrollHeight - content.scrollTop) - content.clientHeight) < 5;
+        scrollPositions[blockId] = {
+          position: content.scrollTop,
+          isAtBottom: isAtBottom
+        };
+      }
     }
   });
 
@@ -313,8 +349,8 @@ function handleMorphdomUpdate(data) {
     {
       onBeforeElUpdated: function(fromEl, toEl) {
         // Preserve code highlighting
-        if (fromEl.tagName === "PRE" && fromEl.querySelector("code[data-highlighted]")) {
-          const fromCode = fromEl.querySelector("code");
+        if (fromEl.tagName === "PRE") {
+          const fromCode = fromEl.querySelector("code[data-highlighted]");
           const toCode = toEl.querySelector("code");
 
           if (fromCode && toCode && fromCode.textContent === toCode.textContent) {
@@ -359,10 +395,23 @@ function handleMorphdomUpdate(data) {
     }
   );
 
+  // Syntax highlighting and LaTeX
+  if (window.doSyntaxHighlighting) {
+    window.doSyntaxHighlighting();
+  }
+
+  // Auto-scroll runs both before and after padding update.
+  // Before: so content growth isn't hidden by padding absorption.
+  // After: so padding-added space is also scrolled into view.
+  autoScrollToBottom();
+  updateInstructPadding();
+  autoScrollToBottom();
+
   // Add toggle listeners for new blocks
   queryScope.querySelectorAll(".thinking-block").forEach(block => {
     if (!block._hasToggleListener) {
       block.addEventListener("toggle", function(e) {
+        const wasScrolled = window.isScrolled;
         if (this.open) {
           const content = this.querySelector(".thinking-content");
           if (content) {
@@ -371,6 +420,12 @@ function handleMorphdomUpdate(data) {
             }, 0);
           }
         }
+        autoScrollToBottom();
+        updateInstructPadding();
+        autoScrollToBottom();
+        // Restore scroll state so the browser's layout adjustment
+        // from the toggle doesn't disable auto-scroll
+        window.isScrolled = wasScrolled;
       });
       block._hasToggleListener = true;
     }

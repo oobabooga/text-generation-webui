@@ -36,6 +36,7 @@ class LlamaServer:
         self.process = None
         self.session = requests.Session()
         self.vocabulary_size = None
+        self.n_ctx = None
         self.bos_token = "<s>"
         self.last_prompt_token_count = 0
 
@@ -133,9 +134,20 @@ class LlamaServer:
 
             payload["samplers"] = filtered_samplers
 
+        logit_bias = []
         if state['custom_token_bans']:
-            to_ban = [[int(token_id), False] for token_id in state['custom_token_bans'].split(',')]
-            payload["logit_bias"] = to_ban
+            logit_bias.extend([[int(token_id.strip()), False] for token_id in state['custom_token_bans'].split(',') if token_id.strip()])
+
+        if state.get('logit_bias'):
+            for token_id_str, bias in state['logit_bias'].items():
+                logit_bias.append([int(token_id_str), bias])
+
+        if logit_bias:
+            payload["logit_bias"] = logit_bias
+
+        n_probs = state.get('logprobs', 0)
+        if n_probs and n_probs > 0:
+            payload["n_probs"] = n_probs
 
         return payload
 
@@ -215,6 +227,7 @@ class LlamaServer:
                 response.raise_for_status()  # Raise an exception for HTTP errors
 
             full_text = ""
+            self.last_completion_probabilities = []
 
             # Process the streaming response
             stop_event = state.get('stop_event')
@@ -239,6 +252,10 @@ class LlamaServer:
                     if data.get('content', ''):
                         full_text += data['content']
                         yield full_text
+
+                    # Capture logprobs if present
+                    if 'completion_probabilities' in data:
+                        self.last_completion_probabilities.extend(data['completion_probabilities'])
 
                     # Check if generation is complete
                     if data.get('stop', False):
@@ -304,11 +321,16 @@ class LlamaServer:
                 self.vocabulary_size = model_info["meta"]["n_vocab"]
 
     def _get_bos_token(self):
-        """Get and store the model's BOS token."""
+        """Get and store the model's BOS token and context size."""
         url = f"http://127.0.0.1:{self.port}/props"
         response = self.session.get(url).json()
         if "bos_token" in response:
             self.bos_token = response["bos_token"]
+
+        # Get actual n_ctx from the server (important when --fit auto-selects it)
+        n_ctx = response.get("default_generation_settings", {}).get("n_ctx")
+        if n_ctx:
+            self.n_ctx = n_ctx
 
     def _is_port_available(self, port):
         """Check if a port is available for use."""
@@ -349,11 +371,14 @@ class LlamaServer:
 
         if shared.args.ctx_size > 0:
             cmd += ["--ctx-size", str(shared.args.ctx_size)]
+        elif shared.args.gpu_layers >= 0:
+            cmd += ["--ctx-size", "8192"]
 
         if shared.args.gpu_layers >= 0:
             cmd += ["--gpu-layers", str(shared.args.gpu_layers), "--fit", "off"]
         else:
             cmd += ["--fit", "on"]
+            cmd += ["--fit-ctx", "8192"]
             if shared.args.fit_target:
                 cmd += ["--fit-target", shared.args.fit_target]
 
@@ -379,10 +404,6 @@ class LlamaServer:
         if shared.args.cache_type != "fp16" and shared.args.cache_type in llamacpp_valid_cache_types:
             cmd += ["--cache-type-k", shared.args.cache_type, "--cache-type-v", shared.args.cache_type]
             cache_type = shared.args.cache_type
-        if shared.args.compress_pos_emb != 1:
-            cmd += ["--rope-freq-scale", str(1.0 / shared.args.compress_pos_emb)]
-        if shared.args.rope_freq_base > 0:
-            cmd += ["--rope-freq-base", str(shared.args.rope_freq_base)]
         if shared.args.mmproj not in [None, 'None']:
             path = Path(shared.args.mmproj)
             if not path.exists():
@@ -455,7 +476,7 @@ class LlamaServer:
             print()
 
         gpu_layers_str = "auto" if shared.args.gpu_layers < 0 else str(shared.args.gpu_layers)
-        ctx_size_str = "auto" if shared.args.ctx_size == 0 else str(shared.args.ctx_size)
+        ctx_size_str = "auto" if shared.args.ctx_size == 0 and shared.args.gpu_layers < 0 else str(shared.args.ctx_size or 8192)
         logger.info(f"Using gpu_layers={gpu_layers_str} | ctx_size={ctx_size_str} | cache_type={cache_type}")
         # Start the server with pipes for output
         self.process = subprocess.Popen(
