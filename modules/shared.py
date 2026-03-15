@@ -265,7 +265,7 @@ settings = {
     'web_search_pages': 3,
     'selected_tools': [],
     'prompt-notebook': '',
-    'preset': 'Qwen3 - Thinking' if (user_data_dir / 'presets/Qwen3 - Thinking.yaml').exists() else None,
+    'preset': 'Top-P' if (user_data_dir / 'presets/Top-P.yaml').exists() else None,
     'max_new_tokens': 512,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
@@ -290,7 +290,7 @@ settings = {
     'include_past_attachments': True,
 
     # Generation parameters - Curve shape
-    'temperature': 0.6,
+    'temperature': neutral_samplers['temperature'],
     'dynatemp_low': neutral_samplers['dynatemp_low'],
     'dynatemp_high': neutral_samplers['dynatemp_high'],
     'dynatemp_exponent': neutral_samplers['dynatemp_exponent'],
@@ -300,7 +300,7 @@ settings = {
     # Generation parameters - Curve cutoff
     'min_p': neutral_samplers['min_p'],
     'top_p': 0.95,
-    'top_k': 20,
+    'top_k': neutral_samplers['top_k'],
     'typical_p': neutral_samplers['typical_p'],
     'xtc_threshold': neutral_samplers['xtc_threshold'],
     'xtc_probability': neutral_samplers['xtc_probability'],
