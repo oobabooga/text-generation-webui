@@ -420,7 +420,9 @@ function applyMorphdomUpdate(data) {
             }, 0);
           }
         }
+        autoScrollToBottom();
         updateInstructPadding();
+        autoScrollToBottom();
         // Restore scroll state so the browser's layout adjustment
         // from the toggle doesn't disable auto-scroll
         window.isScrolled = wasScrolled;
