@@ -67,7 +67,7 @@ def get_model_metadata(model):
 
         for k in metadata:
             if k.endswith('.context_length'):
-                model_settings['ctx_size'] = min(metadata[k], 8192)
+                model_settings['ctx_size'] = 0
                 model_settings['truncation_length_info'] = metadata[k]
             elif k.endswith('rope.freq_base'):
                 model_settings['rope_freq_base'] = metadata[k]
