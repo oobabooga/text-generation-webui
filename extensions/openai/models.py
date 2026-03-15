@@ -20,10 +20,14 @@ def list_models():
 
 def list_models_openai_format():
     """Returns model list in OpenAI API format"""
-    model_names = get_available_models()
+    if shared.model_name and shared.model_name != 'None':
+        data = [model_info_dict(shared.model_name)]
+    else:
+        data = []
+
     return {
         "object": "list",
-        "data": [model_info_dict(name) for name in model_names]
+        "data": data
     }
 
 
