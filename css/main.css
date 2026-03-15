@@ -1680,7 +1680,7 @@ button:focus {
 .chat-parent {
     /* Optimize for scrolling performance */
     will-change: scroll-position;
-    contain: layout style paint;
+    contain: style paint;
 
     /* Ensure GPU acceleration */
     transform: translateZ(0);
