@@ -175,9 +175,10 @@ group.add_argument('--dynatemp-high', type=float, default=_d['dynatemp_high'], m
 group.add_argument('--dynatemp-exponent', type=float, default=_d['dynatemp_exponent'], metavar='N', help='Dynamic temperature exponent')
 group.add_argument('--smoothing-factor', type=float, default=_d['smoothing_factor'], metavar='N', help='Smoothing factor')
 group.add_argument('--smoothing-curve', type=float, default=_d['smoothing_curve'], metavar='N', help='Smoothing curve')
-group.add_argument('--min-p', type=float, default=_d['min_p'], metavar='N', help='Min P')
 group.add_argument('--top-p', type=float, default=_d['top_p'], metavar='N', help='Top P')
 group.add_argument('--top-k', type=int, default=_d['top_k'], metavar='N', help='Top K')
+group.add_argument('--min-p', type=float, default=_d['min_p'], metavar='N', help='Min P')
+group.add_argument('--top-n-sigma', type=float, default=_d['top_n_sigma'], metavar='N', help='Top N Sigma')
 group.add_argument('--typical-p', type=float, default=_d['typical_p'], metavar='N', help='Typical P')
 group.add_argument('--xtc-threshold', type=float, default=_d['xtc_threshold'], metavar='N', help='XTC threshold')
 group.add_argument('--xtc-probability', type=float, default=_d['xtc_probability'], metavar='N', help='XTC probability')
@@ -185,7 +186,6 @@ group.add_argument('--epsilon-cutoff', type=float, default=_d['epsilon_cutoff'],
 group.add_argument('--eta-cutoff', type=float, default=_d['eta_cutoff'], metavar='N', help='Eta cutoff')
 group.add_argument('--tfs', type=float, default=_d['tfs'], metavar='N', help='TFS')
 group.add_argument('--top-a', type=float, default=_d['top_a'], metavar='N', help='Top A')
-group.add_argument('--top-n-sigma', type=float, default=_d['top_n_sigma'], metavar='N', help='Top N Sigma')
 group.add_argument('--adaptive-target', type=float, default=_d['adaptive_target'], metavar='N', help='Adaptive target')
 group.add_argument('--adaptive-decay', type=float, default=_d['adaptive_decay'], metavar='N', help='Adaptive decay')
 group.add_argument('--dry-multiplier', type=float, default=_d['dry_multiplier'], metavar='N', help='DRY multiplier')
@@ -292,9 +292,10 @@ settings = {
     'smoothing_curve': neutral_samplers['smoothing_curve'],
 
     # Generation parameters - Curve cutoff
-    'min_p': neutral_samplers['min_p'],
     'top_p': 0.95,
     'top_k': neutral_samplers['top_k'],
+    'min_p': neutral_samplers['min_p'],
+    'top_n_sigma': neutral_samplers['top_n_sigma'],
     'typical_p': neutral_samplers['typical_p'],
     'xtc_threshold': neutral_samplers['xtc_threshold'],
     'xtc_probability': neutral_samplers['xtc_probability'],
@@ -302,7 +303,6 @@ settings = {
     'eta_cutoff': neutral_samplers['eta_cutoff'],
     'tfs': neutral_samplers['tfs'],
     'top_a': neutral_samplers['top_a'],
-    'top_n_sigma': neutral_samplers['top_n_sigma'],
     'adaptive_target': neutral_samplers['adaptive_target'],
     'adaptive_decay': neutral_samplers['adaptive_decay'],
 
