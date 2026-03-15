@@ -403,10 +403,6 @@ class LlamaServer:
         if shared.args.cache_type != "fp16" and shared.args.cache_type in llamacpp_valid_cache_types:
             cmd += ["--cache-type-k", shared.args.cache_type, "--cache-type-v", shared.args.cache_type]
             cache_type = shared.args.cache_type
-        if shared.args.compress_pos_emb != 1:
-            cmd += ["--rope-freq-scale", str(1.0 / shared.args.compress_pos_emb)]
-        if shared.args.rope_freq_base > 0:
-            cmd += ["--rope-freq-base", str(shared.args.rope_freq_base)]
         if shared.args.mmproj not in [None, 'None']:
             path = Path(shared.args.mmproj)
             if not path.exists():

@@ -244,15 +244,14 @@ usage: server.py [-h] [--user-data-dir USER_DATA_DIR] [--multi-user] [--model MO
                  [--row-split] [--no-mmap] [--mlock] [--no-kv-offload] [--batch-size BATCH_SIZE] [--ubatch-size UBATCH_SIZE] [--threads THREADS] [--threads-batch THREADS_BATCH] [--numa]
                  [--parallel PARALLEL] [--fit-target FIT_TARGET] [--extra-flags EXTRA_FLAGS] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16]
                  [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE]
-                 [--quant_type QUANT_TYPE] [--gpu-split GPU_SPLIT] [--enable-tp] [--tp-backend TP_BACKEND] [--cfg-cache] [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE]
-                 [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH]
-                 [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE] [--subpath SUBPATH] [--old-colors] [--portable] [--api] [--public-api]
-                 [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6] [--api-disable-ipv4] [--nowebui] [--temperature N]
-                 [--dynatemp-low N] [--dynatemp-high N] [--dynatemp-exponent N] [--smoothing-factor N] [--smoothing-curve N] [--min-p N] [--top-p N] [--top-k N] [--typical-p N] [--xtc-threshold N]
-                 [--xtc-probability N] [--epsilon-cutoff N] [--eta-cutoff N] [--tfs N] [--top-a N] [--top-n-sigma N] [--adaptive-target N] [--adaptive-decay N] [--dry-multiplier N]
-                 [--dry-allowed-length N] [--dry-base N] [--repetition-penalty N] [--frequency-penalty N] [--presence-penalty N] [--encoder-repetition-penalty N] [--no-repeat-ngram-size N]
-                 [--repetition-penalty-range N] [--penalty-alpha N] [--guidance-scale N] [--mirostat-mode N] [--mirostat-tau N] [--mirostat-eta N] [--do-sample | --no-do-sample]
-                 [--dynamic-temperature | --no-dynamic-temperature] [--temperature-last | --no-temperature-last] [--sampler-priority N] [--dry-sequence-breakers N]
+                 [--quant_type QUANT_TYPE] [--gpu-split GPU_SPLIT] [--enable-tp] [--tp-backend TP_BACKEND] [--cfg-cache] [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share]
+                 [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE] [--subpath SUBPATH] [--old-colors]
+                 [--portable] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6] [--api-disable-ipv4]
+                 [--nowebui] [--temperature N] [--dynatemp-low N] [--dynatemp-high N] [--dynatemp-exponent N] [--smoothing-factor N] [--smoothing-curve N] [--min-p N] [--top-p N] [--top-k N]
+                 [--typical-p N] [--xtc-threshold N] [--xtc-probability N] [--epsilon-cutoff N] [--eta-cutoff N] [--tfs N] [--top-a N] [--top-n-sigma N] [--adaptive-target N] [--adaptive-decay N]
+                 [--dry-multiplier N] [--dry-allowed-length N] [--dry-base N] [--repetition-penalty N] [--frequency-penalty N] [--presence-penalty N] [--encoder-repetition-penalty N]
+                 [--no-repeat-ngram-size N] [--repetition-penalty-range N] [--penalty-alpha N] [--guidance-scale N] [--mirostat-mode N] [--mirostat-tau N] [--mirostat-eta N]
+                 [--do-sample | --no-do-sample] [--dynamic-temperature | --no-dynamic-temperature] [--temperature-last | --no-temperature-last] [--sampler-priority N] [--dry-sequence-breakers N]
                  [--enable-thinking | --no-enable-thinking] [--reasoning-effort N] [--chat-template-file CHAT_TEMPLATE_FILE]
 
 Text Generation Web UI
@@ -262,7 +261,7 @@ options:
 
 Basic settings:
   --user-data-dir USER_DATA_DIR                        Path to the user data directory. Default: auto-detected.
-  --multi-user                                         Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.
+  --multi-user                                         Multi-user mode. Chat histories are not saved or automatically loaded. Best suited for small trusted teams.
   --model MODEL                                        Name of the model to load by default.
   --lora LORA [LORA ...]                               The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.
   --model-dir MODEL_DIR                                Path to directory with all the models.
@@ -289,7 +288,7 @@ Model loader:
                                                        LLM.
 
 Context and cache:
-  --ctx-size, --n_ctx, --max_seq_len N                 Context size in tokens. llama.cpp: 0 = auto if gpu-layers is also -1.
+  --ctx-size, --n_ctx, --max_seq_len N                 Context size in tokens. 0 = auto for llama.cpp (requires gpu-layers=-1), 8192 for other loaders.
   --cache-type, --cache_type N                         KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).
 
 Speculative decoding:
@@ -349,11 +348,6 @@ ExLlamaV3:
   --enable-tp, --enable_tp                             Enable Tensor Parallelism (TP) to split the model across GPUs.
   --tp-backend TP_BACKEND                              The backend for tensor parallelism. Valid options: native, nccl. Default: native.
   --cfg-cache                                          Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.
-
-RoPE:
-  --alpha_value ALPHA_VALUE                            Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both.
-  --rope_freq_base ROPE_FREQ_BASE                      If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63).
-  --compress_pos_emb COMPRESS_POS_EMB                  Positional embeddings compression factor. Should be set to (context length) / (model's original context length). Equal to 1/rope_freq_scale.
 
 Gradio:
   --listen                                             Make the web UI reachable from your local network.

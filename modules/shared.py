@@ -139,12 +139,6 @@ group.add_argument('--enable-tp', '--enable_tp', action='store_true', help='Enab
 group.add_argument('--tp-backend', type=str, default='native', help='The backend for tensor parallelism. Valid options: native, nccl. Default: native.')
 group.add_argument('--cfg-cache', action='store_true', help='Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.')
 
-# RoPE
-group = parser.add_argument_group('RoPE')
-group.add_argument('--alpha_value', type=float, default=1, help='Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both.')
-group.add_argument('--rope_freq_base', type=int, default=0, help='If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63).')
-group.add_argument('--compress_pos_emb', type=int, default=1, help="Positional embeddings compression factor. Should be set to (context length) / (model\'s original context length). Equal to 1/rope_freq_scale.")
-
 # Gradio
 group = parser.add_argument_group('Gradio')
 group.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')

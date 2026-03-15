@@ -15,9 +15,6 @@ def get_fallback_settings():
     return {
         'bf16': False,
         'ctx_size': 8192,
-        'rope_freq_base': 0,
-        'compress_pos_emb': 1,
-        'alpha_value': 1,
         'truncation_length': shared.settings['truncation_length'],
         'truncation_length_info': shared.settings['truncation_length'],
         'skip_special_tokens': shared.settings['skip_special_tokens'],
@@ -69,12 +66,6 @@ def get_model_metadata(model):
             if k.endswith('.context_length'):
                 model_settings['ctx_size'] = 0
                 model_settings['truncation_length_info'] = metadata[k]
-            elif k.endswith('rope.freq_base'):
-                model_settings['rope_freq_base'] = metadata[k]
-            elif k.endswith('rope.scale_linear'):
-                model_settings['compress_pos_emb'] = metadata[k]
-            elif k.endswith('rope.scaling.factor'):
-                model_settings['compress_pos_emb'] = metadata[k]
             elif k.endswith('.block_count'):
                 model_settings['gpu_layers'] = -1
                 model_settings['max_gpu_layers'] = metadata[k] + 1
@@ -118,15 +109,6 @@ def get_model_metadata(model):
                 model_settings['truncation_length_info'] = value
                 model_settings['ctx_size'] = min(value, 8192)
                 break
-
-            if 'rope_theta' in metadata:
-                model_settings['rope_freq_base'] = metadata['rope_theta']
-            elif 'attn_config' in metadata and 'rope_theta' in metadata['attn_config']:
-                model_settings['rope_freq_base'] = metadata['attn_config']['rope_theta']
-
-            if 'rope_scaling' in metadata and isinstance(metadata['rope_scaling'], dict) and all(key in metadata['rope_scaling'] for key in ('type', 'factor')):
-                if metadata['rope_scaling']['type'] == 'linear':
-                    model_settings['compress_pos_emb'] = metadata['rope_scaling']['factor']
 
             if 'torch_dtype' in metadata and metadata['torch_dtype'] == 'bfloat16':
                 model_settings['bf16'] = True
@@ -180,10 +162,6 @@ def get_model_metadata(model):
 
     if 'instruction_template' not in model_settings:
         model_settings['instruction_template'] = 'Alpaca'
-
-    # Ignore rope_freq_base if set to the default value
-    if 'rope_freq_base' in model_settings and model_settings['rope_freq_base'] == 10000:
-        model_settings.pop('rope_freq_base')
 
     # Apply user settings from user_data/models/config-user.yaml
     settings = shared.user_config
