@@ -4,10 +4,9 @@ import ipaddress
 import random
 import re
 import socket
-import urllib.request
 from concurrent.futures import as_completed
 from datetime import datetime
-from urllib.parse import quote_plus, urljoin, urlparse
+from urllib.parse import parse_qs, quote_plus, urljoin, urlparse
 
 import requests
 
@@ -87,22 +86,28 @@ def perform_web_search(query, num_pages=3, max_workers=5, timeout=10, fetch_cont
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
         ]
 
-        response_text = ""
-        req = urllib.request.Request(search_url, headers={'User-Agent': random.choice(agents)})
-        with urllib.request.urlopen(req, timeout=timeout) as response:
-            response_text = response.read().decode('utf-8')
+        response = requests.get(search_url, headers={'User-Agent': random.choice(agents)}, timeout=timeout)
+        response.raise_for_status()
+        response_text = response.text
 
-        # Extract results with regex
-        titles = re.findall(r'<a[^>]*class="[^"]*result__a[^"]*"[^>]*>(.*?)</a>', response_text, re.DOTALL)
-        urls = re.findall(r'<a[^>]*class="[^"]*result__url[^"]*"[^>]*>(.*?)</a>', response_text, re.DOTALL)
+        # Extract results - title and URL come from the same <a class="result__a"> element
+        result_links = re.findall(r'<a[^>]*class="[^"]*result__a[^"]*"[^>]*>(.*?)</a>', response_text, re.DOTALL)
+        result_tags = re.findall(r'<a([^>]*class="[^"]*result__a[^"]*"[^>]*)>', response_text, re.DOTALL)
 
         # Prepare download tasks
         download_tasks = []
-        for i in range(min(len(titles), len(urls), num_pages)):
-            url = f"https://{urls[i].strip()}"
-            title = re.sub(r'<[^>]+>', '', titles[i]).strip()
-            title = html.unescape(title)
-            download_tasks.append((url, title, i))
+        for i, (tag_attrs, raw_title) in enumerate(zip(result_tags, result_links)):
+            if num_pages is not None and i >= num_pages:
+                break
+            # Extract href and resolve the actual URL from DuckDuckGo's redirect link
+            href_match = re.search(r'href="([^"]*)"', tag_attrs)
+            if not href_match:
+                continue
+            uddg = parse_qs(urlparse(html.unescape(href_match.group(1))).query).get('uddg', [''])[0]
+            if not uddg:
+                continue
+            title = html.unescape(re.sub(r'<[^>]+>', '', raw_title).strip())
+            download_tasks.append((uddg, title, len(download_tasks)))
 
         search_results = [None] * len(download_tasks)  # Pre-allocate to maintain order
 

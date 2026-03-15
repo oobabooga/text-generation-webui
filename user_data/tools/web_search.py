@@ -9,7 +9,6 @@ tool = {
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "The search query."},
-                "num_pages": {"type": "integer", "description": "Number of search results to return (default: 3)."},
             },
             "required": ["query"]
         }
@@ -19,8 +18,7 @@ tool = {
 
 def execute(arguments):
     query = arguments.get("query", "")
-    num_pages = arguments.get("num_pages", 3)
-    results = perform_web_search(query, num_pages=num_pages, fetch_content=False)
+    results = perform_web_search(query, num_pages=None, fetch_content=False)
     output = []
     for r in results:
         if r:
