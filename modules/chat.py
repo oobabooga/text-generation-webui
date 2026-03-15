@@ -12,6 +12,7 @@ from datetime import datetime
 from functools import partial
 from pathlib import Path
 
+import markupsafe
 import yaml
 from jinja2.ext import loopcontrols
 from jinja2.sandbox import ImmutableSandboxedEnvironment
@@ -79,6 +80,13 @@ jinja_env = ImmutableSandboxedEnvironment(
     lstrip_blocks=True,
     extensions=[loopcontrols]
 )
+
+
+def custom_tojson(value, indent=None, ensure_ascii=True):
+    return markupsafe.Markup(json.dumps(value, indent=indent, ensure_ascii=ensure_ascii))
+
+
+jinja_env.filters["tojson"] = custom_tojson
 jinja_env.globals["strftime_now"] = strftime_now
 
 
