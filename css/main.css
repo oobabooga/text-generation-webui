@@ -439,6 +439,10 @@ audio {
     color: white !important;
 }
 
+.dark .message-body blockquote {
+    border-left-color: rgb(255 255 255 / 30%);
+}
+
 .message-body h1 {
     font-weight: 800;
     font-size: 2.25em;
