@@ -157,7 +157,7 @@ let lastClientHeight = 0;
 
 targetElement.addEventListener("scroll", function() {
   let diff = targetElement.scrollHeight - targetElement.clientHeight;
-  let isAtBottomNow = Math.abs(targetElement.scrollTop - diff) <= 10 || diff == 0;
+  let isAtBottomNow = Math.abs(targetElement.scrollTop - diff) <= 10 || diff <= 0;
 
   // Add scrolling class to disable hover effects
   if (window.isScrolled || !isAtBottomNow) {
