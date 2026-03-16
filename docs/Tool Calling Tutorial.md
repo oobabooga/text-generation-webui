@@ -1,8 +1,23 @@
+## Supported models
+
+The following models are supported:
+
+- Qwen 3.5
+- GPT-OSS
+- Mistral Small / Devstral
+- DeepSeek V3
+- Kimi-K2
+- MiniMax-M2.5
+- GLM-5
+- Llama 4
+
+Other models that output tool calls as JSON (inside XML tags, code blocks, or plain JSON) are also supported through a generic fallback parser.
+
 ## Tool calling in the UI
 
 ### 1. Load a model with tool-calling support
 
-Load a model with tool-calling support (Qwen, Mistral, Llama 4, etc.) from the Model tab.
+Load a model with tool-calling support from the Model tab.
 
 ### 2. Select tools
 
