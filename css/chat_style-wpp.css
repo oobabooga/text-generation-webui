@@ -1,5 +1,6 @@
 .message {
     display: block;
+    width: min(100%, 724px);
     padding-top: 0;
     padding-bottom: 21px;
     font-size: 15px;
@@ -77,14 +78,8 @@
     border-radius: 12px;
 }
 
-.message-body p {
+.message-body p, .message-body li {
     font-size: 15px !important;
-    line-height: 1.4 !important;
-    font-weight: 400;
-}
-
-.message-body p:first-child {
-    margin-top: 0 !important;
 }
 
 .dark .message-body p em {
@@ -100,6 +95,3 @@
     margin-top: 8px;
 }
 
-.message-body p, .chat .message-body ul, .chat .message-body ol {
-    margin-bottom: 10px !important;
-}

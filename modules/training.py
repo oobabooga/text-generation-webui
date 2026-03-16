@@ -310,6 +310,11 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
 
     # == Input validation / processing ==
     yield "Preparing the input..."
+
+    if shared.args.loader == 'llama.cpp':
+        yield "Error: LoRA training requires a model loaded with the Transformers loader. GGUF models are not supported for training."
+        return
+
     lora_file_path = clean_path(None, lora_name)
     if lora_file_path.strip() == '':
         yield "Missing or invalid LoRA file name input."

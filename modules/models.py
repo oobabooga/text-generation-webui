@@ -38,6 +38,9 @@ def load_model(model_name, loader=None):
         sampler_hijack.hijack_samplers()
 
     shared.args.loader = loader
+    if loader != 'llama.cpp' and shared.args.ctx_size == 0:
+        shared.args.ctx_size = 8192
+
     output = load_func_map[loader](model_name)
     if type(output) is tuple:
         model, tokenizer = output
@@ -54,6 +57,8 @@ def load_model(model_name, loader=None):
     if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt') or loader == 'llama.cpp':
         if shared.args.ctx_size > 0:
             shared.settings['truncation_length'] = shared.args.ctx_size
+        elif loader == 'llama.cpp' and hasattr(model, 'n_ctx') and model.n_ctx:
+            shared.settings['truncation_length'] = model.n_ctx
 
     shared.is_multimodal = False
     if loader.lower() in ('exllamav3', 'llama.cpp') and hasattr(model, 'is_multimodal'):

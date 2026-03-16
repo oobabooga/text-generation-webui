@@ -6,8 +6,6 @@ from functools import partial
 from inspect import signature
 from pathlib import Path
 
-import gradio as gr
-
 import modules.shared as shared
 from modules.logging_colors import logger
 
@@ -214,6 +212,7 @@ def _apply_custom_js():
 
 
 def create_extensions_block():
+    import gradio as gr
     to_display = []
     for extension, name in iterator():
         if hasattr(extension, "ui") and not (hasattr(extension, 'params') and extension.params.get('is_tab', False)):
@@ -228,6 +227,7 @@ def create_extensions_block():
 
 
 def create_extensions_tabs():
+    import gradio as gr
     for extension, name in iterator():
         if hasattr(extension, "ui") and (hasattr(extension, 'params') and extension.params.get('is_tab', False)):
             display_name = getattr(extension, 'params', {}).get('display_name', name)

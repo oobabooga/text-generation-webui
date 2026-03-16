@@ -13,7 +13,7 @@
 
 # Text Generation Web UI
 
-A Gradio web UI for running Large Language Models locally. 100% private, offline, and free.
+A Gradio web UI for running Large Language Models locally. 100% private and offline. Supports text generation, vision, tool-calling, training, image generation, and more.
 
 [Try the Deep Reason extension](https://oobabooga.gumroad.com/l/deep_reason)
 
@@ -23,22 +23,21 @@ A Gradio web UI for running Large Language Models locally. 100% private, offline
 
 ## Features
 
-- Supports multiple local text generation backends, including [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) (the latter via its own [Dockerfile](https://github.com/oobabooga/text-generation-webui/blob/main/docker/TensorRT-LLM/Dockerfile)).
-- Easy setup: Choose between **portable builds** (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or the one-click installer that creates a self-contained `installer_files` directory.
+- **Multiple backends**: [llama.cpp](https://github.com/ggerganov/llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM). Switch between backends and models without restarting.
+- **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
+- **Vision (multimodal)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Multimodal-Tutorial)).
+- **Tool-calling**: Models can call custom functions during chat — web search, page fetching, math, and more. Each tool is a single `.py` file, easy to create and extend ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Tool-Calling-Tutorial)).
+- **OpenAI-compatible API**: Chat and Completions endpoints with tool-calling support. Use as a local drop-in replacement for the OpenAI API ([examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples)).
+- **Training**: Fine-tune LoRAs on multi-turn chat or raw text datasets. Supports resuming interrupted runs ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/05-%E2%80%90-Training-Tab)).
+- **Image generation**: A dedicated tab for `diffusers` models like **Z-Image-Turbo**. Features 4-bit/8-bit quantization and a persistent gallery with metadata ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Image-Generation-Tutorial)).
+- **Easy setup**: [Portable builds](https://github.com/oobabooga/text-generation-webui/releases) (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or a one-click installer for the full feature set.
 - 100% offline and private, with zero telemetry, external resources, or remote update requests.
 - `instruct` mode for instruction-following (like ChatGPT), and `chat-instruct`/`chat` modes for talking to custom characters. Prompts are automatically formatted with Jinja2 templates.
-- **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
-- **Vision (multimodal models)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Multimodal-Tutorial)).
-- **Image generation**: A dedicated tab for `diffusers` models like **Z-Image-Turbo**. Features 4-bit/8-bit quantization and a persistent gallery with metadata ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Image-Generation-Tutorial)).
-- **Web search**: Optionally search the internet with LLM-generated queries to add context to the conversation.
-- **Training**: Fine-tune LoRAs on multi-turn chat or raw text datasets. Easy to use, good defaults, and supports resuming interrupted runs ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/05-%E2%80%90-Training-Tab)).
 - Edit messages, navigate between message versions, and branch conversations at any point.
-- Switch between different models in the UI without restarting.
 - Free-form text generation in the Notebook tab without being limited to chat turns.
 - Multiple sampling parameters and generation options for sophisticated text generation control.
 - Aesthetic UI with dark and light themes.
 - Syntax highlighting for code blocks and LaTeX rendering for mathematical expressions.
-- OpenAI-compatible API with Chat and Completions endpoints, including tool-calling support – see [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
 - Extension support, with numerous built-in and user-contributed extensions available. See the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
 
 ## How to install
@@ -47,9 +46,10 @@ A Gradio web UI for running Large Language Models locally. 100% private, offline
 
 No installation needed – just download, unzip and run. All dependencies included.
 
-Compatible with GGUF (llama.cpp) models on Windows, Linux, and macOS. [Check what models fit your hardware](https://huggingface.co/spaces/oobabooga/accurate-gguf-vram-calculator).
-
 Download from here: **https://github.com/oobabooga/text-generation-webui/releases**
+
+- Builds are provided for Linux, Windows, and macOS, with options for CUDA, Vulkan, ROCm, and CPU-only.
+- Compatible with GGUF (llama.cpp) models.
 
 #### Option 2: Manual portable install with venv
 
@@ -81,7 +81,7 @@ deactivate
 
 #### Option 3: One-click installer
 
-For users who need additional backends (ExLlamaV3, Transformers) or extensions (TTS, voice input, translation, etc). Requires ~10GB disk space and downloads PyTorch.
+For users who need additional backends (ExLlamaV3, Transformers), training, image generation, or extensions (TTS, voice input, translation, etc). Requires ~10GB disk space and downloads PyTorch.
 
 1. Clone the repository, or [download its source code](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) and extract it.
 2. Run the startup script for your OS: `start_windows.bat`, `start_linux.sh`, or `start_macos.sh`.
@@ -146,7 +146,7 @@ conda activate textgen
 |--------|---------|---------|
 | Linux/WSL | NVIDIA | `pip3 install torch==2.9.1 --index-url https://download.pytorch.org/whl/cu128` |
 | Linux/WSL | CPU only | `pip3 install torch==2.9.1 --index-url https://download.pytorch.org/whl/cpu` |
-| Linux | AMD | `pip3 install torch==2.9.1 --index-url https://download.pytorch.org/whl/rocm6.4` |
+| Linux | AMD | `pip3 install https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/torch-2.9.1%2Brocm7.2.0.lw.git7e1940d4-cp313-cp313-linux_x86_64.whl` |
 | MacOS + MPS | Any | `pip3 install torch==2.9.1` |
 | Windows | NVIDIA | `pip3 install torch==2.9.1 --index-url https://download.pytorch.org/whl/cu128` |
 | Windows | CPU only | `pip3 install torch==2.9.1` |
@@ -201,7 +201,7 @@ ln -s docker/{nvidia/Dockerfile,nvidia/docker-compose.yml,.dockerignore} .
 For AMD GPU:
 ln -s docker/{amd/Dockerfile,amd/docker-compose.yml,.dockerignore} .
 For Intel GPU:
-ln -s docker/{intel/Dockerfile,amd/docker-compose.yml,.dockerignore} .
+ln -s docker/{intel/Dockerfile,intel/docker-compose.yml,.dockerignore} .
 For CPU only
 ln -s docker/{cpu/Dockerfile,cpu/docker-compose.yml,.dockerignore} .
 cp docker/.env.example .env
@@ -236,20 +236,24 @@ List of command-line flags
 </summary>
 
 ```txt
-usage: server.py [-h] [--multi-user] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--model-menu] [--settings SETTINGS]
+usage: server.py [-h] [--user-data-dir USER_DATA_DIR] [--multi-user] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--model-menu] [--settings SETTINGS]
                  [--extensions EXTENSIONS [EXTENSIONS ...]] [--verbose] [--idle-timeout IDLE_TIMEOUT] [--image-model IMAGE_MODEL] [--image-model-dir IMAGE_MODEL_DIR] [--image-dtype {bfloat16,float16}]
                  [--image-attn-backend {flash_attention_2,sdpa}] [--image-cpu-offload] [--image-compile] [--image-quant {none,bnb-8bit,bnb-4bit,torchao-int8wo,torchao-fp4,torchao-float8wo}]
                  [--loader LOADER] [--ctx-size N] [--cache-type N] [--model-draft MODEL_DRAFT] [--draft-max DRAFT_MAX] [--gpu-layers-draft GPU_LAYERS_DRAFT] [--device-draft DEVICE_DRAFT]
                  [--ctx-size-draft CTX_SIZE_DRAFT] [--spec-type {none,ngram-mod,ngram-simple,ngram-map-k,ngram-map-k4v,ngram-cache}] [--spec-ngram-size-n SPEC_NGRAM_SIZE_N]
                  [--spec-ngram-size-m SPEC_NGRAM_SIZE_M] [--spec-ngram-min-hits SPEC_NGRAM_MIN_HITS] [--gpu-layers N] [--cpu-moe] [--mmproj MMPROJ] [--streaming-llm] [--tensor-split TENSOR_SPLIT]
                  [--row-split] [--no-mmap] [--mlock] [--no-kv-offload] [--batch-size BATCH_SIZE] [--ubatch-size UBATCH_SIZE] [--threads THREADS] [--threads-batch THREADS_BATCH] [--numa]
-                 [--extra-flags EXTRA_FLAGS] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code]
-                 [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE]
-                 [--gpu-split GPU_SPLIT] [--enable-tp] [--tp-backend TP_BACKEND] [--cfg-cache] [--cpp-runner]
-                 [--alpha_value ALPHA_VALUE] [--rope_freq_base ROPE_FREQ_BASE] [--compress_pos_emb COMPRESS_POS_EMB] [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share]
+                 [--parallel PARALLEL] [--fit-target FIT_TARGET] [--extra-flags EXTRA_FLAGS] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16]
+                 [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE]
+                 [--quant_type QUANT_TYPE] [--gpu-split GPU_SPLIT] [--enable-tp] [--tp-backend TP_BACKEND] [--cfg-cache] [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share]
                  [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE] [--subpath SUBPATH] [--old-colors]
                  [--portable] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6] [--api-disable-ipv4]
-                 [--nowebui]
+                 [--nowebui] [--temperature N] [--dynatemp-low N] [--dynatemp-high N] [--dynatemp-exponent N] [--smoothing-factor N] [--smoothing-curve N] [--min-p N] [--top-p N] [--top-k N]
+                 [--typical-p N] [--xtc-threshold N] [--xtc-probability N] [--epsilon-cutoff N] [--eta-cutoff N] [--tfs N] [--top-a N] [--top-n-sigma N] [--adaptive-target N] [--adaptive-decay N]
+                 [--dry-multiplier N] [--dry-allowed-length N] [--dry-base N] [--repetition-penalty N] [--frequency-penalty N] [--presence-penalty N] [--encoder-repetition-penalty N]
+                 [--no-repeat-ngram-size N] [--repetition-penalty-range N] [--penalty-alpha N] [--guidance-scale N] [--mirostat-mode N] [--mirostat-tau N] [--mirostat-eta N]
+                 [--do-sample | --no-do-sample] [--dynamic-temperature | --no-dynamic-temperature] [--temperature-last | --no-temperature-last] [--sampler-priority N] [--dry-sequence-breakers N]
+                 [--enable-thinking | --no-enable-thinking] [--reasoning-effort N] [--chat-template-file CHAT_TEMPLATE_FILE]
 
 Text Generation Web UI
 
@@ -257,7 +261,8 @@ options:
   -h, --help                                           show this help message and exit
 
 Basic settings:
-  --multi-user                                         Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.
+  --user-data-dir USER_DATA_DIR                        Path to the user data directory. Default: auto-detected.
+  --multi-user                                         Multi-user mode. Chat histories are not saved or automatically loaded. Best suited for small trusted teams.
   --model MODEL                                        Name of the model to load by default.
   --lora LORA [LORA ...]                               The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.
   --model-dir MODEL_DIR                                Path to directory with all the models.
@@ -280,12 +285,12 @@ Image model:
                                                        Quantization method for image model.
 
 Model loader:
-  --loader LOADER                                      Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav3,
-                                                       TensorRT-LLM.
+  --loader LOADER                                      Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, ExLlamav3_HF, ExLlamav3, TensorRT-
+                                                       LLM.
 
 Context and cache:
-  --ctx-size N, --n_ctx N, --max_seq_len N             Context size in tokens. llama.cpp: 0 = auto if gpu-layers is also -1.
-  --cache-type N, --cache_type N                       KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).
+  --ctx-size, --n_ctx, --max_seq_len N                 Context size in tokens. 0 = auto for llama.cpp (requires gpu-layers=-1), 8192 for other loaders.
+  --cache-type, --cache_type N                         KV cache type; valid options: llama.cpp - fp16, q8_0, q4_0; ExLlamaV3 - fp16, q2 to q8 (can specify k_bits and v_bits separately, e.g. q4_q8).
 
 Speculative decoding:
   --model-draft MODEL_DRAFT                            Path to the draft model for speculative decoding.
@@ -300,7 +305,7 @@ Speculative decoding:
   --spec-ngram-min-hits SPEC_NGRAM_MIN_HITS            Minimum n-gram hits for ngram-map speculative decoding.
 
 llama.cpp:
-  --gpu-layers N, --n-gpu-layers N                     Number of layers to offload to the GPU. -1 = auto.
+  --gpu-layers, --n-gpu-layers N                       Number of layers to offload to the GPU. -1 = auto.
   --cpu-moe                                            Move the experts to the CPU (for MoE models).
   --mmproj MMPROJ                                      Path to the mmproj file for vision models.
   --streaming-llm                                      Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.
@@ -314,13 +319,17 @@ llama.cpp:
   --threads THREADS                                    Number of threads to use.
   --threads-batch THREADS_BATCH                        Number of threads to use for batches/prompt processing.
   --numa                                               Activate NUMA task allocation for llama.cpp.
+  --parallel PARALLEL                                  Number of parallel request slots. The context size is divided equally among slots. For example, to have 4 slots with 8192 context each, set
+                                                       ctx_size to 32768.
+  --fit-target FIT_TARGET                              Target VRAM margin per device for auto GPU layers, comma-separated list of values in MiB. A single value is broadcast across all devices.
+                                                       Default: 1024.
   --extra-flags EXTRA_FLAGS                            Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"
 
 Transformers/Accelerate:
   --cpu                                                Use the CPU to generate text. Warning: Training on CPU is extremely slow.
   --cpu-memory CPU_MEMORY                              Maximum CPU memory in GiB. Use this for CPU offloading.
   --disk                                               If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.
-  --disk-cache-dir DISK_CACHE_DIR                      Directory to save the disk cache to. Defaults to "user_data/cache".
+  --disk-cache-dir DISK_CACHE_DIR                      Directory to save the disk cache to.
   --load-in-8bit                                       Load the model with 8-bit precision (using bitsandbytes).
   --bf16                                               Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.
   --no-cache                                           Set use_cache to False while generating text. This reduces VRAM usage slightly, but it comes at a performance cost.
@@ -341,14 +350,6 @@ ExLlamaV3:
   --tp-backend TP_BACKEND                              The backend for tensor parallelism. Valid options: native, nccl. Default: native.
   --cfg-cache                                          Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.
 
-TensorRT-LLM:
-  --cpp-runner                                         Use the ModelRunnerCpp runner, which is faster than the default ModelRunner.
-
-RoPE:
-  --alpha_value ALPHA_VALUE                            Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both.
-  --rope_freq_base ROPE_FREQ_BASE                      If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63).
-  --compress_pos_emb COMPRESS_POS_EMB                  Positional embeddings compression factor. Should be set to (context length) / (model's original context length). Equal to 1/rope_freq_scale.
-
 Gradio:
   --listen                                             Make the web UI reachable from your local network.
   --listen-port LISTEN_PORT                            The listening port that the server will use.
@@ -365,7 +366,7 @@ Gradio:
 
 API:
   --api                                                Enable the API extension.
-  --public-api                                         Create a public URL for the API using Cloudfare.
+  --public-api                                         Create a public URL for the API using Cloudflare.
   --public-api-id PUBLIC_API_ID                        Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.
   --api-port API_PORT                                  The listening port for the API.
   --api-key API_KEY                                    API authentication key.
@@ -373,28 +374,67 @@ API:
   --api-enable-ipv6                                    Enable IPv6 for the API
   --api-disable-ipv4                                   Disable IPv4 for the API
   --nowebui                                            Do not launch the Gradio UI. Useful for launching the API in standalone mode.
+
+API generation defaults:
+  --temperature N                                      Temperature
+  --dynatemp-low N                                     Dynamic temperature low
+  --dynatemp-high N                                    Dynamic temperature high
+  --dynatemp-exponent N                                Dynamic temperature exponent
+  --smoothing-factor N                                 Smoothing factor
+  --smoothing-curve N                                  Smoothing curve
+  --min-p N                                            Min P
+  --top-p N                                            Top P
+  --top-k N                                            Top K
+  --typical-p N                                        Typical P
+  --xtc-threshold N                                    XTC threshold
+  --xtc-probability N                                  XTC probability
+  --epsilon-cutoff N                                   Epsilon cutoff
+  --eta-cutoff N                                       Eta cutoff
+  --tfs N                                              TFS
+  --top-a N                                            Top A
+  --top-n-sigma N                                      Top N Sigma
+  --adaptive-target N                                  Adaptive target
+  --adaptive-decay N                                   Adaptive decay
+  --dry-multiplier N                                   DRY multiplier
+  --dry-allowed-length N                               DRY allowed length
+  --dry-base N                                         DRY base
+  --repetition-penalty N                               Repetition penalty
+  --frequency-penalty N                                Frequency penalty
+  --presence-penalty N                                 Presence penalty
+  --encoder-repetition-penalty N                       Encoder repetition penalty
+  --no-repeat-ngram-size N                             No repeat ngram size
+  --repetition-penalty-range N                         Repetition penalty range
+  --penalty-alpha N                                    Penalty alpha
+  --guidance-scale N                                   Guidance scale
+  --mirostat-mode N                                    Mirostat mode
+  --mirostat-tau N                                     Mirostat tau
+  --mirostat-eta N                                     Mirostat eta
+  --do-sample, --no-do-sample                          Do sample
+  --dynamic-temperature, --no-dynamic-temperature      Dynamic temperature
+  --temperature-last, --no-temperature-last            Temperature last
+  --sampler-priority N                                 Sampler priority
+  --dry-sequence-breakers N                            DRY sequence breakers
+  --enable-thinking, --no-enable-thinking              Enable thinking
+  --reasoning-effort N                                 Reasoning effort
+  --chat-template-file CHAT_TEMPLATE_FILE              Path to a chat template file (.jinja, .jinja2, or .yaml) to use as the default instruction template for API requests. Overrides the model's
+                                                       built-in template.
 ```
 
 </details>
 
 ## Downloading models
 
-Models should be placed in the folder `text-generation-webui/user_data/models`. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=gguf).
+1. Download a GGUF model file from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=gguf).
+2. Place it in the `user_data/models` folder.
 
-To check if a GGUF model will fit in your hardware before downloading it, you can use this tool I created:
+That's it. The UI will detect it automatically.
 
-[Accurate GGUF VRAM Calculator](https://huggingface.co/spaces/oobabooga/accurate-gguf-vram-calculator)
+To check what will fit your GPU, you can use the [VRAM Calculator](https://huggingface.co/spaces/oobabooga/accurate-gguf-vram-calculator).
 
-* GGUF models are a single file and should be placed directly into `user_data/models`. Example:
+<details>
+<summary>Other model types (Transformers, EXL3)</summary>
 
-```
-text-generation-webui
-└── user_data
-    └── models
-        └── llama-2-13b-chat.Q4_K_M.gguf
-```
-
-* The remaining model types (like 16-bit Transformers models and EXL3 models) are made of several files and must be placed in a subfolder. Example:
+Models that consist of multiple files (like 16-bit Transformers models and EXL3 models) should be placed in a subfolder inside `user_data/models`:
 
 ```
 text-generation-webui
@@ -404,30 +444,17 @@ text-generation-webui
             ├── config.json
             ├── generation_config.json
             ├── model-00001-of-00004.safetensors
-            ├── model-00002-of-00004.safetensors
-            ├── model-00003-of-00004.safetensors
-            ├── model-00004-of-00004.safetensors
-            ├── model.safetensors.index.json
-            ├── special_tokens_map.json
+            ├── ...
             ├── tokenizer_config.json
             └── tokenizer.json
 ```
 
-In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download it via the command-line with:
-
-```
-python download-model.py organization/model
-```
-
-Run `python download-model.py --help` to see all the options.
+These formats require the one-click installer (not the portable build).
+</details>
 
 ## Documentation
 
 https://github.com/oobabooga/text-generation-webui/wiki
-
-## Google Colab notebook
-
-https://colab.research.google.com/github/oobabooga/text-generation-webui/blob/main/Colab-TextGen-GPU.ipynb
 
 ## Community
 

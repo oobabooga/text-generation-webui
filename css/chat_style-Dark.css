@@ -2,6 +2,7 @@
     display: grid;
     align-items: start;
     grid-template-columns: 60px minmax(0, 1fr);
+    width: min(100%, calc(724px + 60px));
     padding-bottom: 22px;
     padding-top: 6px;
     font-size: 18px;
@@ -91,9 +92,6 @@
 }
 
 .message-body p {
-    margin-bottom: 0 !important;
-    font-size: 16px !important;
-    line-height: 1.5 !important;
     color: #e0e0e0 !important; /* Light color for text */
 }
 
@@ -122,7 +120,7 @@
     }
 
     .message-body p {
-        font-size: 14px !important; /* Smaller text for mobile */
+        font-size: 14px !important;
     }
 
     .username {

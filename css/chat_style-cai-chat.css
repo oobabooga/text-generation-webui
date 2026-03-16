@@ -2,6 +2,7 @@
     display: grid;
     align-items: start;
     grid-template-columns: 60px minmax(0, 1fr);
+    width: min(100%, calc(724px + 60px));
     padding-bottom: 1.5em;
     padding-top: 0.5em;
     font-size: 15px;
@@ -46,14 +47,8 @@
     border-radius: 20px;
 }
 
-.message-body p {
-    font-size: 15px !important;
-    line-height: 22.5px !important;
+.message-body p, .message-body li {
     font-weight: 500;
-}
-
-.message-body p, .chat .message-body ul, .chat .message-body ol {
-    margin-bottom: 10px !important;
 }
 
 .dark .message-body p em {

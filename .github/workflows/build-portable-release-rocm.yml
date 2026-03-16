@@ -148,11 +148,11 @@ jobs:
             # 6. Create archive
             cd ..
             if [[ "$RUNNER_OS" == "Windows" ]]; then
-                ARCHIVE_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}-rocm.zip"
+                ARCHIVE_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}-rocm7.2.zip"
                 echo "Creating archive: $ARCHIVE_NAME"
                 powershell -Command "Compress-Archive -Path text-generation-webui-${VERSION_CLEAN} -DestinationPath $ARCHIVE_NAME"
             else
-                ARCHIVE_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}-rocm.tar.gz"
+                ARCHIVE_NAME="textgen-portable-${VERSION_CLEAN}-${PLATFORM}-rocm7.2.tar.gz"
                 echo "Creating archive: $ARCHIVE_NAME"
                 tar czf "$ARCHIVE_NAME" "text-generation-webui-${VERSION_CLEAN}"
             fi

@@ -65,14 +65,16 @@ class LogprobProcessor(LogitsProcessor):
     def __init__(self, logprobs=None):
         self.logprobs = logprobs
         self.token_alternatives = {}
+        self.token_alternatives_history = []
 
     def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
         if self.logprobs is not None:  # 0-5
             log_e_probabilities = F.log_softmax(logits, dim=1)
-            top_values, top_indices = torch.topk(log_e_probabilities, k=self.logprobs + 1)
+            top_values, top_indices = torch.topk(log_e_probabilities, k=self.logprobs)
             top_tokens = [get_reply_from_output_ids([tok]) for tok in top_indices[0]]
             top_probs = [float(x) for x in top_values[0]]
             self.token_alternatives = dict(zip(top_tokens, top_probs))
+            self.token_alternatives_history.append(self.token_alternatives)
 
         return logits
 
@@ -134,8 +136,6 @@ def load_model_HF(model_name):
         shared.args.load_in_4bit,
         shared.args.disk,
         shared.args.cpu_memory is not None,
-        shared.args.compress_pos_emb > 1,
-        shared.args.alpha_value > 1,
     ])
 
     # Load the model without any special settings
@@ -197,11 +197,6 @@ def load_model_HF(model_name):
 
             if shared.args.disk:
                 params['offload_folder'] = str(Path(shared.args.disk_cache_dir))
-
-        if shared.args.compress_pos_emb > 1:
-            params['rope_scaling'] = {'type': 'linear', 'factor': shared.args.compress_pos_emb}
-        elif shared.args.alpha_value > 1:
-            params['rope_scaling'] = {'type': 'dynamic', 'factor': shared.args.alpha_value}
 
         logger.info("TRANSFORMERS_PARAMS=")
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(params)

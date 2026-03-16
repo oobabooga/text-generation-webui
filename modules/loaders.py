@@ -1,8 +1,6 @@
 import functools
 from collections import OrderedDict
 
-import gradio as gr
-
 loaders_and_params = OrderedDict({
     'llama.cpp': [
         'gpu_layers',
@@ -17,8 +15,6 @@ loaders_and_params = OrderedDict({
         'tensor_split',
         'extra_flags',
         'streaming_llm',
-        'rope_freq_base',
-        'compress_pos_emb',
         'row_split',
         'no_kv_offload',
         'no_mmap',
@@ -43,8 +39,6 @@ loaders_and_params = OrderedDict({
     'Transformers': [
         'gpu_split',
         'cpu_memory',
-        'alpha_value',
-        'compress_pos_emb',
         'compute_dtype',
         'quant_type',
         'load_in_8bit',
@@ -71,7 +65,6 @@ loaders_and_params = OrderedDict({
         'gpu_split',
         'model_draft',
         'draft_max',
-        'ctx_size_draft',
         'speculative_decoding_accordion',
         'enable_tp',
         'tp_backend',
@@ -208,6 +201,7 @@ loaders_samplers = {
         'ban_eos_token',
         'add_bos_token',
         'enable_thinking',
+        'reasoning_effort',
         'seed',
         'skip_special_tokens',
     },
@@ -244,6 +238,7 @@ loaders_samplers = {
         'reasoning_effort',
         'seed',
         'sampler_priority',
+        'custom_token_bans',
         'dry_sequence_breakers',
         'grammar_string',
         'grammar_file_row',
@@ -277,6 +272,7 @@ def list_all_samplers():
 
 
 def blacklist_samplers(loader, dynamic_temperature):
+    import gradio as gr
     all_samplers = list_all_samplers()
     output = []
 
@@ -302,7 +298,58 @@ def get_all_params():
     return sorted(all_params)
 
 
+def list_model_elements():
+    return [
+        'filter_by_loader',
+        'loader',
+        'cpu_memory',
+        'gpu_layers',
+        'fit_target',
+        'cpu_moe',
+        'threads',
+        'threads_batch',
+        'batch_size',
+        'ubatch_size',
+        'ctx_size',
+        'cache_type',
+        'tensor_split',
+        'extra_flags',
+        'streaming_llm',
+        'gpu_split',
+        'compute_dtype',
+        'quant_type',
+        'load_in_8bit',
+        'load_in_4bit',
+        'attn_implementation',
+        'cpu',
+        'disk',
+        'row_split',
+        'no_kv_offload',
+        'no_mmap',
+        'mlock',
+        'numa',
+        'parallel',
+        'use_double_quant',
+        'bf16',
+        'enable_tp',
+        'tp_backend',
+        'cfg_cache',
+        'no_use_fast',
+        'model_draft',
+        'draft_max',
+        'gpu_layers_draft',
+        'device_draft',
+        'ctx_size_draft',
+        'spec_type',
+        'spec_ngram_size_n',
+        'spec_ngram_size_m',
+        'spec_ngram_min_hits',
+        'mmproj',
+    ]
+
+
 def make_loader_params_visible(loader):
+    import gradio as gr
     params = []
     all_params = get_all_params()
     if loader in loaders_and_params:

@@ -21,6 +21,7 @@ import extensions.openai.completions as OAIcompletions
 import extensions.openai.logits as OAIlogits
 import extensions.openai.models as OAImodels
 from extensions.openai.tokens import token_count, token_decode, token_encode
+from extensions.openai.errors import OpenAIError
 from extensions.openai.utils import _start_cloudflared
 from modules import shared
 from modules.logging_colors import logger
@@ -94,6 +95,20 @@ app.add_middleware(
 )
 
 
+@app.exception_handler(OpenAIError)
+async def openai_error_handler(request: Request, exc: OpenAIError):
+    error_type = "server_error" if exc.code >= 500 else "invalid_request_error"
+    return JSONResponse(
+        status_code=exc.code,
+        content={"error": {
+            "message": exc.message,
+            "type": error_type,
+            "param": getattr(exc, 'param', None),
+            "code": None
+        }}
+    )
+
+
 @app.middleware("http")
 async def validate_host_header(request: Request, call_next):
     # Be strict about only approving access to localhost by default
@@ -119,6 +134,12 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
     is_legacy = "/generate" in path
 
     if request_data.stream:
+        if (request_data.n or 1) > 1:
+            return JSONResponse(
+                status_code=400,
+                content={"error": {"message": "n > 1 is not supported with streaming.", "type": "invalid_request_error", "param": "n", "code": None}}
+            )
+
         stop_event = threading.Event()
 
         async def generator():
@@ -130,6 +151,8 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
                         break
 
                     yield {"data": json.dumps(resp)}
+
+                yield {"data": "[DONE]"}
             finally:
                 stop_event.set()
                 response.close()
@@ -170,6 +193,8 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
                         break
 
                     yield {"data": json.dumps(resp)}
+
+                yield {"data": "[DONE]"}
             finally:
                 stop_event.set()
                 response.close()
@@ -433,10 +458,13 @@ def run_server():
 
     # In the server configuration:
     server_addrs = []
-    if os.environ.get('OPENEDAI_ENABLE_IPV6', shared.args.api_enable_ipv6):
-        server_addrs.append('[::]' if shared.args.listen else '[::1]')
-    if not os.environ.get('OPENEDAI_DISABLE_IPV4', shared.args.api_disable_ipv4):
-        server_addrs.append('0.0.0.0' if shared.args.listen else '127.0.0.1')
+    if shared.args.listen and shared.args.listen_host:
+        server_addrs.append(shared.args.listen_host)
+    else:
+        if os.environ.get('OPENEDAI_ENABLE_IPV6', shared.args.api_enable_ipv6):
+            server_addrs.append('[::]' if shared.args.listen else '[::1]')
+        if not os.environ.get('OPENEDAI_DISABLE_IPV4', shared.args.api_disable_ipv4):
+            server_addrs.append('0.0.0.0' if shared.args.listen else '127.0.0.1')
 
     if not server_addrs:
         raise Exception('you MUST enable IPv6 or IPv4 for the API to work')
@@ -447,11 +475,11 @@ def run_server():
             port,
             shared.args.public_api_id,
             max_attempts=3,
-            on_start=lambda url: logger.info(f'OpenAI-compatible API URL:\n\n{url}\n')
+            on_start=lambda url: logger.info(f'OpenAI-compatible API URL:\n\n{url}/v1\n')
         )
     else:
         url_proto = 'https://' if (ssl_certfile and ssl_keyfile) else 'http://'
-        urls = [f'{url_proto}{addr}:{port}' for addr in server_addrs]
+        urls = [f'{url_proto}{addr}:{port}/v1' for addr in server_addrs]
         if len(urls) > 1:
             logger.info('OpenAI-compatible API URLs:\n\n' + '\n'.join(urls) + '\n')
         else:
