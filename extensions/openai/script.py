@@ -458,10 +458,13 @@ def run_server():
 
     # In the server configuration:
     server_addrs = []
-    if os.environ.get('OPENEDAI_ENABLE_IPV6', shared.args.api_enable_ipv6):
-        server_addrs.append('[::]' if shared.args.listen else '[::1]')
-    if not os.environ.get('OPENEDAI_DISABLE_IPV4', shared.args.api_disable_ipv4):
-        server_addrs.append('0.0.0.0' if shared.args.listen else '127.0.0.1')
+    if shared.args.listen and shared.args.listen_host:
+        server_addrs.append(shared.args.listen_host)
+    else:
+        if os.environ.get('OPENEDAI_ENABLE_IPV6', shared.args.api_enable_ipv6):
+            server_addrs.append('[::]' if shared.args.listen else '[::1]')
+        if not os.environ.get('OPENEDAI_DISABLE_IPV4', shared.args.api_disable_ipv4):
+            server_addrs.append('0.0.0.0' if shared.args.listen else '127.0.0.1')
 
     if not server_addrs:
         raise Exception('you MUST enable IPv6 or IPv4 for the API to work')
