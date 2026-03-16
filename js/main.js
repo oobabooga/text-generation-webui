@@ -2,6 +2,12 @@
 // Main
 // ------------------------------------------------
 
+// Sync highlight.js theme with the actual Gradio theme
+var defined_hljs_css = document.body.classList.contains("dark") ? "file/css/highlightjs/github-dark.min.css" : "file/css/highlightjs/github.min.css";
+if (document.getElementById("highlight-css").getAttribute("href") !== defined_hljs_css) {
+  document.getElementById("highlight-css").setAttribute("href", defined_hljs_css);
+}
+
 let main_parent = document.getElementById("chat-tab").parentNode;
 let extensions = document.getElementById("extensions");
 
@@ -145,10 +151,13 @@ targetElement.classList.add("pretty_scrollbar");
 targetElement.classList.add("chat-parent");
 window.isScrolled = false;
 let scrollTimeout;
+let lastScrollTop = 0;
+let lastScrollHeight = 0;
+let lastClientHeight = 0;
 
 targetElement.addEventListener("scroll", function() {
   let diff = targetElement.scrollHeight - targetElement.clientHeight;
-  let isAtBottomNow = Math.abs(targetElement.scrollTop - diff) <= 10 || diff == 0;
+  let isAtBottomNow = Math.abs(targetElement.scrollTop - diff) <= 10 || diff <= 0;
 
   // Add scrolling class to disable hover effects
   if (window.isScrolled || !isAtBottomNow) {
@@ -157,9 +166,12 @@ targetElement.addEventListener("scroll", function() {
 
   if(isAtBottomNow) {
     window.isScrolled = false;
-  } else {
+  } else if (targetElement.scrollTop < lastScrollTop && targetElement.scrollHeight >= lastScrollHeight && targetElement.clientHeight <= lastClientHeight) {
     window.isScrolled = true;
   }
+  lastScrollTop = targetElement.scrollTop;
+  lastScrollHeight = targetElement.scrollHeight;
+  lastClientHeight = targetElement.clientHeight;
 
   // Clear previous timeout and set new one
   clearTimeout(scrollTimeout);
@@ -170,61 +182,28 @@ targetElement.addEventListener("scroll", function() {
 });
 
 // Create a MutationObserver instance
-const observer = new MutationObserver(function(mutations) {
-  // Check if this is just the scrolling class being toggled
-  const isScrollingClassOnly = mutations.every(mutation =>
-    mutation.type === "attributes" &&
-    mutation.attributeName === "class" &&
-    mutation.target === targetElement
-  );
-
+const observer = new MutationObserver(function() {
   if (targetElement.classList.contains("_generating")) {
     typing.parentNode.classList.add("visible-dots");
     document.getElementById("stop").style.display = "flex";
     document.getElementById("Generate").style.display = "none";
+    // If the user is near the bottom, ensure auto-scroll is enabled
+    // for the new reply. This catches cases where isScrolled was
+    // incorrectly set to true by layout shifts during page load, etc.
+    const diff = targetElement.scrollHeight - targetElement.clientHeight;
+    if (Math.abs(targetElement.scrollTop - diff) <= 10 || diff <= 0) {
+      window.isScrolled = false;
+    }
   } else {
     typing.parentNode.classList.remove("visible-dots");
     document.getElementById("stop").style.display = "none";
     document.getElementById("Generate").style.display = "flex";
   }
-
-  doSyntaxHighlighting();
-
-  if (!window.isScrolled && !isScrollingClassOnly) {
-    const maxScroll = targetElement.scrollHeight - targetElement.clientHeight;
-    if (maxScroll > 0 && targetElement.scrollTop < maxScroll - 1) {
-      targetElement.scrollTop = maxScroll;
-    }
-  }
-
-  const chatElement = document.getElementById("chat");
-  if (chatElement && chatElement.getAttribute("data-mode") === "instruct") {
-    const messagesContainer = chatElement.querySelector(".messages");
-    const lastChild = messagesContainer?.lastElementChild;
-    const prevSibling = lastChild?.previousElementSibling;
-    if (lastChild && prevSibling) {
-      // Add padding to the messages container to create room for the last message.
-      // The purpose of this is to avoid constant scrolling during streaming in
-      // instruct mode.
-      let bufferHeight = Math.max(0, Math.max(window.innerHeight - 128 - 84, window.innerHeight - prevSibling.offsetHeight - 84) - lastChild.offsetHeight);
-
-      // Subtract header height when screen width is <= 924px
-      if (window.innerWidth <= 924) {
-        bufferHeight = Math.max(0, bufferHeight - 32);
-      }
-
-      messagesContainer.style.paddingBottom = `${bufferHeight}px`;
-    }
-  }
 });
 
-// Configure the observer to watch for changes in the subtree and attributes
+// Only watch for attribute changes on targetElement (e.g. _generating class)
 const config = {
-  childList: true,
-  subtree: true,
-  characterData: true,
-  attributeOldValue: true,
-  characterDataOldValue: true
+  attributes: true
 };
 
 // Start observing the target element
@@ -243,63 +222,76 @@ function isElementVisibleOnScreen(element) {
   );
 }
 
-function doSyntaxHighlighting() {
+window.doSyntaxHighlighting = function() {
   const messageBodies = document.getElementById("chat").querySelectorAll(".message-body");
 
   if (messageBodies.length > 0) {
-    observer.disconnect();
+    let hasSeenVisible = false;
 
-    try {
-      let hasSeenVisible = false;
+    // Go from last message to first
+    for (let i = messageBodies.length - 1; i >= 0; i--) {
+      const messageBody = messageBodies[i];
 
-      // Go from last message to first
-      for (let i = messageBodies.length - 1; i >= 0; i--) {
-        const messageBody = messageBodies[i];
+      if (isElementVisibleOnScreen(messageBody)) {
+        hasSeenVisible = true;
 
-        if (isElementVisibleOnScreen(messageBody)) {
-          hasSeenVisible = true;
+        // Handle both code and math in a single pass through each message
+        const codeBlocks = messageBody.querySelectorAll("pre code:not([data-highlighted])");
+        codeBlocks.forEach((codeBlock) => {
+          hljs.highlightElement(codeBlock);
+          codeBlock.setAttribute("data-highlighted", "true");
+          codeBlock.classList.add("pretty_scrollbar");
+        });
 
-          // Handle both code and math in a single pass through each message
-          const codeBlocks = messageBody.querySelectorAll("pre code:not([data-highlighted])");
-          codeBlocks.forEach((codeBlock) => {
-            hljs.highlightElement(codeBlock);
-            codeBlock.setAttribute("data-highlighted", "true");
-            codeBlock.classList.add("pretty_scrollbar");
-          });
-
-          // Only render math in visible elements
-          const mathContainers = messageBody.querySelectorAll("p, span, li, td, th, h1, h2, h3, h4, h5, h6, blockquote, figcaption, caption, dd, dt");
-          mathContainers.forEach(container => {
-            if (isElementVisibleOnScreen(container)) {
-              renderMathInElement(container, {
-                delimiters: [
-                  { left: "$$", right: "$$", display: true },
-                  { left: "\\(", right: "\\)", display: false },
-                  { left: "\\[", right: "\\]", display: true },
-                ],
-              });
-            }
-          });
-        } else if (hasSeenVisible) {
-        // We've seen visible messages but this one is not visible
-        // Since we're going from last to first, we can break
-          break;
-        }
+        // Only render math in visible elements
+        const mathContainers = messageBody.querySelectorAll("p, span, li, td, th, h1, h2, h3, h4, h5, h6, blockquote, figcaption, caption, dd, dt");
+        mathContainers.forEach(container => {
+          if (isElementVisibleOnScreen(container)) {
+            renderMathInElement(container, {
+              delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true },
+              ],
+            });
+          }
+        });
+      } else if (hasSeenVisible) {
+      // We've seen visible messages but this one is not visible
+      // Since we're going from last to first, we can break
+        break;
       }
-    } finally {
-      observer.observe(targetElement, config);
     }
   }
 }
+const doSyntaxHighlighting = window.doSyntaxHighlighting;
 
 //------------------------------------------------
 // Add some scrollbars
 //------------------------------------------------
-const textareaElements = document.querySelectorAll(".add_scrollbar textarea");
-for(i = 0; i < textareaElements.length; i++) {
-  textareaElements[i].classList.remove("scroll-hide");
-  textareaElements[i].classList.add("pretty_scrollbar");
-  textareaElements[i].style.resize = "none";
+const scrollbarElements = document.querySelectorAll(".add_scrollbar textarea, .add_scrollbar .drag-drop-list");
+for(i = 0; i < scrollbarElements.length; i++) {
+  scrollbarElements[i].classList.remove("scroll-hide");
+  scrollbarElements[i].classList.add("pretty_scrollbar");
+  scrollbarElements[i].style.resize = "none";
+}
+
+
+//------------------------------------------------
+// Tools: inject "Refresh list" link into the label
+//------------------------------------------------
+const toolsTitle = document.querySelector("#tools-group > [data-testid='block-info']");
+const toolsInfo = toolsTitle ? toolsTitle.nextElementSibling : null;
+if (toolsInfo) {
+  const refreshLink = document.createElement("span");
+  refreshLink.textContent = " [Refresh list]";
+  refreshLink.className = "tools-refresh-link";
+  refreshLink.addEventListener("click", function(e) {
+    e.preventDefault();
+    document.querySelector("#tools-refresh-btn").click();
+  });
+  toolsInfo.appendChild(refreshLink);
 }
 
 //------------------------------------------------
@@ -559,6 +551,38 @@ document.querySelectorAll(".focus-on-chat-input").forEach(element => {
     document.querySelector("#chat-input textarea").focus();
   });
 });
+
+//------------------------------------------------
+// "New chat" hover menu with incognito option
+//------------------------------------------------
+
+(function() {
+  const newChatBtn = document.getElementById("new-chat-btn");
+
+  const wrapper = document.createElement("div");
+  wrapper.id = "new-chat-wrapper";
+  newChatBtn.replaceWith(wrapper);
+  wrapper.appendChild(newChatBtn);
+
+  const arrow = document.createElement("span");
+  arrow.className = "new-chat-arrow";
+  arrow.textContent = "\u25BE";
+
+  const menu = document.createElement("div");
+  menu.className = "new-chat-menu";
+  const option = document.createElement("div");
+  option.className = "new-chat-menu-item";
+  option.textContent = "Incognito chat";
+  menu.appendChild(option);
+
+  arrow.appendChild(menu);
+  wrapper.appendChild(arrow);
+
+  option.addEventListener("click", function(e) {
+    e.stopPropagation();
+    document.querySelector("#incognito-chat-btn").click();
+  });
+})();
 
 //------------------------------------------------
 // Fix a border around the "past chats" menu
@@ -1089,15 +1113,13 @@ document.fonts.addEventListener("loadingdone", (event) => {
     const currentHeight = chatInputRow.offsetHeight;
     const heightDifference = currentHeight - originalHeight;
     chatParent.style.marginBottom = `${originalMarginBottom + heightDifference}px`;
+    if (!window.isScrolled) {
+      chatParent.scrollTop = chatParent.scrollHeight - chatParent.clientHeight;
+    }
   }
 
-  // Watch for changes that might affect height
-  const observer = new MutationObserver(updateMargin);
-  observer.observe(chatInputRow, {
-    childList: true,
-    subtree: true,
-    attributes: true
-  });
+  // Watch for size changes that affect height
+  new ResizeObserver(updateMargin).observe(chatInputRow);
 
   // Also listen for window resize
   window.addEventListener("resize", updateMargin);

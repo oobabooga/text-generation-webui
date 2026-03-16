@@ -11,7 +11,11 @@ function copyToClipboard(element) {
   const rawText = messageElement.getAttribute("data-raw");
   if (!rawText) return;
 
-  navigator.clipboard.writeText(rawText).then(function() {
+  const copyPromise = navigator.clipboard && window.isSecureContext
+    ? navigator.clipboard.writeText(rawText)
+    : fallbackCopyToClipboard(rawText);
+
+  copyPromise.then(function() {
     const originalSvg = element.innerHTML;
     element.innerHTML = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"text-green-500 dark:text-green-400\"><path d=\"M5 12l5 5l10 -10\"></path></svg>";
     setTimeout(() => {
@@ -19,6 +23,27 @@ function copyToClipboard(element) {
     }, 1000);
   }).catch(function(err) {
     console.error("Failed to copy text: ", err);
+  });
+}
+
+function fallbackCopyToClipboard(text) {
+  return new Promise((resolve, reject) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    textArea.style.top = "-9999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textArea);
+      successful ? resolve() : reject();
+    } catch (err) {
+      document.body.removeChild(textArea);
+      reject(err);
+    }
   });
 }
 
@@ -244,7 +269,49 @@ function removeLastClick() {
   document.getElementById("Remove-last").click();
 }
 
+function autoScrollToBottom() {
+  if (!window.isScrolled) {
+    const chatParent = document.getElementById("chat")?.parentNode?.parentNode?.parentNode;
+    if (chatParent) {
+      const maxScroll = chatParent.scrollHeight - chatParent.clientHeight;
+      if (maxScroll > 0 && chatParent.scrollTop < maxScroll - 1) {
+        chatParent.scrollTop = maxScroll;
+      }
+    }
+  }
+}
+
+function updateInstructPadding() {
+  const chatElement = document.getElementById("chat");
+  if (chatElement && chatElement.getAttribute("data-mode") === "instruct") {
+    const messagesContainer = chatElement.querySelector(".messages");
+    const lastChild = messagesContainer?.lastElementChild;
+    const prevSibling = lastChild?.previousElementSibling;
+    if (lastChild && prevSibling && chatElement.offsetHeight > 0) {
+      let bufferHeight = Math.max(0, Math.max(window.innerHeight - 128 - 84, window.innerHeight - prevSibling.offsetHeight - 84) - lastChild.offsetHeight);
+      if (window.innerWidth <= 924) {
+        bufferHeight = Math.max(0, bufferHeight - 32);
+      }
+      messagesContainer.style.paddingBottom = `${bufferHeight}px`;
+    }
+  }
+}
+
+let pendingMorphdomData = null;
+let morphdomRafId = null;
+
 function handleMorphdomUpdate(data) {
+  pendingMorphdomData = data;
+  if (!morphdomRafId) {
+    morphdomRafId = requestAnimationFrame(() => {
+      morphdomRafId = null;
+      applyMorphdomUpdate(pendingMorphdomData);
+      pendingMorphdomData = null;
+    });
+  }
+}
+
+function applyMorphdomUpdate(data) {
   // Determine target element and use it as query scope
   var target_element, target_html;
   if (data.last_message_only) {
@@ -258,27 +325,21 @@ function handleMorphdomUpdate(data) {
 
   const queryScope = target_element;
 
-  // Track open blocks
+  // Track open blocks and store their scroll positions
   const openBlocks = new Set();
+  const scrollPositions = {};
   queryScope.querySelectorAll(".thinking-block").forEach(block => {
     const blockId = block.getAttribute("data-block-id");
-    // If block exists and is open, add to open set
     if (blockId && block.hasAttribute("open")) {
       openBlocks.add(blockId);
-    }
-  });
-
-  // Store scroll positions for any open blocks
-  const scrollPositions = {};
-  queryScope.querySelectorAll(".thinking-block[open]").forEach(block => {
-    const content = block.querySelector(".thinking-content");
-    const blockId = block.getAttribute("data-block-id");
-    if (content && blockId) {
-      const isAtBottom = Math.abs((content.scrollHeight - content.scrollTop) - content.clientHeight) < 5;
-      scrollPositions[blockId] = {
-        position: content.scrollTop,
-        isAtBottom: isAtBottom
-      };
+      const content = block.querySelector(".thinking-content");
+      if (content) {
+        const isAtBottom = Math.abs((content.scrollHeight - content.scrollTop) - content.clientHeight) < 5;
+        scrollPositions[blockId] = {
+          position: content.scrollTop,
+          isAtBottom: isAtBottom
+        };
+      }
     }
   });
 
@@ -288,8 +349,8 @@ function handleMorphdomUpdate(data) {
     {
       onBeforeElUpdated: function(fromEl, toEl) {
         // Preserve code highlighting
-        if (fromEl.tagName === "PRE" && fromEl.querySelector("code[data-highlighted]")) {
-          const fromCode = fromEl.querySelector("code");
+        if (fromEl.tagName === "PRE") {
+          const fromCode = fromEl.querySelector("code[data-highlighted]");
           const toCode = toEl.querySelector("code");
 
           if (fromCode && toCode && fromCode.textContent === toCode.textContent) {
@@ -334,10 +395,23 @@ function handleMorphdomUpdate(data) {
     }
   );
 
+  // Syntax highlighting and LaTeX
+  if (window.doSyntaxHighlighting) {
+    window.doSyntaxHighlighting();
+  }
+
+  // Auto-scroll runs both before and after padding update.
+  // Before: so content growth isn't hidden by padding absorption.
+  // After: so padding-added space is also scrolled into view.
+  autoScrollToBottom();
+  updateInstructPadding();
+  autoScrollToBottom();
+
   // Add toggle listeners for new blocks
   queryScope.querySelectorAll(".thinking-block").forEach(block => {
     if (!block._hasToggleListener) {
       block.addEventListener("toggle", function(e) {
+        const wasScrolled = window.isScrolled;
         if (this.open) {
           const content = this.querySelector(".thinking-content");
           if (content) {
@@ -346,44 +420,14 @@ function handleMorphdomUpdate(data) {
             }, 0);
           }
         }
+        autoScrollToBottom();
+        updateInstructPadding();
+        autoScrollToBottom();
+        // Restore scroll state so the browser's layout adjustment
+        // from the toggle doesn't disable auto-scroll
+        window.isScrolled = wasScrolled;
       });
       block._hasToggleListener = true;
     }
   });
 }
-
-// Wait for Gradio to finish setting its styles, then force dark theme
-const observer = new MutationObserver((mutations) => {
-  mutations.forEach((mutation) => {
-    if (mutation.type === "attributes" &&
-        mutation.target.tagName === "GRADIO-APP" &&
-        mutation.attributeName === "style") {
-
-      // Gradio just set its styles, now force dark theme
-      document.body.classList.add("dark");
-      observer.disconnect();
-    }
-  });
-});
-
-// Start observing
-observer.observe(document.documentElement, {
-  attributes: true,
-  subtree: true,
-  attributeFilter: ["style"]
-});
-
-//------------------------------------------------
-// Suppress "Attempted to select a non-interactive or hidden tab" warning
-//------------------------------------------------
-(function() {
-  const originalWarn = console.warn;
-
-  console.warn = function(...args) {
-    if (args[0] && typeof args[0] === "string" && args[0].includes("Attempted to select a non-interactive or hidden tab")) {
-      return;
-    }
-
-    originalWarn.apply(console, args);
-  };
-})();

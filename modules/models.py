@@ -20,8 +20,6 @@ def load_model(model_name, loader=None):
         'Transformers': transformers_loader,
         'ExLlamav3_HF': ExLlamav3_HF_loader,
         'ExLlamav3': ExLlamav3_loader,
-        'ExLlamav2_HF': ExLlamav2_HF_loader,
-        'ExLlamav2': ExLlamav2_loader,
         'TensorRT-LLM': TensorRT_LLM_loader,
     }
 
@@ -40,6 +38,9 @@ def load_model(model_name, loader=None):
         sampler_hijack.hijack_samplers()
 
     shared.args.loader = loader
+    if loader != 'llama.cpp' and shared.args.ctx_size == 0:
+        shared.args.ctx_size = 8192
+
     output = load_func_map[loader](model_name)
     if type(output) is tuple:
         model, tokenizer = output
@@ -54,7 +55,10 @@ def load_model(model_name, loader=None):
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
     if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt') or loader == 'llama.cpp':
-        shared.settings['truncation_length'] = shared.args.ctx_size
+        if shared.args.ctx_size > 0:
+            shared.settings['truncation_length'] = shared.args.ctx_size
+        elif loader == 'llama.cpp' and hasattr(model, 'n_ctx') and model.n_ctx:
+            shared.settings['truncation_length'] = model.n_ctx
 
     shared.is_multimodal = False
     if loader.lower() in ('exllamav3', 'llama.cpp') and hasattr(model, 'is_multimodal'):
@@ -108,19 +112,6 @@ def ExLlamav3_loader(model_name):
     return model, tokenizer
 
 
-def ExLlamav2_HF_loader(model_name):
-    from modules.exllamav2_hf import Exllamav2HF
-
-    return Exllamav2HF.from_pretrained(model_name)
-
-
-def ExLlamav2_loader(model_name):
-    from modules.exllamav2 import Exllamav2Model
-
-    model, tokenizer = Exllamav2Model.from_pretrained(model_name)
-    return model, tokenizer
-
-
 def TensorRT_LLM_loader(model_name):
     try:
         from modules.tensorrt_llm import TensorRTLLMModel
@@ -128,7 +119,7 @@ def TensorRT_LLM_loader(model_name):
         raise ModuleNotFoundError("Failed to import 'tensorrt_llm'. Please install it manually following the instructions in the TensorRT-LLM GitHub repository.")
 
     model = TensorRTLLMModel.from_pretrained(model_name)
-    return model
+    return model, model.tokenizer
 
 
 def unload_model(keep_model_name=False):
@@ -138,10 +129,10 @@ def unload_model(keep_model_name=False):
     model_class_name = shared.model.__class__.__name__
     is_llamacpp = (model_class_name == 'LlamaServer')
 
-    if model_class_name in ['Exllamav3Model', 'Exllamav3HF']:
+    if model_class_name in ['Exllamav3Model', 'Exllamav3HF', 'TensorRTLLMModel']:
         shared.model.unload()
-    elif model_class_name in ['Exllamav2Model', 'Exllamav2HF'] and hasattr(shared.model, 'unload'):
-        shared.model.unload()
+    elif model_class_name == 'LlamaServer':
+        shared.model.stop()
 
     shared.model = shared.tokenizer = None
     shared.lora_names = []

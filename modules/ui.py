@@ -113,65 +113,15 @@ if not shared.args.old_colors:
         block_radius='0',
     )
 
-if Path("user_data/notification.mp3").exists():
+if (shared.user_data_dir / "notification.mp3").exists():
     audio_notification_js = "document.querySelector('#audio_notification audio')?.play();"
 else:
     audio_notification_js = ""
 
 
 def list_model_elements():
-    elements = [
-        'filter_by_loader',
-        'loader',
-        'cpu_memory',
-        'gpu_layers',
-        'cpu_moe',
-        'threads',
-        'threads_batch',
-        'batch_size',
-        'ubatch_size',
-        'ctx_size',
-        'cache_type',
-        'tensor_split',
-        'extra_flags',
-        'streaming_llm',
-        'gpu_split',
-        'alpha_value',
-        'rope_freq_base',
-        'compress_pos_emb',
-        'compute_dtype',
-        'quant_type',
-        'num_experts_per_token',
-        'load_in_8bit',
-        'load_in_4bit',
-        'attn_implementation',
-        'cpu',
-        'disk',
-        'row_split',
-        'no_kv_offload',
-        'no_mmap',
-        'mlock',
-        'numa',
-        'use_double_quant',
-        'bf16',
-        'autosplit',
-        'enable_tp',
-        'tp_backend',
-        'no_flash_attn',
-        'no_xformers',
-        'no_sdpa',
-        'cfg_cache',
-        'cpp_runner',
-        'no_use_fast',
-        'model_draft',
-        'draft_max',
-        'gpu_layers_draft',
-        'device_draft',
-        'ctx_size_draft',
-        'mmproj',
-    ]
-
-    return elements
+    from modules.loaders import list_model_elements
+    return list_model_elements()
 
 
 def list_interface_input_elements():
@@ -193,6 +143,8 @@ def list_interface_input_elements():
         'tfs',
         'top_a',
         'top_n_sigma',
+        'adaptive_target',
+        'adaptive_decay',
         'dry_multiplier',
         'dry_allowed_length',
         'dry_base',
@@ -247,6 +199,7 @@ def list_interface_input_elements():
         'unique_id',
         'textbox',
         'start_with',
+        'selected_tools',
         'mode',
         'chat_style',
         'chat-instruct_command',
@@ -351,12 +304,16 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
         if k in shared.settings and k not in exclude:
             output[k] = state[k]
 
-    output['preset'] = preset
+    if preset:
+        output['preset'] = preset
     output['prompt-notebook'] = state['prompt_menu-default'] if state['show_two_notebook_columns'] else state['prompt_menu-notebook']
-    output['character'] = state['character_menu']
-    if 'user_menu' in state and state['user_menu']:
+    if state.get('character_menu'):
+        output['character'] = state['character_menu']
+    if state.get('user_menu'):
         output['user'] = state['user_menu']
     output['seed'] = int(output['seed'])
+    output['custom_stopping_strings'] = output.get('custom_stopping_strings') or ''
+    output['custom_token_bans'] = output.get('custom_token_bans') or ''
     output['show_controls'] = show_controls
     output['dark_theme'] = True if theme_state == 'dark' else False
     output.pop('instruction_template_str')
@@ -380,7 +337,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
                             output[_id] = params[param]
     else:
         # Preserve existing extensions and extension parameters during autosave
-        settings_path = Path('user_data') / 'settings.yaml'
+        settings_path = shared.user_data_dir / 'settings.yaml'
         if settings_path.exists():
             try:
                 with open(settings_path, 'r', encoding='utf-8') as f:
@@ -435,7 +392,7 @@ def _perform_debounced_save():
     try:
         if _last_interface_state is not None:
             contents = save_settings(_last_interface_state, _last_preset, _last_extensions, _last_show_controls, _last_theme_state, manual_save=False)
-            settings_path = Path('user_data') / 'settings.yaml'
+            settings_path = shared.user_data_dir / 'settings.yaml'
             settings_path.parent.mkdir(exist_ok=True)
             with open(settings_path, 'w', encoding='utf-8') as f:
                 f.write(contents)
@@ -468,6 +425,7 @@ def setup_auto_save():
         'user_bio',
         'custom_system_message',
         'chat_template_str',
+        'selected_tools',
 
         # Parameters tab (ui_parameters.py) - Generation parameters
         'preset_menu',
@@ -488,6 +446,8 @@ def setup_auto_save():
         'tfs',
         'top_a',
         'top_n_sigma',
+        'adaptive_target',
+        'adaptive_decay',
         'dry_multiplier',
         'dry_allowed_length',
         'dry_base',
@@ -516,7 +476,6 @@ def setup_auto_save():
         'skip_special_tokens',
         'stream',
         'static_cache',
-        'truncation_length',
         'seed',
         'sampler_priority',
         'custom_stopping_strings',

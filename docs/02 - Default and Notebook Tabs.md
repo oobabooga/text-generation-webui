@@ -10,11 +10,11 @@ The number on the lower right of the Input box counts the number of tokens in th
 
 Below the Input box, the following buttons can be found:
 
+* **Continue**: starts a new generation taking as input the text in the "Output" box.
 * **Generate**: starts a new generation.
 * **Stop**: stops an ongoing generation as soon as the next token is generated (which can take a while for a slow model).
-* **Continue**: starts a new generation taking as input the text in the "Output" box.
 
-In the **Prompt** menu, you can select from some predefined prompts defined under `text-generation-webui/prompts`. The 💾 button saves your current input as a new prompt, the 🗑️ button deletes the selected prompt, and the 🔄 button refreshes the list. If you come up with an interesting prompt for a certain task, you are welcome to submit it to the repository.
+In the **Prompt** menu, you can select from saved prompts stored in `user_data/logs/notebook`. The **New** button creates a new prompt, the **Rename** button renames the selected prompt, and the 🗑️ button deletes it. The 🔄 button refreshes the list.
 
 ### Output
 
@@ -28,7 +28,7 @@ Five tabs can be found:
 
 ## Notebook tab
 
-Precisely the same thing as the Default tab, with the difference that the output appears in the same text box as the input. 
+Precisely the same thing as the Default tab, with the difference that the output appears in the same text box as the input.
 
 It contains the following additional button:
 

@@ -1,8 +1,3 @@
 .env
 Dockerfile
-/characters
-/loras
-/models
-/presets
-/prompts
-/training
+/user_data

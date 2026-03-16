@@ -10,14 +10,9 @@ import site
 import subprocess
 import sys
 
-# Remove the '# ' from the following lines as needed for your AMD GPU on Linux
-# os.environ["ROCM_PATH"] = '/opt/rocm'
-# os.environ["HSA_OVERRIDE_GFX_VERSION"] = '10.3.0'
-# os.environ["HCC_AMDGPU_TARGET"] = 'gfx1030'
-
 # Define the required versions
-TORCH_VERSION = "2.7.1"
-PYTHON_VERSION = "3.11"
+TORCH_VERSION = "2.9.1"
+PYTHON_VERSION = "3.13"
 LIBSTDCXX_VERSION_LINUX = "12.1.0"
 
 # Environment
@@ -65,31 +60,13 @@ def is_installed():
         return os.path.isdir(conda_env_path)
 
 
-def cpu_has_avx2():
-    try:
-        import cpuinfo
-        info = cpuinfo.get_cpu_info()
-        return 'avx2' in info['flags']
-    except:
-        return True
-
-
-def cpu_has_amx():
-    try:
-        import cpuinfo
-        info = cpuinfo.get_cpu_info()
-        return 'amx' in info['flags']
-    except:
-        return True
-
-
 def load_state():
     """Load installer state from JSON file"""
     if os.path.exists(state_file):
         try:
             with open(state_file, 'r') as f:
                 return json.load(f)
-        except:
+        except Exception:
             return {}
     return {}
 
@@ -114,7 +91,7 @@ def get_gpu_choice():
                 "What is your GPU?",
                 {
                     'A': 'NVIDIA',
-                    'B': 'AMD - Linux/macOS only, requires ROCm 6.2.4',
+                    'B': 'AMD - Linux only, ROCm 7.2',
                     'C': 'Apple M Series',
                     'D': 'Intel Arc (beta)',
                     'N': 'CPU mode'
@@ -134,18 +111,17 @@ def get_gpu_choice():
 def get_pytorch_install_command(gpu_choice):
     """Get PyTorch installation command based on GPU choice"""
     base_cmd = f"python -m pip install torch=={TORCH_VERSION} "
+    pypi_fallback = " --extra-index-url https://pypi.org/simple/"
 
     if gpu_choice == "NVIDIA_CUDA128":
-        return base_cmd + "--index-url https://download.pytorch.org/whl/cu128"
+        return base_cmd + "--index-url https://download.pytorch.org/whl/cu128" + pypi_fallback
     elif gpu_choice == "AMD":
-        return base_cmd + "--index-url https://download.pytorch.org/whl/rocm6.2.4"
+        py_tag = f"cp{PYTHON_VERSION.replace('.', '')}"
+        return f"python -m pip install https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/torch-{TORCH_VERSION}%2Brocm7.2.0.lw.git7e1940d4-{py_tag}-{py_tag}-linux_x86_64.whl"
     elif gpu_choice in ["APPLE", "NONE"]:
-        return base_cmd + "--index-url https://download.pytorch.org/whl/cpu"
+        return base_cmd + "--index-url https://download.pytorch.org/whl/cpu" + pypi_fallback
     elif gpu_choice == "INTEL":
-        if is_linux():
-            return "python -m pip install torch==2.1.0a0 intel-extension-for-pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
-        else:
-            return "python -m pip install torch==2.1.0a0 intel-extension-for-pytorch==2.1.10 --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
+        return base_cmd + "--index-url https://download.pytorch.org/whl/xpu"
     else:
         return base_cmd
 
@@ -153,16 +129,17 @@ def get_pytorch_install_command(gpu_choice):
 def get_pytorch_update_command(gpu_choice):
     """Get PyTorch update command based on GPU choice"""
     base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} "
+    pypi_fallback = " --extra-index-url https://pypi.org/simple/"
 
     if gpu_choice == "NVIDIA_CUDA128":
-        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cu128"
+        return f"{base_cmd}--index-url https://download.pytorch.org/whl/cu128" + pypi_fallback
     elif gpu_choice == "AMD":
-        return f"{base_cmd} --index-url https://download.pytorch.org/whl/rocm6.2.4"
+        py_tag = f"cp{PYTHON_VERSION.replace('.', '')}"
+        return f"python -m pip install --upgrade https://repo.radeon.com/rocm/manylinux/rocm-rel-7.2/torch-{TORCH_VERSION}%2Brocm7.2.0.lw.git7e1940d4-{py_tag}-{py_tag}-linux_x86_64.whl"
     elif gpu_choice in ["APPLE", "NONE"]:
-        return f"{base_cmd} --index-url https://download.pytorch.org/whl/cpu"
+        return f"{base_cmd}--index-url https://download.pytorch.org/whl/cpu" + pypi_fallback
     elif gpu_choice == "INTEL":
-        intel_extension = "intel-extension-for-pytorch==2.1.10+xpu" if is_linux() else "intel-extension-for-pytorch==2.1.10"
-        return f"{base_cmd} {intel_extension} --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
+        return f"{base_cmd}--index-url https://download.pytorch.org/whl/xpu"
     else:
         return base_cmd
 
@@ -172,13 +149,13 @@ def get_requirements_file(gpu_choice):
     requirements_base = os.path.join("requirements", "full")
 
     if gpu_choice == "NVIDIA_CUDA128":
-        file_name = f"requirements{'_noavx2' if not cpu_has_avx2() else ''}.txt"
+        file_name = "requirements.txt"
     elif gpu_choice == "AMD":
-        file_name = f"requirements_amd{'_noavx2' if not cpu_has_avx2() else ''}.txt"
+        file_name = "requirements_amd.txt"
     elif gpu_choice == "APPLE":
         file_name = f"requirements_apple_{'intel' if is_x86_64() else 'silicon'}.txt"
     elif gpu_choice in ["INTEL", "NONE"]:
-        file_name = f"requirements_cpu_only{'_noavx2' if not cpu_has_avx2() else ''}.txt"
+        file_name = "requirements_cpu_only.txt"
     else:
         raise ValueError(f"Unknown GPU choice: {gpu_choice}")
 
@@ -217,6 +194,8 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
     if environment:
         if is_windows():
             conda_bat_path = os.path.join(script_dir, "installer_files", "conda", "condabin", "conda.bat")
+            python_path = os.path.join(conda_env_path, "python.exe")
+            cmd = cmd.replace("python ", f'"{python_path}" ')
             cmd = f'"{conda_bat_path}" activate "{conda_env_path}" >nul && {cmd}'
         else:
             conda_sh_path = os.path.join(script_dir, "installer_files", "conda", "etc", "profile.d", "conda.sh")
@@ -291,7 +270,7 @@ def update_pytorch_and_python():
 
 
 def clean_outdated_pytorch_cuda_dependencies():
-    patterns = ["cu121", "cu122", "torch2.4", "torchvision", "torchaudio"]
+    patterns = ["cu121", "cu122", "rocm6", "torch2.4", "torch2.6", "torch2.7", "torchvision", "torchaudio"]
     result = run_cmd("python -m pip list --format=freeze", capture_output=True, environment=True)
     matching_packages = []
 
@@ -327,7 +306,7 @@ def install_webui():
     elif any((is_windows(), is_linux())) and gpu_choice == "NVIDIA_CUDA128":
         print("CUDA: 12.8")
 
-    # No PyTorch for AMD on Windows (?)
+    # No PyTorch for AMD on Windows
     elif is_windows() and gpu_choice == "AMD":
         print("PyTorch setup on Windows is not implemented yet. Exiting...")
         sys.exit(1)
@@ -335,14 +314,7 @@ def install_webui():
     # Install Git and then Pytorch
     print_big_message("Installing PyTorch.")
     install_pytorch = get_pytorch_install_command(gpu_choice)
-    run_cmd(f"conda install -y ninja git && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
-
-    if gpu_choice == "INTEL":
-        # Install oneAPI dependencies via conda
-        print_big_message("Installing Intel oneAPI runtime libraries.")
-        run_cmd("conda install -y -c https://software.repos.intel.com/python/conda/ -c conda-forge dpcpp-cpp-rt=2024.0 mkl-dpcpp=2024.0", environment=True)
-        # Install libuv required by Intel-patched torch
-        run_cmd("conda install -y libuv", environment=True)
+    run_cmd(f"conda install -y ninja git && {install_pytorch}", assert_success=True, environment=True)
 
     # Install the webui requirements
     update_requirements(initial_installation=True, pull=False)
@@ -359,6 +331,18 @@ def update_requirements(initial_installation=False, pull=True):
             assert_success=True
         )
 
+    # Check for outdated Python version and refuse to update
+    if '.'.join(map(str, sys.version_info[:2])) != PYTHON_VERSION:
+        print_big_message(
+            "Your current installation uses Python {}.{}, which is outdated.\n"
+            "Python {} is now required. A clean installation is needed.\n\n"
+            "INSTRUCTIONS:\n"
+            "1. Delete the 'installer_files' folder in your text-generation-webui directory.\n"
+            "2. Run the start script again (e.g., start_windows.bat).\n\n"
+            "This will create a fresh environment with the latest software.".format(*sys.version_info[:2], PYTHON_VERSION)
+        )
+        sys.exit(0)
+
     # Check for outdated CUDA 12.4 installs and refuse to update
     state = load_state()
     if state.get('gpu_choice') == 'NVIDIA':
@@ -374,8 +358,10 @@ def update_requirements(initial_installation=False, pull=True):
 
     current_commit = get_current_commit()
     wheels_changed = not os.path.exists(state_file)
+    installed_wheels = set()
     if not wheels_changed:
         state = load_state()
+        installed_wheels = set(state.get('installed_wheels', []))
         if 'wheels_changed' in state or state.get('last_installed_commit') != current_commit:
             wheels_changed = True
 
@@ -401,6 +387,7 @@ def update_requirements(initial_installation=False, pull=True):
 
         # Perform the git pull
         run_cmd("git pull --autostash", assert_success=True, environment=True)
+        current_commit = get_current_commit()
 
         # Check hashes after pulling
         after_hashes = {file: calculate_file_hash(file) for file in files_to_check}
@@ -417,22 +404,17 @@ def update_requirements(initial_installation=False, pull=True):
 
                 # Save state before exiting
                 state = load_state()
+                state['last_installed_commit'] = current_commit
                 if wheels_changed:
                     state['wheels_changed'] = True
                 save_state(state)
                 sys.exit(1)
 
-    # Save current state
-    state = load_state()
-    state['last_installed_commit'] = current_commit
-    state.pop('wheels_changed', None)  # Remove wheels_changed flag
-    save_state(state)
-
     if os.environ.get("INSTALL_EXTENSIONS", "").lower() in ("yes", "y", "true", "1", "t", "on"):
         install_extensions_requirements()
 
     if is_linux():
-        run_cmd(f"conda install -y -c conda-forge libstdcxx-ng=={LIBSTDCXX_VERSION_LINUX}", assert_success=True, environment=True)
+        run_cmd(f"conda install -y -c conda-forge 'libstdcxx-ng>={LIBSTDCXX_VERSION_LINUX}'", assert_success=True, environment=True)
 
     # Update PyTorch
     if not initial_installation:
@@ -444,9 +426,17 @@ def update_requirements(initial_installation=False, pull=True):
 
     # Prepare the requirements file
     textgen_requirements = open(requirements_file).read().splitlines()
+    all_whl_lines = [line.strip() for line in textgen_requirements if '.whl' in line]
 
-    if not initial_installation and not wheels_changed:
-        textgen_requirements = [line for line in textgen_requirements if '.whl' not in line]
+    if not initial_installation:
+        if installed_wheels:
+            # Per-wheel comparison: only re-download wheels that changed
+            textgen_requirements = [
+                line for line in textgen_requirements
+                if '.whl' not in line or line.strip() not in installed_wheels
+            ]
+        elif not wheels_changed:
+            textgen_requirements = [line for line in textgen_requirements if '.whl' not in line]
 
     with open('temp_requirements.txt', 'w') as file:
         file.write('\n'.join(textgen_requirements))
@@ -461,6 +451,13 @@ def update_requirements(initial_installation=False, pull=True):
 
     # Install/update the project requirements
     run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
+
+    # Save state after successful installation
+    state = load_state()
+    state['last_installed_commit'] = current_commit
+    state['installed_wheels'] = all_whl_lines
+    state.pop('wheels_changed', None)
+    save_state(state)
 
     # Clean up
     os.remove('temp_requirements.txt')

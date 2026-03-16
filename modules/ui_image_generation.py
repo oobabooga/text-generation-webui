@@ -138,7 +138,7 @@ def save_generated_images(images, state, actual_seed):
         return []
 
     date_str = datetime.now().strftime("%Y-%m-%d")
-    folder_path = os.path.join("user_data", "image_outputs", date_str)
+    folder_path = str(shared.user_data_dir / "image_outputs" / date_str)
     os.makedirs(folder_path, exist_ok=True)
 
     metadata = build_generation_metadata(state, actual_seed)
@@ -214,7 +214,7 @@ def get_all_history_images(force_refresh=False):
     """Get all history images sorted by modification time (newest first). Uses caching."""
     global _image_cache, _cache_timestamp
 
-    output_dir = os.path.join("user_data", "image_outputs")
+    output_dir = str(shared.user_data_dir / "image_outputs")
     if not os.path.exists(output_dir):
         return []
 
@@ -728,6 +728,8 @@ def generate_prompt_variation(state):
         variation = variation.rsplit("</think>", 1)[1]
     elif "<|start|>assistant<|channel|>final<|message|>" in variation:
         variation = variation.rsplit("<|start|>assistant<|channel|>final<|message|>", 1)[1]
+    elif "<|channel|>final<|message|>" in variation:
+        variation = variation.rsplit("<|channel|>final<|message|>", 1)[1]
     elif "</seed:think>" in variation:
         variation = variation.rsplit("</seed:think>", 1)[1]
 

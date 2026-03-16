@@ -6,12 +6,13 @@ import json
 import pprint
 import re
 import shutil
+import threading
 import time
 from datetime import datetime
 from functools import partial
 from pathlib import Path
 
-import gradio as gr
+import markupsafe
 import yaml
 from jinja2.ext import loopcontrols
 from jinja2.sandbox import ImmutableSandboxedEnvironment
@@ -23,10 +24,12 @@ from modules.extensions import apply_extensions
 from modules.html_generator import (
     chat_html_wrapper,
     convert_to_markdown,
+    extract_thinking_block,
     make_thumbnail
 )
 from modules.image_utils import open_image_safely
 from modules.logging_colors import logger
+from modules.reasoning import THINKING_FORMATS
 from modules.text_generation import (
     generate_reply,
     get_encoded_length,
@@ -36,9 +39,12 @@ from modules.utils import (
     delete_file,
     get_available_characters,
     get_available_users,
+    sanitize_filename,
     save_file
 )
 from modules.web_search import add_web_search_attachments
+
+_history_file_lock = threading.Lock()
 
 
 def strftime_now(format):
@@ -74,7 +80,33 @@ jinja_env = ImmutableSandboxedEnvironment(
     lstrip_blocks=True,
     extensions=[loopcontrols]
 )
+
+
+def custom_tojson(value, indent=None, ensure_ascii=True):
+    return markupsafe.Markup(json.dumps(value, indent=indent, ensure_ascii=ensure_ascii))
+
+
+jinja_env.filters["tojson"] = custom_tojson
 jinja_env.globals["strftime_now"] = strftime_now
+
+
+def _raise_exception(message):
+    raise ValueError(message)
+
+
+jinja_env.globals["raise_exception"] = _raise_exception
+
+_template_cache = {}
+
+
+def get_compiled_template(template_str):
+    """Cache compiled Jinja2 templates keyed by their source string."""
+    compiled = _template_cache.get(template_str)
+    if compiled is None:
+        compiled = jinja_env.from_string(template_str)
+        _template_cache[template_str] = compiled
+
+    return compiled
 
 
 def str_presenter(dumper, data):
@@ -93,6 +125,93 @@ yaml.add_representer(str, str_presenter)
 yaml.representer.SafeRepresenter.add_representer(str, str_presenter)
 
 
+class _JsonDict(dict):
+    """A dict that serializes as JSON when used in string concatenation.
+
+    Some Jinja2 templates (Qwen, GLM) iterate arguments with .items(),
+    requiring a dict.  Others (DeepSeek) concatenate arguments as a
+    string, requiring JSON.  This class satisfies both.
+    """
+
+    def __str__(self):
+        return json.dumps(self, ensure_ascii=False)
+
+    def __add__(self, other):
+        return str(self) + other
+
+    def __radd__(self, other):
+        return other + str(self)
+
+
+def _deserialize_tool_call_arguments(tool_calls):
+    """Convert tool_call arguments from JSON strings to _JsonDict.
+
+    The OpenAI API spec sends arguments as a JSON string, but Jinja2
+    templates may need a dict (.items()) or a string (concatenation).
+    _JsonDict handles both transparently.
+    """
+    result = []
+    for tc in tool_calls:
+        tc = copy.copy(tc)
+        func = tc.get('function', {})
+        if isinstance(func, dict):
+            func = dict(func)
+            args = func.get('arguments')
+            if isinstance(args, str):
+                try:
+                    func['arguments'] = _JsonDict(json.loads(args))
+                except (json.JSONDecodeError, ValueError):
+                    pass
+            elif isinstance(args, dict) and not isinstance(args, _JsonDict):
+                func['arguments'] = _JsonDict(args)
+            tc['function'] = func
+        result.append(tc)
+    return result
+
+
+def _expand_tool_sequence(tool_seq):
+    """Expand a tool_sequence list into API messages.
+
+    Returns a list of dicts (role: assistant with tool_calls, or role: tool).
+    If any tool_call IDs are missing a matching tool result, a synthetic
+    empty result is inserted so the prompt is never malformed.
+    """
+    messages = []
+    expected_ids = []
+    seen_ids = set()
+
+    for item in tool_seq:
+        if 'tool_calls' in item:
+            deserialized = _deserialize_tool_call_arguments(item['tool_calls'])
+            messages.append({
+                "role": "assistant",
+                "content": item.get('content', ''),
+                "tool_calls": deserialized
+            })
+            for tc in item['tool_calls']:
+                tc_id = tc.get('id', '')
+                if tc_id:
+                    expected_ids.append(tc_id)
+        elif item.get('role') == 'tool':
+            messages.append({
+                "role": "tool",
+                "content": item['content'],
+                "tool_call_id": item.get('tool_call_id', '')
+            })
+            seen_ids.add(item.get('tool_call_id', ''))
+
+    # Fill in synthetic results for any orphaned tool call IDs
+    for tc_id in expected_ids:
+        if tc_id not in seen_ids:
+            messages.append({
+                "role": "tool",
+                "content": "",
+                "tool_call_id": tc_id
+            })
+
+    return messages
+
+
 def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs.get('impersonate', False)
     _continue = kwargs.get('_continue', False)
@@ -106,8 +225,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
     if state['mode'] != 'instruct':
         chat_template_str = replace_character_names(chat_template_str, state['name1'], state['name2'])
 
-    instruction_template = jinja_env.from_string(state['instruction_template_str'])
-    chat_template = jinja_env.from_string(chat_template_str)
+    instruction_template = get_compiled_template(state['instruction_template_str'])
+    chat_template = get_compiled_template(chat_template_str)
 
     instruct_renderer = partial(
         instruction_template.render,
@@ -128,6 +247,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
         name1=state['name1'],
         name2=state['name2'],
         user_bio=replace_character_names(state['user_bio'], state['name1'], state['name2']),
+        tools=state['tools'] if 'tools' in state else None,
     )
 
     messages = []
@@ -147,13 +267,20 @@ def generate_chat_prompt(user_input, state, **kwargs):
         user_msg = entry[0].strip()
         assistant_msg = entry[1].strip()
         tool_msg = entry[2].strip() if len(entry) > 2 else ''
+        entry_meta = entry[3] if len(entry) > 3 else {}
 
         row_idx = len(history) - i - 1
 
         if tool_msg:
-            messages.insert(insert_pos, {"role": "tool", "content": tool_msg})
+            tool_message = {"role": "tool", "content": tool_msg}
+            if "tool_call_id" in entry_meta:
+                tool_message["tool_call_id"] = entry_meta["tool_call_id"]
+            messages.insert(insert_pos, tool_message)
 
-        if assistant_msg:
+        if not assistant_msg and entry_meta.get('tool_calls'):
+            # Assistant message with only tool_calls and no text content
+            messages.insert(insert_pos, {"role": "assistant", "content": "", "tool_calls": _deserialize_tool_call_arguments(entry_meta['tool_calls'])})
+        elif assistant_msg:
             # Handle GPT-OSS as a special case
             if '<|channel|>analysis<|message|>' in assistant_msg or '<|channel|>final<|message|>' in assistant_msg:
                 thinking_content = ""
@@ -228,7 +355,22 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 # Default case (used by all other models)
                 messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
 
-        if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
+            # Attach tool_calls metadata to the assistant message if present
+            if entry_meta.get('tool_calls') and messages[insert_pos].get('role') == 'assistant':
+                messages[insert_pos]['tool_calls'] = _deserialize_tool_call_arguments(entry_meta['tool_calls'])
+
+        # Expand tool_sequence from metadata (inserted AFTER assistant so that
+        # the final order is: user → tool_calls → tool_results → final_answer)
+        meta_key = f"assistant_{row_idx}"
+        tool_seq = metadata.get(meta_key, {}).get('tool_sequence', [])
+        if tool_seq:
+            for msg in reversed(_expand_tool_sequence(tool_seq)):
+                messages.insert(insert_pos, msg)
+
+        if entry_meta.get('role') == 'system':
+            if user_msg:
+                messages.insert(insert_pos, {"role": "system", "content": user_msg})
+        elif user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
             # Check for user message attachments in metadata
             user_key = f"user_{row_idx}"
             enhanced_user_msg = user_msg
@@ -296,6 +438,12 @@ def generate_chat_prompt(user_input, state, **kwargs):
                         user_input += f"\n\nATTACHMENTS:\n{attachments_text}"
 
             messages.append({"role": "user", "content": user_input})
+
+        # Expand tool_sequence for the current entry (excluded from the
+        # history loop during regenerate — needed so the model sees prior
+        # tool calls and results when re-generating the final answer).
+        current_tool_seq = metadata.get(f"assistant_{len(history)}", {}).get('tool_sequence', [])
+        messages.extend(_expand_tool_sequence(current_tool_seq))
 
     if impersonate and state['mode'] != 'chat-instruct':
         messages.append({"role": "user", "content": "fake user message replace me"})
@@ -481,12 +629,12 @@ def get_stopping_strings(state):
     renderers = []
 
     if state['mode'] in ['instruct', 'chat-instruct']:
-        template = jinja_env.from_string(state['instruction_template_str'])
+        template = get_compiled_template(state['instruction_template_str'])
         renderer = partial(template.render, add_generation_prompt=False, bos_token=shared.bos_token, eos_token=shared.eos_token)
         renderers.append(renderer)
 
     if state['mode'] in ['chat']:
-        template = jinja_env.from_string(state['chat_template_str'])
+        template = get_compiled_template(state['chat_template_str'])
         renderer = partial(template.render, add_generation_prompt=False, name1=state['name1'], name2=state['name2'])
         renderers.append(renderer)
 
@@ -657,15 +805,13 @@ def add_message_attachment(history, row_idx, file_path, is_user=True):
 
 def extract_pdf_text(pdf_path):
     """Extract text from a PDF file"""
-    import PyPDF2
+    import pymupdf
 
     text = ""
     try:
-        with open(pdf_path, 'rb') as file:
-            pdf_reader = PyPDF2.PdfReader(file)
-            for page_num in range(len(pdf_reader.pages)):
-                page = pdf_reader.pages[page_num]
-                text += page.extract_text() + "\n\n"
+        with pymupdf.open(pdf_path) as doc:
+            for page in doc:
+                text += page.get_text() + "\n\n"
 
         return text.strip()
     except Exception as e:
@@ -744,6 +890,8 @@ def generate_search_query(user_message, state):
         query = query.rsplit("</think>", 1)[1]
     elif "<|start|>assistant<|channel|>final<|message|>" in query:
         query = query.rsplit("<|start|>assistant<|channel|>final<|message|>", 1)[1]
+    elif "<|channel|>final<|message|>" in query:
+        query = query.rsplit("<|channel|>final<|message|>", 1)[1]
     elif "</seed:think>" in query:
         query = query.rsplit("</seed:think>", 1)[1]
 
@@ -818,7 +966,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             }
     else:
         text, visible_text = output['internal'][-1][0], output['visible'][-1][0]
-        if regenerate:
+        if regenerate and not state.get('_tool_turn'):
             row_idx = len(output['internal']) - 1
 
             # Store the old response as a version before regenerating
@@ -881,9 +1029,32 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     # Add timestamp for assistant's response at the start of generation
     update_message_metadata(output['metadata'], "assistant", row_idx, timestamp=get_current_timestamp(), model_name=shared.model_name)
 
+    # Detect if the template appended a thinking start tag to the prompt
+    thinking_prefix = None
+    if not _continue:
+        stripped_prompt = prompt.rstrip('\n')
+        for start_tag, end_tag, content_tag in THINKING_FORMATS:
+            if start_tag is not None and stripped_prompt.endswith(start_tag):
+                thinking_prefix = start_tag
+                break
+
+    # When tools are active, buffer streaming output during potential tool
+    # call generation to prevent raw markup from leaking into the display.
+    _check_tool_markers = bool(state.get('tools'))
+    _last_visible_before_tool_buffer = None
+    if _check_tool_markers:
+        from modules.tool_parsing import streaming_tool_buffer_check, detect_tool_call_format
+        _tool_names = [t['function']['name'] for t in state['tools'] if 'function' in t and 'name' in t['function']]
+        _template_str = state.get('instruction_template_str', '') if state.get('mode') == 'instruct' else state.get('chat_template_str', '')
+        _, _streaming_markers, _check_bare_names = detect_tool_call_format(_template_str)
+
     # Generate
     reply = None
     for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True, for_ui=for_ui)):
+
+        # Prepend thinking tag if the template appended it to the prompt
+        if thinking_prefix:
+            reply = thinking_prefix + reply
 
         # Extract the reply
         if state['mode'] in ['chat', 'chat-instruct']:
@@ -902,7 +1073,9 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         visible_reply = html.escape(visible_reply)
 
         if shared.stop_everything:
-            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+            if not state.get('_skip_output_extensions'):
+                output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+
             yield output
             return
 
@@ -914,7 +1087,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
 
         # Keep version metadata in sync during streaming (for regeneration)
-        if regenerate:
+        if regenerate and not state.get('_tool_turn'):
             row_idx = len(output['internal']) - 1
             key = f"assistant_{row_idx}"
             current_idx = output['metadata'][key]['current_version_index']
@@ -924,23 +1097,35 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             })
 
         if is_stream:
+            if _check_tool_markers:
+                if streaming_tool_buffer_check(output['internal'][-1][1], markers=_streaming_markers, tool_names=_tool_names, check_bare_names=_check_bare_names):
+                    continue
+                _last_visible_before_tool_buffer = output['visible'][-1][1]
+
             yield output
 
     if _continue:
-        # Reprocess the entire internal text for extensions (like translation)
-        full_internal = output['internal'][-1][1]
-        if state['mode'] in ['chat', 'chat-instruct']:
-            full_visible = re.sub("(<USER>|<user>|{{user}})", state['name1'], full_internal)
-        else:
-            full_visible = full_internal
+        # Reprocess the entire internal text for extensions (like translation).
+        # Skip entirely when the visible text contains <tool_call> markers,
+        # since those only exist in visible (internal is cleared after each tool
+        # execution) and rebuilding from internal would destroy them. Output
+        # extensions also can't handle the raw <tool_call> markup safely.
+        if '<tool_call>' not in output['visible'][-1][1]:
+            full_internal = output['internal'][-1][1]
+            if state['mode'] in ['chat', 'chat-instruct']:
+                full_visible = re.sub("(<USER>|<user>|{{user}})", state['name1'], full_internal)
+            else:
+                full_visible = full_internal
 
-        full_visible = html.escape(full_visible)
-        output['visible'][-1][1] = apply_extensions('output', full_visible, state, is_chat=True)
+            full_visible = html.escape(full_visible)
+            if not state.get('_skip_output_extensions'):
+                output['visible'][-1][1] = apply_extensions('output', full_visible, state, is_chat=True)
     else:
-        output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+        if not state.get('_skip_output_extensions'):
+            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
 
     # Final sync for version metadata (in case streaming was disabled)
-    if regenerate:
+    if regenerate and not state.get('_tool_turn'):
         row_idx = len(output['internal']) - 1
         key = f"assistant_{row_idx}"
         current_idx = output['metadata'][key]['current_version_index']
@@ -948,6 +1133,13 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             'content': output['internal'][row_idx][1],
             'visible_content': output['visible'][row_idx][1]
         })
+
+    # When tool markers were detected during streaming, restore the last
+    # visible text from before buffering started so raw markup doesn't flash
+    # in the UI.  The internal text is left intact so the caller can still
+    # parse tool calls from it.
+    if is_stream and _check_tool_markers and streaming_tool_buffer_check(output['internal'][-1][1], markers=_streaming_markers, tool_names=_tool_names, check_bare_names=_check_bare_names):
+        output['visible'][-1][1] = _last_visible_before_tool_buffer or ''
 
     yield output
 
@@ -994,7 +1186,11 @@ def character_is_loaded(state, raise_exception=False):
 
 def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     '''
-    Same as above but returns HTML for the UI
+    Same as above but returns HTML for the UI.
+    When tools are selected, wraps generation in a loop that detects
+    tool calls, executes them, and re-generates until the model stops.
+    All tool output is consolidated into a single visible chat bubble
+    using metadata['assistant_N']['tool_sequence'].
     '''
 
     if not character_is_loaded(state):
@@ -1009,19 +1205,257 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         send_dummy_message(text, state)
         send_dummy_reply(state['start_with'], state)
 
-    history = state['history']
+    # On regenerate, clear old tool_sequence metadata so it gets rebuilt.
+    # Save it first so it can be stored per-version below.
+    # This must happen after the start_with logic above, which may remove
+    # and re-add messages, changing which row we operate on.
+    _old_tool_sequence = None
+    if regenerate:
+        history = state['history']
+        meta = history.get('metadata', {})
+        row_idx = len(history['internal']) - 1
+        if row_idx >= 0:
+            _old_tool_sequence = meta.get(f'assistant_{row_idx}', {}).pop('tool_sequence', None)
+
+    # Load tools if any are selected
+    selected = state.get('selected_tools', [])
+    parse_tool_call = None
+    _tool_parsers = None
+    if selected:
+        from modules.tool_use import load_tools, execute_tool
+        from modules.tool_parsing import parse_tool_call, get_tool_call_id, detect_tool_call_format
+
+    if selected:
+        tool_defs, tool_executors = load_tools(selected)
+        state['tools'] = tool_defs
+        tool_func_names = [t['function']['name'] for t in tool_defs]
+        _template_str = state.get('instruction_template_str', '') if state.get('mode') == 'instruct' else state.get('chat_template_str', '')
+        _tool_parsers, _, _ = detect_tool_call_format(_template_str)
+    else:
+        tool_func_names = None
+
+    visible_prefix = []  # Accumulated tool call summaries + results
     last_save_time = time.monotonic()
     save_interval = 8
-    for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True, for_ui=True)):
-        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'], last_message_only=(i > 0)), history
-        if i == 0:
-            time.sleep(0.125)  # We need this to make sure the first update goes through
+    _tool_turn = 0
+    while True:
+        history = state['history']
 
-        current_time = time.monotonic()
-        # Save on first iteration or if save_interval seconds have passed
-        if i == 0 or (current_time - last_save_time) >= save_interval:
+        # Turn 0: use original flags; turns 2+: regenerate into the same entry.
+        # _tool_turn tells chatbot_wrapper to skip version creation/sync so
+        # that intermediate tool-loop regenerations don't pollute swipe history.
+        if _tool_turn > 0:
+            state['_tool_turn'] = True
+            state['_skip_output_extensions'] = True
+
+        regen = regenerate if _tool_turn == 0 else True
+        cont = _continue if _tool_turn == 0 else False
+        cur_text = text if _tool_turn == 0 else ''
+
+        for i, history in enumerate(generate_chat_reply(cur_text, state, regen, cont, loading_message=True, for_ui=True)):
+            # Prepend accumulated tool output to visible reply for display.
+            # Save and restore the original to prevent the markers from leaking
+            # back into chatbot_wrapper's shared output object, which would cause
+            # duplication on the next yield.
+            _original_visible = history['visible'][-1][1] if visible_prefix else None
+            if visible_prefix:
+                history['visible'][-1][1] = '\n\n'.join(visible_prefix + [_original_visible])
+
+            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'], last_message_only=(i > 0)), history
+
+            if visible_prefix:
+                history['visible'][-1][1] = _original_visible
+
+            if i == 0:
+                # Save old tool_sequence into version 0 (created by chatbot_wrapper
+                # on the first yield).  Only needed on the first regeneration when
+                # versions didn't previously exist.
+                if _old_tool_sequence is not None and _tool_turn == 0:
+                    _ri = len(history['internal']) - 1
+                    _versions = history.get('metadata', {}).get(f'assistant_{_ri}', {}).get('versions', [])
+                    if _versions and 'tool_sequence' not in _versions[0]:
+                        _versions[0]['tool_sequence'] = _old_tool_sequence
+                    _old_tool_sequence = None
+
+                time.sleep(0.125)
+
+            current_time = time.monotonic()
+            if i == 0 or (current_time - last_save_time) >= save_interval:
+                save_history(history, state['unique_id'], state['character_menu'], state['mode'])
+                last_save_time = current_time
+
+            # Early stop on tool call detection
+            if tool_func_names and parse_tool_call(history['internal'][-1][1], tool_func_names, parsers=_tool_parsers):
+                break
+
+        # Save the model's visible output before re-applying visible_prefix,
+        # so we can extract thinking content from just this turn's output.
+        _model_visible = history['visible'][-1][1]
+
+        # Recover visible_prefix from existing visible text (e.g. on Continue
+        # after a previous session had tool calls). Extract all <tool_call>
+        # blocks and any text between them (thinking blocks, intermediate text).
+        if tool_func_names and not visible_prefix and _model_visible:
+            tc_matches = list(re.finditer(r'<tool_call>.*?</tool_call>', _model_visible, re.DOTALL))
+            if tc_matches:
+                prefix_end = tc_matches[-1].end()
+                prefix = _model_visible[:prefix_end].strip()
+                if prefix:
+                    visible_prefix = [prefix]
+                _model_visible = _model_visible[prefix_end:].strip()
+
+        # Re-apply visible prefix to the final state after streaming completes.
+        # This is safe because we're no longer sharing the object with chatbot_wrapper.
+        if visible_prefix:
+            history['visible'][-1][1] = '\n\n'.join(visible_prefix + [_model_visible])
+
+        if tool_func_names:
             save_history(history, state['unique_id'], state['character_menu'], state['mode'])
-            last_save_time = current_time
+
+        # Check for tool calls
+        if not tool_func_names or shared.stop_everything:
+            break
+
+        answer = history['internal'][-1][1]
+        parsed_calls, content_prefix = parse_tool_call(answer, tool_func_names, return_prefix=True, parsers=_tool_parsers) if answer else (None, '')
+
+        if not parsed_calls:
+            break  # No tool calls — done
+
+        # --- Process tool calls ---
+        row_idx = len(history['internal']) - 1
+        meta = history.get('metadata', {})
+        seq = meta.setdefault(f'assistant_{row_idx}', {}).setdefault('tool_sequence', [])
+
+        def _render():
+            return chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+
+        # Serialize tool calls and build display headers in one pass
+        serialized = []
+        tc_headers = []
+        for tc in parsed_calls:
+            tc['id'] = get_tool_call_id()
+            fn_name = tc['function']['name']
+            fn_args = tc['function'].get('arguments', {})
+
+            serialized.append({
+                'id': tc['id'],
+                'type': 'function',
+                'function': {
+                    'name': fn_name,
+                    'arguments': json.dumps(fn_args) if isinstance(fn_args, dict) else fn_args
+                }
+            })
+
+            if isinstance(fn_args, dict) and fn_args:
+                args_summary = ', '.join(f'{k}={json.dumps(v, ensure_ascii=False)}' for k, v in fn_args.items())
+            elif isinstance(fn_args, dict):
+                args_summary = ''
+            else:
+                args_summary = str(fn_args)
+
+            tc_headers.append(f'{fn_name}({args_summary})')
+
+        seq_entry = {'tool_calls': serialized}
+        if content_prefix.strip():
+            # Strip GPT-OSS channel tokens so they don't get double-wrapped
+            # by the template (which adds its own channel markup).
+            clean = content_prefix.strip()
+            if '<|channel|>' in clean and '<|message|>' in clean:
+                inner = clean.split('<|message|>', 1)[1]
+                if '<|end|>' in inner:
+                    inner = inner.split('<|end|>', 1)[0]
+                clean = inner.strip()
+            if clean:
+                seq_entry['content'] = clean
+        seq.append(seq_entry)
+
+        # Clear internal (raw tool markup)
+        history['internal'][-1][1] = ''
+
+        # Preserve thinking block and intermediate text from this turn.
+        # content_prefix is the raw text before tool call syntax (returned
+        # by parse_tool_call); HTML-escape it and extract thinking to get
+        # the content the user should see.
+        content_text = html.escape(content_prefix)
+        thinking_content, intermediate = extract_thinking_block(content_text)
+        if thinking_content:
+            visible_prefix.append(f'&lt;think&gt;\n{thinking_content}\n&lt;/think&gt;')
+        if intermediate and intermediate.strip():
+            visible_prefix.append(intermediate.strip())
+
+        # Show placeholder accordions with "..." before execution starts
+        # (tool calls may be slow, e.g. web search).
+        pending_placeholders = [f'<tool_call>{h}\n...\n</tool_call>' for h in tc_headers]
+        history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
+        yield _render(), history
+
+        # Execute tools, store results, and replace placeholders with real results
+        for i, tc in enumerate(parsed_calls):
+            # Check for stop request before each tool execution
+            if shared.stop_everything:
+                for j in range(i, len(parsed_calls)):
+                    seq.append({'role': 'tool', 'content': 'Tool execution was cancelled by the user.', 'tool_call_id': parsed_calls[j]['id']})
+                    pending_placeholders[j] = f'<tool_call>{tc_headers[j]}\nCancelled\n</tool_call>'
+
+                history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
+                yield _render(), history
+                break
+
+            fn_name = tc['function']['name']
+            fn_args = tc['function'].get('arguments', {})
+            result = execute_tool(fn_name, fn_args, tool_executors)
+
+            seq.append({'role': 'tool', 'content': result, 'tool_call_id': tc['id']})
+            try:
+                pretty_result = json.dumps(json.loads(result), indent=2, ensure_ascii=False)
+            except (json.JSONDecodeError, TypeError):
+                pretty_result = result
+
+            # Replace the placeholder with the real result
+            pending_placeholders[i] = f'<tool_call>{tc_headers[i]}\n{pretty_result}\n</tool_call>'
+            history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
+            yield _render(), history
+
+        # Move completed tool calls into visible_prefix for next turns
+        visible_prefix.extend(pending_placeholders)
+        history['visible'][-1][1] = '\n\n'.join(visible_prefix)
+        save_history(history, state['unique_id'], state['character_menu'], state['mode'])
+
+        state['history'] = history
+        _tool_turn += 1
+
+    state.pop('_tool_turn', None)
+
+    # If output extensions were deferred during tool turns, apply them now
+    # to the final model response only (not to tool call markers).
+    if state.pop('_skip_output_extensions', None):
+        _model_visible = apply_extensions('output', _model_visible, state, is_chat=True)
+        if visible_prefix:
+            history['visible'][-1][1] = '\n\n'.join(visible_prefix + [_model_visible])
+        else:
+            history['visible'][-1][1] = _model_visible
+
+        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
+
+    state['history'] = history
+
+    # Sync version metadata so swipes show the full visible (with tool prefix)
+    if visible_prefix and history.get('metadata'):
+        row_idx = len(history['internal']) - 1
+        key = f"assistant_{row_idx}"
+        meta_entry = history['metadata'].get(key, {})
+        if 'versions' in meta_entry and 'current_version_index' in meta_entry:
+            current_idx = meta_entry['current_version_index']
+            if current_idx < len(meta_entry['versions']):
+                version_update = {
+                    'content': history['internal'][row_idx][1],
+                    'visible_content': history['visible'][row_idx][1]
+                }
+                ts = meta_entry.get('tool_sequence')
+                if ts is not None:
+                    version_update['tool_sequence'] = ts
+                meta_entry['versions'][current_idx].update(version_update)
 
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 
@@ -1094,7 +1528,7 @@ def redraw_html(history, name1, name2, mode, style, character, reset_cache=False
     return chat_html_wrapper(history, name1, name2, mode, style, character, reset_cache=reset_cache)
 
 
-def start_new_chat(state):
+def start_new_chat(state, unique_id=None):
     mode = state['mode']
     # Initialize with empty metadata dictionary
     history = {'internal': [], 'visible': [], 'metadata': {}}
@@ -1108,7 +1542,9 @@ def start_new_chat(state):
             # Add timestamp for assistant's greeting
             update_message_metadata(history['metadata'], "assistant", 0, timestamp=get_current_timestamp())
 
-    unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
+    if unique_id is None:
+        unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
+
     save_history(history, unique_id, state['character_menu'], state['mode'])
 
     return history
@@ -1116,9 +1552,9 @@ def start_new_chat(state):
 
 def get_history_file_path(unique_id, character, mode):
     if mode == 'instruct':
-        p = Path(f'user_data/logs/instruct/{unique_id}.json')
+        p = shared.user_data_dir / 'logs' / 'instruct' / f'{unique_id}.json'
     else:
-        p = Path(f'user_data/logs/chat/{character}/{unique_id}.json')
+        p = shared.user_data_dir / 'logs' / 'chat' / character / f'{unique_id}.json'
 
     return p
 
@@ -1127,12 +1563,16 @@ def save_history(history, unique_id, character, mode):
     if shared.args.multi_user:
         return
 
+    if unique_id and unique_id.startswith('incognito-'):
+        return
+
     p = get_history_file_path(unique_id, character, mode)
     if not p.parent.is_dir():
         p.parent.mkdir(parents=True)
 
-    with open(p, 'w', encoding='utf-8') as f:
-        f.write(json.dumps(history, indent=4, ensure_ascii=False))
+    with _history_file_lock:
+        with open(p, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(history, indent=4, ensure_ascii=False))
 
 
 def rename_history(old_id, new_id, character, mode):
@@ -1154,13 +1594,13 @@ def rename_history(old_id, new_id, character, mode):
 
 def get_paths(state):
     if state['mode'] == 'instruct':
-        return Path('user_data/logs/instruct').glob('*.json')
+        return (shared.user_data_dir / 'logs' / 'instruct').glob('*.json')
     else:
         character = state['character_menu']
 
         # Handle obsolete filenames and paths
-        old_p = Path(f'user_data/logs/{character}_persistent.json')
-        new_p = Path(f'user_data/logs/persistent_{character}.json')
+        old_p = shared.user_data_dir / 'logs' / f'{character}_persistent.json'
+        new_p = shared.user_data_dir / 'logs' / f'persistent_{character}.json'
         if old_p.exists():
             logger.warning(f"Renaming \"{old_p}\" to \"{new_p}\"")
             old_p.rename(new_p)
@@ -1172,7 +1612,7 @@ def get_paths(state):
             p.parent.mkdir(exist_ok=True)
             new_p.rename(p)
 
-        return Path(f'user_data/logs/chat/{character}').glob('*.json')
+        return (shared.user_data_dir / 'logs' / 'chat' / character).glob('*.json')
 
 
 def find_all_histories(state):
@@ -1263,6 +1703,7 @@ def load_history_after_deletion(state, idx):
     Loads the latest history for the given character in chat or chat-instruct
     mode, or the latest instruct history for instruct mode.
     '''
+    import gradio as gr
 
     if shared.args.multi_user:
         return start_new_chat(state)
@@ -1281,6 +1722,7 @@ def load_history_after_deletion(state, idx):
 
 
 def update_character_menu_after_deletion(idx):
+    import gradio as gr
     characters = utils.get_available_characters()
     idx = min(int(idx), len(characters) - 1)
     idx = max(0, idx)
@@ -1297,12 +1739,12 @@ def get_chat_state_key(character, mode):
 
 def load_last_chat_state():
     """Load the last chat state from file"""
-    state_file = Path('user_data/logs/chat_state.json')
+    state_file = shared.user_data_dir / 'logs' / 'chat_state.json'
     if state_file.exists():
         try:
             with open(state_file, 'r', encoding='utf-8') as f:
                 return json.loads(f.read())
-        except:
+        except Exception:
             pass
 
     return {"last_chats": {}}
@@ -1313,11 +1755,14 @@ def save_last_chat_state(character, mode, unique_id):
     if shared.args.multi_user:
         return
 
+    if unique_id and unique_id.startswith('incognito-'):
+        return
+
     state = load_last_chat_state()
     key = get_chat_state_key(character, mode)
     state["last_chats"][key] = unique_id
 
-    state_file = Path('user_data/logs/chat_state.json')
+    state_file = shared.user_data_dir / 'logs' / 'chat_state.json'
     state_file.parent.mkdir(exist_ok=True)
     with open(state_file, 'w', encoding='utf-8') as f:
         f.write(json.dumps(state, indent=2))
@@ -1374,7 +1819,7 @@ def load_history_json(file, history):
                     update_message_metadata(history['metadata'], "assistant", i, timestamp="")
 
         return history
-    except:
+    except Exception:
         return history
 
 
@@ -1393,7 +1838,7 @@ def generate_pfp_cache(character):
     if not cache_folder.exists():
         cache_folder.mkdir()
 
-    for path in [Path(f"user_data/characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
+    for path in [shared.user_data_dir / 'characters' / f"{character}.{extension}" for extension in ['png', 'jpg', 'jpeg']]:
         if path.exists():
             original_img = Image.open(path)
             # Define file paths
@@ -1418,12 +1863,12 @@ def load_character(character, name1, name2):
 
     filepath = None
     for extension in ["yml", "yaml", "json"]:
-        filepath = Path(f'user_data/characters/{character}.{extension}')
+        filepath = shared.user_data_dir / 'characters' / f'{character}.{extension}'
         if filepath.exists():
             break
 
     if filepath is None or not filepath.exists():
-        logger.error(f"Could not find the character \"{character}\" inside user_data/characters. No character has been loaded.")
+        logger.error(f"Could not find the character \"{character}\" inside {shared.user_data_dir}/characters. No character has been loaded.")
         raise ValueError
 
     file_contents = open(filepath, 'r', encoding='utf-8').read()
@@ -1495,24 +1940,6 @@ def clear_character_for_ui(state):
     return state, state['name2'], state['context'], state['greeting'], None
 
 
-def load_instruction_template(template):
-    if template == 'None':
-        return ''
-
-    for filepath in [Path(f'user_data/instruction-templates/{template}.yaml'), Path('user_data/instruction-templates/Alpaca.yaml')]:
-        if filepath.exists():
-            break
-    else:
-        return ''
-
-    file_contents = open(filepath, 'r', encoding='utf-8').read()
-    data = yaml.safe_load(file_contents)
-    if 'instruction_template' in data:
-        return data['instruction_template']
-    else:
-        return jinja_template_from_old_format(data)
-
-
 @functools.cache
 def load_character_memoized(character, name1, name2):
     return load_character(character, name1, name2)
@@ -1520,39 +1947,41 @@ def load_character_memoized(character, name1, name2):
 
 @functools.cache
 def load_instruction_template_memoized(template):
+    from modules.models_settings import load_instruction_template
     return load_instruction_template(template)
 
 
 def upload_character(file, img_path, tavern=False):
+    import gradio as gr
     img = open_image_safely(img_path)
     decoded_file = file if isinstance(file, str) else file.decode('utf-8')
     try:
         data = json.loads(decoded_file)
-    except:
+    except Exception:
         data = yaml.safe_load(decoded_file)
 
     if 'char_name' in data:
-        name = data['char_name']
+        name = sanitize_filename(data['char_name'])
         greeting = data['char_greeting']
         context = build_pygmalion_style_context(data)
         yaml_data = generate_character_yaml(name, greeting, context)
     else:
-        name = data['name']
+        name = sanitize_filename(data['name'])
         yaml_data = generate_character_yaml(data['name'], data['greeting'], data['context'])
 
     outfile_name = name
     i = 1
-    while Path(f'user_data/characters/{outfile_name}.yaml').exists():
+    while (shared.user_data_dir / 'characters' / f'{outfile_name}.yaml').exists():
         outfile_name = f'{name}_{i:03d}'
         i += 1
 
-    with open(Path(f'user_data/characters/{outfile_name}.yaml'), 'w', encoding='utf-8') as f:
+    with open(shared.user_data_dir / 'characters' / f'{outfile_name}.yaml', 'w', encoding='utf-8') as f:
         f.write(yaml_data)
 
     if img is not None:
-        img.save(Path(f'user_data/characters/{outfile_name}.png'))
+        img.save(shared.user_data_dir / 'characters' / f'{outfile_name}.png')
 
-    logger.info(f'New character saved to "user_data/characters/{outfile_name}.yaml".')
+    logger.info(f'New character saved to "{shared.user_data_dir}/characters/{outfile_name}.yaml".')
     return gr.update(value=outfile_name, choices=get_available_characters())
 
 
@@ -1577,6 +2006,7 @@ def upload_tavern_character(img_path, _json):
 
 
 def check_tavern_character(img_path):
+    import gradio as gr
     img = open_image_safely(img_path)
 
     if img is None:
@@ -1628,14 +2058,15 @@ def generate_instruction_template_yaml(instruction_template):
 
 
 def save_character(name, greeting, context, picture, filename):
+    filename = sanitize_filename(filename)
     if filename == "":
         logger.error("The filename is empty, so the character will not be saved.")
         return
 
     data = generate_character_yaml(name, greeting, context)
-    filepath = Path(f'user_data/characters/{filename}.yaml')
+    filepath = shared.user_data_dir / 'characters' / f'{filename}.yaml'
     save_file(filepath, data)
-    path_to_img = Path(f'user_data/characters/{filename}.png')
+    path_to_img = shared.user_data_dir / 'characters' / f'{filename}.png'
     if picture is not None:
         # Copy the image file from its source path to the character folder
         shutil.copy(picture, path_to_img)
@@ -1643,13 +2074,14 @@ def save_character(name, greeting, context, picture, filename):
 
 
 def delete_character(name, instruct=False):
+    name = sanitize_filename(name)
     # Check for character data files
     for extension in ["yml", "yaml", "json"]:
-        delete_file(Path(f'user_data/characters/{name}.{extension}'))
+        delete_file(shared.user_data_dir / 'characters' / f'{name}.{extension}')
 
     # Check for character image files
     for extension in ["png", "jpg", "jpeg"]:
-        delete_file(Path(f'user_data/characters/{name}.{extension}'))
+        delete_file(shared.user_data_dir / 'characters' / f'{name}.{extension}')
 
 
 def generate_user_pfp_cache(user):
@@ -1658,7 +2090,7 @@ def generate_user_pfp_cache(user):
     if not cache_folder.exists():
         cache_folder.mkdir()
 
-    for path in [Path(f"user_data/users/{user}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
+    for path in [shared.user_data_dir / 'users' / f"{user}.{extension}" for extension in ['png', 'jpg', 'jpeg']]:
         if path.exists():
             original_img = Image.open(path)
             # Define file paths
@@ -1680,12 +2112,12 @@ def load_user(user_name, name1, user_bio):
 
     filepath = None
     for extension in ["yml", "yaml", "json"]:
-        filepath = Path(f'user_data/users/{user_name}.{extension}')
+        filepath = shared.user_data_dir / 'users' / f'{user_name}.{extension}'
         if filepath.exists():
             break
 
     if filepath is None or not filepath.exists():
-        logger.error(f"Could not find the user \"{user_name}\" inside user_data/users. No user has been loaded.")
+        logger.error(f"Could not find the user \"{user_name}\" inside {shared.user_data_dir}/users. No user has been loaded.")
         raise ValueError
 
     with open(filepath, 'r', encoding='utf-8') as f:
@@ -1726,19 +2158,20 @@ def generate_user_yaml(name, user_bio):
 
 def save_user(name, user_bio, picture, filename):
     """Save user profile to YAML file"""
+    filename = sanitize_filename(filename)
     if filename == "":
         logger.error("The filename is empty, so the user will not be saved.")
         return
 
     # Ensure the users directory exists
-    users_dir = Path('user_data/users')
+    users_dir = shared.user_data_dir / 'users'
     users_dir.mkdir(parents=True, exist_ok=True)
 
     data = generate_user_yaml(name, user_bio)
-    filepath = Path(f'user_data/users/{filename}.yaml')
+    filepath = shared.user_data_dir / 'users' / f'{filename}.yaml'
     save_file(filepath, data)
 
-    path_to_img = Path(f'user_data/users/{filename}.png')
+    path_to_img = shared.user_data_dir / 'users' / f'{filename}.png'
     if picture is not None:
         # Copy the image file from its source path to the users folder
         shutil.copy(picture, path_to_img)
@@ -1747,17 +2180,19 @@ def save_user(name, user_bio, picture, filename):
 
 def delete_user(name):
     """Delete user profile files"""
+    name = sanitize_filename(name)
     # Check for user data files
     for extension in ["yml", "yaml", "json"]:
-        delete_file(Path(f'user_data/users/{name}.{extension}'))
+        delete_file(shared.user_data_dir / 'users' / f'{name}.{extension}')
 
     # Check for user image files
     for extension in ["png", "jpg", "jpeg"]:
-        delete_file(Path(f'user_data/users/{name}.{extension}'))
+        delete_file(shared.user_data_dir / 'users' / f'{name}.{extension}')
 
 
 def update_user_menu_after_deletion(idx):
     """Update user menu after a user is deleted"""
+    import gradio as gr
     users = get_available_users()
     if len(users) == 0:
         # Create a default user if none exist
@@ -1790,91 +2225,11 @@ def handle_user_menu_change(state):
 
 def handle_save_user_click(name1):
     """Handle save user button click"""
+    import gradio as gr
     return [
         name1,
         gr.update(visible=True)
     ]
-
-
-def jinja_template_from_old_format(params, verbose=False):
-    MASTER_TEMPLATE = """
-{%- set ns = namespace(found=false) -%}
-{%- for message in messages -%}
-    {%- if message['role'] == 'system' -%}
-        {%- set ns.found = true -%}
-    {%- endif -%}
-{%- endfor -%}
-{%- if not ns.found -%}
-    {{- '<|PRE-SYSTEM|>' + '<|SYSTEM-MESSAGE|>' + '<|POST-SYSTEM|>' -}}
-{%- endif %}
-{%- for message in messages %}
-    {%- if message['role'] == 'system' -%}
-        {{- '<|PRE-SYSTEM|>' + message['content'] + '<|POST-SYSTEM|>' -}}
-    {%- else -%}
-        {%- if message['role'] == 'user' -%}
-            {{-'<|PRE-USER|>' + message['content'] + '<|POST-USER|>'-}}
-        {%- else -%}
-            {{-'<|PRE-ASSISTANT|>' + message['content'] + '<|POST-ASSISTANT|>' -}}
-        {%- endif -%}
-    {%- endif -%}
-{%- endfor -%}
-{%- if add_generation_prompt -%}
-    {{-'<|PRE-ASSISTANT-GENERATE|>'-}}
-{%- endif -%}
-"""
-
-    if 'context' in params and '<|system-message|>' in params['context']:
-        pre_system = params['context'].split('<|system-message|>')[0]
-        post_system = params['context'].split('<|system-message|>')[1]
-    else:
-        pre_system = ''
-        post_system = ''
-
-    pre_user = params['turn_template'].split('<|user-message|>')[0].replace('<|user|>', params['user'])
-    post_user = params['turn_template'].split('<|user-message|>')[1].split('<|bot|>')[0]
-
-    pre_assistant = '<|bot|>' + params['turn_template'].split('<|bot-message|>')[0].split('<|bot|>')[1]
-    pre_assistant = pre_assistant.replace('<|bot|>', params['bot'])
-    post_assistant = params['turn_template'].split('<|bot-message|>')[1]
-
-    def preprocess(string):
-        return string.replace('\n', '\\n').replace('\'', '\\\'')
-
-    pre_system = preprocess(pre_system)
-    post_system = preprocess(post_system)
-    pre_user = preprocess(pre_user)
-    post_user = preprocess(post_user)
-    pre_assistant = preprocess(pre_assistant)
-    post_assistant = preprocess(post_assistant)
-
-    if verbose:
-        print(
-            '\n',
-            repr(pre_system) + '\n',
-            repr(post_system) + '\n',
-            repr(pre_user) + '\n',
-            repr(post_user) + '\n',
-            repr(pre_assistant) + '\n',
-            repr(post_assistant) + '\n',
-        )
-
-    result = MASTER_TEMPLATE
-    if 'system_message' in params:
-        result = result.replace('<|SYSTEM-MESSAGE|>', preprocess(params['system_message']))
-    else:
-        result = result.replace('<|SYSTEM-MESSAGE|>', '')
-
-    result = result.replace('<|PRE-SYSTEM|>', pre_system)
-    result = result.replace('<|POST-SYSTEM|>', post_system)
-    result = result.replace('<|PRE-USER|>', pre_user)
-    result = result.replace('<|POST-USER|>', post_user)
-    result = result.replace('<|PRE-ASSISTANT|>', pre_assistant)
-    result = result.replace('<|PRE-ASSISTANT-GENERATE|>', pre_assistant.rstrip(' '))
-    result = result.replace('<|POST-ASSISTANT|>', post_assistant)
-
-    result = result.strip()
-
-    return result
 
 
 def my_yaml_output(data):
@@ -1928,6 +2283,7 @@ def handle_unique_id_select(state):
 
 
 def handle_start_new_chat_click(state):
+    import gradio as gr
     history = start_new_chat(state)
     histories = find_all_histories_with_first_prompts(state)
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
@@ -1942,10 +2298,29 @@ def handle_start_new_chat_click(state):
     return [history, html, past_chats_update]
 
 
+def handle_start_incognito_chat_click(state):
+    import gradio as gr
+    unique_id = 'incognito-' + datetime.now().strftime('%Y%m%d-%H-%M-%S')
+    history = start_new_chat(state, unique_id=unique_id)
+    html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+
+    convert_to_markdown.cache_clear()
+
+    histories = find_all_histories_with_first_prompts(state)
+    past_chats_update = gr.update(choices=histories, value=unique_id)
+
+    return [history, html, past_chats_update]
+
+
 def handle_delete_chat_confirm_click(state):
     filtered_histories = find_all_histories_with_first_prompts(state)
     filtered_ids = [h[1] for h in filtered_histories]
-    index = str(filtered_ids.index(state['unique_id']))
+
+    if state['unique_id'] not in filtered_ids:
+        # Incognito or unknown chat — just load the most recent saved chat
+        index = '0'
+    else:
+        index = str(filtered_ids.index(state['unique_id']))
 
     delete_history(state['unique_id'], state['character_menu'], state['mode'])
     history, unique_id = load_history_after_deletion(state, index)
@@ -1953,16 +2328,11 @@ def handle_delete_chat_confirm_click(state):
 
     convert_to_markdown.cache_clear()
 
-    return [
-        history,
-        html,
-        unique_id,
-        gr.update(visible=False),
-        gr.update(visible=True),
-    ]
+    return [history, html, unique_id]
 
 
 def handle_branch_chat_click(state):
+    import gradio as gr
     branch_from_index = state['branch_index']
     if branch_from_index == -1:
         history = state['history']
@@ -1974,7 +2344,8 @@ def handle_branch_chat_click(state):
         if 'metadata' in history:
             history['metadata'] = {k: v for k, v in history['metadata'].items() if int(k.split('_')[-1]) <= branch_from_index}
 
-    new_unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
+    prefix = 'incognito-' if state['unique_id'] and state['unique_id'].startswith('incognito-') else ''
+    new_unique_id = prefix + datetime.now().strftime('%Y%m%d-%H-%M-%S')
     save_history(history, new_unique_id, state['character_menu'], state['mode'])
 
     histories = find_all_histories_with_first_prompts(state)
@@ -2012,14 +2383,19 @@ def handle_edit_message_click(state):
         original_visible = history['visible'][message_index][role_idx]
         original_timestamp = history['metadata'][key].get('timestamp', get_current_timestamp())
 
-        history['metadata'][key]["versions"] = [{
+        version_entry = {
             "content": original_content,
             "visible_content": original_visible,
             "timestamp": original_timestamp
-        }]
+        }
+        ts = history['metadata'][key].get('tool_sequence')
+        if ts is not None:
+            version_entry['tool_sequence'] = ts
+        history['metadata'][key]["versions"] = [version_entry]
 
     history['internal'][message_index][role_idx] = apply_extensions('input', new_text, state, is_chat=True)
     history['visible'][message_index][role_idx] = html.escape(new_text)
+    history['metadata'][key].pop('tool_sequence', None)
 
     add_message_version(history, role, message_index, is_current=True)
 
@@ -2064,6 +2440,14 @@ def handle_navigate_version_click(state):
     history['internal'][message_index][msg_content_idx] = version_to_load['content']
     history['visible'][message_index][msg_content_idx] = version_to_load['visible_content']
     metadata['current_version_index'] = new_idx
+
+    # Restore per-version tool_sequence so follow-up prompts see consistent context
+    version_ts = version_to_load.get('tool_sequence')
+    if version_ts is not None:
+        metadata['tool_sequence'] = version_ts
+    else:
+        metadata.pop('tool_sequence', None)
+
     update_message_metadata(history['metadata'], role, message_index, timestamp=version_to_load['timestamp'])
 
     # Redraw and save
@@ -2074,6 +2458,7 @@ def handle_navigate_version_click(state):
 
 
 def handle_rename_chat_click():
+    import gradio as gr
     return [
         gr.update(value="My New Chat"),
         gr.update(visible=True),
@@ -2081,6 +2466,14 @@ def handle_rename_chat_click():
 
 
 def handle_rename_chat_confirm(rename_to, state):
+    import gradio as gr
+
+    if state['unique_id'] and state['unique_id'].startswith('incognito-'):
+        return [
+            gr.update(),
+            gr.update(visible=False),
+        ]
+
     rename_history(state['unique_id'], rename_to, state['character_menu'], state['mode'])
     histories = find_all_histories_with_first_prompts(state)
 
@@ -2091,11 +2484,13 @@ def handle_rename_chat_confirm(rename_to, state):
 
 
 def handle_search_chat_change(state):
+    import gradio as gr
     histories = find_all_histories_with_first_prompts(state)
     return gr.update(choices=histories)
 
 
 def handle_upload_chat_history(load_chat_history, state):
+    import gradio as gr
     history = start_new_chat(state)
     history = load_history_json(load_chat_history, history)
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
@@ -2118,6 +2513,7 @@ def handle_upload_chat_history(load_chat_history, state):
 
 
 def handle_character_menu_change(state):
+    import gradio as gr
     name1, name2, picture, greeting, context = load_character(state['character_menu'], state['name1'], state['name2'])
 
     state['name1'] = name1
@@ -2170,6 +2566,7 @@ def handle_character_picture_change(picture_path):
 
 
 def handle_mode_change(state):
+    import gradio as gr
     history, loaded_unique_id = load_latest_history(state)
     histories = find_all_histories_with_first_prompts(state)
 
@@ -2196,6 +2593,7 @@ def handle_mode_change(state):
 
 
 def handle_save_character_click(name2):
+    import gradio as gr
     return [
         name2,
         gr.update(visible=True)
@@ -2203,6 +2601,7 @@ def handle_save_character_click(name2):
 
 
 def handle_load_template_click(instruction_template):
+    from modules.models_settings import load_instruction_template
     output = load_instruction_template(instruction_template)
     return [
         output,
@@ -2211,19 +2610,21 @@ def handle_load_template_click(instruction_template):
 
 
 def handle_save_template_click(instruction_template_str):
+    import gradio as gr
     contents = generate_instruction_template_yaml(instruction_template_str)
     return [
         "My Template.yaml",
-        "user_data/instruction-templates/",
+        str(shared.user_data_dir / 'instruction-templates') + '/',
         contents,
         gr.update(visible=True)
     ]
 
 
 def handle_delete_template_click(template):
+    import gradio as gr
     return [
         f"{template}.yaml",
-        "user_data/instruction-templates/",
+        str(shared.user_data_dir / 'instruction-templates') + '/',
         gr.update(visible=False)
     ]
 
@@ -2236,6 +2637,7 @@ def handle_your_picture_change(picture, state):
 
 
 def handle_send_instruction_click(state):
+    import gradio as gr
     state['mode'] = 'instruct'
     state['history'] = {'internal': [], 'visible': [], 'metadata': {}}
 
@@ -2248,6 +2650,7 @@ def handle_send_instruction_click(state):
 
 
 def handle_send_chat_click(state):
+    import gradio as gr
     output = generate_chat_prompt("", state, _continue=True)
 
     if state["show_two_notebook_columns"]:

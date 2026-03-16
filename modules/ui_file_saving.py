@@ -3,7 +3,7 @@ import traceback
 import gradio as gr
 
 from modules import chat, presets, shared, ui, utils
-from modules.utils import gradio
+from modules.utils import gradio, sanitize_filename
 
 
 def create_ui():
@@ -28,7 +28,7 @@ def create_ui():
 
     # Character saver/deleter
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['character_saver']:
-        shared.gradio['save_character_filename'] = gr.Textbox(lines=1, label='File name', info='The character will be saved to your user_data/characters folder with this base filename.')
+        shared.gradio['save_character_filename'] = gr.Textbox(lines=1, label='File name', info=f'The character will be saved to your {shared.user_data_dir}/characters folder with this base filename.')
         with gr.Row():
             shared.gradio['save_character_cancel'] = gr.Button('Cancel', elem_classes="small-button")
             shared.gradio['save_character_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
@@ -41,7 +41,7 @@ def create_ui():
 
     # User saver/deleter
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['user_saver']:
-        shared.gradio['save_user_filename'] = gr.Textbox(lines=1, label='File name', info='The user profile will be saved to your user_data/users folder with this base filename.')
+        shared.gradio['save_user_filename'] = gr.Textbox(lines=1, label='File name', info=f'The user profile will be saved to your {shared.user_data_dir}/users folder with this base filename.')
         with gr.Row():
             shared.gradio['save_user_cancel'] = gr.Button('Cancel', elem_classes="small-button")
             shared.gradio['save_user_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
@@ -54,7 +54,7 @@ def create_ui():
 
     # Preset saver
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['preset_saver']:
-        shared.gradio['save_preset_filename'] = gr.Textbox(lines=1, label='File name', info='The preset will be saved to your user_data/presets folder with this base filename.')
+        shared.gradio['save_preset_filename'] = gr.Textbox(lines=1, label='File name', info=f'The preset will be saved to your {shared.user_data_dir}/presets folder with this base filename.')
         shared.gradio['save_preset_contents'] = gr.Textbox(lines=10, label='File contents')
         with gr.Row():
             shared.gradio['save_preset_cancel'] = gr.Button('Cancel', elem_classes="small-button")
@@ -91,7 +91,8 @@ def create_event_handlers():
 
 def handle_save_preset_confirm_click(filename, contents):
     try:
-        utils.save_file(f"user_data/presets/{filename}.yaml", contents)
+        filename = sanitize_filename(filename)
+        utils.save_file(str(shared.user_data_dir / "presets" / f"{filename}.yaml"), contents)
         available_presets = utils.get_available_presets()
         output = gr.update(choices=available_presets, value=filename)
     except Exception:
@@ -106,6 +107,7 @@ def handle_save_preset_confirm_click(filename, contents):
 
 def handle_save_confirm_click(root, filename, contents):
     try:
+        filename = sanitize_filename(filename)
         utils.save_file(root + filename, contents)
     except Exception:
         traceback.print_exc()
@@ -115,6 +117,7 @@ def handle_save_confirm_click(root, filename, contents):
 
 def handle_delete_confirm_click(root, filename):
     try:
+        filename = sanitize_filename(filename)
         utils.delete_file(root + filename)
     except Exception:
         traceback.print_exc()
@@ -164,7 +167,7 @@ def handle_save_preset_click(state):
 def handle_delete_preset_click(preset):
     return [
         f"{preset}.yaml",
-        "user_data/presets/",
+        str(shared.user_data_dir / "presets") + "/",
         gr.update(visible=True)
     ]
 
@@ -173,7 +176,7 @@ def handle_save_grammar_click(grammar_string):
     return [
         grammar_string,
         "My Fancy Grammar.gbnf",
-        "user_data/grammars/",
+        str(shared.user_data_dir / "grammars") + "/",
         gr.update(visible=True)
     ]
 
@@ -181,7 +184,7 @@ def handle_save_grammar_click(grammar_string):
 def handle_delete_grammar_click(grammar_file):
     return [
         grammar_file,
-        "user_data/grammars/",
+        str(shared.user_data_dir / "grammars") + "/",
         gr.update(visible=True)
     ]
 

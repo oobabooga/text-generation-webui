@@ -1,20 +1,17 @@
 ## What Works
 
-| Loader         | Loading 1 LoRA | Loading 2 or more LoRAs | Training LoRAs | Multimodal extension | Perplexity evaluation |
-|----------------|----------------|-------------------------|----------------|----------------------|-----------------------|
-| Transformers   |       ✅       |           ✅\*\*        |       ✅\*     |          ✅          |           ✅          |
-| llama.cpp      |       ❌       |           ❌            |       ❌       |          ❌          |    use llamacpp_HF    |
-| llamacpp_HF    |       ❌       |           ❌            |       ❌       |          ❌          |           ✅          |
-| ExLlamav2_HF   |       ✅       |           ✅            |       ❌       |          ❌          |           ✅          |
-| ExLlamav2      |       ✅       |           ✅            |       ❌       |          ❌          |   use ExLlamav2_HF    |
-| AutoGPTQ       |       ✅       |           ❌            |       ❌       |          ✅          |           ✅          |
-| AutoAWQ        |       ?        |           ❌            |       ?        |          ?           |           ✅          |
-| HQQ            |       ?        |           ?             |       ?        |          ?           |           ✅          |
+| Loader         | Loading LoRAs | Training LoRAs | Multimodal | Perplexity evaluation |
+|----------------|---------------|----------------|------------|-----------------------|
+| llama.cpp      |      ❌       |       ❌       |    ✅\*    |           ❌          |
+| Transformers   |      ✅       |       ✅       |    ✅\*\*  |           ✅          |
+| ExLlamav3_HF   |      ❌       |       ❌       |    ❌      |           ✅          |
+| ExLlamav3      |      ❌       |       ❌       |    ✅      |           ❌          |
+| TensorRT-LLM   |      ❌       |       ❌       |    ❌      |           ❌          |
 
-❌ = not implemented
+❌ = not supported
 
-✅ = implemented
+✅ = supported
 
-\* Training LoRAs with GPTQ models also works with the Transformers loader. Make sure to check "auto-devices" and "disable_exllama" before loading the model.
+\* Via the `mmproj` parameter (multimodal projector file).
 
-\*\* Multi-LoRA in PEFT is tricky and the current implementation does not work reliably in all cases.
+\*\* Via the `send_pictures` extension.

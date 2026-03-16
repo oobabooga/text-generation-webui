@@ -37,10 +37,10 @@ def create_ui():
                             shared.gradio['dynamic_temperature'] = gr.Checkbox(value=shared.settings['dynamic_temperature'], label='dynamic_temperature')
 
                             gr.Markdown('## Curve cutoff')
-                            shared.gradio['min_p'] = gr.Slider(0.0, 1.0, value=shared.settings['min_p'], step=0.01, label='min_p')
-                            shared.gradio['top_n_sigma'] = gr.Slider(0.0, 5.0, value=shared.settings['top_n_sigma'], step=0.01, label='top_n_sigma')
                             shared.gradio['top_p'] = gr.Slider(0.0, 1.0, value=shared.settings['top_p'], step=0.01, label='top_p')
                             shared.gradio['top_k'] = gr.Slider(0, 200, value=shared.settings['top_k'], step=1, label='top_k')
+                            shared.gradio['min_p'] = gr.Slider(0.0, 1.0, value=shared.settings['min_p'], step=0.01, label='min_p')
+                            shared.gradio['top_n_sigma'] = gr.Slider(0.0, 5.0, value=shared.settings['top_n_sigma'], step=0.01, label='top_n_sigma')
                             shared.gradio['typical_p'] = gr.Slider(0.0, 1.0, value=shared.settings['typical_p'], step=0.01, label='typical_p')
                             shared.gradio['xtc_threshold'] = gr.Slider(0, 0.5, value=shared.settings['xtc_threshold'], step=0.01, label='xtc_threshold', info='If 2 or more tokens have probability above this threshold, consider removing all but the last one.')
                             shared.gradio['xtc_probability'] = gr.Slider(0, 1, value=shared.settings['xtc_probability'], step=0.01, label='xtc_probability', info='Probability that the removal will actually happen. 0 disables the sampler. 1 makes it always happen.')
@@ -67,11 +67,13 @@ def create_ui():
                             shared.gradio['mirostat_mode'] = gr.Slider(0, 2, step=1, value=shared.settings['mirostat_mode'], label='mirostat_mode', info='mode=1 is for llama.cpp only.')
                             shared.gradio['mirostat_tau'] = gr.Slider(0, 10, step=0.01, value=shared.settings['mirostat_tau'], label='mirostat_tau')
                             shared.gradio['mirostat_eta'] = gr.Slider(0, 1, step=0.01, value=shared.settings['mirostat_eta'], label='mirostat_eta')
+                            shared.gradio['adaptive_target'] = gr.Slider(0.0, 1.0, value=shared.settings['adaptive_target'], step=0.01, label='adaptive_target', info='Target probability for adaptive-p sampling. Tokens near this probability are favored. 0 disables.')
+                            shared.gradio['adaptive_decay'] = gr.Slider(0.0, 0.99, value=shared.settings['adaptive_decay'], step=0.01, label='adaptive_decay', info='EMA decay rate for adaptive-p. Controls history window (~1/(1-decay) tokens). Default: 0.9.')
 
                             gr.Markdown('## Other options')
                             shared.gradio['do_sample'] = gr.Checkbox(value=shared.settings['do_sample'], label='do_sample')
                             shared.gradio['temperature_last'] = gr.Checkbox(value=shared.settings['temperature_last'], label='temperature_last', info='Moves temperature/dynamic temperature/quadratic sampling to the end of the sampler stack, ignoring their positions in "Sampler priority".')
-                            shared.gradio['sampler_priority'] = gr.Textbox(value=shared.settings['sampler_priority'], lines=10, label='Sampler priority', info='Parameter names separated by new lines or commas.', elem_classes=['add_scrollbar'])
+                            shared.gradio['sampler_priority'] = gr.DragDrop(value=shared.settings['sampler_priority'], label='Sampler priority', info='Parameter names separated by new lines or commas.', elem_classes=['add_scrollbar'])
                             shared.gradio['dry_sequence_breakers'] = gr.Textbox(value=shared.settings['dry_sequence_breakers'], label='dry_sequence_breakers', info='Tokens across which sequence matching is not continued. Specified as a comma-separated list of quoted strings.')
 
                 with gr.Column():
@@ -126,14 +128,14 @@ def create_event_handlers():
 
 
 def get_truncation_length():
-    if 'ctx_size' in shared.provided_arguments or shared.args.ctx_size != shared.args_defaults.ctx_size:
+    if shared.args.ctx_size > 0 and ('ctx_size' in shared.provided_arguments or shared.args.ctx_size != shared.args_defaults.ctx_size):
         return shared.args.ctx_size
     else:
         return shared.settings['truncation_length']
 
 
 def load_grammar(name):
-    p = Path(f'user_data/grammars/{name}')
+    p = shared.user_data_dir / 'grammars' / name
     if p.exists():
         return open(p, 'r', encoding='utf-8').read()
     else:

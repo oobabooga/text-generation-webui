@@ -9,45 +9,50 @@ from modules.loaders import loaders_samplers
 from modules.logging_colors import logger
 
 
+default_preset_values = {
+    'temperature': 1,
+    'dynatemp_low': 1,
+    'dynatemp_high': 1,
+    'dynatemp_exponent': 1,
+    'smoothing_factor': 0,
+    'smoothing_curve': 1,
+    'top_p': 1,
+    'top_k': 0,
+    'min_p': 0,
+    'top_n_sigma': 0,
+    'typical_p': 1,
+    'xtc_threshold': 0.1,
+    'xtc_probability': 0,
+    'epsilon_cutoff': 0,
+    'eta_cutoff': 0,
+    'tfs': 1,
+    'top_a': 0,
+    'adaptive_target': 0,
+    'adaptive_decay': 0.9,
+    'dry_multiplier': 0,
+    'dry_allowed_length': 2,
+    'dry_base': 1.75,
+    'repetition_penalty': 1,
+    'frequency_penalty': 0,
+    'presence_penalty': 0,
+    'encoder_repetition_penalty': 1,
+    'no_repeat_ngram_size': 0,
+    'repetition_penalty_range': 1024,
+    'penalty_alpha': 0,
+    'guidance_scale': 1,
+    'mirostat_mode': 0,
+    'mirostat_tau': 5,
+    'mirostat_eta': 0.1,
+    'do_sample': True,
+    'dynamic_temperature': False,
+    'temperature_last': False,
+    'sampler_priority': 'repetition_penalty\npresence_penalty\nfrequency_penalty\ndry\ntop_n_sigma\ntemperature\ndynamic_temperature\nquadratic_sampling\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nadaptive_p\nmirostat\nxtc\nencoder_repetition_penalty\nno_repeat_ngram',
+    'dry_sequence_breakers': '"\\n", ":", "\\"", "*"',
+}
+
+
 def default_preset():
-    result = {
-        'temperature': 1,
-        'dynatemp_low': 1,
-        'dynatemp_high': 1,
-        'dynatemp_exponent': 1,
-        'smoothing_factor': 0,
-        'smoothing_curve': 1,
-        'min_p': 0,
-        'top_p': 1,
-        'top_k': 0,
-        'typical_p': 1,
-        'xtc_threshold': 0.1,
-        'xtc_probability': 0,
-        'epsilon_cutoff': 0,
-        'eta_cutoff': 0,
-        'tfs': 1,
-        'top_a': 0,
-        'top_n_sigma': 0,
-        'dry_multiplier': 0,
-        'dry_allowed_length': 2,
-        'dry_base': 1.75,
-        'repetition_penalty': 1,
-        'frequency_penalty': 0,
-        'presence_penalty': 0,
-        'encoder_repetition_penalty': 1,
-        'no_repeat_ngram_size': 0,
-        'repetition_penalty_range': 1024,
-        'penalty_alpha': 0,
-        'guidance_scale': 1,
-        'mirostat_mode': 0,
-        'mirostat_tau': 5,
-        'mirostat_eta': 0.1,
-        'do_sample': True,
-        'dynamic_temperature': False,
-        'temperature_last': False,
-        'sampler_priority': 'repetition_penalty\npresence_penalty\nfrequency_penalty\ndry\ntop_n_sigma\ntemperature\ndynamic_temperature\nquadratic_sampling\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nmirostat\nxtc\nencoder_repetition_penalty\nno_repeat_ngram',
-        'dry_sequence_breakers': '"\\n", ":", "\\"", "*"',
-    }
+    result = dict(default_preset_values)
 
     if shared.args.portable:
         samplers = result['sampler_priority'].split('\n')
@@ -64,7 +69,7 @@ def presets_params():
 def load_preset(name, verbose=False):
     generate_params = default_preset()
     if name not in ['None', None, '']:
-        path = Path(f'user_data/presets/{name}.yaml')
+        path = shared.user_data_dir / 'presets' / f'{name}.yaml'
         if path.exists():
             with open(path, 'r') as infile:
                 preset = yaml.safe_load(infile)

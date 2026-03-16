@@ -53,7 +53,7 @@ def get_single(value_type, file):
         value = file.read(value_length)
         try:
             value = value.decode('utf-8')
-        except:
+        except Exception:
             pass
     else:
         type_str = _simple_value_packing.get(value_type)

@@ -264,7 +264,7 @@ def SD_api_address_update(address):
         response = requests.get(url=f'{params["address"]}/sdapi/v1/sd-models')
         response.raise_for_status()
         # r = response.json()
-    except:
+    except Exception:
         msg = "❌ No SD API endpoint on:"
 
     return gr.Textbox.update(label=msg)
@@ -284,7 +284,7 @@ def get_checkpoints():
         options_json = options.json()
         params['sd_checkpoint'] = options_json['sd_model_checkpoint']
         params['checkpoint_list'] = [result["title"] for result in models.json()]
-    except:
+    except Exception:
         params['sd_checkpoint'] = ""
         params['checkpoint_list'] = []
 
@@ -298,7 +298,7 @@ def load_checkpoint(checkpoint):
 
     try:
         requests.post(url=f'{params["address"]}/sdapi/v1/options', json=payload)
-    except:
+    except Exception:
         pass
 
 
@@ -307,7 +307,7 @@ def get_samplers():
         response = requests.get(url=f'{params["address"]}/sdapi/v1/samplers')
         response.raise_for_status()
         samplers = [x["name"] for x in response.json()]
-    except:
+    except Exception:
         samplers = []
 
     return samplers

@@ -1,0 +1,10 @@
+[
+    {"text": "The quick brown fox jumps over the lazy dog. This is a simple sentence used for testing purposes. It contains all the letters of the English alphabet."},
+    {"text": "Machine learning is a subset of artificial intelligence that focuses on building systems that learn from data. These systems improve their performance over time without being explicitly programmed."},
+    {"text": "Python is a high-level programming language known for its simplicity and readability. It was created by Guido van Rossum and first released in 1991."},
+    {"text": "The Earth orbits the Sun at an average distance of about 93 million miles. It takes approximately 365.25 days to complete one orbit, which is why we have leap years."},
+    {"text": "Neural networks are computing systems inspired by biological neural networks in the brain. They consist of layers of interconnected nodes that process information using connectionist approaches."},
+    {"text": "Water covers about 71 percent of the Earth's surface. The oceans hold about 96.5 percent of all Earth's water. Only about 2.5 percent of the Earth's water is freshwater."},
+    {"text": "The history of computing dates back to ancient times with devices like the abacus. Modern electronic computing began in the mid-20th century with the development of vacuum tube computers."},
+    {"text": "Photosynthesis is the process by which green plants and some other organisms use sunlight to synthesize nutrients from carbon dioxide and water. It generates oxygen as a byproduct."}
+]

@@ -1,4 +1,5 @@
 .message {
+    width: min(100%, calc(724px + 60px));
     padding-bottom: 22px;
     padding-top: 3px;
     font-size: 15px;
@@ -60,8 +61,10 @@
     text-align: right;
 }
 
-.dark .circle-bot + .text div, .dark .circle-bot + .text * {
-    color: #000;
+.dark .circle-bot + .text div, .dark .circle-bot + .text *,
+.dark .chat .message .circle-bot + .text .message-body :is(h1, h2, h3, h4, h5, h6),
+.dark .chat .message .circle-bot + .text .message-body a {
+    color: #000 !important;
 }
 
 .text {
@@ -76,19 +79,14 @@
     font-weight: bold;
 }
 
-.message-body {
-}
-
 .message-body img {
     max-width: 300px;
     max-height: 300px;
     border-radius: 20px;
 }
 
-.message-body p {
-    margin-bottom: 0 !important;
+.message-body p, .message-body li {
     font-size: 15px !important;
-    line-height: 1.428571429 !important;
     font-weight: 500;
 }
 

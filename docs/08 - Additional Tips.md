@@ -13,29 +13,6 @@ Source: https://github.com/AUTOMATIC1111/stable-diffusion-webui/pull/1126
 
 This file will be automatically detected the next time you start the web UI.
 
-## DeepSpeed
-
-`DeepSpeed ZeRO-3` is an alternative offloading strategy for full-precision (16-bit) transformers models.
-
-With this, I have been able to load a 6b model (GPT-J 6B) with less than 6GB of VRAM. The speed of text generation is very decent and much better than what would be accomplished with `--auto-devices --gpu-memory 6`.
-
-As far as I know, DeepSpeed is only available for Linux at the moment.
-
-### How to use it
-
-1. Install DeepSpeed: 
-
-```
-conda install -c conda-forge mpi4py mpich
-pip install -U deepspeed
-```
-
-2. Start the web UI replacing `python` with `deepspeed --num_gpus=1` and adding the `--deepspeed` flag. Example:
-
-```
-deepspeed --num_gpus=1 server.py --deepspeed --chat --model gpt-j-6B
-```
-
 ## Miscellaneous info
 
 ### You can train LoRAs in CPU mode
