@@ -1528,7 +1528,7 @@ def redraw_html(history, name1, name2, mode, style, character, reset_cache=False
     return chat_html_wrapper(history, name1, name2, mode, style, character, reset_cache=reset_cache)
 
 
-def start_new_chat(state):
+def start_new_chat(state, unique_id=None):
     mode = state['mode']
     # Initialize with empty metadata dictionary
     history = {'internal': [], 'visible': [], 'metadata': {}}
@@ -1542,7 +1542,9 @@ def start_new_chat(state):
             # Add timestamp for assistant's greeting
             update_message_metadata(history['metadata'], "assistant", 0, timestamp=get_current_timestamp())
 
-    unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
+    if unique_id is None:
+        unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
+
     save_history(history, unique_id, state['character_menu'], state['mode'])
 
     return history
@@ -1559,6 +1561,9 @@ def get_history_file_path(unique_id, character, mode):
 
 def save_history(history, unique_id, character, mode):
     if shared.args.multi_user:
+        return
+
+    if unique_id and unique_id.startswith('incognito-'):
         return
 
     p = get_history_file_path(unique_id, character, mode)
@@ -1748,6 +1753,9 @@ def load_last_chat_state():
 def save_last_chat_state(character, mode, unique_id):
     """Save the last visited chat for a character/mode"""
     if shared.args.multi_user:
+        return
+
+    if unique_id and unique_id.startswith('incognito-'):
         return
 
     state = load_last_chat_state()
@@ -2290,11 +2298,29 @@ def handle_start_new_chat_click(state):
     return [history, html, past_chats_update]
 
 
-def handle_delete_chat_confirm_click(state):
+def handle_start_incognito_chat_click(state):
     import gradio as gr
+    unique_id = 'incognito-' + datetime.now().strftime('%Y%m%d-%H-%M-%S')
+    history = start_new_chat(state, unique_id=unique_id)
+    html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
+
+    convert_to_markdown.cache_clear()
+
+    histories = find_all_histories_with_first_prompts(state)
+    past_chats_update = gr.update(choices=histories, value=unique_id)
+
+    return [history, html, past_chats_update]
+
+
+def handle_delete_chat_confirm_click(state):
     filtered_histories = find_all_histories_with_first_prompts(state)
     filtered_ids = [h[1] for h in filtered_histories]
-    index = str(filtered_ids.index(state['unique_id']))
+
+    if state['unique_id'] not in filtered_ids:
+        # Incognito or unknown chat — just load the most recent saved chat
+        index = '0'
+    else:
+        index = str(filtered_ids.index(state['unique_id']))
 
     delete_history(state['unique_id'], state['character_menu'], state['mode'])
     history, unique_id = load_history_after_deletion(state, index)
@@ -2302,13 +2328,7 @@ def handle_delete_chat_confirm_click(state):
 
     convert_to_markdown.cache_clear()
 
-    return [
-        history,
-        html,
-        unique_id,
-        gr.update(visible=False),
-        gr.update(visible=True),
-    ]
+    return [history, html, unique_id]
 
 
 def handle_branch_chat_click(state):
@@ -2324,7 +2344,8 @@ def handle_branch_chat_click(state):
         if 'metadata' in history:
             history['metadata'] = {k: v for k, v in history['metadata'].items() if int(k.split('_')[-1]) <= branch_from_index}
 
-    new_unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
+    prefix = 'incognito-' if state['unique_id'] and state['unique_id'].startswith('incognito-') else ''
+    new_unique_id = prefix + datetime.now().strftime('%Y%m%d-%H-%M-%S')
     save_history(history, new_unique_id, state['character_menu'], state['mode'])
 
     histories = find_all_histories_with_first_prompts(state)
@@ -2446,6 +2467,13 @@ def handle_rename_chat_click():
 
 def handle_rename_chat_confirm(rename_to, state):
     import gradio as gr
+
+    if state['unique_id'] and state['unique_id'].startswith('incognito-'):
+        return [
+            gr.update(),
+            gr.update(visible=False),
+        ]
+
     rename_history(state['unique_id'], rename_to, state['character_menu'], state['mode'])
     histories = find_all_histories_with_first_prompts(state)
 

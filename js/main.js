@@ -553,6 +553,38 @@ document.querySelectorAll(".focus-on-chat-input").forEach(element => {
 });
 
 //------------------------------------------------
+// "New chat" hover menu with incognito option
+//------------------------------------------------
+
+(function() {
+  const newChatBtn = document.getElementById("new-chat-btn");
+
+  const wrapper = document.createElement("div");
+  wrapper.id = "new-chat-wrapper";
+  newChatBtn.replaceWith(wrapper);
+  wrapper.appendChild(newChatBtn);
+
+  const arrow = document.createElement("span");
+  arrow.className = "new-chat-arrow";
+  arrow.textContent = "\u25BE";
+
+  const menu = document.createElement("div");
+  menu.className = "new-chat-menu";
+  const option = document.createElement("div");
+  option.className = "new-chat-menu-item";
+  option.textContent = "Incognito chat";
+  menu.appendChild(option);
+
+  arrow.appendChild(menu);
+  wrapper.appendChild(arrow);
+
+  option.addEventListener("click", function(e) {
+    e.stopPropagation();
+    document.querySelector("#incognito-chat-btn").click();
+  });
+})();
+
+//------------------------------------------------
 // Fix a border around the "past chats" menu
 //------------------------------------------------
 document.getElementById("past-chats").parentNode.style.borderRadius = "0px";

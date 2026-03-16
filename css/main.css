@@ -1022,6 +1022,49 @@ audio {
     padding-right: 0.5rem;
 }
 
+#new-chat-wrapper {
+    display: contents;
+}
+
+.new-chat-arrow {
+    cursor: pointer;
+    position: relative;
+    padding: 0;
+    margin-right: -15px;
+    height: 39.594px;
+    display: flex;
+    align-items: center;
+}
+
+.new-chat-menu {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding-top: 1.2em;
+    z-index: var(--layer-top);
+    white-space: nowrap;
+}
+
+.new-chat-arrow:hover .new-chat-menu {
+    display: block;
+}
+
+.new-chat-menu-item {
+    cursor: pointer;
+    padding: var(--size-2);
+    background: var(--background-fill-primary);
+    box-shadow: var(--shadow-drop-lg);
+    border-radius: var(--container-radius);
+    color: var(--body-text-color);
+    font-size: var(--text-md);
+    font-weight: var(--button-large-text-weight);
+}
+
+.new-chat-menu-item:hover {
+    background: var(--background-fill-secondary);
+}
+
 #past-chats-row,
 #chat-controls {
     width: 260px;
