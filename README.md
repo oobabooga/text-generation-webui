@@ -313,7 +313,7 @@ llama.cpp:
   --row-split                                          Split the model by rows across GPUs. This may improve multi-gpu performance.
   --no-mmap                                            Prevent mmap from being used.
   --mlock                                              Force the system to keep the model in RAM.
-  --no-kv-offload                                      Do not offload the K, Q, V to the GPU. This saves VRAM but reduces the performance.
+  --no-kv-offload                                      Do not offload the K, Q, V to the GPU. This saves VRAM but reduces performance.
   --batch-size BATCH_SIZE                              Maximum number of prompt tokens to batch together when calling llama-server. This is the application level batch size.
   --ubatch-size UBATCH_SIZE                            Maximum number of prompt tokens to batch together when calling llama-server. This is the max physical batch size for computation (device level).
   --threads THREADS                                    Number of threads to use.

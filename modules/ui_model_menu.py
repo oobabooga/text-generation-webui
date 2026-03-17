@@ -107,7 +107,7 @@ def create_ui():
                                 shared.gradio['cpu'] = gr.Checkbox(label="cpu", value=shared.args.cpu, info='Use PyTorch in CPU mode.')
                                 shared.gradio['disk'] = gr.Checkbox(label="disk", value=shared.args.disk)
                                 shared.gradio['row_split'] = gr.Checkbox(label="row_split", value=shared.args.row_split, info='Split the model by rows across GPUs. This may improve multi-gpu performance.')
-                                shared.gradio['no_kv_offload'] = gr.Checkbox(label="no_kv_offload", value=shared.args.no_kv_offload, info='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
+                                shared.gradio['no_kv_offload'] = gr.Checkbox(label="no_kv_offload", value=shared.args.no_kv_offload, info='Do not offload the K, Q, V to the GPU. This saves VRAM but reduces performance.')
                                 shared.gradio['no_mmap'] = gr.Checkbox(label="no-mmap", value=shared.args.no_mmap)
                                 shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
                                 shared.gradio['numa'] = gr.Checkbox(label="numa", value=shared.args.numa, info='NUMA support can help on some systems with non-uniform memory access.')
@@ -134,7 +134,7 @@ def create_ui():
                         ui.create_refresh_button(shared.gradio['customized_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button', interactive=not mu)
 
                     shared.gradio['customized_template_submit'] = gr.Button("Submit", variant="primary", interactive=not mu)
-                    gr.Markdown("This allows you to set a customized template for the model currently selected in the \"Model loader\" menu. Whenever the model gets loaded, this template will be used in place of the template specified in the model's medatada, which sometimes is wrong.")
+                    gr.Markdown("This allows you to set a customized template for the model currently selected in the \"Model loader\" menu. Whenever the model gets loaded, this template will be used in place of the template specified in the model's metadata, which sometimes is wrong.")
 
                 with gr.Row():
                     shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
@@ -231,7 +231,7 @@ def load_model_wrapper(selected_model, loader, autoload=False):
 def load_lora_wrapper(selected_loras):
     yield ("Applying the following LoRAs to {}:\n\n{}".format(shared.model_name, '\n'.join(selected_loras)))
     add_lora_to_model(selected_loras)
-    yield ("Successfuly applied the LoRAs")
+    yield ("Successfully applied the LoRAs")
 
 
 def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False, check=False):
