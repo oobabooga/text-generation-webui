@@ -446,18 +446,21 @@ class LlamaServer:
             elif extra_flags.startswith("'") and extra_flags.endswith("'"):
                 extra_flags = extra_flags[1:-1].strip()
 
+            # llama.cpp flags that only have a long form (--) despite being short
+            long_form_only = {'rpc', 'fit', 'pos', 'ppl'}
+
             for flag_item in extra_flags.split(','):
                 flag_item = flag_item.strip()
                 if '=' in flag_item:
                     flag, value = flag_item.split('=', 1)
                     flag = flag.strip()
                     value = value.strip()
-                    if len(flag) <= 3:
+                    if len(flag) <= 3 and flag not in long_form_only:
                         cmd += [f"-{flag}", value]
                     else:
                         cmd += [f"--{flag}", value]
                 else:
-                    if len(flag_item) <= 3:
+                    if len(flag_item) <= 3 and flag_item not in long_form_only:
                         cmd.append(f"-{flag_item}")
                     else:
                         cmd.append(f"--{flag_item}")
