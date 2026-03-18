@@ -1,6 +1,7 @@
 import json
 import os
 import pprint
+import shlex
 import re
 import socket
 import subprocess
@@ -446,24 +447,28 @@ class LlamaServer:
             elif extra_flags.startswith("'") and extra_flags.endswith("'"):
                 extra_flags = extra_flags[1:-1].strip()
 
-            # llama.cpp flags that only have a long form (--) despite being short
-            long_form_only = {'rpc', 'fit', 'pos', 'ppl'}
+            if extra_flags.startswith('-'):
+                # New literal format: "--jinja --rpc 1222,1222"
+                cmd += shlex.split(extra_flags)
+            else:
+                # Legacy format: "flag1=value1,flag2,flag3=value3"
+                long_form_only = {'rpc', 'fit', 'pos', 'ppl'}
 
-            for flag_item in extra_flags.split(','):
-                flag_item = flag_item.strip()
-                if '=' in flag_item:
-                    flag, value = flag_item.split('=', 1)
-                    flag = flag.strip()
-                    value = value.strip()
-                    if len(flag) <= 3 and flag not in long_form_only:
-                        cmd += [f"-{flag}", value]
+                for flag_item in extra_flags.split(','):
+                    flag_item = flag_item.strip()
+                    if '=' in flag_item:
+                        flag, value = flag_item.split('=', 1)
+                        flag = flag.strip()
+                        value = value.strip()
+                        if len(flag) <= 3 and flag not in long_form_only:
+                            cmd += [f"-{flag}", value]
+                        else:
+                            cmd += [f"--{flag}", value]
                     else:
-                        cmd += [f"--{flag}", value]
-                else:
-                    if len(flag_item) <= 3 and flag_item not in long_form_only:
-                        cmd.append(f"-{flag_item}")
-                    else:
-                        cmd.append(f"--{flag_item}")
+                        if len(flag_item) <= 3 and flag_item not in long_form_only:
+                            cmd.append(f"-{flag_item}")
+                        else:
+                            cmd.append(f"--{flag_item}")
 
         env = os.environ.copy()
         if os.name == 'posix':
