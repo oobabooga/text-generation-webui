@@ -2651,7 +2651,7 @@ def handle_delete_template_click(template):
         f"{template}.yaml",
         root,
         root,
-        gr.update(visible=False)
+        gr.update(visible=True)
     ]
 
 
