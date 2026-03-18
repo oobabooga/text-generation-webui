@@ -2612,19 +2612,23 @@ def handle_load_template_click(instruction_template):
 def handle_save_template_click(instruction_template_str):
     import gradio as gr
     contents = generate_instruction_template_yaml(instruction_template_str)
+    root = str(shared.user_data_dir / 'instruction-templates') + '/'
     return [
         "My Template.yaml",
-        str(shared.user_data_dir / 'instruction-templates') + '/',
+        root,
         contents,
+        root,
         gr.update(visible=True)
     ]
 
 
 def handle_delete_template_click(template):
     import gradio as gr
+    root = str(shared.user_data_dir / 'instruction-templates') + '/'
     return [
         f"{template}.yaml",
-        str(shared.user_data_dir / 'instruction-templates') + '/',
+        root,
+        root,
         gr.update(visible=False)
     ]
 

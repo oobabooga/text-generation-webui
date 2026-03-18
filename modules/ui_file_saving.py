@@ -9,6 +9,12 @@ from modules.utils import gradio, sanitize_filename
 def create_ui():
     mu = shared.args.multi_user
 
+    # Server-side per-session root paths for the generic file saver/deleter.
+    # Set by the handler that opens the dialog, read by the confirm handler.
+    # Using gr.State so they are session-scoped and safe for multi-user.
+    shared.gradio['save_root_state'] = gr.State(None)
+    shared.gradio['delete_root_state'] = gr.State(None)
+
     # Text file saver
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['file_saver']:
         shared.gradio['save_filename'] = gr.Textbox(lines=1, label='File name')
@@ -66,13 +72,13 @@ def create_event_handlers():
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         handle_save_preset_click, gradio('interface_state'), gradio('save_preset_contents', 'save_preset_filename', 'preset_saver'), show_progress=False)
 
-    shared.gradio['delete_preset'].click(handle_delete_preset_click, gradio('preset_menu'), gradio('delete_filename', 'delete_root', 'file_deleter'), show_progress=False)
-    shared.gradio['save_grammar'].click(handle_save_grammar_click, gradio('grammar_string'), gradio('save_contents', 'save_filename', 'save_root', 'file_saver'), show_progress=False)
-    shared.gradio['delete_grammar'].click(handle_delete_grammar_click, gradio('grammar_file'), gradio('delete_filename', 'delete_root', 'file_deleter'), show_progress=False)
+    shared.gradio['delete_preset'].click(handle_delete_preset_click, gradio('preset_menu'), gradio('delete_filename', 'delete_root', 'delete_root_state', 'file_deleter'), show_progress=False)
+    shared.gradio['save_grammar'].click(handle_save_grammar_click, gradio('grammar_string'), gradio('save_contents', 'save_filename', 'save_root', 'save_root_state', 'file_saver'), show_progress=False)
+    shared.gradio['delete_grammar'].click(handle_delete_grammar_click, gradio('grammar_file'), gradio('delete_filename', 'delete_root', 'delete_root_state', 'file_deleter'), show_progress=False)
 
     shared.gradio['save_preset_confirm'].click(handle_save_preset_confirm_click, gradio('save_preset_filename', 'save_preset_contents'), gradio('preset_menu', 'preset_saver'), show_progress=False)
-    shared.gradio['save_confirm'].click(handle_save_confirm_click, gradio('save_root', 'save_filename', 'save_contents'), gradio('file_saver'), show_progress=False)
-    shared.gradio['delete_confirm'].click(handle_delete_confirm_click, gradio('delete_root', 'delete_filename'), gradio('file_deleter'), show_progress=False)
+    shared.gradio['save_confirm'].click(handle_save_confirm_click, gradio('save_root_state', 'save_filename', 'save_contents'), gradio('save_root_state', 'file_saver'), show_progress=False)
+    shared.gradio['delete_confirm'].click(handle_delete_confirm_click, gradio('delete_root_state', 'delete_filename'), gradio('delete_root_state', 'file_deleter'), show_progress=False)
     shared.gradio['save_character_confirm'].click(handle_save_character_confirm_click, gradio('name2', 'greeting', 'context', 'character_picture', 'save_character_filename'), gradio('character_menu', 'character_saver'), show_progress=False)
     shared.gradio['delete_character_confirm'].click(handle_delete_character_confirm_click, gradio('character_menu'), gradio('character_menu', 'character_deleter'), show_progress=False)
 
@@ -105,24 +111,30 @@ def handle_save_preset_confirm_click(filename, contents):
     ]
 
 
-def handle_save_confirm_click(root, filename, contents):
+def handle_save_confirm_click(root_state, filename, contents):
     try:
+        if root_state is None:
+            return None, gr.update(visible=False)
+
         filename = sanitize_filename(filename)
-        utils.save_file(root + filename, contents)
+        utils.save_file(root_state + filename, contents)
     except Exception:
         traceback.print_exc()
 
-    return gr.update(visible=False)
+    return None, gr.update(visible=False)
 
 
-def handle_delete_confirm_click(root, filename):
+def handle_delete_confirm_click(root_state, filename):
     try:
+        if root_state is None:
+            return None, gr.update(visible=False)
+
         filename = sanitize_filename(filename)
-        utils.delete_file(root + filename)
+        utils.delete_file(root_state + filename)
     except Exception:
         traceback.print_exc()
 
-    return gr.update(visible=False)
+    return None, gr.update(visible=False)
 
 
 def handle_save_character_confirm_click(name2, greeting, context, character_picture, filename):
@@ -165,26 +177,32 @@ def handle_save_preset_click(state):
 
 
 def handle_delete_preset_click(preset):
+    root = str(shared.user_data_dir / "presets") + "/"
     return [
         f"{preset}.yaml",
-        str(shared.user_data_dir / "presets") + "/",
+        root,
+        root,
         gr.update(visible=True)
     ]
 
 
 def handle_save_grammar_click(grammar_string):
+    root = str(shared.user_data_dir / "grammars") + "/"
     return [
         grammar_string,
         "My Fancy Grammar.gbnf",
-        str(shared.user_data_dir / "grammars") + "/",
+        root,
+        root,
         gr.update(visible=True)
     ]
 
 
 def handle_delete_grammar_click(grammar_file):
+    root = str(shared.user_data_dir / "grammars") + "/"
     return [
         grammar_file,
-        str(shared.user_data_dir / "grammars") + "/",
+        root,
+        root,
         gr.update(visible=True)
     ]
 
