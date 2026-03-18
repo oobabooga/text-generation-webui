@@ -77,7 +77,18 @@ def process_message_content(content: Any) -> Tuple[str, List[Image.Image]]:
                     # Support external URLs
                     try:
                         import requests
-                        response = requests.get(image_url, timeout=10)
+                        from urllib.parse import urljoin
+                        from modules.web_search import _validate_url
+                        _validate_url(image_url)
+                        url = image_url
+                        for _ in range(5):
+                            response = requests.get(url, timeout=10, allow_redirects=False)
+                            if response.is_redirect and 'Location' in response.headers:
+                                url = urljoin(url, response.headers['Location'])
+                                _validate_url(url)
+                            else:
+                                break
+
                         response.raise_for_status()
                         image_data = response.content
                         image = Image.open(io.BytesIO(image_data))
