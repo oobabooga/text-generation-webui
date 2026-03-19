@@ -7,8 +7,8 @@ Allows you to enter your inputs in chat mode using your microphone.
 To adjust your default settings, you can add the following to your settings.yaml file.
 
 ```
-whisper_stt-whipser_language: chinese
-whisper_stt-whipser_model: tiny
+whisper_stt-whisper_language: chinese
+whisper_stt-whisper_model: tiny
 whisper_stt-auto_submit: False
 ```
 

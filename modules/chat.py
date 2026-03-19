@@ -235,6 +235,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
         tools_in_user_message=False,
         add_generation_prompt=False,
         enable_thinking=state['enable_thinking'],
+        thinking=state['enable_thinking'],
         reasoning_effort=state['reasoning_effort'],
         thinking_budget=-1 if state.get('enable_thinking', True) else 0,
         bos_token=shared.bos_token,
@@ -345,6 +346,27 @@ def generate_chat_prompt(user_input, state, **kwargs):
                             final_content = parts[0]
 
                 # Insert as structured message
+                msg_dict = {"role": "assistant", "content": final_content.strip()}
+                if thinking_content:
+                    msg_dict["reasoning_content"] = thinking_content
+
+                messages.insert(insert_pos, msg_dict)
+
+            # Handle <think> blocks (Kimi, DeepSeek, Qwen, etc.)
+            elif '<think>' in assistant_msg:
+                thinking_content = ""
+                final_content = assistant_msg
+
+                parts = assistant_msg.split('<think>', 1)
+                if len(parts) > 1:
+                    potential_content = parts[1]
+                    if '</think>' in potential_content:
+                        thinking_content = potential_content.split('</think>', 1)[0].strip()
+                        final_content = parts[0] + potential_content.split('</think>', 1)[1]
+                    else:
+                        thinking_content = potential_content.strip()
+                        final_content = parts[0]
+
                 msg_dict = {"role": "assistant", "content": final_content.strip()}
                 if thinking_content:
                     msg_dict["reasoning_content"] = thinking_content
@@ -2612,20 +2634,24 @@ def handle_load_template_click(instruction_template):
 def handle_save_template_click(instruction_template_str):
     import gradio as gr
     contents = generate_instruction_template_yaml(instruction_template_str)
+    root = str(shared.user_data_dir / 'instruction-templates') + '/'
     return [
         "My Template.yaml",
-        str(shared.user_data_dir / 'instruction-templates') + '/',
+        root,
         contents,
+        root,
         gr.update(visible=True)
     ]
 
 
 def handle_delete_template_click(template):
     import gradio as gr
+    root = str(shared.user_data_dir / 'instruction-templates') + '/'
     return [
         f"{template}.yaml",
-        str(shared.user_data_dir / 'instruction-templates') + '/',
-        gr.update(visible=False)
+        root,
+        root,
+        gr.update(visible=True)
     ]
 
 

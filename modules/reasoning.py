@@ -79,7 +79,7 @@ def extract_reasoning(text, html_escaped=False):
             else:
                 content_start = end_pos + len(end_esc)
 
-        return text[thought_start:thought_end], text[content_start:]
+        return text[thought_start:thought_end], text[content_start:].lstrip()
 
     # Handle standalone GPT-OSS final channel marker without a preceding
     # analysis/commentary block (the model skipped thinking entirely).

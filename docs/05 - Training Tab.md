@@ -100,6 +100,8 @@ Each parameter has a description in the UI. Below is guidance on the most import
 
 VRAM usage during training is roughly similar to inference with ~1000 tokens of context. If you can run the model, you can probably train LoRAs with the default settings. If you run out of VRAM, reduce `Micro Batch Size` or `Cutoff Length`. Training 4-bit quantized models uses more VRAM — set `Micro Batch Size` to `1` to compensate.
 
+**Gradient checkpointing** is enabled by default. It reduces VRAM usage by recomputing activations during the backward pass instead of storing them in memory. The tradeoff is ~20-30% slower training. There is no impact on accuracy — the results are mathematically identical. The savings are most noticeable with longer sequences and larger batch sizes. You can disable it if you have VRAM to spare and want faster training.
+
 ### Rank
 
 Higher rank = more learning capacity = larger adapter = more VRAM. Use 4–8 for style/format, 128–256 to teach factual knowledge.

@@ -47,6 +47,10 @@ def save_file(fname, contents):
         logger.error(f'Invalid file path: \"{fname}\"')
         return
 
+    if Path(abs_path_str).suffix.lower() not in ('.yaml', '.yml', '.json', '.txt', '.gbnf'):
+        logger.error(f'Refusing to save file with disallowed extension: \"{fname}\"')
+        return
+
     with open(abs_path_str, 'w', encoding='utf-8') as f:
         f.write(contents)
 

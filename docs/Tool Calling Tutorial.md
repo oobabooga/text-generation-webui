@@ -1,18 +1,3 @@
-## Supported models
-
-The following models are supported:
-
-- Qwen 3.5
-- GPT-OSS
-- Mistral Small / Devstral
-- DeepSeek V3
-- Kimi-K2
-- MiniMax-M2.5
-- GLM-5
-- Llama 4
-
-Other models that output tool calls as JSON (inside XML tags, code blocks, or plain JSON) are also supported through a generic fallback parser.
-
 ## Tool calling in the UI
 
 ### 1. Load a model with tool-calling support
@@ -23,11 +8,11 @@ Load a model with tool-calling support from the Model tab.
 
 In the chat sidebar, check the tools you want the model to use:
 
-- **web_search** -- Search the web using DuckDuckGo.
-- **fetch_webpage** -- Fetch the content of a URL.
-- **calculate** -- Evaluate math expressions.
-- **get_datetime** -- Get the current date and time.
-- **roll_dice** -- Roll dice.
+- `web_search`: Search the web using DuckDuckGo.
+- `fetch_webpage`: Fetch the content of a URL.
+- `calculate`: Evaluate math expressions.
+- `get_datetime`: Get the current date and time.
+- `roll_dice`: Roll dice.
 
 ### 3. Chat
 
@@ -157,3 +142,18 @@ for _ in range(10):
         print(f"\nAssistant: {choice['message']['content']}")
         break
 ```
+
+## Supported models
+
+The following models are supported:
+
+- Qwen 3.5
+- GPT-OSS
+- Mistral Small / Devstral
+- DeepSeek V3
+- Kimi-K2
+- MiniMax-M2.5
+- GLM-5
+- Llama 4
+
+Other models that output tool calls as JSON (inside XML tags, code blocks, or plain JSON) are also supported through a generic fallback parser.

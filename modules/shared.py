@@ -101,7 +101,7 @@ group.add_argument('--tensor-split', type=str, default=None, help='Split the mod
 group.add_argument('--row-split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
 group.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 group.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
-group.add_argument('--no-kv-offload', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
+group.add_argument('--no-kv-offload', action='store_true', help='Do not offload the K, Q, V to the GPU. This saves VRAM but reduces performance.')
 group.add_argument('--batch-size', type=int, default=1024, help='Maximum number of prompt tokens to batch together when calling llama-server. This is the application level batch size.')
 group.add_argument('--ubatch-size', type=int, default=1024, help='Maximum number of prompt tokens to batch together when calling llama-server. This is the max physical batch size for computation (device level).')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
@@ -109,7 +109,7 @@ group.add_argument('--threads-batch', type=int, default=0, help='Number of threa
 group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
 group.add_argument('--parallel', type=int, default=1, help='Number of parallel request slots. The context size is divided equally among slots. For example, to have 4 slots with 8192 context each, set ctx_size to 32768.')
 group.add_argument('--fit-target', type=str, default='512', help='Target VRAM margin per device for auto GPU layers, comma-separated list of values in MiB. A single value is broadcast across all devices.')
-group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"')
+group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to pass to llama-server. Example: "--jinja --rpc 192.168.1.100:50052"')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
