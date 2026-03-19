@@ -116,13 +116,13 @@ jobs:
             # 1. Set platform-specific variables
             if [[ "$RUNNER_OS" == "Windows" ]]; then
                 PLATFORM="windows"
-                PYTHON_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20260303/cpython-3.13.12+20260303-x86_64-pc-windows-msvc-install_only.tar.gz"
+                PYTHON_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20260303/cpython-3.13.12+20260303-x86_64-pc-windows-msvc-install_only_stripped.tar.gz"
                 PIP_PATH="portable_env/python.exe -m pip"
                 PACKAGES_PATH="portable_env/Lib/site-packages"
                 rm start_linux.sh start_macos.sh
             else
                 PLATFORM="linux"
-                PYTHON_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20260303/cpython-3.13.12+20260303-x86_64-unknown-linux-gnu-install_only.tar.gz"
+                PYTHON_URL="https://github.com/astral-sh/python-build-standalone/releases/download/20260303/cpython-3.13.12+20260303-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz"
                 PIP_PATH="portable_env/bin/python -m pip"
                 PACKAGES_PATH="portable_env/lib/python3.13/site-packages"
                 rm start_macos.sh start_windows.bat
