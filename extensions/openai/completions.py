@@ -263,7 +263,7 @@ def convert_history(history):
             seen_non_system = True
             meta = {}
             tool_calls = entry.get("tool_calls")
-            if tool_calls and isinstance(tool_calls, list) and len(tool_calls) > 0:
+            if tool_calls and isinstance(tool_calls, list):
                 meta["tool_calls"] = tool_calls
                 if content.strip() == "":
                     content = ""  # keep empty content, don't skip
@@ -315,7 +315,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         raise InvalidRequestError(message="messages is required", param='messages')
 
     tools = None
-    if 'tools' in body and body['tools'] is not None and isinstance(body['tools'], list) and len(body['tools']) > 0:
+    if 'tools' in body and body['tools'] is not None and isinstance(body['tools'], list) and body['tools']:
         tools = validateTools(body['tools'])  # raises InvalidRequestError if validation fails
 
     tool_choice = body.get('tool_choice', None)

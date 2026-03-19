@@ -500,9 +500,8 @@ class LlamaServer:
         health_url = f"http://127.0.0.1:{self.port}/health"
         while True:
             # Check if process is still alive
-            if self.process.poll() is not None:
-                # Process has terminated
-                exit_code = self.process.poll()
+            exit_code = self.process.poll()
+            if exit_code is not None:
                 raise RuntimeError(f"Server process terminated unexpectedly with exit code: {exit_code}")
 
             try:

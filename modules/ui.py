@@ -299,7 +299,7 @@ def apply_interface_values(state, use_persistent=False):
 
     elements = list_interface_input_elements()
 
-    if len(state) == 0:
+    if not state:
         return [gr.update() for k in elements]  # Dummy, do nothing
     else:
         return [state[k] if k in state else gr.update() for k in elements]
@@ -307,9 +307,8 @@ def apply_interface_values(state, use_persistent=False):
 
 def save_settings(state, preset, extensions_list, show_controls, theme_state, manual_save=False):
     output = copy.deepcopy(shared.settings)
-    exclude = []
     for k in state:
-        if k in shared.settings and k not in exclude:
+        if k in shared.settings:
             output[k] = state[k]
 
     if preset:
@@ -323,7 +322,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
     output['custom_stopping_strings'] = output.get('custom_stopping_strings') or ''
     output['custom_token_bans'] = output.get('custom_token_bans') or ''
     output['show_controls'] = show_controls
-    output['dark_theme'] = True if theme_state == 'dark' else False
+    output['dark_theme'] = theme_state == 'dark'
     output.pop('instruction_template_str')
     output.pop('truncation_length')
 

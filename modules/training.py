@@ -732,11 +732,13 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
     if lora_all_param > 0:
         print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
 
-    train_log.update({"base_model_name": shared.model_name})
-    train_log.update({"base_model_class": shared.model.__class__.__name__})
-    train_log.update({"base_loaded_in_4bit": getattr(lora_model, "is_loaded_in_4bit", False)})
-    train_log.update({"base_loaded_in_8bit": getattr(lora_model, "is_loaded_in_8bit", False)})
-    train_log.update({"projections": projections_string})
+    train_log.update({
+        "base_model_name": shared.model_name,
+        "base_model_class": shared.model.__class__.__name__,
+        "base_loaded_in_4bit": getattr(lora_model, "is_loaded_in_4bit", False),
+        "base_loaded_in_8bit": getattr(lora_model, "is_loaded_in_8bit", False),
+        "projections": projections_string,
+    })
 
     if stop_at_loss > 0:
         print(f"Monitoring loss \033[1;31;1m(Auto-Stop at: {stop_at_loss})\033[0;37;0m")

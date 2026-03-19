@@ -453,15 +453,11 @@ def load_user_config():
     '''
     Loads custom model-specific settings
     '''
+    user_config = {}
     if Path(f'{args.model_dir}/config-user.yaml').exists():
         file_content = open(f'{args.model_dir}/config-user.yaml', 'r').read().strip()
-
         if file_content:
             user_config = yaml.safe_load(file_content)
-        else:
-            user_config = {}
-    else:
-        user_config = {}
 
     return user_config
 

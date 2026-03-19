@@ -3,6 +3,10 @@ import random
 import re
 
 
+def _make_tool_call(name, arguments):
+    return {"type": "function", "function": {"name": name, "arguments": arguments}}
+
+
 def get_tool_call_id() -> str:
     letter_bytes = "abcdefghijklmnopqrstuvwxyz0123456789"
     b = [random.choice(letter_bytes) for _ in range(8)]
@@ -149,13 +153,7 @@ def _parse_channel_tool_calls(answer: str, tool_names: list[str]):
                 if start_pos is None:
                     prefix = answer.rfind('<|start|>assistant', 0, m.start())
                     start_pos = prefix if prefix != -1 else m.start()
-                matches.append({
-                    "type": "function",
-                    "function": {
-                        "name": func_name,
-                        "arguments": arguments
-                    }
-                })
+                matches.append(_make_tool_call(func_name, arguments))
             except json.JSONDecodeError:
                 pass
         if matches:
@@ -185,13 +183,7 @@ def _parse_mistral_token_tool_calls(answer: str, tool_names: list[str]):
             arguments = json.loads(json_str)
             if start_pos is None:
                 start_pos = m.start()
-            matches.append({
-                "type": "function",
-                "function": {
-                    "name": func_name,
-                    "arguments": arguments
-                }
-            })
+            matches.append(_make_tool_call(func_name, arguments))
         except json.JSONDecodeError:
             pass
     return matches, start_pos
@@ -226,13 +218,7 @@ def _parse_bare_name_tool_calls(answer: str, tool_names: list[str]):
             arguments = json.loads(json_str)
             if start_pos is None:
                 start_pos = match.start()
-            matches.append({
-                "type": "function",
-                "function": {
-                    "name": name,
-                    "arguments": arguments
-                }
-            })
+            matches.append(_make_tool_call(name, arguments))
         except json.JSONDecodeError:
             pass
     return matches, start_pos
@@ -269,13 +255,7 @@ def _parse_xml_param_tool_calls(answer: str, tool_names: list[str]):
             arguments[param_name] = param_value
         if start_pos is None:
             start_pos = tc_match.start()
-        matches.append({
-            "type": "function",
-            "function": {
-                "name": func_name,
-                "arguments": arguments
-            }
-        })
+        matches.append(_make_tool_call(func_name, arguments))
     return matches, start_pos
 
 
@@ -305,13 +285,7 @@ def _parse_kimi_tool_calls(answer: str, tool_names: list[str]):
                 # Check for section begin marker before the call marker
                 section = answer.rfind('<|tool_calls_section_begin|>', 0, m.start())
                 start_pos = section if section != -1 else m.start()
-            matches.append({
-                "type": "function",
-                "function": {
-                    "name": func_name,
-                    "arguments": arguments
-                }
-            })
+            matches.append(_make_tool_call(func_name, arguments))
         except json.JSONDecodeError:
             pass
     return matches, start_pos
@@ -348,13 +322,7 @@ def _parse_minimax_tool_calls(answer: str, tool_names: list[str]):
                 arguments[param_name] = param_value
             if start_pos is None:
                 start_pos = tc_match.start()
-            matches.append({
-                "type": "function",
-                "function": {
-                    "name": func_name,
-                    "arguments": arguments
-                }
-            })
+            matches.append(_make_tool_call(func_name, arguments))
     return matches, start_pos
 
 
@@ -382,13 +350,7 @@ def _parse_deep_seek_tool_calls(answer: str, tool_names: list[str]):
                 # Check for section begin marker before the call marker
                 section = answer.rfind('<｜tool▁calls▁begin｜>', 0, m.start())
                 start_pos = section if section != -1 else m.start()
-            matches.append({
-                "type": "function",
-                "function": {
-                    "name": func_name,
-                    "arguments": arguments
-                }
-            })
+            matches.append(_make_tool_call(func_name, arguments))
         except json.JSONDecodeError:
             pass
     return matches, start_pos
@@ -428,13 +390,7 @@ def _parse_glm_tool_calls(answer: str, tool_names: list[str]):
             arguments[k] = v
         if start_pos is None:
             start_pos = tc_match.start()
-        matches.append({
-            "type": "function",
-            "function": {
-                "name": func_name,
-                "arguments": arguments
-            }
-        })
+        matches.append(_make_tool_call(func_name, arguments))
     return matches, start_pos
 
 
@@ -486,13 +442,7 @@ def _parse_pythonic_tool_calls(answer: str, tool_names: list[str]):
 
         if start_pos is None:
             start_pos = bracket_match.start()
-        matches.append({
-            "type": "function",
-            "function": {
-                "name": func_name,
-                "arguments": arguments
-            }
-        })
+        matches.append(_make_tool_call(func_name, arguments))
 
     return matches, start_pos
 
