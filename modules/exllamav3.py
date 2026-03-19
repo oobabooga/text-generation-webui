@@ -1,7 +1,6 @@
 import math
 import queue
 import threading
-import traceback
 from pathlib import Path
 from typing import Any, List, Tuple
 
@@ -34,8 +33,7 @@ from modules.text_generation import get_max_prompt_length
 try:
     import flash_attn
 except Exception:
-    logger.warning('Failed to load flash-attention due to the following error:\n')
-    traceback.print_exc()
+    logger.warning('Failed to load flash-attention due to the following error:', exc_info=True)
 
 
 class LogitBiasFilter(Filter):
@@ -81,7 +79,7 @@ class ConcurrentGenerator:
                 try:
                     results = self.generator.iterate()
                 except Exception:
-                    logger.error("Exception in ConcurrentGenerator iterate loop:\n" + traceback.format_exc())
+                    logger.exception("Exception in ConcurrentGenerator iterate loop")
                     for q in self.job_queues.values():
                         q.put(None)
                     self.job_queues.clear()

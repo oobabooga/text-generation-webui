@@ -916,9 +916,8 @@ def generate(state, save_images=True):
         yield all_images, progress_bar_html()
         clear_torch_cache()
 
-    except Exception as e:
-        logger.error(f"Image generation failed: {e}")
-        traceback.print_exc()
+    except Exception:
+        logger.exception("Image generation failed")
         yield [], progress_bar_html()
         clear_torch_cache()
 

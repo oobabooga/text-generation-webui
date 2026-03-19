@@ -1,8 +1,8 @@
-import traceback
 from queue import Queue
 from threading import Thread
 
 import modules.shared as shared
+from modules.logging_colors import logger
 
 
 class StopNowException(Exception):
@@ -38,8 +38,7 @@ class Iteratorize:
             except StopNowException:
                 pass
             except Exception:
-                traceback.print_exc()
-                pass
+                logger.exception("Failed in generation callback")
 
             self.q.put(self.sentinel)
             if self.c_callback:

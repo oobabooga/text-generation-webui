@@ -1,5 +1,4 @@
 import time
-import traceback
 
 import numpy as np
 
@@ -23,7 +22,7 @@ def get_next_logits(*args, **kwargs):
     try:
         result = _get_next_logits(*args, **kwargs)
     except Exception:
-        traceback.print_exc()
+        logger.exception("Failed to get next logits")
         result = None
 
     if needs_lock:

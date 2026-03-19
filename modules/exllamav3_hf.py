@@ -1,5 +1,4 @@
 import os
-import traceback
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -21,8 +20,7 @@ from modules.logging_colors import logger
 try:
     import flash_attn
 except Exception:
-    logger.warning('Failed to load flash-attention due to the following error:\n')
-    traceback.print_exc()
+    logger.warning('Failed to load flash-attention due to the following error:', exc_info=True)
 
 
 class Exllamav3HF(PreTrainedModel, GenerationMixin):

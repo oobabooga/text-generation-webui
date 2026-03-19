@@ -546,10 +546,8 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
                     yield f"Failed to load {selected_model}."
                     return
             except Exception:
-                exc = traceback.format_exc()
-                logger.error('Failed to reload the model.')
-                print(exc)
-                yield exc.replace('\n', '\n\n')
+                logger.exception('Failed to reload the model.')
+                yield traceback.format_exc().replace('\n', '\n\n')
                 return
 
     # == Start prepping the model itself ==

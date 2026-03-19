@@ -222,10 +222,8 @@ def load_model_wrapper(selected_model, loader, autoload=False):
             else:
                 yield f"Failed to load `{selected_model}`."
         except Exception:
-            exc = traceback.format_exc()
-            logger.error('Failed to load the model.')
-            print(exc)
-            yield exc.replace('\n', '\n\n')
+            logger.exception('Failed to load the model.')
+            yield traceback.format_exc().replace('\n', '\n\n')
 
 
 def load_lora_wrapper(selected_loras):

@@ -1,7 +1,6 @@
 import importlib
 import importlib.util
 import sys
-import traceback
 from functools import partial
 from inspect import signature
 from pathlib import Path
@@ -75,8 +74,7 @@ def load_extensions():
             raise
 
         except Exception:
-            logger.error(f'Failed to load the extension "{name}".')
-            traceback.print_exc()
+            logger.exception(f'Failed to load the extension "{name}".')
 
 
 # This iterator returns the extensions in the order specified in the command-line

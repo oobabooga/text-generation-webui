@@ -4,7 +4,6 @@ import html
 import pprint
 import random
 import time
-import traceback
 
 import numpy as np
 
@@ -477,7 +476,7 @@ def generate_reply_HF(question, original_question, state, stopping_strings=None,
                     yield cumulative_reply
 
     except Exception:
-        traceback.print_exc()
+        logger.exception("Failed to generate reply (HF)")
     finally:
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
@@ -510,7 +509,7 @@ def generate_reply_custom(question, original_question, state, stopping_strings=N
                 yield reply
 
     except Exception:
-        traceback.print_exc()
+        logger.exception("Failed to generate reply (custom)")
     finally:
         t1 = time.time()
 
