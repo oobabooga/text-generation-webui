@@ -288,6 +288,11 @@ if __name__ == "__main__":
         if extension not in shared.args.extensions:
             shared.args.extensions.append(extension)
 
+    # Handle --extensions openai from the command line (moved to modules/api)
+    if shared.args.extensions and 'openai' in shared.args.extensions:
+        shared.args.extensions.remove('openai')
+        shared.args.api = True
+
     # Load image model if specified via CLI
     if shared.args.image_model:
         logger.info(f"Loading image model: {shared.args.image_model}")
