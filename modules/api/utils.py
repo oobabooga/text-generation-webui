@@ -50,4 +50,4 @@ def _start_cloudflared(port: int, tunnel_id: str, max_attempts: int = 3, on_star
             traceback.print_exc()
             time.sleep(3)
 
-        raise Exception('Could not start cloudflared.')
+    raise Exception('Could not start cloudflared.')
