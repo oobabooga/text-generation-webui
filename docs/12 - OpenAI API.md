@@ -19,7 +19,7 @@ Add `--api` to your command-line flags.
 
 ### Examples
 
-For the documentation with all the endpoints, parameters and their types, consult `http://127.0.0.1:5000/docs` or the [typing.py](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/openai/typing.py) file.
+For the documentation with all the endpoints, parameters and their types, consult `http://127.0.0.1:5000/docs` or the [typing.py](https://github.com/oobabooga/text-generation-webui/blob/main/modules/api/typing.py) file.
 
 The official examples in the [OpenAI documentation](https://platform.openai.com/docs/api-reference) should also work, and the same parameters apply (although the API here has more optional parameters).
 
@@ -489,16 +489,6 @@ The following environment variables can be used (they take precedence over every
 | `OPENEDAI_DEBUG`          | Enable debugging (set to 1)    | 1                          |
 | `OPENEDAI_EMBEDDING_MODEL` | Embedding model (if applicable) |          sentence-transformers/all-mpnet-base-v2                  |
 | `OPENEDAI_EMBEDDING_DEVICE` | Embedding device (if applicable) |           cuda                 |
-
-#### Persistent settings with `settings.yaml`
-
-You can also set the following variables in your `settings.yaml` file:
-
-```
-openai-embedding_device: cuda
-openai-embedding_model: "sentence-transformers/all-mpnet-base-v2"
-openai-debug: 1
-```
 
 ### Third-party application setup
 

@@ -32,8 +32,7 @@ def load_extensions():
         if name not in available_extensions:
             continue
 
-        if name != 'api':
-            logger.info(f'Loading the extension "{name}"')
+        logger.info(f'Loading the extension "{name}"')
 
         try:
             # Prefer user extension, fall back to system extension

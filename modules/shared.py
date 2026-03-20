@@ -156,7 +156,7 @@ group.add_argument('--portable', action='store_true', help='Hide features not av
 
 # API
 group = parser.add_argument_group('API')
-group.add_argument('--api', action='store_true', help='Enable the API extension.')
+group.add_argument('--api', action='store_true', help='Enable the API server.')
 group.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudflare.')
 group.add_argument('--public-api-id', type=str, help='Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.', default=None)
 group.add_argument('--api-port', type=int, default=5000, help='The listening port for the API.')
@@ -435,16 +435,6 @@ def fix_loader_name(name):
         return 'TensorRT-LLM'
 
 
-def add_extension(name, last=False):
-    if args.extensions is None:
-        args.extensions = [name]
-    elif last:
-        args.extensions = [x for x in args.extensions if x != name]
-        args.extensions.append(name)
-    elif name not in args.extensions:
-        args.extensions.append(name)
-
-
 def is_chat():
     return True
 
@@ -463,10 +453,6 @@ def load_user_config():
 
 
 args.loader = fix_loader_name(args.loader)
-
-# Activate the API extension
-if args.api or args.public_api:
-    add_extension('openai', last=True)
 
 # Load model-specific settings
 p = Path(f'{args.model_dir}/config.yaml')

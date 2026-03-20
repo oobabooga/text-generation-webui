@@ -3,8 +3,8 @@ import os
 import numpy as np
 from transformers import AutoModel
 
-from extensions.openai.errors import ServiceUnavailableError
-from extensions.openai.utils import debug_msg, float_list_to_base64
+from .errors import ServiceUnavailableError
+from .utils import debug_msg, float_list_to_base64
 from modules.logging_colors import logger
 
 embeddings_params_initialized = False
@@ -17,14 +17,12 @@ def initialize_embedding_params():
     '''
     global embeddings_params_initialized
     if not embeddings_params_initialized:
-        from extensions.openai.script import params
-
         global st_model, embeddings_model, embeddings_device
 
-        st_model = os.environ.get("OPENEDAI_EMBEDDING_MODEL", params.get('embedding_model', 'all-mpnet-base-v2'))
+        st_model = os.environ.get("OPENEDAI_EMBEDDING_MODEL", 'sentence-transformers/all-mpnet-base-v2')
         embeddings_model = None
         # OPENEDAI_EMBEDDING_DEVICE: auto (best or cpu), cpu, cuda, ipu, xpu, mkldnn, opengl, opencl, ideep, hip, ve, fpga, ort, xla, lazy, vulkan, mps, meta, hpu, mtia, privateuseone
-        embeddings_device = os.environ.get("OPENEDAI_EMBEDDING_DEVICE", params.get('embedding_device', 'cpu'))
+        embeddings_device = os.environ.get("OPENEDAI_EMBEDDING_DEVICE", 'cpu')
         if embeddings_device.lower() == 'auto':
             embeddings_device = None
 

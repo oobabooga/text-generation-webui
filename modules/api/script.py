@@ -13,16 +13,15 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
-from pydub import AudioSegment
 from sse_starlette import EventSourceResponse
 from starlette.concurrency import iterate_in_threadpool
 
-import extensions.openai.completions as OAIcompletions
-import extensions.openai.logits as OAIlogits
-import extensions.openai.models as OAImodels
-from extensions.openai.tokens import token_count, token_decode, token_encode
-from extensions.openai.errors import OpenAIError
-from extensions.openai.utils import _start_cloudflared
+import modules.api.completions as OAIcompletions
+import modules.api.logits as OAIlogits
+import modules.api.models as OAImodels
+from .tokens import token_count, token_decode, token_encode
+from .errors import OpenAIError
+from .utils import _start_cloudflared
 from modules import shared
 from modules.logging_colors import logger
 from modules.models import unload_model
@@ -52,12 +51,6 @@ from .typing import (
     TokenCountResponse,
     to_dict
 )
-
-params = {
-    'embedding_device': 'cpu',
-    'embedding_model': 'sentence-transformers/all-mpnet-base-v2',
-    'debug': 0
-}
 
 
 async def _wait_for_disconnect(request: Request, stop_event: threading.Event):
@@ -244,6 +237,7 @@ def handle_billing_usage():
 @app.post('/v1/audio/transcriptions', dependencies=check_key)
 async def handle_audio_transcription(request: Request):
     import speech_recognition as sr
+    from pydub import AudioSegment
 
     r = sr.Recognizer()
 
@@ -275,7 +269,7 @@ async def handle_audio_transcription(request: Request):
 
 @app.post('/v1/images/generations', response_model=ImageGenerationResponse, dependencies=check_key)
 async def handle_image_generation(request_data: ImageGenerationRequest):
-    import extensions.openai.images as OAIimages
+    import modules.api.images as OAIimages
 
     response = await asyncio.to_thread(OAIimages.generations, request_data)
     return JSONResponse(response)
@@ -283,7 +277,7 @@ async def handle_image_generation(request_data: ImageGenerationRequest):
 
 @app.post("/v1/embeddings", response_model=EmbeddingsResponse, dependencies=check_key)
 async def handle_embeddings(request: Request, request_data: EmbeddingsRequest):
-    import extensions.openai.embeddings as OAIembeddings
+    import modules.api.embeddings as OAIembeddings
 
     input = request_data.input
     if not input:
@@ -298,7 +292,7 @@ async def handle_embeddings(request: Request, request_data: EmbeddingsRequest):
 
 @app.post("/v1/moderations", dependencies=check_key)
 async def handle_moderations(request: Request):
-    import extensions.openai.moderations as OAImoderations
+    import modules.api.moderations as OAImoderations
 
     body = await request.json()
     input = body["input"]
@@ -500,7 +494,15 @@ def run_server():
     uvicorn.run(app, host=server_addrs, port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile, access_log=False)
 
 
+_server_started = False
+
+
 def setup():
+    global _server_started
+    if _server_started:
+        return
+
+    _server_started = True
     if shared.args.nowebui:
         run_server()
     else:

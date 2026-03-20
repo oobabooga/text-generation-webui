@@ -9,9 +9,9 @@ import tiktoken
 import yaml
 from pydantic import ValidationError
 
-from extensions.openai.errors import InvalidRequestError
-from extensions.openai.typing import ToolDefinition
-from extensions.openai.utils import debug_msg
+from .errors import InvalidRequestError
+from .typing import ToolDefinition
+from .utils import debug_msg
 from modules.tool_parsing import get_tool_call_id, parse_tool_call, detect_tool_call_format
 from modules import shared
 from modules.reasoning import extract_reasoning
