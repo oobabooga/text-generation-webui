@@ -34,7 +34,7 @@ class Iteratorize:
 
         def gentask():
             try:
-                ret = self.mfunc(callback=_callback, *args, **self.kwargs)
+                ret = self.mfunc(callback=_callback, *self.args, **self.kwargs)
             except StopNowException:
                 pass
             except Exception:
