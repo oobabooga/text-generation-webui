@@ -23,7 +23,7 @@ def float_list_to_base64(float_array: np.ndarray) -> str:
 
 
 def debug_msg(*args, **kwargs):
-    if os.environ.get("OPENEDAI_DEBUG", 0):
+    if int(os.environ.get("OPENEDAI_DEBUG", 0)):
         print(*args, **kwargs)
 
 
