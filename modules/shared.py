@@ -175,7 +175,7 @@ group.add_argument('--dynatemp-high', type=float, default=_d['dynatemp_high'], m
 group.add_argument('--dynatemp-exponent', type=float, default=_d['dynatemp_exponent'], metavar='N', help='Dynamic temperature exponent')
 group.add_argument('--smoothing-factor', type=float, default=_d['smoothing_factor'], metavar='N', help='Smoothing factor')
 group.add_argument('--smoothing-curve', type=float, default=_d['smoothing_curve'], metavar='N', help='Smoothing curve')
-group.add_argument('--top-p', type=float, default=_d['top_p'], metavar='N', help='Top P')
+group.add_argument('--top-p', type=float, default=0.95, metavar='N', help='Top P')
 group.add_argument('--top-k', type=int, default=_d['top_k'], metavar='N', help='Top K')
 group.add_argument('--min-p', type=float, default=_d['min_p'], metavar='N', help='Min P')
 group.add_argument('--top-n-sigma', type=float, default=_d['top_n_sigma'], metavar='N', help='Top N Sigma')
