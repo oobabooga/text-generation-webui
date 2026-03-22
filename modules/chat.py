@@ -465,7 +465,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
             add_generation_prompt = False
 
         prompt = renderer(
-            messages=messages_copy,
+            messages=messages,
             add_generation_prompt=add_generation_prompt
         )
 
