@@ -588,8 +588,8 @@ def filter_stderr_with_progress(process_stderr):
                             print(display_line, end=end_char, file=sys.stderr, flush=True)
                             last_was_progress = (progress < 1.0)
 
-                        # skip health check polling and parser warnings
-                        elif 'log_server_r: request: GET /health' in line or 'No parser definition detected' in line:
+                        # skip noise lines
+                        elif 'log_server_r: request: GET /health' in line or 'No parser definition detected' in line or (last_was_progress and ('memory_seq_rm' in line or 'context checkpoint' in line)):
                             continue
 
                         else:
