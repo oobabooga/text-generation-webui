@@ -1,6 +1,6 @@
-## OpenAI compatible API
+## OpenAI/Anthropic-compatible API
 
-The main API for this project is meant to be a drop-in replacement to the OpenAI API, including Chat and Completions endpoints.
+The main API for this project is meant to be a drop-in replacement for the OpenAI and Anthropic APIs, including Chat, Completions, and Messages endpoints.
 
 * It is 100% offline and private.
 * It doesn't create any logs.

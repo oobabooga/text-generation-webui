@@ -578,15 +578,15 @@ def run_server():
             port,
             shared.args.public_api_id,
             max_attempts=3,
-            on_start=lambda url: logger.info(f'API URL (OpenAI + Anthropic compatible):\n\n{url}/v1\n')
+            on_start=lambda url: logger.info(f'OpenAI/Anthropic-compatible API URL:\n\n{url}/v1\n')
         )
     else:
         url_proto = 'https://' if (ssl_certfile and ssl_keyfile) else 'http://'
         urls = [f'{url_proto}{addr}:{port}/v1' for addr in server_addrs]
         if len(urls) > 1:
-            logger.info('API URLs (OpenAI + Anthropic compatible):\n\n' + '\n'.join(urls) + '\n')
+            logger.info('OpenAI/Anthropic-compatible API URLs:\n\n' + '\n'.join(urls) + '\n')
         else:
-            logger.info('API URL (OpenAI + Anthropic compatible):\n\n' + '\n'.join(urls) + '\n')
+            logger.info('OpenAI/Anthropic-compatible API URL:\n\n' + '\n'.join(urls) + '\n')
 
     # Log API keys
     if shared.args.api_key:
