@@ -449,14 +449,15 @@ def generate_chat_prompt(user_input, state, **kwargs):
         messages.append({"role": "user", "content": "fake user message replace me"})
 
     def make_prompt(messages):
-        messages_copy = copy.deepcopy(messages)
-        last_message = messages_copy[-1].copy()
+        if _continue:
+            messages = copy.deepcopy(messages)
+        last_message = messages[-1].copy()
         if _continue:
             if state['mode'] == 'chat-instruct':
-                messages_copy = messages_copy[:-1]
+                messages = messages[:-1]
             else:
-                messages_copy[-1]["content"] = "fake assistant message replace me"
-                messages_copy.append({"role": "assistant", "content": "this will get deleted"})
+                messages[-1]["content"] = "fake assistant message replace me"
+                messages.append({"role": "assistant", "content": "this will get deleted"})
 
         if state['mode'] != 'chat-instruct':
             add_generation_prompt = (not _continue and not impersonate)
