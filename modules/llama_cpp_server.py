@@ -588,8 +588,11 @@ def filter_stderr_with_progress(process_stderr):
                             print(display_line, end=end_char, file=sys.stderr, flush=True)
                             last_was_progress = (progress < 1.0)
 
-                        # skip noise lines
-                        elif not (line.startswith(('srv ', 'slot ')) or 'log_server_r: request: GET /health' in line or 'No parser definition detected' in line):
+                        # skip health check polling and parser warnings
+                        elif 'log_server_r: request: GET /health' in line or 'No parser definition detected' in line:
+                            continue
+
+                        else:
                             # if we were in progress, finish that line first
                             if last_was_progress:
                                 print(file=sys.stderr)
