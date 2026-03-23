@@ -64,6 +64,4 @@ def moderations(input):
                 'category_scores': category_scores,
             }])
 
-    print(results)
-
     return results

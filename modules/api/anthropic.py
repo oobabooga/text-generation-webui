@@ -326,7 +326,7 @@ class StreamConverter:
                     "data": json.dumps({
                         "type": "content_block_start",
                         "index": self.block_index,
-                        "content_block": {"type": "thinking", "thinking": ""}
+                        "content_block": {"type": "thinking", "thinking": "", "signature": ""}
                     })
                 })
             events.append({

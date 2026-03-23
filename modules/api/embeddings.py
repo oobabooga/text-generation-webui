@@ -39,14 +39,14 @@ def load_embedding_model(model: str):
     initialize_embedding_params()
     global embeddings_device, embeddings_model
     try:
-        print(f"Try embedding model: {model} on {embeddings_device}")
+        logger.info(f"Try embedding model: {model} on {embeddings_device}")
         if 'jina-embeddings' in model:
             embeddings_model = AutoModel.from_pretrained(model, trust_remote_code=True)  # trust_remote_code is needed to use the encode method
             embeddings_model = embeddings_model.to(embeddings_device)
         else:
             embeddings_model = SentenceTransformer(model, device=embeddings_device)
 
-        print(f"Loaded embedding model: {model}")
+        logger.info(f"Loaded embedding model: {model}")
     except Exception as e:
         embeddings_model = None
         raise ServiceUnavailableError(f"Error: Failed to load embedding model: {model}", internal_message=repr(e))

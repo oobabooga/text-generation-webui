@@ -506,12 +506,17 @@ async def handle_load_model(request_data: LoadModelRequest):
         return JSONResponse(content="OK")
     except Exception:
         traceback.print_exc()
-        raise HTTPException(status_code=400, detail="Failed to load the model.")
+        raise HTTPException(status_code=500, detail="Failed to load the model.")
 
 
 @app.post("/v1/internal/model/unload", dependencies=check_admin_key)
 async def handle_unload_model():
-    unload_model()
+    try:
+        unload_model()
+        return JSONResponse(content="OK")
+    except Exception:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Failed to unload the model.")
 
 
 @app.get("/v1/internal/lora/list", response_model=LoraListResponse, dependencies=check_admin_key)
