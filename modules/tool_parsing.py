@@ -2,6 +2,8 @@ import json
 import random
 import re
 
+from modules.reasoning import extract_reasoning
+
 
 def _make_tool_call(name, arguments):
     return {"type": "function", "function": {"name": name, "arguments": arguments}}
@@ -41,6 +43,10 @@ def streaming_tool_buffer_check(text, markers=None, tool_names=None, check_bare_
         check_bare_names: Whether to do partial-prefix matching on tool
                           names (for models with unknown template format).
     '''
+    # Strip thinking blocks so tool-call syntax inside <think> doesn't
+    # trigger false positives.
+    _, text = extract_reasoning(text)
+
     # Full marker found in text → buffer permanently.
     # Always checks ALL known markers regardless of template (cheap safety net).
     for marker in TOOL_CALL_OPENING_MARKERS:
@@ -543,12 +549,19 @@ def detect_tool_call_format(template_str):
 
 
 def parse_tool_call(answer: str, tool_names: list[str], return_prefix: bool = False, parsers: list = None):
+    # Strip thinking blocks so tool-call syntax inside <think> is ignored.
+    original_answer = answer
+    _, answer = extract_reasoning(answer)
+    # Offset between original and stripped text, used to map start_pos
+    # back to the original string when returning a prefix.
+    reasoning_offset = len(original_answer) - len(answer)
+
     matches = []
     start_pos = None
 
     def _return(matches, start_pos):
         if return_prefix:
-            prefix = answer[:start_pos] if matches and start_pos is not None else ''
+            prefix = original_answer[:start_pos + reasoning_offset] if matches and start_pos is not None else ''
             return matches, prefix
         return matches
 
