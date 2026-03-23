@@ -115,6 +115,7 @@ if not shared.args.old_colors:
         input_shadow_focus='none',
         input_shadow_focus_dark='none',
         button_large_radius='0.75rem',
+        button_small_radius='0.75rem',
         button_large_padding='6px 12px',
         input_radius='0.5rem',
         block_radius='0.375rem',
