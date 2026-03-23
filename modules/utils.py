@@ -136,32 +136,35 @@ def get_available_models():
 
     model_dir = Path(shared.args.model_dir)
 
-    # Find top-level directories containing GGUF files
+    # Find directories with GGUF files
     dirs_with_gguf = set()
-    for gguf_path in gguf_files:
-        path = Path(gguf_path)
-        if len(path.parts) > 0:
-            dirs_with_gguf.add(path.parts[0])
+    for dirpath, _, files in os.walk(model_dir, followlinks=True):
+        for file in files:
+            if file.lower().endswith(".gguf"):
+                rel_path = str(Path(dirpath).relative_to(model_dir))
+                dirs_with_gguf.add(rel_path)
+                break
 
     # Find directories with safetensors files
     dirs_with_safetensors = set()
-    for item in os.listdir(model_dir):
-        item_path = model_dir / item
-        if item_path.is_dir():
-            if any(file.lower().endswith(('.safetensors', '.pt')) for file in os.listdir(item_path) if (item_path / file).is_file()):
-                dirs_with_safetensors.add(item)
+    for dirpath, _, files in os.walk(model_dir, followlinks=True):
+        for file in files:
+            if file.lower().endswith(('.safetensors', '.pt')):
+                rel_path = str(Path(dirpath).relative_to(model_dir))
+                dirs_with_safetensors.add(rel_path)
+                break
 
     # Find valid model directories
     model_dirs = []
-    for item in os.listdir(model_dir):
-        item_path = model_dir / item
-        if not item_path.is_dir():
+    for dirpath, _, files in os.walk(model_dir, followlinks=True):
+        if dirpath == str(model_dir) or not files:
             continue
+        rel_path = str(Path(dirpath).relative_to(model_dir))
 
         # Include directory if it either doesn't contain GGUF files
         # or contains both GGUF and safetensors files
-        if item not in dirs_with_gguf or item in dirs_with_safetensors:
-            model_dirs.append(item)
+        if rel_path not in dirs_with_gguf or rel_path in dirs_with_safetensors:
+            model_dirs.append(rel_path)
 
     model_dirs = sorted(model_dirs, key=natural_keys)
 
