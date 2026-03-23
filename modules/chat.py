@@ -434,6 +434,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
         messages.append({"role": "user", "content": "fake user message replace me"})
 
     def make_prompt(messages):
+        if _continue:
+            messages = copy.deepcopy(messages)
         last_message = messages[-1].copy()
         if _continue:
             if state['mode'] == 'chat-instruct':
