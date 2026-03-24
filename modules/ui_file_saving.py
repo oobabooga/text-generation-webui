@@ -1,8 +1,7 @@
-import traceback
-
 import gradio as gr
 
 from modules import chat, presets, shared, ui, utils
+from modules.logging_colors import logger
 from modules.utils import gradio, sanitize_filename
 
 
@@ -103,7 +102,7 @@ def handle_save_preset_confirm_click(filename, contents):
         output = gr.update(choices=available_presets, value=filename)
     except Exception:
         output = gr.update()
-        traceback.print_exc()
+        logger.exception("Failed to save preset")
 
     return [
         output,
@@ -119,7 +118,7 @@ def handle_save_confirm_click(root_state, filename, contents):
         filename = sanitize_filename(filename)
         utils.save_file(root_state + filename, contents)
     except Exception:
-        traceback.print_exc()
+        logger.exception("Failed to save file")
 
     return None, gr.update(visible=False)
 
@@ -132,7 +131,7 @@ def handle_delete_confirm_click(root_state, filename):
         filename = sanitize_filename(filename)
         utils.delete_file(root_state + filename)
     except Exception:
-        traceback.print_exc()
+        logger.exception("Failed to delete file")
 
     return None, gr.update(visible=False)
 
@@ -144,7 +143,7 @@ def handle_save_character_confirm_click(name2, greeting, context, character_pict
         output = gr.update(choices=available_characters, value=filename)
     except Exception:
         output = gr.update()
-        traceback.print_exc()
+        logger.exception("Failed to save character")
 
     return [
         output,
@@ -159,7 +158,7 @@ def handle_delete_character_confirm_click(character):
         output = chat.update_character_menu_after_deletion(index)
     except Exception:
         output = gr.update()
-        traceback.print_exc()
+        logger.exception("Failed to delete character")
 
     return [
         output,
@@ -214,7 +213,7 @@ def handle_save_user_confirm_click(name1, user_bio, your_picture, filename):
         output = gr.update(choices=available_users, value=filename)
     except Exception:
         output = gr.update()
-        traceback.print_exc()
+        logger.exception("Failed to save user")
 
     return [
         output,
@@ -229,7 +228,7 @@ def handle_delete_user_confirm_click(user):
         output = chat.update_user_menu_after_deletion(index)
     except Exception:
         output = gr.update()
-        traceback.print_exc()
+        logger.exception("Failed to delete user")
 
     return [
         output,

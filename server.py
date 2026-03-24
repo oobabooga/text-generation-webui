@@ -106,6 +106,11 @@ def create_interface():
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
         extensions_module.load_extensions()
 
+    # Start the API server if enabled
+    if shared.args.api or shared.args.public_api:
+        from modules.api.script import setup as api_setup
+        api_setup()
+
     # Force some events to be triggered on page load
     shared.persistent_interface_state.update({
         'mode': shared.settings['mode'],
@@ -273,9 +278,20 @@ if __name__ == "__main__":
     # Activate the extensions listed on settings.yaml
     extensions_module.available_extensions = utils.get_available_extensions()
     for extension in shared.settings['default_extensions']:
+        # The openai extension was moved to modules/api and is now
+        # activated with --api. Treat it as an alias for backwards compat.
+        if extension == 'openai':
+            shared.args.api = True
+            continue
+
         shared.args.extensions = shared.args.extensions or []
         if extension not in shared.args.extensions:
             shared.args.extensions.append(extension)
+
+    # Handle --extensions openai from the command line (moved to modules/api)
+    if shared.args.extensions and 'openai' in shared.args.extensions:
+        shared.args.extensions.remove('openai')
+        shared.args.api = True
 
     # Load image model if specified via CLI
     if shared.args.image_model:
@@ -337,6 +353,10 @@ if __name__ == "__main__":
         shared.args.extensions = [x for x in (shared.args.extensions or []) if x != 'gallery']
         if shared.args.extensions:
             extensions_module.load_extensions()
+
+        if shared.args.api or shared.args.public_api:
+            from modules.api.script import setup as api_setup
+            api_setup()
     else:
         # Launch the web UI
         create_interface()

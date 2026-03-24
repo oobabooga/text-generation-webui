@@ -48,7 +48,7 @@ def download_web_page(url, timeout=10, include_links=False):
     try:
         _validate_url(url)
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
         }
         max_redirects = 5
         for _ in range(max_redirects):
@@ -82,8 +82,8 @@ def perform_web_search(query, num_pages=3, max_workers=5, timeout=10, fetch_cont
         search_url = f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
 
         agents = [
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
         ]
 
         response = requests.get(search_url, headers={'User-Agent': random.choice(agents)}, timeout=timeout)

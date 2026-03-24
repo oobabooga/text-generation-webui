@@ -23,8 +23,7 @@ def float_list_to_base64(float_array: np.ndarray) -> str:
 
 
 def debug_msg(*args, **kwargs):
-    from extensions.openai.script import params
-    if os.environ.get("OPENEDAI_DEBUG", params.get('debug', 0)):
+    if int(os.environ.get("OPENEDAI_DEBUG", 0)):
         print(*args, **kwargs)
 
 
@@ -51,4 +50,4 @@ def _start_cloudflared(port: int, tunnel_id: str, max_attempts: int = 3, on_star
             traceback.print_exc()
             time.sleep(3)
 
-        raise Exception('Could not start cloudflared.')
+    raise Exception('Could not start cloudflared.')

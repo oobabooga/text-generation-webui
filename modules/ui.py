@@ -66,7 +66,8 @@ theme = gr.themes.Default(
 if not shared.args.old_colors:
     theme = theme.set(
         # General Colors
-        border_color_primary='#c5c5d2',
+        border_color_primary='#d2d2d8',
+        block_border_color='transparent',
         body_text_color_subdued='#484848',
         background_fill_secondary='#eaeaea',
         background_fill_secondary_dark='var(--selected-item-color-dark, #282930)',
@@ -77,6 +78,12 @@ if not shared.args.old_colors:
         body_text_color='rgb(64, 64, 64)',
         button_secondary_background_fill="white",
         button_secondary_border_color="var(--border-color-primary)",
+        block_title_text_color='*body_text_color',
+        button_primary_background_fill='#374151',
+        button_primary_background_fill_hover='#4b5563',
+        button_primary_background_fill_hover_dark='rgba(255, 255, 255, 0.05)',
+        button_primary_border_color='#374151',
+        button_primary_text_color='white',
         input_shadow="none",
         button_shadow_hover="none",
 
@@ -85,11 +92,11 @@ if not shared.args.old_colors:
         checkbox_background_color_dark='var(--darker-gray, #1C1C1D)',
         block_background_fill_dark='transparent',
         block_border_color_dark='transparent',
-        input_border_color_dark='var(--border-color-dark, #525252)',
-        input_border_color_focus_dark='var(--border-color-dark, #525252)',
-        checkbox_border_color_dark='var(--border-color-dark, #525252)',
-        border_color_primary_dark='var(--border-color-dark, #525252)',
-        button_secondary_border_color_dark='var(--border-color-dark, #525252)',
+        input_border_color_dark='var(--border-color-dark)',
+        input_border_color_focus_dark='var(--border-color-dark)',
+        checkbox_border_color_dark='rgba(255, 255, 255, 0.2)',
+        border_color_primary_dark='var(--border-color-dark)',
+        button_secondary_border_color_dark='var(--border-color-dark)',
         body_background_fill_dark='var(--dark-gray, #212125)',
         button_primary_background_fill_dark='transparent',
         button_secondary_background_fill_dark='transparent',
@@ -107,10 +114,12 @@ if not shared.args.old_colors:
         block_shadow_dark='none',
         input_shadow_focus='none',
         input_shadow_focus_dark='none',
-        button_large_radius='0.375rem',
+        button_large_radius='0.75rem',
+        button_small_radius='0.75rem',
         button_large_padding='6px 12px',
-        input_radius='0.375rem',
-        block_radius='0',
+        input_radius='0.5rem',
+        block_radius='0.375rem',
+        button_transition='background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease',
     )
 
 if (shared.user_data_dir / "notification.mp3").exists():
@@ -291,7 +300,7 @@ def apply_interface_values(state, use_persistent=False):
 
     elements = list_interface_input_elements()
 
-    if len(state) == 0:
+    if not state:
         return [gr.update() for k in elements]  # Dummy, do nothing
     else:
         return [state[k] if k in state else gr.update() for k in elements]
@@ -299,9 +308,8 @@ def apply_interface_values(state, use_persistent=False):
 
 def save_settings(state, preset, extensions_list, show_controls, theme_state, manual_save=False):
     output = copy.deepcopy(shared.settings)
-    exclude = []
     for k in state:
-        if k in shared.settings and k not in exclude:
+        if k in shared.settings:
             output[k] = state[k]
 
     if preset:
@@ -315,7 +323,7 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
     output['custom_stopping_strings'] = output.get('custom_stopping_strings') or ''
     output['custom_token_bans'] = output.get('custom_token_bans') or ''
     output['show_controls'] = show_controls
-    output['dark_theme'] = True if theme_state == 'dark' else False
+    output['dark_theme'] = theme_state == 'dark'
     output.pop('instruction_template_str')
     output.pop('truncation_length')
 

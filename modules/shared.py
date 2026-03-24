@@ -101,7 +101,7 @@ group.add_argument('--tensor-split', type=str, default=None, help='Split the mod
 group.add_argument('--row-split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
 group.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 group.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
-group.add_argument('--no-kv-offload', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
+group.add_argument('--no-kv-offload', action='store_true', help='Do not offload the K, Q, V to the GPU. This saves VRAM but reduces performance.')
 group.add_argument('--batch-size', type=int, default=1024, help='Maximum number of prompt tokens to batch together when calling llama-server. This is the application level batch size.')
 group.add_argument('--ubatch-size', type=int, default=1024, help='Maximum number of prompt tokens to batch together when calling llama-server. This is the max physical batch size for computation (device level).')
 group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
@@ -109,7 +109,7 @@ group.add_argument('--threads-batch', type=int, default=0, help='Number of threa
 group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
 group.add_argument('--parallel', type=int, default=1, help='Number of parallel request slots. The context size is divided equally among slots. For example, to have 4 slots with 8192 context each, set ctx_size to 32768.')
 group.add_argument('--fit-target', type=str, default='512', help='Target VRAM margin per device for auto GPU layers, comma-separated list of values in MiB. A single value is broadcast across all devices.')
-group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"')
+group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to pass to llama-server. Example: "--jinja --rpc 192.168.1.100:50052"')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
@@ -156,7 +156,7 @@ group.add_argument('--portable', action='store_true', help='Hide features not av
 
 # API
 group = parser.add_argument_group('API')
-group.add_argument('--api', action='store_true', help='Enable the API extension.')
+group.add_argument('--api', action='store_true', help='Enable the API server.')
 group.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudflare.')
 group.add_argument('--public-api-id', type=str, help='Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.', default=None)
 group.add_argument('--api-port', type=int, default=5000, help='The listening port for the API.')
@@ -175,7 +175,7 @@ group.add_argument('--dynatemp-high', type=float, default=_d['dynatemp_high'], m
 group.add_argument('--dynatemp-exponent', type=float, default=_d['dynatemp_exponent'], metavar='N', help='Dynamic temperature exponent')
 group.add_argument('--smoothing-factor', type=float, default=_d['smoothing_factor'], metavar='N', help='Smoothing factor')
 group.add_argument('--smoothing-curve', type=float, default=_d['smoothing_curve'], metavar='N', help='Smoothing curve')
-group.add_argument('--top-p', type=float, default=_d['top_p'], metavar='N', help='Top P')
+group.add_argument('--top-p', type=float, default=0.95, metavar='N', help='Top P')
 group.add_argument('--top-k', type=int, default=_d['top_k'], metavar='N', help='Top K')
 group.add_argument('--min-p', type=float, default=_d['min_p'], metavar='N', help='Min P')
 group.add_argument('--top-n-sigma', type=float, default=_d['top_n_sigma'], metavar='N', help='Top N Sigma')
@@ -435,16 +435,6 @@ def fix_loader_name(name):
         return 'TensorRT-LLM'
 
 
-def add_extension(name, last=False):
-    if args.extensions is None:
-        args.extensions = [name]
-    elif last:
-        args.extensions = [x for x in args.extensions if x != name]
-        args.extensions.append(name)
-    elif name not in args.extensions:
-        args.extensions.append(name)
-
-
 def is_chat():
     return True
 
@@ -453,24 +443,16 @@ def load_user_config():
     '''
     Loads custom model-specific settings
     '''
+    user_config = {}
     if Path(f'{args.model_dir}/config-user.yaml').exists():
         file_content = open(f'{args.model_dir}/config-user.yaml', 'r').read().strip()
-
         if file_content:
             user_config = yaml.safe_load(file_content)
-        else:
-            user_config = {}
-    else:
-        user_config = {}
 
     return user_config
 
 
 args.loader = fix_loader_name(args.loader)
-
-# Activate the API extension
-if args.api or args.public_api:
-    add_extension('openai', last=True)
 
 # Load model-specific settings
 p = Path(f'{args.model_dir}/config.yaml')

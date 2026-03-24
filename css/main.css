@@ -2,8 +2,8 @@
     --darker-gray: #1C1C1D;
     --dark-gray: #212125;
     --light-gray: #2C2E34;
-    --light-theme-gray: #f9fbff;
-    --border-color-dark: #525252;
+    --light-theme-gray: #f0f3fb;
+    --border-color-dark: rgba(255, 255, 255, 0.15);
     --header-width: 112px;
     --selected-item-color-dark: #282930;
 }
@@ -54,7 +54,7 @@ div.svelte-iyf88w {
     height: 39.594px;
     align-self: end;
     line-height: 1em;
-    border-radius: 0.375rem;
+    border-radius: 0.75rem;
     flex: none;
 }
 
@@ -127,7 +127,7 @@ gradio-app > :first-child {
 }
 
 .header_bar {
-    border-right: var(--input-border-width) solid var(--input-border-color);
+    border-right: none;
     margin-bottom: 0;
     overflow-x: scroll;
     text-wrap: nowrap;
@@ -150,7 +150,7 @@ gradio-app > :first-child {
 
 .dark .header_bar {
     border: none !important;
-    box-shadow: 0 3px 4px rgba(20 20 20 / 60%);
+    box-shadow: none;
     background-color: #8080802b;
 }
 
@@ -268,17 +268,17 @@ button {
 .dark #image-history-gallery > :nth-child(2)::-webkit-scrollbar-thumb,
 .dark #image-history-gallery > :nth-child(2)::-webkit-scrollbar-thumb:hover {
     background: rgb(255 255 255 / 6.25%);
-    border-radius: 10px;
+    border-radius: 30px;
 }
 
 .pretty_scrollbar::-webkit-resizer,
 #image-history-gallery > :nth-child(2)::-webkit-resizer {
-    background: #c5c5d2;
+    background: #d2d2d8;
 }
 
 .dark .pretty_scrollbar::-webkit-resizer,
 .dark #image-history-gallery > :nth-child(2)::-webkit-resizer {
-    background: #ccc;
+    background: rgb(255 255 255 / 10%);
     border-radius: 10px;
 }
 
@@ -582,10 +582,28 @@ audio {
 
 #chat-input textarea {
     background: #f3f4f6;
-    padding: 0.65rem 2.5rem;
-    border: 0;
-    box-shadow: 0;
-    border-radius: 8px;
+    padding: 0.675rem 2.5rem 0.6rem;
+    margin-top: 0.15rem;
+    border: 1px solid #d2d2d8;
+    border-radius: 1.5rem;
+    overflow-y: auto !important;
+}
+
+#chat-input textarea::-webkit-scrollbar {
+    width: 8px;
+}
+
+#chat-input textarea::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#chat-input textarea::-webkit-scrollbar-thumb {
+    background: var(--neutral-300);
+    border-radius: 30px;
+}
+
+.dark #chat-input textarea::-webkit-scrollbar-thumb {
+    background: rgb(255 255 255 / 6.25%);
 }
 
 #chat-input textarea::placeholder {
@@ -725,10 +743,12 @@ audio {
     position: absolute;
     bottom: 100%;
     left: 0;
-    box-shadow: 0 0 5px rgb(0 0 0 / 25%);
+    box-shadow: 0 2px 12px rgb(0 0 0 / 15%);
+    border-radius: 0.5rem;
     z-index: 10000;
     min-width: 330px;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .hover-menu button {
@@ -739,6 +759,7 @@ audio {
     margin: 0 !important;
     height: 36px;
     border-color: transparent !important;
+    transition: background-color 0.15s ease;
 }
 
 .hover-menu button:not(#clear-history-confirm) {
@@ -914,7 +935,7 @@ audio {
 .options {
     z-index: 100 !important;
     border: 1px solid var(--input-border-color);
-    border-radius: 0;
+    border-radius: 0.5rem;
 }
 
 /* ----------------------------------------------
@@ -1008,9 +1029,13 @@ audio {
     cursor: pointer;
 }
 
+#past-chats label {
+    transition: background-color 0.15s ease;
+}
+
 #past-chats .selected,
 #past-chats label:hover {
-    background-color: #dbeafe !important;
+    background-color: #c8d8f5 !important;
 }
 
 #past-chats-buttons,
@@ -1166,7 +1191,7 @@ audio {
   Dark theme
 ---------------------------------------------- */
 .dark .header_bar {
-    background-color: var(--darker-gray) !important;
+    background-color: #1a1a1a !important;
 }
 
 .dark .header_bar button.selected {
@@ -1176,7 +1201,7 @@ audio {
 .dark #chat-input textarea {
     background: var(--light-gray);
     color: white !important;
-    border-color: #292c3b;
+    border-color: rgba(255, 255, 255, 0.06);
 }
 
 .dark #chat-input textarea::placeholder {
@@ -1192,6 +1217,7 @@ audio {
 .dark #past-chats-row {
     background-color: var(--darker-gray);
     border: 0 !important;
+    box-shadow: none;
 }
 
 .dark gradio-app .gradio-container.gradio-container-4-37-2 .contain #past-chats .selected,
@@ -1228,11 +1254,11 @@ audio {
   Light theme
 ---------------------------------------------- */
 .header_bar {
-    background-color: var(--light-theme-gray) !important;
+    background-color: #e4e8f0 !important;
 }
 
 .header_bar button.selected {
-    background: #dbeafe;
+    background: #c8d8f5;
 }
 
 #chat-controls,
@@ -1241,11 +1267,11 @@ audio {
 }
 
 .dark #chat-controls {
-    border-left: 1px solid #d9d9d0;
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .dark #past-chats-row {
-    border-right: 1px solid #d9d9d0;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 #past-chats-toggle,
@@ -1364,6 +1390,7 @@ audio {
 
 .tgw-accordion {
     padding: 10px 12px !important;
+    border: 1px solid #d2d2d8;
 }
 
 .dark .tgw-accordion {
@@ -1531,7 +1558,7 @@ strong {
     min-height: 200px;
     max-height: 65vh;
     padding: 10px;
-    border-radius: 5px;
+    border-radius: 0.5rem;
     border: 1px solid #ccc;
     background-color: var(--light-theme-gray);
     font-family: inherit;
@@ -1559,7 +1586,7 @@ strong {
 .edit-control-button {
     padding: 6px 12px;
     border: 1px solid #ccc;
-    border-radius: 4px;
+    border-radius: 0.75rem;
     cursor: pointer;
     background-color: #f8f9fa;
     color: #212529;
@@ -1742,7 +1769,7 @@ button:focus {
 }
 
 .dark .sidebar-vertical-separator {
-    border-bottom: 1px solid rgb(255 255 255 / 10%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 button#swap-height-width {
@@ -1932,7 +1959,7 @@ thead + tbody tr:first-child th { border-top: 1px solid; }
 .dark #tools-group .wrap::-webkit-scrollbar-thumb,
 .dark #tools-group .wrap::-webkit-scrollbar-thumb:hover {
     background: rgb(255 255 255 / 6.25%);
-    border-radius: 10px;
+    border-radius: 30px;
 }
 
 #tools-group .wrap::-webkit-scrollbar-corner {

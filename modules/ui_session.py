@@ -17,7 +17,7 @@ def create_ui():
 
             with gr.Column():
                 gr.Markdown("## Extensions & flags")
-                shared.gradio['save_settings'] = gr.Button(f'Save extensions settings to {shared.user_data_dir}/settings.yaml', elem_classes='refresh-button', interactive=not mu)
+                shared.gradio['save_settings'] = gr.Button(f'Save extensions settings to {shared.user_data_dir}/settings.yaml', interactive=not mu)
                 shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions and restart", interactive=not mu)
                 with gr.Row():
                     with gr.Column():
@@ -95,8 +95,6 @@ def set_interface_arguments(extensions, bool_active):
         setattr(shared.args, k, False)
     for k in bool_active:
         setattr(shared.args, k, True)
-        if k == 'api':
-            shared.add_extension('openai', last=True)
 
     shared.need_restart = True
 

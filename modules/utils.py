@@ -81,14 +81,6 @@ def atoi(text):
     return int(text) if text.isdigit() else text.lower()
 
 
-# Replace multiple string pairs in a string
-def replace_all(text, dic):
-    for i, j in dic.items():
-        text = text.replace(i, j)
-
-    return text
-
-
 def natural_keys(text):
     return [atoi(c) for c in re.split(r'(\d+)', text)]
 

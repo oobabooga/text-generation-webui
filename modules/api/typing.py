@@ -144,7 +144,7 @@ class CompletionResponse(BaseModel):
 
 
 class ChatCompletionRequestParams(BaseModel):
-    messages: List[dict]
+    messages: List[dict] = Field(..., min_length=1)
     model: str | None = Field(default=None, description="Unused parameter. To change the model, use the /v1/internal/model/load endpoint.")
     frequency_penalty: float | None = shared.args.frequency_penalty
     function_call: str | dict | None = Field(default=None, description="Unused parameter.")
@@ -280,6 +280,25 @@ class LoraListResponse(BaseModel):
 
 class LoadLorasRequest(BaseModel):
     lora_names: List[str]
+
+
+class AnthropicRequestParams(BaseModel):
+    model: str | None = None
+    messages: List[dict] = Field(..., min_length=1)
+    max_tokens: int
+    system: str | list | None = None
+    temperature: float | None = shared.args.temperature
+    top_p: float | None = shared.args.top_p
+    stop_sequences: list[str] | None = None
+    stream: bool = False
+    tools: list[dict] | None = None
+    tool_choice: dict | None = None
+    thinking: dict | None = None
+    metadata: dict | None = None
+
+
+class AnthropicRequest(GenerationOptions, AnthropicRequestParams):
+    pass
 
 
 class ImageGenerationRequest(BaseModel):
