@@ -1420,7 +1420,7 @@ audio {
 }
 
 .dark .thinking-block {
-    background-color: var(--selected-item-color-dark);
+    background-color: transparent;
     border: 1px solid var(--input-border-color);
 }
 
