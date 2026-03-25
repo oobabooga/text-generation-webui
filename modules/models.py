@@ -1,4 +1,5 @@
 import sys
+import threading
 import time
 
 import modules.shared as shared
@@ -7,6 +8,15 @@ from modules.models_settings import get_model_metadata
 from modules.utils import resolve_model_path
 
 last_generation_time = time.time()
+active_generation_count = 0
+_generation_count_lock = threading.Lock()
+
+
+def load_model_if_idle_unloaded():
+    global last_generation_time
+    if shared.args.idle_timeout > 0 and shared.model is None and shared.model_name not in [None, 'None']:
+        shared.model, shared.tokenizer = load_model(shared.model_name)
+        last_generation_time = time.time()
 
 
 def load_model(model_name, loader=None):
@@ -158,7 +168,10 @@ def unload_model_if_idle():
     while True:
         shared.generation_lock.acquire()
         try:
-            if time.time() - last_generation_time > shared.args.idle_timeout * 60:
+            with _generation_count_lock:
+                is_active = active_generation_count > 0
+
+            if not is_active and time.time() - last_generation_time > shared.args.idle_timeout * 60:
                 if shared.model is not None:
                     logger.info("Unloading the model for inactivity.")
                     unload_model(keep_model_name=True)
