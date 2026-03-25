@@ -23,14 +23,9 @@ def get_fallback_settings():
 
 def get_model_metadata(model):
     model_path = resolve_model_path(model)
-    model_settings = {}
 
-    # Get settings from user_data/models/config.yaml and user_data/models/config-user.yaml
-    settings = shared.model_config
-    for pat in settings:
-        if re.match(pat.lower(), Path(model).name.lower()):
-            for k in settings[pat]:
-                model_settings[k] = settings[pat][k]
+    # Fallback settings
+    model_settings = get_fallback_settings()
 
     path = model_path / 'config.json'
     if path.exists():

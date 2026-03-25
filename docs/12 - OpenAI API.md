@@ -39,7 +39,7 @@ curl http://127.0.0.1:5000/v1/completions \
 
 #### Chat completions
 
-Works best with instruction-following models. If the "instruction_template" variable is not provided, it will be guessed automatically based on the model name using the regex patterns in `user_data/models/config.yaml`.
+Works best with instruction-following models. If the "instruction_template" variable is not provided, it will be detected automatically from the model metadata.
 
 ```shell
 curl http://127.0.0.1:5000/v1/chat/completions \

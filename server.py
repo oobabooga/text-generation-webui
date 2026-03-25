@@ -18,7 +18,6 @@ import modules.extensions as extensions_module
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model_if_idle
 from modules.models_settings import (
-    get_fallback_settings,
     get_model_metadata,
     update_model_parameters
 )
@@ -270,10 +269,6 @@ if __name__ == "__main__":
 
     # Apply CLI overrides for image model settings (CLI flags take precedence over saved settings)
     shared.apply_image_model_cli_overrides()
-
-    # Fallback settings for models
-    shared.model_config['.*'] = get_fallback_settings()
-    shared.model_config.move_to_end('.*', last=False)  # Move to the beginning
 
     # Activate the extensions listed on settings.yaml
     extensions_module.available_extensions = utils.get_available_extensions()

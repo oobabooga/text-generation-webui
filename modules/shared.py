@@ -454,17 +454,7 @@ def load_user_config():
 
 args.loader = fix_loader_name(args.loader)
 
-# Load model-specific settings
-p = Path(f'{args.model_dir}/config.yaml')
-if p.exists():
-    model_config = yaml.safe_load(open(p, 'r').read())
-else:
-    model_config = {}
-del p
-
-
 # Load custom model-specific settings
 user_config = load_user_config()
 
-model_config = OrderedDict(model_config)
 user_config = OrderedDict(user_config)

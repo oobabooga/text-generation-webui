@@ -112,7 +112,7 @@ Used for talking to an instruction-following model using the prompt format defin
 
 The prompt format is defined by the **Instruction template** parameter in "Parameters" > "Instruction template", which represents a Jinja2 template.
 
-Note that when you load a model in the "Model" tab, the web UI will try to automatically detect its instruction template (if any), and will update the values under "Parameters" > "Instruction template" accordingly. This is done using a set of regular expressions defined in `user_data/models/config.yaml`. This detection is not guaranteed to be accurate. You should check the model card on Hugging Face to see if you are using the correct prompt format.
+Note that when you load a model in the "Model" tab, the web UI will try to automatically detect its instruction template (if any) from the model metadata (e.g. `tokenizer_config.json` or GGUF metadata), and will update the values under "Parameters" > "Instruction template" accordingly. You should check the model card on Hugging Face to see if you are using the correct prompt format.
 
 ### Chat-instruct
 
