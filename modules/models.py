@@ -76,7 +76,7 @@ def load_model(model_name, loader=None):
 
     logger.info(f"Loaded \"{model_name}\" in {(time.time()-t0):.2f} seconds.")
     logger.info(f"LOADER: \"{loader}\"")
-    logger.info(f"TRUNCATION LENGTH: {shared.settings['truncation_length']}")
+    logger.info(f"CONTEXT LENGTH: {shared.settings['truncation_length']}")
     return model, tokenizer
 
 
