@@ -110,6 +110,7 @@ group.add_argument('--numa', action='store_true', help='Activate NUMA task alloc
 group.add_argument('--parallel', type=int, default=1, help='Number of parallel request slots. The context size is divided equally among slots. For example, to have 4 slots with 8192 context each, set ctx_size to 32768.')
 group.add_argument('--fit-target', type=str, default='512', help='Target VRAM margin per device for auto GPU layers, comma-separated list of values in MiB. A single value is broadcast across all devices.')
 group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to pass to llama-server. Example: "--jinja --rpc 192.168.1.100:50052"')
+group.add_argument('--ik', action='store_true', help='Use ik_llama.cpp instead of upstream llama.cpp. To install: build ik_llama.cpp, then delete all files inside <venv>/lib/pythonX.Y/site-packages/llama_cpp_binaries/bin/ and copy or symlink the ik_llama.cpp build outputs into that folder.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')

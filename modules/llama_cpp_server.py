@@ -470,6 +470,10 @@ class LlamaServer:
                         else:
                             cmd.append(f"--{flag_item}")
 
+        # Patch flags for ik_llama.cpp compatibility
+        if shared.args.ik:
+            cmd = _patch_cmd_for_ik(cmd)
+
         env = os.environ.copy()
         if os.name == 'posix':
             current_path = env.get('LD_LIBRARY_PATH', '')
@@ -607,3 +611,36 @@ def filter_stderr_with_progress(process_stderr):
             process_stderr.close()
         except Exception:
             pass
+
+
+def _patch_cmd_for_ik(cmd):
+    """
+    Rewrite upstream llama.cpp flags to ik_llama.cpp equivalents:
+      --no-webui          → --webui none
+      --fit off            → (removed)
+      --fit on / --fit-ctx → --fit (bare flag)
+      --fit-target         → --fit-margin
+    """
+    patched = []
+    i = 0
+    while i < len(cmd):
+        arg = cmd[i]
+
+        if arg == "--no-webui":
+            patched += ["--webui", "none"]
+        elif arg == "--fit" and i + 1 < len(cmd) and cmd[i + 1] in ("on", "off"):
+            val = cmd[i + 1]
+            i += 1
+            if val == "on":
+                patched.append("--fit")
+            # "off" → drop entirely
+        elif arg == "--fit-ctx":
+            i += 1  # skip the value
+        elif arg == "--fit-target":
+            patched.append("--fit-margin")
+        else:
+            patched.append(arg)
+
+        i += 1
+
+    return patched
