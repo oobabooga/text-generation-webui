@@ -671,7 +671,10 @@ def get_stopping_strings(state):
     # Handle GPT-OSS as a special case
     if '<|channel|>final<|message|>' in state['instruction_template_str'] and "<|end|>" in result:
         result.remove("<|end|>")
-        result.append("<|result|>")
+        if '<|result|>' in state['instruction_template_str']:
+            result.append("<|result|>")
+        elif '<|return|>' in state['instruction_template_str']:
+            result.append("<|return|>")
         result = list(set(result))
 
     if shared.args.verbose:
