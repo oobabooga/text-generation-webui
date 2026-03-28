@@ -423,6 +423,15 @@ class Exllamav3Model:
         if logit_bias:
             filters.append(LogitBiasFilter(self.tokenizer, logit_bias))
 
+        # Suppress EOS tokens via logit bias so they are never sampled
+        if state['ban_eos_token']:
+            eos_bias = {}
+            for eos_id in self.config.eos_token_id_list:
+                if eos_id is not None:
+                    eos_bias[str(eos_id)] = float('-inf')
+            if eos_bias:
+                filters.append(LogitBiasFilter(self.tokenizer, eos_bias))
+
         # Logprobs support (OpenAI API)
         logprobs = state.get('logprobs', 0) or 0
         return_top_tokens = logprobs if logprobs > 0 else 0
