@@ -37,5 +37,7 @@ sse-starlette==1.6.5
 tiktoken
 
 # llama.cpp (CPU only)
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.98.0/llama_cpp_binaries-0.98.0+cpu-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.98.0/llama_cpp_binaries-0.98.0+cpu-py3-none-win_amd64.whl; platform_system == "Windows"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.99.0/llama_cpp_binaries-0.99.0+cpu-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.99.0/llama_cpp_binaries-0.99.0+cpu-py3-none-win_amd64.whl; platform_system == "Windows"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.99.0/ik_llama_cpp_binaries-0.99.0+cpu-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.99.0/ik_llama_cpp_binaries-0.99.0+cpu-py3-none-win_amd64.whl; platform_system == "Windows"

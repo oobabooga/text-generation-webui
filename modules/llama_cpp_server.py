@@ -11,7 +11,6 @@ import time
 from pathlib import Path
 from typing import Any, List
 
-import llama_cpp_binaries
 import requests
 
 from modules import shared
@@ -357,7 +356,16 @@ class LlamaServer:
         """Start the llama.cpp server and wait until it's ready."""
         # Determine the server path
         if self.server_path is None:
-            self.server_path = llama_cpp_binaries.get_binary_path()
+            if shared.args.ik:
+                try:
+                    import ik_llama_cpp_binaries
+                except ImportError:
+                    raise ImportError("--ik requires the ik_llama_cpp_binaries package. Install it with: pip install <ik_llama_cpp_binaries wheel URL>")
+
+                self.server_path = ik_llama_cpp_binaries.get_binary_path()
+            else:
+                import llama_cpp_binaries
+                self.server_path = llama_cpp_binaries.get_binary_path()
 
         # Build the command
         cmd = [
@@ -616,10 +624,12 @@ def filter_stderr_with_progress(process_stderr):
 def _patch_cmd_for_ik(cmd):
     """
     Rewrite upstream llama.cpp flags to ik_llama.cpp equivalents:
-      --no-webui          → --webui none
+      --no-webui           → --webui none
       --fit off            → (removed)
       --fit on / --fit-ctx → --fit (bare flag)
       --fit-target         → --fit-margin
+      --cache-reuse        → (removed, unsupported)
+      --swa-full           → (removed, unsupported)
     """
     patched = []
     i = 0
@@ -635,9 +645,14 @@ def _patch_cmd_for_ik(cmd):
                 patched.append("--fit")
             # "off" → drop entirely
         elif arg == "--fit-ctx":
+            patched.append("--fit")
             i += 1  # skip the value
         elif arg == "--fit-target":
             patched.append("--fit-margin")
+        elif arg == "--cache-reuse":
+            i += 1  # skip the value
+        elif arg == "--swa-full":
+            pass  # bare flag, just drop it
         else:
             patched.append(arg)
 
