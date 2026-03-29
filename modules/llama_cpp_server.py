@@ -631,6 +631,12 @@ def _patch_cmd_for_ik(cmd):
       --cache-reuse        → (removed, unsupported)
       --swa-full           → (removed, unsupported)
     """
+    # Add Hadamard KV cache rotation when using quantized cache types.
+    # This significantly improves quantized cache quality (especially q4_0)
+    # and is a no-op for MLA models like DeepSeek.
+    if shared.args.cache_type in ("q8_0", "q4_0"):
+        cmd += ["-khad", "-vhad"]
+
     patched = []
     i = 0
     while i < len(cmd):
