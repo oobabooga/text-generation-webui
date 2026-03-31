@@ -1,10 +1,9 @@
 // Functions for downloading JSON files
 function getCurrentTimestamp() {
   const now = new Date();
-  const timezoneOffset = now.getTimezoneOffset() * 60000; // Convert to milliseconds
+  const timezoneOffset = now.getTimezoneOffset() * 60000; // Convert minutes to milliseconds
   const localTime = new Date(now.getTime() - timezoneOffset);
-  const formattedTimestamp = localTime.toISOString().replace(/[-:]/g, "").slice(0, 15);
-  return formattedTimestamp;
+  return localTime.toISOString().replace(/[-:]/g, "").slice(0, 15);
 }
 
 function saveFile(contents, filename) {
@@ -18,23 +17,18 @@ function saveFile(contents, filename) {
 }
 
 function saveHistory(history, character, mode) {
-  let path = null;
+  let path;
 
   if (["chat", "chat-instruct"].includes(mode) && character && character.trim() !== "") {
     path = `history_${character}_${getCurrentTimestamp()}.json`;
   } else {
-    try {
-      path = `history_${mode}_${getCurrentTimestamp()}.json`;
-    } catch (error) {
-      path = `history_${getCurrentTimestamp()}.json`;
-    }
+    path = `history_${mode || "unknown"}_${getCurrentTimestamp()}.json`;
   }
+
   saveFile(history, path);
 }
 
 function saveSession(session) {
-  let path = null;
-
-  path = `session_${getCurrentTimestamp()}.json`;
+  const path = `session_${getCurrentTimestamp()}.json`;
   saveFile(session, path);
 }

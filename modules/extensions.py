@@ -191,21 +191,19 @@ def _apply_custom_generate_reply():
 
 
 def _apply_custom_css():
-    all_css = ''
-    for extension, _ in iterator():
-        if hasattr(extension, 'custom_css'):
-            all_css += getattr(extension, 'custom_css')()
-
-    return all_css
+    return ''.join(
+        getattr(extension, 'custom_css')()
+        for extension, _ in iterator()
+        if hasattr(extension, 'custom_css')
+    )
 
 
 def _apply_custom_js():
-    all_js = ''
-    for extension, _ in iterator():
-        if hasattr(extension, 'custom_js'):
-            all_js += getattr(extension, 'custom_js')()
-
-    return all_js
+    return ''.join(
+        getattr(extension, 'custom_js')()
+        for extension, _ in iterator()
+        if hasattr(extension, 'custom_js')
+    )
 
 
 def create_extensions_block():
