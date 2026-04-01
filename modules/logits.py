@@ -1,5 +1,4 @@
 import time
-import traceback
 
 import numpy as np
 
@@ -23,7 +22,7 @@ def get_next_logits(*args, **kwargs):
     try:
         result = _get_next_logits(*args, **kwargs)
     except Exception:
-        traceback.print_exc()
+        logger.exception("Failed to get next logits")
         result = None
 
     if needs_lock:
@@ -70,25 +69,21 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
         from modules import sampler_hijack
         from modules.torch_utils import get_device
 
-        is_non_hf_exllamav2 = shared.model.__class__.__name__ == 'Exllamav2Model'
+        is_non_hf_exllamav3 = shared.model.__class__.__name__ == 'Exllamav3Model'
 
         if not use_samplers:
             state = {'stream': True}
 
         if use_samplers:
-            if is_non_hf_exllamav2:
-                # sampling is all done in C++ for exllama, so it is really hard to hijack
-                logger.error("Sampler hijacking is not supported non-Huggingface loaders.")
-                return 'Error: Sampler hijacking is not supported non-Huggingface loaders. Please disable the "Use samplers" option.', previous
-
             state['max_new_tokens'] = 1
             state['auto_max_new_tokens'] = False
+            state.setdefault('stream', True)
             for _ in generate_reply(prompt, state):
                 pass
 
             scores = sampler_hijack.global_scores[-1]
         else:
-            if is_non_hf_exllamav2:
+            if is_non_hf_exllamav3:
                 device = get_device()
                 tokens = shared.tokenizer.encode(prompt)
                 if device:
@@ -104,7 +99,7 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
                 output = shared.model(input_ids=tokens)
                 scores = output['logits'][-1][-1]
 
-        probs = torch.softmax(scores, dim=-1, dtype=torch.float)
+        probs = torch.softmax(scores.detach(), dim=-1, dtype=torch.float)
         topk_values, topk_indices = torch.topk(probs, k=top_logits, largest=True, sorted=True)
         if hasattr(shared.tokenizer, 'convert_ids_to_tokens'):
             tokens = [shared.tokenizer.convert_ids_to_tokens(int(i)) for i in topk_indices]
@@ -119,7 +114,7 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
                 if isinstance(key, bytes):
                     try:
                         key = key.decode()
-                    except:
+                    except Exception:
                         key = key.decode('latin')
 
                 output[key] = row[0]

@@ -1,0 +1,10 @@
+[
+    {"messages": [{"role": "user", "content": "What is the capital of France?"}, {"role": "assistant", "content": "The capital of France is Paris."}]},
+    {"messages": [{"role": "user", "content": "What is 2+2?"}, {"role": "assistant", "content": "2+2 equals 4."}]},
+    {"messages": [{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": "Name a color."}, {"role": "assistant", "content": "Blue is a color."}, {"role": "user", "content": "Another one?"}, {"role": "assistant", "content": "Red is also a color."}]},
+    {"messages": [{"role": "user", "content": "What is the sun?"}, {"role": "assistant", "content": "The sun is a star at the center of our solar system."}]},
+    {"messages": [{"role": "user", "content": "Say hello."}, {"role": "assistant", "content": "Hello! How can I help you today?"}]},
+    {"messages": [{"role": "user", "content": "What is water?"}, {"role": "assistant", "content": "Water is a chemical compound with the formula H2O."}]},
+    {"messages": [{"role": "user", "content": "Name a fruit."}, {"role": "assistant", "content": "An apple is a fruit."}]},
+    {"messages": [{"role": "user", "content": "What is gravity?"}, {"role": "assistant", "content": "Gravity is a fundamental force that attracts objects with mass toward each other."}]}
+]

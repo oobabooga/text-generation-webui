@@ -4,6 +4,7 @@
     display: grid;
     align-items: start;
     grid-template-columns: 60px minmax(0, 1fr);
+    width: min(100%, calc(724px + 60px + 90px));
     padding-bottom: 21px;
     padding-top: 7px;
     font-size: 18px;
@@ -86,10 +87,8 @@
     border-radius: 20px;
 }
 
-.message-body p {
-    margin-bottom: 0 !important;
+.message-body p, .message-body li {
     font-size: 18px !important;
-    line-height: 1.428571429 !important;
     color: rgb(243 244 246) !important;
     text-shadow: 2px 2px 2px rgb(0 0 0);
     font-weight: 500;
@@ -127,7 +126,7 @@
         padding-left: 0;
     }
 
-    .message-body p {
+    .message-body p, .message-body li {
         font-size: 16px !important;
     }
 

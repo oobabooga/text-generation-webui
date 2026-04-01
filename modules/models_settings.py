@@ -1,32 +1,28 @@
 import functools
 import json
 import re
-import subprocess
 from math import floor
 from pathlib import Path
 
-import gradio as gr
 import yaml
 
-from modules import chat, loaders, metadata_gguf, shared, ui
+from modules import loaders, metadata_gguf, shared
+from modules.logging_colors import logger
+from modules.utils import resolve_model_path
 
 
 def get_fallback_settings():
     return {
         'bf16': False,
-        'use_eager_attention': False,
-        'ctx_size': 2048,
-        'rope_freq_base': 0,
-        'compress_pos_emb': 1,
-        'alpha_value': 1,
+        'ctx_size': 8192,
         'truncation_length': shared.settings['truncation_length'],
         'truncation_length_info': shared.settings['truncation_length'],
         'skip_special_tokens': shared.settings['skip_special_tokens'],
-        'custom_stopping_strings': shared.settings['custom_stopping_strings'],
     }
 
 
 def get_model_metadata(model):
+    model_path = resolve_model_path(model)
     model_settings = {}
 
     # Get settings from user_data/models/config.yaml and user_data/models/config-user.yaml
@@ -36,9 +32,10 @@ def get_model_metadata(model):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
-    path = Path(f'{shared.args.model_dir}/{model}/config.json')
+    path = model_path / 'config.json'
     if path.exists():
-        hf_metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+        with open(path, 'r', encoding='utf-8') as f:
+            hf_metadata = json.loads(f.read())
     else:
         hf_metadata = None
 
@@ -52,82 +49,105 @@ def get_model_metadata(model):
 
     # GGUF metadata
     if model_settings['loader'] == 'llama.cpp':
-        path = Path(f'{shared.args.model_dir}/{model}')
+        path = model_path
         if path.is_file():
             model_file = path
         else:
-            model_file = list(path.glob('*.gguf'))[0]
+            gguf_files = list(path.glob('*.gguf'))
+            if not gguf_files:
+                error_msg = f"No .gguf models found in directory: {path}"
+                logger.error(error_msg)
+                raise FileNotFoundError(error_msg)
+
+            model_file = gguf_files[0]
 
         metadata = load_gguf_metadata_with_cache(model_file)
 
         for k in metadata:
-            if k.endswith('context_length'):
-                model_settings['ctx_size'] = min(metadata[k], 8192)
+            if k.endswith('.context_length'):
+                model_settings['ctx_size'] = 0
                 model_settings['truncation_length_info'] = metadata[k]
-            elif k.endswith('rope.freq_base'):
-                model_settings['rope_freq_base'] = metadata[k]
-            elif k.endswith('rope.scale_linear'):
-                model_settings['compress_pos_emb'] = metadata[k]
-            elif k.endswith('rope.scaling.factor'):
-                model_settings['compress_pos_emb'] = metadata[k]
-            elif k.endswith('block_count'):
-                model_settings['gpu_layers'] = metadata[k] + 1
+            elif k.endswith('.block_count'):
+                model_settings['gpu_layers'] = -1
                 model_settings['max_gpu_layers'] = metadata[k] + 1
 
         if 'tokenizer.chat_template' in metadata:
             template = metadata['tokenizer.chat_template']
-            eos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.eos_token_id']]
+            if 'tokenizer.ggml.eos_token_id' in metadata:
+                eos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.eos_token_id']]
+            else:
+                eos_token = ""
+
             if 'tokenizer.ggml.bos_token_id' in metadata:
                 bos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.bos_token_id']]
             else:
                 bos_token = ""
 
-            template = template.replace('eos_token', "'{}'".format(eos_token))
-            template = template.replace('bos_token', "'{}'".format(bos_token))
+            shared.bos_token = bos_token
+            shared.eos_token = eos_token
 
+            template = re.sub(r"\{\{-?\s*raise_exception\(.*?\)\s*-?\}\}", "", template, flags=re.DOTALL)
             template = re.sub(r'raise_exception\([^)]*\)', "''", template)
-            template = re.sub(r'{% if add_generation_prompt %}.*', '', template, flags=re.DOTALL)
             model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
             model_settings['instruction_template_str'] = template
 
     else:
         # Transformers metadata
         if hf_metadata is not None:
-            metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+            metadata = hf_metadata
             if 'pretrained_config' in metadata:
                 metadata = metadata['pretrained_config']
 
             for k in ['max_position_embeddings', 'model_max_length', 'max_seq_len']:
                 if k in metadata:
-                    model_settings['truncation_length'] = metadata[k]
-                    model_settings['truncation_length_info'] = metadata[k]
-                    model_settings['ctx_size'] = min(metadata[k], 8192)
+                    value = metadata[k]
+                elif k in metadata.get('text_config', {}):
+                    value = metadata['text_config'][k]
+                else:
+                    continue
 
-            if 'rope_theta' in metadata:
-                model_settings['rope_freq_base'] = metadata['rope_theta']
-            elif 'attn_config' in metadata and 'rope_theta' in metadata['attn_config']:
-                model_settings['rope_freq_base'] = metadata['attn_config']['rope_theta']
+                model_settings['truncation_length'] = value
+                model_settings['truncation_length_info'] = value
+                model_settings['ctx_size'] = min(value, 8192)
+                break
 
-            if 'rope_scaling' in metadata and isinstance(metadata['rope_scaling'], dict) and all(key in metadata['rope_scaling'] for key in ('type', 'factor')):
-                if metadata['rope_scaling']['type'] == 'linear':
-                    model_settings['compress_pos_emb'] = metadata['rope_scaling']['factor']
-
-            # For Gemma-2
             if 'torch_dtype' in metadata and metadata['torch_dtype'] == 'bfloat16':
                 model_settings['bf16'] = True
 
-            # For Gemma-2
-            if 'architectures' in metadata and isinstance(metadata['architectures'], list) and 'Gemma2ForCausalLM' in metadata['architectures']:
-                model_settings['use_eager_attention'] = True
-
     # Try to find the Jinja instruct template
-    path = Path(f'{shared.args.model_dir}/{model}') / 'tokenizer_config.json'
+    path = model_path / 'tokenizer_config.json'
+    template = None
+
+    # 1. Prioritize reading from chat_template.jinja if it exists
+    jinja_path = model_path / 'chat_template.jinja'
+    if jinja_path.exists():
+        with open(jinja_path, 'r', encoding='utf-8') as f:
+            template = f.read()
+
+    # 2. If no .jinja file, try chat_template.json
+    if template is None:
+        json_template_path = model_path / 'chat_template.json'
+        if json_template_path.exists():
+            with open(json_template_path, 'r', encoding='utf-8') as f:
+                json_data = json.load(f)
+                if 'chat_template' in json_data:
+                    template = json_data['chat_template']
+
+    # 3. Fall back to tokenizer_config.json metadata
     if path.exists():
-        metadata = json.loads(open(path, 'r', encoding='utf-8').read())
-        if 'chat_template' in metadata:
+        with open(path, 'r', encoding='utf-8') as f:
+            metadata = json.loads(f.read())
+
+        # Only read from metadata if we haven't already loaded from .jinja or .json
+        if template is None and 'chat_template' in metadata:
             template = metadata['chat_template']
             if isinstance(template, list):
                 template = template[0]['template']
+
+        # 4. If a template was found from any source, process it
+        if template:
+            shared.bos_token = '<s>'
+            shared.eos_token = '</s>'
 
             for k in ['eos_token', 'bos_token']:
                 if k in metadata:
@@ -135,19 +155,15 @@ def get_model_metadata(model):
                     if isinstance(value, dict):
                         value = value['content']
 
-                    template = template.replace(k, "'{}'".format(value))
+                    setattr(shared, k, value)
 
+            template = re.sub(r"\{\{-?\s*raise_exception\(.*?\)\s*-?\}\}", "", template, flags=re.DOTALL)
             template = re.sub(r'raise_exception\([^)]*\)', "''", template)
-            template = re.sub(r'{% if add_generation_prompt %}.*', '', template, flags=re.DOTALL)
             model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
             model_settings['instruction_template_str'] = template
 
     if 'instruction_template' not in model_settings:
         model_settings['instruction_template'] = 'Alpaca'
-
-    # Ignore rope_freq_base if set to the default value
-    if 'rope_freq_base' in model_settings and model_settings['rope_freq_base'] == 10000:
-        model_settings.pop('rope_freq_base')
 
     # Apply user settings from user_data/models/config-user.yaml
     settings = shared.user_config
@@ -162,29 +178,25 @@ def get_model_metadata(model):
 
     # Load instruction template if defined by name rather than by value
     if model_settings['instruction_template'] != 'Custom (obtained from model metadata)':
-        model_settings['instruction_template_str'] = chat.load_instruction_template(model_settings['instruction_template'])
+        model_settings['instruction_template_str'] = load_instruction_template(model_settings['instruction_template'])
 
     return model_settings
 
 
 def infer_loader(model_name, model_settings, hf_quant_method=None):
-    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+    path_to_model = resolve_model_path(model_name)
     if not path_to_model.exists():
         loader = None
+    elif shared.args.portable:
+        loader = 'llama.cpp'
     elif len(list(path_to_model.glob('*.gguf'))) > 0:
         loader = 'llama.cpp'
     elif re.match(r'.*\.gguf', model_name.lower()):
         loader = 'llama.cpp'
     elif hf_quant_method == 'exl3':
-        loader = 'ExLlamav3_HF'
-    elif hf_quant_method in ['exl2', 'gptq']:
-        loader = 'ExLlamav2_HF'
+        loader = 'ExLlamav3'
     elif re.match(r'.*exl3', model_name.lower()):
-        loader = 'ExLlamav3_HF'
-    elif re.match(r'.*exl2', model_name.lower()):
-        loader = 'ExLlamav2_HF'
-    elif re.match(r'.*-hqq', model_name.lower()):
-        return 'HQQ'
+        loader = 'ExLlamav3'
     else:
         loader = 'Transformers'
 
@@ -195,7 +207,7 @@ def update_model_parameters(state, initial=False):
     '''
     UI: update the command-line arguments based on the interface values
     '''
-    elements = ui.list_model_elements()  # the names of the parameters
+    elements = loaders.list_model_elements()  # the names of the parameters
 
     for i, element in enumerate(elements):
         if element not in state:
@@ -215,10 +227,11 @@ def apply_model_settings_to_state(model, state):
     '''
     UI: update the state variable with the model settings
     '''
+    import gradio as gr
     model_settings = get_model_metadata(model)
     if 'loader' in model_settings:
         loader = model_settings.pop('loader')
-        if not (loader == 'ExLlamav2_HF' and state['loader'] in ['ExLlamav2']):
+        if not (loader == 'ExLlamav3_HF' and state['loader'] == 'ExLlamav3'):
             state['loader'] = loader
 
     for k in model_settings:
@@ -227,16 +240,18 @@ def apply_model_settings_to_state(model, state):
 
     # Handle GPU layers and VRAM update for llama.cpp
     if state['loader'] == 'llama.cpp' and 'gpu_layers' in model_settings:
-        vram_info, gpu_layers_update = update_gpu_layers_and_vram(
+        gpu_layers = model_settings['gpu_layers']  # -1 (auto) by default, or user-saved value
+        max_layers = model_settings.get('max_gpu_layers', 256)
+        state['gpu_layers'] = gr.update(value=gpu_layers, maximum=max_layers)
+
+        vram_info = update_gpu_layers_and_vram(
             state['loader'],
             model,
-            model_settings['gpu_layers'],
+            gpu_layers,
             state['ctx_size'],
             state['cache_type'],
-            auto_adjust=True
         )
 
-        state['gpu_layers'] = gpu_layers_update
         state['vram_info'] = vram_info
 
     return state
@@ -255,7 +270,7 @@ def save_model_settings(model, state):
     if model_regex not in user_config:
         user_config[model_regex] = {}
 
-    for k in ui.list_model_elements():
+    for k in loaders.list_model_elements():
         if k == 'loader' or k in loaders.loaders_and_params[state['loader']]:
             user_config[model_regex][k] = state[k]
 
@@ -324,22 +339,28 @@ def get_model_size_mb(model_file: Path) -> float:
 
 
 def estimate_vram(gguf_file, gpu_layers, ctx_size, cache_type):
-    model_file = Path(f'{shared.args.model_dir}/{gguf_file}')
+    model_file = resolve_model_path(gguf_file)
     metadata = load_gguf_metadata_with_cache(model_file)
     size_in_mb = get_model_size_mb(model_file)
 
     # Extract values from metadata
     n_layers = None
     n_kv_heads = None
+    n_attention_heads = None  # Fallback for models without separate KV heads
     embedding_dim = None
 
     for key, value in metadata.items():
         if key.endswith('.block_count'):
             n_layers = value
         elif key.endswith('.attention.head_count_kv'):
-            n_kv_heads = value
+            n_kv_heads = max(value) if isinstance(value, list) else value
+        elif key.endswith('.attention.head_count'):
+            n_attention_heads = max(value) if isinstance(value, list) else value
         elif key.endswith('.embedding_length'):
             embedding_dim = value
+
+    if n_kv_heads is None:
+        n_kv_heads = n_attention_heads
 
     if gpu_layers > n_layers:
         gpu_layers = n_layers
@@ -368,127 +389,113 @@ def estimate_vram(gguf_file, gpu_layers, ctx_size, cache_type):
     return vram
 
 
-def get_nvidia_vram(return_free=True):
+def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type):
     """
-    Calculates VRAM statistics across all NVIDIA GPUs by parsing nvidia-smi output.
-
-    Args:
-        return_free (bool): If True, returns free VRAM. If False, returns total VRAM.
-
-    Returns:
-        int: Either the total free VRAM or total VRAM in MiB summed across all detected NVIDIA GPUs.
-             Returns -1 if nvidia-smi command fails (not found, error, etc.).
-             Returns 0 if nvidia-smi succeeds but no GPU memory info found.
+    Compute the estimated VRAM usage for the given GPU layers and return
+    an HTML string for the UI display.
     """
-    try:
-        # Execute nvidia-smi command
-        result = subprocess.run(
-            ['nvidia-smi'],
-            capture_output=True,
-            text=True,
-            check=False
+    if loader != 'llama.cpp' or model in ["None", None] or not model.endswith(".gguf") or gpu_layers < 0 or ctx_size == 0:
+        return f"<div id=\"vram-info\"'>Estimated VRAM to load the model: <span class=\"value\">auto</span></div>"
+
+    vram_usage = estimate_vram(model, gpu_layers, ctx_size, cache_type)
+    return f"<div id=\"vram-info\"'>Estimated VRAM to load the model: <span class=\"value\">{vram_usage:.0f} MiB</span></div>"
+
+
+def load_instruction_template(template):
+    if template == 'None':
+        return ''
+
+    for filepath in [shared.user_data_dir / 'instruction-templates' / f'{template}.yaml', shared.user_data_dir / 'instruction-templates' / 'Alpaca.yaml']:
+        if filepath.exists():
+            break
+    else:
+        return ''
+
+    with open(filepath, 'r', encoding='utf-8') as f:
+        file_contents = f.read()
+    data = yaml.safe_load(file_contents)
+    if 'instruction_template' in data:
+        return data['instruction_template']
+    else:
+        return _jinja_template_from_old_format(data)
+
+
+def _jinja_template_from_old_format(params, verbose=False):
+    MASTER_TEMPLATE = """
+{%- set ns = namespace(found=false) -%}
+{%- for message in messages -%}
+    {%- if message['role'] == 'system' -%}
+        {%- set ns.found = true -%}
+    {%- endif -%}
+{%- endfor -%}
+{%- if not ns.found -%}
+    {{- '<|PRE-SYSTEM|>' + '<|SYSTEM-MESSAGE|>' + '<|POST-SYSTEM|>' -}}
+{%- endif %}
+{%- for message in messages %}
+    {%- if message['role'] == 'system' -%}
+        {{- '<|PRE-SYSTEM|>' + message['content'] + '<|POST-SYSTEM|>' -}}
+    {%- else -%}
+        {%- if message['role'] == 'user' -%}
+            {{-'<|PRE-USER|>' + message['content'] + '<|POST-USER|>'-}}
+        {%- else -%}
+            {{-'<|PRE-ASSISTANT|>' + message['content'] + '<|POST-ASSISTANT|>' -}}
+        {%- endif -%}
+    {%- endif -%}
+{%- endfor -%}
+{%- if add_generation_prompt -%}
+    {{-'<|PRE-ASSISTANT-GENERATE|>'-}}
+{%- endif -%}
+"""
+
+    if 'context' in params and '<|system-message|>' in params['context']:
+        pre_system = params['context'].split('<|system-message|>')[0]
+        post_system = params['context'].split('<|system-message|>')[1]
+    else:
+        pre_system = ''
+        post_system = ''
+
+    pre_user = params['turn_template'].split('<|user-message|>')[0].replace('<|user|>', params['user'])
+    post_user = params['turn_template'].split('<|user-message|>')[1].split('<|bot|>')[0]
+
+    pre_assistant = '<|bot|>' + params['turn_template'].split('<|bot-message|>')[0].split('<|bot|>')[1]
+    pre_assistant = pre_assistant.replace('<|bot|>', params['bot'])
+    post_assistant = params['turn_template'].split('<|bot-message|>')[1]
+
+    def preprocess(string):
+        return string.replace('\n', '\\n').replace('\'', '\\\'')
+
+    pre_system = preprocess(pre_system)
+    post_system = preprocess(post_system)
+    pre_user = preprocess(pre_user)
+    post_user = preprocess(post_user)
+    pre_assistant = preprocess(pre_assistant)
+    post_assistant = preprocess(post_assistant)
+
+    if verbose:
+        print(
+            '\n',
+            repr(pre_system) + '\n',
+            repr(post_system) + '\n',
+            repr(pre_user) + '\n',
+            repr(post_user) + '\n',
+            repr(pre_assistant) + '\n',
+            repr(post_assistant) + '\n',
         )
 
-        # Check if nvidia-smi returned an error
-        if result.returncode != 0:
-            return -1
-
-        # Parse the output for memory usage patterns
-        output = result.stdout
-
-        # Find memory usage like "XXXXMiB / YYYYMiB"
-        # Captures used and total memory for each GPU
-        matches = re.findall(r"(\d+)\s*MiB\s*/\s*(\d+)\s*MiB", output)
-
-        if not matches:
-            # No GPUs found in expected format
-            return 0
-
-        total_vram_mib = 0
-        total_free_vram_mib = 0
-
-        for used_mem_str, total_mem_str in matches:
-            try:
-                used_mib = int(used_mem_str)
-                total_mib = int(total_mem_str)
-                total_vram_mib += total_mib
-                total_free_vram_mib += (total_mib - used_mib)
-            except ValueError:
-                # Skip malformed entries
-                pass
-
-        # Return either free or total VRAM based on the flag
-        return total_free_vram_mib if return_free else total_vram_mib
-
-    except FileNotFoundError:
-        # nvidia-smi not found (likely no NVIDIA drivers installed)
-        return -1
-    except Exception:
-        # Handle any other unexpected exceptions
-        return -1
-
-
-def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type, auto_adjust=False, for_ui=True):
-    """
-    Unified function to handle GPU layers and VRAM updates.
-
-    Args:
-        for_ui: If True, returns Gradio updates. If False, returns raw values.
-
-    Returns:
-        - If for_ui=True: (vram_info_update, gpu_layers_update) or just vram_info_update
-        - If for_ui=False: (vram_usage, adjusted_layers) or just vram_usage
-    """
-    if loader != 'llama.cpp' or model in ["None", None] or not model.endswith(".gguf"):
-        vram_info = "<div id=\"vram-info\"'>Estimated VRAM to load the model:</span>"
-        if for_ui:
-            return (vram_info, gr.update()) if auto_adjust else vram_info
-        else:
-            return (0, gpu_layers) if auto_adjust else 0
-
-    current_layers = gpu_layers
-    max_layers = gpu_layers
-
-    if auto_adjust:
-        # Get model settings including user preferences
-        model_settings = get_model_metadata(model)
-
-        # Get the true maximum layers
-        max_layers = model_settings.get('max_gpu_layers', model_settings.get('gpu_layers', gpu_layers))
-
-        # Check if this is a user-saved setting
-        user_config = shared.user_config
-        model_regex = Path(model).name + '$'
-        has_user_setting = model_regex in user_config and 'gpu_layers' in user_config[model_regex]
-
-        if has_user_setting:
-            # For user settings, just use the current value (which already has user pref)
-            # but ensure the slider maximum is correct
-            current_layers = gpu_layers  # Already has user setting
-        else:
-            # No user setting, auto-adjust from the maximum
-            current_layers = max_layers  # Start from max
-
-            # Auto-adjust based on available/total VRAM
-            # If a model is loaded and it's for the UI, use the total VRAM to avoid confusion
-            return_free = False if (for_ui and shared.model_name not in [None, 'None']) else True
-            available_vram = get_nvidia_vram(return_free=return_free)
-            if available_vram > 0:
-                tolerance = 577
-                while current_layers > 0 and estimate_vram(model, current_layers, ctx_size, cache_type) > available_vram - tolerance:
-                    current_layers -= 1
-
-    # Calculate VRAM with current layers
-    vram_usage = estimate_vram(model, current_layers, ctx_size, cache_type)
-
-    if for_ui:
-        vram_info = f"<div id=\"vram-info\"'>Estimated VRAM to load the model: <span class=\"value\">{vram_usage:.0f} MiB</span>"
-        if auto_adjust:
-            return vram_info, gr.update(value=current_layers, maximum=max_layers)
-        else:
-            return vram_info
+    result = MASTER_TEMPLATE
+    if 'system_message' in params:
+        result = result.replace('<|SYSTEM-MESSAGE|>', preprocess(params['system_message']))
     else:
-        if auto_adjust:
-            return vram_usage, current_layers
-        else:
-            return vram_usage
+        result = result.replace('<|SYSTEM-MESSAGE|>', '')
+
+    result = result.replace('<|PRE-SYSTEM|>', pre_system)
+    result = result.replace('<|POST-SYSTEM|>', post_system)
+    result = result.replace('<|PRE-USER|>', pre_user)
+    result = result.replace('<|POST-USER|>', post_user)
+    result = result.replace('<|PRE-ASSISTANT|>', pre_assistant)
+    result = result.replace('<|PRE-ASSISTANT-GENERATE|>', pre_assistant.rstrip(' '))
+    result = result.replace('<|POST-ASSISTANT|>', post_assistant)
+
+    result = result.strip()
+
+    return result

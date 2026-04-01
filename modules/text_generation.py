@@ -4,7 +4,6 @@ import html
 import pprint
 import random
 import time
-import traceback
 
 import numpy as np
 
@@ -22,13 +21,23 @@ def generate_reply(*args, **kwargs):
         from modules.models import load_model
         shared.model, shared.tokenizer = load_model(shared.model_name)
 
-    shared.generation_lock.acquire()
+    state = args[1] if len(args) > 1 else kwargs.get('state', {})
+    use_parallel = (
+        state.get('stop_event') is not None
+        and shared.model.__class__.__name__ in ['Exllamav3Model', 'LlamaServer', 'TensorRTLLMModel']
+        and (shared.model.__class__.__name__ != 'LlamaServer' or shared.args.parallel > 1)
+    )
+
+    if not use_parallel:
+        shared.generation_lock.acquire()
+
     try:
         for result in _generate_reply(*args, **kwargs):
             yield result
     finally:
         models.last_generation_time = time.time()
-        shared.generation_lock.release()
+        if not use_parallel:
+            shared.generation_lock.release()
 
 
 def _generate_reply(question, state, stopping_strings=None, is_chat=False, escape_html=False, for_ui=False):
@@ -40,7 +49,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             yield ''
             return
 
-        if shared.model.__class__.__name__ in ['LlamaServer', 'Exllamav2Model', 'TensorRTLLMModel']:
+        if shared.model.__class__.__name__ in ['LlamaServer', 'Exllamav3Model', 'TensorRTLLMModel']:
             generate_func = generate_reply_custom
         else:
             generate_func = generate_reply_HF
@@ -68,7 +77,13 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
     reply = ''
     is_stream = state['stream']
     if len(all_stop_strings) > 0 and not state['stream']:
+        original_logits_processor = state.get('logits_processor')
+        stop_event_ref = state.pop('stop_event', None)
         state = copy.deepcopy(state)
+        if stop_event_ref is not None:
+            state['stop_event'] = stop_event_ref
+        if original_logits_processor is not None:
+            state['logits_processor'] = original_logits_processor
         state['stream'] = True
 
     # Generate
@@ -99,7 +114,8 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
                     yield reply
                 last_update = time.monotonic()
 
-        if stop_found or (state['max_tokens_second'] > 0 and shared.stop_everything):
+        stop_event = state.get('stop_event')
+        if stop_found or shared.stop_everything or (stop_event and stop_event.is_set()):
             break
 
     if not is_chat:
@@ -128,13 +144,12 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
 
         from modules.torch_utils import get_device
 
-        if shared.model.__class__.__name__ in ['Exllamav2Model', 'TensorRTLLMModel']:
+        if shared.model.__class__.__name__ in ['Exllamav3Model', 'TensorRTLLMModel']:
             input_ids = shared.tokenizer.encode(str(prompt))
-            if shared.model.__class__.__name__ != 'Exllamav2Model':
+            if shared.model.__class__.__name__ not in ['Exllamav3Model']:
                 input_ids = np.array(input_ids).reshape(1, len(input_ids))
         else:
             input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', add_special_tokens=add_special_tokens)
-
             if hasattr(shared.tokenizer, 'bos_token_id') and shared.tokenizer.bos_token_id is not None:
                 if add_bos_token:
                     # Add BOS token if missing
@@ -142,18 +157,14 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
                         bos_tensor = torch.tensor([[shared.tokenizer.bos_token_id]])
                         input_ids = torch.cat((bos_tensor, input_ids), 1)
 
-                    # Prevent double BOS tokens from jinja templates
-                    while len(input_ids[0]) > 1 and input_ids[0][0] == shared.tokenizer.bos_token_id and input_ids[0][1] == shared.tokenizer.bos_token_id:
-                        input_ids = input_ids[:, 1:]
-                else:
-                    # Remove BOS tokens when not wanted
-                    while len(input_ids[0]) > 0 and input_ids[0][0] == shared.tokenizer.bos_token_id:
-                        input_ids = input_ids[:, 1:]
+                # Always prevent double BOS tokens (regardless of add_bos_token setting)
+                while len(input_ids[0]) > 1 and input_ids[0][0] == shared.tokenizer.bos_token_id and input_ids[0][1] == shared.tokenizer.bos_token_id:
+                    input_ids = input_ids[:, 1:]
 
         if truncation_length is not None:
             input_ids = input_ids[:, -truncation_length:]
 
-        if shared.model.__class__.__name__ in ['Exllamav2Model', 'TensorRTLLMModel'] or shared.args.cpu:
+        if shared.model.__class__.__name__ in ['Exllamav3Model', 'TensorRTLLMModel'] or shared.args.cpu:
             return input_ids
         else:
             device = get_device()
@@ -322,6 +333,8 @@ def generate_reply_HF(question, original_question, state, stopping_strings=None,
         'tfs',
         'top_a',
         'top_n_sigma',
+        'adaptive_target',
+        'adaptive_decay',
         'dry_multiplier',
         'dry_allowed_length',
         'dry_base',
@@ -364,7 +377,7 @@ def generate_reply_HF(question, original_question, state, stopping_strings=None,
         generate_params['sampler_priority'] = [x.strip() for x in state['sampler_priority'].replace('\n', ',').split(',') if x.strip()]
 
     if state['custom_token_bans']:
-        to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
+        to_ban = [int(x.strip()) for x in state['custom_token_bans'].split(',') if x.strip()]
         if len(to_ban) > 0:
             if generate_params.get('suppress_tokens', None):
                 generate_params['suppress_tokens'] += to_ban
@@ -375,8 +388,6 @@ def generate_reply_HF(question, original_question, state, stopping_strings=None,
         generate_params['negative_prompt_ids'] = encode(state['negative_prompt'])
 
     generate_params.update({'use_cache': not shared.args.no_cache})
-    if shared.args.deepspeed:
-        generate_params.update({'synced_gpus': True})
 
     # Encode the input
     input_ids = encode(question, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
@@ -465,7 +476,7 @@ def generate_reply_HF(question, original_question, state, stopping_strings=None,
                     yield cumulative_reply
 
     except Exception:
-        traceback.print_exc()
+        logger.exception("Failed to generate reply (HF)")
     finally:
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
@@ -479,6 +490,10 @@ def generate_reply_custom(question, original_question, state, stopping_strings=N
     For models that do not use the transformers library for sampling
     """
 
+    stop_event_ref = state.pop('stop_event', None)
+    state = copy.deepcopy(state)
+    if stop_event_ref is not None:
+        state['stop_event'] = stop_event_ref
     state['seed'] = set_manual_seed(state['seed'])
     t0 = time.time()
     reply = ''
@@ -494,20 +509,26 @@ def generate_reply_custom(question, original_question, state, stopping_strings=N
                 yield reply
 
     except Exception:
-        traceback.print_exc()
+        logger.exception("Failed to generate reply (custom)")
     finally:
         t1 = time.time()
-        original_tokens = len(encode(original_question)[0])
-        new_tokens = len(encode(original_question + reply)[0]) - original_tokens
+
+        if hasattr(shared.model, 'last_prompt_token_count'):
+            original_tokens = shared.model.last_prompt_token_count
+            new_tokens = len(encode(reply)[0]) if reply else 0
+        else:
+            original_tokens = len(encode(original_question)[0])
+            new_tokens = len(encode(original_question + reply)[0]) - original_tokens
+
         logger.info(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {state["seed"]})')
         return
 
 
-def print_prompt(prompt, max_chars=2000):
+def print_prompt(prompt, max_chars=-1):
     DARK_YELLOW = "\033[38;5;3m"
     RESET = "\033[0m"
 
-    if len(prompt) > max_chars:
+    if max_chars > 0 and len(prompt) > max_chars:
         half_chars = max_chars // 2
         hidden_len = len(prompt[half_chars:-half_chars])
         hidden_msg = f"{DARK_YELLOW}[...{hidden_len} characters hidden...]{RESET}"

@@ -107,7 +107,7 @@ class Handler(BaseHTTPRequestHandler):
 
             elif path in ['/api/v1/delete', '/api/delete']:
                 metadata = body.get('metadata')
-                if corpus is None:
+                if metadata is None:
                     self._send_412_error("Missing parameter 'metadata'")
                     return
 

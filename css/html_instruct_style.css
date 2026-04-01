@@ -13,8 +13,20 @@
     line-height: 28px !important;
 }
 
-.dark .chat .message-body :is(p, li, q, h1, h2, h3, h4, h5, h6) {
+.dark .chat .message-body :is(p,li,h1,h2,h3,h4,h5,h6),
+.dark .chat .message-body em:not(:is(h1,h2,h3,h4,h5,h6,b,strong) em),
+.dark .chat .message-body q:not(:is(h1,h2,h3,h4,h5,h6,b,strong) q) {
     color: #d1d5db !important;
+}
+
+.chat .message-body :is(th, td),
+.prose hr {
+    border-color: #40404096 !important;
+}
+
+.dark .chat .message-body :is(th, td),
+.dark .prose hr {
+    border-color: rgb(255 255 255 / 30%) !important;
 }
 
 .chat .message-body :is(p, ul, ol) {
@@ -66,7 +78,7 @@
 
 .chat .user-message .text,
 .chat .assistant-message .text {
-    max-width: 700px;
+    max-width: 724px;
     margin-left: auto;
     margin-right: auto;
 }

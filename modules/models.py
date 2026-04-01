@@ -1,10 +1,10 @@
 import sys
 import time
-from pathlib import Path
 
 import modules.shared as shared
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
+from modules.utils import resolve_model_path
 
 last_generation_time = time.time()
 
@@ -19,9 +19,7 @@ def load_model(model_name, loader=None):
         'llama.cpp': llama_cpp_server_loader,
         'Transformers': transformers_loader,
         'ExLlamav3_HF': ExLlamav3_HF_loader,
-        'ExLlamav2_HF': ExLlamav2_HF_loader,
-        'ExLlamav2': ExLlamav2_loader,
-        'HQQ': HQQ_loader,
+        'ExLlamav3': ExLlamav3_loader,
         'TensorRT-LLM': TensorRT_LLM_loader,
     }
 
@@ -40,20 +38,31 @@ def load_model(model_name, loader=None):
         sampler_hijack.hijack_samplers()
 
     shared.args.loader = loader
+    if loader != 'llama.cpp' and shared.args.ctx_size == 0:
+        shared.args.ctx_size = 8192
+
     output = load_func_map[loader](model_name)
     if type(output) is tuple:
         model, tokenizer = output
     else:
         model = output
-        if model is None:
-            return None, None
-        else:
+        if model is not None:
             from modules.transformers_loader import load_tokenizer
             tokenizer = load_tokenizer(model_name)
 
+    if model is None:
+        return None, None
+
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
     if loader.lower().startswith('exllama') or loader.lower().startswith('tensorrt') or loader == 'llama.cpp':
-        shared.settings['truncation_length'] = shared.args.ctx_size
+        if shared.args.ctx_size > 0:
+            shared.settings['truncation_length'] = shared.args.ctx_size
+        elif loader == 'llama.cpp' and hasattr(model, 'n_ctx') and model.n_ctx:
+            shared.settings['truncation_length'] = model.n_ctx
+
+    shared.is_multimodal = False
+    if loader.lower() in ('exllamav3', 'llama.cpp') and hasattr(model, 'is_multimodal'):
+        shared.is_multimodal = model.is_multimodal()
 
     logger.info(f"Loaded \"{model_name}\" in {(time.time()-t0):.2f} seconds.")
     logger.info(f"LOADER: \"{loader}\"")
@@ -65,17 +74,24 @@ def load_model(model_name, loader=None):
 def llama_cpp_server_loader(model_name):
     from modules.llama_cpp_server import LlamaServer
 
-    path = Path(f'{shared.args.model_dir}/{model_name}')
+    path = resolve_model_path(model_name)
+
     if path.is_file():
         model_file = path
     else:
-        model_file = sorted(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0]
+        gguf_files = sorted(path.glob('*.gguf'))
+        if not gguf_files:
+            logger.error(f"No .gguf models found in the directory: {path}")
+            return None, None
+
+        model_file = gguf_files[0]
 
     try:
         model = LlamaServer(model_file)
         return model, model
     except Exception as e:
         logger.error(f"Error loading the model with llama.cpp: {str(e)}")
+        return None, None
 
 
 def transformers_loader(model_name):
@@ -89,32 +105,11 @@ def ExLlamav3_HF_loader(model_name):
     return Exllamav3HF.from_pretrained(model_name)
 
 
-def ExLlamav2_HF_loader(model_name):
-    from modules.exllamav2_hf import Exllamav2HF
+def ExLlamav3_loader(model_name):
+    from modules.exllamav3 import Exllamav3Model
 
-    return Exllamav2HF.from_pretrained(model_name)
-
-
-def ExLlamav2_loader(model_name):
-    from modules.exllamav2 import Exllamav2Model
-
-    model, tokenizer = Exllamav2Model.from_pretrained(model_name)
+    model, tokenizer = Exllamav3Model.from_pretrained(model_name)
     return model, tokenizer
-
-
-def HQQ_loader(model_name):
-    try:
-        from hqq.core.quantize import HQQBackend, HQQLinear
-        from hqq.models.hf.base import AutoHQQHFModel
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError("Failed to import 'hqq'. Please install it manually following the instructions in the HQQ GitHub repository.")
-
-    logger.info(f"Loading HQQ model with backend: \"{shared.args.hqq_backend}\"")
-
-    model_dir = Path(f'{shared.args.model_dir}/{model_name}')
-    model = AutoHQQHFModel.from_quantized(str(model_dir))
-    HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
-    return model
 
 
 def TensorRT_LLM_loader(model_name):
@@ -124,18 +119,25 @@ def TensorRT_LLM_loader(model_name):
         raise ModuleNotFoundError("Failed to import 'tensorrt_llm'. Please install it manually following the instructions in the TensorRT-LLM GitHub repository.")
 
     model = TensorRTLLMModel.from_pretrained(model_name)
-    return model
+    return model, model.tokenizer
 
 
 def unload_model(keep_model_name=False):
     if shared.model is None:
         return
 
-    is_llamacpp = (shared.model.__class__.__name__ == 'LlamaServer')
+    model_class_name = shared.model.__class__.__name__
+    is_llamacpp = (model_class_name == 'LlamaServer')
+
+    if model_class_name in ['Exllamav3Model', 'Exllamav3HF', 'TensorRTLLMModel']:
+        shared.model.unload()
+    elif model_class_name == 'LlamaServer':
+        shared.model.stop()
 
     shared.model = shared.tokenizer = None
     shared.lora_names = []
     shared.model_dirty_from_training = False
+
     if not is_llamacpp:
         from modules.torch_utils import clear_torch_cache
         clear_torch_cache()

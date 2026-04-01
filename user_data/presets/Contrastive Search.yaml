@@ -1,3 +1,0 @@
-do_sample: false
-top_k: 4
-penalty_alpha: 0.3

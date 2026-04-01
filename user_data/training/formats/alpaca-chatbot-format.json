@@ -1,4 +1,0 @@
-{
-    "instruction,output": "User: %instruction%\nAssistant: %output%",
-    "instruction,input,output": "User: %instruction%: %input%\nAssistant: %output%"
-}

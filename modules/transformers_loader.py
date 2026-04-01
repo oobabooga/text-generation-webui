@@ -1,4 +1,3 @@
-import os
 import pprint
 from pathlib import Path
 
@@ -6,11 +5,7 @@ import torch
 import torch.nn.functional as F
 import transformers
 from accelerate import infer_auto_device_map, init_empty_weights
-from accelerate.utils import (
-    is_ccl_available,
-    is_npu_available,
-    is_xpu_available
-)
+from accelerate.utils import is_xpu_available
 from transformers import (
     AutoConfig,
     AutoModel,
@@ -27,31 +22,6 @@ from modules.text_generation import get_reply_from_output_ids
 from modules.torch_utils import get_device
 
 transformers.logging.set_verbosity_error()
-
-local_rank = None
-if shared.args.deepspeed:
-    import deepspeed
-    from transformers.integrations.deepspeed import (
-        HfDeepSpeedConfig,
-        is_deepspeed_zero3_enabled
-    )
-
-    from modules.deepspeed_parameters import generate_ds_config
-
-    # Distributed setup
-    local_rank = shared.args.local_rank if shared.args.local_rank is not None else int(os.getenv("LOCAL_RANK", "0"))
-    world_size = int(os.getenv("WORLD_SIZE", "1"))
-    if is_xpu_available() and is_ccl_available():
-        torch.xpu.set_device(local_rank)
-        deepspeed.init_distributed(backend="ccl")
-    elif is_npu_available():
-        torch.npu.set_device(local_rank)
-        deepspeed.init_distributed(dist_backend="hccl")
-    else:
-        torch.cuda.set_device(local_rank)
-        deepspeed.init_distributed()
-    ds_config = generate_ds_config(shared.args.bf16, 1 * world_size, shared.args.nvme_offload_dir)
-    dschf = HfDeepSpeedConfig(ds_config)  # Keep this object alive for the Transformers integration
 
 
 class _StopEverythingStoppingCriteria(transformers.StoppingCriteria):
@@ -74,8 +44,8 @@ class Stream(transformers.StoppingCriteria):
 
 
 class LogitsBiasProcessor(LogitsProcessor):
-    def __init__(self, logit_bias={}):
-        self.logit_bias = logit_bias
+    def __init__(self, logit_bias=None):
+        self.logit_bias = logit_bias if logit_bias is not None else {}
         if self.logit_bias:
             self.keys = list([int(key) for key in self.logit_bias.keys()])
             values = [self.logit_bias[str(key)] for key in self.keys]
@@ -95,14 +65,16 @@ class LogprobProcessor(LogitsProcessor):
     def __init__(self, logprobs=None):
         self.logprobs = logprobs
         self.token_alternatives = {}
+        self.token_alternatives_history = []
 
     def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
         if self.logprobs is not None:  # 0-5
             log_e_probabilities = F.log_softmax(logits, dim=1)
-            top_values, top_indices = torch.topk(log_e_probabilities, k=self.logprobs + 1)
+            top_values, top_indices = torch.topk(log_e_probabilities, k=self.logprobs)
             top_tokens = [get_reply_from_output_ids([tok]) for tok in top_indices[0]]
             top_probs = [float(x) for x in top_values[0]]
             self.token_alternatives = dict(zip(top_tokens, top_probs))
+            self.token_alternatives_history.append(self.token_alternatives)
 
         return logits
 
@@ -123,7 +95,7 @@ def load_tokenizer(model_name, tokenizer_dir=None):
 
         tokenizer = AutoTokenizer.from_pretrained(
             path_to_model,
-            trust_remote_code=shared.args.trust_remote_code,
+            trust_remote_code=shared.original_args.trust_remote_code,
             use_fast=not shared.args.no_use_fast
         )
 
@@ -131,25 +103,22 @@ def load_tokenizer(model_name, tokenizer_dir=None):
 
 
 def load_model_HF(model_name):
+    torch._dynamo.config.disable = True
+
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     params = {
         'low_cpu_mem_usage': True,
+        'attn_implementation': shared.args.attn_implementation,
         'torch_dtype': torch.bfloat16 if shared.args.bf16 else torch.float16,
     }
 
-    if shared.args.trust_remote_code:
+    if shared.original_args.trust_remote_code:
         params['trust_remote_code'] = True
-
-    if shared.args.use_flash_attention_2:
-        params['use_flash_attention_2'] = True
 
     if shared.args.force_safetensors:
         params['force_safetensors'] = True
 
-    if shared.args.use_eager_attention:
-        params['attn_implementation'] = 'eager'
-
-    config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
+    config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.original_args.trust_remote_code)
 
     if 'chatglm' in model_name.lower():
         LoaderClass = AutoModel
@@ -166,10 +135,7 @@ def load_model_HF(model_name):
         shared.args.load_in_8bit,
         shared.args.load_in_4bit,
         shared.args.disk,
-        shared.args.deepspeed,
         shared.args.cpu_memory is not None,
-        shared.args.compress_pos_emb > 1,
-        shared.args.alpha_value > 1,
     ])
 
     # Load the model without any special settings
@@ -185,25 +151,6 @@ def load_model_HF(model_name):
             device = get_device()
             if device:
                 model = model.to(device)
-
-    # DeepSpeed ZeRO-3
-    elif shared.args.deepspeed:
-        model = LoaderClass.from_pretrained(
-            path_to_model,
-            torch_dtype=params['torch_dtype'],
-            trust_remote_code=params.get('trust_remote_code')
-        )
-
-        model = deepspeed.initialize(
-            model=model,
-            config_params=ds_config,
-            model_parameters=None,
-            optimizer=None,
-            lr_scheduler=None
-        )[0]
-
-        model.module.eval()  # Inference
-        logger.info(f'DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}')
 
     # Load with quantization and/or offloading
     else:
@@ -251,18 +198,10 @@ def load_model_HF(model_name):
             if shared.args.disk:
                 params['offload_folder'] = str(Path(shared.args.disk_cache_dir))
 
-        if shared.args.compress_pos_emb > 1:
-            params['rope_scaling'] = {'type': 'linear', 'factor': shared.args.compress_pos_emb}
-        elif shared.args.alpha_value > 1:
-            params['rope_scaling'] = {'type': 'dynamic', 'factor': shared.args.alpha_value}
-
         logger.info("TRANSFORMERS_PARAMS=")
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(params)
         print()
         model = LoaderClass.from_pretrained(path_to_model, **params)
-
-    if shared.args.torch_compile:
-        model = torch.compile(model)
 
     return model
 

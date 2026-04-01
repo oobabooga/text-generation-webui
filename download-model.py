@@ -24,6 +24,8 @@ from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, RequestException, Timeout
 from tqdm.contrib.concurrent import thread_map
 
+from modules.paths import resolve_user_data_dir
+
 base = os.environ.get("HF_ENDPOINT") or "https://huggingface.co"
 
 
@@ -32,6 +34,7 @@ class ModelDownloader:
         self.max_retries = max_retries
         self.session = self.get_session()
         self._progress_bar_slots = None
+        self.progress_queue = None
 
     def get_session(self):
         session = requests.Session()
@@ -81,6 +84,7 @@ class ModelDownloader:
 
         links = []
         sha256 = []
+        file_sizes = []
         classifications = []
         has_pytorch = False
         has_pt = False
@@ -117,8 +121,14 @@ class ModelDownloader:
                 is_tokenizer = re.match(r"(tokenizer|ice|spiece).*\.model", fname) or is_tiktoken
                 is_text = re.match(r".*\.(txt|json|py|md)", fname) or is_tokenizer
                 if any((is_pytorch, is_safetensors, is_pt, is_gguf, is_tokenizer, is_text)):
+                    file_size = 0
                     if 'lfs' in dict[i]:
                         sha256.append([fname, dict[i]['lfs']['oid']])
+                        file_size = dict[i]['lfs'].get('size', 0)
+                    elif 'size' in dict[i]:
+                        file_size = dict[i]['size']
+
+                    file_sizes.append(file_size)
 
                     if is_text:
                         links.append(f"{base}/{model}/resolve/{branch}/{fname}")
@@ -151,6 +161,7 @@ class ModelDownloader:
             for i in range(len(classifications) - 1, -1, -1):
                 if classifications[i] in ['pytorch', 'pt', 'gguf']:
                     links.pop(i)
+                    file_sizes.pop(i)
 
         # For GGUF, try to download only the Q4_K_M if no specific file is specified.
         if has_gguf and specific_file is None:
@@ -163,19 +174,23 @@ class ModelDownloader:
                 for i in range(len(classifications) - 1, -1, -1):
                     if 'q4_k_m' not in links[i].lower():
                         links.pop(i)
+                        file_sizes.pop(i)
             else:
                 for i in range(len(classifications) - 1, -1, -1):
                     if links[i].lower().endswith('.gguf'):
                         links.pop(i)
+                        file_sizes.pop(i)
 
         is_llamacpp = has_gguf and specific_file is not None
-        return links, sha256, is_lora, is_llamacpp
+        return links, sha256, is_lora, is_llamacpp, file_sizes
 
-    def get_output_folder(self, model, branch, is_lora, is_llamacpp=False, model_dir=None):
+    def get_output_folder(self, model, branch, is_lora, is_llamacpp=False, model_dir=None, user_data_dir=None):
         if model_dir:
             base_folder = model_dir
         else:
-            base_folder = 'user_data/models' if not is_lora else 'user_data/loras'
+            if user_data_dir is None:
+                user_data_dir = resolve_user_data_dir()
+            base_folder = str(user_data_dir / 'models') if not is_lora else str(user_data_dir / 'loras')
 
         # If the model is of type GGUF, save directly in the base_folder
         if is_llamacpp:
@@ -218,33 +233,55 @@ class ModelDownloader:
 
         max_retries = self.max_retries
         attempt = 0
+        file_downloaded_count_for_progress = 0
+
         try:
             while attempt < max_retries:
                 attempt += 1
                 session = self.session
                 headers = {}
                 mode = 'wb'
+                current_file_size_on_disk = 0
 
                 try:
                     if output_path.exists() and not start_from_scratch:
-                        # Resume download
-                        r = session.get(url, stream=True, timeout=20)
-                        total_size = int(r.headers.get('content-length', 0))
-                        if output_path.stat().st_size >= total_size:
+                        current_file_size_on_disk = output_path.stat().st_size
+
+                        # Make a HEAD request without following redirects to get metadata first
+                        r_head = session.head(url, timeout=20, allow_redirects=True)
+                        r_head.raise_for_status()  # Will raise an error for 4xx or 5xx status codes
+
+                        # Check for the new 'x-linked-size' header from Hugging Face
+                        if 'x-linked-size' in r_head.headers:
+                            total_size = int(r_head.headers['x-linked-size'])
+                        # Fallback to the old 'content-length' just in case
+                        elif 'content-length' in r_head.headers:
+                            total_size = int(r_head.headers.get('content-length', 0))
+                        else:
+                            total_size = 0
+
+                        if current_file_size_on_disk >= total_size and total_size > 0:
+                            if self.progress_queue is not None and total_size > 0:
+                                self.progress_queue.put((1.0, str(filename)))
                             return
 
-                        headers = {'Range': f'bytes={output_path.stat().st_size}-'}
+                        headers = {'Range': f'bytes={current_file_size_on_disk}-'}
                         mode = 'ab'
 
                     with session.get(url, stream=True, headers=headers, timeout=30) as r:
-                        r.raise_for_status()  # If status is not 2xx, raise an error
-                        total_size = int(r.headers.get('content-length', 0))
-                        block_size = 1024 * 1024  # 1MB
+                        r.raise_for_status()
+                        total_size_from_stream = int(r.headers.get('content-length', 0))
+                        if mode == 'ab':
+                            effective_total_size = current_file_size_on_disk + total_size_from_stream
+                        else:
+                            effective_total_size = total_size_from_stream
 
-                        filename_str = str(filename)  # Convert PosixPath to string if necessary
+                        block_size = 1024 * 1024
+                        filename_str = str(filename)
 
                         tqdm_kwargs = {
-                            'total': total_size,
+                            'total': effective_total_size,
+                            'initial': current_file_size_on_disk if mode == 'ab' else 0,
                             'unit': 'B',
                             'unit_scale': True,
                             'unit_divisor': 1024,
@@ -261,16 +298,20 @@ class ModelDownloader:
                             })
 
                         with open(output_path, mode) as f:
+                            if mode == 'ab':
+                                f.seek(current_file_size_on_disk)
+
                             with tqdm.tqdm(**tqdm_kwargs) as t:
-                                count = 0
+                                file_downloaded_count_for_progress = current_file_size_on_disk
                                 for data in r.iter_content(block_size):
                                     f.write(data)
                                     t.update(len(data))
-                                    if total_size != 0 and self.progress_bar is not None:
-                                        count += len(data)
-                                        self.progress_bar(float(count) / float(total_size), f"{filename_str}")
+                                    if effective_total_size != 0 and self.progress_queue is not None:
+                                        file_downloaded_count_for_progress += len(data)
+                                        progress_fraction = float(file_downloaded_count_for_progress) / float(effective_total_size)
+                                        self.progress_queue.put((progress_fraction, filename_str))
+                        break
 
-                        break  # Exit loop if successful
                 except (RequestException, ConnectionError, Timeout) as e:
                     print(f"Error downloading {filename}: {e}.")
                     print(f"That was attempt {attempt}/{max_retries}.", end=' ')
@@ -295,10 +336,9 @@ class ModelDownloader:
         finally:
             print(f"\nDownload of {len(file_list)} files to {output_folder} completed.")
 
-    def download_model_files(self, model, branch, links, sha256, output_folder, progress_bar=None, start_from_scratch=False, threads=4, specific_file=None, is_llamacpp=False):
-        self.progress_bar = progress_bar
+    def download_model_files(self, model, branch, links, sha256, output_folder, progress_queue=None, start_from_scratch=False, threads=4, specific_file=None, is_llamacpp=False):
+        self.progress_queue = progress_queue
 
-        # Create the folder and writing the metadata
         output_folder.mkdir(parents=True, exist_ok=True)
 
         if not is_llamacpp:
@@ -356,7 +396,8 @@ if __name__ == '__main__':
     parser.add_argument('--specific-file', type=str, default=None, help='Name of the specific file to download (if not provided, downloads all).')
     parser.add_argument('--exclude-pattern', type=str, default=None, help='Regex pattern to exclude files from download.')
     parser.add_argument('--output', type=str, default=None, help='Save the model files to this folder.')
-    parser.add_argument('--model-dir', type=str, default=None, help='Save the model files to a subfolder of this folder instead of the default one (text-generation-webui/user_data/models).')
+    parser.add_argument('--model-dir', type=str, default=None, help='Save the model files to a subfolder of this folder instead of the default one (user_data/models).')
+    parser.add_argument('--user-data-dir', type=str, default=None, help='Path to the user data directory. Overrides auto-detection.')
     parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
     parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
     parser.add_argument('--max-retries', type=int, default=7, help='Max retries count when get error in download time.')
@@ -372,6 +413,26 @@ if __name__ == '__main__':
         sys.exit()
 
     downloader = ModelDownloader(max_retries=args.max_retries)
+
+    # Handle direct file URLs (e.g. https://huggingface.co/org/repo/resolve/branch/file.gguf)
+    if '/resolve/' in model:
+        url = model if model.startswith('http') else f'{base}/{model}'
+        url = url.split('?')[0]
+        filename = url.split('/')[-1]
+
+        if args.output:
+            output_folder = Path(args.output)
+        elif args.model_dir:
+            output_folder = Path(args.model_dir)
+        else:
+            user_data_dir = Path(args.user_data_dir) if args.user_data_dir else resolve_user_data_dir()
+            output_folder = user_data_dir / 'models'
+
+        output_folder.mkdir(parents=True, exist_ok=True)
+        print(f"Downloading {filename} to {output_folder}")
+        downloader.get_single_file(url, output_folder, start_from_scratch=args.clean)
+        sys.exit()
+
     # Clean up the model/branch names
     try:
         model, branch = downloader.sanitize_model_and_branch_names(model, branch)
@@ -380,15 +441,16 @@ if __name__ == '__main__':
         sys.exit()
 
     # Get the download links from Hugging Face
-    links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(
+    links, sha256, is_lora, is_llamacpp, file_sizes = downloader.get_download_links_from_huggingface(
         model, branch, text_only=args.text_only, specific_file=specific_file, exclude_pattern=exclude_pattern
     )
 
     # Get the output folder
+    user_data_dir = Path(args.user_data_dir) if args.user_data_dir else None
     if args.output:
         output_folder = Path(args.output)
     else:
-        output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp, model_dir=args.model_dir)
+        output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp, model_dir=args.model_dir, user_data_dir=user_data_dir)
 
     if args.check:
         # Check previously downloaded files
