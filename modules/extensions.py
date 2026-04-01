@@ -1,7 +1,6 @@
 import importlib
 import importlib.util
 import sys
-import traceback
 from functools import partial
 from inspect import signature
 from pathlib import Path
@@ -33,8 +32,7 @@ def load_extensions():
         if name not in available_extensions:
             continue
 
-        if name != 'api':
-            logger.info(f'Loading the extension "{name}"')
+        logger.info(f'Loading the extension "{name}"')
 
         try:
             # Prefer user extension, fall back to system extension
@@ -75,8 +73,7 @@ def load_extensions():
             raise
 
         except Exception:
-            logger.error(f'Failed to load the extension "{name}".')
-            traceback.print_exc()
+            logger.exception(f'Failed to load the extension "{name}".')
 
 
 # This iterator returns the extensions in the order specified in the command-line
@@ -193,21 +190,19 @@ def _apply_custom_generate_reply():
 
 
 def _apply_custom_css():
-    all_css = ''
-    for extension, _ in iterator():
-        if hasattr(extension, 'custom_css'):
-            all_css += getattr(extension, 'custom_css')()
-
-    return all_css
+    return ''.join(
+        getattr(extension, 'custom_css')()
+        for extension, _ in iterator()
+        if hasattr(extension, 'custom_css')
+    )
 
 
 def _apply_custom_js():
-    all_js = ''
-    for extension, _ in iterator():
-        if hasattr(extension, 'custom_js'):
-            all_js += getattr(extension, 'custom_js')()
-
-    return all_js
+    return ''.join(
+        getattr(extension, 'custom_js')()
+        for extension, _ in iterator()
+        if hasattr(extension, 'custom_js')
+    )
 
 
 def create_extensions_block():

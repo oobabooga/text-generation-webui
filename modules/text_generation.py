@@ -4,7 +4,6 @@ import html
 import pprint
 import random
 import time
-import traceback
 
 import numpy as np
 
@@ -18,9 +17,7 @@ from modules.utils import check_model_loaded
 
 
 def generate_reply(*args, **kwargs):
-    if shared.args.idle_timeout > 0 and shared.model is None and shared.model_name not in [None, 'None']:
-        from modules.models import load_model
-        shared.model, shared.tokenizer = load_model(shared.model_name)
+    models.load_model_if_idle_unloaded()
 
     state = args[1] if len(args) > 1 else kwargs.get('state', {})
     use_parallel = (
@@ -32,10 +29,16 @@ def generate_reply(*args, **kwargs):
     if not use_parallel:
         shared.generation_lock.acquire()
 
+    with models._generation_count_lock:
+        models.active_generation_count += 1
+
     try:
         for result in _generate_reply(*args, **kwargs):
             yield result
     finally:
+        with models._generation_count_lock:
+            models.active_generation_count -= 1
+
         models.last_generation_time = time.time()
         if not use_parallel:
             shared.generation_lock.release()
@@ -146,7 +149,9 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
 def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
     if shared.tokenizer is None:
-        raise ValueError('No tokenizer is loaded')
+        models.load_model_if_idle_unloaded()
+        if shared.tokenizer is None:
+            raise ValueError('No tokenizer is loaded')
 
     # llama.cpp case
     if shared.model.__class__.__name__ == 'LlamaServer':
@@ -196,7 +201,9 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
 
 def decode(output_ids, skip_special_tokens=True):
     if shared.tokenizer is None:
-        raise ValueError('No tokenizer is loaded')
+        models.load_model_if_idle_unloaded()
+        if shared.tokenizer is None:
+            raise ValueError('No tokenizer is loaded')
 
     return shared.tokenizer.decode(output_ids, skip_special_tokens=skip_special_tokens)
 
@@ -496,7 +503,7 @@ def generate_reply_HF(question, original_question, state, stopping_strings=None,
                     yield cumulative_reply
 
     except Exception:
-        traceback.print_exc()
+        logger.exception("Failed to generate reply (HF)")
     finally:
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
@@ -529,7 +536,7 @@ def generate_reply_custom(question, original_question, state, stopping_strings=N
                 yield reply
 
     except Exception:
-        traceback.print_exc()
+        logger.exception("Failed to generate reply (custom)")
     finally:
         t1 = time.time()
 

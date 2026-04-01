@@ -3,7 +3,7 @@ import time
 import numpy as np
 from numpy.linalg import norm
 
-from extensions.openai.embeddings import get_embeddings
+from .embeddings import get_embeddings
 
 moderations_disabled = False  # return 0/false
 category_embeddings = None
@@ -63,7 +63,5 @@ def moderations(input):
                 'categories': category_flags,
                 'category_scores': category_scores,
             }])
-
-    print(results)
 
     return results

@@ -6,7 +6,7 @@ import base64
 import io
 import time
 
-from extensions.openai.errors import ServiceUnavailableError
+from .errors import ServiceUnavailableError
 from modules import shared
 
 

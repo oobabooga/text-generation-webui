@@ -72,10 +72,9 @@ def extract_reasoning(text, html_escaped=False):
                 if content_pos != -1:
                     content_start = content_pos + len(content_esc)
                 else:
-                    # Content tag expected but not yet present (e.g. partial
-                    # streaming) — suppress intermediate tags between end_tag
-                    # and content_tag so they don't leak as content.
-                    content_start = len(text)
+                    # Content tag not present — fall back to content after
+                    # end_tag (e.g. GPT-OSS tool calls skip the final channel).
+                    content_start = end_pos + len(end_esc)
             else:
                 content_start = end_pos + len(end_esc)
 

@@ -95,8 +95,6 @@ def set_interface_arguments(extensions, bool_active):
         setattr(shared.args, k, False)
     for k in bool_active:
         setattr(shared.args, k, True)
-        if k == 'api':
-            shared.add_extension('openai', last=True)
 
     shared.need_restart = True
 

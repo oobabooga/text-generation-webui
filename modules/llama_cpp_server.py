@@ -11,7 +11,6 @@ import time
 from pathlib import Path
 from typing import Any, List
 
-import llama_cpp_binaries
 import requests
 
 from modules import shared
@@ -311,8 +310,45 @@ class LlamaServer:
         else:
             raise Exception(f"Unexpected response format: 'completion_probabilities' not found in {result}")
 
+    def get_prompt_logprob_entries(self, token_ids, n_probs=5, prompt=""):
+        """Get logprob entries for prompt tokens via a single n_predict=0 request.
+
+        Requires llama.cpp server with prompt_logprobs support.
+        Returns entries in the standard format for format_completion_logprobs().
+        """
+        token_ids_list = token_ids.tolist() if hasattr(token_ids, 'tolist') else list(token_ids)
+
+        url = f"http://127.0.0.1:{self.port}/completion"
+        payload = {
+            "prompt": token_ids_list,
+            "n_predict": 0,
+            "n_probs": n_probs,
+            "prompt_logprobs": True,
+            "stream": False,
+            "cache_prompt": False,
+        }
+
+        response = self.session.post(url, json=payload)
+        result = response.json()
+
+        prompt_probs = result.get("prompt_probabilities", [])
+        if not prompt_probs:
+            return []
+
+        # Null first token (no conditioning context); use empty string for BOS
+        # or tokens that don't appear at the start of the prompt text.
+        first_token_str = self.decode([token_ids_list[0]])
+        if self.bos_token and first_token_str == self.bos_token:
+            first_token_str = ""
+        elif not prompt.startswith(first_token_str):
+            first_token_str = ""
+
+        entries = [{"token": first_token_str, "null_logprob": True}]
+        entries.extend(prompt_probs)
+        return entries
+
     def _get_vocabulary_size(self):
-        """Get and store the model's maximum context length."""
+        """Get and store the model's vocabulary size."""
         url = f"http://127.0.0.1:{self.port}/v1/models"
         response = self.session.get(url).json()
 
@@ -357,7 +393,16 @@ class LlamaServer:
         """Start the llama.cpp server and wait until it's ready."""
         # Determine the server path
         if self.server_path is None:
-            self.server_path = llama_cpp_binaries.get_binary_path()
+            if shared.args.ik:
+                try:
+                    import ik_llama_cpp_binaries
+                except ImportError:
+                    raise ImportError("--ik requires the ik_llama_cpp_binaries package. Install it with: pip install <ik_llama_cpp_binaries wheel URL>")
+
+                self.server_path = ik_llama_cpp_binaries.get_binary_path()
+            else:
+                import llama_cpp_binaries
+                self.server_path = llama_cpp_binaries.get_binary_path()
 
         # Build the command
         cmd = [
@@ -470,6 +515,10 @@ class LlamaServer:
                         else:
                             cmd.append(f"--{flag_item}")
 
+        # Patch flags for ik_llama.cpp compatibility
+        if shared.args.ik:
+            cmd = _patch_cmd_for_ik(cmd)
+
         env = os.environ.copy()
         if os.name == 'posix':
             current_path = env.get('LD_LIBRARY_PATH', '')
@@ -500,9 +549,8 @@ class LlamaServer:
         health_url = f"http://127.0.0.1:{self.port}/health"
         while True:
             # Check if process is still alive
-            if self.process.poll() is not None:
-                # Process has terminated
-                exit_code = self.process.poll()
+            exit_code = self.process.poll()
+            if exit_code is not None:
                 raise RuntimeError(f"Server process terminated unexpectedly with exit code: {exit_code}")
 
             try:
@@ -608,3 +656,49 @@ def filter_stderr_with_progress(process_stderr):
             process_stderr.close()
         except Exception:
             pass
+
+
+def _patch_cmd_for_ik(cmd):
+    """
+    Rewrite upstream llama.cpp flags to ik_llama.cpp equivalents:
+      --no-webui           → --webui none
+      --fit off            → (removed)
+      --fit on / --fit-ctx → --fit (bare flag)
+      --fit-target         → --fit-margin
+      --cache-reuse        → (removed, unsupported)
+      --swa-full           → (removed, unsupported)
+    """
+    # Add Hadamard KV cache rotation when using quantized cache types.
+    # This significantly improves quantized cache quality (especially q4_0)
+    # and is a no-op for MLA models like DeepSeek.
+    if shared.args.cache_type in ("q8_0", "q4_0"):
+        cmd += ["-khad", "-vhad"]
+
+    patched = []
+    i = 0
+    while i < len(cmd):
+        arg = cmd[i]
+
+        if arg == "--no-webui":
+            patched += ["--webui", "none"]
+        elif arg == "--fit" and i + 1 < len(cmd) and cmd[i + 1] in ("on", "off"):
+            val = cmd[i + 1]
+            i += 1
+            if val == "on":
+                patched.append("--fit")
+            # "off" → drop entirely
+        elif arg == "--fit-ctx":
+            patched.append("--fit")
+            i += 1  # skip the value
+        elif arg == "--fit-target":
+            patched.append("--fit-margin")
+        elif arg == "--cache-reuse":
+            i += 1  # skip the value
+        elif arg == "--swa-full":
+            pass  # bare flag, just drop it
+        else:
+            patched.append(arg)
+
+        i += 1
+
+    return patched

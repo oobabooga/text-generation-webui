@@ -1,7 +1,6 @@
 import math
 import queue
 import threading
-import traceback
 from pathlib import Path
 from typing import Any, List, Tuple
 
@@ -34,8 +33,7 @@ from modules.text_generation import get_max_prompt_length
 try:
     import flash_attn
 except Exception:
-    logger.warning('Failed to load flash-attention due to the following error:\n')
-    traceback.print_exc()
+    logger.warning('Failed to load flash-attention due to the following error:', exc_info=True)
 
 
 class LogitBiasFilter(Filter):
@@ -81,7 +79,7 @@ class ConcurrentGenerator:
                 try:
                     results = self.generator.iterate()
                 except Exception:
-                    logger.error("Exception in ConcurrentGenerator iterate loop:\n" + traceback.format_exc())
+                    logger.exception("Exception in ConcurrentGenerator iterate loop")
                     for q in self.job_queues.values():
                         q.put(None)
                     self.job_queues.clear()
@@ -425,6 +423,15 @@ class Exllamav3Model:
         if logit_bias:
             filters.append(LogitBiasFilter(self.tokenizer, logit_bias))
 
+        # Suppress EOS tokens via logit bias so they are never sampled
+        if state['ban_eos_token']:
+            eos_bias = {}
+            for eos_id in self.config.eos_token_id_list:
+                if eos_id is not None:
+                    eos_bias[str(eos_id)] = float('-inf')
+            if eos_bias:
+                filters.append(LogitBiasFilter(self.tokenizer, eos_bias))
+
         # Logprobs support (OpenAI API)
         logprobs = state.get('logprobs', 0) or 0
         return_top_tokens = logprobs if logprobs > 0 else 0
@@ -482,15 +489,35 @@ class Exllamav3Model:
             return
 
         id_to_piece = self.tokenizer.get_id_to_piece_list(True)
+        sampled_ids = result.get("token_ids")    # (batch, seq_len) - actually sampled tokens
+        sampled_probs = result.get("token_probs")  # (batch, seq_len) - their probabilities
+
+        def _piece(tid):
+            s = id_to_piece[tid] if tid < len(id_to_piece) else f"<{tid}>"
+            return s.replace('\u2581', ' ')
+
+        def _logprob(prob):
+            return math.log(prob) if prob > 0 else float("-inf")
+
         # top_k_tokens shape: (batch, seq_len, k), top_k_probs same
         for seq_idx in range(top_k_tokens.shape[1]):
             entry = {"top_logprobs": []}
             for k_idx in range(top_k_tokens.shape[2]):
                 token_id = top_k_tokens[0, seq_idx, k_idx].item()
                 prob = top_k_probs[0, seq_idx, k_idx].item()
-                token_str = id_to_piece[token_id] if token_id < len(id_to_piece) else f"<{token_id}>"
-                logprob = math.log(prob) if prob > 0 else float("-inf")
-                entry["top_logprobs"].append({"token": token_str, "logprob": logprob})
+                entry["top_logprobs"].append({"token": _piece(token_id), "logprob": _logprob(prob)})
+
+            # Record the actually sampled token at the entry level so
+            # format_completion_logprobs uses it instead of top_logprobs[0]
+            # (they differ with non-greedy sampling).
+            if sampled_ids is not None:
+                sid = sampled_ids[0, seq_idx].item()
+                entry["token"] = _piece(sid)
+                if sampled_probs is not None:
+                    entry["logprob"] = _logprob(sampled_probs[0, seq_idx].item())
+                else:
+                    entry["logprob"] = None
+
             self.last_completion_probabilities.append(entry)
 
     def generate(self, prompt, state):

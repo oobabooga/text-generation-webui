@@ -51,6 +51,9 @@ def create_ui():
 
                         with gr.Column():
                             shared.gradio['vram_info'] = gr.HTML(value=get_initial_vram_info())
+                            if not shared.args.portable:
+                                shared.gradio['ik'] = gr.Checkbox(label="ik", value=shared.args.ik, info='Use ik_llama.cpp instead of upstream llama.cpp.')
+
                             shared.gradio['cpu_moe'] = gr.Checkbox(label="cpu-moe", value=shared.args.cpu_moe, info='Move the experts to the CPU. Saves VRAM on MoE models.')
                             shared.gradio['streaming_llm'] = gr.Checkbox(label="streaming-llm", value=shared.args.streaming_llm, info='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
                             shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
@@ -222,10 +225,8 @@ def load_model_wrapper(selected_model, loader, autoload=False):
             else:
                 yield f"Failed to load `{selected_model}`."
         except Exception:
-            exc = traceback.format_exc()
-            logger.error('Failed to load the model.')
-            print(exc)
-            yield exc.replace('\n', '\n\n')
+            logger.exception('Failed to load the model.')
+            yield traceback.format_exc().replace('\n', '\n\n')
 
 
 def load_lora_wrapper(selected_loras):

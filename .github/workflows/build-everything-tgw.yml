@@ -68,3 +68,38 @@ jobs:
     with:
       version: ${{ inputs.version }}
       config: 'os:macos-15-intel,macos-14'
+
+  build_release_ik_cuda_windows:
+    name: ik CUDA Windows
+    uses: ./.github/workflows/build-portable-release-ik-cuda.yml
+    with:
+      version: ${{ inputs.version }}
+      config: 'os:windows-2022'
+
+  build_release_ik_cuda_linux:
+    name: ik CUDA Linux
+    uses: ./.github/workflows/build-portable-release-ik-cuda.yml
+    with:
+      version: ${{ inputs.version }}
+      config: 'os:ubuntu-22.04'
+
+  build_release_ik_cpu_windows:
+    name: ik CPU Windows
+    uses: ./.github/workflows/build-portable-release-ik.yml
+    with:
+      version: ${{ inputs.version }}
+      config: 'os:windows-2022'
+
+  build_release_ik_cpu_linux:
+    name: ik CPU Linux
+    uses: ./.github/workflows/build-portable-release-ik.yml
+    with:
+      version: ${{ inputs.version }}
+      config: 'os:ubuntu-22.04'
+
+  build_release_ik_macos:
+    name: ik macOS
+    uses: ./.github/workflows/build-portable-release-ik.yml
+    with:
+      version: ${{ inputs.version }}
+      config: 'os:macos-14'

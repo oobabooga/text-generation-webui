@@ -28,8 +28,8 @@ trafilatura==2.0.0
 wandb
 
 # Gradio
-https://github.com/oobabooga/gradio/releases/download/4.37.2-custom.12/gradio-4.37.2+custom.12-py3-none-any.whl
-https://github.com/oobabooga/gradio/releases/download/4.37.2-custom.12/gradio_client-1.0.2+custom.12-py3-none-any.whl
+https://github.com/oobabooga/gradio/releases/download/4.37.2-custom.13/gradio-4.37.2+custom.13-py3-none-any.whl
+https://github.com/oobabooga/gradio/releases/download/4.37.2-custom.13/gradio_client-1.0.2+custom.13-py3-none-any.whl
 
 # API
 flask_cloudflared==0.0.15
@@ -37,4 +37,5 @@ sse-starlette==1.6.5
 tiktoken
 
 # Mac wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.94.0/llama_cpp_binaries-0.94.0-py3-none-macosx_13_0_arm64.whl; platform_system == "Darwin"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.99.0/llama_cpp_binaries-0.99.0-py3-none-macosx_13_0_arm64.whl; platform_system == "Darwin"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.99.0/ik_llama_cpp_binaries-0.99.0-py3-none-macosx_13_0_arm64.whl; platform_system == "Darwin"
