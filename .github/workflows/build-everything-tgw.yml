@@ -96,10 +96,3 @@ jobs:
     with:
       version: ${{ inputs.version }}
       config: 'os:ubuntu-22.04'
-
-  build_release_ik_macos:
-    name: ik macOS
-    uses: ./.github/workflows/build-portable-release-ik.yml
-    with:
-      version: ${{ inputs.version }}
-      config: 'os:macos-14'

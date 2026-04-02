@@ -138,14 +138,13 @@ jobs:
             # 3. Prepare requirements file based on CUDA version
             cd "text-generation-webui-${VERSION_CLEAN}"
             if [[ "$CUDA_VERSION" == "13.1" ]]; then
-                REQ_FILE="requirements/portable/requirements_cuda131.txt"
+                REQ_FILE="requirements/portable/requirements_ik_cuda131.txt"
             else
-                REQ_FILE="requirements/portable/requirements.txt"
+                REQ_FILE="requirements/portable/requirements_ik.txt"
             fi
 
-            # 4. Swap llama.cpp wheels for ik_llama.cpp and inject --ik into start scripts
-            sed -i 's|/llama_cpp_binaries-|/ik_llama_cpp_binaries-|g' "$REQ_FILE"
-            sed -i 's/--portable/--portable --ik/g' start_linux.sh start_windows.bat start_macos.sh 2>/dev/null || true
+            # 4. Inject --ik into start scripts
+            sed -i 's/--portable/--portable --ik/g' start_linux.sh start_windows.bat 2>/dev/null || true
 
             # 5. Install packages
             echo "Installing Python packages from $REQ_FILE..."
