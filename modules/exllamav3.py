@@ -527,6 +527,20 @@ class Exllamav3Model:
 
         return output
 
+    def get_prompt_logits(self, input_ids):
+        """Return logits for all positions via a single no-cache forward pass.
+
+        Used by prompt logprobs computation. Returns (1, seq_len, vocab) on CPU in float32.
+        """
+        import torch
+        input_ids_tensor = input_ids if isinstance(input_ids, torch.Tensor) else torch.tensor(input_ids, dtype=torch.long)
+        input_ids_tensor = input_ids_tensor.view(1, -1).cpu()
+        with torch.no_grad():
+            return self.model.forward(
+                input_ids=input_ids_tensor,
+                params={"attn_mode": "flash_attn_nc"}
+            ).cpu().float()
+
     def get_logits(self, token_ids, **kwargs):
         """
         Process a batch of token_ids and return the logits for the last token.
