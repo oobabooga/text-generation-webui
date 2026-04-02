@@ -1,4 +1,4 @@
-accelerate==1.12.*
+accelerate==1.13.*
 audioop-lts<1.0; python_version >= "3.13"
 datasets
 diffusers==0.37.*
