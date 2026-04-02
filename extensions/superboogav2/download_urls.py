@@ -5,12 +5,14 @@ import requests
 from bs4 import BeautifulSoup
 
 import extensions.superboogav2.parameters as parameters
+from modules.web_search import _validate_url
 
 from .data_processor import process_and_add_to_collector
 from .utils import create_metadata_source
 
 
 def _download_single(url):
+    _validate_url(url)
     response = requests.get(url, timeout=5)
     if response.status_code == 200:
         return response.content
