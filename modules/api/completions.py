@@ -299,8 +299,9 @@ def format_completion_logprobs(entries):
             t = item.get('token', '')
             lp = item.get('logprob', item.get('prob', 0))
             top_dict[t] = lp
-            if 'token_id' in item:
-                top_dict_ids[item['token_id']] = lp
+            tid = item.get('token_id', item.get('id'))
+            if tid is not None:
+                top_dict_ids[tid] = lp
         top_logprobs.append(top_dict)
         top_logprobs_ids.append(top_dict_ids if top_dict_ids else None)
 
