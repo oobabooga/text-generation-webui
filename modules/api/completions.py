@@ -91,17 +91,14 @@ def _compute_prompt_logprob_entries(prompt, logprobs_count, input_ids=None):
     import torch
 
     if loader == 'ExLlamav3' and hasattr(model, 'model') and hasattr(model, 'cache'):
-        # Native ExLlamav3: call the underlying Model.forward() directly
+        # Native ExLlamav3: call the underlying Model.forward() in chunks
+        # to avoid OOM from giant logits tensors (seq_len * vocab_size * 4 bytes)
         input_ids_tensor = input_ids if isinstance(input_ids, torch.Tensor) else torch.tensor(input_ids, dtype=torch.long)
+        input_ids_tensor = input_ids_tensor.view(-1).cpu()
         with torch.no_grad():
             logits = model.model.forward(
-                input_ids=input_ids_tensor,
-                params={
-                    "attn_mode": "flash_attn",
-                    "cache": model.cache,
-                    "past_len": 0,
-                    "batch_shape": (1, model.max_tokens),
-                }
+                input_ids=input_ids_tensor.view(1, -1),
+                params={"attn_mode": "flash_attn_nc"}
             ).float().cpu()
 
     elif hasattr(model, 'forward'):

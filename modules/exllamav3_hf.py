@@ -26,6 +26,9 @@ except Exception:
 class Exllamav3HF(PreTrainedModel, GenerationMixin):
     def __init__(self, model_dir):
         hf_config = PretrainedConfig.from_pretrained(model_dir)
+        # Ensure text_config is a proper object, not a dict (fixes qwen3_5_moe + transformers compat)
+        if isinstance(getattr(hf_config, 'text_config', None), dict):
+            hf_config.text_config = PretrainedConfig(**hf_config.text_config)
         super().__init__(hf_config)
 
         exl3_config = Config.from_directory(model_dir)
@@ -199,30 +202,11 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
                 }
             ).to(input_ids.device).float()
         else:
-            # Labels path: use cache for cross-chunk attention.
-            tokens_to_process = seq_tensor
-            all_logits = None
-            current_len = 0
-
-            for i in range(0, tokens_to_process.shape[0], max_chunk_size):
-                chunk = tokens_to_process[i:i + max_chunk_size]
-                chunk_logits = self.ex_model.forward(
-                    input_ids=chunk.view(1, -1),
-                    params={
-                        "attn_mode": "flash_attn",
-                        "cache": ex_cache,
-                        "past_len": current_len,
-                        "batch_shape": (1, self.max_tokens),
-                    }
-                ).float()
-                current_len += chunk.shape[0]
-
-                if all_logits is None:
-                    all_logits = chunk_logits
-                else:
-                    all_logits = torch.cat([all_logits, chunk_logits], dim=1)
-
-            logits = all_logits
+            # Labels path: single pass without cache for correct logits
+            logits = self.ex_model.forward(
+                input_ids=seq_tensor.view(1, -1),
+                params={"attn_mode": "flash_attn_nc"}
+            ).float().cpu()
 
         if is_negative:
             self.past_seq_negative = seq_tensor
