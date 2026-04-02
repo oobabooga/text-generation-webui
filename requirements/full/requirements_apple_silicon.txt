@@ -38,4 +38,3 @@ tiktoken
 
 # Mac wheels
 https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.101.0/llama_cpp_binaries-0.101.0-py3-none-macosx_13_0_arm64.whl; platform_system == "Darwin"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.101.0/ik_llama_cpp_binaries-0.101.0-py3-none-macosx_13_0_arm64.whl; platform_system == "Darwin"
