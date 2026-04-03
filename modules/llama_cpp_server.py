@@ -333,12 +333,6 @@ class LlamaServer:
 
         prompt_probs = result.get("prompt_probabilities", [])
         if not prompt_probs:
-            logger.warning(
-                "The llama.cpp server did not return prompt probabilities. "
-                "This feature requires a custom build with prompt_logprobs support. "
-                "See: https://github.com/oobabooga/llama.cpp/tree/prompt-logprobs "
-                "or https://github.com/oobabooga/ik_llama.cpp/tree/prompt-logprobs"
-            )
             return []
 
         # Null first token (no conditioning context); use empty string for BOS
