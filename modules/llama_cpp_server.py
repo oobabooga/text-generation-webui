@@ -418,6 +418,7 @@ class LlamaServer:
             "--ubatch-size", str(shared.args.ubatch_size),
             "--port", str(self.port),
             "--no-webui",
+            "--no-jinja",
             "--flash-attn", "on",
         ]
 
