@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from modules import shared, utils
+from modules.utils import sanitize_filename
 from modules.text_generation import get_encoded_length
 
 
@@ -18,6 +19,7 @@ def load_prompt(fname):
 
         return initial_content
 
+    fname = sanitize_filename(fname)
     file_path = shared.user_data_dir / 'logs' / 'notebook' / f'{fname}.txt'
     if file_path.exists():
         with open(file_path, 'r', encoding='utf-8') as f:
