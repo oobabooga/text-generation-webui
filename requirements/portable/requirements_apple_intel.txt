@@ -23,4 +23,4 @@ sse-starlette==1.6.5
 tiktoken
 
 # Mac wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.102.0/llama_cpp_binaries-0.102.0-py3-none-macosx_13_0_x86_64.whl; platform_system == "Darwin"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.106.0/llama_cpp_binaries-0.106.0-py3-none-macosx_13_0_x86_64.whl; platform_system == "Darwin"
