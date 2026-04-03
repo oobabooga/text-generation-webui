@@ -210,6 +210,57 @@ def _expand_tool_sequence(tool_seq):
     return messages
 
 
+def _convert_to_tool_responses(messages):
+    """Convert role:'tool' messages to tool_responses format.
+
+    Templates like Gemma 4 expect tool results as a ``tool_responses``
+    attribute on a message rather than separate ``role: 'tool'`` messages.
+    This function groups consecutive tool messages and rewrites them.
+    """
+    result = []
+    tc_id_to_name = {}
+
+    i = 0
+    while i < len(messages):
+        msg = messages[i]
+
+        if msg.get('tool_calls'):
+            for tc in msg['tool_calls']:
+                tc_id = tc.get('id', '')
+                func_name = tc.get('function', {}).get('name', 'unknown')
+                if tc_id:
+                    tc_id_to_name[tc_id] = func_name
+
+        if msg.get('role') == 'tool':
+            tool_responses = []
+            while i < len(messages) and messages[i].get('role') == 'tool':
+                tool_msg = messages[i]
+                tc_id = tool_msg.get('tool_call_id', '')
+                func_name = tc_id_to_name.get(tc_id, 'unknown')
+
+                content = tool_msg.get('content', '')
+                try:
+                    response = json.loads(content)
+                except (json.JSONDecodeError, ValueError, TypeError):
+                    response = content
+
+                tool_responses.append({
+                    'name': func_name,
+                    'response': response,
+                })
+                i += 1
+
+            result.append({
+                'role': 'tool',
+                'tool_responses': tool_responses,
+            })
+        else:
+            result.append(msg)
+            i += 1
+
+    return result
+
+
 def _format_attachments(attachments, include_text=True):
     """Build image ref and text attachment strings from a list of attachments."""
     attachments_text = ""
@@ -266,6 +317,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
         user_bio=replace_character_names(state['user_bio'], state['name1'], state['name2']),
         tools=state['tools'] if 'tools' in state else None,
     )
+
+    active_template_str = state['instruction_template_str'] if state['mode'] == 'instruct' else chat_template_str
+    uses_tool_responses = 'tool_responses' in active_template_str
 
     messages = []
 
@@ -502,6 +556,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
             prompt += apply_extensions('bot_prefix', "", state)
 
         return prompt
+
+    if uses_tool_responses:
+        messages = _convert_to_tool_responses(messages)
 
     prompt = make_prompt(messages)
 

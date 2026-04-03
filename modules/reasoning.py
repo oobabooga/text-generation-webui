@@ -7,6 +7,7 @@ THINKING_FORMATS = [
     ('<|channel|>analysis<|message|>', '<|end|>', '<|channel|>final<|message|>'),
     ('<|channel|>commentary<|message|>', '<|end|>', '<|channel|>final<|message|>'),
     ('<seed:think>', '</seed:think>', None),
+    ('<|channel>thought', '<channel|>', None),  # Gemma 4
     ('<|think|>', '<|end|>', '<|content|>'),  # Solar Open
     # ('Thinking Process:', '</think>', None),  # Qwen3.5 verbose thinking outside tags -- removed: too prone to false positives in streaming
     (None, '</think>', None),  # End-only variant (e.g., Qwen3-next)

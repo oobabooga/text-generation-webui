@@ -27,6 +27,7 @@ TOOL_CALL_OPENING_MARKERS = [
     '[TOOL_CALLS]',
     'to=functions.',
     '<|channel|>commentary',
+    '<|tool_call>call:',
 ]
 
 
@@ -400,6 +401,78 @@ def _parse_glm_tool_calls(answer: str, tool_names: list[str]):
     return matches, start_pos
 
 
+def _extract_gemma4_balanced(text, start):
+    """Extract balanced braces from Gemma 4 format, using <|"|> as string delimiters."""
+    if start >= len(text) or text[start] != '{':
+        return None
+    depth = 0
+    in_string = False
+    quote_token = '<|"|>'
+    quote_len = len(quote_token)
+    i = start
+    while i < len(text):
+        if text[i:i + quote_len] == quote_token:
+            in_string = not in_string
+            i += quote_len
+            continue
+        if in_string:
+            i += 1
+            continue
+        c = text[i]
+        if c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+            if depth == 0:
+                return text[start:i + 1]
+        i += 1
+    return None
+
+
+def _parse_gemma4_tool_calls(answer: str, tool_names: list[str]):
+    """Parse Gemma 4-style tool calls.
+
+    Format:
+        <|tool_call>call:func_name{key:<|"|>value<|"|>,...}<tool_call|>
+
+    Values use <|"|> tokens instead of standard JSON quotes, and keys are
+    bare identifiers.
+    """
+    matches = []
+    start_pos = None
+
+    for m in re.finditer(r'<\|tool_call>call:([^\s{]+)\s*', answer):
+        func_name = m.group(1).strip()
+        if func_name not in tool_names:
+            continue
+
+        brace_start = m.end()
+        if brace_start >= len(answer) or answer[brace_start] != '{':
+            continue
+
+        content = _extract_gemma4_balanced(answer, brace_start)
+        if content is None:
+            continue
+
+        # Convert to JSON: split on <|"|> tokens so that key quoting
+        # only applies outside string values (even-indexed parts),
+        # then rejoin with real quotes.
+        parts = content.split('<|"|>')
+        for idx in range(0, len(parts), 2):
+            parts[idx] = re.sub(r'(^|[{,\[])\s*(\w+)\s*:', r'\1"\2":', parts[idx])
+        json_str = '"'.join(parts)
+
+        try:
+            arguments = json.loads(json_str)
+            if start_pos is None:
+                start_pos = m.start()
+            matches.append(_make_tool_call(func_name, arguments))
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    return matches, start_pos
+
+
 def _parse_pythonic_tool_calls(answer: str, tool_names: list[str]):
     """Parse pythonic-style tool calls used by Llama 4 and similar models.
 
@@ -473,6 +546,11 @@ TOOL_CALL_FORMATS = [
         'markers': ['to=functions.', '<|channel|>commentary'],
     },
     {
+        'template_hints': ['<|tool_call>call:'],
+        'parser': _parse_gemma4_tool_calls,
+        'markers': ['<|tool_call>call:'],
+    },
+    {
         'template_hints': ['minimax:tool_call'],
         'parser': _parse_minimax_tool_calls,
         'markers': ['<minimax:tool_call>'],
@@ -504,6 +582,7 @@ ALL_PARSERS = [
     _parse_deep_seek_tool_calls,
     _parse_kimi_tool_calls,
     _parse_channel_tool_calls,
+    _parse_gemma4_tool_calls,
     _parse_minimax_tool_calls,
     _parse_glm_tool_calls,
     _parse_xml_param_tool_calls,
