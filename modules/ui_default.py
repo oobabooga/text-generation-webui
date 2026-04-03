@@ -10,7 +10,7 @@ from modules.text_generation import (
     stop_everything_event
 )
 from modules.ui_notebook import store_notebook_state_and_debounce
-from modules.utils import gradio
+from modules.utils import gradio, sanitize_filename
 
 inputs = ('textbox-default', 'interface_state')
 outputs = ('output_textbox', 'html-default')
@@ -167,11 +167,11 @@ def handle_new_prompt():
 
 
 def handle_delete_prompt_confirm_default(prompt_name):
+    prompt_name = sanitize_filename(prompt_name)
     available_prompts = utils.get_available_prompts()
     current_index = available_prompts.index(prompt_name) if prompt_name in available_prompts else 0
 
-    prompt_name = sanitize_filename(prompt_name)
-        (shared.user_data_dir / "logs" / "notebook" / f"{prompt_name}.txt").unlink(missing_ok=True)
+    (shared.user_data_dir / "logs" / "notebook" / f"{prompt_name}.txt").unlink(missing_ok=True)
     available_prompts = utils.get_available_prompts()
 
     if available_prompts:

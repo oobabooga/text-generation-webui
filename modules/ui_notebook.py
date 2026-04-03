@@ -11,7 +11,7 @@ from modules.text_generation import (
     get_token_ids,
     stop_everything_event
 )
-from modules.utils import gradio
+from modules.utils import gradio, sanitize_filename
 
 _notebook_file_lock = threading.Lock()
 _notebook_auto_save_timer = None
@@ -202,10 +202,10 @@ def handle_new_prompt():
 
 
 def handle_delete_prompt_confirm_notebook(prompt_name):
+    prompt_name = sanitize_filename(prompt_name)
     available_prompts = utils.get_available_prompts()
     current_index = available_prompts.index(prompt_name) if prompt_name in available_prompts else 0
 
-    prompt_name = sanitize_filename(prompt_name)
     (shared.user_data_dir / "logs" / "notebook" / f"{prompt_name}.txt").unlink(missing_ok=True)
     available_prompts = utils.get_available_prompts()
 
@@ -252,6 +252,7 @@ def handle_rename_prompt_confirm_notebook(new_name, current_name):
 
 def autosave_prompt(text, prompt_name):
     """Automatically save the text to the selected prompt file"""
+    prompt_name = sanitize_filename(prompt_name)
     if prompt_name and text.strip():
         prompt_path = shared.user_data_dir / "logs" / "notebook" / f"{prompt_name}.txt"
         prompt_path.parent.mkdir(parents=True, exist_ok=True)
