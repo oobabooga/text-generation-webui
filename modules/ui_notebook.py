@@ -205,6 +205,7 @@ def handle_delete_prompt_confirm_notebook(prompt_name):
     available_prompts = utils.get_available_prompts()
     current_index = available_prompts.index(prompt_name) if prompt_name in available_prompts else 0
 
+    prompt_name = sanitize_filename(prompt_name)
     (shared.user_data_dir / "logs" / "notebook" / f"{prompt_name}.txt").unlink(missing_ok=True)
     available_prompts = utils.get_available_prompts()
 
@@ -233,6 +234,8 @@ def handle_rename_prompt_click_notebook(current_name):
 
 
 def handle_rename_prompt_confirm_notebook(new_name, current_name):
+    new_name = sanitize_filename(new_name)
+    current_name = sanitize_filename(current_name)
     old_path = shared.user_data_dir / "logs" / "notebook" / f"{current_name}.txt"
     new_path = shared.user_data_dir / "logs" / "notebook" / f"{new_name}.txt"
 
