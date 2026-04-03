@@ -20,6 +20,7 @@ loaders_and_params = OrderedDict({
         'no_mmap',
         'mlock',
         'numa',
+        'ik',
         'parallel',
         'model_draft',
         'draft_max',
@@ -345,6 +346,7 @@ def list_model_elements():
         'spec_ngram_size_m',
         'spec_ngram_min_hits',
         'mmproj',
+        'ik',
     ]
 
 

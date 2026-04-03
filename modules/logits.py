@@ -4,7 +4,6 @@ import numpy as np
 
 from modules import models, shared
 from modules.logging_colors import logger
-from modules.models import load_model
 from modules.text_generation import generate_reply
 from modules.utils import check_model_loaded
 
@@ -12,8 +11,7 @@ global_scores = None
 
 
 def get_next_logits(*args, **kwargs):
-    if shared.args.idle_timeout > 0 and shared.model is None and shared.model_name not in [None, 'None']:
-        shared.model, shared.tokenizer = load_model(shared.model_name)
+    models.load_model_if_idle_unloaded()
 
     needs_lock = not args[2]  # use_samplers
     if needs_lock:

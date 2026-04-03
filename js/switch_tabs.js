@@ -2,17 +2,9 @@ function scrollToTop() {
   window.scrollTo({ top: 0 });
 }
 
-function findButtonsByText(buttonText) {
-  const buttons = document.getElementsByTagName("button");
-  const matchingButtons = [];
-
-  for (let i = 0; i < buttons.length; i++) {
-    if (buttons[i].textContent.trim() === buttonText) {
-      matchingButtons.push(buttons[i]);
-    }
-  }
-
-  return matchingButtons;
+function findButtonsByText(buttonText, container = document) {
+  return Array.from(container.getElementsByTagName("button"))
+    .filter(btn => btn.textContent.trim() === buttonText);
 }
 
 function switch_to_chat() {
@@ -39,13 +31,9 @@ function switch_to_character() {
 
 function switch_to_image_ai_generate() {
   const container = document.querySelector("#image-ai-tab");
-  const buttons = container.getElementsByTagName("button");
-
-  for (let i = 0; i < buttons.length; i++) {
-    if (buttons[i].textContent.trim() === "Generate") {
-      buttons[i].click();
-      break;
-    }
+  const generateBtn = findButtonsByText("Generate", container)[0];
+  if (generateBtn) {
+    generateBtn.click();
   }
 
   scrollToTop();

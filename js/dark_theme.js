@@ -1,6 +1,6 @@
 function toggleDarkMode() {
   document.body.classList.toggle("dark");
-  var currentCSS = document.getElementById("highlight-css");
+  const currentCSS = document.getElementById("highlight-css");
   if (currentCSS.getAttribute("href") === "file/css/highlightjs/github-dark.min.css") {
     currentCSS.setAttribute("href", "file/css/highlightjs/github.min.css");
   } else {
@@ -9,12 +9,10 @@ function toggleDarkMode() {
 
   // Re-highlight all code blocks once stylesheet loads
   currentCSS.onload = function() {
-    const messageBodies = document.getElementById("chat").querySelectorAll(".message-body");
-    messageBodies.forEach((messageBody) => {
-      const codeBlocks = messageBody.querySelectorAll("pre code");
-      codeBlocks.forEach((codeBlock) => {
-        hljs.highlightElement(codeBlock);
-      });
+    // Clear data-highlighted so hljs will re-process with the new theme
+    document.querySelectorAll("#chat .message-body pre code[data-highlighted]").forEach((codeBlock) => {
+      delete codeBlock.dataset.highlighted;
     });
+    doSyntaxHighlighting();
   };
 }

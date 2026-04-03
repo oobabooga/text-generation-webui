@@ -1,11 +1,35 @@
 // -------------------------------------------------
+// Shared helpers
+// -------------------------------------------------
+
+function getProfilePictureUrl() {
+  return "/file/user_data/cache/pfp_character.png?time=" + Date.now();
+}
+
+const MESSAGE_SELECTOR = ".message, .user-message, .assistant-message";
+
+function getMessageElement(element) {
+  if (!element) return null;
+  return element.closest(MESSAGE_SELECTOR);
+}
+
+function isUserRole(messageElement) {
+  return messageElement.classList.contains("user-message") ||
+         messageElement.querySelector(".text-you") !== null ||
+         messageElement.querySelector(".circle-you") !== null;
+}
+
+// Trigger a synthetic 'input' event so Gradio picks up programmatic value changes
+function dispatchGradioInput(element) {
+  element.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+// -------------------------------------------------
 // Event handlers
 // -------------------------------------------------
 
 function copyToClipboard(element) {
-  if (!element) return;
-
-  const messageElement = element.closest(".message, .user-message, .assistant-message");
+  const messageElement = getMessageElement(element);
   if (!messageElement) return;
 
   const rawText = messageElement.getAttribute("data-raw");
@@ -48,9 +72,7 @@ function fallbackCopyToClipboard(text) {
 }
 
 function branchHere(element) {
-  if (!element) return;
-
-  const messageElement = element.closest(".message, .user-message, .assistant-message");
+  const messageElement = getMessageElement(element);
   if (!messageElement) return;
 
   const index = messageElement.getAttribute("data-index");
@@ -69,11 +91,7 @@ function branchHere(element) {
   }
 
   branchIndexInput.value = index;
-
-  // Trigger any 'change' or 'input' events Gradio might be listening for
-  const event = new Event("input", { bubbles: true });
-  branchIndexInput.dispatchEvent(event);
-
+  dispatchGradioInput(branchIndexInput);
   branchButton.click();
 }
 
@@ -82,9 +100,7 @@ function branchHere(element) {
 // -------------------------------------------------
 
 function editHere(buttonElement) {
-  if (!buttonElement) return;
-
-  const messageElement = buttonElement.closest(".message, .user-message, .assistant-message");
+  const messageElement = getMessageElement(buttonElement);
   if (!messageElement) return;
 
   const messageBody = messageElement.querySelector(".message-body");
@@ -97,12 +113,7 @@ function editHere(buttonElement) {
     return;
   }
 
-  // Determine role based on message element - handle different chat modes
-  const isUserMessage = messageElement.classList.contains("user-message") ||
-                       messageElement.querySelector(".text-you") !== null ||
-                       messageElement.querySelector(".circle-you") !== null;
-
-  startEditing(messageElement, messageBody, isUserMessage);
+  startEditing(messageElement, messageBody, isUserRole(messageElement));
 }
 
 function startEditing(messageElement, messageBody, isUserMessage) {
@@ -209,30 +220,22 @@ function submitMessageEdit(index, newText, isUserMessage) {
   editTextInput.value = newText;
   editRoleInput.value = isUserMessage ? "user" : "assistant";
 
-  editIndexInput.dispatchEvent(new Event("input", { bubbles: true }));
-  editTextInput.dispatchEvent(new Event("input", { bubbles: true }));
-  editRoleInput.dispatchEvent(new Event("input", { bubbles: true }));
+  dispatchGradioInput(editIndexInput);
+  dispatchGradioInput(editTextInput);
+  dispatchGradioInput(editRoleInput);
 
   editButton.click();
   return true;
 }
 
 function navigateVersion(element, direction) {
-  if (!element) return;
-
-  const messageElement = element.closest(".message, .user-message, .assistant-message");
+  const messageElement = getMessageElement(element);
   if (!messageElement) return;
 
   const index = messageElement.getAttribute("data-index");
   if (!index) return;
 
-  // Determine role based on message element classes
-  let role = "assistant"; // Default role
-  if (messageElement.classList.contains("user-message") ||
-      messageElement.querySelector(".text-you") ||
-      messageElement.querySelector(".circle-you")) {
-    role = "user";
-  }
+  const role = isUserRole(messageElement) ? "user" : "assistant";
 
   const indexInput = document.getElementById("Navigate-message-index")?.querySelector("input");
   const directionInput = document.getElementById("Navigate-direction")?.querySelector("textarea");
@@ -248,11 +251,9 @@ function navigateVersion(element, direction) {
   directionInput.value = direction;
   roleInput.value = role;
 
-  // Trigger 'input' events for Gradio to pick up changes
-  const event = new Event("input", { bubbles: true });
-  indexInput.dispatchEvent(event);
-  directionInput.dispatchEvent(event);
-  roleInput.dispatchEvent(event);
+  dispatchGradioInput(indexInput);
+  dispatchGradioInput(directionInput);
+  dispatchGradioInput(roleInput);
 
   navigateButton.click();
 }
@@ -313,7 +314,7 @@ function handleMorphdomUpdate(data) {
 
 function applyMorphdomUpdate(data) {
   // Determine target element and use it as query scope
-  var target_element, target_html;
+  let target_element, target_html;
   if (data.last_message_only) {
     const childNodes = document.getElementsByClassName("messages")[0].childNodes;
     target_element = childNodes[childNodes.length - 1];

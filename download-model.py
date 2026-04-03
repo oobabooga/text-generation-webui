@@ -158,28 +158,21 @@ class ModelDownloader:
         # Also if GGUF and safetensors are available, download only safetensors
         if (has_pytorch or has_pt or has_gguf) and has_safetensors:
             has_gguf = False
-            for i in range(len(classifications) - 1, -1, -1):
-                if classifications[i] in ['pytorch', 'pt', 'gguf']:
-                    links.pop(i)
-                    file_sizes.pop(i)
+            keep = [i for i, c in enumerate(classifications) if c not in ['pytorch', 'pt', 'gguf']]
+            links = [links[i] for i in keep]
+            file_sizes = [file_sizes[i] for i in keep]
 
         # For GGUF, try to download only the Q4_K_M if no specific file is specified.
         if has_gguf and specific_file is None:
-            has_q4km = False
-            for i in range(len(classifications) - 1, -1, -1):
-                if 'q4_k_m' in links[i].lower():
-                    has_q4km = True
+            has_q4km = any('q4_k_m' in link.lower() for link in links)
 
             if has_q4km:
-                for i in range(len(classifications) - 1, -1, -1):
-                    if 'q4_k_m' not in links[i].lower():
-                        links.pop(i)
-                        file_sizes.pop(i)
+                keep = [i for i, link in enumerate(links) if 'q4_k_m' in link.lower()]
             else:
-                for i in range(len(classifications) - 1, -1, -1):
-                    if links[i].lower().endswith('.gguf'):
-                        links.pop(i)
-                        file_sizes.pop(i)
+                keep = [i for i, link in enumerate(links) if not link.lower().endswith('.gguf')]
+
+            links = [links[i] for i in keep]
+            file_sizes = [file_sizes[i] for i in keep]
 
         is_llamacpp = has_gguf and specific_file is not None
         return links, sha256, is_lora, is_llamacpp, file_sizes

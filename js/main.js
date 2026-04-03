@@ -4,8 +4,9 @@
 
 // Sync highlight.js theme with the actual Gradio theme
 var defined_hljs_css = document.body.classList.contains("dark") ? "file/css/highlightjs/github-dark.min.css" : "file/css/highlightjs/github.min.css";
-if (document.getElementById("highlight-css").getAttribute("href") !== defined_hljs_css) {
-  document.getElementById("highlight-css").setAttribute("href", defined_hljs_css);
+var hljsCssElement = document.getElementById("highlight-css");
+if (hljsCssElement.getAttribute("href") !== defined_hljs_css) {
+  hljsCssElement.setAttribute("href", defined_hljs_css);
 }
 
 let main_parent = document.getElementById("chat-tab").parentNode;
@@ -49,21 +50,18 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
 //------------------------------------------------
 
 // --- Helper functions --- //
-function isModifiedKeyboardEvent() {
-  return (event instanceof KeyboardEvent &&
-    event.shiftKey ||
-    event.ctrlKey ||
-    event.altKey ||
-    event.metaKey);
+function isModifiedKeyboardEvent(event) {
+  return event instanceof KeyboardEvent &&
+    (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey);
 }
 
-function isFocusedOnEditableTextbox() {
+function isFocusedOnEditableTextbox(event) {
   if (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA") {
     return !!event.target.value;
   }
+  return false;
 }
 
-let previousTabId = "chat-tab-button";
 document.addEventListener("keydown", function(event) {
   // Stop generation on Esc pressed
   if (event.key === "Escape") {
@@ -117,14 +115,14 @@ document.addEventListener("keydown", function(event) {
   }
 
   // --- Simple version navigation --- //
-  if (!isFocusedOnEditableTextbox()) {
+  if (!isFocusedOnEditableTextbox(event)) {
     // Version navigation on Arrow keys (horizontal)
-    if (!isModifiedKeyboardEvent() && event.key === "ArrowLeft") {
+    if (!isModifiedKeyboardEvent(event) && event.key === "ArrowLeft") {
       event.preventDefault();
       navigateLastAssistantMessage("left");
     }
 
-    else if (!isModifiedKeyboardEvent() && event.key === "ArrowRight") {
+    else if (!isModifiedKeyboardEvent(event) && event.key === "ArrowRight") {
       event.preventDefault();
       if (!navigateLastAssistantMessage("right")) {
         // If can't navigate right (last version), regenerate
@@ -159,9 +157,8 @@ targetElement.addEventListener("scroll", function() {
   let diff = targetElement.scrollHeight - targetElement.clientHeight;
   let isAtBottomNow = Math.abs(targetElement.scrollTop - diff) <= 10 || diff <= 0;
 
-  // Add scrolling class to disable hover effects
   if (window.isScrolled || !isAtBottomNow) {
-    targetElement.classList.add("scrolling");
+    targetElement.classList.add("scrolling"); // Disables hover effects during scroll
   }
 
   if(isAtBottomNow) {
@@ -202,12 +199,8 @@ const observer = new MutationObserver(function() {
 });
 
 // Only watch for attribute changes on targetElement (e.g. _generating class)
-const config = {
-  attributes: true
-};
-
 // Start observing the target element
-observer.observe(targetElement, config);
+observer.observe(targetElement, { attributes: true });
 
 //------------------------------------------------
 // Handle syntax highlighting / LaTeX
@@ -228,7 +221,7 @@ window.doSyntaxHighlighting = function() {
   if (messageBodies.length > 0) {
     let hasSeenVisible = false;
 
-    // Go from last message to first
+    // Go from last message to first so we can early-exit once past visible area
     for (let i = messageBodies.length - 1; i >= 0; i--) {
       const messageBody = messageBodies[i];
 
@@ -243,8 +236,8 @@ window.doSyntaxHighlighting = function() {
           codeBlock.classList.add("pretty_scrollbar");
         });
 
-        // Only render math in visible elements
         const mathContainers = messageBody.querySelectorAll("p, span, li, td, th, h1, h2, h3, h4, h5, h6, blockquote, figcaption, caption, dd, dt");
+        // Only render math in individually visible containers (the outer check is on the message body)
         mathContainers.forEach(container => {
           if (isElementVisibleOnScreen(container)) {
             renderMathInElement(container, {
@@ -271,7 +264,7 @@ const doSyntaxHighlighting = window.doSyntaxHighlighting;
 // Add some scrollbars
 //------------------------------------------------
 const scrollbarElements = document.querySelectorAll(".add_scrollbar textarea, .add_scrollbar .drag-drop-list");
-for(i = 0; i < scrollbarElements.length; i++) {
+for(let i = 0; i < scrollbarElements.length; i++) {
   scrollbarElements[i].classList.remove("scroll-hide");
   scrollbarElements[i].classList.add("pretty_scrollbar");
   scrollbarElements[i].style.resize = "none";
@@ -298,13 +291,13 @@ if (toolsInfo) {
 // Remove some backgrounds
 //------------------------------------------------
 const noBackgroundelements = document.querySelectorAll(".no-background");
-for(i = 0; i < noBackgroundelements.length; i++) {
+for(let i = 0; i < noBackgroundelements.length; i++) {
   noBackgroundelements[i].parentNode.style.border = "none";
   noBackgroundelements[i].parentNode.parentNode.parentNode.style.alignItems = "center";
 }
 
 const slimDropdownElements = document.querySelectorAll(".slim-dropdown");
-for (i = 0; i < slimDropdownElements.length; i++) {
+for (let i = 0; i < slimDropdownElements.length; i++) {
   const parentNode = slimDropdownElements[i].parentNode;
   parentNode.style.background = "transparent";
   parentNode.style.border = "0";
@@ -374,49 +367,43 @@ button.addEventListener("click", function () {
   }
 });
 
-// Add event listener for mouseleave on the button
-button.addEventListener("mouseleave", function () {
-  // Delay to prevent menu hiding when the mouse leaves the button into the menu
+// Delay to prevent menu hiding when the mouse leaves the button or menu
+function delayedHideMenu() {
   setTimeout(function () {
     if (!isMouseOverButtonOrMenu()) {
       hideMenu();
     }
   }, 100);
-});
+}
 
+// Add event listener for mouseleave on the button
+button.addEventListener("mouseleave", delayedHideMenu);
 // Add event listener for mouseleave on the menu
-menu.addEventListener("mouseleave", function () {
-  // Delay to prevent menu hide when the mouse leaves the menu into the button
-  setTimeout(function () {
-    if (!isMouseOverButtonOrMenu()) {
-      hideMenu();
-    }
-  }, 100);
-});
+menu.addEventListener("mouseleave", delayedHideMenu);
 
 // Add event listener for click anywhere in the document
 document.addEventListener("click", function (event) {
-  const target = event.target;
-
   // Check if the click is outside the button/menu and the menu is visible
   if (!isMouseOverButtonOrMenu() && menu.style.display === "flex") {
     hideMenu();
   }
 
-  if (event.target.classList.contains("pfp_character")) {
+  const target = event.target;
+
+  if (target.classList.contains("pfp_character")) {
     toggleBigPicture();
   }
 
   // Handle sidebar clicks on mobile
   if (isMobile()) {
-  // Check if the click did NOT originate from any of the specified toggle buttons or elements
+    // Check if the click did NOT originate from any of the specified toggle buttons or elements
     if (
       target.closest("#navigation-toggle") !== navigationToggle &&
-    target.closest("#past-chats-toggle") !== pastChatsToggle &&
-    target.closest("#chat-controls-toggle") !== chatControlsToggle &&
-    target.closest(".header_bar") !== headerBar &&
-    target.closest("#past-chats-row") !== pastChatsRow &&
-    target.closest("#chat-controls") !== chatControlsRow
+      target.closest("#past-chats-toggle") !== pastChatsToggle &&
+      target.closest("#chat-controls-toggle") !== chatControlsToggle &&
+      target.closest(".header_bar") !== headerBar &&
+      target.closest("#past-chats-row") !== pastChatsRow &&
+      target.closest("#chat-controls") !== chatControlsRow
     ) {
       handleIndividualSidebarClose(event);
     }
@@ -433,27 +420,19 @@ document.getElementById("chat-input-row").classList.add("chat-input-positioned")
 //------------------------------------------------
 const chatTextArea = document.getElementById("chat-input").querySelector("textarea");
 
-function respondToChatInputVisibility(element, callback) {
-  var options = {
-    root: document.documentElement,
-  };
-
-  var observer = new IntersectionObserver((entries, observer) => {
+function focusOnVisible(element) {
+  var observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      callback(entry.intersectionRatio > 0);
+      if (entry.intersectionRatio > 0) {
+        element.focus();
+      }
     });
-  }, options);
+  }, { root: document.documentElement });
 
   observer.observe(element);
 }
 
-function handleChatInputVisibilityChange(isVisible) {
-  if (isVisible) {
-    chatTextArea.focus();
-  }
-}
-
-respondToChatInputVisibility(chatTextArea, handleChatInputVisibilityChange);
+focusOnVisible(chatTextArea);
 
 //------------------------------------------------
 // Show enlarged character picture when the profile
@@ -463,8 +442,7 @@ let bigPictureVisible = false;
 
 function addBigPicture() {
   var imgElement = document.createElement("img");
-  var timestamp = new Date().getTime();
-  imgElement.src = "/file/user_data/cache/pfp_character.png?time=" + timestamp;
+  imgElement.src = getProfilePictureUrl();
   imgElement.classList.add("bigProfilePicture");
   imgElement.addEventListener("load", function () {
     this.style.visibility = "visible";
@@ -478,9 +456,8 @@ function addBigPicture() {
 }
 
 function deleteBigPicture() {
-  var bigProfilePictures = document.querySelectorAll(".bigProfilePicture");
-  bigProfilePictures.forEach(function (element) {
-    element.parentNode.removeChild(element);
+  document.querySelectorAll(".bigProfilePicture").forEach(function (element) {
+    element.remove();
   });
 }
 
@@ -495,43 +472,10 @@ function toggleBigPicture() {
 }
 
 //------------------------------------------------
-// Handle the chat input box growth
-//------------------------------------------------
-
-// Cache DOM elements
-const chatContainer = document.getElementById("chat").parentNode.parentNode.parentNode;
-const chatInput = document.querySelector("#chat-input textarea");
-
-// Variables to store current dimensions
-let currentChatInputHeight = chatInput.clientHeight;
-
-//------------------------------------------------
 // Focus on the rename text area when it becomes visible
 //------------------------------------------------
 const renameTextArea = document.getElementById("rename-row").querySelector("textarea");
-
-function respondToRenameVisibility(element, callback) {
-  var options = {
-    root: document.documentElement,
-  };
-
-  var observer = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-      callback(entry.intersectionRatio > 0);
-    });
-  }, options);
-
-  observer.observe(element);
-}
-
-
-function handleVisibilityChange(isVisible) {
-  if (isVisible) {
-    renameTextArea.focus();
-  }
-}
-
-respondToRenameVisibility(renameTextArea, handleVisibilityChange);
+focusOnVisible(renameTextArea);
 
 //------------------------------------------------
 // Adjust the chat tab margin if no extension UI
@@ -737,21 +681,21 @@ function handleIndividualSidebarClose(event) {
 
   // Close navigation bar if click is outside and it is open
   if (!headerBar.contains(target) && !headerBar.classList.contains("sidebar-hidden")) {
-    toggleSidebar(headerBar, navigationToggle, true);
+    toggleSidebar(headerBar, navigationToggle);
   }
 
   // Close past chats row if click is outside and it is open
   if (!pastChatsRow.contains(target) && !pastChatsRow.classList.contains("sidebar-hidden")) {
-    toggleSidebar(pastChatsRow, pastChatsToggle, true);
+    toggleSidebar(pastChatsRow, pastChatsToggle);
   }
 
   // Close chat controls row if click is outside and it is open
   if (!chatControlsRow.contains(target) && !chatControlsRow.classList.contains("sidebar-hidden")) {
-    toggleSidebar(chatControlsRow, chatControlsToggle, true);
+    toggleSidebar(chatControlsRow, chatControlsToggle);
   }
 }
 
-function toggleSidebar(sidebar, toggle, forceClose = false) {
+function toggleSidebar(sidebar, toggle) {
   const isCurrentlyHidden = sidebar.classList.contains("sidebar-hidden");
   const shouldClose = !isCurrentlyHidden;
 
@@ -775,11 +719,6 @@ function toggleSidebar(sidebar, toggle, forceClose = false) {
     toggle.classList.toggle("chat-controls-closed", shouldClose);
     toggle.classList.toggle("chat-controls-open", !shouldClose);
     toggle.innerHTML = shouldClose ? leftArrowSVG : rightArrowSVG;
-  }
-
-  // Mobile handling
-  if (isMobile()) {
-    sidebar.classList.toggle("sidebar-shown", !shouldClose);
   }
 }
 
@@ -840,17 +779,17 @@ pastChatsToggle.addEventListener("click", () => {
   const isCurrentlyOpen = !pastChatsRow.classList.contains("sidebar-hidden");
   toggleSidebar(pastChatsRow, pastChatsToggle);
 
-  // On desktop, open/close both sidebars at the same time
+  // On desktop, sync both sidebars together
   if (!isMobile()) {
     if (isCurrentlyOpen) {
       // If we just closed the left sidebar, also close the right sidebar
       if (!chatControlsRow.classList.contains("sidebar-hidden")) {
-        toggleSidebar(chatControlsRow, chatControlsToggle, true);
+        toggleSidebar(chatControlsRow, chatControlsToggle);
       }
     } else {
       // If we just opened the left sidebar, also open the right sidebar
       if (chatControlsRow.classList.contains("sidebar-hidden")) {
-        toggleSidebar(chatControlsRow, chatControlsToggle, false);
+        toggleSidebar(chatControlsRow, chatControlsToggle);
       }
     }
   }
@@ -860,17 +799,17 @@ chatControlsToggle.addEventListener("click", () => {
   const isCurrentlyOpen = !chatControlsRow.classList.contains("sidebar-hidden");
   toggleSidebar(chatControlsRow, chatControlsToggle);
 
-  // On desktop, open/close both sidebars at the same time
+  // On desktop, sync both sidebars together
   if (!isMobile()) {
     if (isCurrentlyOpen) {
       // If we just closed the right sidebar, also close the left sidebar
       if (!pastChatsRow.classList.contains("sidebar-hidden")) {
-        toggleSidebar(pastChatsRow, pastChatsToggle, true);
+        toggleSidebar(pastChatsRow, pastChatsToggle);
       }
     } else {
       // If we just opened the right sidebar, also open the left sidebar
       if (pastChatsRow.classList.contains("sidebar-hidden")) {
-        toggleSidebar(pastChatsRow, pastChatsToggle, false);
+        toggleSidebar(pastChatsRow, pastChatsToggle);
       }
     }
   }
@@ -890,7 +829,7 @@ if (isMobile()) {
   const textarea = document.querySelector("#chat-input textarea");
 
   if (textarea) {
-    // Simulate adding and removing a newline
+    // Force textarea height recalculation by simulating content change
     textarea.value += "\n";
     textarea.dispatchEvent(new Event("input", { bubbles: true }));
     textarea.value = textarea.value.slice(0, -1);

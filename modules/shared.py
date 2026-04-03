@@ -110,6 +110,7 @@ group.add_argument('--numa', action='store_true', help='Activate NUMA task alloc
 group.add_argument('--parallel', type=int, default=1, help='Number of parallel request slots. The context size is divided equally among slots. For example, to have 4 slots with 8192 context each, set ctx_size to 32768.')
 group.add_argument('--fit-target', type=str, default='512', help='Target VRAM margin per device for auto GPU layers, comma-separated list of values in MiB. A single value is broadcast across all devices.')
 group.add_argument('--extra-flags', type=str, default=None, help='Extra flags to pass to llama-server. Example: "--jinja --rpc 192.168.1.100:50052"')
+group.add_argument('--ik', action='store_true', help='Use ik_llama.cpp instead of upstream llama.cpp. Requires the ik_llama_cpp_binaries package to be installed.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
@@ -454,17 +455,7 @@ def load_user_config():
 
 args.loader = fix_loader_name(args.loader)
 
-# Load model-specific settings
-p = Path(f'{args.model_dir}/config.yaml')
-if p.exists():
-    model_config = yaml.safe_load(open(p, 'r').read())
-else:
-    model_config = {}
-del p
-
-
 # Load custom model-specific settings
 user_config = load_user_config()
 
-model_config = OrderedDict(model_config)
 user_config = OrderedDict(user_config)

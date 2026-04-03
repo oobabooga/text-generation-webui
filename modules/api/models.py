@@ -68,7 +68,7 @@ def _load_model(data):
             if k in shared.settings:
                 shared.settings[k] = settings[k]
                 if k == 'truncation_length':
-                    logger.info(f"TRUNCATION LENGTH (UPDATED): {shared.settings['truncation_length']}")
+                    logger.info(f"CONTEXT LENGTH (UPDATED): {shared.settings['truncation_length']}")
                 elif k == 'instruction_template':
                     logger.info(f"INSTRUCTION TEMPLATE (UPDATED): {shared.settings['instruction_template']}")
 
