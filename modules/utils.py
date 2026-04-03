@@ -105,6 +105,9 @@ def resolve_model_path(model_name_or_path, image_model=False):
     before the default models directory.
     """
 
+    if model_name_or_path is None:
+        raise FileNotFoundError("No model specified.")
+
     path_candidate = Path(model_name_or_path)
     if path_candidate.exists():
         return path_candidate
