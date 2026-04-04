@@ -1,5 +1,4 @@
 from modules import loaders, shared
-from modules.logging_colors import logger
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
 from modules.models_settings import get_model_metadata, update_model_parameters
@@ -42,8 +41,7 @@ def model_info_dict(model_name: str) -> dict:
 
 def _load_model(data):
     model_name = data["model_name"]
-    args = data["args"]
-    settings = data["settings"]
+    args = data.get("args")
 
     unload_model()
     model_settings = get_model_metadata(model_name)
@@ -70,16 +68,6 @@ def _load_model(data):
                 setattr(shared.args, k, args[k])
 
     shared.model, shared.tokenizer = load_model(model_name)
-
-    # Update shared.settings with custom generation defaults
-    if settings:
-        for k in settings:
-            if k in shared.settings:
-                shared.settings[k] = settings[k]
-                if k == 'truncation_length':
-                    logger.info(f"CONTEXT LENGTH (UPDATED): {shared.settings['truncation_length']}")
-                elif k == 'instruction_template':
-                    logger.info(f"INSTRUCTION TEMPLATE (UPDATED): {shared.settings['instruction_template']}")
 
 
 def list_loras():

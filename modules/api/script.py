@@ -475,10 +475,8 @@ async def handle_list_models():
 @app.post("/v1/internal/model/load", dependencies=check_admin_key)
 async def handle_load_model(request_data: LoadModelRequest):
     '''
-    This endpoint is experimental and may change in the future.
-
-    The "args" parameter can be used to modify flags like "--load-in-4bit"
-    or "--n-gpu-layers" before loading a model. Example:
+    The "args" parameter can be used to modify loader flags before loading
+    a model. Example:
 
     ```
     "args": {
@@ -487,18 +485,8 @@ async def handle_load_model(request_data: LoadModelRequest):
     }
     ```
 
-    Note that those settings will remain after loading the model. So you
-    may need to change them back to load a second model.
-
-    The "settings" parameter is also a dict but with keys for the
-    shared.settings object. It can be used to modify the default instruction
-    template like this:
-
-    ```
-    "settings": {
-      "instruction_template": "Alpaca"
-    }
-    ```
+    Loader args are reset to their startup defaults between loads, so
+    settings from a previous load do not leak into the next one.
     '''
 
     try:

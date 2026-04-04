@@ -271,7 +271,6 @@ class ModelListResponse(BaseModel):
 class LoadModelRequest(BaseModel):
     model_name: str
     args: dict | None = None
-    settings: dict | None = None
 
 
 class LoraListResponse(BaseModel):
