@@ -31,7 +31,7 @@ TOOL_CALL_OPENING_MARKERS = [
 ]
 
 
-def streaming_tool_buffer_check(text, markers=None, tool_names=None, check_bare_names=False):
+def streaming_tool_buffer_check(text, markers=None, tool_names=None, check_bare_names=False, partial_match=True):
     '''
     Check whether streaming output should be withheld because it may
     contain tool-call markup.
@@ -43,6 +43,10 @@ def streaming_tool_buffer_check(text, markers=None, tool_names=None, check_bare_
         tool_names: List of tool function names.
         check_bare_names: Whether to do partial-prefix matching on tool
                           names (for models with unknown template format).
+        partial_match: Whether to check partial prefixes of markers/names.
+                       Set to False for end-of-generation checks where a
+                       partial prefix is just normal text, not an incomplete
+                       tool call.
     '''
     # Strip thinking blocks so tool-call syntax inside <think> doesn't
     # trigger false positives.
@@ -59,6 +63,9 @@ def streaming_tool_buffer_check(text, markers=None, tool_names=None, check_bare_
         for name in tool_names:
             if name + '{' in text or name + ' {' in text:
                 return True
+
+    if not partial_match:
+        return False
 
     # Partial-prefix matching: only for template-specific markers.
     for marker in (markers if markers is not None else TOOL_CALL_OPENING_MARKERS):

@@ -1183,7 +1183,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     # visible text from before buffering started so raw markup doesn't flash
     # in the UI.  The internal text is left intact so the caller can still
     # parse tool calls from it.
-    if is_stream and _check_tool_markers and streaming_tool_buffer_check(output['internal'][-1][1], markers=_streaming_markers, tool_names=_tool_names, check_bare_names=_check_bare_names):
+    if is_stream and _check_tool_markers and streaming_tool_buffer_check(output['internal'][-1][1], markers=_streaming_markers, tool_names=_tool_names, check_bare_names=_check_bare_names, partial_match=False):
         output['visible'][-1][1] = _last_visible_before_tool_buffer or ''
 
     yield output
