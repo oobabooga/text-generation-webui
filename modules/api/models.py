@@ -47,7 +47,6 @@ def _load_model(data):
 
     unload_model()
     model_settings = get_model_metadata(model_name)
-    update_model_parameters(model_settings)
 
     # Update shared.args with custom model loading settings
     # Security: only allow keys that correspond to model loading
@@ -55,6 +54,16 @@ def _load_model(data):
     # flags like trust_remote_code or extra_flags to be set via the API.
     blocked_keys = {'extra_flags'}
     allowed_keys = set(loaders.list_model_elements()) - blocked_keys
+
+    # Reset all loader args to their startup values before applying new ones,
+    # so settings from a previous API load don't leak into this one.
+    # Include blocked keys in the reset (safe: restores startup value, not API-controlled).
+    for k in allowed_keys | blocked_keys:
+        if hasattr(shared.args, k) and hasattr(shared.original_args, k):
+            setattr(shared.args, k, getattr(shared.original_args, k))
+
+    update_model_parameters(model_settings)
+
     if args:
         for k in args:
             if k in allowed_keys and hasattr(shared.args, k):
