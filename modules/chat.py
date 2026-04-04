@@ -694,7 +694,7 @@ def get_stopping_strings(state):
         # Find positions of each message content
         first_user_end = prompt.find("first user message") + len("first user message")
         first_assistant_start = prompt.find("first assistant message")
-        first_assistant_end = prompt.find("first assistant message") + len("first assistant message")
+        first_assistant_end = first_assistant_start + len("first assistant message")
         second_user_start = prompt.find("second user message")
         second_assistant_end = prompt.find("second assistant message") + len("second assistant message")
 
@@ -1819,7 +1819,8 @@ def load_history(unique_id, character, mode):
     if not p.exists():
         return {'internal': [], 'visible': [], 'metadata': {}}
 
-    f = json.loads(open(p, 'rb').read())
+    with open(p, 'rb') as fh:
+        f = json.loads(fh.read())
     if 'internal' in f and 'visible' in f:
         history = f
     else:
@@ -1883,19 +1884,17 @@ def generate_pfp_cache(character):
     if not cache_folder.exists():
         cache_folder.mkdir()
 
-    for path in [shared.user_data_dir / 'characters' / f"{character}.{extension}" for extension in ['png', 'jpg', 'jpeg']]:
+    for extension in ['png', 'jpg', 'jpeg']:
+        path = shared.user_data_dir / 'characters' / f"{character}.{extension}"
         if path.exists():
             original_img = Image.open(path)
-            # Define file paths
-            pfp_path = Path(f'{cache_folder}/pfp_character.png')
-            thumb_path = Path(f'{cache_folder}/pfp_character_thumb.png')
+            pfp_path = cache_folder / 'pfp_character.png'
+            thumb_path = cache_folder / 'pfp_character_thumb.png'
 
-            # Save main picture and thumbnail
             original_img.save(pfp_path, format='PNG')
             thumb = make_thumbnail(original_img)
             thumb.save(thumb_path, format='PNG')
 
-            # Return the path to the thumbnail, not the in-memory PIL Image object.
             return str(thumb_path)
 
     return None
@@ -1916,13 +1915,13 @@ def load_character(character, name1, name2):
         logger.error(f"Could not find the character \"{character}\" inside {shared.user_data_dir}/characters. No character has been loaded.")
         raise ValueError
 
-    file_contents = open(filepath, 'r', encoding='utf-8').read()
+    with open(filepath, 'r', encoding='utf-8') as fh:
+        file_contents = fh.read()
     data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
     cache_folder = Path(shared.args.disk_cache_dir)
 
-    for path in [Path(f"{cache_folder}/pfp_character.png"), Path(f"{cache_folder}/pfp_character_thumb.png")]:
-        if path.exists():
-            path.unlink()
+    for path in [cache_folder / "pfp_character.png", cache_folder / "pfp_character_thumb.png"]:
+        path.unlink(missing_ok=True)
 
     picture = generate_pfp_cache(character)
 
@@ -1978,9 +1977,7 @@ def clear_character_for_ui(state):
     # Clear the cache files
     cache_folder = Path(shared.args.disk_cache_dir)
     for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
-        cache_path = Path(f'{cache_folder}/{cache_file}')
-        if cache_path.exists():
-            cache_path.unlink()
+        (cache_folder / cache_file).unlink(missing_ok=True)
 
     return state, state['name2'], state['context'], state['greeting'], None
 
@@ -2075,11 +2072,10 @@ def upload_your_profile_picture(img_path):
         cache_folder.mkdir()
 
     if img is None:
-        if Path(f"{cache_folder}/pfp_me.png").exists():
-            Path(f"{cache_folder}/pfp_me.png").unlink()
+        (cache_folder / "pfp_me.png").unlink(missing_ok=True)
     else:
         img = make_thumbnail(img)
-        img.save(Path(f'{cache_folder}/pfp_me.png'))
+        img.save(cache_folder / 'pfp_me.png')
         logger.info(f'Profile picture saved to "{cache_folder}/pfp_me.png"')
 
 
@@ -2135,13 +2131,12 @@ def generate_user_pfp_cache(user):
     if not cache_folder.exists():
         cache_folder.mkdir()
 
-    for path in [shared.user_data_dir / 'users' / f"{user}.{extension}" for extension in ['png', 'jpg', 'jpeg']]:
+    for extension in ['png', 'jpg', 'jpeg']:
+        path = shared.user_data_dir / 'users' / f"{user}.{extension}"
         if path.exists():
             original_img = Image.open(path)
-            # Define file paths
-            pfp_path = Path(f'{cache_folder}/pfp_me.png')
+            pfp_path = cache_folder / 'pfp_me.png'
 
-            # Save thumbnail
             thumb = make_thumbnail(original_img)
             thumb.save(pfp_path, format='PNG')
             logger.info(f'User profile picture cached to "{pfp_path}"')
@@ -2173,9 +2168,7 @@ def load_user(user_name, name1, user_bio):
 
     # Clear existing user picture cache
     cache_folder = Path(shared.args.disk_cache_dir)
-    pfp_path = Path(f"{cache_folder}/pfp_me.png")
-    if pfp_path.exists():
-        pfp_path.unlink()
+    (cache_folder / "pfp_me.png").unlink(missing_ok=True)
 
     # Generate new picture cache
     picture = generate_user_pfp_cache(user_name)
@@ -2599,15 +2592,13 @@ def handle_character_picture_change(picture_path):
 
     if picture is not None:
         # Save to cache
-        picture.save(Path(f'{cache_folder}/pfp_character.png'), format='PNG')
+        picture.save(cache_folder / 'pfp_character.png', format='PNG')
         thumb = make_thumbnail(picture)
-        thumb.save(Path(f'{cache_folder}/pfp_character_thumb.png'), format='PNG')
+        thumb.save(cache_folder / 'pfp_character_thumb.png', format='PNG')
     else:
         # Remove cache files when picture is cleared
         for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
-            cache_path = Path(f'{cache_folder}/{cache_file}')
-            if cache_path.exists():
-                cache_path.unlink()
+            (cache_folder / cache_file).unlink(missing_ok=True)
 
 
 def handle_mode_change(state):
