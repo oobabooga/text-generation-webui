@@ -246,8 +246,8 @@ button {
 
 .pretty_scrollbar::-webkit-scrollbar,
 #image-history-gallery > :nth-child(2)::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-track,
@@ -260,7 +260,7 @@ button {
 #image-history-gallery > :nth-child(2)::-webkit-scrollbar-thumb,
 #image-history-gallery > :nth-child(2)::-webkit-scrollbar-thumb:hover {
     background: var(--neutral-300);
-    border-radius: 30px;
+    border-radius: 9999px;
 }
 
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb,
@@ -268,18 +268,17 @@ button {
 .dark #image-history-gallery > :nth-child(2)::-webkit-scrollbar-thumb,
 .dark #image-history-gallery > :nth-child(2)::-webkit-scrollbar-thumb:hover {
     background: rgb(255 255 255 / 6.25%);
-    border-radius: 30px;
+    border-radius: 9999px;
 }
 
 .pretty_scrollbar::-webkit-resizer,
 #image-history-gallery > :nth-child(2)::-webkit-resizer {
-    background: #d2d2d8;
+    background: transparent;
 }
 
 .dark .pretty_scrollbar::-webkit-resizer,
 .dark #image-history-gallery > :nth-child(2)::-webkit-resizer {
-    background: rgb(255 255 255 / 10%);
-    border-radius: 10px;
+    background: transparent;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-corner,
@@ -599,7 +598,7 @@ audio {
 }
 
 #chat-input textarea::-webkit-scrollbar {
-    width: 8px;
+    width: 7px;
 }
 
 #chat-input textarea::-webkit-scrollbar-track {
@@ -608,7 +607,7 @@ audio {
 
 #chat-input textarea::-webkit-scrollbar-thumb {
     background: var(--neutral-300);
-    border-radius: 30px;
+    border-radius: 9999px;
 }
 
 .dark #chat-input textarea::-webkit-scrollbar-thumb {
@@ -869,7 +868,6 @@ audio {
     min-width: 0 !important;
     display: flex;
     flex-direction: column-reverse;
-    padding-left: 12px;
     padding-right: 20px;
     padding-bottom: 3px;
     flex-grow: 0 !important;
@@ -2000,8 +1998,8 @@ thead + tbody tr:first-child th { border-top: 1px solid; }
 
 /* Pretty scrollbar for the tools list */
 #tools-group .wrap::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
 }
 
 #tools-group .wrap::-webkit-scrollbar-track {
@@ -2011,13 +2009,13 @@ thead + tbody tr:first-child th { border-top: 1px solid; }
 #tools-group .wrap::-webkit-scrollbar-thumb,
 #tools-group .wrap::-webkit-scrollbar-thumb:hover {
     background: var(--neutral-300);
-    border-radius: 30px;
+    border-radius: 9999px;
 }
 
 .dark #tools-group .wrap::-webkit-scrollbar-thumb,
 .dark #tools-group .wrap::-webkit-scrollbar-thumb:hover {
     background: rgb(255 255 255 / 6.25%);
-    border-radius: 30px;
+    border-radius: 9999px;
 }
 
 #tools-group .wrap::-webkit-scrollbar-corner {
