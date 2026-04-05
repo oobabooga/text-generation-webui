@@ -14,6 +14,13 @@ from modules.reasoning import extract_reasoning
 from modules.sane_markdown_lists import SaneListExtension
 from modules.utils import get_available_chat_styles
 
+# Pre-compiled regex for protecting markdown-sensitive characters inside LaTeX.
+# Covers $$...$$, \[...\], \(...\), and inline $...$ (when content contains \\).
+_LATEX_PATTERN = re.compile(
+    r'((?:^|[\r\n\s])\$\$[^`]*?\$\$)|\\\[(.*?)\\\]|\\\((.*?)\\\)|(?<!\$)\$(?!\$)([^\$\n]*\\\\[^\$\n]*?)\$(?!\$)',
+    re.DOTALL
+)
+
 # This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}
 
@@ -241,9 +248,7 @@ def process_markdown_content(string):
     string = re.sub(r"(.)```", r"\1\n```", string)
 
     # Protect asterisks and underscores within all LaTeX blocks before markdown conversion
-    latex_pattern = re.compile(r'((?:^|[\r\n\s])\$\$[^`]*?\$\$)|\\\[(.*?)\\\]|\\\((.*?)\\\)|(?<!\$)\$(?!\$)([^\$\n]*\\\\[^\$\n]*?)\$(?!\$)',
-                               re.DOTALL)
-    string = latex_pattern.sub(protect_asterisks_underscores_in_latex, string)
+    string = _LATEX_PATTERN.sub(protect_asterisks_underscores_in_latex, string)
 
     result = ''
     is_code = False
