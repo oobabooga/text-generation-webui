@@ -1428,11 +1428,11 @@ audio {
 }
 
 .footer-button svg {
-    stroke: rgb(107 114 128);
+    stroke: rgb(140 140 148);
 }
 
 .footer-button:hover svg {
-    stroke: rgb(64 64 64);
+    stroke: rgb(107 114 128);
 }
 
 .dark .footer-button svg {
