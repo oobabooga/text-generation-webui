@@ -798,6 +798,9 @@ def generate(state, save_images=True):
         if seed == -1:
             seed = random.randint(0, 2**32 - 1)
 
+        # Store resolved seed back so callers (e.g. API) can access it
+        state['image_seed_resolved'] = seed
+
         device = get_device()
         if device is None:
             device = "cpu"
