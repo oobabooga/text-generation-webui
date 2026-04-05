@@ -436,15 +436,24 @@ audio {
 .dark .message-body h4,
 .dark .message-body h5,
 .dark .message-body h6 {
-    color: white !important;
+    color: #e8e8e8 !important;
 }
 
 .dark .message-body blockquote {
     border-left-color: rgb(255 255 255 / 30%);
 }
 
+.message-body h1,
+.message-body h2,
+.message-body h3,
+.message-body h4,
+.message-body h5,
+.message-body h6 {
+    color: #1a1a1a;
+}
+
 .message-body h1 {
-    font-weight: 800;
+    font-weight: 700;
     font-size: 2.25em;
     margin-top: 0;
     margin-bottom: 0.8888889em;
@@ -476,13 +485,13 @@ audio {
 }
 
 .message-body h5 {
-    font-weight: normal;
+    font-weight: 600;
     font-size: 1em;
     margin: 0;
 }
 
 .message-body h6 {
-    font-weight: normal;
+    font-weight: 600;
     font-size: 1em;
     margin: 0;
 }
