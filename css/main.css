@@ -1958,14 +1958,24 @@ table, tr, td, th, thead {
     border: 0;
 }
 
+.prose hr {
+    border-color: var(--border-color-primary);
+}
+
 td + td,
-th + th { border-left: 1px solid; }
+th + th {
+    border-left: 1px solid var(--border-color-primary) !important;
+}
 
 tr + tr td,
-tr + tr th { border-top: 1px solid; }
+tr + tr th {
+    border-top: 1px solid var(--border-color-primary) !important;
+}
 
 thead + tbody tr:first-child td,
-thead + tbody tr:first-child th { border-top: 1px solid; }
+thead + tbody tr:first-child th {
+    border-top: 1px solid var(--border-color-primary) !important;
+}
 
 /* ------------------------------------------------
    Tools CheckboxGroup - vertical DragDrop-like style

@@ -19,15 +19,6 @@
     color: #d1d5db !important;
 }
 
-.chat .message-body :is(th, td),
-.prose hr {
-    border-color: #40404096 !important;
-}
-
-.dark .chat .message-body :is(th, td),
-.dark .prose hr {
-    border-color: rgb(255 255 255 / 30%) !important;
-}
 
 .chat .message-body :is(p, ul, ol) {
     margin: 1.25em 0 !important;
