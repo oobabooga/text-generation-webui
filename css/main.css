@@ -735,7 +735,30 @@ audio {
 
 .hover-element {
     position: relative;
-    font-size: 24px;
+    padding-top: 4px;
+}
+
+#hover-element-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    color: gray;
+}
+
+#hover-element-button:hover {
+    background-color: var(--background-fill-secondary);
+}
+
+#hover-element-button svg {
+    color: inherit;
+}
+
+.dark #hover-element-button:hover {
+    background-color: var(--selected-item-color-dark);
 }
 
 .hover-menu {
@@ -743,27 +766,40 @@ audio {
     position: absolute;
     bottom: 100%;
     left: 0;
-    box-shadow: 0 2px 12px rgb(0 0 0 / 15%);
-    border-radius: 0.5rem;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 12%), 0 1px 3px rgb(0 0 0 / 8%);
+    border-radius: 0.75rem;
     z-index: 10000;
     min-width: 330px;
     flex-direction: column;
-    overflow: hidden;
+    padding: 4px;
+}
+
+.hover-menu::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 8px;
+}
+
+.hover-menu > * {
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .hover-menu button {
     width: 100%;
-    background: white !important;
-    border-radius: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0.5rem !important;
     justify-content: space-between;
     margin: 0 !important;
     height: 36px;
-    border-color: transparent !important;
-    transition: background-color 0.15s ease;
-}
-
-.hover-menu button:not(#clear-history-confirm) {
-    border-bottom: 0 !important;
+    font-weight: 500;
+    box-shadow: none !important;
 }
 
 .hover-menu button:hover {
@@ -775,19 +811,26 @@ audio {
 }
 
 #show-controls {
-    background-color: white;
-    border-color: transparent !important;
+    background-color: transparent;
+    border: none !important;
     height: 36px;
-    border-radius: 0;
-    border-bottom: 0 !important;
+    border-radius: 0.5rem;
     padding-top: 3px;
     padding-left: 4px;
     display: flex;
     font-weight: normal;
 }
 
+#show-controls:hover {
+    background-color: #dbeafe;
+}
+
 .dark #show-controls {
-    background-color: var(--darker-gray);
+    background-color: transparent;
+}
+
+.dark #show-controls:hover {
+    background-color: var(--selected-item-color-dark);
 }
 
 #show-controls label {
@@ -797,12 +840,12 @@ audio {
     width: 100%;
     padding-right: 12px;
     gap: 10px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--button-secondary-text-color);
 }
 
 #show-controls label input {
-    margin-top: 4px;
+    margin-top: 5px;
 }
 
 .transparent-substring {
@@ -817,6 +860,7 @@ audio {
     min-width: 0 !important;
     display: flex;
     flex-direction: column-reverse;
+    padding-left: 12px;
     padding-right: 20px;
     padding-bottom: 3px;
     flex-grow: 0 !important;
@@ -1208,9 +1252,14 @@ audio {
     color: #9ca3af;
 }
 
+.dark .hover-menu {
+    background: var(--darker-gray);
+    border-color: transparent;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 40%);
+}
+
 .dark .hover-menu button {
-    border-color: var(--border-color-primary);
-    background-color: var(--darker-gray) !important;
+    background-color: transparent !important;
 }
 
 .dark #chat-controls,
