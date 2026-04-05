@@ -1443,12 +1443,12 @@ audio {
     stroke: rgb(209 213 219);
 }
 
-.tgw-accordion {
+.block:has(> .label-wrap) {
     padding: 10px 12px !important;
     border: 1px solid #d2d2d8;
 }
 
-.dark .tgw-accordion {
+.dark .block:has(> .label-wrap) {
     border: 1px solid var(--border-color-dark);
 }
 
