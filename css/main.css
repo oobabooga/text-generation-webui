@@ -642,6 +642,10 @@ audio {
     background: transparent;
 }
 
+#chat-input .thumbnails {
+    padding-top: 3px;
+}
+
 .chat-input-positioned {
     max-width: 54rem;
     left: 50%;
