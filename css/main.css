@@ -438,8 +438,9 @@ audio {
     color: #e8e8e8 !important;
 }
 
-.dark .message-body blockquote {
-    border-left-color: rgb(255 255 255 / 30%);
+.message-body blockquote {
+    border-left-width: 4px;
+    border-left-color: var(--border-color-primary);
 }
 
 .message-body h1,
