@@ -22,6 +22,17 @@
     font-style: italic;
 }
 
+/* Hide spin buttons on number inputs (look bad on Windows) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
 .padded.svelte-12cmxck {
     padding: 3px 0;
 }
