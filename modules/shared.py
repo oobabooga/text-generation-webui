@@ -364,7 +364,7 @@ settings = {
     'image_llm_variations_prompt': 'Write a variation of the image generation prompt above. Consider the intent of the user with that prompt and write something that will likely please them, with added details. Output only the new prompt. Do not add any explanations, prefixes, or additional text.',
     'image_model_menu': 'None',
     'image_dtype': 'bfloat16',
-    'image_attn_backend': 'flash_attention_2',
+    'image_attn_backend': 'sdpa',
     'image_cpu_offload': False,
     'image_compile': False,
     'image_quant': 'none',

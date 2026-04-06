@@ -129,7 +129,7 @@ def load_image_model(model_name, dtype='bfloat16', attn_backend='sdpa', cpu_offl
 
         modules = ["transformer", "unet"]
 
-        # Set attention backend
+        # Set attention backend (diffusers defaults to native/SDPA)
         if attn_backend == 'flash_attention_2':
             for name in modules:
                 mod = getattr(pipe, name, None)
