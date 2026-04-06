@@ -1264,14 +1264,23 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
     # Load tools if any are selected
     selected = state.get('selected_tools', [])
+    mcp_servers = state.get('mcp_servers', '')
     parse_tool_call = None
     _tool_parsers = None
-    if selected:
-        from modules.tool_use import load_tools, execute_tool
+    if selected or mcp_servers:
+        from modules.tool_use import load_tools, load_mcp_tools, execute_tool
         from modules.tool_parsing import parse_tool_call, get_tool_call_id, detect_tool_call_format
 
-    if selected:
         tool_defs, tool_executors = load_tools(selected)
+        if mcp_servers:
+            mcp_defs, mcp_executors = load_mcp_tools(mcp_servers)
+            for td in mcp_defs:
+                fn = td['function']['name']
+                if fn in tool_executors:
+                    logger.warning(f'MCP tool "{fn}" conflicts with a local tool. Skipping.')
+                    continue
+                tool_defs.append(td)
+                tool_executors[fn] = mcp_executors[fn]
         state['tools'] = tool_defs
         tool_func_names = [t['function']['name'] for t in tool_defs]
         _template_str = state.get('instruction_template_str', '') if state.get('mode') == 'instruct' else state.get('chat_template_str', '')

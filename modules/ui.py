@@ -209,6 +209,7 @@ def list_interface_input_elements():
         'textbox',
         'start_with',
         'selected_tools',
+        'mcp_servers',
         'mode',
         'chat_style',
         'chat-instruct_command',
@@ -434,6 +435,7 @@ def setup_auto_save():
         'custom_system_message',
         'chat_template_str',
         'selected_tools',
+        'mcp_servers',
 
         # Parameters tab (ui_parameters.py) - Generation parameters
         'preset_menu',

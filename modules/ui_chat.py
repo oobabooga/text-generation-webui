@@ -105,6 +105,9 @@ def create_ui():
 
                 shared.gradio['selected_tools'].change(fn=sync_web_tools, inputs=[shared.gradio['selected_tools']], outputs=[shared.gradio['selected_tools']], show_progress=False)
 
+                with gr.Accordion('MCP servers', open=False):
+                    shared.gradio['mcp_servers'] = gr.Textbox(value=shared.settings.get('mcp_servers', ''), lines=3, max_lines=3, label='', info='One url per line. For headers, write url,Header: value,Header2: value2', elem_classes=['add_scrollbar'])
+
                 gr.HTML("<div class='sidebar-vertical-separator'></div>")
 
                 with gr.Row():

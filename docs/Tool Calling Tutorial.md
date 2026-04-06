@@ -80,6 +80,19 @@ def execute(arguments):
 
 You can open the built-in tools in `user_data/tools/` for more examples.
 
+## MCP servers
+
+You can connect to remote [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) servers to use their tools alongside local ones.
+
+In the chat sidebar, open the **MCP servers** accordion and enter one server URL per line. For servers that require authentication, append headers after the URL separated by commas:
+
+```
+https://example.com/mcp
+https://other.com/mcp,Authorization: Bearer sk-xxx
+```
+
+All tools from the configured servers are automatically discovered and made available to the model during generation. If an MCP tool has the same name as a selected local tool, the local tool takes priority.
+
 ## Tool calling over the API
 
 Tool calling over the API follows the [OpenAI API](https://platform.openai.com/docs/guides/function-calling) convention. Define your tools, send them with your messages, and handle tool calls in a loop until the model gives a final answer.
