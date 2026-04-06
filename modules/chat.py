@@ -568,13 +568,24 @@ def generate_chat_prompt(user_input, state, **kwargs):
         encoded_length = get_encoded_length(prompt)
         while len(messages) > 0 and encoded_length > max_length:
 
-            # Remove old message, save system message
             if len(messages) > 2 and messages[0]['role'] == 'system':
-                messages.pop(1)
-
-            # Remove old message when no system message is present
+                pop_idx = 1
             elif len(messages) > 1 and messages[0]['role'] != 'system':
-                messages.pop(0)
+                pop_idx = 0
+            else:
+                pop_idx = None
+
+            if pop_idx is not None:
+                messages.pop(pop_idx)
+
+                # Remove orphaned tool-call/tool-result messages that
+                # would be invalid without their partner.
+                while pop_idx < len(messages):
+                    msg = messages[pop_idx]
+                    if msg.get('role') == 'tool' or (msg.get('role') == 'assistant' and msg.get('tool_calls')):
+                        messages.pop(pop_idx)
+                    else:
+                        break
 
             # Resort to truncating the user input
             else:
