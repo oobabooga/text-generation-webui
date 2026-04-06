@@ -7,6 +7,7 @@ fastapi==0.112.4
 huggingface-hub==1.5.*
 jinja2==3.1.6
 markdown
+mcp==1.27.0
 numpy==2.2.*
 pandas
 peft==0.18.*
@@ -38,4 +39,3 @@ tiktoken
 
 # Mac wheels
 https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.106.0/llama_cpp_binaries-0.106.0-py3-none-macosx_13_0_arm64.whl; platform_system == "Darwin"
-mcp==1.27.0
