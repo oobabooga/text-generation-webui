@@ -232,6 +232,17 @@ curl -k http://127.0.0.1:5000/v1/internal/model/load \
   }'
 ```
 
+You can also set a default instruction template for all subsequent API requests by passing `instruction_template` (a template name from `user_data/instruction-templates/`) or `instruction_template_str` (a raw Jinja2 string):
+
+```shell
+curl -k http://127.0.0.1:5000/v1/internal/model/load \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model_name": "Qwen_Qwen3-0.6B-Q4_K_M.gguf",
+    "instruction_template": "Alpaca"
+  }'
+```
+
 #### Python chat example
 
 ```python

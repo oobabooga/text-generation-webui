@@ -1,7 +1,8 @@
 from modules import loaders, shared
+from modules.logging_colors import logger
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
-from modules.models_settings import get_model_metadata, update_model_parameters
+from modules.models_settings import get_model_metadata, load_instruction_template, update_model_parameters
 from modules.utils import get_available_loras, get_available_models
 
 
@@ -68,6 +69,13 @@ def _load_model(data):
                 setattr(shared.args, k, args[k])
 
     shared.model, shared.tokenizer = load_model(model_name)
+
+    if data.get("instruction_template_str") is not None:
+        shared.settings['instruction_template_str'] = data["instruction_template_str"]
+        logger.info("INSTRUCTION TEMPLATE: set to custom Jinja2 string")
+    elif data.get("instruction_template") is not None:
+        shared.settings['instruction_template_str'] = load_instruction_template(data["instruction_template"])
+        logger.info(f"INSTRUCTION TEMPLATE: {data['instruction_template']}")
 
 
 def list_loras():

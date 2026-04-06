@@ -487,6 +487,11 @@ async def handle_load_model(request_data: LoadModelRequest):
 
     Loader args are reset to their startup defaults between loads, so
     settings from a previous load do not leak into the next one.
+
+    The "instruction_template" parameter sets the default instruction
+    template by name (from user_data/instruction-templates/). The
+    "instruction_template_str" parameter sets it as a raw Jinja2 string
+    and takes precedence over "instruction_template".
     '''
 
     try:

@@ -400,14 +400,19 @@ def load_instruction_template(template):
     if template == 'None':
         return ''
 
-    for filepath in [shared.user_data_dir / 'instruction-templates' / f'{template}.yaml', shared.user_data_dir / 'instruction-templates' / 'Alpaca.yaml']:
-        if filepath.exists():
-            break
+    for name in (template, 'Alpaca'):
+        path = shared.user_data_dir / 'instruction-templates' / f'{name}.yaml'
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                file_contents = f.read()
+        except FileNotFoundError:
+            if name == template:
+                logger.warning(f"Instruction template '{template}' not found, falling back to Alpaca")
+            continue
+
+        break
     else:
         return ''
-
-    with open(filepath, 'r', encoding='utf-8') as f:
-        file_contents = f.read()
     data = yaml.safe_load(file_contents)
     if 'instruction_template' in data:
         return data['instruction_template']
