@@ -638,9 +638,15 @@ def parse_tool_call(answer: str, tool_names: list[str], return_prefix: bool = Fa
     # Strip thinking blocks so tool-call syntax inside <think> is ignored.
     original_answer = answer
     _, answer = extract_reasoning(answer)
-    # Offset between original and stripped text, used to map start_pos
-    # back to the original string when returning a prefix.
-    reasoning_offset = len(original_answer) - len(answer)
+    # Reasoning extraction returns empty content when GPT-OSS internal
+    # markup (<|start|>assistant…) follows the thinking block without a
+    # content tag.  Fall back to the full text so tool-call markers can
+    # be found.
+    if not answer.strip():
+        answer = original_answer
+        reasoning_offset = 0
+    else:
+        reasoning_offset = len(original_answer) - len(answer)
 
     matches = []
     start_pos = None
