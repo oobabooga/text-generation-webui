@@ -532,8 +532,8 @@ async def handle_unload_loras():
 def find_available_port(starting_port):
     """Try the starting port, then find an available one if it's taken."""
     try:
-        # Try to create a socket with the starting port
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind(('', starting_port))
             return starting_port
     except OSError:
@@ -591,31 +591,9 @@ def run_server():
     if shared.args.admin_key and shared.args.admin_key != shared.args.api_key:
         logger.info(f'OpenAI API admin key (for loading/unloading models):\n\n{shared.args.admin_key}\n')
 
-    # Use SO_REUSEADDR to avoid "address already in use" after restart
+    # Start server
     logging.getLogger("uvicorn.error").propagate = False
-    sockets = []
-    try:
-        for addr in server_addrs:
-            family = socket.AF_INET6 if ':' in addr else socket.AF_INET
-            sock = socket.socket(family, socket.SOCK_STREAM)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            if family == socket.AF_INET6:
-                sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
-            sock.bind((addr.strip('[]'), port))
-            sock.listen(socket.SOMAXCONN)
-            sockets.append(sock)
-    except Exception:
-        for s in sockets:
-            s.close()
-        raise
-
-    config = uvicorn.Config(app, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile, access_log=False)
-    server = uvicorn.Server(config)
-    try:
-        server.run(sockets=sockets)
-    finally:
-        for s in sockets:
-            s.close()
+    uvicorn.run(app, host=server_addrs, port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile, access_log=False)
 
 
 _server_started = False
