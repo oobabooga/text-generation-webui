@@ -563,7 +563,7 @@ def run_server():
         server_addrs.append(shared.args.listen_host)
     else:
         if os.environ.get('OPENEDAI_ENABLE_IPV6', shared.args.api_enable_ipv6):
-            server_addrs.append('[::]' if shared.args.listen else '[::1]')
+            server_addrs.append('::' if shared.args.listen else '::1')
         if not os.environ.get('OPENEDAI_DISABLE_IPV4', shared.args.api_disable_ipv4):
             server_addrs.append('0.0.0.0' if shared.args.listen else '127.0.0.1')
 
@@ -580,7 +580,7 @@ def run_server():
         )
     else:
         url_proto = 'https://' if (ssl_certfile and ssl_keyfile) else 'http://'
-        urls = [f'{url_proto}{addr}:{port}/v1' for addr in server_addrs]
+        urls = [f'{url_proto}[{addr}]:{port}/v1' if ':' in addr else f'{url_proto}{addr}:{port}/v1' for addr in server_addrs]
         if len(urls) > 1:
             logger.info('OpenAI/Anthropic-compatible API URLs:\n\n' + '\n'.join(urls) + '\n')
         else:
