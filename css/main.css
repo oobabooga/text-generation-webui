@@ -511,6 +511,10 @@ audio {
     color: #f5b031;
 }
 
+.message q {
+    color: #5CACEE;
+}
+
 .message-body q::before, .message-body q::after {
     content: "";
 }
