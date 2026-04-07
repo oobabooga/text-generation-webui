@@ -309,18 +309,19 @@ for (let i = 0; i < slimDropdownElements.length; i++) {
 // https://github.com/SillyTavern/SillyTavern/blob/6c8bd06308c69d51e2eb174541792a870a83d2d6/public/script.js
 //------------------------------------------------
 var buttonsInChat = document.querySelectorAll("#chat-tab #chat-buttons button, #chat-tab #chat-buttons #show-controls");
+var hoverContainer = document.getElementById("gr-hover-container");
 var button = document.getElementById("hover-element-button");
 var menu = document.getElementById("hover-menu");
 var istouchscreen = (navigator.maxTouchPoints > 0) || "ontouchstart" in document.documentElement;
 
 function showMenu() {
-  menu.style.display = "flex"; // Show the menu
+  menu.style.display = "flex";
 }
 
 function hideMenu() {
-  menu.style.display = "none"; // Hide the menu
+  menu.style.display = "none";
   if (!istouchscreen) {
-    document.querySelector("#chat-input textarea").focus(); // Focus on the chat input
+    document.querySelector("#chat-input textarea").focus();
   }
 }
 
@@ -329,7 +330,6 @@ if (buttonsInChat.length > 0) {
     const thisButton = buttonsInChat[i];
     menu.appendChild(thisButton);
 
-    // Only apply transformations to button elements
     if (thisButton.tagName.toLowerCase() === "button") {
       thisButton.addEventListener("click", () => {
         hideMenu();
@@ -339,7 +339,6 @@ if (buttonsInChat.length > 0) {
       const matches = buttonText.match(/(\(.*?\))/);
 
       if (matches && matches.length > 1) {
-        // Apply the transparent-substring class to the matched substring
         const substring = matches[1];
         const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring.slice(1, -1)}</span>`);
         thisButton.innerHTML = newText;
@@ -348,14 +347,17 @@ if (buttonsInChat.length > 0) {
   }
 }
 
-function isMouseOverButtonOrMenu() {
-  return menu.matches(":hover") || button.matches(":hover");
-}
+var menuInteracting = false;
 
-button.addEventListener("mouseenter", function () {
+hoverContainer.addEventListener("mouseenter", function () {
   if (!istouchscreen) {
     showMenu();
   }
+});
+
+hoverContainer.addEventListener("mousedown", function () {
+  menuInteracting = true;
+  setTimeout(function () { menuInteracting = false; }, 300);
 });
 
 button.addEventListener("click", function () {
@@ -367,24 +369,20 @@ button.addEventListener("click", function () {
   }
 });
 
-// Delay to prevent menu hiding when the mouse leaves the button or menu
-function delayedHideMenu() {
-  setTimeout(function () {
-    if (!isMouseOverButtonOrMenu()) {
-      hideMenu();
-    }
-  }, 100);
-}
-
-// Add event listener for mouseleave on the button
-button.addEventListener("mouseleave", delayedHideMenu);
-// Add event listener for mouseleave on the menu
-menu.addEventListener("mouseleave", delayedHideMenu);
+hoverContainer.addEventListener("mouseleave", function () {
+  if (!istouchscreen) {
+    setTimeout(function () {
+      if (!hoverContainer.matches(":hover") && !menu.matches(":hover")) {
+        hideMenu();
+      }
+    }, 50);
+  }
+});
 
 // Add event listener for click anywhere in the document
 document.addEventListener("click", function (event) {
   // Check if the click is outside the button/menu and the menu is visible
-  if (!isMouseOverButtonOrMenu() && menu.style.display === "flex") {
+  if (!menuInteracting && !event.target.closest("#gr-hover-container") && menu.style.display === "flex") {
     hideMenu();
   }
 

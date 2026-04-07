@@ -52,7 +52,7 @@ def create_ui():
                 shared.gradio['html_display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': [], 'metadata': {}}, '', '', 'chat', 'cai-chat', '')['html'], visible=True)
                 with gr.Row(elem_id="chat-input-row"):
                     with gr.Column(scale=1, elem_id='gr-hover-container'):
-                        gr.HTML(value='<div class="hover-element" onclick="void(0)"><span style="width: 100px; display: block" id="hover-element-button">&#9776;</span><div class="hover-menu" id="hover-menu"></div>', elem_id='gr-hover')
+                        gr.HTML(value='<div class="hover-element" onclick="void(0)"><span id="hover-element-button"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18" x2="20" y2="18"></line></svg></span><div class="hover-menu" id="hover-menu"></div></div>', elem_id='gr-hover')
 
                     with gr.Column(scale=10, elem_id='chat-input-container'):
                         shared.gradio['textbox'] = gr.MultimodalTextbox(label='', placeholder='Send a message', file_types=['text', '.pdf', 'image'], file_count="multiple", elem_id='chat-input', elem_classes=['add_scrollbar'])
@@ -104,6 +104,9 @@ def create_ui():
                     return gr.update(value=selected)
 
                 shared.gradio['selected_tools'].change(fn=sync_web_tools, inputs=[shared.gradio['selected_tools']], outputs=[shared.gradio['selected_tools']], show_progress=False)
+
+                with gr.Accordion('MCP servers', open=False):
+                    shared.gradio['mcp_servers'] = gr.Textbox(value=shared.settings.get('mcp_servers', ''), lines=3, max_lines=3, label='', info='One url per line. For headers, write url,Header: value,Header2: value2', elem_classes=['add_scrollbar'])
 
                 gr.HTML("<div class='sidebar-vertical-separator'></div>")
 

@@ -475,10 +475,8 @@ async def handle_list_models():
 @app.post("/v1/internal/model/load", dependencies=check_admin_key)
 async def handle_load_model(request_data: LoadModelRequest):
     '''
-    This endpoint is experimental and may change in the future.
-
-    The "args" parameter can be used to modify flags like "--load-in-4bit"
-    or "--n-gpu-layers" before loading a model. Example:
+    The "args" parameter can be used to modify loader flags before loading
+    a model. Example:
 
     ```
     "args": {
@@ -487,18 +485,13 @@ async def handle_load_model(request_data: LoadModelRequest):
     }
     ```
 
-    Note that those settings will remain after loading the model. So you
-    may need to change them back to load a second model.
+    Loader args are reset to their startup defaults between loads, so
+    settings from a previous load do not leak into the next one.
 
-    The "settings" parameter is also a dict but with keys for the
-    shared.settings object. It can be used to modify the default instruction
-    template like this:
-
-    ```
-    "settings": {
-      "instruction_template": "Alpaca"
-    }
-    ```
+    The "instruction_template" parameter sets the default instruction
+    template by name (from user_data/instruction-templates/). The
+    "instruction_template_str" parameter sets it as a raw Jinja2 string
+    and takes precedence over "instruction_template".
     '''
 
     try:
@@ -544,8 +537,8 @@ async def handle_unload_loras():
 def find_available_port(starting_port):
     """Try the starting port, then find an available one if it's taken."""
     try:
-        # Try to create a socket with the starting port
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind(('', starting_port))
             return starting_port
     except OSError:
@@ -570,7 +563,7 @@ def run_server():
         server_addrs.append(shared.args.listen_host)
     else:
         if os.environ.get('OPENEDAI_ENABLE_IPV6', shared.args.api_enable_ipv6):
-            server_addrs.append('[::]' if shared.args.listen else '[::1]')
+            server_addrs.append('::' if shared.args.listen else '::1')
         if not os.environ.get('OPENEDAI_DISABLE_IPV4', shared.args.api_disable_ipv4):
             server_addrs.append('0.0.0.0' if shared.args.listen else '127.0.0.1')
 
@@ -587,7 +580,7 @@ def run_server():
         )
     else:
         url_proto = 'https://' if (ssl_certfile and ssl_keyfile) else 'http://'
-        urls = [f'{url_proto}{addr}:{port}/v1' for addr in server_addrs]
+        urls = [f'{url_proto}[{addr}]:{port}/v1' if ':' in addr else f'{url_proto}{addr}:{port}/v1' for addr in server_addrs]
         if len(urls) > 1:
             logger.info('OpenAI/Anthropic-compatible API URLs:\n\n' + '\n'.join(urls) + '\n')
         else:

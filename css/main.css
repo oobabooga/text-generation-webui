@@ -22,6 +22,17 @@
     font-style: italic;
 }
 
+/* Hide spin buttons on number inputs (look bad on Windows) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
 .padded.svelte-12cmxck {
     padding: 3px 0;
 }
@@ -246,8 +257,8 @@ button {
 
 .pretty_scrollbar::-webkit-scrollbar,
 #image-history-gallery > :nth-child(2)::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-track,
@@ -260,7 +271,7 @@ button {
 #image-history-gallery > :nth-child(2)::-webkit-scrollbar-thumb,
 #image-history-gallery > :nth-child(2)::-webkit-scrollbar-thumb:hover {
     background: var(--neutral-300);
-    border-radius: 30px;
+    border-radius: 9999px;
 }
 
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb,
@@ -268,18 +279,17 @@ button {
 .dark #image-history-gallery > :nth-child(2)::-webkit-scrollbar-thumb,
 .dark #image-history-gallery > :nth-child(2)::-webkit-scrollbar-thumb:hover {
     background: rgb(255 255 255 / 6.25%);
-    border-radius: 30px;
+    border-radius: 9999px;
 }
 
 .pretty_scrollbar::-webkit-resizer,
 #image-history-gallery > :nth-child(2)::-webkit-resizer {
-    background: #d2d2d8;
+    background: transparent;
 }
 
 .dark .pretty_scrollbar::-webkit-resizer,
 .dark #image-history-gallery > :nth-child(2)::-webkit-resizer {
-    background: rgb(255 255 255 / 10%);
-    border-radius: 10px;
+    background: transparent;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-corner,
@@ -436,15 +446,25 @@ audio {
 .dark .message-body h4,
 .dark .message-body h5,
 .dark .message-body h6 {
-    color: white !important;
+    color: #e8e8e8 !important;
 }
 
-.dark .message-body blockquote {
-    border-left-color: rgb(255 255 255 / 30%);
+.message-body blockquote {
+    border-left-width: 4px;
+    border-left-color: var(--border-color-primary);
+}
+
+.message-body h1,
+.message-body h2,
+.message-body h3,
+.message-body h4,
+.message-body h5,
+.message-body h6 {
+    color: #1a1a1a;
 }
 
 .message-body h1 {
-    font-weight: 800;
+    font-weight: 700;
     font-size: 2.25em;
     margin-top: 0;
     margin-bottom: 0.8888889em;
@@ -476,13 +496,13 @@ audio {
 }
 
 .message-body h5 {
-    font-weight: normal;
+    font-weight: 600;
     font-size: 1em;
     margin: 0;
 }
 
 .message-body h6 {
-    font-weight: normal;
+    font-weight: 600;
     font-size: 1em;
     margin: 0;
 }
@@ -590,7 +610,7 @@ audio {
 }
 
 #chat-input textarea::-webkit-scrollbar {
-    width: 8px;
+    width: 7px;
 }
 
 #chat-input textarea::-webkit-scrollbar-track {
@@ -599,7 +619,7 @@ audio {
 
 #chat-input textarea::-webkit-scrollbar-thumb {
     background: var(--neutral-300);
-    border-radius: 30px;
+    border-radius: 9999px;
 }
 
 .dark #chat-input textarea::-webkit-scrollbar-thumb {
@@ -631,6 +651,10 @@ audio {
     margin-right: 16px;
     margin-bottom: 7px;
     background: transparent;
+}
+
+#chat-input .thumbnails {
+    padding-top: 3px;
 }
 
 .chat-input-positioned {
@@ -735,7 +759,30 @@ audio {
 
 .hover-element {
     position: relative;
-    font-size: 24px;
+    padding-top: 4px;
+}
+
+#hover-element-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    color: gray;
+}
+
+#hover-element-button:hover {
+    background-color: var(--background-fill-secondary);
+}
+
+#hover-element-button svg {
+    color: inherit;
+}
+
+.dark #hover-element-button:hover {
+    background-color: var(--selected-item-color-dark);
 }
 
 .hover-menu {
@@ -743,27 +790,40 @@ audio {
     position: absolute;
     bottom: 100%;
     left: 0;
-    box-shadow: 0 2px 12px rgb(0 0 0 / 15%);
-    border-radius: 0.5rem;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px rgb(0 0 0 / 12%), 0 1px 3px rgb(0 0 0 / 8%);
+    border-radius: 0.75rem;
     z-index: 10000;
     min-width: 330px;
     flex-direction: column;
-    overflow: hidden;
+    padding: 4px;
+}
+
+.hover-menu::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 8px;
+}
+
+.hover-menu > * {
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .hover-menu button {
     width: 100%;
-    background: white !important;
-    border-radius: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0.5rem !important;
     justify-content: space-between;
     margin: 0 !important;
     height: 36px;
-    border-color: transparent !important;
-    transition: background-color 0.15s ease;
-}
-
-.hover-menu button:not(#clear-history-confirm) {
-    border-bottom: 0 !important;
+    font-weight: 500;
+    box-shadow: none !important;
 }
 
 .hover-menu button:hover {
@@ -775,19 +835,26 @@ audio {
 }
 
 #show-controls {
-    background-color: white;
-    border-color: transparent !important;
+    background-color: transparent;
+    border: none !important;
     height: 36px;
-    border-radius: 0;
-    border-bottom: 0 !important;
+    border-radius: 0.5rem;
     padding-top: 3px;
     padding-left: 4px;
     display: flex;
     font-weight: normal;
 }
 
+#show-controls:hover {
+    background-color: #dbeafe;
+}
+
 .dark #show-controls {
-    background-color: var(--darker-gray);
+    background-color: transparent;
+}
+
+.dark #show-controls:hover {
+    background-color: var(--selected-item-color-dark);
 }
 
 #show-controls label {
@@ -797,12 +864,12 @@ audio {
     width: 100%;
     padding-right: 12px;
     gap: 10px;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--button-secondary-text-color);
 }
 
 #show-controls label input {
-    margin-top: 4px;
+    margin-top: 5px;
 }
 
 .transparent-substring {
@@ -842,7 +909,7 @@ audio {
 }
 
 #chat-input-row {
-    padding: 1rem;
+    padding: 0.5rem 1rem 1rem;
 }
 
 #chat-col {
@@ -1208,9 +1275,14 @@ audio {
     color: #9ca3af;
 }
 
+.dark .hover-menu {
+    background: var(--darker-gray);
+    border-color: transparent;
+    box-shadow: 0 4px 16px rgb(0 0 0 / 40%);
+}
+
 .dark .hover-menu button {
-    border-color: var(--border-color-primary);
-    background-color: var(--darker-gray) !important;
+    background-color: transparent !important;
 }
 
 .dark #chat-controls,
@@ -1372,8 +1444,7 @@ audio {
 }
 
 .footer-button svg {
-    stroke: rgb(156 163 175);
-    transition: stroke 0.2s;
+    stroke: rgb(140 140 148);
 }
 
 .footer-button:hover svg {
@@ -1388,12 +1459,12 @@ audio {
     stroke: rgb(209 213 219);
 }
 
-.tgw-accordion {
+.block:has(> .label-wrap) {
     padding: 10px 12px !important;
     border: 1px solid #d2d2d8;
 }
 
-.dark .tgw-accordion {
+.dark .block:has(> .label-wrap) {
     border: 1px solid var(--border-color-dark);
 }
 
@@ -1903,14 +1974,24 @@ table, tr, td, th, thead {
     border: 0;
 }
 
+.prose hr {
+    border-color: var(--border-color-primary);
+}
+
 td + td,
-th + th { border-left: 1px solid; }
+th + th {
+    border-left: 1px solid var(--border-color-primary) !important;
+}
 
 tr + tr td,
-tr + tr th { border-top: 1px solid; }
+tr + tr th {
+    border-top: 1px solid var(--border-color-primary) !important;
+}
 
 thead + tbody tr:first-child td,
-thead + tbody tr:first-child th { border-top: 1px solid; }
+thead + tbody tr:first-child th {
+    border-top: 1px solid var(--border-color-primary) !important;
+}
 
 /* ------------------------------------------------
    Tools CheckboxGroup - vertical DragDrop-like style
@@ -1942,8 +2023,8 @@ thead + tbody tr:first-child th { border-top: 1px solid; }
 
 /* Pretty scrollbar for the tools list */
 #tools-group .wrap::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
 }
 
 #tools-group .wrap::-webkit-scrollbar-track {
@@ -1953,13 +2034,13 @@ thead + tbody tr:first-child th { border-top: 1px solid; }
 #tools-group .wrap::-webkit-scrollbar-thumb,
 #tools-group .wrap::-webkit-scrollbar-thumb:hover {
     background: var(--neutral-300);
-    border-radius: 30px;
+    border-radius: 9999px;
 }
 
 .dark #tools-group .wrap::-webkit-scrollbar-thumb,
 .dark #tools-group .wrap::-webkit-scrollbar-thumb:hover {
     background: rgb(255 255 255 / 6.25%);
-    border-radius: 30px;
+    border-radius: 9999px;
 }
 
 #tools-group .wrap::-webkit-scrollbar-corner {

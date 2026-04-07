@@ -271,7 +271,8 @@ class ModelListResponse(BaseModel):
 class LoadModelRequest(BaseModel):
     model_name: str
     args: dict | None = None
-    settings: dict | None = None
+    instruction_template: str | None = Field(default=None, description="An instruction template defined under text-generation-webui/user_data/instruction-templates. Sets the default template for all subsequent API requests.")
+    instruction_template_str: str | None = Field(default=None, description="A Jinja2 instruction template string. If set, takes precedence over instruction_template.")
 
 
 class LoraListResponse(BaseModel):

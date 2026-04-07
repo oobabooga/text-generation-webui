@@ -31,7 +31,7 @@ TOOL_CALL_OPENING_MARKERS = [
 ]
 
 
-def streaming_tool_buffer_check(text, markers=None, tool_names=None, check_bare_names=False):
+def streaming_tool_buffer_check(text, markers=None, tool_names=None, check_bare_names=False, partial_match=True):
     '''
     Check whether streaming output should be withheld because it may
     contain tool-call markup.
@@ -43,6 +43,10 @@ def streaming_tool_buffer_check(text, markers=None, tool_names=None, check_bare_
         tool_names: List of tool function names.
         check_bare_names: Whether to do partial-prefix matching on tool
                           names (for models with unknown template format).
+        partial_match: Whether to check partial prefixes of markers/names.
+                       Set to False for end-of-generation checks where a
+                       partial prefix is just normal text, not an incomplete
+                       tool call.
     '''
     # Strip thinking blocks so tool-call syntax inside <think> doesn't
     # trigger false positives.
@@ -59,6 +63,9 @@ def streaming_tool_buffer_check(text, markers=None, tool_names=None, check_bare_
         for name in tool_names:
             if name + '{' in text or name + ' {' in text:
                 return True
+
+    if not partial_match:
+        return False
 
     # Partial-prefix matching: only for template-specific markers.
     for marker in (markers if markers is not None else TOOL_CALL_OPENING_MARKERS):
@@ -631,9 +638,15 @@ def parse_tool_call(answer: str, tool_names: list[str], return_prefix: bool = Fa
     # Strip thinking blocks so tool-call syntax inside <think> is ignored.
     original_answer = answer
     _, answer = extract_reasoning(answer)
-    # Offset between original and stripped text, used to map start_pos
-    # back to the original string when returning a prefix.
-    reasoning_offset = len(original_answer) - len(answer)
+    # Reasoning extraction returns empty content when GPT-OSS internal
+    # markup (<|start|>assistant…) follows the thinking block without a
+    # content tag.  Fall back to the full text so tool-call markers can
+    # be found.
+    if not answer.strip():
+        answer = original_answer
+        reasoning_offset = 0
+    else:
+        reasoning_offset = len(original_answer) - len(answer)
 
     matches = []
     start_pos = None
