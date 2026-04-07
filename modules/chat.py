@@ -210,6 +210,57 @@ def _expand_tool_sequence(tool_seq):
     return messages
 
 
+def _convert_to_tool_responses(messages):
+    """Convert role:'tool' messages to tool_responses format.
+
+    Templates like Gemma 4 expect tool results as a ``tool_responses``
+    attribute on a message rather than separate ``role: 'tool'`` messages.
+    This function groups consecutive tool messages and rewrites them.
+    """
+    result = []
+    tc_id_to_name = {}
+
+    i = 0
+    while i < len(messages):
+        msg = messages[i]
+
+        if msg.get('tool_calls'):
+            for tc in msg['tool_calls']:
+                tc_id = tc.get('id', '')
+                func_name = tc.get('function', {}).get('name', 'unknown')
+                if tc_id:
+                    tc_id_to_name[tc_id] = func_name
+
+        if msg.get('role') == 'tool':
+            tool_responses = []
+            while i < len(messages) and messages[i].get('role') == 'tool':
+                tool_msg = messages[i]
+                tc_id = tool_msg.get('tool_call_id', '')
+                func_name = tc_id_to_name.get(tc_id, 'unknown')
+
+                content = tool_msg.get('content', '')
+                try:
+                    response = json.loads(content)
+                except (json.JSONDecodeError, ValueError, TypeError):
+                    response = content
+
+                tool_responses.append({
+                    'name': func_name,
+                    'response': response,
+                })
+                i += 1
+
+            result.append({
+                'role': 'tool',
+                'tool_responses': tool_responses,
+            })
+        else:
+            result.append(msg)
+            i += 1
+
+    return result
+
+
 def _format_attachments(attachments, include_text=True):
     """Build image ref and text attachment strings from a list of attachments."""
     attachments_text = ""
@@ -266,6 +317,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
         user_bio=replace_character_names(state['user_bio'], state['name1'], state['name2']),
         tools=state['tools'] if 'tools' in state else None,
     )
+
+    active_template_str = state['instruction_template_str'] if state['mode'] == 'instruct' else chat_template_str
+    uses_tool_responses = 'tool_responses' in active_template_str
 
     messages = []
 
@@ -503,6 +557,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
         return prompt
 
+    if uses_tool_responses:
+        messages = _convert_to_tool_responses(messages)
+
     prompt = make_prompt(messages)
 
     # Handle truncation
@@ -511,13 +568,24 @@ def generate_chat_prompt(user_input, state, **kwargs):
         encoded_length = get_encoded_length(prompt)
         while len(messages) > 0 and encoded_length > max_length:
 
-            # Remove old message, save system message
             if len(messages) > 2 and messages[0]['role'] == 'system':
-                messages.pop(1)
-
-            # Remove old message when no system message is present
+                pop_idx = 1
             elif len(messages) > 1 and messages[0]['role'] != 'system':
-                messages.pop(0)
+                pop_idx = 0
+            else:
+                pop_idx = None
+
+            if pop_idx is not None:
+                messages.pop(pop_idx)
+
+                # Remove orphaned tool-call/tool-result messages that
+                # would be invalid without their partner.
+                while pop_idx < len(messages):
+                    msg = messages[pop_idx]
+                    if msg.get('role') == 'tool' or (msg.get('role') == 'assistant' and msg.get('tool_calls')):
+                        messages.pop(pop_idx)
+                    else:
+                        break
 
             # Resort to truncating the user input
             else:
@@ -637,7 +705,7 @@ def get_stopping_strings(state):
         # Find positions of each message content
         first_user_end = prompt.find("first user message") + len("first user message")
         first_assistant_start = prompt.find("first assistant message")
-        first_assistant_end = prompt.find("first assistant message") + len("first assistant message")
+        first_assistant_end = first_assistant_start + len("first assistant message")
         second_user_start = prompt.find("second user message")
         second_assistant_end = prompt.find("second assistant message") + len("second assistant message")
 
@@ -1126,7 +1194,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     # visible text from before buffering started so raw markup doesn't flash
     # in the UI.  The internal text is left intact so the caller can still
     # parse tool calls from it.
-    if is_stream and _check_tool_markers and streaming_tool_buffer_check(output['internal'][-1][1], markers=_streaming_markers, tool_names=_tool_names, check_bare_names=_check_bare_names):
+    if is_stream and _check_tool_markers and streaming_tool_buffer_check(output['internal'][-1][1], markers=_streaming_markers, tool_names=_tool_names, check_bare_names=_check_bare_names, partial_match=False):
         output['visible'][-1][1] = _last_visible_before_tool_buffer or ''
 
     yield output
@@ -1207,14 +1275,23 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
     # Load tools if any are selected
     selected = state.get('selected_tools', [])
+    mcp_servers = state.get('mcp_servers', '')
     parse_tool_call = None
     _tool_parsers = None
-    if selected:
-        from modules.tool_use import load_tools, execute_tool
+    if selected or mcp_servers:
+        from modules.tool_use import load_tools, load_mcp_tools, execute_tool
         from modules.tool_parsing import parse_tool_call, get_tool_call_id, detect_tool_call_format
 
-    if selected:
         tool_defs, tool_executors = load_tools(selected)
+        if mcp_servers:
+            mcp_defs, mcp_executors = load_mcp_tools(mcp_servers)
+            for td in mcp_defs:
+                fn = td['function']['name']
+                if fn in tool_executors:
+                    logger.warning(f'MCP tool "{fn}" conflicts with a local tool. Skipping.')
+                    continue
+                tool_defs.append(td)
+                tool_executors[fn] = mcp_executors[fn]
         state['tools'] = tool_defs
         tool_func_names = [t['function']['name'] for t in tool_defs]
         _template_str = state.get('instruction_template_str', '') if state.get('mode') == 'instruct' else state.get('chat_template_str', '')
@@ -1762,7 +1839,8 @@ def load_history(unique_id, character, mode):
     if not p.exists():
         return {'internal': [], 'visible': [], 'metadata': {}}
 
-    f = json.loads(open(p, 'rb').read())
+    with open(p, 'rb') as fh:
+        f = json.loads(fh.read())
     if 'internal' in f and 'visible' in f:
         history = f
     else:
@@ -1826,19 +1904,17 @@ def generate_pfp_cache(character):
     if not cache_folder.exists():
         cache_folder.mkdir()
 
-    for path in [shared.user_data_dir / 'characters' / f"{character}.{extension}" for extension in ['png', 'jpg', 'jpeg']]:
+    for extension in ['png', 'jpg', 'jpeg']:
+        path = shared.user_data_dir / 'characters' / f"{character}.{extension}"
         if path.exists():
             original_img = Image.open(path)
-            # Define file paths
-            pfp_path = Path(f'{cache_folder}/pfp_character.png')
-            thumb_path = Path(f'{cache_folder}/pfp_character_thumb.png')
+            pfp_path = cache_folder / 'pfp_character.png'
+            thumb_path = cache_folder / 'pfp_character_thumb.png'
 
-            # Save main picture and thumbnail
             original_img.save(pfp_path, format='PNG')
             thumb = make_thumbnail(original_img)
             thumb.save(thumb_path, format='PNG')
 
-            # Return the path to the thumbnail, not the in-memory PIL Image object.
             return str(thumb_path)
 
     return None
@@ -1859,13 +1935,13 @@ def load_character(character, name1, name2):
         logger.error(f"Could not find the character \"{character}\" inside {shared.user_data_dir}/characters. No character has been loaded.")
         raise ValueError
 
-    file_contents = open(filepath, 'r', encoding='utf-8').read()
+    with open(filepath, 'r', encoding='utf-8') as fh:
+        file_contents = fh.read()
     data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
     cache_folder = Path(shared.args.disk_cache_dir)
 
-    for path in [Path(f"{cache_folder}/pfp_character.png"), Path(f"{cache_folder}/pfp_character_thumb.png")]:
-        if path.exists():
-            path.unlink()
+    for path in [cache_folder / "pfp_character.png", cache_folder / "pfp_character_thumb.png"]:
+        path.unlink(missing_ok=True)
 
     picture = generate_pfp_cache(character)
 
@@ -1921,9 +1997,7 @@ def clear_character_for_ui(state):
     # Clear the cache files
     cache_folder = Path(shared.args.disk_cache_dir)
     for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
-        cache_path = Path(f'{cache_folder}/{cache_file}')
-        if cache_path.exists():
-            cache_path.unlink()
+        (cache_folder / cache_file).unlink(missing_ok=True)
 
     return state, state['name2'], state['context'], state['greeting'], None
 
@@ -2018,11 +2092,10 @@ def upload_your_profile_picture(img_path):
         cache_folder.mkdir()
 
     if img is None:
-        if Path(f"{cache_folder}/pfp_me.png").exists():
-            Path(f"{cache_folder}/pfp_me.png").unlink()
+        (cache_folder / "pfp_me.png").unlink(missing_ok=True)
     else:
         img = make_thumbnail(img)
-        img.save(Path(f'{cache_folder}/pfp_me.png'))
+        img.save(cache_folder / 'pfp_me.png')
         logger.info(f'Profile picture saved to "{cache_folder}/pfp_me.png"')
 
 
@@ -2078,13 +2151,12 @@ def generate_user_pfp_cache(user):
     if not cache_folder.exists():
         cache_folder.mkdir()
 
-    for path in [shared.user_data_dir / 'users' / f"{user}.{extension}" for extension in ['png', 'jpg', 'jpeg']]:
+    for extension in ['png', 'jpg', 'jpeg']:
+        path = shared.user_data_dir / 'users' / f"{user}.{extension}"
         if path.exists():
             original_img = Image.open(path)
-            # Define file paths
-            pfp_path = Path(f'{cache_folder}/pfp_me.png')
+            pfp_path = cache_folder / 'pfp_me.png'
 
-            # Save thumbnail
             thumb = make_thumbnail(original_img)
             thumb.save(pfp_path, format='PNG')
             logger.info(f'User profile picture cached to "{pfp_path}"')
@@ -2116,9 +2188,7 @@ def load_user(user_name, name1, user_bio):
 
     # Clear existing user picture cache
     cache_folder = Path(shared.args.disk_cache_dir)
-    pfp_path = Path(f"{cache_folder}/pfp_me.png")
-    if pfp_path.exists():
-        pfp_path.unlink()
+    (cache_folder / "pfp_me.png").unlink(missing_ok=True)
 
     # Generate new picture cache
     picture = generate_user_pfp_cache(user_name)
@@ -2542,15 +2612,13 @@ def handle_character_picture_change(picture_path):
 
     if picture is not None:
         # Save to cache
-        picture.save(Path(f'{cache_folder}/pfp_character.png'), format='PNG')
+        picture.save(cache_folder / 'pfp_character.png', format='PNG')
         thumb = make_thumbnail(picture)
-        thumb.save(Path(f'{cache_folder}/pfp_character_thumb.png'), format='PNG')
+        thumb.save(cache_folder / 'pfp_character_thumb.png', format='PNG')
     else:
         # Remove cache files when picture is cleared
         for cache_file in ['pfp_character.png', 'pfp_character_thumb.png']:
-            cache_path = Path(f'{cache_folder}/{cache_file}')
-            if cache_path.exists():
-                cache_path.unlink()
+            (cache_folder / cache_file).unlink(missing_ok=True)
 
 
 def handle_mode_change(state):

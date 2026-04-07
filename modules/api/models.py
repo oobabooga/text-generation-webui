@@ -2,7 +2,7 @@ from modules import loaders, shared
 from modules.logging_colors import logger
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
-from modules.models_settings import get_model_metadata, update_model_parameters
+from modules.models_settings import get_model_metadata, load_instruction_template, update_model_parameters
 from modules.utils import get_available_loras, get_available_models
 
 
@@ -42,12 +42,10 @@ def model_info_dict(model_name: str) -> dict:
 
 def _load_model(data):
     model_name = data["model_name"]
-    args = data["args"]
-    settings = data["settings"]
+    args = data.get("args")
 
     unload_model()
     model_settings = get_model_metadata(model_name)
-    update_model_parameters(model_settings)
 
     # Update shared.args with custom model loading settings
     # Security: only allow keys that correspond to model loading
@@ -55,6 +53,16 @@ def _load_model(data):
     # flags like trust_remote_code or extra_flags to be set via the API.
     blocked_keys = {'extra_flags'}
     allowed_keys = set(loaders.list_model_elements()) - blocked_keys
+
+    # Reset all loader args to their startup values before applying new ones,
+    # so settings from a previous API load don't leak into this one.
+    # Include blocked keys in the reset (safe: restores startup value, not API-controlled).
+    for k in allowed_keys | blocked_keys:
+        if hasattr(shared.args, k) and hasattr(shared.original_args, k):
+            setattr(shared.args, k, getattr(shared.original_args, k))
+
+    update_model_parameters(model_settings)
+
     if args:
         for k in args:
             if k in allowed_keys and hasattr(shared.args, k):
@@ -62,15 +70,12 @@ def _load_model(data):
 
     shared.model, shared.tokenizer = load_model(model_name)
 
-    # Update shared.settings with custom generation defaults
-    if settings:
-        for k in settings:
-            if k in shared.settings:
-                shared.settings[k] = settings[k]
-                if k == 'truncation_length':
-                    logger.info(f"CONTEXT LENGTH (UPDATED): {shared.settings['truncation_length']}")
-                elif k == 'instruction_template':
-                    logger.info(f"INSTRUCTION TEMPLATE (UPDATED): {shared.settings['instruction_template']}")
+    if data.get("instruction_template_str") is not None:
+        shared.settings['instruction_template_str'] = data["instruction_template_str"]
+        logger.info("INSTRUCTION TEMPLATE: set to custom Jinja2 string")
+    elif data.get("instruction_template") is not None:
+        shared.settings['instruction_template_str'] = load_instruction_template(data["instruction_template"])
+        logger.info(f"INSTRUCTION TEMPLATE: {data['instruction_template']}")
 
 
 def list_loras():

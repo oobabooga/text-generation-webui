@@ -291,16 +291,21 @@ def blacklist_samplers(loader, dynamic_temperature):
 
 @functools.cache
 def get_all_params():
+    from modules import shared
     all_params = set()
     for k in loaders_and_params:
         for el in loaders_and_params[k]:
             all_params.add(el)
 
+    if shared.args.portable:
+        all_params.discard('ik')
+
     return sorted(all_params)
 
 
+@functools.cache
 def list_model_elements():
-    return [
+    elements = [
         'filter_by_loader',
         'loader',
         'cpu_memory',
@@ -346,8 +351,13 @@ def list_model_elements():
         'spec_ngram_size_m',
         'spec_ngram_min_hits',
         'mmproj',
-        'ik',
     ]
+
+    from modules import shared
+    if not shared.args.portable:
+        elements.append('ik')
+
+    return elements
 
 
 def make_loader_params_visible(loader):

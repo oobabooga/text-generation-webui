@@ -7,6 +7,7 @@ THINKING_FORMATS = [
     ('<|channel|>analysis<|message|>', '<|end|>', '<|channel|>final<|message|>'),
     ('<|channel|>commentary<|message|>', '<|end|>', '<|channel|>final<|message|>'),
     ('<seed:think>', '</seed:think>', None),
+    ('<|channel>thought', '<channel|>', None),  # Gemma 4
     ('<|think|>', '<|end|>', '<|content|>'),  # Solar Open
     # ('Thinking Process:', '</think>', None),  # Qwen3.5 verbose thinking outside tags -- removed: too prone to false positives in streaming
     (None, '</think>', None),  # End-only variant (e.g., Qwen3-next)
@@ -72,9 +73,16 @@ def extract_reasoning(text, html_escaped=False):
                 if content_pos != -1:
                     content_start = content_pos + len(content_esc)
                 else:
-                    # Content tag not present — fall back to content after
-                    # end_tag (e.g. GPT-OSS tool calls skip the final channel).
-                    content_start = end_pos + len(end_esc)
+                    # Content tag not present yet.  In GPT-OSS the region
+                    # between <|end|> and the content tag contains internal
+                    # markup (<|start|>assistant…) that must not be shown.
+                    # Suppress it to prevent tag leaks during streaming.
+                    remainder = text[end_pos + len(end_esc):].lstrip()
+                    framing_token = esc('<|start|>')
+                    if not remainder or remainder.startswith(framing_token) or framing_token.startswith(remainder):
+                        content_start = len(text)
+                    else:
+                        content_start = end_pos + len(end_esc)
             else:
                 content_start = end_pos + len(end_esc)
 

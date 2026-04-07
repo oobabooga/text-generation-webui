@@ -27,10 +27,11 @@ TOOL_CALL_OPENING_MARKERS = [
     '[TOOL_CALLS]',
     'to=functions.',
     '<|channel|>commentary',
+    '<|tool_call>call:',
 ]
 
 
-def streaming_tool_buffer_check(text, markers=None, tool_names=None, check_bare_names=False):
+def streaming_tool_buffer_check(text, markers=None, tool_names=None, check_bare_names=False, partial_match=True):
     '''
     Check whether streaming output should be withheld because it may
     contain tool-call markup.
@@ -42,6 +43,10 @@ def streaming_tool_buffer_check(text, markers=None, tool_names=None, check_bare_
         tool_names: List of tool function names.
         check_bare_names: Whether to do partial-prefix matching on tool
                           names (for models with unknown template format).
+        partial_match: Whether to check partial prefixes of markers/names.
+                       Set to False for end-of-generation checks where a
+                       partial prefix is just normal text, not an incomplete
+                       tool call.
     '''
     # Strip thinking blocks so tool-call syntax inside <think> doesn't
     # trigger false positives.
@@ -58,6 +63,9 @@ def streaming_tool_buffer_check(text, markers=None, tool_names=None, check_bare_
         for name in tool_names:
             if name + '{' in text or name + ' {' in text:
                 return True
+
+    if not partial_match:
+        return False
 
     # Partial-prefix matching: only for template-specific markers.
     for marker in (markers if markers is not None else TOOL_CALL_OPENING_MARKERS):
@@ -400,6 +408,78 @@ def _parse_glm_tool_calls(answer: str, tool_names: list[str]):
     return matches, start_pos
 
 
+def _extract_gemma4_balanced(text, start):
+    """Extract balanced braces from Gemma 4 format, using <|"|> as string delimiters."""
+    if start >= len(text) or text[start] != '{':
+        return None
+    depth = 0
+    in_string = False
+    quote_token = '<|"|>'
+    quote_len = len(quote_token)
+    i = start
+    while i < len(text):
+        if text[i:i + quote_len] == quote_token:
+            in_string = not in_string
+            i += quote_len
+            continue
+        if in_string:
+            i += 1
+            continue
+        c = text[i]
+        if c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+            if depth == 0:
+                return text[start:i + 1]
+        i += 1
+    return None
+
+
+def _parse_gemma4_tool_calls(answer: str, tool_names: list[str]):
+    """Parse Gemma 4-style tool calls.
+
+    Format:
+        <|tool_call>call:func_name{key:<|"|>value<|"|>,...}<tool_call|>
+
+    Values use <|"|> tokens instead of standard JSON quotes, and keys are
+    bare identifiers.
+    """
+    matches = []
+    start_pos = None
+
+    for m in re.finditer(r'<\|tool_call>call:([^\s{]+)\s*', answer):
+        func_name = m.group(1).strip()
+        if func_name not in tool_names:
+            continue
+
+        brace_start = m.end()
+        if brace_start >= len(answer) or answer[brace_start] != '{':
+            continue
+
+        content = _extract_gemma4_balanced(answer, brace_start)
+        if content is None:
+            continue
+
+        # Convert to JSON: split on <|"|> tokens so that key quoting
+        # only applies outside string values (even-indexed parts),
+        # then rejoin with real quotes.
+        parts = content.split('<|"|>')
+        for idx in range(0, len(parts), 2):
+            parts[idx] = re.sub(r'(^|[{,\[])\s*(\w+)\s*:', r'\1"\2":', parts[idx])
+        json_str = '"'.join(parts)
+
+        try:
+            arguments = json.loads(json_str)
+            if start_pos is None:
+                start_pos = m.start()
+            matches.append(_make_tool_call(func_name, arguments))
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    return matches, start_pos
+
+
 def _parse_pythonic_tool_calls(answer: str, tool_names: list[str]):
     """Parse pythonic-style tool calls used by Llama 4 and similar models.
 
@@ -473,6 +553,11 @@ TOOL_CALL_FORMATS = [
         'markers': ['to=functions.', '<|channel|>commentary'],
     },
     {
+        'template_hints': ['<|tool_call>call:'],
+        'parser': _parse_gemma4_tool_calls,
+        'markers': ['<|tool_call>call:'],
+    },
+    {
         'template_hints': ['minimax:tool_call'],
         'parser': _parse_minimax_tool_calls,
         'markers': ['<minimax:tool_call>'],
@@ -504,6 +589,7 @@ ALL_PARSERS = [
     _parse_deep_seek_tool_calls,
     _parse_kimi_tool_calls,
     _parse_channel_tool_calls,
+    _parse_gemma4_tool_calls,
     _parse_minimax_tool_calls,
     _parse_glm_tool_calls,
     _parse_xml_param_tool_calls,
@@ -552,9 +638,15 @@ def parse_tool_call(answer: str, tool_names: list[str], return_prefix: bool = Fa
     # Strip thinking blocks so tool-call syntax inside <think> is ignored.
     original_answer = answer
     _, answer = extract_reasoning(answer)
-    # Offset between original and stripped text, used to map start_pos
-    # back to the original string when returning a prefix.
-    reasoning_offset = len(original_answer) - len(answer)
+    # Reasoning extraction returns empty content when GPT-OSS internal
+    # markup (<|start|>assistant…) follows the thinking block without a
+    # content tag.  Fall back to the full text so tool-call markers can
+    # be found.
+    if not answer.strip():
+        answer = original_answer
+        reasoning_offset = 0
+    else:
+        reasoning_offset = len(original_answer) - len(answer)
 
     matches = []
     start_pos = None
@@ -620,6 +712,8 @@ def parse_tool_call(answer: str, tool_names: list[str], return_prefix: bool = Fa
                 if not isinstance(candidates, list):
                     candidates = [candidates]
                 for candidate_dict in candidates:
+                    if not isinstance(candidate_dict, dict):
+                        continue
                     checked_candidate = check_and_sanitize_tool_call_candidate(candidate_dict, tool_names)
                     if checked_candidate is not None:
                         matches.append(checked_candidate)

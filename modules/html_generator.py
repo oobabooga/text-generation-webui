@@ -14,6 +14,13 @@ from modules.reasoning import extract_reasoning
 from modules.sane_markdown_lists import SaneListExtension
 from modules.utils import get_available_chat_styles
 
+# Pre-compiled regex for protecting markdown-sensitive characters inside LaTeX.
+# Covers $$...$$, \[...\], \(...\), and inline $...$ (when content contains \\).
+_LATEX_PATTERN = re.compile(
+    r'((?:^|[\r\n\s])\$\$[^`]*?\$\$)|\\\[(.*?)\\\]|\\\((.*?)\\\)|(?<!\$)\$(?!\$)([^\$\n]*\\\\[^\$\n]*?)\$(?!\$)',
+    re.DOTALL
+)
+
 # This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}
 
@@ -185,28 +192,29 @@ def process_markdown_content(string):
     if not string:
         return ""
 
-    # Define unique placeholders for LaTeX asterisks and underscores
+    # Define unique placeholders for LaTeX characters that conflict with markdown
     LATEX_ASTERISK_PLACEHOLDER = "LATEXASTERISKPLACEHOLDER"
     LATEX_UNDERSCORE_PLACEHOLDER = "LATEXUNDERSCOREPLACEHOLDER"
+    LATEX_PIPE_PLACEHOLDER = "LATEXPIPEPLACEHOLDER"
+
+    def protect_latex_content(content):
+        """Protect markdown-sensitive characters inside LaTeX."""
+        content = content.replace('*', LATEX_ASTERISK_PLACEHOLDER)
+        content = content.replace('_', LATEX_UNDERSCORE_PLACEHOLDER)
+        content = content.replace('|', LATEX_PIPE_PLACEHOLDER)
+        return content
 
     def protect_asterisks_underscores_in_latex(match):
-        """A replacer function for re.sub to protect asterisks and underscores in multiple LaTeX formats."""
+        """A replacer function for re.sub to protect markdown-sensitive characters in multiple LaTeX formats."""
         # Check which delimiter group was captured
         if match.group(1) is not None:  # Content from $$...$$
-            content = match.group(1)
-            modified_content = content.replace('*', LATEX_ASTERISK_PLACEHOLDER)
-            modified_content = modified_content.replace('_', LATEX_UNDERSCORE_PLACEHOLDER)
-            return f'{modified_content}'
+            return protect_latex_content(match.group(1))
         elif match.group(2) is not None:  # Content from \[...\]
-            content = match.group(2)
-            modified_content = content.replace('*', LATEX_ASTERISK_PLACEHOLDER)
-            modified_content = modified_content.replace('_', LATEX_UNDERSCORE_PLACEHOLDER)
-            return f'\\[{modified_content}\\]'
+            return f'\\[{protect_latex_content(match.group(2))}\\]'
         elif match.group(3) is not None:  # Content from \(...\)
-            content = match.group(3)
-            modified_content = content.replace('*', LATEX_ASTERISK_PLACEHOLDER)
-            modified_content = modified_content.replace('_', LATEX_UNDERSCORE_PLACEHOLDER)
-            return f'\\({modified_content}\\)'
+            return f'\\({protect_latex_content(match.group(3))}\\)'
+        elif match.group(4) is not None:  # Content from $...$
+            return f'${protect_latex_content(match.group(4).strip())}$'
 
         return match.group(0)  # Fallback
 
@@ -240,9 +248,7 @@ def process_markdown_content(string):
     string = re.sub(r"(.)```", r"\1\n```", string)
 
     # Protect asterisks and underscores within all LaTeX blocks before markdown conversion
-    latex_pattern = re.compile(r'((?:^|[\r\n\s])\$\$[^`]*?\$\$)|\\\[(.*?)\\\]|\\\((.*?)\\\)',
-                               re.DOTALL)
-    string = latex_pattern.sub(protect_asterisks_underscores_in_latex, string)
+    string = _LATEX_PATTERN.sub(protect_asterisks_underscores_in_latex, string)
 
     result = ''
     is_code = False
@@ -306,6 +312,7 @@ def process_markdown_content(string):
     # Restore the LaTeX asterisks and underscores after markdown conversion
     html_output = html_output.replace(LATEX_ASTERISK_PLACEHOLDER, '*')
     html_output = html_output.replace(LATEX_UNDERSCORE_PLACEHOLDER, '_')
+    html_output = html_output.replace(LATEX_PIPE_PLACEHOLDER, '|')
 
     # Remove extra newlines before </code>
     html_output = re.sub(r'\s*</code>', '</code>', html_output)

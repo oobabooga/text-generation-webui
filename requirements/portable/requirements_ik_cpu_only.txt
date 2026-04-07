@@ -1,32 +1,18 @@
-accelerate==1.13.*
 audioop-lts<1.0; python_version >= "3.13"
-datasets
-diffusers==0.37.*
-einops
 fastapi==0.112.4
 huggingface-hub==1.5.*
 jinja2==3.1.6
 markdown
 mcp==1.27.0
 numpy==2.2.*
-pandas
-peft==0.18.*
-Pillow>=9.5.0
 pydantic==2.11.0
 pymupdf==1.27.*
 python-docx==1.1.2
 pyyaml
 requests
 rich
-safetensors==0.7.*
-scipy
-sentencepiece
-tensorboard
-torchao==0.15.*
-transformers==5.5.*
-tqdm
 trafilatura==2.0.0
-wandb
+tqdm
 
 # Gradio
 https://github.com/oobabooga/gradio/releases/download/4.37.2-custom.19/gradio-4.37.2+custom.19-py3-none-any.whl
@@ -37,8 +23,6 @@ flask_cloudflared==0.0.15
 sse-starlette==1.6.5
 tiktoken
 
-# llama.cpp (CPU only)
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.106.0/llama_cpp_binaries-0.106.0+cpu-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.106.0/llama_cpp_binaries-0.106.0+cpu-py3-none-win_amd64.whl; platform_system == "Windows"
+# ik_llama.cpp (CPU only)
 https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.106.0/ik_llama_cpp_binaries-0.106.0+cpu-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.106.0/ik_llama_cpp_binaries-0.106.0+cpu-py3-none-win_amd64.whl; platform_system == "Windows"

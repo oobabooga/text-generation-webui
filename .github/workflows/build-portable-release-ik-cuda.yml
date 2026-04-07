@@ -102,8 +102,8 @@ jobs:
             VERSION_CLEAN="${{ inputs.version }}"
             VERSION_CLEAN="${VERSION_CLEAN#v}"
             cd ..
-            cp -r text-generation-webui "text-generation-webui-${VERSION_CLEAN}"
-            cd "text-generation-webui-${VERSION_CLEAN}"
+            cp -r text-generation-webui "text-generation-webui-ik-${VERSION_CLEAN}"
+            cd "text-generation-webui-ik-${VERSION_CLEAN}"
 
             # Remove extensions that need additional requirements
             allowed=("character_bias" "gallery" "sd_api_pictures")
@@ -133,19 +133,18 @@ jobs:
             echo "Downloading Python for $PLATFORM..."
             curl -L -o python-build.tar.gz "$PYTHON_URL"
             tar -xzf python-build.tar.gz
-            mv python "text-generation-webui-${VERSION_CLEAN}/portable_env"
+            mv python "text-generation-webui-ik-${VERSION_CLEAN}/portable_env"
 
             # 3. Prepare requirements file based on CUDA version
-            cd "text-generation-webui-${VERSION_CLEAN}"
+            cd "text-generation-webui-ik-${VERSION_CLEAN}"
             if [[ "$CUDA_VERSION" == "13.1" ]]; then
-                REQ_FILE="requirements/portable/requirements_cuda131.txt"
+                REQ_FILE="requirements/portable/requirements_ik_cuda131.txt"
             else
-                REQ_FILE="requirements/portable/requirements.txt"
+                REQ_FILE="requirements/portable/requirements_ik.txt"
             fi
 
-            # 4. Swap llama.cpp wheels for ik_llama.cpp and inject --ik into start scripts
-            sed -i 's|/llama_cpp_binaries-|/ik_llama_cpp_binaries-|g' "$REQ_FILE"
-            sed -i 's/--portable/--portable --ik/g' start_linux.sh start_windows.bat start_macos.sh 2>/dev/null || true
+            # 4. Inject --ik into start scripts
+            sed -i 's/--portable/--portable --ik/g' start_linux.sh start_windows.bat 2>/dev/null || true
 
             # 5. Install packages
             echo "Installing Python packages from $REQ_FILE..."
@@ -159,11 +158,11 @@ jobs:
             if [[ "$RUNNER_OS" == "Windows" ]]; then
                 ARCHIVE_NAME="textgen-portable-ik-${VERSION_CLEAN}-${PLATFORM}-cuda${CUDA_VERSION}.zip"
                 echo "Creating archive: $ARCHIVE_NAME"
-                powershell -Command "Compress-Archive -Path text-generation-webui-${VERSION_CLEAN} -DestinationPath $ARCHIVE_NAME"
+                powershell -Command "Compress-Archive -Path text-generation-webui-ik-${VERSION_CLEAN} -DestinationPath $ARCHIVE_NAME"
             else
                 ARCHIVE_NAME="textgen-portable-ik-${VERSION_CLEAN}-${PLATFORM}-cuda${CUDA_VERSION}.tar.gz"
                 echo "Creating archive: $ARCHIVE_NAME"
-                tar czf "$ARCHIVE_NAME" "text-generation-webui-${VERSION_CLEAN}"
+                tar czf "$ARCHIVE_NAME" "text-generation-webui-ik-${VERSION_CLEAN}"
             fi
 
       - name: Upload files to a GitHub release

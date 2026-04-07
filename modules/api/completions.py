@@ -89,20 +89,10 @@ def _compute_prompt_logprob_entries(prompt, logprobs_count, input_ids=None):
         return [{"token": first_token_str, "null_logprob": True}]
 
     import torch
+    from modules.torch_utils import clear_torch_cache
 
-    if loader == 'ExLlamav3' and hasattr(model, 'model') and hasattr(model, 'cache'):
-        # Native ExLlamav3: call the underlying Model.forward() directly
-        input_ids_tensor = input_ids if isinstance(input_ids, torch.Tensor) else torch.tensor(input_ids, dtype=torch.long)
-        with torch.no_grad():
-            logits = model.model.forward(
-                input_ids=input_ids_tensor,
-                params={
-                    "attn_mode": "flash_attn",
-                    "cache": model.cache,
-                    "past_len": 0,
-                    "batch_shape": (1, model.max_tokens),
-                }
-            ).float().cpu()
+    if hasattr(model, 'get_prompt_logits'):
+        logits = model.get_prompt_logits(input_ids)
 
     elif hasattr(model, 'forward'):
         # HF-compatible loaders (Transformers, ExLlamav3_HF, etc.)
@@ -114,26 +104,54 @@ def _compute_prompt_logprob_entries(prompt, logprobs_count, input_ids=None):
             # not just the last token (some HF wrappers like ExLlamav3_HF
             # only compute the last-token logits when labels are absent).
             outputs = model(input_ids=input_ids_tensor, labels=input_ids_tensor)
-            logits = outputs.logits.float().cpu()
+            logits = outputs.logits  # keep on GPU, (1, seq_len, vocab) in model dtype
+            del outputs
 
     else:
         return []
 
     entries = [{"token": first_token_str, "null_logprob": True}]
 
-    # Batch logsumexp and topk as single operations across all positions
-    # to avoid per-position kernel launch overhead.
-    prompt_logits = logits[0, :n_tokens - 1]  # positions 0..n-2 predict tokens 1..n-1
-    k = min(logprobs_count, prompt_logits.shape[-1])
-    all_top_values, all_top_indices = torch.topk(prompt_logits, k=k, dim=-1)
-    all_lse = torch.logsumexp(prompt_logits, dim=-1)
-    all_top_log_probs = all_top_values - all_lse.unsqueeze(-1)
-
-    # Batch-decode all unique token IDs to avoid O(N*k) individual decode calls
+    logprobs_count = max(logprobs_count, 1)
+    k = min(logprobs_count, logits.shape[-1])
+    chunk_size = 2048
     unique_ids = set(int(tid) for tid in token_ids[1:])
-    unique_ids.update(int(tid) for tid in all_top_indices.flatten().tolist())
 
-    decoded_strs = {tid: shared.tokenizer.decode(torch.tensor([tid])) for tid in unique_ids}
+    # Process logits in chunks on GPU, only move top-K results to CPU
+    all_top_log_probs_list = []
+    all_top_indices_list = []
+    all_actual_lps = []
+
+    for start in range(0, n_tokens - 1, chunk_size):
+        end = min(start + chunk_size, n_tokens - 1)
+        chunk_logits = logits[0, start:end].float()  # (chunk, vocab) on GPU
+        chunk_lse = torch.logsumexp(chunk_logits, dim=-1)
+        chunk_top_values, chunk_top_indices = torch.topk(chunk_logits, k=k, dim=-1)
+        chunk_top_log_probs = chunk_top_values - chunk_lse.unsqueeze(-1)
+
+        # Compute logprob for actual next tokens in this chunk
+        chunk_top_sets = [set(chunk_top_indices[j].tolist()) for j in range(end - start)]
+        for j in range(end - start):
+            actual_tid = int(token_ids[start + j + 1])
+            if actual_tid not in chunk_top_sets[j]:
+                all_actual_lps.append((chunk_logits[j, actual_tid] - chunk_lse[j]).item())
+            else:
+                all_actual_lps.append(None)  # will use top_log_probs
+
+        all_top_log_probs_list.append(chunk_top_log_probs.cpu())
+        all_top_indices_list.append(chunk_top_indices.cpu())
+        unique_ids.update(int(tid) for tid in chunk_top_indices.flatten().tolist())
+        del chunk_logits, chunk_lse, chunk_top_values
+
+    del logits
+    clear_torch_cache()
+
+    all_top_log_probs = torch.cat(all_top_log_probs_list, dim=0)
+    all_top_indices = torch.cat(all_top_indices_list, dim=0)
+
+    unique_ids_list = sorted(unique_ids)
+    decoded_list = shared.tokenizer.batch_decode([[tid] for tid in unique_ids_list]) if hasattr(shared.tokenizer, 'batch_decode') else [shared.tokenizer.decode(torch.tensor([tid])) for tid in unique_ids_list]
+    decoded_strs = dict(zip(unique_ids_list, decoded_list))
 
     for i in range(1, n_tokens):
         token_id = int(token_ids[i])
@@ -142,21 +160,20 @@ def _compute_prompt_logprob_entries(prompt, logprobs_count, input_ids=None):
         top_ids = all_top_indices[idx].tolist()
         actual_token_str = decoded_strs[token_id]
 
-        # Build the top list with the actual prompt token guaranteed at front
         if token_id in top_ids:
             actual_lp = top_log_probs[top_ids.index(token_id)].item()
             alternatives = [
-                {"token": decoded_strs[top_ids[j]], "logprob": top_log_probs[j].item()}
+                {"token": decoded_strs[top_ids[j]], "token_id": top_ids[j], "logprob": top_log_probs[j].item()}
                 for j in range(k) if top_ids[j] != token_id
             ]
         else:
-            actual_lp = (prompt_logits[idx, token_id] - all_lse[idx]).item()
+            actual_lp = all_actual_lps[idx]
             alternatives = [
-                {"token": decoded_strs[top_ids[j]], "logprob": top_log_probs[j].item()}
-                for j in range(k - 1)  # drop lowest to make room
+                {"token": decoded_strs[top_ids[j]], "token_id": top_ids[j], "logprob": top_log_probs[j].item()}
+                for j in range(k - 1)
             ]
 
-        entry = {"top_logprobs": [{"token": actual_token_str, "logprob": actual_lp}] + alternatives}
+        entry = {"top_logprobs": [{"token": actual_token_str, "token_id": token_id, "logprob": actual_lp}] + alternatives}
         entries.append(entry)
 
     return entries
@@ -242,7 +259,7 @@ def format_chat_logprobs(entries):
 def format_completion_logprobs(entries):
     """Format logprob entries into OpenAI completions logprobs format.
 
-    Output: {"tokens", "token_logprobs", "top_logprobs": [{token: prob}], "text_offset"}
+    Output: {"tokens", "token_logprobs", "top_logprobs": [{token: prob}], "top_logprobs_ids": [{token_id: prob}], "text_offset"}
     """
     if not entries:
         return None
@@ -250,6 +267,7 @@ def format_completion_logprobs(entries):
     tokens = []
     token_logprobs = []
     top_logprobs = []
+    top_logprobs_ids = []
     text_offset = []
     offset = 0
 
@@ -260,6 +278,7 @@ def format_completion_logprobs(entries):
             tokens.append(token_str)
             token_logprobs.append(None)
             top_logprobs.append(None)
+            top_logprobs_ids.append(None)
             text_offset.append(offset)
             offset += len(token_str)
             continue
@@ -276,21 +295,29 @@ def format_completion_logprobs(entries):
         offset += len(token_str)
 
         top_dict = {}
+        top_dict_ids = {}
         for item in top:
             t = item.get('token', '')
             lp = item.get('logprob', item.get('prob', 0))
             top_dict[t] = lp
+            tid = item.get('token_id', item.get('id'))
+            if tid is not None:
+                top_dict_ids[tid] = lp
         top_logprobs.append(top_dict)
+        top_logprobs_ids.append(top_dict_ids if top_dict_ids else None)
 
     if not tokens:
         return None
 
-    return {
+    result = {
         "tokens": tokens,
         "token_logprobs": token_logprobs,
         "top_logprobs": top_logprobs,
         "text_offset": text_offset
     }
+    if any(x is not None for x in top_logprobs_ids):
+        result["top_logprobs_ids"] = top_logprobs_ids
+    return result
 
 
 def process_parameters(body, is_legacy=False):

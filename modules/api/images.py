@@ -4,7 +4,10 @@ OpenAI-compatible image generation using local diffusion models.
 
 import base64
 import io
+import json
 import time
+
+from PIL.PngImagePlugin import PngInfo
 
 from .errors import ServiceUnavailableError
 from modules import shared
@@ -15,7 +18,7 @@ def generations(request):
     Generate images using the loaded diffusion model.
     Returns dict with 'created' timestamp and 'data' list of images.
     """
-    from modules.ui_image_generation import generate
+    from modules.ui_image_generation import build_generation_metadata, generate
 
     if shared.image_model is None:
         raise ServiceUnavailableError("No image model loaded. Load a model via the UI first.")
@@ -46,10 +49,18 @@ def generations(request):
     if not images:
         raise ServiceUnavailableError("Image generation failed or produced no images.")
 
-    # Build response
+    # Build response with per-batch metadata (seed increments per batch)
+    base_seed = state.get('image_seed_resolved', state['image_seed'])
+    batch_size = int(state['image_batch_size'])
+
     resp = {'created': int(time.time()), 'data': []}
-    for img in images:
-        b64 = _image_to_base64(img)
+    for idx, img in enumerate(images):
+        batch_seed = base_seed + idx // batch_size
+        metadata = build_generation_metadata(state, batch_seed)
+        metadata_json = json.dumps(metadata, ensure_ascii=False)
+        png_info = PngInfo()
+        png_info.add_text("image_gen_settings", metadata_json)
+        b64 = _image_to_base64(img, png_info)
 
         image_obj = {'revised_prompt': request.prompt}
 
@@ -63,7 +74,7 @@ def generations(request):
     return resp
 
 
-def _image_to_base64(image) -> str:
+def _image_to_base64(image, png_info=None) -> str:
     buffered = io.BytesIO()
-    image.save(buffered, format="PNG")
+    image.save(buffered, format="PNG", pnginfo=png_info)
     return base64.b64encode(buffered.getvalue()).decode('utf-8')
