@@ -15,18 +15,20 @@
 
 A Gradio web UI for running Large Language Models locally. 100% private and offline. Supports text generation, vision, tool-calling, training, image generation, and more.
 
-[Try the Deep Reason extension](https://oobabooga.gumroad.com/l/deep_reason)
-
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/INSTRUCT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/CHAT-3.5.png) |
 |:---:|:---:|
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/DEFAULT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/PARAMETERS-3.5.png) |
+
+## 🔥 News
+My GGUF quantization benchmarks on [LocalBench](https://localbench.substack.com), where I compare quants from uploaders like unsloth, bartowski, and lmstudio-community:
+- **2026-04-07**: [Gemma 4 31B results](https://localbench.substack.com/p/gemma-4-31b-gguf-kl-divergence)
 
 ## Features
 
 - **Easy setup**: [Portable builds](https://github.com/oobabooga/text-generation-webui/releases) (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or a one-click installer for the full feature set.
 - **Multiple backends**: [llama.cpp](https://github.com/ggerganov/llama.cpp), [ik_llama.cpp](https://github.com/ikawrakow/ik_llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM). Switch between backends and models without restarting.
 - **OpenAI/Anthropic-compatible API**: Chat, Completions, and Messages endpoints with tool-calling support. Use as a local drop-in replacement for the OpenAI/Anthropic APIs ([examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples)).
-- **Tool-calling**: Models can call custom functions during chat — web search, page fetching, math, and more. Each tool is a single `.py` file. MCP servers are also supported ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Tool-Calling-Tutorial)).
+- **Tool-calling**: Models can call custom functions during chat: web search, page fetching, math, and more. Each tool is a single `.py` file. MCP servers are also supported ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Tool-Calling-Tutorial)).
 - **Vision (multimodal)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Multimodal-Tutorial)).
 - **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
 - **Training**: Fine-tune LoRAs on multi-turn chat or raw text datasets. Supports resuming interrupted runs ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/05-%E2%80%90-Training-Tab)).
