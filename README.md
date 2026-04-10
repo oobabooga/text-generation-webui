@@ -13,7 +13,7 @@
 
 # Text Generation Web UI
 
-A Gradio web UI for running Large Language Models locally. 100% private and offline. Supports text generation, vision, tool-calling, training, image generation, and more.
+A Gradio web UI for running Large Language Models locally. 100% private and offline. Supports text generation, vision, tool-calling, training, and image generation.
 
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/INSTRUCT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/CHAT-3.5.png) |
 |:---:|:---:|
@@ -28,7 +28,7 @@ My GGUF quantization benchmarks on [LocalBench](https://localbench.substack.com)
 - **Easy setup**: [Portable builds](https://github.com/oobabooga/text-generation-webui/releases) (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or a one-click installer for the full feature set.
 - **Multiple backends**: [llama.cpp](https://github.com/ggerganov/llama.cpp), [ik_llama.cpp](https://github.com/ikawrakow/ik_llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM). Switch between backends and models without restarting.
 - **OpenAI/Anthropic-compatible API**: Chat, Completions, and Messages endpoints with tool-calling support. Use as a local drop-in replacement for the OpenAI/Anthropic APIs ([examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples)).
-- **Tool-calling**: Models can call custom functions during chat: web search, page fetching, math, and more. Each tool is a single `.py` file. MCP servers are also supported ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Tool-Calling-Tutorial)).
+- **Tool-calling**: Models can call custom functions during chat, including web search, page fetching, and math. Each tool is a single `.py` file. MCP servers are also supported ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Tool-Calling-Tutorial)).
 - **Vision (multimodal)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Multimodal-Tutorial)).
 - **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
 - **Training**: Fine-tune LoRAs on multi-turn chat or raw text datasets. Supports resuming interrupted runs ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/05-%E2%80%90-Training-Tab)).
@@ -37,9 +37,8 @@ My GGUF quantization benchmarks on [LocalBench](https://localbench.substack.com)
 - `instruct` mode for instruction-following (like ChatGPT), and `chat-instruct`/`chat` modes for talking to custom characters. Prompts are automatically formatted with Jinja2 templates.
 - Edit messages, navigate between message versions, and branch conversations at any point.
 - Free-form text generation in the Notebook tab without being limited to chat turns.
-- Multiple sampling parameters and generation options for sophisticated text generation control.
 - Dark/light themes, syntax highlighting for code blocks, and LaTeX rendering for mathematical expressions.
-- Extension support, with numerous built-in and user-contributed extensions available. See the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
+- Extension support, with built-in and user-contributed extensions available. See the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
 
 ## How to install
 
@@ -54,7 +53,7 @@ Download from here: **https://github.com/oobabooga/text-generation-webui/release
 
 #### Option 2: Manual portable install with venv
 
-Very fast setup that should work on any Python 3.9+:
+Fast setup on any Python 3.9+:
 
 ```bash
 # Clone repository
