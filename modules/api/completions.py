@@ -95,16 +95,15 @@ def _compute_prompt_logprob_entries(prompt, logprobs_count, input_ids=None):
         logits = model.get_prompt_logits(input_ids)
 
     elif hasattr(model, 'forward'):
-        # HF-compatible loaders (Transformers, ExLlamav3_HF, etc.)
+        # HF-compatible loaders (Transformers, etc.). Loaders that need a
+        # custom path (e.g. wrappers that only compute last-token logits in
+        # __call__) should expose get_prompt_logits() above.
         input_ids_tensor = input_ids if isinstance(input_ids, torch.Tensor) else torch.tensor(input_ids, dtype=torch.long)
         if hasattr(model, 'device'):
             input_ids_tensor = input_ids_tensor.to(model.device)
-        with torch.no_grad():
-            # Pass labels to ensure logits are returned for ALL positions,
-            # not just the last token (some HF wrappers like ExLlamav3_HF
-            # only compute the last-token logits when labels are absent).
-            outputs = model(input_ids=input_ids_tensor, labels=input_ids_tensor)
-            logits = outputs.logits  # keep on GPU, (1, seq_len, vocab) in model dtype
+        with torch.inference_mode():
+            outputs = model(input_ids=input_ids_tensor)
+            logits = outputs.logits  # keep on device, (1, seq_len, vocab) in model dtype
             del outputs
 
     else:
@@ -117,14 +116,14 @@ def _compute_prompt_logprob_entries(prompt, logprobs_count, input_ids=None):
     chunk_size = 2048
     unique_ids = set(int(tid) for tid in token_ids[1:])
 
-    # Process logits in chunks on GPU, only move top-K results to CPU
+    # Process logits in chunks, only move top-K results to CPU
     all_top_log_probs_list = []
     all_top_indices_list = []
     all_actual_lps = []
 
     for start in range(0, n_tokens - 1, chunk_size):
         end = min(start + chunk_size, n_tokens - 1)
-        chunk_logits = logits[0, start:end].float()  # (chunk, vocab) on GPU
+        chunk_logits = logits[0, start:end].float()  # (chunk, vocab) on logits.device
         chunk_lse = torch.logsumexp(chunk_logits, dim=-1)
         chunk_top_values, chunk_top_indices = torch.topk(chunk_logits, k=k, dim=-1)
         chunk_top_log_probs = chunk_top_values - chunk_lse.unsqueeze(-1)
