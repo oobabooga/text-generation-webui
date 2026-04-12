@@ -558,6 +558,8 @@ class Exllamav3Model:
 
     def encode(self, string, **kwargs):
         add_bos = kwargs.pop('add_bos', True)
+        if add_bos and self.tokenizer.bos_token and string.startswith(self.tokenizer.bos_token):
+            add_bos = False
         return self.tokenizer.encode(string, add_bos=add_bos, **kwargs)
 
     def decode(self, ids, **kwargs):
