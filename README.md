@@ -11,7 +11,7 @@
 </div>
 <hr>
 
-# Text Generation Web UI
+# TextGen
 
 A Gradio web UI for running Large Language Models locally. 100% private and offline. Supports text generation, vision, tool-calling, training, image generation, and more.
 
