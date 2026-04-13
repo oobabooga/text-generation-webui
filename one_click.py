@@ -324,7 +324,7 @@ def update_requirements(initial_installation=False, pull=True):
     # Create .git directory if missing
     if not os.path.exists(os.path.join(script_dir, ".git")):
         run_cmd(
-            "git init -b main && git remote add origin https://github.com/oobabooga/text-generation-webui && "
+            "git init -b main && git remote add origin https://github.com/oobabooga/textgen && "
             "git fetch && git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main && "
             "git reset --hard origin/main && git branch --set-upstream-to=origin/main",
             environment=True,
@@ -337,7 +337,7 @@ def update_requirements(initial_installation=False, pull=True):
             "Your current installation uses Python {}.{}, which is outdated.\n"
             "Python {} is now required. A clean installation is needed.\n\n"
             "INSTRUCTIONS:\n"
-            "1. Delete the 'installer_files' folder in your text-generation-webui directory.\n"
+            "1. Delete the 'installer_files' folder in your textgen directory.\n"
             "2. Run the start script again (e.g., start_windows.bat).\n\n"
             "This will create a fresh environment with the latest software.".format(*sys.version_info[:2], PYTHON_VERSION)
         )
@@ -350,7 +350,7 @@ def update_requirements(initial_installation=False, pull=True):
             "Your current installation uses CUDA 12.4, which has been removed.\n"
             "To update to the new default (CUDA 12.8), a clean installation is required.\n\n"
             "INSTRUCTIONS:\n"
-            "1. Delete the 'installer_files' folder in your text-generation-webui directory.\n"
+            "1. Delete the 'installer_files' folder in your textgen directory.\n"
             "2. Run the start script again (e.g., start_windows.bat).\n\n"
             "This will create a fresh environment with the latest software."
         )

@@ -9,9 +9,9 @@ WORKDIR /app
 # This is needed to avoid an error about "Failed to build mpi4py" in the next command
 ENV LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
 
-# Install text-generation-webui
-RUN git clone https://github.com/oobabooga/text-generation-webui
-WORKDIR /app/text-generation-webui
+# Install textgen
+RUN git clone https://github.com/oobabooga/textgen
+WORKDIR /app/textgen
 RUN pip install --break-system-packages -r requirements/full/requirements.txt
 
 # Install TensorRT-LLM

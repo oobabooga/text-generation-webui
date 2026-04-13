@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version tag of text-generation-webui to build: v3.0'
+        description: 'Version tag of textgen to build: v3.0'
         default: 'v3.0'
         required: true
         type: string
@@ -21,7 +21,7 @@ on:
   workflow_call:
     inputs:
       version:
-        description: 'Version tag of text-generation-webui to build: v3.0'
+        description: 'Version tag of textgen to build: v3.0'
         default: 'v3.0'
         required: true
         type: string
@@ -88,7 +88,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          repository: 'oobabooga/text-generation-webui'
+          repository: 'oobabooga/textgen'
           ref: ${{ inputs.version }}
           submodules: 'recursive'
 
@@ -102,8 +102,8 @@ jobs:
             VERSION_CLEAN="${{ inputs.version }}"
             VERSION_CLEAN="${VERSION_CLEAN#v}"
             cd ..
-            cp -r text-generation-webui "text-generation-webui-ik-${VERSION_CLEAN}"
-            cd "text-generation-webui-ik-${VERSION_CLEAN}"
+            cp -r textgen "textgen-ik-${VERSION_CLEAN}"
+            cd "textgen-ik-${VERSION_CLEAN}"
 
             # Remove extensions that need additional requirements
             allowed=("character_bias" "gallery" "sd_api_pictures")
@@ -133,10 +133,10 @@ jobs:
             echo "Downloading Python for $PLATFORM..."
             curl -L -o python-build.tar.gz "$PYTHON_URL"
             tar -xzf python-build.tar.gz
-            mv python "text-generation-webui-ik-${VERSION_CLEAN}/portable_env"
+            mv python "textgen-ik-${VERSION_CLEAN}/portable_env"
 
             # 3. Prepare requirements file based on CUDA version
-            cd "text-generation-webui-ik-${VERSION_CLEAN}"
+            cd "textgen-ik-${VERSION_CLEAN}"
             if [[ "$CUDA_VERSION" == "13.1" ]]; then
                 REQ_FILE="requirements/portable/requirements_ik_cuda131.txt"
             else
@@ -158,11 +158,11 @@ jobs:
             if [[ "$RUNNER_OS" == "Windows" ]]; then
                 ARCHIVE_NAME="textgen-portable-ik-${VERSION_CLEAN}-${PLATFORM}-cuda${CUDA_VERSION}.zip"
                 echo "Creating archive: $ARCHIVE_NAME"
-                powershell -Command "Compress-Archive -Path text-generation-webui-ik-${VERSION_CLEAN} -DestinationPath $ARCHIVE_NAME"
+                powershell -Command "Compress-Archive -Path textgen-ik-${VERSION_CLEAN} -DestinationPath $ARCHIVE_NAME"
             else
                 ARCHIVE_NAME="textgen-portable-ik-${VERSION_CLEAN}-${PLATFORM}-cuda${CUDA_VERSION}.tar.gz"
                 echo "Creating archive: $ARCHIVE_NAME"
-                tar czf "$ARCHIVE_NAME" "text-generation-webui-ik-${VERSION_CLEAN}"
+                tar czf "$ARCHIVE_NAME" "textgen-ik-${VERSION_CLEAN}"
             fi
 
       - name: Upload files to a GitHub release

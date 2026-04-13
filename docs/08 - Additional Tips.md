@@ -1,6 +1,6 @@
 ## Audio notification
 
-If your computer takes a long time to generate each response for the model that you are using, you can enable an audio notification for when the response is completed. This feature was kindly contributed by HappyWorldGames in [#1277](https://github.com/oobabooga/text-generation-webui/pull/1277).
+If your computer takes a long time to generate each response for the model that you are using, you can enable an audio notification for when the response is completed. This feature was kindly contributed by HappyWorldGames in [#1277](https://github.com/oobabooga/textgen/pull/1277).
 
 ### Installation
 

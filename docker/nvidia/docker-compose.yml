@@ -1,6 +1,6 @@
 version: "3.3"
 services:
-  text-generation-webui:
+  textgen:
     build:
       context: .
       args:
@@ -17,7 +17,7 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - ./user_data:/home/app/text-generation-webui/user_data
+      - ./user_data:/home/app/textgen/user_data
     deploy:
       resources:
         reservations:
