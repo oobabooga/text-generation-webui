@@ -1518,6 +1518,10 @@ audio {
 .thinking-icon {
     margin-right: 8px;
     color: rgb(0 0 0 / 50%);
+
+    /* Prevents the SVG from shrinking
+     * when tool call arguments are long */
+    flex-shrink: 0;
 }
 
 .thinking-title {
