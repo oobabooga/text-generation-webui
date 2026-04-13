@@ -13,7 +13,7 @@
 
 # TextGen
 
-A Gradio web UI for running Large Language Models locally. 100% private and offline. Supports text generation, vision, tool-calling, training, and image generation.
+**The original local LLM interface.** Text, vision, tool-calling, training, image generation. UI + API, 100% offline and private.
 
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/INSTRUCT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/CHAT-3.5.png) |
 |:---:|:---:|
