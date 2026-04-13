@@ -470,7 +470,7 @@ def _parse_gemma4_tool_calls(answer: str, tool_names: list[str]):
             if idx % 2 == 0:
                 parts[idx] = re.sub(r'(^|[{,\[])\s*(\w+)\s*:', r'\1"\2":', parts[idx])
             else:
-                parts[idx] = parts[idx].replace("\n", "\\n").replace('"', '\\"').replace("\\\\", "\\")
+                parts[idx] = json.dumps(parts[idx])[1:-1] 
         json_str = '"'.join(parts)
 
         try:
