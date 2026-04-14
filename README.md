@@ -15,13 +15,11 @@
 
 **The original local LLM interface.** Text, vision, tool-calling, training, image generation. UI + API, 100% offline and private.
 
+Check out my GGUF quantization quality benchmarks on [LocalBench](https://localbench.substack.com). 360+ quants tested across unsloth, bartowski, and other uploaders.
+
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/INSTRUCT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/CHAT-3.5.png) |
 |:---:|:---:|
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/DEFAULT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/PARAMETERS-3.5.png) |
-
-## 🔥 News
-My GGUF quantization benchmarks on [LocalBench](https://localbench.substack.com), where I compare quants from uploaders like unsloth, bartowski, and lmstudio-community:
-- **2026-04-07**: [Gemma 4 31B results](https://localbench.substack.com/p/gemma-4-31b-gguf-kl-divergence)
 
 ## Features
 
