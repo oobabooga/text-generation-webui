@@ -535,11 +535,14 @@ class Exllamav3Model:
         import torch
         input_ids_tensor = input_ids if isinstance(input_ids, torch.Tensor) else torch.tensor(input_ids, dtype=torch.long)
         input_ids_tensor = input_ids_tensor.view(1, -1).cpu()
-        with torch.no_grad():
-            return self.model.forward(
+        with torch.inference_mode():
+            output = self.model.forward(
                 input_ids=input_ids_tensor,
                 params={"attn_mode": "flash_attn_nc"}
             ).cpu().float()
+            # Mask padding slots beyond the real vocab so they can't appear in top-k
+            output[..., self.model.config.vocab_size:] = float("-inf")
+            return output
 
     def get_logits(self, token_ids, **kwargs):
         """
@@ -555,6 +558,8 @@ class Exllamav3Model:
 
     def encode(self, string, **kwargs):
         add_bos = kwargs.pop('add_bos', True)
+        if add_bos and self.tokenizer.bos_token and string.startswith(self.tokenizer.bos_token):
+            add_bos = False
         return self.tokenizer.encode(string, add_bos=add_bos, **kwargs)
 
     def decode(self, ids, **kwargs):

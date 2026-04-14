@@ -18,7 +18,7 @@ port = shared.args.listen_port if shared.args.listen_port else '7860'
 options = {
     'addr': f"{host}:{port}",
     'authtoken_from_env': True,
-    'session_metadata': 'text-generation-webui',
+    'session_metadata': 'textgen',
 }
 
 

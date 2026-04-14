@@ -1,6 +1,6 @@
 version: "3.3"
 services:
-  text-generation-webui:
+  textgen:
     build:
       context: .
       args:
@@ -25,4 +25,4 @@ services:
     security_opt:
       - seccomp=unconfined
     volumes:
-      - ./user_data:/home/app/text-generation-webui/user_data
+      - ./user_data:/home/app/textgen/user_data

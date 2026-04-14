@@ -92,7 +92,7 @@ If the **Autoload the model** checkbox is selected, the model will be loaded as 
 
 ## LoRA dropdown
 
-Used to apply LoRAs to the model. Note that LoRA support is not implemented for all loaders. Check the [What Works](https://github.com/oobabooga/text-generation-webui/wiki/What-Works) page for details.
+Used to apply LoRAs to the model. Note that LoRA support is not implemented for all loaders. Check the [What Works](https://github.com/oobabooga/textgen/wiki/What-Works) page for details.
 
 ## Download model or LoRA
 

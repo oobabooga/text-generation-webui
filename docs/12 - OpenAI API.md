@@ -19,7 +19,7 @@ Add `--api` to your command-line flags.
 
 ### Examples
 
-For the documentation with all the endpoints, parameters and their types, consult `http://127.0.0.1:5000/docs` or the [typing.py](https://github.com/oobabooga/text-generation-webui/blob/main/modules/api/typing.py) file.
+For the documentation with all the endpoints, parameters and their types, consult `http://127.0.0.1:5000/docs` or the [typing.py](https://github.com/oobabooga/textgen/blob/main/modules/api/typing.py) file.
 
 The official examples in the [OpenAI documentation](https://platform.openai.com/docs/api-reference) should also work, and the same parameters apply (although the API here has more optional parameters).
 

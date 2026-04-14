@@ -10,10 +10,10 @@ This feature allows you to generate images using `diffusers` models like [Tongyi
 1. Clone the repository with
 
 ```
-git clone https://github.com/oobabooga/text-generation-webui
+git clone https://github.com/oobabooga/textgen
 ```
 
-or download it from [here](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) and unzip it.
+or download it from [here](https://github.com/oobabooga/textgen/archive/refs/heads/main.zip) and unzip it.
 
 2. Use the one-click installer.
 
@@ -21,7 +21,7 @@ or download it from [here](https://github.com/oobabooga/text-generation-webui/ar
 - Linux: Run `./start_linux.sh`
 - macOS: Run `./start_macos.sh`
 
-Note: Image generation does not work with the portable builds in `.zip` format in the [Releases page](https://github.com/oobabooga/text-generation-webui/releases). You need the "full" version of the web UI.
+Note: Image generation does not work with the portable builds in `.zip` format in the [Releases page](https://github.com/oobabooga/textgen/releases). You need the "full" version of the web UI.
 
 ## Downloading a model
 
@@ -64,7 +64,7 @@ To use this feature, you need to load an LLM in the main "Model" page on the lef
 
 If you have no idea what to use, do this to get started:
 
-1. Download [Qwen3-4B-Q3_K_M.gguf](https://huggingface.co/unsloth/Qwen3-4B-GGUF/resolve/main/Qwen3-4B-Q3_K_M.gguf) to your `text-generation-webui/user_data/models` folder.
+1. Download [Qwen3-4B-Q3_K_M.gguf](https://huggingface.co/unsloth/Qwen3-4B-GGUF/resolve/main/Qwen3-4B-Q3_K_M.gguf) to your `textgen/user_data/models` folder.
 2. Select the model in the dropdown menu in the "Model" page.
 3. Click Load.
 

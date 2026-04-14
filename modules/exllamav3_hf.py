@@ -98,6 +98,22 @@ class Exllamav3HF(PreTrainedModel, GenerationMixin):
     def _validate_model_kwargs(self, model_kwargs: Dict[str, Any]):
         pass
 
+    def get_prompt_logits(self, input_ids):
+        """Return logits for all positions via a single no-cache forward pass.
+
+        Used by prompt logprobs computation. Returns (1, seq_len, vocab) on CPU in float32.
+        """
+        input_ids_tensor = input_ids if isinstance(input_ids, torch.Tensor) else torch.tensor(input_ids, dtype=torch.long)
+        input_ids_tensor = input_ids_tensor.view(1, -1).cpu()
+        with torch.inference_mode():
+            output = self.ex_model.forward(
+                input_ids=input_ids_tensor,
+                params={"attn_mode": "flash_attn_nc"}
+            ).cpu().float()
+            # Mask padding slots beyond the real vocab so they can't appear in top-k
+            output[..., self.ex_model.config.vocab_size:] = float("-inf")
+            return output
+
     def prepare_inputs_for_generation(self, input_ids, **kwargs):
         return {'input_ids': input_ids, **kwargs}
 

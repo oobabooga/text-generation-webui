@@ -133,6 +133,14 @@ def get_model_metadata(model):
         with open(path, 'r', encoding='utf-8') as f:
             metadata = json.loads(f.read())
 
+        for k in ['eos_token', 'bos_token']:
+            if k in metadata:
+                value = metadata[k]
+                if isinstance(value, dict):
+                    value = value['content']
+
+                setattr(shared, k, value)
+
         # Only read from metadata if we haven't already loaded from .jinja or .json
         if template is None and 'chat_template' in metadata:
             template = metadata['chat_template']
@@ -141,17 +149,6 @@ def get_model_metadata(model):
 
         # 4. If a template was found from any source, process it
         if template:
-            shared.bos_token = '<s>'
-            shared.eos_token = '</s>'
-
-            for k in ['eos_token', 'bos_token']:
-                if k in metadata:
-                    value = metadata[k]
-                    if isinstance(value, dict):
-                        value = value['content']
-
-                    setattr(shared, k, value)
-
             template = re.sub(r"\{\{-?\s*raise_exception\(.*?\)\s*-?\}\}", "", template, flags=re.DOTALL)
             template = re.sub(r'raise_exception\([^)]*\)', "''", template)
             model_settings['instruction_template'] = 'Custom (obtained from model metadata)'

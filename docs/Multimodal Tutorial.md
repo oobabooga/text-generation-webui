@@ -14,7 +14,7 @@ As an example, download
 
 https://huggingface.co/unsloth/gemma-3-4b-it-GGUF/resolve/main/gemma-3-4b-it-Q4_K_S.gguf?download=true
 
-to your `text-generation-webui/user_data/models` folder.
+to your `textgen/user_data/models` folder.
 
 ### 3. Download the associated mmproj file to `user_data/mmproj`
 
@@ -22,7 +22,7 @@ Then download
 
 https://huggingface.co/unsloth/gemma-3-4b-it-GGUF/resolve/main/mmproj-F16.gguf?download=true
 
-to your `text-generation-webui/user_data/mmproj` folder. Name it `mmproj-gemma-3-4b-it-F16.gguf` to give it a recognizable name.
+to your `textgen/user_data/mmproj` folder. Name it `mmproj-gemma-3-4b-it-F16.gguf` to give it a recognizable name.
 
 ### 4. Load the model
 
@@ -63,4 +63,4 @@ Examples of models that you can use:
 
 In the page below you can find some ready-to-use examples:
 
-[Multimodal/vision (llama.cpp and ExLlamaV3)](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#multimodalvision-llamacpp-and-exllamav3)
+[Multimodal/vision (llama.cpp and ExLlamaV3)](https://github.com/oobabooga/textgen/wiki/12-%E2%80%90-OpenAI-API#multimodalvision-llamacpp-and-exllamav3)
