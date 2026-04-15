@@ -15,7 +15,7 @@
 
 **The original local LLM interface.** Text, vision, tool-calling, training, image generation. UI + API, 100% offline and private.
 
-Check out my GGUF quantization quality benchmarks on [LocalBench](https://localbench.substack.com). 360+ quants tested across unsloth, bartowski, and other uploaders.
+For recommended GGUF quants, check out my new project: [LocalBench](https://localbench.substack.com).
 
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/INSTRUCT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/CHAT-3.5.png) |
 |:---:|:---:|
