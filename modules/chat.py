@@ -1142,8 +1142,8 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             output['internal'][-1] = [text, reply.lstrip(' ')]
             output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
 
-        # Keep version metadata in sync during streaming (for regeneration)
-        if regenerate and not state.get('_tool_turn'):
+        # Keep version metadata in sync during streaming (for regeneration/continue)
+        if (regenerate or _continue) and not state.get('_tool_turn'):
             row_idx = len(output['internal']) - 1
             key = f"assistant_{row_idx}"
             current_idx = output['metadata'][key]['current_version_index']
@@ -1181,7 +1181,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
 
     # Final sync for version metadata (in case streaming was disabled)
-    if regenerate and not state.get('_tool_turn'):
+    if (regenerate or _continue) and not state.get('_tool_turn'):
         row_idx = len(output['internal']) - 1
         key = f"assistant_{row_idx}"
         current_idx = output['metadata'][key]['current_version_index']
