@@ -675,6 +675,7 @@ def _patch_cmd_for_ik(cmd):
       --fit-target         → --fit-margin
       --cache-reuse        → (removed, unsupported)
       --swa-full           → (removed, unsupported)
+      --split-mode row     → --split-mode graph
     """
     # Add Hadamard KV cache rotation when using quantized cache types.
     # This significantly improves quantized cache quality (especially q4_0)
@@ -701,6 +702,9 @@ def _patch_cmd_for_ik(cmd):
         elif arg == "--fit-target":
             patched.append("--fit-margin")
         elif arg == "--cache-reuse":
+            i += 1  # skip the value
+        elif arg == "--split-mode" and i + 1 < len(cmd) and cmd[i + 1] == "row":
+            patched += ["--split-mode", "graph"]
             i += 1  # skip the value
         elif arg == "--swa-full":
             pass  # bare flag, just drop it
