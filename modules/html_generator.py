@@ -349,20 +349,6 @@ def convert_to_markdown(string, message_id=None):
     tool_call_pattern = re.compile(r'<tool_call>(.*?)\n(.*?)\n</tool_call>', re.DOTALL)
     tool_calls = list(tool_call_pattern.finditer(string))
 
-    if not tool_calls:
-        # No tool calls — use original single-pass extraction
-        thinking_content, remaining_content = extract_thinking_block(string)
-        blocks = []
-        thinking_html = build_thinking_block(thinking_content, message_id, bool(remaining_content))
-        if thinking_html:
-            blocks.append(thinking_html)
-
-        main_html = build_main_content_block(remaining_content)
-        if main_html:
-            blocks.append(main_html)
-
-        return ''.join(blocks)
-
     # Split string into text segments around tool_call blocks and
     # run extract_thinking_block on each segment for full format support.
     html_parts = []
