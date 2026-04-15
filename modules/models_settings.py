@@ -42,6 +42,10 @@ def get_model_metadata(model):
             hf_quant_method=quant_method
         )
 
+    # Default bos/eos tokens (may be overridden by GGUF metadata or tokenizer_config.json)
+    shared.bos_token = '<s>'
+    shared.eos_token = '</s>'
+
     # GGUF metadata
     if model_settings['loader'] == 'llama.cpp':
         path = model_path
@@ -129,8 +133,6 @@ def get_model_metadata(model):
                     template = json_data['chat_template']
 
     # 3. Fall back to tokenizer_config.json metadata
-    shared.bos_token = '<s>'
-    shared.eos_token = '</s>'
     if path.exists():
         with open(path, 'r', encoding='utf-8') as f:
             metadata = json.loads(f.read())
