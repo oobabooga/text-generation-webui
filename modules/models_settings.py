@@ -129,6 +129,8 @@ def get_model_metadata(model):
                     template = json_data['chat_template']
 
     # 3. Fall back to tokenizer_config.json metadata
+    shared.bos_token = '<s>'
+    shared.eos_token = '</s>'
     if path.exists():
         with open(path, 'r', encoding='utf-8') as f:
             metadata = json.loads(f.read())
