@@ -214,8 +214,10 @@ def _convert_to_tool_responses(messages):
     """Convert role:'tool' messages to tool_responses format.
 
     Templates like Gemma 4 expect tool results as a ``tool_responses``
-    attribute on a message rather than separate ``role: 'tool'`` messages.
-    This function groups consecutive tool messages and rewrites them.
+    attribute on the preceding assistant message rather than separate
+    ``role: 'tool'`` messages.  This function groups consecutive tool
+    messages and attaches them to the assistant message that issued the
+    tool calls.
     """
     result = []
     tc_id_to_name = {}
@@ -250,10 +252,8 @@ def _convert_to_tool_responses(messages):
                 })
                 i += 1
 
-            result.append({
-                'role': 'tool',
-                'tool_responses': tool_responses,
-            })
+            if result and result[-1].get('role') == 'assistant':
+                result[-1]['tool_responses'] = tool_responses
         else:
             result.append(msg)
             i += 1
