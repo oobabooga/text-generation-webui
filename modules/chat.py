@@ -214,8 +214,10 @@ def _convert_to_tool_responses(messages):
     """Convert role:'tool' messages to tool_responses format.
 
     Templates like Gemma 4 expect tool results as a ``tool_responses``
-    attribute on a message rather than separate ``role: 'tool'`` messages.
-    This function groups consecutive tool messages and rewrites them.
+    attribute on the preceding assistant message rather than separate
+    ``role: 'tool'`` messages.  This function groups consecutive tool
+    messages and attaches them to the assistant message that issued the
+    tool calls.
     """
     result = []
     tc_id_to_name = {}
@@ -250,10 +252,8 @@ def _convert_to_tool_responses(messages):
                 })
                 i += 1
 
-            result.append({
-                'role': 'tool',
-                'tool_responses': tool_responses,
-            })
+            if result and result[-1].get('role') == 'assistant':
+                result[-1]['tool_responses'] = tool_responses
         else:
             result.append(msg)
             i += 1
@@ -1055,6 +1055,14 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
     row_idx = len(output['internal']) - 1
 
+    # Check if the current row has version metadata to sync during streaming
+    _version_meta = output['metadata'].get(f"assistant_{row_idx}")
+    _sync_versions = (
+        _version_meta is not None
+        and 'current_version_index' in _version_meta
+        and not state.get('_tool_turn')
+    )
+
     # Collect image attachments for multimodal generation from the entire history
     all_image_attachments = []
     if 'metadata' in output:
@@ -1142,12 +1150,9 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             output['internal'][-1] = [text, reply.lstrip(' ')]
             output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
 
-        # Keep version metadata in sync during streaming (for regeneration/continue)
-        if (regenerate or _continue) and not state.get('_tool_turn'):
-            row_idx = len(output['internal']) - 1
-            key = f"assistant_{row_idx}"
-            current_idx = output['metadata'][key]['current_version_index']
-            output['metadata'][key]['versions'][current_idx].update({
+        # Keep version metadata in sync during streaming
+        if _sync_versions:
+            _version_meta['versions'][_version_meta['current_version_index']].update({
                 'content': output['internal'][row_idx][1],
                 'visible_content': output['visible'][row_idx][1]
             })
@@ -1181,11 +1186,8 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
 
     # Final sync for version metadata (in case streaming was disabled)
-    if (regenerate or _continue) and not state.get('_tool_turn'):
-        row_idx = len(output['internal']) - 1
-        key = f"assistant_{row_idx}"
-        current_idx = output['metadata'][key]['current_version_index']
-        output['metadata'][key]['versions'][current_idx].update({
+    if _sync_versions:
+        _version_meta['versions'][_version_meta['current_version_index']].update({
             'content': output['internal'][row_idx][1],
             'visible_content': output['visible'][row_idx][1]
         })
