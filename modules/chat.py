@@ -1204,6 +1204,11 @@ def impersonate_wrapper(textbox, state):
     text = textbox['text']
     static_output = chat_html_wrapper(state['history'], state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
+    model_is_loaded, error_message = utils.check_model_loaded()
+    if not model_is_loaded:
+        import gradio as gr
+        raise gr.Error(error_message)
+
     prompt = generate_chat_prompt('', state, impersonate=True)
     stopping_strings = get_stopping_strings(state)
 
@@ -1251,6 +1256,11 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
     if not character_is_loaded(state):
         return
+
+    model_is_loaded, error_message = utils.check_model_loaded()
+    if not model_is_loaded:
+        import gradio as gr
+        raise gr.Error(error_message)
 
     if state['start_with'] != '' and not _continue:
         if regenerate:

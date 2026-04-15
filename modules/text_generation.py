@@ -216,6 +216,11 @@ def generate_reply_wrapper(question, state, stopping_strings=None):
     """
     Returns formatted outputs for the UI
     """
+    model_is_loaded, error_message = check_model_loaded()
+    if not model_is_loaded:
+        import gradio as gr
+        raise gr.Error(error_message)
+
     reply = question if not shared.is_seq2seq else ''
     yield formatted_outputs(reply, shared.model_name)
 
