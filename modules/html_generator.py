@@ -176,14 +176,6 @@ def build_thinking_block(thinking_content, message_id, has_remaining_content, th
     '''
 
 
-def build_main_content_block(content):
-    """Build HTML for the main content block."""
-    if not content:
-        return ""
-
-    return process_markdown_content(content)
-
-
 def process_markdown_content(string):
     """
     Process a string through the markdown conversion pipeline.
