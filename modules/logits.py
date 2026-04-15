@@ -36,15 +36,22 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
         return error_message, previous
 
     # llama.cpp case
+    def _escaped(token):
+        chars = []
+        for a in token:
+            # C0 and DEL and C1
+            if ord(a) <= 0x1F or 0x7F <= ord(a) <= 0x9F:
+                chars.append(repr(a)[1:-1])
+            else:
+                chars.append(a)
+        return ''.join(chars)
     if shared.model.__class__.__name__ == 'LlamaServer':
         logprobs = shared.model.get_logits(prompt, state, n_probs=top_logits, use_samplers=use_samplers)
 
         if return_dict:
             output = {}
             for entry in logprobs:
-                token = repr(entry['token'])
-                if len(token) > 2 and token.startswith("'") and token.endswith("'"):
-                    token = token[1:-1]
+                token = _escaped(entry['token'])
 
                 prob = entry['prob'] if use_samplers else np.exp(entry['logprob'])
                 output[token] = prob
@@ -52,12 +59,11 @@ def _get_next_logits(prompt, state, use_samplers, previous, top_logits=25, retur
         else:
             output = ''
             for entry in logprobs:
-                token = repr(entry['token'])
-                if len(token) > 2 and token.startswith("'") and token.endswith("'"):
-                    token = token[1:-1]
+                token = _escaped(entry['token'])
+                token_id = entry['id']
 
                 prob = entry['prob'] if use_samplers else np.exp(entry['logprob'])
-                output += f"{prob:.5f}  -  {token}\n"
+                output += f"{prob:.5f}  -  [{token}] ({token_id})\n"
             return output, previous
 
     # All other model types
