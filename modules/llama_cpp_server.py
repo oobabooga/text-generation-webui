@@ -296,19 +296,26 @@ class LlamaServer:
             pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(printable_payload)
             print()
 
-        for retry in range(5):
-            response = self.session.post(url, json=payload)
-            result = response.json()
+        def _try_fetch_logits():
+            for retry in range(5):
+                response = self.session.post(url, json=payload)
+                result = response.json()
 
-            if "completion_probabilities" in result:
-                if use_samplers:
-                    return result["completion_probabilities"][0]["top_probs"]
-                else:
-                    return result["completion_probabilities"][0]["top_logprobs"]
+                if "completion_probabilities" in result:
+                    if use_samplers:
+                        return result["completion_probabilities"][0]["top_probs"]
+                    else:
+                        return result["completion_probabilities"][0]["top_logprobs"]
 
-            time.sleep(0.05)
-        else:
-            raise Exception(f"Unexpected response format: 'completion_probabilities' not found in {result}")
+                time.sleep(0.05)
+            else:
+                raise Exception(f"Unexpected response format: 'completion_probabilities' not found in {result}")
+
+        result = _try_fetch_logits()
+        for entry in result:
+            if not entry.get('token'):
+                entry['token'] = self.decode([entry['id']])
+        return result
 
     def get_prompt_logprob_entries(self, token_ids, n_probs=5, prompt=""):
         """Get logprob entries for prompt tokens via a single n_predict=0 request.
@@ -668,6 +675,7 @@ def _patch_cmd_for_ik(cmd):
       --fit-target         → --fit-margin
       --cache-reuse        → (removed, unsupported)
       --swa-full           → (removed, unsupported)
+      --split-mode row     → --split-mode graph
     """
     # Add Hadamard KV cache rotation when using quantized cache types.
     # This significantly improves quantized cache quality (especially q4_0)
@@ -694,6 +702,9 @@ def _patch_cmd_for_ik(cmd):
         elif arg == "--fit-target":
             patched.append("--fit-margin")
         elif arg == "--cache-reuse":
+            i += 1  # skip the value
+        elif arg == "--split-mode" and i + 1 < len(cmd) and cmd[i + 1] == "row":
+            patched += ["--split-mode", "graph"]
             i += 1  # skip the value
         elif arg == "--swa-full":
             pass  # bare flag, just drop it

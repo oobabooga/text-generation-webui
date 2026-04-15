@@ -270,16 +270,23 @@ function removeLastClick() {
   document.getElementById("Remove-last").click();
 }
 
+let _scrollPending = false;
+
 function autoScrollToBottom() {
-  if (!window.isScrolled) {
-    const chatParent = document.getElementById("chat")?.parentNode?.parentNode?.parentNode;
-    if (chatParent) {
-      const maxScroll = chatParent.scrollHeight - chatParent.clientHeight;
-      if (maxScroll > 0 && chatParent.scrollTop < maxScroll - 1) {
-        chatParent.scrollTop = maxScroll;
+  if (_scrollPending) return;
+  _scrollPending = true;
+  queueMicrotask(() => {
+    _scrollPending = false;
+    if (!window.isScrolled) {
+      const chatParent = document.getElementById("chat")?.parentNode?.parentNode?.parentNode;
+      if (chatParent) {
+        const maxScroll = chatParent.scrollHeight - chatParent.clientHeight;
+        if (maxScroll > 0 && chatParent.scrollTop < maxScroll - 1) {
+          chatParent.scrollTop = maxScroll;
+        }
       }
     }
-  }
+  });
 }
 
 function updateInstructPadding() {

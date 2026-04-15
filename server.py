@@ -36,7 +36,7 @@ def signal_handler(sig, frame):
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
-    logger.info("Received Ctrl+C. Shutting down Text Generation Web UI gracefully.")
+    logger.info("Received Ctrl+C. Shutting down TextGen gracefully.")
 
     # Explicitly stop LlamaServer to avoid __del__ cleanup issues during shutdown
     if shared.model and shared.model.__class__.__name__ == 'LlamaServer':
@@ -85,7 +85,7 @@ def create_interface():
         'GRADIO_TEMP_DIR': str(gradio_temp_path)
     })
 
-    title = 'Text Generation Web UI'
+    title = 'TextGen'
 
     # Password authentication
     auth = []
@@ -249,7 +249,7 @@ def create_interface():
 
 if __name__ == "__main__":
 
-    logger.info("Starting Text Generation Web UI")
+    logger.info("Starting TextGen")
     do_cmd_flags_warnings()
 
     # Load custom settings

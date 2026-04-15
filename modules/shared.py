@@ -42,7 +42,7 @@ persistent_interface_state = {}
 need_restart = False
 
 # Parser copied from https://github.com/vladmandic/automatic
-parser = argparse.ArgumentParser(description="Text Generation Web UI", conflict_handler='resolve', add_help=True, formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=55, indent_increment=2, width=200))
+parser = argparse.ArgumentParser(description="TextGen", conflict_handler='resolve', add_help=True, formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=55, indent_increment=2, width=200))
 
 # Basic settings
 group = parser.add_argument_group('Basic settings')

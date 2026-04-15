@@ -13,33 +13,30 @@
 
 # TextGen
 
-A Gradio web UI for running Large Language Models locally. 100% private and offline. Supports text generation, vision, tool-calling, training, image generation, and more.
+**The original local LLM interface.** Text, vision, tool-calling, training, image generation. UI + API, 100% offline and private.
+
+For recommended GGUF quants, check out my new project: [LocalBench](https://localbench.substack.com).
 
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/INSTRUCT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/CHAT-3.5.png) |
 |:---:|:---:|
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/DEFAULT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/PARAMETERS-3.5.png) |
 
-## 🔥 News
-My GGUF quantization benchmarks on [LocalBench](https://localbench.substack.com), where I compare quants from uploaders like unsloth, bartowski, and lmstudio-community:
-- **2026-04-07**: [Gemma 4 31B results](https://localbench.substack.com/p/gemma-4-31b-gguf-kl-divergence)
-
 ## Features
 
-- **Easy setup**: [Portable builds](https://github.com/oobabooga/text-generation-webui/releases) (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or a one-click installer for the full feature set.
+- **Easy setup**: [Portable builds](https://github.com/oobabooga/textgen/releases) (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or a one-click installer for the full feature set.
 - **Multiple backends**: [llama.cpp](https://github.com/ggerganov/llama.cpp), [ik_llama.cpp](https://github.com/ikawrakow/ik_llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM). Switch between backends and models without restarting.
-- **OpenAI/Anthropic-compatible API**: Chat, Completions, and Messages endpoints with tool-calling support. Use as a local drop-in replacement for the OpenAI/Anthropic APIs ([examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples)).
-- **Tool-calling**: Models can call custom functions during chat: web search, page fetching, math, and more. Each tool is a single `.py` file. MCP servers are also supported ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Tool-Calling-Tutorial)).
-- **Vision (multimodal)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Multimodal-Tutorial)).
+- **OpenAI/Anthropic-compatible API**: Chat, Completions, and Messages endpoints with tool-calling support. Use as a local drop-in replacement for the OpenAI/Anthropic APIs ([examples](https://github.com/oobabooga/textgen/wiki/12-%E2%80%90-OpenAI-API#examples)).
+- **Tool-calling**: Models can call custom functions during chat, including web search, page fetching, and math. Each tool is a single `.py` file. MCP servers are also supported ([tutorial](https://github.com/oobabooga/textgen/wiki/Tool-Calling-Tutorial)).
+- **Vision (multimodal)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/textgen/wiki/Multimodal-Tutorial)).
 - **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
-- **Training**: Fine-tune LoRAs on multi-turn chat or raw text datasets. Supports resuming interrupted runs ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/05-%E2%80%90-Training-Tab)).
-- **Image generation**: A dedicated tab for `diffusers` models like **Z-Image-Turbo**. Features 4-bit/8-bit quantization and a persistent gallery with metadata ([tutorial](https://github.com/oobabooga/text-generation-webui/wiki/Image-Generation-Tutorial)).
+- **Training**: Fine-tune LoRAs on multi-turn chat or raw text datasets. Supports resuming interrupted runs ([tutorial](https://github.com/oobabooga/textgen/wiki/05-%E2%80%90-Training-Tab)).
+- **Image generation**: A dedicated tab for `diffusers` models like **Z-Image-Turbo**. Features 4-bit/8-bit quantization and a persistent gallery with metadata ([tutorial](https://github.com/oobabooga/textgen/wiki/Image-Generation-Tutorial)).
 - 100% offline and private, with zero telemetry, external resources, or remote update requests.
 - `instruct` mode for instruction-following (like ChatGPT), and `chat-instruct`/`chat` modes for talking to custom characters. Prompts are automatically formatted with Jinja2 templates.
 - Edit messages, navigate between message versions, and branch conversations at any point.
 - Free-form text generation in the Notebook tab without being limited to chat turns.
-- Multiple sampling parameters and generation options for sophisticated text generation control.
 - Dark/light themes, syntax highlighting for code blocks, and LaTeX rendering for mathematical expressions.
-- Extension support, with numerous built-in and user-contributed extensions available. See the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
+- Extension support, with built-in and user-contributed extensions available. See the [wiki](https://github.com/oobabooga/textgen/wiki/07-%E2%80%90-Extensions) and [extensions directory](https://github.com/oobabooga/textgen-extensions) for details.
 
 ## How to install
 
@@ -47,19 +44,19 @@ My GGUF quantization benchmarks on [LocalBench](https://localbench.substack.com)
 
 No installation needed – just download, unzip and run. All dependencies included.
 
-Download from here: **https://github.com/oobabooga/text-generation-webui/releases**
+Download from here: **https://github.com/oobabooga/textgen/releases**
 
 - Builds are provided for Linux, Windows, and macOS, with options for CUDA, Vulkan, ROCm, and CPU-only.
 - Compatible with GGUF (llama.cpp) models.
 
 #### Option 2: Manual portable install with venv
 
-Very fast setup that should work on any Python 3.9+:
+Fast setup on any Python 3.9+:
 
 ```bash
 # Clone repository
-git clone https://github.com/oobabooga/text-generation-webui
-cd text-generation-webui
+git clone https://github.com/oobabooga/textgen
+cd textgen
 
 # Create virtual environment
 python -m venv venv
@@ -84,7 +81,7 @@ deactivate
 
 For users who need additional backends (ExLlamaV3, Transformers), training, image generation, or extensions (TTS, voice input, translation, etc). Requires ~10GB disk space and downloads PyTorch.
 
-1. Clone the repository, or [download its source code](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) and extract it.
+1. Clone the repository, or [download its source code](https://github.com/oobabooga/textgen/archive/refs/heads/main.zip) and extract it.
 2. Run the startup script for your OS: `start_windows.bat`, `start_linux.sh`, or `start_macos.sh`.
 3. When prompted, select your GPU vendor.
 4. After installation, open `http://127.0.0.1:7860` in your browser.
@@ -163,8 +160,8 @@ conda install -y -c "nvidia/label/cuda-12.8.1" cuda
 #### 3. Install the web UI
 
 ```
-git clone https://github.com/oobabooga/text-generation-webui
-cd text-generation-webui
+git clone https://github.com/oobabooga/textgen
+cd textgen
 pip install -r requirements/full/<requirements file according to table below>
 ```
 
@@ -182,7 +179,7 @@ Requirements file to use:
 
 ```
 conda activate textgen
-cd text-generation-webui
+cd textgen
 python server.py
 ```
 
@@ -217,7 +214,7 @@ mkdir -p user_data/logs user_data/cache
 docker compose up --build
 ```
 
-* You need to have Docker Compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/wiki/09-%E2%80%90-Docker) for instructions.
+* You need to have Docker Compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/textgen/wiki/09-%E2%80%90-Docker) for instructions.
 * For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui-docker).
 
 ### Updating the requirements
@@ -226,7 +223,7 @@ From time to time, the `requirements*.txt` change. To update, use these commands
 
 ```
 conda activate textgen
-cd text-generation-webui
+cd textgen
 pip install -r <requirements file that you have used> --upgrade
 ```
 </details>
@@ -256,7 +253,7 @@ usage: server.py [-h] [--user-data-dir USER_DATA_DIR] [--multi-user] [--model MO
                  [--do-sample | --no-do-sample] [--dynamic-temperature | --no-dynamic-temperature] [--temperature-last | --no-temperature-last] [--sampler-priority N] [--dry-sequence-breakers N]
                  [--enable-thinking | --no-enable-thinking] [--reasoning-effort N] [--chat-template-file CHAT_TEMPLATE_FILE]
 
-Text Generation Web UI
+TextGen
 
 options:
   -h, --help                                           show this help message and exit
@@ -438,7 +435,7 @@ To estimate how much memory a model will use, you can use the [GGUF Memory Calcu
 Models that consist of multiple files (like 16-bit Transformers models and EXL3 models) should be placed in a subfolder inside `user_data/models`:
 
 ```
-text-generation-webui
+textgen
 └── user_data
     └── models
         └── Qwen_Qwen3-8B
@@ -455,7 +452,7 @@ These formats require the one-click installer (not the portable build).
 
 ## Documentation
 
-https://github.com/oobabooga/text-generation-webui/wiki
+https://github.com/oobabooga/textgen/wiki
 
 ## Community
 

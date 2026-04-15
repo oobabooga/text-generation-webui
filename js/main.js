@@ -1004,6 +1004,7 @@ function addMiniDeletes() {
 
     confirmBtn.onclick = (e) => {
       e.stopPropagation();
+      label.querySelector("input").click();
       document.querySelector("#delete_chat-confirm").click();
       resetButtons();
     };

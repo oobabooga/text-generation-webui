@@ -9,14 +9,14 @@ Here you can restart the UI with new settings.
 
 ## Extensions & flags
 
-* **Available extensions**: shows a list of extensions available under `text-generation-webui/extensions` and `text-generation-webui/user_data/extensions`. Note that some of these extensions may require manually installing Python requirements through the command: `pip install -r extensions/extension_name/requirements.txt`.
+* **Available extensions**: shows a list of extensions available under `textgen/extensions` and `textgen/user_data/extensions`. Note that some of these extensions may require manually installing Python requirements through the command: `pip install -r extensions/extension_name/requirements.txt`.
 * **Boolean command-line flags**: shows command-line flags of bool (true/false) type.
 
 After selecting your desired flags and extensions, you can restart the UI by clicking on **Apply flags/extensions and restart**.
 
 ## Install or update an extension
 
-In this field, you can enter the GitHub URL for an extension and press enter to either install it (i.e. cloning it into `text-generation-webui/extensions`) or update it with `git pull` in case it is already cloned.
+In this field, you can enter the GitHub URL for an extension and press enter to either install it (i.e. cloning it into `textgen/extensions`) or update it with `git pull` in case it is already cloned.
 
 Note that some extensions may include additional Python requirements. In this case, to install those you have to run the command
 

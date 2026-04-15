@@ -463,10 +463,14 @@ def _parse_gemma4_tool_calls(answer: str, tool_names: list[str]):
 
         # Convert to JSON: split on <|"|> tokens so that key quoting
         # only applies outside string values (even-indexed parts),
+        # escape newlines and double quotes in arguments (odd-indexed parts),
         # then rejoin with real quotes.
         parts = content.split('<|"|>')
-        for idx in range(0, len(parts), 2):
-            parts[idx] = re.sub(r'(^|[{,\[])\s*(\w+)\s*:', r'\1"\2":', parts[idx])
+        for idx in range(len(parts)):
+            if idx % 2 == 0:
+                parts[idx] = re.sub(r'(^|[{,\[])\s*(\w+)\s*:', r'\1"\2":', parts[idx])
+            else:
+                parts[idx] = json.dumps(parts[idx])[1:-1]
         json_str = '"'.join(parts)
 
         try:

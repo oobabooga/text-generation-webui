@@ -8,7 +8,7 @@ Enhance your LLM with additional information from text, URLs, and files for more
 
 ## Installation and Activation
 
-1. Start the conda environment by running `cmd_windows.bat` or the equivalent for your system in the root directory of `text-generation-webui`.
+1. Start the conda environment by running `cmd_windows.bat` or the equivalent for your system in the root directory of `textgen`.
 2. Install the necessary packages:
    ```
    pip install -r extensions/superboogav2/requirements.txt
@@ -38,4 +38,4 @@ SuperboogaV2 utilizes MuPDF, pandas, python-docx, and python-pptx to extract tex
 
 SuperboogaV2 processes your data into context-aware chunks, applies cleaning techniques, and stores them as embeddings to minimize redundant computations. Relevance is determined using distance calculations and prioritization of recent information.
 
-For a detailed description and more information, refer to the comments in this pull request: [https://github.com/oobabooga/text-generation-webui/pull/3272](https://github.com/oobabooga/text-generation-webui/pull/3272)
+For a detailed description and more information, refer to the comments in this pull request: [https://github.com/oobabooga/textgen/pull/3272](https://github.com/oobabooga/textgen/pull/3272)

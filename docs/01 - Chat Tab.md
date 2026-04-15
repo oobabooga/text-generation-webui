@@ -146,14 +146,14 @@ Note that you can get creative: instead of writing something trivial like "Write
 
 And it works:
 
-![chat-instruct](https://github.com/oobabooga/text-generation-webui/assets/112222186/e38e3469-8263-4a10-b1a1-3c955026b8e7)
+![chat-instruct](https://github.com/oobabooga/textgen/assets/112222186/e38e3469-8263-4a10-b1a1-3c955026b8e7)
 
 ## Chat style
 
-This defines the visual style of the chat UI. Each option is a CSS file defined under `text-generation-webui/css/chat_style-name.css`, where "name" is how this style is called in the dropdown menu. You can add new styles by simply copying `chat_style-cai-chat.css` to `chat_style-myNewStyle.css` and editing the contents of this new file. If you end up with a style that you like, you are highly encouraged to submit it to the repository.
+This defines the visual style of the chat UI. Each option is a CSS file defined under `textgen/css/chat_style-name.css`, where "name" is how this style is called in the dropdown menu. You can add new styles by simply copying `chat_style-cai-chat.css` to `chat_style-myNewStyle.css` and editing the contents of this new file. If you end up with a style that you like, you are highly encouraged to submit it to the repository.
 
-The styles are only applied to chat and chat-instruct modes. Instruct mode has its separate style defined in `text-generation-webui/css/html_instruct_style.css`.
+The styles are only applied to chat and chat-instruct modes. Instruct mode has its separate style defined in `textgen/css/html_instruct_style.css`.
 
 ## Character gallery
 
-This menu is a built-in extension defined under `text-generation-webui/extensions/gallery`. It displays a gallery with your characters, and if you click on a character, it will be automatically selected in the Character tab.
+This menu is a built-in extension defined under `textgen/extensions/gallery`. It displays a gallery with your characters, and if you click on a character, it will be automatically selected in the Character tab.

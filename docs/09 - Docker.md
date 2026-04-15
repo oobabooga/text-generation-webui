@@ -27,7 +27,7 @@ There are four Docker variants available under `docker/`:
 To launch (using NVIDIA as an example):
 
 ```bash
-cd text-generation-webui/docker/nvidia
+cd textgen/docker/nvidia
 cp ../.env.example .env
 # Optionally edit .env to customize ports, TORCH_CUDA_ARCH_LIST, etc.
 docker compose up --build

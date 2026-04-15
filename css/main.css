@@ -415,7 +415,13 @@ audio {
     text-align: start;
     padding-left: 1rem;
     padding-right: 1rem;
-    contain: layout;
+    contain: layout paint;
+}
+
+.message,
+.user-message,
+.assistant-message {
+    contain: layout paint;
 }
 
 .chat .message .timestamp {
@@ -509,6 +515,10 @@ audio {
 
 .dark .message q {
     color: #f5b031;
+}
+
+.message q {
+    color: #3480be;
 }
 
 .message-body q::before, .message-body q::after {
@@ -1518,6 +1528,10 @@ audio {
 .thinking-icon {
     margin-right: 8px;
     color: rgb(0 0 0 / 50%);
+
+    /* Prevents the SVG from shrinking
+     * when tool call arguments are long */
+    flex-shrink: 0;
 }
 
 .thinking-title {
@@ -1819,14 +1833,9 @@ button:focus {
 }
 
 .chat-parent {
-    /* Optimize for scrolling performance */
     will-change: scroll-position;
-    contain: style paint;
-
-    /* Ensure GPU acceleration */
+    contain: style;
     transform: translateZ(0);
-
-    /* Prevent layout shifts */
     overflow-anchor: none;
 }
 
