@@ -976,6 +976,13 @@ audio {
     flex-shrink: 0;
     box-sizing: content-box;
     z-index: 10;
+    position: fixed;
+    top: 0;
+    background: var(--background-fill-primary);
+}
+
+#past-chats-row {
+    left: var(--header-width);
 }
 
 #past-chats-row:not(.negative-header) {
@@ -983,6 +990,7 @@ audio {
 }
 
 #chat-controls {
+    right: 0;
     padding: 1rem;
     padding-bottom: 0;
     overflow-y: scroll;
@@ -1253,16 +1261,6 @@ audio {
     right: 7px;
 }
 
-@media screen and (width <= 924px) {
-    #chat-controls.sidebar-shown {
-        position: fixed;
-        right: 0;
-    }
-
-    #past-chats-row.sidebar-shown {
-        position: fixed;
-    }
-}
 
 /* ----------------------------------------------
   Dark theme

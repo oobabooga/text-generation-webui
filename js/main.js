@@ -674,23 +674,21 @@ headerBar.appendChild(navigationToggle);
 const pastChatsToggle = document.getElementById("past-chats-toggle");
 const chatControlsToggle = document.getElementById("chat-controls-toggle");
 
+const SIDEBARS = [
+  { element: headerBar, toggle: navigationToggle, key: "sidebar-header-hidden" },
+  { element: pastChatsRow, toggle: pastChatsToggle, key: "sidebar-past-chats-hidden" },
+  { element: chatControlsRow, toggle: chatControlsToggle, key: "sidebar-chat-controls-hidden" },
+];
+window.SIDEBARS = SIDEBARS;
+
 function handleIndividualSidebarClose(event) {
   const target = event.target;
-
-  // Close navigation bar if click is outside and it is open
-  if (!headerBar.contains(target) && !headerBar.classList.contains("sidebar-hidden")) {
-    toggleSidebar(headerBar, navigationToggle);
-  }
-
-  // Close past chats row if click is outside and it is open
-  if (!pastChatsRow.contains(target) && !pastChatsRow.classList.contains("sidebar-hidden")) {
-    toggleSidebar(pastChatsRow, pastChatsToggle);
-  }
-
-  // Close chat controls row if click is outside and it is open
-  if (!chatControlsRow.contains(target) && !chatControlsRow.classList.contains("sidebar-hidden")) {
-    toggleSidebar(chatControlsRow, chatControlsToggle);
-  }
+  SIDEBARS.forEach(({ element, toggle, key }) => {
+    if (!element.contains(target) && !element.classList.contains("sidebar-hidden")) {
+      toggleSidebar(element, toggle);
+      localStorage.setItem(key, "true");
+    }
+  });
 }
 
 function toggleSidebar(sidebar, toggle) {
@@ -720,12 +718,12 @@ function toggleSidebar(sidebar, toggle) {
   }
 }
 
-// Function to check if the device is mobile
+window.toggleSidebar = toggleSidebar;
+
 function isMobile() {
   return window.innerWidth <= 924;
 }
 
-// Function to initialize sidebars
 function initializeSidebars() {
   const isOnMobile = isMobile();
 
@@ -766,55 +764,22 @@ function initializeSidebars() {
     pastChatsToggle.innerHTML = leftArrowSVG;
     chatControlsToggle.innerHTML = rightArrowSVG;
     navigationToggle.innerHTML = closeMenuSVG;
+
+    SIDEBARS.forEach(({ element, toggle, key }) => {
+      if (localStorage.getItem(key) === "true") {
+        toggleSidebar(element, toggle);
+      }
+    });
   }
 }
 
-// Run the initializer when the page loads
 initializeSidebars();
 
-// Add click event listeners to toggle buttons
-pastChatsToggle.addEventListener("click", () => {
-  const isCurrentlyOpen = !pastChatsRow.classList.contains("sidebar-hidden");
-  toggleSidebar(pastChatsRow, pastChatsToggle);
-
-  // On desktop, sync both sidebars together
-  if (!isMobile()) {
-    if (isCurrentlyOpen) {
-      // If we just closed the left sidebar, also close the right sidebar
-      if (!chatControlsRow.classList.contains("sidebar-hidden")) {
-        toggleSidebar(chatControlsRow, chatControlsToggle);
-      }
-    } else {
-      // If we just opened the left sidebar, also open the right sidebar
-      if (chatControlsRow.classList.contains("sidebar-hidden")) {
-        toggleSidebar(chatControlsRow, chatControlsToggle);
-      }
-    }
-  }
-});
-
-chatControlsToggle.addEventListener("click", () => {
-  const isCurrentlyOpen = !chatControlsRow.classList.contains("sidebar-hidden");
-  toggleSidebar(chatControlsRow, chatControlsToggle);
-
-  // On desktop, sync both sidebars together
-  if (!isMobile()) {
-    if (isCurrentlyOpen) {
-      // If we just closed the right sidebar, also close the left sidebar
-      if (!pastChatsRow.classList.contains("sidebar-hidden")) {
-        toggleSidebar(pastChatsRow, pastChatsToggle);
-      }
-    } else {
-      // If we just opened the right sidebar, also open the left sidebar
-      if (pastChatsRow.classList.contains("sidebar-hidden")) {
-        toggleSidebar(pastChatsRow, pastChatsToggle);
-      }
-    }
-  }
-});
-
-navigationToggle.addEventListener("click", () => {
-  toggleSidebar(headerBar, navigationToggle);
+SIDEBARS.forEach(({ element, toggle, key }) => {
+  toggle.addEventListener("click", () => {
+    toggleSidebar(element, toggle);
+    localStorage.setItem(key, element.classList.contains("sidebar-hidden"));
+  });
 });
 
 //------------------------------------------------
