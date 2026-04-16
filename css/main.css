@@ -1103,6 +1103,7 @@ audio {
     padding: 0.75rem;
     font-size: 12.5px;
     font-weight: 400;
+    margin-right: 8px;
 }
 
 #past-chats .selected,

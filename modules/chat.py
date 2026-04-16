@@ -1736,9 +1736,9 @@ def find_all_histories_with_first_prompts(state):
 
         first_prompt = first_prompt.strip()
 
-        # Truncate the first prompt if it's longer than 30 characters
-        if len(first_prompt) > 30:
-            first_prompt = first_prompt[:30 - 3] + '...'
+        # Truncate the first prompt if it's longer than 28 characters
+        if len(first_prompt) > 28:
+            first_prompt = first_prompt[:28 - 3] + '...'
 
         result.append((first_prompt, filename))
 
