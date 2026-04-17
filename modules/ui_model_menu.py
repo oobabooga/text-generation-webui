@@ -275,7 +275,6 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
                 progress(0.0)
                 return
 
-
         if not repo_id:
             yield "Please enter a model path."
             progress(0.0)
