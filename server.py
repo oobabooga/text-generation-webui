@@ -330,6 +330,8 @@ if __name__ == "__main__":
     if shared.model_name != 'None':
         model_settings = get_model_metadata(shared.model_name)
         update_model_parameters(model_settings, initial=True)  # hijack the command-line arguments
+        if 'instruction_template_str' in model_settings:
+            shared.settings['instruction_template_str'] = model_settings['instruction_template_str']
 
         # Load the model
         shared.model, shared.tokenizer = load_model(shared.model_name)

@@ -349,3 +349,13 @@ def get_available_chat_styles():
 
 def get_available_grammars():
     return ['None'] + sorted([item.name for item in list((shared.user_data_dir / 'grammars').glob('*.gbnf'))], key=natural_keys)
+
+
+def get_jinja_control_visibility(template_str):
+    if shared.model_name == 'None':
+        return True, True, True
+
+    show_reasoning = 'reasoning_effort' in template_str
+    show_thinking = 'enable_thinking' in template_str or 'thinking_budget' in template_str
+    show_separator = show_reasoning or show_thinking
+    return show_separator, show_reasoning, show_thinking
