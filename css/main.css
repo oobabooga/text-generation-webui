@@ -614,7 +614,7 @@ audio {
     background: #f3f4f6;
     padding: 0.675rem 2.5rem 0.6rem;
     margin-top: 0.15rem;
-    border: 1px solid #d2d2d8;
+    border: 1px solid var(--border-color-primary);
     border-radius: 1.5rem;
     overflow-y: auto !important;
 }
@@ -1489,7 +1489,7 @@ audio {
 
 .block:has(> .label-wrap) {
     padding: 10px 12px !important;
-    border: 1px solid #d2d2d8;
+    border: 1px solid var(--border-color-primary);
 }
 
 .dark .block:has(> .label-wrap) {
@@ -1662,7 +1662,7 @@ strong {
     max-height: 65vh;
     padding: 10px;
     border-radius: 0.5rem;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-color-primary);
     background-color: var(--light-theme-gray);
     font-family: inherit;
     font-size: inherit;
@@ -1688,7 +1688,7 @@ strong {
 
 .edit-control-button {
     padding: 6px 12px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-color-primary);
     border-radius: 0.75rem;
     cursor: pointer;
     background-color: #f8f9fa;

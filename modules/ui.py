@@ -66,7 +66,7 @@ theme = gr.themes.Default(
 if not shared.args.old_colors:
     theme = theme.set(
         # General Colors
-        border_color_primary='#d2d2d8',
+        border_color_primary='rgba(0, 0, 0, 0.15)',
         block_border_color='transparent',
         body_text_color_subdued='#484848',
         background_fill_secondary='#eaeaea',
