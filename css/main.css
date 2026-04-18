@@ -1265,22 +1265,6 @@ audio {
     }
 }
 
-@media screen and (min-width: 1470px) {
-    #chat-controls,
-    #past-chats-row {
-        position: fixed;
-        top: 0;
-        background: var(--background-fill-primary);
-    }
-
-    #past-chats-row {
-        left: var(--header-width);
-    }
-
-    #chat-controls {
-        right: 0;
-    }
-}
 
 /* ----------------------------------------------
   Dark theme
