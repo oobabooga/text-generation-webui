@@ -579,11 +579,14 @@ audio {
     padding: 1px 3px;
     background: #f3f4f6 !important;
     color: #1f2328;
+    scrollbar-width: thin;
+    scrollbar-color: var(--neutral-300) transparent;
 }
 
 .dark .message-body pre > code {
     background: #0d1117 !important;
     color: rgb(201 209 217);
+    scrollbar-color: rgb(255 255 255 / 6.25%) transparent;
 }
 
 .message-body pre > code {
