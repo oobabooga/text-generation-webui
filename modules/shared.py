@@ -260,6 +260,7 @@ settings = {
     'web_search_pages': 3,
     'selected_tools': [],
     'mcp_servers': '',
+    'confirm_tool_calls': False,
     'prompt-notebook': '',
     'preset': 'Top-P' if (user_data_dir / 'presets/Top-P.yaml').exists() else None,
     'max_new_tokens': 512,

@@ -1580,6 +1580,28 @@ audio {
     100% { opacity: 0.6; }
 }
 
+.tool-approval-buttons {
+    display: flex;
+    gap: 8px;
+    max-height: none;
+    overflow-y: visible;
+}
+
+.tool-approval-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color-primary);
+    border-radius: 0.75rem;
+    background: var(--button-secondary-background-fill);
+    color: var(--button-secondary-text-color);
+    cursor: pointer;
+    font-size: 12px;
+    margin-bottom: 0 !important;
+}
+
+.tool-approval-btn:hover {
+    background: var(--button-secondary-background-fill-hover);
+}
+
 strong {
     font-weight: bold;
 }
@@ -1678,16 +1700,10 @@ strong {
     border: 1px solid var(--border-color-primary);
     border-radius: 0.75rem;
     cursor: pointer;
-    background-color: #f8f9fa;
-    color: #212529;
+    background: var(--button-secondary-background-fill);
+    color: var(--button-secondary-text-color);
     font-size: 12px;
     margin: 0;
-}
-
-.dark .edit-control-button {
-    border: 1px solid var(--border-color-dark);
-    background-color: var(--light-gray);
-    color: #efefef;
 }
 
 /* --- Simple Version Navigation --- */

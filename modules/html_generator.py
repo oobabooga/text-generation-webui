@@ -122,6 +122,9 @@ def extract_thinking_block(string):
 
 
 
+TOOL_APPROVAL_PENDING = '\x00approval_pending'
+
+
 def build_tool_call_block(header, body, message_id, index):
     """Build HTML for a tool call accordion block."""
     block_id = f"tool-call-{message_id}-{index}"
@@ -134,6 +137,21 @@ def build_tool_call_block(header, body, message_id, index):
                 {tool_svg_small}
                 <span class="thinking-title">{html.escape(header)} ...</span>
             </summary>
+        </details>
+        '''
+
+    if body == TOOL_APPROVAL_PENDING:
+        return f'''
+        <details class="thinking-block" open data-block-id="{block_id}">
+            <summary class="thinking-header">
+                {tool_svg_small}
+                <span class="thinking-title">{html.escape(header)}</span>
+            </summary>
+            <div class="thinking-content tool-approval-buttons">
+                <button class="tool-approval-btn" onclick="document.getElementById('tool-approve-btn').click()">Approve</button>
+                <button class="tool-approval-btn" onclick="document.getElementById('tool-always-approve-btn').click()">Always approve</button>
+                <button class="tool-approval-btn" onclick="document.getElementById('tool-reject-btn').click()">Reject</button>
+            </div>
         </details>
         '''
 

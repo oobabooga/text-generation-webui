@@ -22,6 +22,7 @@ import modules.shared as shared
 from modules import utils
 from modules.extensions import apply_extensions
 from modules.html_generator import (
+    TOOL_APPROVAL_PENDING,
     chat_html_wrapper,
     convert_to_markdown,
     extract_thinking_block,
@@ -45,6 +46,42 @@ from modules.utils import (
 from modules.web_search import add_web_search_attachments
 
 _history_file_lock = threading.Lock()
+
+_tool_approvals = {}
+_tool_approvals_lock = threading.Lock()
+
+
+def request_tool_approval(session_key, tool_name):
+    """Block until the user approves/rejects a tool call. Returns 'approve'|'always'|'reject'."""
+    with _tool_approvals_lock:
+        if session_key not in _tool_approvals:
+            _tool_approvals[session_key] = {
+                "event": threading.Event(),
+                "result": None,
+                "tool_name": None,
+                "approved": set(),
+            }
+    session = _tool_approvals[session_key]
+    session["event"].clear()
+    session["result"] = None
+    session["tool_name"] = tool_name
+    while not session["event"].wait(timeout=0.5):
+        if shared.stop_everything:
+            session["tool_name"] = None
+            return 'reject'
+    session["tool_name"] = None
+    return session["result"]
+
+
+def resolve_tool_approval(session_key, result):
+    """Called by button handlers to resolve a pending approval."""
+    session = _tool_approvals.get(session_key)
+    if not session:
+        return
+    if result == 'always' and session["tool_name"]:
+        session["approved"].add(session["tool_name"])
+    session["result"] = result
+    session["event"].set()
 
 
 def strftime_now(format):
@@ -1470,19 +1507,43 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         yield _render(), history
 
         # Execute tools, store results, and replace placeholders with real results
-        for i, tc in enumerate(parsed_calls):
-            # Check for stop request before each tool execution
-            if shared.stop_everything:
-                for j in range(i, len(parsed_calls)):
-                    seq.append({'role': 'tool', 'content': 'Tool execution was cancelled by the user.', 'tool_call_id': parsed_calls[j]['id']})
-                    pending_placeholders[j] = f'<tool_call>{tc_headers[j]}\nCancelled\n</tool_call>'
+        _session_key = state.get('unique_id', '')
+        def _cancel_remaining(from_idx):
+            for j in range(from_idx, len(parsed_calls)):
+                seq.append({'role': 'tool', 'content': 'Tool execution was cancelled by the user.', 'tool_call_id': parsed_calls[j]['id']})
+                pending_placeholders[j] = f'<tool_call>{tc_headers[j]}\nCancelled\n</tool_call>'
 
-                history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
+            history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
+
+        for i, tc in enumerate(parsed_calls):
+            if shared.stop_everything:
+                _cancel_remaining(i)
                 yield _render(), history
                 break
 
             fn_name = tc['function']['name']
             fn_args = tc['function'].get('arguments', {})
+
+            _approved = _tool_approvals[_session_key]["approved"] if _session_key in _tool_approvals else set()
+            if state.get('confirm_tool_calls', False) and fn_name not in _approved:
+                pending_placeholders[i] = f'<tool_call>{tc_headers[i]}\n{TOOL_APPROVAL_PENDING}\n</tool_call>'
+                history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
+                yield _render(), history
+
+                approval = request_tool_approval(_session_key, fn_name)
+
+                if approval == 'reject' and shared.stop_everything:
+                    _cancel_remaining(i)
+                    yield _render(), history
+                    break
+
+                if approval == 'reject':
+                    seq.append({'role': 'tool', 'content': 'Tool call was rejected by the user.', 'tool_call_id': tc['id']})
+                    pending_placeholders[i] = f'<tool_call>{tc_headers[i]}\nRejected\n</tool_call>'
+                    history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
+                    yield _render(), history
+                    continue
+
             result = execute_tool(fn_name, fn_args, tool_executors)
 
             seq.append({'role': 'tool', 'content': result, 'tool_call_id': tc['id']})

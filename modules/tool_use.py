@@ -220,10 +220,13 @@ def load_mcp_tools(servers_str):
 
     uncached = [s for s in servers if _mcp_server_id(s) not in _mcp_server_cache]
     if uncached:
-        results = asyncio.run(asyncio.gather(
-            *(_connect_mcp_server(s) for s in uncached),
-            return_exceptions=True
-        ))
+        async def _discover_uncached():
+            return await asyncio.gather(
+                *(_connect_mcp_server(s) for s in uncached),
+                return_exceptions=True
+            )
+
+        results = asyncio.run(_discover_uncached())
         for server, result in zip(uncached, results):
             sid = _mcp_server_id(server)
             if isinstance(result, Exception):
