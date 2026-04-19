@@ -57,8 +57,7 @@ class ModelDownloader:
         return session
 
     def sanitize_model_and_branch_names(self, model, branch):
-        if model[-1] == '/':
-            model = model[:-1]
+        model = model.removesuffix("/")
 
         if model.startswith(base + '/'):
             model = model[len(base) + 1:]
