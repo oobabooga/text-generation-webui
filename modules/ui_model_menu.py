@@ -252,7 +252,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
                 return
 
         # Handle branch delimited by ":"
-        elif ":" in repo_id:
+        elif not repo_id.startswith("http") and ":" in repo_id:
             try:
                 repo_id, branch = repo_id.split(":")
             except Exception as e:
