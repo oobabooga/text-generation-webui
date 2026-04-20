@@ -1288,14 +1288,16 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     # Load tools if any are selected
     selected = state.get('selected_tools', [])
     mcp_servers = state.get('mcp_servers', '')
+    from modules.tool_use import has_mcp_config
+    has_mcp = has_mcp_config()
     parse_tool_call = None
     _tool_parsers = None
-    if selected or mcp_servers:
+    if selected or mcp_servers or has_mcp:
         from modules.tool_use import load_tools, load_mcp_tools, execute_tool
         from modules.tool_parsing import parse_tool_call, get_tool_call_id, detect_tool_call_format
 
         tool_defs, tool_executors = load_tools(selected)
-        if mcp_servers:
+        if mcp_servers or has_mcp:
             mcp_defs, mcp_executors = load_mcp_tools(mcp_servers)
             for td in mcp_defs:
                 fn = td['function']['name']

@@ -259,6 +259,10 @@ if __name__ == "__main__":
     elif (shared.user_data_dir / 'settings.yaml').exists():
         settings_file = shared.user_data_dir / 'settings.yaml'
 
+    from modules.tool_use import has_mcp_config
+    if has_mcp_config():
+        logger.warning(f"MCP stdio servers will be loaded from \"{shared.user_data_dir / 'mcp.json'}\"")
+
     if settings_file is not None:
         logger.info(f"Loading settings from \"{settings_file}\"")
         with open(settings_file, 'r', encoding='utf-8') as f:
