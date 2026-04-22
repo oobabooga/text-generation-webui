@@ -485,6 +485,7 @@ class LlamaServer:
         if shared.args.spec_type != 'none':
             cmd += ["--spec-type", shared.args.spec_type]
             cmd += ["--draft-max", str(shared.args.draft_max)]
+            cmd += ["--draft-min", "48"]
             cmd += ["--spec-ngram-size-n", str(shared.args.spec_ngram_size_n)]
             cmd += ["--spec-ngram-size-m", str(shared.args.spec_ngram_size_m)]
             cmd += ["--spec-ngram-min-hits", str(shared.args.spec_ngram_min_hits)]
