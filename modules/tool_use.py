@@ -204,39 +204,47 @@ async def _call_mcp_tool(name, arguments, server):
     return await _mcp_session(server, _invoke)
 
 
-async def _connect_all_mcp_servers(servers):
-    """Connect to all MCP servers concurrently."""
-    results = await asyncio.gather(
-        *(_connect_mcp_server(server) for server in servers),
-        return_exceptions=True
-    )
-    all_defs = []
-    all_executors = {}
-    for server, result in zip(servers, results):
-        if isinstance(result, Exception):
-            logger.exception(f'Failed to connect to MCP server "{_mcp_server_id(server)}"', exc_info=result)
-            continue
-        defs, execs = result
-        for td, (fn, ex) in zip(defs, execs.items()):
-            if fn in all_executors:
-                logger.warning(f'MCP tool "{fn}" from {_mcp_server_id(server)} conflicts with an already loaded tool. Skipping.')
-                continue
-            all_defs.append(td)
-            all_executors[fn] = ex
-    return all_defs, all_executors
+_mcp_server_cache = {}
 
 
 def load_mcp_tools(servers_str):
     """
     Discover tools from MCP servers (HTTP from UI textbox + stdio from mcp.json).
     Returns (tool_defs, executors) in the same format as load_tools.
+    Tool discovery is cached per server so each server is only queried once.
     """
     servers = _parse_mcp_servers(servers_str) if servers_str else []
     servers += _load_mcp_json()
     if not servers:
         return [], {}
 
-    return asyncio.run(_connect_all_mcp_servers(servers))
+    uncached = [s for s in servers if _mcp_server_id(s) not in _mcp_server_cache]
+    if uncached:
+        results = asyncio.run(asyncio.gather(
+            *(_connect_mcp_server(s) for s in uncached),
+            return_exceptions=True
+        ))
+        for server, result in zip(uncached, results):
+            sid = _mcp_server_id(server)
+            if isinstance(result, Exception):
+                logger.exception(f'Failed to connect to MCP server "{sid}"', exc_info=result)
+                _mcp_server_cache[sid] = ([], {})
+            else:
+                _mcp_server_cache[sid] = result
+
+    all_defs = []
+    all_executors = {}
+    for server in servers:
+        sid = _mcp_server_id(server)
+        defs, execs = _mcp_server_cache[sid]
+        for td, (fn, ex) in zip(defs, execs.items()):
+            if fn in all_executors:
+                logger.warning(f'MCP tool "{fn}" from {sid} conflicts with an already loaded tool. Skipping.')
+                continue
+            all_defs.append(td)
+            all_executors[fn] = ex
+
+    return all_defs, all_executors
 
 
 def execute_tool(func_name, arguments, executors):
