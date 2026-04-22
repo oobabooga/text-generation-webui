@@ -16,9 +16,17 @@ from modules.logging_colors import logger
 
 def _validate_url(url):
     """Validate that a URL is safe to fetch (not targeting private/internal networks)."""
+    # Reject characters that cause parsing discrepancies between urlparse and requests,
+    # which can be exploited to bypass SSRF protections (GHSA-27xf-58m5-vxmc).
+    if '\\' in url:
+        raise ValueError("Invalid URL: backslashes are not allowed")
+
     parsed = urlparse(url)
     if parsed.scheme not in ('http', 'https'):
         raise ValueError(f"Unsupported URL scheme: {parsed.scheme}")
+
+    if '@' in parsed.netloc:
+        raise ValueError("Invalid URL: userinfo (credentials) in URLs is not allowed")
 
     hostname = parsed.hostname
     if not hostname:
@@ -34,6 +42,20 @@ def _validate_url(url):
         raise ValueError(f"Could not resolve hostname: {hostname}")
 
 
+def safe_get(url, headers=None, timeout=10, max_redirects=5):
+    """Fetch a URL with SSRF-safe redirect handling. Validates every hop."""
+    _validate_url(url)
+    for _ in range(max_redirects):
+        response = requests.get(url, headers=headers, timeout=timeout, allow_redirects=False)
+        if response.is_redirect and 'Location' in response.headers:
+            url = urljoin(url, response.headers['Location'])
+            _validate_url(url)
+        else:
+            return response
+
+    raise ValueError(f"Too many redirects (max {max_redirects})")
+
+
 def get_current_timestamp():
     """Returns the current time in 24-hour format"""
     return datetime.now().strftime('%b %d, %Y %H:%M')
@@ -46,19 +68,10 @@ def download_web_page(url, timeout=10, include_links=False):
     import trafilatura
 
     try:
-        _validate_url(url)
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
         }
-        max_redirects = 5
-        for _ in range(max_redirects):
-            response = requests.get(url, headers=headers, timeout=timeout, allow_redirects=False)
-            if response.is_redirect and 'Location' in response.headers:
-                url = urljoin(url, response.headers['Location'])
-                _validate_url(url)
-            else:
-                break
-
+        response = safe_get(url, headers=headers, timeout=timeout)
         response.raise_for_status()
 
         result = trafilatura.extract(
