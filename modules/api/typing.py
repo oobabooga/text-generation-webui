@@ -48,6 +48,7 @@ class GenerationOptions(BaseModel):
     add_bos_token: bool = True
     enable_thinking: bool = shared.args.enable_thinking
     reasoning_effort: str = shared.args.reasoning_effort
+    preserve_thinking: bool = shared.args.preserve_thinking
     skip_special_tokens: bool = True
     static_cache: bool = False
     truncation_length: int = 0

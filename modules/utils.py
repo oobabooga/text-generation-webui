@@ -353,9 +353,10 @@ def get_available_grammars():
 
 def get_jinja_control_visibility(template_str):
     if shared.model_name == 'None':
-        return True, True, True
+        return True, True, True, True
 
     show_reasoning = 'reasoning_effort' in template_str
     show_thinking = 'enable_thinking' in template_str or 'thinking_budget' in template_str
-    show_separator = show_reasoning or show_thinking
-    return show_separator, show_reasoning, show_thinking
+    show_preserve_thinking = 'preserve_thinking' in template_str
+    show_separator = show_reasoning or show_thinking or show_preserve_thinking
+    return show_separator, show_reasoning, show_thinking, show_preserve_thinking

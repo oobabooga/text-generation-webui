@@ -341,6 +341,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
         enable_thinking=state['enable_thinking'],
         thinking=state['enable_thinking'],
         reasoning_effort=state['reasoning_effort'],
+        preserve_thinking=state['preserve_thinking'],
         thinking_budget=-1 if state.get('enable_thinking', True) else 0,
         bos_token=shared.bos_token,
         eos_token=shared.eos_token,

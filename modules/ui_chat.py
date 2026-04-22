@@ -84,12 +84,13 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'], elem_classes=['add_scrollbar'])
 
-                show_separator, show_reasoning, show_thinking = utils.get_jinja_control_visibility(shared.settings.get('instruction_template_str', ''))
+                show_separator, show_reasoning, show_thinking, show_preserve_thinking = utils.get_jinja_control_visibility(shared.settings.get('instruction_template_str', ''))
 
                 shared.gradio['jinja_controls_separator'] = gr.HTML("<div class='sidebar-vertical-separator'></div>", visible=show_separator)
 
                 shared.gradio['reasoning_effort'] = gr.Dropdown(value=shared.settings['reasoning_effort'], choices=['low', 'medium', 'high'], label='Reasoning effort', visible=show_reasoning)
                 shared.gradio['enable_thinking'] = gr.Checkbox(value=shared.settings['enable_thinking'], label='Enable thinking', visible=show_thinking)
+                shared.gradio['preserve_thinking'] = gr.Checkbox(value=shared.settings['preserve_thinking'], label='Preserve thinking', visible=show_preserve_thinking)
 
                 gr.HTML("<div class='sidebar-vertical-separator'></div>")
 
