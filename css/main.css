@@ -579,11 +579,14 @@ audio {
     padding: 1px 3px;
     background: #f3f4f6 !important;
     color: #1f2328;
+    scrollbar-width: thin;
+    scrollbar-color: var(--neutral-300) transparent;
 }
 
 .dark .message-body pre > code {
     background: #0d1117 !important;
     color: rgb(201 209 217);
+    scrollbar-color: rgb(255 255 255 / 6.25%) transparent;
 }
 
 .message-body pre > code {
@@ -614,7 +617,7 @@ audio {
     background: #f3f4f6;
     padding: 0.675rem 2.5rem 0.6rem;
     margin-top: 0.15rem;
-    border: 1px solid #d2d2d8;
+    border: 1px solid var(--border-color-primary);
     border-radius: 1.5rem;
     overflow-y: auto !important;
 }
@@ -1095,6 +1098,7 @@ audio {
     padding: 0.75rem;
     font-size: 12.5px;
     font-weight: 400;
+    margin-right: 8px;
 }
 
 #past-chats .selected,
@@ -1263,6 +1267,7 @@ audio {
         position: fixed;
     }
 }
+
 
 /* ----------------------------------------------
   Dark theme
@@ -1471,7 +1476,7 @@ audio {
 
 .block:has(> .label-wrap) {
     padding: 10px 12px !important;
-    border: 1px solid #d2d2d8;
+    border: 1px solid var(--border-color-primary);
 }
 
 .dark .block:has(> .label-wrap) {
@@ -1575,6 +1580,28 @@ audio {
     100% { opacity: 0.6; }
 }
 
+.tool-approval-buttons {
+    display: flex;
+    gap: 8px;
+    max-height: none;
+    overflow-y: visible;
+}
+
+.tool-approval-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color-primary);
+    border-radius: 0.75rem;
+    background: var(--button-secondary-background-fill);
+    color: var(--button-secondary-text-color);
+    cursor: pointer;
+    font-size: 12px;
+    margin-bottom: 0 !important;
+}
+
+.tool-approval-btn:hover {
+    background: var(--button-secondary-background-fill-hover);
+}
+
 strong {
     font-weight: bold;
 }
@@ -1644,7 +1671,7 @@ strong {
     max-height: 65vh;
     padding: 10px;
     border-radius: 0.5rem;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-color-primary);
     background-color: var(--light-theme-gray);
     font-family: inherit;
     font-size: inherit;
@@ -1670,19 +1697,13 @@ strong {
 
 .edit-control-button {
     padding: 6px 12px;
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-color-primary);
     border-radius: 0.75rem;
     cursor: pointer;
-    background-color: #f8f9fa;
-    color: #212529;
+    background: var(--button-secondary-background-fill);
+    color: var(--button-secondary-text-color);
     font-size: 12px;
     margin: 0;
-}
-
-.dark .edit-control-button {
-    border: 1px solid var(--border-color-dark);
-    background-color: var(--light-gray);
-    color: #efefef;
 }
 
 /* --- Simple Version Navigation --- */

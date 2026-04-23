@@ -82,7 +82,9 @@ You can open the built-in tools in `user_data/tools/` for more examples.
 
 ## MCP servers
 
-You can connect to remote [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) servers to use their tools alongside local ones.
+You can connect to [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) servers to use their tools alongside local ones. Both HTTP and stdio servers are supported.
+
+### HTTP servers
 
 In the chat sidebar, open the **MCP servers** accordion and enter one server URL per line. For servers that require authentication, append headers after the URL separated by commas:
 
@@ -90,6 +92,47 @@ In the chat sidebar, open the **MCP servers** accordion and enter one server URL
 https://example.com/mcp
 https://other.com/mcp,Authorization: Bearer sk-xxx
 ```
+
+### Stdio servers
+
+Stdio MCP servers run as local subprocesses. To configure them, create a `user_data/mcp.json` file using the standard format (compatible with Claude Desktop, Cursor, and LM Studio):
+
+```json
+{
+    "mcpServers": {
+        "filesystem": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/dir"]
+        },
+        "another-server": {
+            "command": "python3",
+            "args": ["-m", "my_mcp_server", "--flag", "value"],
+            "env": {
+                "API_KEY": "your-key-here"
+            }
+        }
+    }
+}
+```
+
+The file is detected automatically and a warning is printed at startup when it is found.
+
+**Quick test example:** Install `npx` (comes with Node.js), then create `user_data/mcp.json` with:
+
+```json
+{
+    "mcpServers": {
+        "filesystem": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp/folder"]
+        }
+    }
+}
+```
+
+Create the target directory (`mkdir -p /tmp/folder`), start the web UI, load a model with tool-calling support, and try asking: *"What files are in /tmp/folder?"* or *"Write a file called notes.txt in /tmp/folder containing 'MCP is working'"*.
+
+### Tool priority
 
 All tools from the configured servers are automatically discovered and made available to the model during generation. If an MCP tool has the same name as a selected local tool, the local tool takes priority.
 

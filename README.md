@@ -15,41 +15,86 @@
 
 **The original local LLM interface.** Text, vision, tool-calling, training, image generation. UI + API, 100% offline and private.
 
-For recommended GGUF quants, check out my new project: [LocalBench](https://localbench.substack.com).
+[![GitHub stars](https://img.shields.io/github/stars/oobabooga/textgen?style=for-the-badge&logo=github&logoColor=white&labelColor=black)](https://github.com/oobabooga/textgen)
 
-|![Image1](https://github.com/oobabooga/screenshots/raw/main/INSTRUCT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/CHAT-3.5.png) |
+## Get started in 1 minute
+
+Zero setup. Download, unzip, run.
+
+**https://github.com/oobabooga/textgen/releases**
+
+Portable builds for Linux, Windows, and macOS with CUDA, Vulkan, ROCm, and CPU-only options. All dependencies included. Compatible with GGUF (llama.cpp) models.
+
+For additional backends (ExLlamaV3, Transformers), training, image generation, and extensions, see [Installation](#installation).
+
+|![Instruct mode](https://github.com/oobabooga/screenshots/raw/main/INSTRUCT-3.5.png) | ![Chat mode](https://github.com/oobabooga/screenshots/raw/main/CHAT-3.5.png) |
 |:---:|:---:|
-|![Image1](https://github.com/oobabooga/screenshots/raw/main/DEFAULT-3.5.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/PARAMETERS-3.5.png) |
+| Instruct mode | Chat mode |
+|![Notebook mode](https://github.com/oobabooga/screenshots/raw/main/DEFAULT-3.5.png) | ![Parameters](https://github.com/oobabooga/screenshots/raw/main/PARAMETERS-3.5.png) |
+| Notebook mode | Parameters |
 
 ## Features
 
-- **Easy setup**: [Portable builds](https://github.com/oobabooga/textgen/releases) (zero setup, just unzip and run) for GGUF models on Windows/Linux/macOS, or a one-click installer for the full feature set.
+### Chat & generation
+
+- `instruct` mode for instruction-following (like ChatGPT), and `chat-instruct`/`chat` modes for talking to custom characters. Prompts are automatically formatted with Jinja2 templates.
+- **Vision (multimodal)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/textgen/wiki/Multimodal-Tutorial)).
+- **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
+- Edit messages, navigate between message versions, and branch conversations at any point.
+- Notebook tab for free-form text generation outside of chat turns.
+
+### Backends & API
+
 - **Multiple backends**: [llama.cpp](https://github.com/ggerganov/llama.cpp), [ik_llama.cpp](https://github.com/ikawrakow/ik_llama.cpp), [Transformers](https://github.com/huggingface/transformers), [ExLlamaV3](https://github.com/turboderp-org/exllamav3), and [TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM). Switch between backends and models without restarting.
 - **OpenAI/Anthropic-compatible API**: Chat, Completions, and Messages endpoints with tool-calling support. Use as a local drop-in replacement for the OpenAI/Anthropic APIs ([examples](https://github.com/oobabooga/textgen/wiki/12-%E2%80%90-OpenAI-API#examples)).
 - **Tool-calling**: Models can call custom functions during chat, including web search, page fetching, and math. Each tool is a single `.py` file. MCP servers are also supported ([tutorial](https://github.com/oobabooga/textgen/wiki/Tool-Calling-Tutorial)).
-- **Vision (multimodal)**: Attach images to messages for visual understanding ([tutorial](https://github.com/oobabooga/textgen/wiki/Multimodal-Tutorial)).
-- **File attachments**: Upload text files, PDF documents, and .docx documents to talk about their contents.
+
+### Training & image generation
+
 - **Training**: Fine-tune LoRAs on multi-turn chat or raw text datasets. Supports resuming interrupted runs ([tutorial](https://github.com/oobabooga/textgen/wiki/05-%E2%80%90-Training-Tab)).
 - **Image generation**: A dedicated tab for `diffusers` models like **Z-Image-Turbo**. Features 4-bit/8-bit quantization and a persistent gallery with metadata ([tutorial](https://github.com/oobabooga/textgen/wiki/Image-Generation-Tutorial)).
+
+### Privacy & interface
+
 - 100% offline and private, with zero telemetry, external resources, or remote update requests.
-- `instruct` mode for instruction-following (like ChatGPT), and `chat-instruct`/`chat` modes for talking to custom characters. Prompts are automatically formatted with Jinja2 templates.
-- Edit messages, navigate between message versions, and branch conversations at any point.
-- Free-form text generation in the Notebook tab without being limited to chat turns.
 - Dark/light themes, syntax highlighting for code blocks, and LaTeX rendering for mathematical expressions.
-- Extension support, with built-in and user-contributed extensions available. See the [wiki](https://github.com/oobabooga/textgen/wiki/07-%E2%80%90-Extensions) and [extensions directory](https://github.com/oobabooga/textgen-extensions) for details.
+- Built-in and community [extensions](https://github.com/oobabooga/textgen/wiki/07-%E2%80%90-Extensions) including TTS, voice input, and translation. See the [extensions directory](https://github.com/oobabooga/textgen-extensions) for the full list.
 
-## How to install
+## Downloading models
 
-#### ✅ Option 1: Portable builds (get started in 1 minute)
+1. Download a GGUF model file from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=gguf).
+2. Place it in the `user_data/models` folder.
 
-No installation needed – just download, unzip and run. All dependencies included.
+That's it. The UI will detect it automatically.
 
-Download from here: **https://github.com/oobabooga/textgen/releases**
+For recommended GGUF quants, check out [LocalBench](https://localbench.substack.com). To estimate how much memory a model will use, try the [GGUF Memory Calculator](https://huggingface.co/spaces/oobabooga/accurate-gguf-vram-calculator).
 
-- Builds are provided for Linux, Windows, and macOS, with options for CUDA, Vulkan, ROCm, and CPU-only.
-- Compatible with GGUF (llama.cpp) models.
+<details>
+<summary>Other model types (Transformers, EXL3)</summary>
 
-#### Option 2: Manual portable install with venv
+Models that consist of multiple files (like 16-bit Transformers models and EXL3 models) should be placed in a subfolder inside `user_data/models`:
+
+```
+textgen
+└── user_data
+    └── models
+        └── Qwen_Qwen3-8B
+            ├── config.json
+            ├── generation_config.json
+            ├── model-00001-of-00004.safetensors
+            ├── ...
+            ├── tokenizer_config.json
+            └── tokenizer.json
+```
+
+These formats require the one-click installer (not the portable build).
+</details>
+
+## Installation
+
+For a zero-setup option, see the [portable builds](https://github.com/oobabooga/textgen/releases).
+
+### Manual portable install with venv
 
 Fast setup on any Python 3.9+:
 
@@ -77,9 +122,9 @@ python server.py --portable --api --auto-launch
 deactivate
 ```
 
-#### Option 3: One-click installer
+### One-click installer
 
-For users who need additional backends (ExLlamaV3, Transformers), training, image generation, or extensions (TTS, voice input, translation, etc). Requires ~10GB disk space and downloads PyTorch.
+For users who need additional backends (ExLlamaV3, Transformers), training, image generation, or extensions like TTS, voice input, and translation. Requires ~10GB disk space and downloads PyTorch.
 
 1. Clone the repository, or [download its source code](https://github.com/oobabooga/textgen/archive/refs/heads/main.zip) and extract it.
 2. Run the startup script for your OS: `start_windows.bat`, `start_linux.sh`, or `start_macos.sh`.
@@ -241,17 +286,17 @@ usage: server.py [-h] [--user-data-dir USER_DATA_DIR] [--multi-user] [--model MO
                  [--ctx-size-draft CTX_SIZE_DRAFT] [--spec-type {none,ngram-mod,ngram-simple,ngram-map-k,ngram-map-k4v,ngram-cache}] [--spec-ngram-size-n SPEC_NGRAM_SIZE_N]
                  [--spec-ngram-size-m SPEC_NGRAM_SIZE_M] [--spec-ngram-min-hits SPEC_NGRAM_MIN_HITS] [--gpu-layers N] [--cpu-moe] [--mmproj MMPROJ] [--streaming-llm] [--tensor-split TENSOR_SPLIT]
                  [--row-split] [--no-mmap] [--mlock] [--no-kv-offload] [--batch-size BATCH_SIZE] [--ubatch-size UBATCH_SIZE] [--threads THREADS] [--threads-batch THREADS_BATCH] [--numa]
-                 [--parallel PARALLEL] [--fit-target FIT_TARGET] [--extra-flags EXTRA_FLAGS] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16]
-                 [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION] [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE]
-                 [--quant_type QUANT_TYPE] [--gpu-split GPU_SPLIT] [--enable-tp] [--tp-backend TP_BACKEND] [--cfg-cache] [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share]
-                 [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE] [--subpath SUBPATH] [--old-colors]
-                 [--portable] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6] [--api-disable-ipv4]
-                 [--nowebui] [--temperature N] [--dynatemp-low N] [--dynatemp-high N] [--dynatemp-exponent N] [--smoothing-factor N] [--smoothing-curve N] [--min-p N] [--top-p N] [--top-k N]
-                 [--typical-p N] [--xtc-threshold N] [--xtc-probability N] [--epsilon-cutoff N] [--eta-cutoff N] [--tfs N] [--top-a N] [--top-n-sigma N] [--adaptive-target N] [--adaptive-decay N]
-                 [--dry-multiplier N] [--dry-allowed-length N] [--dry-base N] [--repetition-penalty N] [--frequency-penalty N] [--presence-penalty N] [--encoder-repetition-penalty N]
-                 [--no-repeat-ngram-size N] [--repetition-penalty-range N] [--penalty-alpha N] [--guidance-scale N] [--mirostat-mode N] [--mirostat-tau N] [--mirostat-eta N]
-                 [--do-sample | --no-do-sample] [--dynamic-temperature | --no-dynamic-temperature] [--temperature-last | --no-temperature-last] [--sampler-priority N] [--dry-sequence-breakers N]
-                 [--enable-thinking | --no-enable-thinking] [--reasoning-effort N] [--chat-template-file CHAT_TEMPLATE_FILE]
+                 [--parallel PARALLEL] [--fit-target FIT_TARGET] [--extra-flags EXTRA_FLAGS] [--ik] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit]
+                 [--bf16] [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION] [--load-in-4bit] [--use_double_quant]
+                 [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE] [--gpu-split GPU_SPLIT] [--enable-tp] [--tp-backend TP_BACKEND] [--cfg-cache] [--listen] [--listen-port LISTEN_PORT]
+                 [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE]
+                 [--subpath SUBPATH] [--old-colors] [--portable] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY]
+                 [--api-enable-ipv6] [--api-disable-ipv4] [--nowebui] [--temperature N] [--dynatemp-low N] [--dynatemp-high N] [--dynatemp-exponent N] [--smoothing-factor N] [--smoothing-curve N]
+                 [--top-p N] [--top-k N] [--min-p N] [--top-n-sigma N] [--typical-p N] [--xtc-threshold N] [--xtc-probability N] [--epsilon-cutoff N] [--eta-cutoff N] [--tfs N] [--top-a N]
+                 [--adaptive-target N] [--adaptive-decay N] [--dry-multiplier N] [--dry-allowed-length N] [--dry-base N] [--repetition-penalty N] [--frequency-penalty N] [--presence-penalty N]
+                 [--encoder-repetition-penalty N] [--no-repeat-ngram-size N] [--repetition-penalty-range N] [--penalty-alpha N] [--guidance-scale N] [--mirostat-mode N] [--mirostat-tau N]
+                 [--mirostat-eta N] [--do-sample | --no-do-sample] [--dynamic-temperature | --no-dynamic-temperature] [--temperature-last | --no-temperature-last] [--sampler-priority N]
+                 [--dry-sequence-breakers N] [--enable-thinking | --no-enable-thinking] [--reasoning-effort N] [--preserve-thinking | --no-preserve-thinking] [--chat-template-file CHAT_TEMPLATE_FILE]
 
 TextGen
 
@@ -320,8 +365,8 @@ llama.cpp:
   --parallel PARALLEL                                  Number of parallel request slots. The context size is divided equally among slots. For example, to have 4 slots with 8192 context each, set
                                                        ctx_size to 32768.
   --fit-target FIT_TARGET                              Target VRAM margin per device for auto GPU layers, comma-separated list of values in MiB. A single value is broadcast across all devices.
-                                                       Default: 1024.
-  --extra-flags EXTRA_FLAGS                            Extra flags to pass to llama-server. Format: "flag1=value1,flag2,flag3=value3". Example: "override-tensor=exps=CPU"
+  --extra-flags EXTRA_FLAGS                            Extra flags to pass to llama-server. Example: "--jinja --rpc 192.168.1.100:50052"
+  --ik                                                 Use ik_llama.cpp instead of upstream llama.cpp. Requires the ik_llama_cpp_binaries package to be installed.
 
 Transformers/Accelerate:
   --cpu                                                Use the CPU to generate text. Warning: Training on CPU is extremely slow.
@@ -363,7 +408,7 @@ Gradio:
   --portable                                           Hide features not available in portable mode like training.
 
 API:
-  --api                                                Enable the API extension.
+  --api                                                Enable the API server.
   --public-api                                         Create a public URL for the API using Cloudflare.
   --public-api-id PUBLIC_API_ID                        Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.
   --api-port API_PORT                                  The listening port for the API.
@@ -380,9 +425,10 @@ API generation defaults:
   --dynatemp-exponent N                                Dynamic temperature exponent
   --smoothing-factor N                                 Smoothing factor
   --smoothing-curve N                                  Smoothing curve
-  --min-p N                                            Min P
   --top-p N                                            Top P
   --top-k N                                            Top K
+  --min-p N                                            Min P
+  --top-n-sigma N                                      Top N Sigma
   --typical-p N                                        Typical P
   --xtc-threshold N                                    XTC threshold
   --xtc-probability N                                  XTC probability
@@ -390,7 +436,6 @@ API generation defaults:
   --eta-cutoff N                                       Eta cutoff
   --tfs N                                              TFS
   --top-a N                                            Top A
-  --top-n-sigma N                                      Top N Sigma
   --adaptive-target N                                  Adaptive target
   --adaptive-decay N                                   Adaptive decay
   --dry-multiplier N                                   DRY multiplier
@@ -414,40 +459,11 @@ API generation defaults:
   --dry-sequence-breakers N                            DRY sequence breakers
   --enable-thinking, --no-enable-thinking              Enable thinking
   --reasoning-effort N                                 Reasoning effort
+  --preserve-thinking, --no-preserve-thinking          Preserve thinking blocks from prior turns in the chat template
   --chat-template-file CHAT_TEMPLATE_FILE              Path to a chat template file (.jinja, .jinja2, or .yaml) to use as the default instruction template for API requests. Overrides the model's
                                                        built-in template.
 ```
 
-</details>
-
-## Downloading models
-
-1. Download a GGUF model file from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=gguf).
-2. Place it in the `user_data/models` folder.
-
-That's it. The UI will detect it automatically.
-
-To estimate how much memory a model will use, you can use the [GGUF Memory Calculator](https://huggingface.co/spaces/oobabooga/accurate-gguf-vram-calculator).
-
-<details>
-<summary>Other model types (Transformers, EXL3)</summary>
-
-Models that consist of multiple files (like 16-bit Transformers models and EXL3 models) should be placed in a subfolder inside `user_data/models`:
-
-```
-textgen
-└── user_data
-    └── models
-        └── Qwen_Qwen3-8B
-            ├── config.json
-            ├── generation_config.json
-            ├── model-00001-of-00004.safetensors
-            ├── ...
-            ├── tokenizer_config.json
-            └── tokenizer.json
-```
-
-These formats require the one-click installer (not the portable build).
 </details>
 
 ## Documentation
@@ -456,7 +472,7 @@ https://github.com/oobabooga/textgen/wiki
 
 ## Community
 
-https://www.reddit.com/r/Oobabooga/
+[![Reddit](https://img.shields.io/reddit/subreddit-subscribers/Oobabooga?style=for-the-badge&logo=reddit&logoColor=white&label=r%2FOobabooga&labelColor=black&color=FF4500)](https://www.reddit.com/r/Oobabooga/)
 
 ## Acknowledgments
 

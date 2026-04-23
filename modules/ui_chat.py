@@ -63,6 +63,11 @@ def create_ui():
                             shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop', visible=False)
                             shared.gradio['Generate'] = gr.Button('Send', elem_id='Generate', variant='primary')
 
+        # Hidden buttons for tool approval (triggered via JS from inline HTML buttons)
+        shared.gradio['tool_approve'] = gr.Button(visible=False, elem_id='tool-approve-btn')
+        shared.gradio['tool_always_approve'] = gr.Button(visible=False, elem_id='tool-always-approve-btn')
+        shared.gradio['tool_reject'] = gr.Button(visible=False, elem_id='tool-reject-btn')
+
         # Hover menu buttons
         with gr.Column(elem_id='chat-buttons'):
             shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')
@@ -79,10 +84,13 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'], elem_classes=['add_scrollbar'])
 
-                gr.HTML("<div class='sidebar-vertical-separator'></div>")
+                show_separator, show_reasoning, show_thinking, show_preserve_thinking = utils.get_jinja_control_visibility(shared.settings.get('instruction_template_str', ''))
 
-                shared.gradio['reasoning_effort'] = gr.Dropdown(value=shared.settings['reasoning_effort'], choices=['low', 'medium', 'high'], label='Reasoning effort', info='Used by GPT-OSS.')
-                shared.gradio['enable_thinking'] = gr.Checkbox(value=shared.settings['enable_thinking'], label='Enable thinking', info='For models with thinking support.')
+                shared.gradio['jinja_controls_separator'] = gr.HTML("<div class='sidebar-vertical-separator'></div>", visible=show_separator)
+
+                shared.gradio['reasoning_effort'] = gr.Dropdown(value=shared.settings['reasoning_effort'], choices=['low', 'medium', 'high'], label='Reasoning effort', visible=show_reasoning)
+                shared.gradio['enable_thinking'] = gr.Checkbox(value=shared.settings['enable_thinking'], label='Enable thinking', visible=show_thinking)
+                shared.gradio['preserve_thinking'] = gr.Checkbox(value=shared.settings['preserve_thinking'], label='Preserve thinking', visible=show_preserve_thinking)
 
                 gr.HTML("<div class='sidebar-vertical-separator'></div>")
 
@@ -106,7 +114,9 @@ def create_ui():
                 shared.gradio['selected_tools'].change(fn=sync_web_tools, inputs=[shared.gradio['selected_tools']], outputs=[shared.gradio['selected_tools']], show_progress=False)
 
                 with gr.Accordion('MCP servers', open=False):
-                    shared.gradio['mcp_servers'] = gr.Textbox(value=shared.settings.get('mcp_servers', ''), lines=3, max_lines=3, label='', info='One url per line. For headers, write url,Header: value,Header2: value2', elem_classes=['add_scrollbar'])
+                    shared.gradio['mcp_servers'] = gr.Textbox(value=shared.settings.get('mcp_servers', ''), lines=3, max_lines=3, label='', info='One URL per line for HTTP servers. For headers: url,Header: value. For stdio servers, use user_data/mcp.json.', elem_classes=['add_scrollbar'])
+
+                shared.gradio['confirm_tool_calls'] = gr.Checkbox(value=shared.settings.get('confirm_tool_calls', False), label='Confirm tool calls', info='Ask for approval before executing each tool call.')
 
                 gr.HTML("<div class='sidebar-vertical-separator'></div>")
 
@@ -284,6 +294,13 @@ def create_event_handlers():
     shared.gradio['Stop'].click(
         stop_everything_event, None, None, queue=False).then(
         chat.redraw_html, gradio(reload_arr), gradio('display'), show_progress=False)
+
+    shared.gradio['tool_approve'].click(
+        lambda uid: chat.resolve_tool_approval(uid or '', 'approve'), gradio('unique_id'), None, queue=False)
+    shared.gradio['tool_always_approve'].click(
+        lambda uid: chat.resolve_tool_approval(uid or '', 'always'), gradio('unique_id'), None, queue=False)
+    shared.gradio['tool_reject'].click(
+        lambda uid: chat.resolve_tool_approval(uid or '', 'reject'), gradio('unique_id'), None, queue=False)
 
     if not shared.args.multi_user:
         shared.gradio['unique_id'].select(

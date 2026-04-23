@@ -6,6 +6,8 @@ from modules import shared
 from modules.logging_colors import logger
 from modules.utils import natural_keys, sanitize_filename
 
+_MCP_JSON_PATH = shared.user_data_dir / 'mcp.json'
+
 
 def get_available_tools():
     """Return sorted list of tool script names from user_data/tools/*.py."""
@@ -57,7 +59,7 @@ def load_tools(selected_names):
 
 
 def _parse_mcp_servers(servers_str):
-    """Parse MCP servers textbox: one server per line, format 'url' or 'url,Header: value,Header2: value2'."""
+    """Parse MCP servers textbox: one HTTP server per line, format 'url' or 'url,Header: value,Header2: value2'."""
     servers = []
     for line in servers_str.strip().splitlines():
         line = line.strip()
@@ -71,7 +73,53 @@ def _parse_mcp_servers(servers_str):
             if ':' in part:
                 key, val = part.split(':', 1)
                 headers[key.strip()] = val.strip()
-        servers.append((url, headers))
+        servers.append({"type": "http", "url": url, "headers": headers})
+    return servers
+
+
+def has_mcp_config():
+    """Check if user_data/mcp.json exists."""
+    return _MCP_JSON_PATH.exists()
+
+
+def _load_mcp_json():
+    """Load stdio MCP servers from user_data/mcp.json (Claude Desktop / Cursor format).
+
+    Expected format:
+    {
+        "mcpServers": {
+            "server-name": {
+                "command": "npx",
+                "args": ["-y", "@modelcontextprotocol/server-filesystem", "/path"],
+                "env": {"KEY": "value"}
+            }
+        }
+    }
+    """
+    if not _MCP_JSON_PATH.exists():
+        return []
+
+    try:
+        with open(_MCP_JSON_PATH) as f:
+            config = json.load(f)
+    except Exception:
+        logger.exception(f'Failed to parse {_MCP_JSON_PATH}')
+        return []
+
+    servers = []
+    for name, entry in config.get('mcpServers', {}).items():
+        command = entry.get('command')
+        if not command:
+            logger.warning(f'MCP server "{name}" in mcp.json is missing "command". Skipping.')
+            continue
+
+        servers.append({
+            "type": "stdio",
+            "command": command,
+            "args": entry.get("args", []),
+            "env": entry.get("env"),
+        })
+
     return servers
 
 
@@ -87,24 +135,45 @@ def _mcp_tool_to_openai(tool):
     }
 
 
-async def _mcp_session(url, headers, callback):
+def _mcp_server_id(server):
+    """Return a human-readable identifier for a server config."""
+    if server["type"] == "http":
+        return server["url"]
+    elif server["type"] == "stdio":
+        return f'{server["command"]} {" ".join(server["args"])}'
+    else:
+        raise ValueError(f"Unknown MCP server type: {server['type']}")
+
+
+async def _mcp_session(server, callback):
     """Open an MCP session and pass it to the callback."""
-    from mcp.client.streamable_http import streamablehttp_client
     from mcp import ClientSession
 
-    async with streamablehttp_client(url, headers=headers or None) as (read_stream, write_stream, _):
-        async with ClientSession(read_stream, write_stream) as session:
-            await session.initialize()
-            return await callback(session)
+    if server["type"] == "http":
+        from mcp.client.streamable_http import streamablehttp_client
+        async with streamablehttp_client(server["url"], headers=server["headers"] or None) as (read_stream, write_stream, _):
+            async with ClientSession(read_stream, write_stream) as session:
+                await session.initialize()
+                return await callback(session)
+    elif server["type"] == "stdio":
+        from mcp import StdioServerParameters
+        from mcp.client.stdio import stdio_client
+        params = StdioServerParameters(command=server["command"], args=server["args"], env=server.get("env"))
+        async with stdio_client(params) as (read_stream, write_stream):
+            async with ClientSession(read_stream, write_stream) as session:
+                await session.initialize()
+                return await callback(session)
+    else:
+        raise ValueError(f"Unknown MCP server type: {server['type']}")
 
 
-def _make_mcp_executor(name, url, headers):
+def _make_mcp_executor(name, server):
     def executor(arguments):
-        return asyncio.run(_call_mcp_tool(name, arguments, url, headers))
+        return asyncio.run(_call_mcp_tool(name, arguments, server))
     return executor
 
 
-async def _connect_mcp_server(url, headers):
+async def _connect_mcp_server(server):
     """Connect to one MCP server and return (tool_defs, executors)."""
 
     async def _discover(session):
@@ -113,13 +182,13 @@ async def _connect_mcp_server(url, headers):
         executors = {}
         for tool in result.tools:
             tool_defs.append(_mcp_tool_to_openai(tool))
-            executors[tool.name] = _make_mcp_executor(tool.name, url, headers)
+            executors[tool.name] = _make_mcp_executor(tool.name, server)
         return tool_defs, executors
 
-    return await _mcp_session(url, headers, _discover)
+    return await _mcp_session(server, _discover)
 
 
-async def _call_mcp_tool(name, arguments, url, headers):
+async def _call_mcp_tool(name, arguments, server):
     """Connect to an MCP server and call a single tool."""
 
     async def _invoke(session):
@@ -132,41 +201,53 @@ async def _call_mcp_tool(name, arguments, url, headers):
                 parts.append(str(content))
         return '\n'.join(parts) if parts else ''
 
-    return await _mcp_session(url, headers, _invoke)
+    return await _mcp_session(server, _invoke)
 
 
-async def _connect_all_mcp_servers(servers):
-    """Connect to all MCP servers concurrently."""
-    results = await asyncio.gather(
-        *(_connect_mcp_server(url, headers) for url, headers in servers),
-        return_exceptions=True
-    )
-    all_defs = []
-    all_executors = {}
-    for (url, _), result in zip(servers, results):
-        if isinstance(result, Exception):
-            logger.exception(f'Failed to connect to MCP server "{url}"', exc_info=result)
-            continue
-        defs, execs = result
-        for td, (fn, ex) in zip(defs, execs.items()):
-            if fn in all_executors:
-                logger.warning(f'MCP tool "{fn}" from {url} conflicts with an already loaded tool. Skipping.')
-                continue
-            all_defs.append(td)
-            all_executors[fn] = ex
-    return all_defs, all_executors
+_mcp_server_cache = {}
 
 
 def load_mcp_tools(servers_str):
     """
-    Parse MCP servers string and discover tools from each server.
+    Discover tools from MCP servers (HTTP from UI textbox + stdio from mcp.json).
     Returns (tool_defs, executors) in the same format as load_tools.
+    Tool discovery is cached per server so each server is only queried once.
     """
-    servers = _parse_mcp_servers(servers_str)
+    servers = _parse_mcp_servers(servers_str) if servers_str else []
+    servers += _load_mcp_json()
     if not servers:
         return [], {}
 
-    return asyncio.run(_connect_all_mcp_servers(servers))
+    uncached = [s for s in servers if _mcp_server_id(s) not in _mcp_server_cache]
+    if uncached:
+        async def _discover_uncached():
+            return await asyncio.gather(
+                *(_connect_mcp_server(s) for s in uncached),
+                return_exceptions=True
+            )
+
+        results = asyncio.run(_discover_uncached())
+        for server, result in zip(uncached, results):
+            sid = _mcp_server_id(server)
+            if isinstance(result, Exception):
+                logger.exception(f'Failed to connect to MCP server "{sid}"', exc_info=result)
+                _mcp_server_cache[sid] = ([], {})
+            else:
+                _mcp_server_cache[sid] = result
+
+    all_defs = []
+    all_executors = {}
+    for server in servers:
+        sid = _mcp_server_id(server)
+        defs, execs = _mcp_server_cache[sid]
+        for td, (fn, ex) in zip(defs, execs.items()):
+            if fn in all_executors:
+                logger.warning(f'MCP tool "{fn}" from {sid} conflicts with an already loaded tool. Skipping.')
+                continue
+            all_defs.append(td)
+            all_executors[fn] = ex
+
+    return all_defs, all_executors
 
 
 def execute_tool(func_name, arguments, executors):

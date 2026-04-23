@@ -210,6 +210,7 @@ group.add_argument('--sampler-priority', type=str, default=_d['sampler_priority'
 group.add_argument('--dry-sequence-breakers', type=str, default=_d['dry_sequence_breakers'], metavar='N', help='DRY sequence breakers')
 group.add_argument('--enable-thinking', action=argparse.BooleanOptionalAction, default=True, help='Enable thinking')
 group.add_argument('--reasoning-effort', type=str, default='medium', metavar='N', help='Reasoning effort')
+group.add_argument('--preserve-thinking', action=argparse.BooleanOptionalAction, default=False, help='Preserve thinking blocks from prior turns in the chat template')
 group.add_argument('--chat-template-file', type=str, default=None, help='Path to a chat template file (.jinja, .jinja2, or .yaml) to use as the default instruction template for API requests. Overrides the model\'s built-in template.')
 
 # Handle CMD_FLAGS.txt
@@ -260,6 +261,7 @@ settings = {
     'web_search_pages': 3,
     'selected_tools': [],
     'mcp_servers': '',
+    'confirm_tool_calls': False,
     'prompt-notebook': '',
     'preset': 'Top-P' if (user_data_dir / 'presets/Top-P.yaml').exists() else None,
     'max_new_tokens': 512,
@@ -272,6 +274,7 @@ settings = {
     'add_bos_token': True,
     'enable_thinking': True,
     'reasoning_effort': 'medium',
+    'preserve_thinking': False,
     'skip_special_tokens': True,
     'stream': True,
     'static_cache': False,

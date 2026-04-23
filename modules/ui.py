@@ -66,7 +66,7 @@ theme = gr.themes.Default(
 if not shared.args.old_colors:
     theme = theme.set(
         # General Colors
-        border_color_primary='#d2d2d8',
+        border_color_primary='rgba(0, 0, 0, 0.15)',
         block_border_color='transparent',
         body_text_color_subdued='#484848',
         background_fill_secondary='#eaeaea',
@@ -179,6 +179,7 @@ def list_interface_input_elements():
         'add_bos_token',
         'enable_thinking',
         'reasoning_effort',
+        'preserve_thinking',
         'skip_special_tokens',
         'stream',
         'static_cache',
@@ -210,6 +211,7 @@ def list_interface_input_elements():
         'start_with',
         'selected_tools',
         'mcp_servers',
+        'confirm_tool_calls',
         'mode',
         'chat_style',
         'chat-instruct_command',
@@ -436,6 +438,7 @@ def setup_auto_save():
         'chat_template_str',
         'selected_tools',
         'mcp_servers',
+        'confirm_tool_calls',
 
         # Parameters tab (ui_parameters.py) - Generation parameters
         'preset_menu',
@@ -483,6 +486,7 @@ def setup_auto_save():
         'add_bos_token',
         'enable_thinking',
         'reasoning_effort',
+        'preserve_thinking',
         'skip_special_tokens',
         'stream',
         'static_cache',

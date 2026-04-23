@@ -22,6 +22,7 @@ import modules.shared as shared
 from modules import utils
 from modules.extensions import apply_extensions
 from modules.html_generator import (
+    TOOL_APPROVAL_PENDING,
     chat_html_wrapper,
     convert_to_markdown,
     extract_thinking_block,
@@ -45,6 +46,42 @@ from modules.utils import (
 from modules.web_search import add_web_search_attachments
 
 _history_file_lock = threading.Lock()
+
+_tool_approvals = {}
+_tool_approvals_lock = threading.Lock()
+
+
+def request_tool_approval(session_key, tool_name):
+    """Block until the user approves/rejects a tool call. Returns 'approve'|'always'|'reject'."""
+    with _tool_approvals_lock:
+        if session_key not in _tool_approvals:
+            _tool_approvals[session_key] = {
+                "event": threading.Event(),
+                "result": None,
+                "tool_name": None,
+                "approved": set(),
+            }
+    session = _tool_approvals[session_key]
+    session["event"].clear()
+    session["result"] = None
+    session["tool_name"] = tool_name
+    while not session["event"].wait(timeout=0.5):
+        if shared.stop_everything:
+            session["tool_name"] = None
+            return 'reject'
+    session["tool_name"] = None
+    return session["result"]
+
+
+def resolve_tool_approval(session_key, result):
+    """Called by button handlers to resolve a pending approval."""
+    session = _tool_approvals.get(session_key)
+    if not session:
+        return
+    if result == 'always' and session["tool_name"]:
+        session["approved"].add(session["tool_name"])
+    session["result"] = result
+    session["event"].set()
 
 
 def strftime_now(format):
@@ -165,6 +202,23 @@ def _deserialize_tool_call_arguments(tool_calls):
             tc['function'] = func
         result.append(tc)
     return result
+
+
+def _strip_channel_tokens(text):
+    """Strip GPT-OSS ``<|channel|>…<|message|>…<|end|>`` wrappers from
+    user-facing content (``final`` or ``commentary`` channels).
+
+    Analysis/thinking channels are left untouched so the reasoning
+    extraction pipeline can handle them separately.
+    """
+    text = text.strip()
+    for tag in ('<|channel|>final<|message|>', '<|channel|>commentary<|message|>'):
+        _, found, after = text.partition(tag)
+        if found:
+            inner, _, _ = after.partition('<|end|>')
+            return inner.strip()
+
+    return text
 
 
 def _expand_tool_sequence(tool_seq):
@@ -304,6 +358,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
         enable_thinking=state['enable_thinking'],
         thinking=state['enable_thinking'],
         reasoning_effort=state['reasoning_effort'],
+        preserve_thinking=state['preserve_thinking'],
         thinking_budget=-1 if state.get('enable_thinking', True) else 0,
         bos_token=shared.bos_token,
         eos_token=shared.eos_token,
@@ -1288,14 +1343,16 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     # Load tools if any are selected
     selected = state.get('selected_tools', [])
     mcp_servers = state.get('mcp_servers', '')
+    from modules.tool_use import has_mcp_config
+    has_mcp = has_mcp_config()
     parse_tool_call = None
     _tool_parsers = None
-    if selected or mcp_servers:
+    if selected or mcp_servers or has_mcp:
         from modules.tool_use import load_tools, load_mcp_tools, execute_tool
         from modules.tool_parsing import parse_tool_call, get_tool_call_id, detect_tool_call_format
 
         tool_defs, tool_executors = load_tools(selected)
-        if mcp_servers:
+        if mcp_servers or has_mcp:
             mcp_defs, mcp_executors = load_mcp_tools(mcp_servers)
             for td in mcp_defs:
                 fn = td['function']['name']
@@ -1435,14 +1492,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
         seq_entry = {'tool_calls': serialized}
         if content_prefix.strip():
-            # Strip GPT-OSS channel tokens so they don't get double-wrapped
-            # by the template (which adds its own channel markup).
-            clean = content_prefix.strip()
-            if '<|channel|>' in clean and '<|message|>' in clean:
-                inner = clean.split('<|message|>', 1)[1]
-                if '<|end|>' in inner:
-                    inner = inner.split('<|end|>', 1)[0]
-                clean = inner.strip()
+            clean = _strip_channel_tokens(content_prefix)
             if clean:
                 seq_entry['content'] = clean
         seq.append(seq_entry)
@@ -1468,19 +1518,43 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         yield _render(), history
 
         # Execute tools, store results, and replace placeholders with real results
-        for i, tc in enumerate(parsed_calls):
-            # Check for stop request before each tool execution
-            if shared.stop_everything:
-                for j in range(i, len(parsed_calls)):
-                    seq.append({'role': 'tool', 'content': 'Tool execution was cancelled by the user.', 'tool_call_id': parsed_calls[j]['id']})
-                    pending_placeholders[j] = f'<tool_call>{tc_headers[j]}\nCancelled\n</tool_call>'
+        _session_key = state.get('unique_id', '')
+        def _cancel_remaining(from_idx):
+            for j in range(from_idx, len(parsed_calls)):
+                seq.append({'role': 'tool', 'content': 'Tool execution was cancelled by the user.', 'tool_call_id': parsed_calls[j]['id']})
+                pending_placeholders[j] = f'<tool_call>{tc_headers[j]}\nCancelled\n</tool_call>'
 
-                history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
+            history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
+
+        for i, tc in enumerate(parsed_calls):
+            if shared.stop_everything:
+                _cancel_remaining(i)
                 yield _render(), history
                 break
 
             fn_name = tc['function']['name']
             fn_args = tc['function'].get('arguments', {})
+
+            _approved = _tool_approvals[_session_key]["approved"] if _session_key in _tool_approvals else set()
+            if state.get('confirm_tool_calls', False) and fn_name not in _approved:
+                pending_placeholders[i] = f'<tool_call>{tc_headers[i]}\n{TOOL_APPROVAL_PENDING}\n</tool_call>'
+                history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
+                yield _render(), history
+
+                approval = request_tool_approval(_session_key, fn_name)
+
+                if approval == 'reject' and shared.stop_everything:
+                    _cancel_remaining(i)
+                    yield _render(), history
+                    break
+
+                if approval == 'reject':
+                    seq.append({'role': 'tool', 'content': 'Tool call was rejected by the user.', 'tool_call_id': tc['id']})
+                    pending_placeholders[i] = f'<tool_call>{tc_headers[i]}\nRejected\n</tool_call>'
+                    history['visible'][-1][1] = '\n\n'.join(visible_prefix + pending_placeholders)
+                    yield _render(), history
+                    continue
+
             result = execute_tool(fn_name, fn_args, tool_executors)
 
             seq.append({'role': 'tool', 'content': result, 'tool_call_id': tc['id']})
@@ -1508,6 +1582,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     # to the final model response only (not to tool call markers).
     if state.pop('_skip_output_extensions', None):
         _model_visible = apply_extensions('output', _model_visible, state, is_chat=True)
+
         if visible_prefix:
             history['visible'][-1][1] = '\n\n'.join(visible_prefix + [_model_visible])
         else:
@@ -1736,9 +1811,9 @@ def find_all_histories_with_first_prompts(state):
 
         first_prompt = first_prompt.strip()
 
-        # Truncate the first prompt if it's longer than 30 characters
-        if len(first_prompt) > 30:
-            first_prompt = first_prompt[:30 - 3] + '...'
+        # Truncate the first prompt if it's longer than 28 characters
+        if len(first_prompt) > 28:
+            first_prompt = first_prompt[:28 - 3] + '...'
 
         result.append((first_prompt, filename))
 

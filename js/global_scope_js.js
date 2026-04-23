@@ -338,7 +338,7 @@ function applyMorphdomUpdate(data) {
   const scrollPositions = {};
   queryScope.querySelectorAll(".thinking-block").forEach(block => {
     const blockId = block.getAttribute("data-block-id");
-    if (blockId && block.hasAttribute("open")) {
+    if (blockId && block.hasAttribute("open") && !block.querySelector(".tool-approval-buttons")) {
       openBlocks.add(blockId);
       const content = block.querySelector(".thinking-content");
       if (content) {
@@ -368,13 +368,11 @@ function applyMorphdomUpdate(data) {
           }
         }
 
-        // For thinking blocks, assume closed by default
+        // For thinking blocks, preserve user-opened state and
+        // server-requested open (e.g. tool approval); otherwise close.
         if (fromEl.classList && fromEl.classList.contains("thinking-block") &&
            toEl.classList && toEl.classList.contains("thinking-block")) {
           const blockId = toEl.getAttribute("data-block-id");
-          // Remove open attribute by default
-          toEl.removeAttribute("open");
-          // If this block was explicitly opened by user, keep it open
           if (blockId && openBlocks.has(blockId)) {
             toEl.setAttribute("open", "");
           }
