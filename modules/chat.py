@@ -204,6 +204,23 @@ def _deserialize_tool_call_arguments(tool_calls):
     return result
 
 
+def _strip_channel_tokens(text):
+    """Strip GPT-OSS ``<|channel|>…<|message|>…<|end|>`` wrappers from
+    user-facing content (``final`` or ``commentary`` channels).
+
+    Analysis/thinking channels are left untouched so the reasoning
+    extraction pipeline can handle them separately.
+    """
+    text = text.strip()
+    for tag in ('<|channel|>final<|message|>', '<|channel|>commentary<|message|>'):
+        _, found, after = text.partition(tag)
+        if found:
+            inner, _, _ = after.partition('<|end|>')
+            return inner.strip()
+
+    return text
+
+
 def _expand_tool_sequence(tool_seq):
     """Expand a tool_sequence list into API messages.
 
@@ -1475,14 +1492,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
         seq_entry = {'tool_calls': serialized}
         if content_prefix.strip():
-            # Strip GPT-OSS channel tokens so they don't get double-wrapped
-            # by the template (which adds its own channel markup).
-            clean = content_prefix.strip()
-            if '<|channel|>' in clean and '<|message|>' in clean:
-                inner = clean.split('<|message|>', 1)[1]
-                if '<|end|>' in inner:
-                    inner = inner.split('<|end|>', 1)[0]
-                clean = inner.strip()
+            clean = _strip_channel_tokens(content_prefix)
             if clean:
                 seq_entry['content'] = clean
         seq.append(seq_entry)
@@ -1572,6 +1582,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     # to the final model response only (not to tool call markers).
     if state.pop('_skip_output_extensions', None):
         _model_visible = apply_extensions('output', _model_visible, state, is_chat=True)
+
         if visible_prefix:
             history['visible'][-1][1] = '\n\n'.join(visible_prefix + [_model_visible])
         else:
