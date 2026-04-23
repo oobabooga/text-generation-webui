@@ -23,7 +23,7 @@ scipy
 sentencepiece
 tensorboard
 torchao==0.15.*
-transformers==5.5.*
+transformers==5.6.*
 tqdm
 trafilatura==2.0.0
 wandb
