@@ -38,6 +38,7 @@ class LlamaServer:
         self.vocabulary_size = None
         self.n_ctx = None
         self.bos_token = "<s>"
+        self.media_marker = "<__media__>"
         self.last_prompt_token_count = 0
 
         # Start the server
@@ -184,6 +185,9 @@ class LlamaServer:
         if pil_images:
             # Multimodal case
             IMAGE_TOKEN_COST_ESTIMATE = 600  # A safe, conservative estimate per image
+
+            # Translate placeholders to the server's actual media marker.
+            prompt = prompt.replace("<__media__>", self.media_marker)
 
             base64_images = [convert_pil_to_base64(img) for img in pil_images]
             payload["prompt"] = {
@@ -375,6 +379,12 @@ class LlamaServer:
         n_ctx = response.get("default_generation_settings", {}).get("n_ctx")
         if n_ctx:
             self.n_ctx = n_ctx
+
+        # Get the server's media marker for multimodal support.
+        # llama.cpp server generates a random marker each restart;
+        # we must use it instead of the default <__media__>.
+        if "media_marker" in response:
+            self.media_marker = response["media_marker"]
 
     def _is_port_available(self, port):
         """Check if a port is available for use."""
