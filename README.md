@@ -27,10 +27,10 @@ Portable builds for Linux, Windows, and macOS with CUDA, Vulkan, ROCm, and CPU-o
 
 For additional backends (ExLlamaV3, Transformers), training, image generation, and extensions, see [Installation](#installation).
 
-|![Instruct mode](https://github.com/oobabooga/screenshots/raw/main/INSTRUCT-3.5.png) | ![Chat mode](https://github.com/oobabooga/screenshots/raw/main/CHAT-3.5.png) |
+|![Instruct mode](https://github.com/oobabooga/screenshots/raw/main/INSTRUCT-4-6.png) | ![Chat mode](https://github.com/oobabooga/screenshots/raw/main/CHAT-4-6.png) |
 |:---:|:---:|
 | Instruct mode | Chat mode |
-|![Notebook mode](https://github.com/oobabooga/screenshots/raw/main/DEFAULT-3.5.png) | ![Parameters](https://github.com/oobabooga/screenshots/raw/main/PARAMETERS-3.5.png) |
+|![Notebook mode](https://github.com/oobabooga/screenshots/raw/main/NOTEBOOK-4-6.png) | ![Parameters](https://github.com/oobabooga/screenshots/raw/main/PARAMETERS-4-6.png) |
 | Notebook mode | Parameters |
 
 ## Features
