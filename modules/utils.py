@@ -247,11 +247,16 @@ def get_available_users():
     return sorted(set((k.stem for k in paths)), key=natural_keys)
 
 
+YAML_EXTENSIONS = ('.yaml', '.yml')
+JINJA_EXTENSIONS = ('.jinja', '.jinja2')
+TEMPLATE_EXTENSIONS = JINJA_EXTENSIONS + YAML_EXTENSIONS
+
+
 def get_available_instruction_templates():
-    path = str(shared.user_data_dir / "instruction-templates")
+    path = shared.user_data_dir / "instruction-templates"
     paths = []
-    if os.path.exists(path):
-        paths = (x for x in Path(path).iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
+    if path.exists():
+        paths = (x for x in path.iterdir() if x.suffix in TEMPLATE_EXTENSIONS)
 
     return ['None'] + sorted(set((k.stem for k in paths)), key=natural_keys)
 

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import yaml
 
-from modules import loaders, metadata_gguf, shared
+from modules import loaders, metadata_gguf, shared, utils
 from modules.logging_colors import logger
 from modules.utils import resolve_model_path
 
@@ -397,28 +397,44 @@ def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type):
     return f"<div id=\"vram-info\"'>Estimated VRAM to load the model: <span class=\"value\">{vram_usage:.0f} MiB</span></div>"
 
 
+def load_template_by_name(name):
+    """Find and load a single instruction template by name. Returns '' if not found."""
+    template_dir = shared.user_data_dir / 'instruction-templates'
+    for ext in utils.TEMPLATE_EXTENSIONS:
+        path = template_dir / f'{name}{ext}'
+        if path.is_file():
+            break
+    else:
+        return ''
+
+    file_contents = path.read_text(encoding='utf-8')
+    if path.suffix in utils.JINJA_EXTENSIONS:
+        return file_contents
+
+    try:
+        data = yaml.safe_load(file_contents) or {}
+    except yaml.YAMLError:
+        logger.warning(f"Failed to parse '{path.name}' as YAML. Treating it as a raw Jinja template. Consider renaming it to '{name}.jinja'.")
+        return file_contents
+
+    if 'instruction_template' in data:
+        return data['instruction_template']
+    elif 'turn_template' in data:
+        return _jinja_template_from_old_format(data)
+    else:
+        return ''
+
+
 def load_instruction_template(template):
     if template == 'None':
         return ''
 
-    for name in (template, 'Alpaca'):
-        path = shared.user_data_dir / 'instruction-templates' / f'{name}.yaml'
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                file_contents = f.read()
-        except FileNotFoundError:
-            if name == template:
-                logger.warning(f"Instruction template '{template}' not found, falling back to Alpaca")
-            continue
+    result = load_template_by_name(template)
+    if result:
+        return result
 
-        break
-    else:
-        return ''
-    data = yaml.safe_load(file_contents)
-    if 'instruction_template' in data:
-        return data['instruction_template']
-    else:
-        return _jinja_template_from_old_format(data)
+    logger.warning(f"Instruction template '{template}' not found, falling back to Alpaca")
+    return load_template_by_name('Alpaca')
 
 
 def _jinja_template_from_old_format(params, verbose=False):

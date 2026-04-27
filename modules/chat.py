@@ -2767,9 +2767,17 @@ def handle_save_template_click(instruction_template_str):
 
 def handle_delete_template_click(template):
     import gradio as gr
-    root = str(shared.user_data_dir / 'instruction-templates') + '/'
+    from modules.utils import TEMPLATE_EXTENSIONS
+    template_dir = shared.user_data_dir / 'instruction-templates'
+    filename = f"{template}.yaml"
+    for ext in TEMPLATE_EXTENSIONS:
+        if (template_dir / f"{template}{ext}").exists():
+            filename = f"{template}{ext}"
+            break
+
+    root = str(template_dir) + '/'
     return [
-        f"{template}.yaml",
+        filename,
         root,
         root,
         gr.update(visible=True)
