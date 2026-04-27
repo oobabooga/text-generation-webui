@@ -47,6 +47,10 @@ def is_x86_64():
     return platform.machine() == "x86_64"
 
 
+def is_nvidia(gpu_choice):
+    return gpu_choice.startswith("NVIDIA_CUDA")
+
+
 def is_installed():
     site_packages_path = None
     for sitedir in site.getsitepackages():
@@ -81,6 +85,12 @@ def get_gpu_choice():
     """Get GPU choice from state file or ask user"""
     state = load_state()
     gpu_choice = state.get('gpu_choice')
+    
+    # Migrate old state values
+    if gpu_choice == 'NVIDIA_CUDA128':
+        gpu_choice = 'NVIDIA_CUDA12'
+        state['gpu_choice'] = gpu_choice
+        save_state(state)
 
     if not gpu_choice:
         if "GPU_CHOICE" in os.environ:
@@ -99,7 +109,23 @@ def get_gpu_choice():
             )
 
         # Convert choice to GPU name
-        gpu_choice = {"A": "NVIDIA_CUDA128", "B": "AMD", "C": "APPLE", "D": "INTEL", "N": "NONE"}[choice]
+        if choice == "A":
+            # Ask for NVIDIA CUDA version
+            if "NVIDIA_CUDA_CHOICE" in os.environ:
+                cuda_choice = os.environ["NVIDIA_CUDA_CHOICE"].upper()
+                print_big_message(f"Selected NVIDIA CUDA choice \"{cuda_choice}\" based on the NVIDIA_CUDA_CHOICE environment variable.")
+            else:
+                cuda_choice = get_user_choice(
+                    "Which CUDA version do you want for llama.cpp?",
+                    {
+                        'A': 'CUDA 12.4 - Supports all GPUs',
+                        'B': 'CUDA 13.1 - Faster on RTX 50xx Blackwell, but drops GTX 750/900/1000 and Titan V (needs driver >= 580)',
+                    },
+                )
+
+            gpu_choice = {"A": "NVIDIA_CUDA12", "B": "NVIDIA_CUDA13"}[cuda_choice]
+        else:
+            gpu_choice = {"B": "AMD", "C": "APPLE", "D": "INTEL", "N": "NONE"}[choice]
 
         # Save choice to state
         state['gpu_choice'] = gpu_choice
@@ -113,7 +139,7 @@ def get_pytorch_install_command(gpu_choice):
     base_cmd = f"python -m pip install torch=={TORCH_VERSION} "
     pypi_fallback = " --extra-index-url https://pypi.org/simple/"
 
-    if gpu_choice == "NVIDIA_CUDA128":
+    if is_nvidia(gpu_choice):
         return base_cmd + "--index-url https://download.pytorch.org/whl/cu128" + pypi_fallback
     elif gpu_choice == "AMD":
         py_tag = f"cp{PYTHON_VERSION.replace('.', '')}"
@@ -131,7 +157,7 @@ def get_pytorch_update_command(gpu_choice):
     base_cmd = f"python -m pip install --upgrade torch=={TORCH_VERSION} "
     pypi_fallback = " --extra-index-url https://pypi.org/simple/"
 
-    if gpu_choice == "NVIDIA_CUDA128":
+    if is_nvidia(gpu_choice):
         return f"{base_cmd}--index-url https://download.pytorch.org/whl/cu128" + pypi_fallback
     elif gpu_choice == "AMD":
         py_tag = f"cp{PYTHON_VERSION.replace('.', '')}"
@@ -148,8 +174,10 @@ def get_requirements_file(gpu_choice):
     """Get requirements file path based on GPU choice"""
     requirements_base = os.path.join("requirements", "full")
 
-    if gpu_choice == "NVIDIA_CUDA128":
+    if gpu_choice == "NVIDIA_CUDA12":
         file_name = "requirements.txt"
+    elif gpu_choice == "NVIDIA_CUDA13":
+        file_name = "requirements_nvidia_cuda13.txt"
     elif gpu_choice == "AMD":
         file_name = "requirements_amd.txt"
     elif gpu_choice == "APPLE":
@@ -303,8 +331,9 @@ def install_webui():
                 cmd_flags_file.write("\n--cpu\n")
 
     # Handle CUDA version display
-    elif any((is_windows(), is_linux())) and gpu_choice == "NVIDIA_CUDA128":
-        print("CUDA: 12.8")
+    elif any((is_windows(), is_linux())) and is_nvidia(gpu_choice):
+        llama_cuda = "12.4" if gpu_choice == "NVIDIA_CUDA12" else "13.1"
+        print(f"PyTorch CUDA: 12.8, llama.cpp CUDA: {llama_cuda}")
 
     # No PyTorch for AMD on Windows
     elif is_windows() and gpu_choice == "AMD":
