@@ -21,7 +21,7 @@ Example: https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF
 * **mmproj**: Path to the mmproj file for multimodal (vision) models. This enables image understanding capabilities.
 * **streaming_llm**: Experimental feature to avoid re-evaluating the entire prompt when part of it is removed, for instance, when you hit the context length for the model in chat mode and an old message is removed.
 * **cpu**: Force a version of llama.cpp compiled without GPU acceleration to be used. Can usually be ignored. Only set this if you want to use CPU only and llama.cpp doesn't work otherwise.
-* **row_split**: Split the model by rows across GPUs. This may improve multi-gpu performance.
+* **split_mode**: How to split the model across multiple GPUs. "tensor" can make multi-GPU significantly faster.
 * **no_kv_offload**: Do not offload the KV cache to the GPU. This saves VRAM but reduces performance.
 * **no_mmap**: Loads the model into memory at once, possibly preventing I/O operations later on at the cost of a longer load time.
 * **mlock**: Force the system to keep the model in RAM rather than swapping or compressing.
