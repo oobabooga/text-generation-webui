@@ -96,6 +96,16 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
     for reply in generate_func(question, original_question, state, stopping_strings, is_chat=is_chat):
         cur_time = time.monotonic()
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
+
+        try:
+            reply = apply_extensions('output_stream', reply, state, is_chat=is_chat, is_final=False)
+        except Exception:
+            try:
+                logger.error('Error in streaming extension hook')
+            except Exception:
+                pass
+            traceback.print_exc()
+
         if escape_html:
             reply = html.escape(reply)
 
@@ -121,6 +131,15 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
         stop_event = state.get('stop_event')
         if stop_found or shared.stop_everything or (stop_event and stop_event.is_set()):
             break
+
+    try:
+        reply = apply_extensions('output_stream', reply, state, is_chat=is_chat, is_final=True)
+    except Exception:
+        try:
+            logger.error('Error in streaming extension hook')
+        except Exception:
+            pass
+        traceback.print_exc()
 
     if not is_chat:
         reply = apply_extensions('output', reply, state)
