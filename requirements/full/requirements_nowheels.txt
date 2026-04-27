@@ -10,7 +10,7 @@ markdown
 mcp==1.27.0
 numpy==2.2.*
 pandas
-peft==0.18.*
+peft==0.19.*
 Pillow>=9.5.0
 pydantic==2.11.0
 pymupdf==1.27.*
