@@ -78,10 +78,8 @@ def get_model_metadata(model):
                 shared.moe_arch = metadata[k]
             elif k.endswith('.expert_count'):
                 shared.moe_total_experts = metadata[k]
-                model_settings['moe_total_experts'] = metadata[k]
             elif k.endswith('.expert_used_count'):
                 shared.moe_default_experts = metadata[k]
-                model_settings['moe_default_experts'] = metadata[k]
 
         if 'tokenizer.chat_template' in metadata:
             template = metadata['tokenizer.chat_template']
@@ -265,8 +263,8 @@ def apply_model_settings_to_state(model, state):
 
     # Handle MoE expert override UI
     if state['loader'] == 'llama.cpp':
-        total = model_settings.get('moe_total_experts', 0)
-        default = model_settings.get('moe_default_experts', 0)
+        total = shared.moe_total_experts
+        default = shared.moe_default_experts
         if total > 0 and default > 0:
             state['moe_experts_override_enabled'] = gr.update(
                 visible=True,
