@@ -452,6 +452,10 @@ class LlamaServer:
             cmd += ["--threads-batch", str(shared.args.threads_batch)]
         if shared.args.cpu_moe:
             cmd.append("--cpu-moe")
+        if getattr(shared.args, 'moe_experts_override_enabled', False) and shared.moe_arch:
+            count = int(getattr(shared.args, 'moe_experts_override', 0))
+            if count > 0:
+                cmd += ["--override-kv", f"{shared.moe_arch}.expert_used_count=int:{count}"]
         if shared.args.no_mmap:
             cmd.append("--no-mmap")
         if shared.args.mlock:
