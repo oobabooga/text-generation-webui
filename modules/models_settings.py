@@ -27,6 +27,11 @@ def get_model_metadata(model):
     # Fallback settings
     model_settings = get_fallback_settings()
 
+    # Reset MoE info for each model load
+    shared.moe_arch = ''
+    shared.moe_total_experts = 0
+    shared.moe_default_experts = 0
+
     path = model_path / 'config.json'
     if path.exists():
         with open(path, 'r', encoding='utf-8') as f:
@@ -69,6 +74,14 @@ def get_model_metadata(model):
             elif k.endswith('.block_count'):
                 model_settings['gpu_layers'] = -1
                 model_settings['max_gpu_layers'] = metadata[k] + 1
+            elif k == 'general.architecture':
+                shared.moe_arch = metadata[k]
+            elif k.endswith('.expert_count'):
+                shared.moe_total_experts = metadata[k]
+                model_settings['moe_total_experts'] = metadata[k]
+            elif k.endswith('.expert_used_count'):
+                shared.moe_default_experts = metadata[k]
+                model_settings['moe_default_experts'] = metadata[k]
 
         if 'tokenizer.chat_template' in metadata:
             template = metadata['tokenizer.chat_template']
@@ -249,6 +262,24 @@ def apply_model_settings_to_state(model, state):
         )
 
         state['vram_info'] = vram_info
+
+    # Handle MoE expert override UI
+    if state['loader'] == 'llama.cpp':
+        total = model_settings.get('moe_total_experts', 0)
+        default = model_settings.get('moe_default_experts', 0)
+        if total > 0 and default > 0:
+            state['moe_experts_override_enabled'] = gr.update(
+                visible=True,
+                value=False,
+                info=f"Model trained with {default} active experts out of {total} total"
+            )
+            state['moe_experts_override'] = gr.update(maximum=total, value=default, visible=False)
+        else:
+            state['moe_experts_override_enabled'] = gr.update(visible=False, value=False)
+            state['moe_experts_override'] = gr.update(visible=False)
+    else:
+        state['moe_experts_override_enabled'] = gr.update(visible=False, value=False)
+        state['moe_experts_override'] = gr.update(visible=False)
 
     return state
 
