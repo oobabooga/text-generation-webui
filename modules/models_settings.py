@@ -262,6 +262,8 @@ def apply_model_settings_to_state(model, state):
         state['vram_info'] = vram_info
 
     # Handle MoE expert override UI
+    state['moe_experts_override_enabled'] = gr.update(visible=False, value=False)
+    state['moe_experts_override'] = gr.update(visible=False)
     if state['loader'] == 'llama.cpp':
         total = shared.moe_total_experts
         default = shared.moe_default_experts
@@ -272,12 +274,6 @@ def apply_model_settings_to_state(model, state):
                 info=f"Model trained with {default} active experts out of {total} total"
             )
             state['moe_experts_override'] = gr.update(maximum=total, value=default, visible=False)
-        else:
-            state['moe_experts_override_enabled'] = gr.update(visible=False, value=False)
-            state['moe_experts_override'] = gr.update(visible=False)
-    else:
-        state['moe_experts_override_enabled'] = gr.update(visible=False, value=False)
-        state['moe_experts_override'] = gr.update(visible=False)
 
     return state
 
