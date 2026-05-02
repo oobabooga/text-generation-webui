@@ -20,6 +20,12 @@ const userArgs = dashIdx >= 0 ? argv.slice(dashIdx + 1) : argv;
 
 app.setName(TITLE);
 
+// chrome-sandbox needs SUID root, which the unzipped portable build can't ship.
+// Safe to disable here — we only load our own localhost server, no untrusted content.
+if (process.platform === "linux") {
+  app.commandLine.appendSwitch("no-sandbox");
+}
+
 let serverProcess = null;
 let mainWindow = null;
 let portCheckInterval = null;

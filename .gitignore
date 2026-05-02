@@ -22,6 +22,7 @@ venv
 cert.pem
 key.pem
 package.json
+!desktop/package.json
 package-lock.json
 Thumbs.db
 wandb
