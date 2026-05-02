@@ -9,16 +9,15 @@
     --selected-item-color-dark: #282930;
 
     /* Role-based design tokens (light mode defaults).
-       Surfaces use a slight blue-leaning gray. The rail is one
-       step darker than the sidebar so the two read as distinct
-       elevations. */
+       Blue-leaning grays. The rail is one step darker than
+       the sidebar so the two read as distinct elevations. */
     --bg-body: #ffffff;
-    --bg-rail: #dbe1ec;
-    --bg-sidebar: #e8ecf3;
-    --bg-input: #f1f4f9;
+    --bg-rail: #e4e8f0;
+    --bg-sidebar: #f0f3fb;
+    --bg-input: #f3f4f6;
     --bg-elevated: #ffffff;
-    --bg-hover: rgba(60, 90, 160, 0.08);
-    --bg-active: rgba(60, 90, 160, 0.16);
+    --bg-hover: #dbeafe;
+    --bg-active: #c8d8f5;
     --text: #1a1a1a;
     --text-muted: #6b6b73;
     --border: rgba(0, 0, 0, 0.10);
@@ -52,7 +51,7 @@
     --text-muted: #a3a3a8;
     --border: rgba(255, 255, 255, 0.10);
     --border-soft: rgba(255, 255, 255, 0.06);
-    --accent: #7aa2ff;
+    --accent: #4a72ff;
 }
 
 @font-face {
@@ -723,10 +722,6 @@ audio {
     background: transparent;
 }
 
-#chat-input .thumbnails {
-    padding-top: 3px;
-}
-
 .chat-input-positioned {
     max-width: 54rem;
     left: 50%;
@@ -766,60 +761,6 @@ audio {
 
     #chat-tab > :first-child {
         max-width: unset;
-    }
-}
-
-#typing-container {
-    display: none;
-    position: absolute;
-    background-color: transparent;
-    left: 23px;
-    top: -25px;
-    padding: var(--block-padding);
-}
-
-.typing {
-    position: relative;
-}
-
-.visible-dots #typing-container {
-    display: block;
-}
-
-.typing span {
-    content: '';
-    animation: blink 1.5s infinite;
-    animation-fill-mode: both;
-    height: 10px;
-    width: 10px;
-    background: #3b5998;;
-    position: absolute;
-    left:0;
-    top:0;
-    border-radius: 50%;
-}
-
-.typing .dot1 {
-    animation-delay: .2s;
-    margin-left: calc(10px * 1.5);
-}
-
-.typing .dot2 {
-    animation-delay: .4s;
-    margin-left: calc(10px * 3);
-}
-
-@keyframes blink {
-    0% {
-        opacity: .1;
-    }
-
-    20% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: .1;
     }
 }
 
@@ -1924,13 +1865,13 @@ button#swap-height-width {
 }
 
 #image-output-gallery, #image-output-gallery > :nth-child(2) {
-    height: calc(100vh - 83px);
-    max-height: calc(100vh - 83px);
+    height: calc(100vh - 91px);
+    max-height: calc(100vh - 91px);
 }
 
 #image-history-gallery, #image-history-gallery > :nth-child(2) {
-    height: calc(100vh - 174px);
-    max-height: calc(100vh - 174px);
+    height: calc(100vh - 182px);
+    max-height: calc(100vh - 182px);
 }
 
 /* Additional CSS for the paginated image gallery */
@@ -2158,10 +2099,10 @@ thead + tbody tr:first-child th {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr);
     gap: 2px;
-    background: var(--bg-elevated);
+    background: transparent;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    padding: 3px;
+    padding: 2px;
 }
 
 #chat-mode .wrap > label {
@@ -2519,34 +2460,53 @@ select:focus-visible {
     min-width: 0;
 }
 
-/* Send/Stop as icon-only buttons. Don't set `display` — it
-   would override Gradio's `.hidden { display: none }` used
-   for visible=False on the Stop button. */
+/* Multimodal attachment thumbnails: in-flow inside the
+   composer card (reserves layout space — chat content above
+   pushes up automatically). Styled as a distinct zone with
+   a subtle bottom divider rather than its own card. */
+#chat-input .thumbnails {
+    padding: 6px 0 8px !important;
+    background: transparent;
+    gap: 8px !important;
+}
+
+/* Send: accent-color circle with white icon. Stop: red ghost
+   square. Don't set `display` — it would override Gradio's
+   `.hidden { display: none }` used for visible=False on Stop. */
 #chat-input-row #Generate,
 #chat-input-row #stop {
     width: 32px !important;
     min-width: 32px !important;
     height: 32px !important;
     padding: 0 !important;
-    background: transparent !important;
-    color: var(--text) !important;
     border: none !important;
-    border-radius: 0 !important;
     box-shadow: none !important;
     font-size: 0 !important;
     line-height: 32px;
     text-align: center;
-    transition: opacity var(--motion);
+    transition: opacity var(--motion), background-color var(--motion);
 }
 
-/* Send icon: filled right-pointing triangle (a refined play
-   shape, rounded corners, no inner detail). Drawn via
-   mask-image so it picks up currentColor. */
+#chat-input-row #Generate {
+    background: var(--accent) !important;
+    color: #ffffff !important;
+    border-radius: 50% !important;
+}
+
+#chat-input-row #stop {
+    background: var(--bg-active) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 50% !important;
+}
+
+/* Send icon: Lucide send-horizontal — paper airplane pointing
+   right with a horizontal accent line. */
 #chat-input-row #Generate::before {
     width: 18px;
     height: 18px;
-    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black' stroke='black' stroke-width='2' stroke-linejoin='round'><polygon points='6 4 20 12 6 20'/></svg>");
-            mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black' stroke='black' stroke-width='2' stroke-linejoin='round'><polygon points='6 4 20 12 6 20'/></svg>");
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 3 6 12l-3 9 19-9Z'/><path d='M6 12h16'/></svg>");
+            mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 3 6 12l-3 9 19-9Z'/><path d='M6 12h16'/></svg>");
 }
 
 /* Stop icon: filled square (no mask needed — just a colored
@@ -2624,11 +2584,10 @@ select:focus-visible {
     box-shadow: inset 0 -2px 0 var(--accent) !important;
 }
 
-/* Slider — Gradio's default white thumb with light border looks
-   plasticky in dark mode. Replace with a neutral thumb that
-   uses tokens. */
+/* Slider thumb — use the accent color so it matches the rest
+   of the design language (selected-tab indicator, etc.). */
 input[type="range"]::-webkit-slider-thumb {
-    background: var(--text) !important;
+    background: var(--accent) !important;
     border: none !important;
     height: 16px !important;
     width: 16px !important;
@@ -2637,16 +2596,11 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 input[type="range"]::-moz-range-thumb {
-    background: var(--text) !important;
+    background: var(--accent) !important;
     border: none !important;
     height: 16px !important;
     width: 16px !important;
     box-shadow: none !important;
-}
-
-input[type="range"]::-webkit-slider-thumb:hover,
-input[type="range"]::-moz-range-thumb:hover {
-    background: var(--accent) !important;
 }
 
 /* Dropdown popover — kill Gradio's heavy default shadow,

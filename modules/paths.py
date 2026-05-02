@@ -6,8 +6,10 @@ def resolve_user_data_dir():
     """
     Resolve the user_data directory path. Order of precedence:
     1. --user-data-dir CLI flag (pre-parsed from sys.argv before argparse)
-    2. In --portable mode, prefer ../user_data if it exists
-    3. Default: 'user_data'
+    2. --portable + ../app exists: ../../user_data (electron build, where
+       the project lives one level deeper than in classic portable mode)
+    3. --portable: ../user_data
+    4. Default: 'user_data'
     """
     script_dir = Path(__file__).resolve().parent.parent
 
@@ -18,9 +20,15 @@ def resolve_user_data_dir():
         elif arg.startswith('--user-data-dir='):
             return Path(arg.split('=', 1)[1])
 
-    # In portable mode, prefer ../user_data if it exists
     is_portable = '--portable' in sys.argv
     if is_portable:
+        # Electron build: ../app exists alongside the project; prefer ../../user_data.
+        if (script_dir.parent / 'app').exists():
+            electron_user_data = script_dir.parent.parent / 'user_data'
+            if electron_user_data.exists():
+                return electron_user_data
+
+        # Classic portable build: ../user_data.
         parent_path = script_dir.parent / 'user_data'
         if parent_path.exists():
             return parent_path

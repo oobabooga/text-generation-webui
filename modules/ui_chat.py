@@ -56,7 +56,6 @@ def create_ui():
 
                     with gr.Column(scale=10, elem_id='chat-input-container'):
                         shared.gradio['textbox'] = gr.MultimodalTextbox(label='', placeholder='Send a message', file_types=['text', '.pdf', 'image'], file_count="multiple", elem_id='chat-input', elem_classes=['add_scrollbar'])
-                        shared.gradio['typing-dots'] = gr.HTML(value='<div class="typing"><span></span><span class="dot1"></span><span class="dot2"></span></div>', label='typing', elem_id='typing-container')
 
                     with gr.Column(scale=1, elem_id='generate-stop-container'):
                         with gr.Row():
