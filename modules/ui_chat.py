@@ -27,7 +27,7 @@ def create_ui():
                 with gr.Row(elem_id='past-chats-buttons'):
                     shared.gradio['branch_chat'] = gr.Button('Branch', elem_classes=['refresh-button', 'refresh-button-medium'], elem_id='Branch', interactive=not mu)
                     shared.gradio['rename_chat'] = gr.Button('Rename', elem_classes=['refresh-button', 'refresh-button-medium'], interactive=not mu)
-                    shared.gradio['delete_chat'] = gr.Button('🗑️', visible=False, elem_classes='refresh-button', interactive=not mu, elem_id='delete_chat')
+                    shared.gradio['delete_chat'] = gr.Button('🗑️', visible=False, elem_classes=['refresh-button', 'delete-icon-btn'], interactive=not mu, elem_id='delete_chat')
                     shared.gradio['Start new chat'] = gr.Button('New chat', elem_classes=['refresh-button', 'refresh-button-medium', 'focus-on-chat-input'], elem_id='new-chat-btn')
                     shared.gradio['Start incognito chat'] = gr.Button('Incognito chat', visible=False, elem_id='incognito-chat-btn')
                     shared.gradio['branch_index'] = gr.Number(value=-1, precision=0, visible=False, elem_id="Branch-index", interactive=True)
@@ -157,8 +157,8 @@ def create_character_settings_ui():
                     with gr.Row():
                         shared.gradio['character_menu'] = gr.Dropdown(value=shared.settings['character'], choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.', elem_classes='slim-dropdown')
                         ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button', interactive=not mu)
-                        shared.gradio['save_character'] = gr.Button('💾', elem_classes='refresh-button', elem_id="save-character", interactive=not mu)
-                        shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
+                        shared.gradio['save_character'] = gr.Button('💾', elem_classes=['refresh-button', 'save-icon-btn'], elem_id="save-character", interactive=not mu)
+                        shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes=['refresh-button', 'delete-icon-btn'], interactive=not mu)
                         shared.gradio['restore_character'] = gr.Button('Restore character', elem_classes='refresh-button', interactive=True, elem_id='restore-character')
 
                     shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
@@ -169,8 +169,8 @@ def create_character_settings_ui():
                     with gr.Row():
                         shared.gradio['user_menu'] = gr.Dropdown(value=shared.settings['user'], choices=utils.get_available_users(), label='User', elem_id='user-menu', info='Select a user profile.', elem_classes='slim-dropdown')
                         ui.create_refresh_button(shared.gradio['user_menu'], lambda: None, lambda: {'choices': utils.get_available_users()}, 'refresh-button', interactive=not mu)
-                        shared.gradio['save_user'] = gr.Button('💾', elem_classes='refresh-button', elem_id="save-user", interactive=not mu)
-                        shared.gradio['delete_user'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
+                        shared.gradio['save_user'] = gr.Button('💾', elem_classes=['refresh-button', 'save-icon-btn'], elem_id="save-user", interactive=not mu)
+                        shared.gradio['delete_user'] = gr.Button('🗑️', elem_classes=['refresh-button', 'delete-icon-btn'], interactive=not mu)
 
                     shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Name')
                     shared.gradio['user_bio'] = gr.Textbox(value=shared.settings['user_bio'], lines=10, label='Description', info='Here you can optionally write a description of yourself.', placeholder='{{user}}\'s personality: ...', elem_classes=['add_scrollbar'], elem_id="user-description")
@@ -216,8 +216,8 @@ def create_chat_settings_ui():
                     shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Saved instruction templates', info="After selecting the template, click on \"Load\" to load and apply it.", value='None', elem_classes='slim-dropdown')
                     ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button', interactive=not mu)
                     shared.gradio['load_template'] = gr.Button("Load", elem_classes='refresh-button')
-                    shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
-                    shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['save_template'] = gr.Button('💾', elem_classes=['refresh-button', 'save-icon-btn'], interactive=not mu)
+                    shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes=['refresh-button', 'delete-icon-btn'], interactive=not mu)
 
             with gr.Column():
                 pass

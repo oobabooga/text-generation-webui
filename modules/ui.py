@@ -43,12 +43,10 @@ with open(Path(__file__).resolve().parent / '../js/update_big_picture.js', 'r', 
 with open(Path(__file__).resolve().parent / '../js/dark_theme.js', 'r', encoding='utf-8') as f:
     dark_theme_js = f.read()
 
-refresh_symbol = '🔄'
-delete_symbol = '🗑️'
-save_symbol = '💾'
+refresh_symbol = '↻'  # a11y label; visible glyph swapped via CSS .refresh-icon-btn
 
 theme = gr.themes.Default(
-    font=['Noto Sans', 'Helvetica', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+    font=['Inter', 'Noto Sans', 'Helvetica', 'ui-sans-serif', 'system-ui', 'sans-serif'],
     font_mono=['IBM Plex Mono', 'ui-monospace', 'Consolas', 'monospace'],
 ).set(
     border_color_primary='#c5c5d2',
@@ -81,7 +79,6 @@ if not shared.args.old_colors:
         block_title_text_color='*body_text_color',
         button_primary_background_fill='#374151',
         button_primary_background_fill_hover='#4b5563',
-        button_primary_background_fill_hover_dark='rgba(255, 255, 255, 0.05)',
         button_primary_border_color='#374151',
         button_primary_text_color='white',
         input_shadow="none",
@@ -99,6 +96,9 @@ if not shared.args.old_colors:
         button_secondary_border_color_dark='var(--border-color-dark)',
         body_background_fill_dark='var(--dark-gray, #212125)',
         button_primary_background_fill_dark='transparent',
+        button_primary_background_fill_hover_dark='rgba(255, 255, 255, 0.05)',
+        button_primary_border_color_dark='var(--border)',
+        button_primary_border_color_hover_dark='var(--border)',
         button_secondary_background_fill_dark='transparent',
         checkbox_label_background_fill_dark='transparent',
         button_cancel_background_fill_dark='transparent',
@@ -553,7 +553,10 @@ def create_refresh_button(refresh_component, refresh_method, refreshed_args, ele
 
         return gr.update(**(args or {}))
 
-    refresh_button = gr.Button(refresh_symbol, elem_classes=elem_class, interactive=interactive)
+    classes = list(elem_class) if isinstance(elem_class, (list, tuple)) else [elem_class]
+    if 'refresh-icon-btn' not in classes:
+        classes.append('refresh-icon-btn')
+    refresh_button = gr.Button(refresh_symbol, elem_classes=classes, interactive=interactive)
     refresh_button.click(
         fn=lambda: {k: tuple(v) if type(k) is list else v for k, v in refresh().items()},
         inputs=[],

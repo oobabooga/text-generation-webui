@@ -35,7 +35,7 @@ def create_ui():
                     ui.create_refresh_button(shared.gradio['prompt_menu-default'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button', interactive=not mu)
                     shared.gradio['new_prompt-default'] = gr.Button('New', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['rename_prompt-default'] = gr.Button('Rename', elem_classes='refresh-button', interactive=not mu)
-                    shared.gradio['delete_prompt-default'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['delete_prompt-default'] = gr.Button('🗑️', elem_classes=['refresh-button', 'delete-icon-btn'], interactive=not mu)
 
                     # Rename elements (initially hidden)
                     shared.gradio['rename_prompt_to-default'] = gr.Textbox(label="New name", elem_classes=['no-background'], visible=False)
