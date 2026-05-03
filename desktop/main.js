@@ -20,10 +20,14 @@ const userArgs = dashIdx >= 0 ? argv.slice(dashIdx + 1) : argv;
 
 app.setName(TITLE);
 
-// chrome-sandbox needs SUID root, which the unzipped portable build can't ship.
-// Safe to disable here — we only load our own localhost server, no untrusted content.
+// Linux portable-build safe defaults:
+// - no-sandbox: chrome-sandbox needs SUID root, which an unzipped tarball can't ship.
+// - no-zygote: zygote's mount namespace hides /dev/shm and /tmp from subprocesses,
+//   producing a blank gray window; disabling restores full filesystem visibility.
+// Safe to disable sandboxing here — we only load our own localhost server.
 if (process.platform === "linux") {
   app.commandLine.appendSwitch("no-sandbox");
+  app.commandLine.appendSwitch("no-zygote");
 }
 
 let serverProcess = null;
