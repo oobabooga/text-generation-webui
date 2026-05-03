@@ -12,4 +12,12 @@ for arg; do
             ;;
     esac
 done
-exec "$APP/__ELECTRON__" "$APP" -- "$@"
+# --no-sandbox / --no-zygote needed on Linux: chrome-sandbox can't be SUID
+# in an unzipped tarball, and the zygote's mount namespace hides /dev/shm
+# and /tmp. Must be on the actual command line — appendSwitch in main.js
+# runs too late on Ubuntu 24.04+ with restricted unprivileged userns.
+if [[ "$(uname)" == "Linux" ]]; then
+    exec "$APP/__ELECTRON__" --no-sandbox --no-zygote "$APP" -- "$@"
+else
+    exec "$APP/__ELECTRON__" "$APP" -- "$@"
+fi

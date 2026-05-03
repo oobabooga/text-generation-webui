@@ -20,17 +20,11 @@ const userArgs = dashIdx >= 0 ? argv.slice(dashIdx + 1) : argv;
 
 app.setName(TITLE);
 
-// Linux portable-build safe defaults:
-// - no-sandbox: chrome-sandbox needs SUID root, which an unzipped tarball can't ship.
-// - no-zygote: zygote's mount namespace hides /dev/shm and /tmp from subprocesses,
-//   producing a blank gray window; disabling restores full filesystem visibility.
-// - disable-accelerated-video-decode/encode: skip Chromium's hardware video pipeline,
-//   which probes VAAPI at startup and logs a noisy version-mismatch error on systems
-//   with older libva. We don't render video content anyway.
-// Safe to disable sandboxing here — we only load our own localhost server.
+// Skip Chromium's hardware video pipeline, which probes VAAPI at startup and
+// logs a noisy version-mismatch error on systems with older libva. We don't
+// render video content anyway. (--no-sandbox / --no-zygote are passed by the
+// launcher script — they must be on the actual argv, not appendSwitch.)
 if (process.platform === "linux") {
-  app.commandLine.appendSwitch("no-sandbox");
-  app.commandLine.appendSwitch("no-zygote");
   app.commandLine.appendSwitch("disable-accelerated-video-decode");
   app.commandLine.appendSwitch("disable-accelerated-video-encode");
 }
