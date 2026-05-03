@@ -338,9 +338,9 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state, ma
         output['default_extensions'] = extensions_list
 
         for extension_name in extensions_list:
-            extension = getattr(extensions, extension_name, None)
-            if extension:
-                extension = extension.script
+            state_entry = extensions_module.state.get(extension_name)
+            if state_entry:
+                extension = state_entry[2]
                 if hasattr(extension, 'params'):
                     params = getattr(extension, 'params')
                     for param in params:
