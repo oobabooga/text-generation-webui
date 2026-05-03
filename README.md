@@ -50,7 +50,7 @@ For additional backends (ExLlamaV3, Transformers), training, image generation, a
 ### Training & image generation
 
 - **Training**: Fine-tune LoRAs on multi-turn chat or raw text datasets. Supports resuming interrupted runs ([tutorial](https://github.com/oobabooga/textgen/wiki/05-%E2%80%90-Training-Tab)).
-- **Image generation**: A dedicated tab for `diffusers` models like **Z-Image-Turbo**. 4-bit/8-bit quantization and a persistent gallery with image metadata ([tutorial](https://github.com/oobabooga/textgen/wiki/Image-Generation-Tutorial)).
+- **Image generation**: A dedicated tab for `diffusers` models like **Z-Image-Turbo**. Features 4-bit/8-bit quantization and a persistent gallery with image metadata ([tutorial](https://github.com/oobabooga/textgen/wiki/Image-Generation-Tutorial)).
 
 ### Privacy & interface
 
@@ -90,7 +90,7 @@ These formats require the one-click installer (not the portable build).
 
 ## Installation
 
-For the desktop app, see the [portable builds](https://github.com/oobabooga/textgen/releases). The install paths below run the web UI in your browser.
+For the desktop app, see the [portable builds](https://github.com/oobabooga/textgen/releases). The options below run the web UI in your browser instead.
 
 ### Manual portable install with venv
 
