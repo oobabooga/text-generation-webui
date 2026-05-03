@@ -36,8 +36,6 @@ def signal_handler(sig, frame):
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
-    logger.info("Received Ctrl+C. Shutting down TextGen gracefully.")
-
     # Explicitly stop LlamaServer to avoid __del__ cleanup issues during shutdown
     if shared.model and shared.model.__class__.__name__ == 'LlamaServer':
         try:
