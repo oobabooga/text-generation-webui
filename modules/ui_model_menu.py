@@ -111,7 +111,6 @@ def create_ui():
                                 shared.gradio['cpu_moe'] = gr.Checkbox(label="cpu-moe", value=shared.args.cpu_moe, info='Move the experts to the CPU. Saves VRAM on MoE models.')
                                 shared.gradio['moe_experts_override_enabled'] = gr.Checkbox(label="Override MoE expert count", value=False, visible=False, info='')
                                 shared.gradio['moe_experts_override'] = gr.Slider(label="Active experts per token", minimum=1, maximum=256, step=1, value=0, visible=False, info='Higher = slower but potentially better quality. Too low will produce odd results.')
-                                shared.gradio['row_split'] = gr.Checkbox(label="row_split", value=shared.args.row_split, info='Split the model by rows across GPUs. This may improve multi-gpu performance.')
                                 shared.gradio['no_kv_offload'] = gr.Checkbox(label="no_kv_offload", value=shared.args.no_kv_offload, info='Do not offload the K, Q, V to the GPU. This saves VRAM but reduces performance.')
                                 shared.gradio['no_mmap'] = gr.Checkbox(label="no-mmap", value=shared.args.no_mmap)
                                 shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
