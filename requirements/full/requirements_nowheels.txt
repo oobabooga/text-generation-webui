@@ -1,6 +1,7 @@
 accelerate==1.13.*
 audioop-lts<1.0; python_version >= "3.13"
 datasets
+ddgs==9.14.1
 diffusers==0.37.*
 einops
 fastapi==0.112.4
@@ -23,7 +24,7 @@ scipy
 sentencepiece
 tensorboard
 torchao==0.15.*
-transformers==5.5.*
+transformers==5.6.*
 tqdm
 trafilatura==2.0.0
 wandb

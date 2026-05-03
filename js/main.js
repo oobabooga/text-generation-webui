@@ -134,14 +134,6 @@ document.addEventListener("keydown", function(event) {
 });
 
 //------------------------------------------------
-// Position the chat typing dots
-//------------------------------------------------
-typing = document.getElementById("typing-container");
-typingParent = typing.parentNode;
-typingSibling = typing.previousElementSibling;
-typingSibling.insertBefore(typing, typingSibling.childNodes[2]);
-
-//------------------------------------------------
 // Chat scrolling
 //------------------------------------------------
 const targetElement = document.getElementById("chat").parentNode.parentNode.parentNode;
@@ -181,7 +173,6 @@ targetElement.addEventListener("scroll", function() {
 // Create a MutationObserver instance
 const observer = new MutationObserver(function() {
   if (targetElement.classList.contains("_generating")) {
-    typing.parentNode.classList.add("visible-dots");
     document.getElementById("stop").style.display = "flex";
     document.getElementById("Generate").style.display = "none";
     // If the user is near the bottom, ensure auto-scroll is enabled
@@ -192,7 +183,6 @@ const observer = new MutationObserver(function() {
       window.isScrolled = false;
     }
   } else {
-    typing.parentNode.classList.remove("visible-dots");
     document.getElementById("stop").style.display = "none";
     document.getElementById("Generate").style.display = "flex";
   }

@@ -13,25 +13,21 @@
 
 # TextGen
 
-**The original local LLM interface.** Text, vision, tool-calling, training, image generation. UI + API, 100% offline and private.
+**A desktop app for local LLMs. Open source, no telemetry.** Text, vision, tool-calling, file attachments. UI + API.
 
 [![GitHub stars](https://img.shields.io/github/stars/oobabooga/textgen?style=for-the-badge&logo=github&logoColor=white&labelColor=black)](https://github.com/oobabooga/textgen)
 
+[![Chat mode](https://raw.githubusercontent.com/oobabooga/screenshots/refs/heads/main/CHAT-4.7.png)](https://raw.githubusercontent.com/oobabooga/screenshots/refs/heads/main/CHAT-4.7.png)
+
 ## Get started in 1 minute
 
-Zero setup. Download, unzip, run.
+Download, unzip, double-click `textgen`. A window opens.
 
 **https://github.com/oobabooga/textgen/releases**
 
 Portable builds for Linux, Windows, and macOS with CUDA, Vulkan, ROCm, and CPU-only options. All dependencies included. Compatible with GGUF (llama.cpp) models.
 
 For additional backends (ExLlamaV3, Transformers), training, image generation, and extensions, see [Installation](#installation).
-
-|![Instruct mode](https://github.com/oobabooga/screenshots/raw/main/INSTRUCT-4-6.png) | ![Chat mode](https://github.com/oobabooga/screenshots/raw/main/CHAT-4-6.png) |
-|:---:|:---:|
-| Instruct mode | Chat mode |
-|![Notebook mode](https://github.com/oobabooga/screenshots/raw/main/NOTEBOOK-4-6.png) | ![Parameters](https://github.com/oobabooga/screenshots/raw/main/PARAMETERS-4-6.png) |
-| Notebook mode | Parameters |
 
 ## Features
 
@@ -52,7 +48,7 @@ For additional backends (ExLlamaV3, Transformers), training, image generation, a
 ### Training & image generation
 
 - **Training**: Fine-tune LoRAs on multi-turn chat or raw text datasets. Supports resuming interrupted runs ([tutorial](https://github.com/oobabooga/textgen/wiki/05-%E2%80%90-Training-Tab)).
-- **Image generation**: A dedicated tab for `diffusers` models like **Z-Image-Turbo**. Features 4-bit/8-bit quantization and a persistent gallery with metadata ([tutorial](https://github.com/oobabooga/textgen/wiki/Image-Generation-Tutorial)).
+- **Image generation**: A dedicated tab for `diffusers` models like **Z-Image-Turbo**. Features 4-bit/8-bit quantization and a persistent gallery with image metadata ([tutorial](https://github.com/oobabooga/textgen/wiki/Image-Generation-Tutorial)).
 
 ### Privacy & interface
 
@@ -92,7 +88,7 @@ These formats require the one-click installer (not the portable build).
 
 ## Installation
 
-For a zero-setup option, see the [portable builds](https://github.com/oobabooga/textgen/releases).
+For the desktop app, see the [portable builds](https://github.com/oobabooga/textgen/releases). The options below run the web UI in your browser instead.
 
 ### Manual portable install with venv
 

@@ -14,7 +14,6 @@ import traceback
 from datetime import datetime
 from pathlib import Path
 
-import yaml
 import gradio as gr
 
 from modules import shared, ui, utils
@@ -217,26 +216,8 @@ def clean_path(base_path: str, path: str):
 
 
 def get_instruction_templates():
-    path = shared.user_data_dir / 'instruction-templates'
-    names = set()
-    for ext in ['yaml', 'yml', 'jinja', 'jinja2']:
-        for f in path.glob(f'*.{ext}'):
-            names.add(f.stem)
-    return ['None', 'Chat Template'] + sorted(names, key=utils.natural_keys)
-
-
-def load_template(name):
-    """Load a Jinja2 template string from {user_data_dir}/instruction-templates/."""
-    path = shared.user_data_dir / 'instruction-templates'
-    for ext in ['jinja', 'jinja2', 'yaml', 'yml']:
-        filepath = path / f'{name}.{ext}'
-        if filepath.exists():
-            if ext in ['jinja', 'jinja2']:
-                return filepath.read_text(encoding='utf-8')
-            else:
-                data = yaml.safe_load(filepath.read_text(encoding='utf-8'))
-                return data.get('instruction_template', '')
-    return ''
+    templates = utils.get_available_instruction_templates()  # ['None', ...]
+    return [templates[0], 'Chat Template'] + templates[1:]
 
 
 def backup_adapter(input_folder):
@@ -485,7 +466,8 @@ def do_train(lora_name: str, always_override: bool, all_linear: bool, q_proj_en:
                 return
         else:
             # Load custom instruction template and set on tokenizer
-            template_str = load_template(format)
+            from modules.models_settings import load_template_by_name
+            template_str = load_template_by_name(format)
             if not template_str:
                 yield f"Error: could not load instruction template '{format}'."
                 return

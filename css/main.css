@@ -1,11 +1,57 @@
 :root {
+    /* Legacy hue-named tokens (still referenced elsewhere). */
     --darker-gray: #1C1C1D;
     --dark-gray: #212125;
     --light-gray: #2C2E34;
     --light-theme-gray: #f0f3fb;
-    --border-color-dark: rgba(255, 255, 255, 0.15);
+    --border-color-dark: rgba(255, 255, 255, 0.10);
     --header-width: 112px;
     --selected-item-color-dark: #282930;
+
+    /* Role-based design tokens (light mode defaults).
+       Blue-leaning grays. The rail is one step darker than
+       the sidebar so the two read as distinct elevations. */
+    --bg-body: #ffffff;
+    --bg-rail: #e4e8f0;
+    --bg-sidebar: #f0f3fb;
+    --bg-input: #f3f4f6;
+    --bg-elevated: #ffffff;
+    --bg-hover: #dbeafe;
+    --bg-active: #c8d8f5;
+    --text: #1a1a1a;
+    --text-muted: #6b6b73;
+    --border: rgba(0, 0, 0, 0.10);
+    --border-soft: rgba(0, 0, 0, 0.06);
+    --accent: #4a72ff;
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+
+    --motion: 0.15s ease;
+    --motion-slow: 0.2s ease;
+}
+
+.dark {
+    --bg-body: #212125;
+    --bg-rail: #161617;
+    --bg-sidebar: #1a1a1c;
+    --bg-input: #2c2e34;
+    --bg-elevated: #1d1d1f;
+    --bg-hover: #2a2a2c;
+    --bg-active: #303033;
+    --text: #ececec;
+    --text-muted: #a3a3a8;
+    --border: rgba(255, 255, 255, 0.10);
+    --border-soft: rgba(255, 255, 255, 0.06);
+    --accent: #4a72ff;
 }
 
 @font-face {
@@ -20,6 +66,13 @@
     src: url('file/css/Inter/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype');
     font-weight: 100 900;
     font-style: italic;
+}
+
+body,
+.gradio-container,
+gradio-app {
+    font-family: 'Inter', 'Noto Sans', ui-sans-serif, system-ui, -apple-system,
+                 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* Hide spin buttons on number inputs (look bad on Windows) */
@@ -153,20 +206,23 @@ gradio-app > :first-child {
 .header_bar button {
     margin: 0;
     padding: 0.75rem;
+    border-radius: 0 !important;
+    transition: background-color var(--motion), color var(--motion);
+}
+
+.header_bar button:hover {
+    background-color: var(--bg-hover);
 }
 
 .header_bar button.selected {
     border: 0;
+    border-radius: 0;
 }
 
 .dark .header_bar {
     border: none !important;
     box-shadow: none;
-    background-color: #8080802b;
-}
-
-.header_bar button.selected {
-    border-radius: 0;
+    background-color: var(--bg-rail);
 }
 
 .textbox_default textarea {
@@ -174,19 +230,19 @@ gradio-app > :first-child {
 }
 
 .textbox_default_output textarea {
-    height: calc(100dvh - 118px);
+    height: calc(100dvh - 126px);
 }
 
 .textbox textarea {
-    height: calc(100dvh - 145px)
+    height: calc(100dvh - 153px)
 }
 
 .textbox_logits textarea {
-    height: calc(100dvh - 205px);
+    height: calc(100dvh - 213px);
 }
 
 .textbox_logits_notebook textarea {
-    height: calc(100dvh - 221px);
+    height: calc(100dvh - 229px);
 }
 
 .monospace textarea {
@@ -318,7 +374,7 @@ audio {
 }
 
 #notebook-token-counter {
-    top: calc(100dvh - 172px) !important;
+    top: calc(100dvh - 180px) !important;
 }
 
 #default-token-counter span, #notebook-token-counter span {
@@ -614,10 +670,10 @@ audio {
 }
 
 #chat-input textarea {
-    background: #f3f4f6;
+    background: var(--bg-input);
     padding: 0.675rem 2.5rem 0.6rem;
     margin-top: 0.15rem;
-    border: 1px solid var(--border-color-primary);
+    border: 1px solid var(--border);
     border-radius: 1.5rem;
     overflow-y: auto !important;
 }
@@ -666,10 +722,6 @@ audio {
     background: transparent;
 }
 
-#chat-input .thumbnails {
-    padding-top: 3px;
-}
-
 .chat-input-positioned {
     max-width: 54rem;
     left: 50%;
@@ -709,60 +761,6 @@ audio {
 
     #chat-tab > :first-child {
         max-width: unset;
-    }
-}
-
-#typing-container {
-    display: none;
-    position: absolute;
-    background-color: transparent;
-    left: 23px;
-    top: -25px;
-    padding: var(--block-padding);
-}
-
-.typing {
-    position: relative;
-}
-
-.visible-dots #typing-container {
-    display: block;
-}
-
-.typing span {
-    content: '';
-    animation: blink 1.5s infinite;
-    animation-fill-mode: both;
-    height: 10px;
-    width: 10px;
-    background: #3b5998;;
-    position: absolute;
-    left:0;
-    top:0;
-    border-radius: 50%;
-}
-
-.typing .dot1 {
-    animation-delay: .2s;
-    margin-left: calc(10px * 1.5);
-}
-
-.typing .dot2 {
-    animation-delay: .4s;
-    margin-left: calc(10px * 3);
-}
-
-@keyframes blink {
-    0% {
-        opacity: .1;
-    }
-
-    20% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: .1;
     }
 }
 
@@ -864,10 +862,6 @@ audio {
 
 .dark #show-controls {
     background-color: transparent;
-}
-
-.dark #show-controls:hover {
-    background-color: var(--selected-item-color-dark);
 }
 
 #show-controls label {
@@ -1273,21 +1267,21 @@ audio {
   Dark theme
 ---------------------------------------------- */
 .dark .header_bar {
-    background-color: #1a1a1a !important;
+    background-color: var(--bg-rail) !important;
 }
 
 .dark .header_bar button.selected {
-    background: var(--selected-item-color-dark);
+    background: var(--bg-active);
 }
 
 .dark #chat-input textarea {
-    background: var(--light-gray);
-    color: white !important;
-    border-color: rgba(255, 255, 255, 0.06);
+    background: var(--bg-input);
+    color: var(--text) !important;
+    border-color: var(--border);
 }
 
 .dark #chat-input textarea::placeholder {
-    color: #9ca3af;
+    color: var(--text-muted);
 }
 
 .dark .hover-menu {
@@ -1302,19 +1296,16 @@ audio {
 
 .dark #chat-controls,
 .dark #past-chats-row {
-    background-color: var(--darker-gray);
     border: 0 !important;
     box-shadow: none;
 }
 
-.dark gradio-app .gradio-container.gradio-container-4-37-2 .contain #past-chats .selected,
 .dark gradio-app .gradio-container.gradio-container-4-37-2 .contain #past-chats label:hover {
-    background-color: var(--selected-item-color-dark) !important;
+    background-color: var(--bg-hover) !important;
 }
 
-.dark #past-chats-row,
-.dark #chat-controls {
-    background-color: var(--darker-gray);
+.dark gradio-app .gradio-container.gradio-container-4-37-2 .contain #past-chats .selected {
+    background-color: var(--bg-active) !important;
 }
 
 .dark #past-chats-toggle,
@@ -1341,25 +1332,18 @@ audio {
   Light theme
 ---------------------------------------------- */
 .header_bar {
-    background-color: #e4e8f0 !important;
+    background-color: var(--bg-rail) !important;
 }
 
 .header_bar button.selected {
-    background: #c8d8f5;
+    background: var(--bg-active);
 }
 
 #chat-controls,
 #past-chats-row {
-    background-color: var(--light-theme-gray);
+    background-color: var(--bg-sidebar);
 }
 
-.dark #chat-controls {
-    border-left: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.dark #past-chats-row {
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
-}
 
 #past-chats-toggle,
 #chat-controls-toggle,
@@ -1829,23 +1813,23 @@ button:focus {
 }
 
 #character-context textarea {
-    height: calc((100vh - 350px) * 2/3) !important;
+    height: calc((100vh - 358px) * 2/3) !important;
     min-height: 90px !important;
 }
 
 #character-greeting textarea {
-    height: calc((100vh - 350px) * 1/3) !important;
+    height: calc((100vh - 358px) * 1/3) !important;
     min-height: 90px !important;
 }
 
 #user-description textarea {
-    height: calc(100vh - 334px) !important;
+    height: calc(100vh - 342px) !important;
     min-height: 90px !important;
 }
 
 #instruction-template-str textarea,
 #chat-template-str textarea {
-    height: calc(100vh - 300px) !important;
+    height: calc(100vh - 308px) !important;
     min-height: 90px !important;
 }
 
@@ -1870,7 +1854,7 @@ button:focus {
 }
 
 .dark .sidebar-vertical-separator {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--border-soft);
 }
 
 button#swap-height-width {
@@ -1881,13 +1865,13 @@ button#swap-height-width {
 }
 
 #image-output-gallery, #image-output-gallery > :nth-child(2) {
-    height: calc(100vh - 83px);
-    max-height: calc(100vh - 83px);
+    height: calc(100vh - 91px);
+    max-height: calc(100vh - 91px);
 }
 
 #image-history-gallery, #image-history-gallery > :nth-child(2) {
-    height: calc(100vh - 174px);
-    max-height: calc(100vh - 174px);
+    height: calc(100vh - 182px);
+    max-height: calc(100vh - 182px);
 }
 
 /* Additional CSS for the paginated image gallery */
@@ -2104,4 +2088,600 @@ thead + tbody tr:first-child th {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* Mode selector: segmented control
+   Targets the gr.Radio at #chat-mode and replaces the default
+   stacked / wrap-prone radio appearance with a 3-up segmented
+   control. The actual <input type=radio> is hidden; the parent
+   <label> carries the selected state. */
+#chat-mode .wrap {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 2px;
+}
+
+#chat-mode .wrap > label {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    margin: 0 !important;
+    padding: 6px 4px !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: calc(var(--radius-md) - 2px);
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color var(--motion), color var(--motion);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#chat-mode .wrap > label:hover {
+    background: var(--bg-hover) !important;
+    color: var(--text);
+}
+
+#chat-mode .wrap > label.selected {
+    background: var(--bg-active) !important;
+    color: var(--text);
+    font-weight: 500;
+}
+
+#chat-mode .wrap > label > input[type="radio"] {
+    display: none !important;
+}
+
+#chat-mode .wrap > label > span {
+    margin: 0 !important;
+}
+
+/* Sidebar collapse: left snappy on purpose. Animating width
+   on a flex container reflows its contents during the
+   transition, which looks worse than an instant snap. */
+
+/* Sidebar toggle handles
+   The existing 2rem-square hitbox is preserved (so all the
+   positioning calc()s in media queries above still work) but
+   the visible affordance is reduced to a 3px hairline bar
+   that lightens on hover. The leftmost navigation-toggle keeps
+   its hamburger because it lives on the rail rather than at a
+   sidebar edge. */
+#past-chats-toggle,
+#chat-controls-toggle {
+    background: transparent !important;
+}
+
+#past-chats-toggle svg,
+#chat-controls-toggle svg {
+    display: none !important;
+}
+
+#past-chats-toggle::before,
+#chat-controls-toggle::before {
+    content: "";
+    display: block;
+    width: 3px;
+    height: 28px;
+    border-radius: 2px;
+    background: var(--text-muted);
+    opacity: 0.55;
+}
+
+/* Mobile: keep the original chunky toggle button + arrow SVG.
+   The hairline approach is a desktop affordance; on mobile
+   the sidebars slide over content and a regular icon button
+   reads more clearly than a thin handle. */
+@media (max-width: 924px) {
+    #past-chats-toggle::before,
+    #chat-controls-toggle::before {
+        display: none !important;
+    }
+
+    #past-chats-toggle svg,
+    #chat-controls-toggle svg {
+        display: block !important;
+    }
+
+    #past-chats-toggle,
+    #chat-controls-toggle {
+        justify-content: center !important;
+    }
+}
+
+/* Bar lives at the inner edge of the hitbox so it stays glued
+   to the sidebar boundary even though the 32px clickable area
+   extends into the chat area. */
+#past-chats-toggle {
+    justify-content: flex-start !important;
+}
+
+#chat-controls-toggle {
+    justify-content: flex-end !important;
+}
+
+/* Desktop-only: vertically center the toggle handles and
+   anchor them at the sidebar boundary. Narrow-screen layouts
+   keep the existing top-anchored positioning above. */
+@media (min-width: 925px) {
+    #past-chats-toggle,
+    #chat-controls-toggle {
+        top: 50% !important;
+        transform: translateY(-50%);
+    }
+
+    /* Open states: hitbox flush with the sidebar's outer
+       edge. Sidebars have width 260px + padding-left 0.5rem
+       (box-sizing: content-box), so total visual width is
+       268px. The +0.5rem accounts for that padding so the bar
+       sits exactly on the outer edge, not 8px inside it. */
+    #past-chats-toggle.past-chats-open.negative-header {
+        left: calc(min(260px, 85vw) + 0.5rem) !important;
+    }
+
+    #past-chats-toggle.past-chats-open:not(.negative-header) {
+        left: calc(112px + min(260px, calc(85vw - var(--header-width))) + 0.5rem) !important;
+    }
+
+    #chat-controls-toggle.chat-controls-open {
+        right: calc(min(260px, 80vw) + 0.5rem) !important;
+    }
+
+    /* Closed states: hitbox flush with the adjacent edge
+       (rail right edge / viewport edge). Bar sits 16px into
+       the chat area / viewport, fully visible. */
+    #past-chats-toggle.past-chats-closed:not(.negative-header) {
+        left: 112px !important;
+    }
+
+    #past-chats-toggle.past-chats-closed.negative-header {
+        left: 0 !important;
+    }
+
+    #chat-controls-toggle.chat-controls-closed {
+        right: 0 !important;
+    }
+}
+
+#navigation-toggle {
+    transition: background-color var(--motion);
+    border-radius: var(--radius-sm);
+}
+
+#navigation-toggle:hover {
+    background: var(--bg-hover);
+}
+
+/* Focus system
+   Restores a visible keyboard focus ring while keeping
+   mouse-click button focus quiet. */
+button:focus:not(:focus-visible),
+.thinking-content:focus,
+.thinking-header:focus {
+    outline: none;
+}
+
+button:focus-visible,
+[role="tab"]:focus-visible,
+[role="button"]:focus-visible,
+.thinking-header:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Inputs/textareas/selects use a border-color shift instead of
+   an outline, so the focus indication doesn't sit detached
+   around a pill-shaped textarea. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: none;
+}
+
+/* Hover transitions */
+#hover-element-button,
+.hover-menu button,
+#show-controls,
+#past-chats label {
+    transition: background-color var(--motion), color var(--motion), border-color var(--motion);
+}
+
+/* Past-chats list items: token-bound hover/selected without
+   layered overrides. */
+#past-chats label {
+    font-size: 13px;
+    border-radius: var(--radius-md);
+}
+
+#past-chats label:hover {
+    background-color: var(--bg-hover) !important;
+}
+
+#past-chats .selected {
+    background-color: var(--bg-active) !important;
+}
+
+/* Hover menu surfaces: consume tokens so the popover is
+   visible in both themes. */
+.hover-menu button:hover {
+    background: var(--bg-hover) !important;
+}
+
+#show-controls:hover {
+    background-color: var(--bg-hover);
+}
+
+.dark #show-controls:hover,
+.dark #hover-element-button:hover {
+    background-color: var(--bg-hover);
+}
+
+/* Composer: turn the three sibling columns inside
+   #chat-input-row (hover menu / textarea / send-stop) into a
+   single rounded card. The textarea is stripped of its own
+   border/background and the surrounding columns lose their
+   default chrome so the row reads as one bordered surface
+   that lights up on focus-within. */
+#chat-input-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-end !important;
+    gap: 4px;
+    width: calc(100% - 20px);
+    max-width: 48rem;
+    margin: 0 auto 1rem;
+    padding: 8px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 1.5rem;
+}
+
+/* Only the row's direct flex children get bottom-anchored.
+   The universal cascade (#chat-input-row *) was pushing SVGs
+   inside the icon buttons to the bottom of their button,
+   leaving a 6-7px offset vs the centered text and Send icon. */
+#chat-input-row > * {
+    align-self: flex-end !important;
+}
+
+#chat-input-row > div,
+#chat-input-row .hover-element,
+#chat-input-row #chat-input,
+#chat-input-row #chat-input > .form,
+#chat-input-row #chat-input > .form > div {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    min-height: 0 !important;
+}
+
+/* JS adds .chat-input-positioned when the row floats over
+   chat history: keep the composer-card fill in that state. */
+.chat-input-positioned {
+    background: var(--bg-input) !important;
+}
+
+/* Strip default chrome from the sibling columns and the
+   MultimodalTextbox itself; the row supplies the visible
+   surface. */
+#chat-input,
+#chat-input-container,
+#gr-hover-container,
+#generate-stop-container,
+#chat-input-container > .form {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Kill the wrapper offsets that push each icon to a different
+   vertical position relative to the textarea / Send button.
+   - .hover-element has padding-top:4px → hamburger sits 4px high
+   - .upload-button has margin-bottom:7px → paperclip sits 7px high
+   - chat-input-container has 5px of internal padding above the
+     textarea from Gradio's MultimodalTextbox wrapper */
+#chat-input-row .hover-element,
+#chat-input-row #gr-hover,
+#chat-input-row #gr-hover-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 32px !important;
+    min-height: 32px !important;
+}
+
+#chat-input .upload-button {
+    height: 32px !important;
+    width: 24px !important;
+    min-width: 24px !important;
+    min-height: 32px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-self: flex-end !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Tighten the hamburger button too: 32×32 leaves 6px of dead
+   space on each side of the 20px SVG, making the icon visually
+   far from its neighbors. */
+#hover-element-button {
+    width: 24px !important;
+    min-width: 24px !important;
+}
+
+#chat-input-container,
+#chat-input-container > .form,
+#chat-input-container > .form > #chat-input,
+#chat-input > label,
+#chat-input .input-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+}
+
+#chat-input textarea {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 5px 4px 5px 12px !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    field-sizing: content;
+    height: auto !important;
+    min-height: 22px !important;
+    max-height: 200px !important;
+    line-height: 22px !important;
+    box-sizing: content-box !important;
+    overflow-y: auto !important;
+    overflow-wrap: anywhere !important;
+}
+
+/* Override Gradio's flex-grow scales (set by `scale=1/10/1`)
+   so the icon column and the send column size to their
+   content and stay flush against the textarea. */
+#gr-hover-container,
+#generate-stop-container {
+    flex: 0 0 auto !important;
+    padding: 0 !important;
+}
+
+#chat-input-container {
+    flex: 1 1 auto !important;
+    min-width: 0;
+}
+
+/* Multimodal attachment thumbnails: in-flow inside the
+   composer card (reserves layout space, chat content above
+   pushes up automatically). Styled as a distinct zone with
+   a subtle bottom divider rather than its own card. */
+#chat-input .thumbnails {
+    padding: 6px 0 8px !important;
+    background: transparent;
+    gap: 8px !important;
+}
+
+/* Send and Stop icon buttons. Don't set `display`; it would
+   override Gradio's `.hidden { display: none }` used for
+   visible=False on the Stop button. */
+#chat-input-row #Generate,
+#chat-input-row #stop {
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-size: 0 !important;
+    line-height: 32px;
+    text-align: center;
+    transition: opacity var(--motion), background-color var(--motion);
+}
+
+#chat-input-row #Generate {
+    background: var(--accent) !important;
+    color: #ffffff !important;
+    border-radius: 50% !important;
+}
+
+/* Stop button: tokenized hover progression. */
+#chat-input-row #stop {
+    background: var(--bg-hover) !important;
+    color: var(--text) !important;
+    border: none !important;
+    border-radius: 50% !important;
+    transition: background-color var(--motion) !important;
+}
+
+#chat-input-row #stop:hover {
+    background: var(--bg-active) !important;
+}
+
+/* Send icon: paper airplane pointing right with a horizontal
+   accent line. */
+#chat-input-row #Generate::before {
+    width: 18px;
+    height: 18px;
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 3 6 12l-3 9 19-9Z'/><path d='M6 12h16'/></svg>");
+            mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 3 6 12l-3 9 19-9Z'/><path d='M6 12h16'/></svg>");
+}
+
+/* Stop icon: filled square (no mask needed, just a colored
+   block via background-color: currentColor). */
+#chat-input-row #stop::before {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    vertical-align: middle;
+    background-color: currentColor;
+}
+
+#chat-input-row #Generate:hover,
+#chat-input-row #stop:hover {
+    opacity: 0.7;
+}
+
+/* Accordion chevron: Gradio renders the open/close indicator
+   as a Unicode ▼ inside a span that inherits section-header
+   font-size; in Inter that glyph paints ~2x its em-square,
+   producing a giant triangle. Constrain it. */
+.label-wrap > .icon {
+    font-size: 11px !important;
+    line-height: 1;
+    color: var(--text-muted);
+}
+
+/* Dark sidebar surfaces use the sidebar token. The
+   .dark #chat-controls,#past-chats-row block above this
+   sets `border: 0 !important;`, so the previous attempts to
+   normalize border-left/right via var(--border-soft) here
+   were dead code (overridden by the !important on the
+   shorthand) and were removed. The `.sidebar-vertical-separator`
+   uses a separate dark rule (see line ~1750 in this file). */
+.dark #chat-controls,
+.dark #past-chats-row {
+    background-color: var(--bg-sidebar);
+}
+
+/* Inner Tabs (Parameters/Models/Image gen). The header_bar is
+   the leftmost rail (already styled) and is excluded via
+   :not(.header_bar). Default Gradio look has tab-shaped
+   buttons with rounded top corners and a bottom border that
+   creates the "browser tab" effect; replaced with a flat
+   underline on the active tab. */
+.tab-nav:not(.header_bar) {
+    border-bottom: 1px solid var(--border) !important;
+    gap: 0;
+    padding: 0;
+    margin-bottom: 0;
+}
+
+.tab-nav:not(.header_bar) > button {
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: var(--text-muted) !important;
+    padding: 8px 14px !important;
+    margin: 0 !important;
+    font-weight: 500;
+    font-size: 14px;
+    box-shadow: none !important;
+    transition: color var(--motion), box-shadow var(--motion);
+}
+
+.tab-nav:not(.header_bar) > button:hover {
+    color: var(--text) !important;
+    background: var(--bg-hover) !important;
+}
+
+.tab-nav:not(.header_bar) > button.selected {
+    color: var(--text) !important;
+    background: transparent !important;
+    box-shadow: inset 0 -2px 0 var(--accent) !important;
+}
+
+/* Slider thumb: use the accent color so it matches the rest
+   of the design language (selected-tab indicator, etc.). */
+input[type="range"]::-webkit-slider-thumb {
+    background: var(--accent) !important;
+    border: none !important;
+    height: 16px !important;
+    width: 16px !important;
+    box-shadow: none !important;
+    margin-top: 0 !important;
+}
+
+input[type="range"]::-moz-range-thumb {
+    background: var(--accent) !important;
+    border: none !important;
+    height: 16px !important;
+    width: 16px !important;
+    box-shadow: none !important;
+}
+
+/* Dropdown popover: kill Gradio's heavy default shadow,
+   replace with a subtle one matching design tokens. */
+.options {
+    box-shadow: 0 4px 12px rgb(0 0 0 / 12%) !important;
+}
+
+.dark .options {
+    box-shadow: 0 4px 16px rgb(0 0 0 / 40%) !important;
+}
+
+/* Accordion: drop Gradio's default shadow_drop on the
+   accordion block. */
+.block:has(> .label-wrap) {
+    box-shadow: none !important;
+}
+
+/* Icon buttons: hide the text label; the visible glyph is the
+   ::before mask below. Original text stays in the DOM for a11y. */
+.refresh-icon-btn,
+.save-icon-btn,
+.delete-icon-btn,
+.trash-btn {
+    font-size: 0 !important;
+}
+
+/* Shared base for masked icon glyphs; per-icon rules set
+   width/height and mask-image. */
+#chat-input-row #Generate::before,
+.refresh-icon-btn::before,
+.save-icon-btn::before,
+.delete-icon-btn::before,
+.trash-btn::before {
+    content: "";
+    display: inline-block;
+    vertical-align: middle;
+    background-color: currentColor;
+    -webkit-mask-position: center;
+            mask-position: center;
+    -webkit-mask-size: contain;
+            mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+}
+
+/* Refresh icon (Lucide refresh-cw). */
+.refresh-icon-btn::before {
+    width: 16px;
+    height: 16px;
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='23 4 23 10 17 10'/><polyline points='1 20 1 14 7 14'/><path d='M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15'/></svg>");
+            mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='23 4 23 10 17 10'/><polyline points='1 20 1 14 7 14'/><path d='M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15'/></svg>");
+}
+
+/* Save icon (Lucide save). */
+.save-icon-btn::before {
+    width: 16px;
+    height: 16px;
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z'/><polyline points='17 21 17 13 7 13 7 21'/><polyline points='7 3 7 8 15 8'/></svg>");
+            mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z'/><polyline points='17 21 17 13 7 13 7 21'/><polyline points='7 3 7 8 15 8'/></svg>");
+}
+
+/* Delete + past-chats trash icon (Lucide trash-2). */
+.delete-icon-btn::before,
+.trash-btn::before {
+    width: 16px;
+    height: 16px;
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2'/></svg>");
+            mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2'/></svg>");
+}
+
+/* Past-chats trash uses 14px to match the smaller chat-list scale. */
+.trash-btn::before {
+    width: 14px;
+    height: 14px;
 }
