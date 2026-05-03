@@ -86,15 +86,15 @@ class ConcurrentGenerator:
                     self.generator.clear_queue()
                     self.has_jobs.clear()
                     continue
-            for result in results:
-                job = result["job"]
-                q = self.job_queues.get(job)
-                if q:
-                    q.put(result)
-                    if result.get("eos"):
-                        self.job_queues.pop(job, None)
-            if not self.job_queues:
-                self.has_jobs.clear()
+                for result in results:
+                    job = result["job"]
+                    q = self.job_queues.get(job)
+                    if q:
+                        q.put(result)
+                        if result.get("eos"):
+                            self.job_queues.pop(job, None)
+                if not self.job_queues:
+                    self.has_jobs.clear()
 
     def submit(self, job) -> queue.Queue:
         q = queue.Queue()
@@ -118,8 +118,6 @@ class ConcurrentGenerator:
 
 
 class Exllamav3Model:
-    def __init__(self):
-        pass
 
     @property
     def device(self) -> torch.device:
@@ -139,14 +137,13 @@ class Exllamav3Model:
         config = Config.from_directory(str(path_to_model))
         model = Model.from_config(config)
 
-        # Calculate the closest multiple of 256 at or above the chosen value
+        # Adjust to the closest multiple of 256 at or above the chosen value
         max_tokens = shared.args.ctx_size
         if max_tokens % 256 != 0:
             adjusted_tokens = ((max_tokens // 256) + 1) * 256
             logger.warning(f"max_num_tokens must be a multiple of 256. Adjusting from {max_tokens} to {adjusted_tokens}")
             max_tokens = adjusted_tokens
 
-        # Parse cache type
         cache_type = shared.args.cache_type.lower()
         cache_kwargs = {}
         if cache_type == 'fp16':
@@ -277,11 +274,8 @@ class Exllamav3Model:
         if not pil_images:
             return prompt, []
 
-        # ExLlamaV3-specific: Generate embeddings
         try:
-            # Use pre-computed embeddings if available (proper MMEmbedding lifetime)
             if 'image_embeddings' in state and state['image_embeddings']:
-                # Use existing embeddings - this preserves MMEmbedding lifetime
                 image_embeddings = state['image_embeddings']
             else:
                 # Do not reset the cache/allocator index; it causes token ID conflicts during generation.
@@ -291,7 +285,6 @@ class Exllamav3Model:
                     for img in pil_images
                 ]
 
-            # ExLlamaV3-specific: Handle prompt processing with placeholders
             placeholders = [ie.text_alias for ie in image_embeddings]
 
             if '<__media__>' in prompt:
@@ -326,22 +319,19 @@ class Exllamav3Model:
         if state['temperature'] == 0:
             sampler = CustomSampler([SS_Argmax()])
         else:
-            # 1. Create a list of all active, unordered samplers
+            # 1. Collect active samplers (unordered)
             unordered_samplers = []
 
-            # Penalties
             penalty_range = state['repetition_penalty_range']
             if penalty_range <= 0:
                 penalty_range = int(10e7)  # Use large number for "full context"
             rep_decay = 0  # Not a configurable parameter
 
-            # Add penalty samplers if they are active
             if state['repetition_penalty'] != 1.0:
                 unordered_samplers.append(SS_RepP(state['repetition_penalty'], penalty_range, rep_decay))
             if state['presence_penalty'] != 0.0 or state['frequency_penalty'] != 0.0:
                 unordered_samplers.append(SS_PresFreqP(state['presence_penalty'], state['frequency_penalty'], penalty_range, rep_decay))
 
-            # Standard samplers
             if state['top_k'] > 0:
                 unordered_samplers.append(SS_TopK(state['top_k']))
             if state['top_p'] < 1.0:
@@ -349,10 +339,9 @@ class Exllamav3Model:
             if state['min_p'] > 0.0:
                 unordered_samplers.append(SS_MinP(state['min_p']))
 
-            # Temperature (SS_NoOp is returned if temp is 1.0)
             unordered_samplers.append(SS_Temperature(state['temperature']))
 
-            # 2. Define the mapping from class names to the priority list keys
+            # 2. Sort samplers by priority
             class_name_to_nickname = {
                 'SS_RepP': 'repetition_penalty',
                 'SS_PresFreqP': 'presence_frequency_penalty',
@@ -362,7 +351,6 @@ class Exllamav3Model:
                 'SS_Temperature': 'temperature',
             }
 
-            # 3. Get the priority list and handle temperature_last
             default_priority = ['repetition_penalty', 'presence_frequency_penalty', 'top_k', 'top_p', 'min_p', 'temperature']
             sampler_priority = list(state.get('sampler_priority') or default_priority)
 
@@ -374,7 +362,6 @@ class Exllamav3Model:
             # SS_PresFreqP sampler. Normalize to the combined name.
             sampler_priority = ['presence_frequency_penalty' if x in ('presence_penalty', 'frequency_penalty') else x for x in sampler_priority]
 
-            # 4. Sort the unordered list based on the priority list
             def custom_sort_key(sampler_obj):
                 class_name = sampler_obj.__class__.__name__
                 nickname = class_name_to_nickname.get(class_name)
@@ -384,7 +371,7 @@ class Exllamav3Model:
 
             ordered_samplers = sorted(unordered_samplers, key=custom_sort_key)
 
-            # 5. Add the final sampling stage and build the sampler
+            # 3. Add final sampling stage and build the sampler
             if state.get('adaptive_target', 0) > 0:
                 ordered_samplers.append(SS_AdaptiveP(state['adaptive_target'], state['adaptive_decay']))
             else:
@@ -392,7 +379,6 @@ class Exllamav3Model:
 
             sampler = CustomSampler(ordered_samplers)
 
-        # Encode prompt with embeddings (ExLlamaV3-specific)
         input_ids = self.tokenizer.encode(
             prompt,
             add_bos=state['add_bos_token'],
@@ -404,37 +390,26 @@ class Exllamav3Model:
 
         self._last_prompt_token_count = input_ids.shape[-1]
 
-        # Determine max_new_tokens
         if state['auto_max_new_tokens']:
             max_new_tokens = state['truncation_length'] - self._last_prompt_token_count
         else:
             max_new_tokens = state['max_new_tokens']
 
-        # Use full EOS token list from config (may contain multiple IDs)
-        stop_conditions = []
-        if not state['ban_eos_token']:
-            for eos_id in self.config.eos_token_id_list:
-                if eos_id is not None:
-                    stop_conditions.append(eos_id)
+        eos_ids = [eid for eid in self.config.eos_token_id_list if eid is not None]
 
-        # Build filters for logit_bias (OpenAI API)
+        stop_conditions = [] if state['ban_eos_token'] else list(eos_ids)
+
         filters = []
         logit_bias = state.get('logit_bias')
         if logit_bias:
             filters.append(LogitBiasFilter(self.tokenizer, logit_bias))
 
         # Suppress EOS tokens via logit bias so they are never sampled
-        if state['ban_eos_token']:
-            eos_bias = {}
-            for eos_id in self.config.eos_token_id_list:
-                if eos_id is not None:
-                    eos_bias[str(eos_id)] = float('-inf')
-            if eos_bias:
-                filters.append(LogitBiasFilter(self.tokenizer, eos_bias))
+        if state['ban_eos_token'] and eos_ids:
+            eos_bias = {str(eid): float('-inf') for eid in eos_ids}
+            filters.append(LogitBiasFilter(self.tokenizer, eos_bias))
 
-        # Logprobs support (OpenAI API)
-        logprobs = state.get('logprobs', 0) or 0
-        return_top_tokens = logprobs if logprobs > 0 else 0
+        return_top_tokens = max(state.get('logprobs') or 0, 0)
 
         seed = state.get('seed', -1)
         job = Job(
@@ -450,7 +425,6 @@ class Exllamav3Model:
             return_probs=return_top_tokens > 0,
         )
 
-        # Stream generation
         response_text = ""
         stop_event = state.get('stop_event')
         self.last_completion_probabilities = []
@@ -465,13 +439,10 @@ class Exllamav3Model:
                 except queue.Empty:
                     continue
                 if result is None or result.get("eos"):
-                    # Capture logprobs from the final eos result too
                     if result is not None and return_top_tokens > 0:
                         self._capture_logprobs(result)
                     break
                 chunk = result.get("text", "")
-
-                # Capture logprobs from streaming results
                 if return_top_tokens > 0:
                     self._capture_logprobs(result)
 
@@ -488,9 +459,18 @@ class Exllamav3Model:
         if top_k_tokens is None or top_k_probs is None:
             return
 
-        id_to_piece = self.tokenizer.get_id_to_piece_list(True)
-        sampled_ids = result.get("token_ids")    # (batch, seq_len) - actually sampled tokens
-        sampled_probs = result.get("token_probs")  # (batch, seq_len) - their probabilities
+        if not hasattr(self, '_id_to_piece'):
+            self._id_to_piece = self.tokenizer.get_id_to_piece_list(True)
+
+        id_to_piece = self._id_to_piece
+
+        # Bulk-convert tensors to Python lists to avoid per-element .item() calls
+        tk_tokens = top_k_tokens[0].tolist()   # (seq_len, k)
+        tk_probs = top_k_probs[0].tolist()     # (seq_len, k)
+        sampled_ids = result.get("token_ids")
+        sampled_probs = result.get("token_probs")
+        s_ids = sampled_ids[0].tolist() if sampled_ids is not None else None
+        s_probs = sampled_probs[0].tolist() if sampled_probs is not None else None
 
         def _piece(tid):
             s = id_to_piece[tid] if tid < len(id_to_piece) else f"<{tid}>"
@@ -499,24 +479,19 @@ class Exllamav3Model:
         def _logprob(prob):
             return math.log(prob) if prob > 0 else float("-inf")
 
-        # top_k_tokens shape: (batch, seq_len, k), top_k_probs same
-        for seq_idx in range(top_k_tokens.shape[1]):
+        for seq_idx in range(len(tk_tokens)):
             entry = {"top_logprobs": []}
-            for k_idx in range(top_k_tokens.shape[2]):
-                token_id = top_k_tokens[0, seq_idx, k_idx].item()
-                prob = top_k_probs[0, seq_idx, k_idx].item()
+            for k_idx in range(len(tk_tokens[seq_idx])):
+                token_id = tk_tokens[seq_idx][k_idx]
+                prob = tk_probs[seq_idx][k_idx]
                 entry["top_logprobs"].append({"token": _piece(token_id), "logprob": _logprob(prob)})
 
             # Record the actually sampled token at the entry level so
             # format_completion_logprobs uses it instead of top_logprobs[0]
             # (they differ with non-greedy sampling).
-            if sampled_ids is not None:
-                sid = sampled_ids[0, seq_idx].item()
-                entry["token"] = _piece(sid)
-                if sampled_probs is not None:
-                    entry["logprob"] = _logprob(sampled_probs[0, seq_idx].item())
-                else:
-                    entry["logprob"] = None
+            if s_ids is not None:
+                entry["token"] = _piece(s_ids[seq_idx])
+                entry["logprob"] = _logprob(s_probs[seq_idx]) if s_probs is not None else None
 
             self.last_completion_probabilities.append(entry)
 
@@ -532,7 +507,6 @@ class Exllamav3Model:
 
         Used by prompt logprobs computation. Returns (1, seq_len, vocab) on CPU in float32.
         """
-        import torch
         input_ids_tensor = input_ids if isinstance(input_ids, torch.Tensor) else torch.tensor(input_ids, dtype=torch.long)
         input_ids_tensor = input_ids_tensor.view(1, -1).cpu()
         with torch.inference_mode():
@@ -575,45 +549,29 @@ class Exllamav3Model:
     def unload(self):
         logger.info("Unloading ExLlamaV3 model components...")
 
-        if hasattr(self, 'parallel_generator') and self.parallel_generator is not None:
+        if self.parallel_generator is not None:
             try:
                 self.parallel_generator.stop()
             except Exception as e:
                 logger.warning(f"Error stopping parallel generator: {e}")
-            self.parallel_generator = None
 
-        if hasattr(self, 'vision_model') and self.vision_model is not None:
-            try:
-                del self.vision_model
-            except Exception as e:
-                logger.warning(f"Error unloading vision model: {e}")
-            self.vision_model = None
-
-        if hasattr(self, 'draft_model') and self.draft_model is not None:
+        if self.draft_model is not None:
             try:
                 self.draft_model.unload()
-                del self.draft_model
             except Exception as e:
                 logger.warning(f"Error unloading draft model: {e}")
-            self.draft_model = None
 
-        if hasattr(self, 'draft_cache') and self.draft_cache is not None:
-            self.draft_cache = None
-
-        if hasattr(self, 'model') and self.model is not None:
+        if self.model is not None:
             try:
                 self.model.unload()
-                del self.model
             except Exception as e:
                 logger.warning(f"Error unloading main model: {e}")
 
-            self.model = None
-
-        if hasattr(self, 'cache') and self.cache is not None:
-            self.cache = None
-
-        if hasattr(self, 'generator') and self.generator is not None:
-            self.generator = None
-
-        if hasattr(self, 'tokenizer') and self.tokenizer is not None:
-            self.tokenizer = None
+        self.parallel_generator = None
+        self.vision_model = None
+        self.draft_model = None
+        self.draft_cache = None
+        self.model = None
+        self.cache = None
+        self.generator = None
+        self.tokenizer = None

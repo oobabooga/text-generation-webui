@@ -439,7 +439,7 @@ def create_ui():
                     with gr.Column(scale=3):
                         # Pagination controls
                         with gr.Row():
-                            shared.gradio['image_refresh_history'] = gr.Button("🔄 Refresh", elem_classes="refresh-button")
+                            shared.gradio['image_refresh_history'] = gr.Button("Refresh", elem_classes="refresh-button")
                             shared.gradio['image_prev_page'] = gr.Button("◀ Prev Page", elem_classes="refresh-button")
                             shared.gradio['image_page_info'] = gr.Markdown(value=get_initial_page_info, elem_id="image-page-info")
                             shared.gradio['image_next_page'] = gr.Button("Next Page ▶", elem_classes="refresh-button")
@@ -486,7 +486,7 @@ def create_ui():
                                 label='Model',
                                 elem_classes='slim-dropdown'
                             )
-                            shared.gradio['image_refresh_models'] = gr.Button("🔄", elem_classes='refresh-button', scale=0, min_width=40)
+                            shared.gradio['image_refresh_models'] = gr.Button("🔄", elem_classes=['refresh-button', 'refresh-icon-btn'], scale=0, min_width=40)
                             shared.gradio['image_load_model'] = gr.Button("Load", variant='primary', elem_classes='refresh-button')
                             shared.gradio['image_unload_model'] = gr.Button("Unload", elem_classes='refresh-button')
 

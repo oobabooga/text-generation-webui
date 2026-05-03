@@ -2,6 +2,7 @@ accelerate==1.13.*
 audioop-lts<1.0; python_version >= "3.13"
 bitsandbytes==0.49.*
 datasets
+ddgs==9.14.1
 diffusers==0.37.*
 einops
 fastapi==0.112.4
@@ -26,7 +27,7 @@ sentencepiece
 tensorboard
 torchao==0.15.*
 trafilatura==2.0.0
-transformers==5.5.*
+transformers==5.6.*
 triton-windows==3.5.1.post24; platform_system == "Windows"
 tqdm
 wandb
@@ -42,10 +43,10 @@ sse-starlette==1.6.5
 tiktoken
 
 # CUDA wheels
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.123.0/llama_cpp_binaries-0.123.0+cu124-py3-none-win_amd64.whl; platform_system == "Windows"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.123.0/llama_cpp_binaries-0.123.0+cu124-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.123.0/ik_llama_cpp_binaries-0.123.0+cu124-py3-none-win_amd64.whl; platform_system == "Windows"
-https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.123.0/ik_llama_cpp_binaries-0.123.0+cu124-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.124.0/llama_cpp_binaries-0.124.0+cu124-py3-none-win_amd64.whl; platform_system == "Windows"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.124.0/llama_cpp_binaries-0.124.0+cu124-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.124.0/ik_llama_cpp_binaries-0.124.0+cu124-py3-none-win_amd64.whl; platform_system == "Windows"
+https://github.com/oobabooga/llama-cpp-binaries/releases/download/v0.124.0/ik_llama_cpp_binaries-0.124.0+cu124-py3-none-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 https://github.com/turboderp-org/exllamav3/releases/download/v0.0.30/exllamav3-0.0.30+cu128.torch2.9.0-cp313-cp313-win_amd64.whl; platform_system == "Windows" and python_version == "3.13"
 https://github.com/turboderp-org/exllamav3/releases/download/v0.0.30/exllamav3-0.0.30+cu128.torch2.9.0-cp313-cp313-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.13"
 https://github.com/kingbri1/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu128torch2.9.0cxx11abiFALSE-cp313-cp313-win_amd64.whl; platform_system == "Windows" and python_version == "3.13"

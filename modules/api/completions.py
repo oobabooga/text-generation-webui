@@ -13,7 +13,7 @@ from .errors import InvalidRequestError
 from .typing import ToolDefinition
 from .utils import debug_msg
 from modules.tool_parsing import get_tool_call_id, parse_tool_call, detect_tool_call_format
-from modules import shared
+from modules import shared, utils
 from modules.reasoning import extract_reasoning
 from modules.chat import (
     generate_chat_prompt,
@@ -31,10 +31,9 @@ from modules.text_generation import decode, encode, generate_reply
 def load_chat_template_file(filepath):
     """Load a chat template from a file path (.jinja, .jinja2, or .yaml/.yml)."""
     filepath = Path(filepath)
-    ext = filepath.suffix.lower()
     text = filepath.read_text(encoding='utf-8')
-    if ext in ['.yaml', '.yml']:
-        data = yaml.safe_load(text)
+    if filepath.suffix.lower() in utils.YAML_EXTENSIONS:
+        data = yaml.safe_load(text) or {}
         return data.get('instruction_template', '')
     return text
 

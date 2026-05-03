@@ -138,15 +138,67 @@ jobs:
             REQ_FILE="requirements/portable/requirements_ik_cpu_only.txt"
             echo "Using requirements file: $REQ_FILE"
 
-            # 4. Inject --ik into start scripts
-            sed -i 's/--portable/--portable --ik/g' start_linux.sh start_windows.bat 2>/dev/null || true
-
             # 5. Install packages
             echo "Installing Python packages from $REQ_FILE..."
             $PIP_PATH install --target="./$PACKAGES_PATH" -r "$REQ_FILE"
 
             # 6. Clean up
             rm -rf .git cmd* update_wizard* Colab-TextGen-GPU.ipynb docker setup.cfg .github .gitignore requirements/ one_click.py
+
+            # 5b. Bundle Electron desktop launcher
+            ELECTRON_VERSION="41.5.0"
+            APP_DIR="app"
+            if [[ "$RUNNER_OS" == "Windows" ]]; then
+                ELECTRON_ZIP="electron-v${ELECTRON_VERSION}-win32-x64.zip"
+                ELECTRON_BIN="electron/electron.exe"
+                rm -f start_windows.bat
+            elif [[ "$RUNNER_OS" == "macOS" ]]; then
+                if [[ "$OS_TYPE" == "macos-15-intel" ]]; then
+                    ELECTRON_ZIP="electron-v${ELECTRON_VERSION}-darwin-x64.zip"
+                else
+                    ELECTRON_ZIP="electron-v${ELECTRON_VERSION}-darwin-arm64.zip"
+                fi
+                ELECTRON_BIN="electron/Electron.app/Contents/MacOS/Electron"
+                rm -f start_macos.sh
+            else
+                ELECTRON_ZIP="electron-v${ELECTRON_VERSION}-linux-x64.zip"
+                ELECTRON_BIN="electron/electron"
+                rm -f start_linux.sh
+            fi
+
+            echo "Downloading Electron ${ELECTRON_VERSION} (${ELECTRON_ZIP})..."
+            curl -L -o /tmp/electron.zip \
+                "https://github.com/electron/electron/releases/download/v${ELECTRON_VERSION}/${ELECTRON_ZIP}"
+            mkdir electron
+            unzip -q /tmp/electron.zip -d electron
+            rm /tmp/electron.zip
+
+            if [[ "$RUNNER_OS" == "Windows" ]]; then
+                sed "s|__APP__|${APP_DIR}|g" desktop/textgen.bat > textgen.bat
+                sed -i 's/$/\r/' textgen.bat
+            else
+                sed "s|__APP__|${APP_DIR}|g; s|__ELECTRON__|${ELECTRON_BIN}|g" desktop/textgen.sh > textgen
+                chmod +x textgen
+            fi
+
+            mv desktop/main.js desktop/package.json .
+            rm -rf desktop
+
+            # 5c. Restructure: textgen-VERSION/{textgen, user_data/, app/<everything else>}
+            mkdir "${APP_DIR}"
+            shopt -s dotglob
+            for item in *; do
+                case "$item" in
+                    "${APP_DIR}"|user_data|textgen|textgen.bat) ;;
+                    *) mv "$item" "${APP_DIR}/" ;;
+                esac
+            done
+            shopt -u dotglob
+
+            # 5d. Inject --ik into spawn args
+            sed -i 's/"--portable", "--api"/"--portable", "--ik", "--api"/' "${APP_DIR}/main.js"
+            sed -i 's|--portable --api|--portable --ik --api|g' textgen 2>/dev/null || true
+            sed -i 's|--portable --api|--portable --ik --api|g' textgen.bat 2>/dev/null || true
 
             # 7. Create archive
             cd ..

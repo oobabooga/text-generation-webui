@@ -52,7 +52,9 @@ _tool_approvals_lock = threading.Lock()
 
 
 def request_tool_approval(session_key, tool_name):
-    """Block until the user approves/rejects a tool call. Returns 'approve'|'always'|'reject'."""
+    """Block until the user approves/rejects a tool call.
+    Returns 'approve'|'always'|'reject', or None if generation was stopped
+    before the user made a decision."""
     with _tool_approvals_lock:
         if session_key not in _tool_approvals:
             _tool_approvals[session_key] = {
@@ -68,7 +70,7 @@ def request_tool_approval(session_key, tool_name):
     while not session["event"].wait(timeout=0.5):
         if shared.stop_everything:
             session["tool_name"] = None
-            return 'reject'
+            return None
     session["tool_name"] = None
     return session["result"]
 
@@ -1543,7 +1545,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
                 approval = request_tool_approval(_session_key, fn_name)
 
-                if approval == 'reject' and shared.stop_everything:
+                if approval is None:
                     _cancel_remaining(i)
                     yield _render(), history
                     break
@@ -1574,6 +1576,11 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 
         state['history'] = history
+
+        # Honor stop here; text_generation resets the flag on re-entry.
+        if shared.stop_everything:
+            break
+
         _tool_turn += 1
 
     state.pop('_tool_turn', None)
@@ -2767,9 +2774,17 @@ def handle_save_template_click(instruction_template_str):
 
 def handle_delete_template_click(template):
     import gradio as gr
-    root = str(shared.user_data_dir / 'instruction-templates') + '/'
+    from modules.utils import TEMPLATE_EXTENSIONS
+    template_dir = shared.user_data_dir / 'instruction-templates'
+    filename = f"{template}.yaml"
+    for ext in TEMPLATE_EXTENSIONS:
+        if (template_dir / f"{template}{ext}").exists():
+            filename = f"{template}{ext}"
+            break
+
+    root = str(template_dir) + '/'
     return [
-        f"{template}.yaml",
+        filename,
         root,
         root,
         gr.update(visible=True)

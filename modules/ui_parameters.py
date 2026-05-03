@@ -15,8 +15,8 @@ def create_ui():
                     with gr.Row():
                         shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=shared.settings['preset'], label='Preset', elem_classes='slim-dropdown')
                         ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button', interactive=not mu)
-                        shared.gradio['save_preset'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
-                        shared.gradio['delete_preset'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
+                        shared.gradio['save_preset'] = gr.Button('💾', elem_classes=['refresh-button', 'save-icon-btn'], interactive=not mu)
+                        shared.gradio['delete_preset'] = gr.Button('🗑️', elem_classes=['refresh-button', 'delete-icon-btn'], interactive=not mu)
                         shared.gradio['reset_preset'] = gr.Button('Restore preset', elem_classes='refresh-button', interactive=True)
                         shared.gradio['neutralize_samplers'] = gr.Button('Neutralize samplers', elem_classes='refresh-button', interactive=True)
 
@@ -101,8 +101,8 @@ def create_ui():
                             with gr.Row() as shared.gradio['grammar_file_row']:
                                 shared.gradio['grammar_file'] = gr.Dropdown(value='None', choices=utils.get_available_grammars(), label='Load grammar from file (.gbnf)', elem_classes='slim-dropdown')
                                 ui.create_refresh_button(shared.gradio['grammar_file'], lambda: None, lambda: {'choices': utils.get_available_grammars()}, 'refresh-button', interactive=not mu)
-                                shared.gradio['save_grammar'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
-                                shared.gradio['delete_grammar'] = gr.Button('🗑️ ', elem_classes='refresh-button', interactive=not mu)
+                                shared.gradio['save_grammar'] = gr.Button('💾', elem_classes=['refresh-button', 'save-icon-btn'], interactive=not mu)
+                                shared.gradio['delete_grammar'] = gr.Button('🗑️ ', elem_classes=['refresh-button', 'delete-icon-btn'], interactive=not mu)
 
                             shared.gradio['grammar_string'] = gr.Textbox(value=shared.settings['grammar_string'], label='Grammar', lines=16, elem_classes=['add_scrollbar', 'monospace'])
 

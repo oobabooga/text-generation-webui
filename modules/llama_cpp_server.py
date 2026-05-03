@@ -462,8 +462,8 @@ class LlamaServer:
             cmd += ["--numa", "distribute"]
         if shared.args.no_kv_offload:
             cmd.append("--no-kv-offload")
-        if shared.args.row_split:
-            cmd += ["--split-mode", "row"]
+        if shared.args.split_mode != "layer":
+            cmd += ["--split-mode", shared.args.split_mode]
         cache_type = "fp16"
         if shared.args.cache_type != "fp16" and shared.args.cache_type in llamacpp_valid_cache_types:
             cmd += ["--cache-type-k", shared.args.cache_type, "--cache-type-v", shared.args.cache_type]
@@ -687,6 +687,7 @@ def _patch_cmd_for_ik(cmd):
       --cache-reuse        → (removed, unsupported)
       --swa-full           → (removed, unsupported)
       --split-mode row     → --split-mode graph
+      --split-mode tensor  → --split-mode graph
     """
     # Add Hadamard KV cache rotation when using quantized cache types.
     # This significantly improves quantized cache quality (especially q4_0)
@@ -714,7 +715,7 @@ def _patch_cmd_for_ik(cmd):
             patched.append("--fit-margin")
         elif arg == "--cache-reuse":
             i += 1  # skip the value
-        elif arg == "--split-mode" and i + 1 < len(cmd) and cmd[i + 1] == "row":
+        elif arg == "--split-mode" and i + 1 < len(cmd) and cmd[i + 1] in ("row", "tensor"):
             patched += ["--split-mode", "graph"]
             i += 1  # skip the value
         elif arg == "--swa-full":
