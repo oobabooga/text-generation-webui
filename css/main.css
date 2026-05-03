@@ -2090,7 +2090,7 @@ thead + tbody tr:first-child th {
     white-space: nowrap;
 }
 
-/* Mode selector — segmented control
+/* Mode selector: segmented control
    Targets the gr.Radio at #chat-mode and replaces the default
    stacked / wrap-prone radio appearance with a 3-up segmented
    control. The actual <input type=radio> is hidden; the parent
@@ -2145,7 +2145,7 @@ thead + tbody tr:first-child th {
     margin: 0 !important;
 }
 
-/* Sidebar collapse — left snappy on purpose. Animating width
+/* Sidebar collapse: left snappy on purpose. Animating width
    on a flex container reflows its contents during the
    transition, which looks worse than an instant snap. */
 
@@ -2295,7 +2295,7 @@ select:focus-visible {
     transition: background-color var(--motion), color var(--motion), border-color var(--motion);
 }
 
-/* Past-chats list items — token-bound hover/selected without
+/* Past-chats list items: token-bound hover/selected without
    layered overrides. */
 #past-chats label {
     font-size: 13px;
@@ -2310,7 +2310,7 @@ select:focus-visible {
     background-color: var(--bg-active) !important;
 }
 
-/* Hover menu surfaces — consume tokens so the popover is
+/* Hover menu surfaces: consume tokens so the popover is
    visible in both themes. */
 .hover-menu button:hover {
     background: var(--bg-hover) !important;
@@ -2325,7 +2325,7 @@ select:focus-visible {
     background-color: var(--bg-hover);
 }
 
-/* Composer — turn the three sibling columns inside
+/* Composer: turn the three sibling columns inside
    #chat-input-row (hover menu / textarea / send-stop) into a
    single rounded card. The textarea is stripped of its own
    border/background and the surrounding columns lose their
@@ -2334,6 +2334,7 @@ select:focus-visible {
 #chat-input-row {
     display: flex !important;
     flex-direction: row !important;
+    flex-wrap: nowrap !important;
     align-items: flex-end !important;
     gap: 4px;
     width: calc(100% - 20px);
@@ -2366,13 +2367,13 @@ select:focus-visible {
 }
 
 /* JS adds .chat-input-positioned when the row floats over
-   chat history — keep the composer-card fill in that state. */
+   chat history: keep the composer-card fill in that state. */
 .chat-input-positioned {
     background: var(--bg-input) !important;
 }
 
 /* Strip default chrome from the sibling columns and the
-   MultimodalTextbox itself — the row supplies the visible
+   MultimodalTextbox itself; the row supplies the visible
    surface. */
 #chat-input,
 #chat-input-container,
@@ -2412,7 +2413,7 @@ select:focus-visible {
     justify-content: center !important;
 }
 
-/* Tighten the hamburger button too — 32×32 leaves 6px of dead
+/* Tighten the hamburger button too: 32×32 leaves 6px of dead
    space on each side of the 20px SVG, making the icon visually
    far from its neighbors. */
 #hover-element-button {
@@ -2444,6 +2445,7 @@ select:focus-visible {
     line-height: 22px !important;
     box-sizing: content-box !important;
     overflow-y: auto !important;
+    overflow-wrap: anywhere !important;
 }
 
 /* Override Gradio's flex-grow scales (set by `scale=1/10/1`)
@@ -2461,7 +2463,7 @@ select:focus-visible {
 }
 
 /* Multimodal attachment thumbnails: in-flow inside the
-   composer card (reserves layout space — chat content above
+   composer card (reserves layout space, chat content above
    pushes up automatically). Styled as a distinct zone with
    a subtle bottom divider rather than its own card. */
 #chat-input .thumbnails {
@@ -2470,9 +2472,9 @@ select:focus-visible {
     gap: 8px !important;
 }
 
-/* Send: accent-color circle with white icon. Stop: red ghost
-   square. Don't set `display` — it would override Gradio's
-   `.hidden { display: none }` used for visible=False on Stop. */
+/* Send and Stop icon buttons. Don't set `display`; it would
+   override Gradio's `.hidden { display: none }` used for
+   visible=False on the Stop button. */
 #chat-input-row #Generate,
 #chat-input-row #stop {
     width: 32px !important;
@@ -2493,15 +2495,21 @@ select:focus-visible {
     border-radius: 50% !important;
 }
 
+/* Stop button: tokenized hover progression. */
 #chat-input-row #stop {
-    background: var(--bg-active) !important;
+    background: var(--bg-hover) !important;
     color: var(--text) !important;
-    border: 1px solid var(--border) !important;
+    border: none !important;
     border-radius: 50% !important;
+    transition: background-color var(--motion) !important;
 }
 
-/* Send icon: Lucide send-horizontal — paper airplane pointing
-   right with a horizontal accent line. */
+#chat-input-row #stop:hover {
+    background: var(--bg-active) !important;
+}
+
+/* Send icon: paper airplane pointing right with a horizontal
+   accent line. */
 #chat-input-row #Generate::before {
     width: 18px;
     height: 18px;
@@ -2509,7 +2517,7 @@ select:focus-visible {
             mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3 3 6 12l-3 9 19-9Z'/><path d='M6 12h16'/></svg>");
 }
 
-/* Stop icon: filled square (no mask needed — just a colored
+/* Stop icon: filled square (no mask needed, just a colored
    block via background-color: currentColor). */
 #chat-input-row #stop::before {
     content: "";
@@ -2525,7 +2533,7 @@ select:focus-visible {
     opacity: 0.7;
 }
 
-/* Accordion chevron — Gradio renders the open/close indicator
+/* Accordion chevron: Gradio renders the open/close indicator
    as a Unicode ▼ inside a span that inherits section-header
    font-size; in Inter that glyph paints ~2x its em-square,
    producing a giant triangle. Constrain it. */
@@ -2548,7 +2556,7 @@ select:focus-visible {
 }
 
 /* Inner Tabs (Parameters/Models/Image gen). The header_bar is
-   the leftmost rail — already styled — and is excluded via
+   the leftmost rail (already styled) and is excluded via
    :not(.header_bar). Default Gradio look has tab-shaped
    buttons with rounded top corners and a bottom border that
    creates the "browser tab" effect; replaced with a flat
@@ -2584,7 +2592,7 @@ select:focus-visible {
     box-shadow: inset 0 -2px 0 var(--accent) !important;
 }
 
-/* Slider thumb — use the accent color so it matches the rest
+/* Slider thumb: use the accent color so it matches the rest
    of the design language (selected-tab indicator, etc.). */
 input[type="range"]::-webkit-slider-thumb {
     background: var(--accent) !important;
@@ -2603,7 +2611,7 @@ input[type="range"]::-moz-range-thumb {
     box-shadow: none !important;
 }
 
-/* Dropdown popover — kill Gradio's heavy default shadow,
+/* Dropdown popover: kill Gradio's heavy default shadow,
    replace with a subtle one matching design tokens. */
 .options {
     box-shadow: 0 4px 12px rgb(0 0 0 / 12%) !important;
@@ -2613,13 +2621,13 @@ input[type="range"]::-moz-range-thumb {
     box-shadow: 0 4px 16px rgb(0 0 0 / 40%) !important;
 }
 
-/* Accordion — drop Gradio's default shadow_drop on the
+/* Accordion: drop Gradio's default shadow_drop on the
    accordion block. */
 .block:has(> .label-wrap) {
     box-shadow: none !important;
 }
 
-/* Icon buttons — hide the text label; the visible glyph is the
+/* Icon buttons: hide the text label; the visible glyph is the
    ::before mask below. Original text stays in the DOM for a11y. */
 .refresh-icon-btn,
 .save-icon-btn,
