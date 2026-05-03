@@ -1,6 +1,7 @@
 const { app, BrowserWindow, screen } = require("electron");
 const { spawn } = require("child_process");
 const path = require("path");
+const fs = require("fs");
 const net = require("net");
 
 const TITLE = "TextGen";
@@ -29,10 +30,34 @@ if (process.platform === "linux") {
   app.commandLine.appendSwitch("disable-accelerated-video-encode");
 }
 
+// Mirrors resolve_user_data_dir in modules/paths.py: --user-data-dir wins,
+// else a sibling-level user_data (shared across installs), else in-tree.
+function resolveUserDataDir() {
+  for (let i = 0; i < userArgs.length; i++) {
+    if (userArgs[i] === "--user-data-dir" && i + 1 < userArgs.length) return path.resolve(baseDir, userArgs[i + 1]);
+    if (userArgs[i].startsWith("--user-data-dir=")) return path.resolve(baseDir, userArgs[i].slice("--user-data-dir=".length));
+  }
+  const shared = path.join(baseDir, "..", "..", "user_data");
+  return fs.existsSync(shared) ? shared : path.join(baseDir, "..", "user_data");
+}
+const stateFile = path.join(resolveUserDataDir(), "cache", "window-state.json");
+
 let serverProcess = null;
 let mainWindow = null;
 let portCheckInterval = null;
 let portCheckTimeout = null;
+
+function loadState() {
+  try { return JSON.parse(fs.readFileSync(stateFile, "utf8")); } catch { return null; }
+}
+
+function saveState() {
+  const state = { ...mainWindow.getNormalBounds(), maximized: mainWindow.isMaximized() };
+  try {
+    fs.mkdirSync(path.dirname(stateFile), { recursive: true });
+    fs.writeFileSync(stateFile, JSON.stringify(state));
+  } catch {}
+}
 
 function checkPort(port) {
   return new Promise((resolve) => {
@@ -68,20 +93,30 @@ function killServer() {
   }
 }
 
-function createWindow(port) {
+function defaultBounds() {
   const { width: sw, height: sh } = screen.getPrimaryDisplay().workAreaSize;
-  const width = Math.min(Math.max(Math.floor(sw * 0.9), 1200), 1600);
-  const height = Math.min(Math.max(Math.floor(sh * 0.9), 800), 1000);
+  return {
+    width: Math.min(Math.max(Math.floor(sw * 0.9), 1200), 1600),
+    height: Math.min(Math.max(Math.floor(sh * 0.9), 800), 1000),
+  };
+}
+
+function createWindow(port) {
+  const state = loadState();
+  const bounds = state && [state.x, state.y, state.width, state.height].every(Number.isFinite)
+    ? { x: state.x, y: state.y, width: state.width, height: state.height }
+    : defaultBounds();
 
   mainWindow = new BrowserWindow({
-    width,
-    height,
+    ...bounds,
     title: TITLE,
     autoHideMenuBar: true,
     webPreferences: { nodeIntegration: false, contextIsolation: true },
   });
+  if (state && state.maximized) mainWindow.maximize();
   mainWindow.on("page-title-updated", (e) => e.preventDefault());
   mainWindow.webContents.on("will-prevent-unload", (e) => e.preventDefault());
+  mainWindow.on("close", saveState);
   mainWindow.on("closed", () => { mainWindow = null; });
   mainWindow.loadURL(`http://127.0.0.1:${port}`);
 }
