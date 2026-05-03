@@ -17,6 +17,8 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/oobabooga/textgen?style=for-the-badge&logo=github&logoColor=white&labelColor=black)](https://github.com/oobabooga/textgen)
 
+![Chat mode](https://raw.githubusercontent.com/oobabooga/screenshots/refs/heads/main/CHAT-4.7.png)
+
 ## Get started in 1 minute
 
 Download, unzip, double-click `textgen`. A window opens.
@@ -28,8 +30,6 @@ Portable builds for Linux, Windows, and macOS with CUDA, Vulkan, ROCm, and CPU-o
 Running on a remote box? `./textgen --listen` skips the window and serves the web UI on your network. `./textgen --nowebui` runs the OpenAI-compatible API only.
 
 For additional backends (ExLlamaV3, Transformers), training, image generation, and extensions, see [Installation](#installation).
-
-![Chat mode](https://raw.githubusercontent.com/oobabooga/screenshots/refs/heads/main/CHAT-4.7.png)
 
 ## Features
 
