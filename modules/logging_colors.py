@@ -1,4 +1,5 @@
 import logging
+import sys
 
 logger = logging.getLogger('textgen')
 
@@ -35,11 +36,16 @@ def setup_logging():
 
     level = logging.DEBUG
     logger.setLevel(logging.DEBUG)  # log to file is always at level debug for facility `sd`
-    console = Console(log_time=True, log_time_format='%H:%M:%S-%f', theme=Theme({
-        "traceback.border": "black",
-        "traceback.border.syntax_error": "black",
-        "inspect.value.border": "black",
-    }))
+    console = Console(
+        log_time=True,
+        log_time_format='%H:%M:%S-%f',
+        legacy_windows=False if sys.platform == "win32" else None,
+        theme=Theme({
+            "traceback.border": "black",
+            "traceback.border.syntax_error": "black",
+            "inspect.value.border": "black",
+        }),
+    )
     logging.basicConfig(level=logging.ERROR, format='%(asctime)s | %(name)s | %(levelname)s | %(module)s | %(message)s', handlers=[logging.NullHandler()])  # redirect default logger to null
     pretty_install(console=console)
     traceback_install(console=console, extra_lines=1, max_frames=10, width=console.width, word_wrap=False, indent_guides=False, suppress=[])
