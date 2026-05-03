@@ -6,8 +6,8 @@ for %%a in (%*) do (
     if /i "%%~a"=="--nowebui" goto :server
     if /i "%%~a"=="--listen" goto :server
 )
-start "" "%APP%\electron\electron.exe" "%APP%" -- %*
-exit /b 0
+"%APP%\electron\electron.exe" "%APP%" -- %*
+exit /b %errorlevel%
 :help
 "%APP%\portable_env\python.exe" "%APP%\server.py" --help
 exit /b %errorlevel%
