@@ -25,9 +25,7 @@ Download, unzip, double-click `textgen`. A window opens.
 
 **https://github.com/oobabooga/textgen/releases**
 
-Portable builds for Linux, Windows, and macOS with CUDA, Vulkan, ROCm, and CPU-only options. No Python install, no conda, no Docker. Compatible with GGUF (llama.cpp) models.
-
-Running on a remote box? `./textgen --listen` skips the window and serves the web UI on your network. `./textgen --nowebui` runs the OpenAI-compatible API only.
+Portable builds for Linux, Windows, and macOS with CUDA, Vulkan, ROCm, and CPU-only options. All dependencies included. Compatible with GGUF (llama.cpp) models.
 
 For additional backends (ExLlamaV3, Transformers), training, image generation, and extensions, see [Installation](#installation).
 
