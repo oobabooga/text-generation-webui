@@ -29,11 +29,7 @@ Running on a remote box? `./textgen --listen` skips the window and serves the we
 
 For additional backends (ExLlamaV3, Transformers), training, image generation, and extensions, see [Installation](#installation).
 
-|![Instruct mode](https://github.com/oobabooga/screenshots/raw/main/INSTRUCT-4-6.png) | ![Chat mode](https://github.com/oobabooga/screenshots/raw/main/CHAT-4-6.png) |
-|:---:|:---:|
-| Instruct mode | Chat mode |
-|![Notebook mode](https://github.com/oobabooga/screenshots/raw/main/NOTEBOOK-4-6.png) | ![Parameters](https://github.com/oobabooga/screenshots/raw/main/PARAMETERS-4-6.png) |
-| Notebook mode | Parameters |
+![Chat mode](https://raw.githubusercontent.com/oobabooga/screenshots/refs/heads/main/CHAT-4.7.png)
 
 ## Features
 
