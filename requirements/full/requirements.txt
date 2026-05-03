@@ -2,6 +2,7 @@ accelerate==1.13.*
 audioop-lts<1.0; python_version >= "3.13"
 bitsandbytes==0.49.*
 datasets
+ddgs==9.14.1
 diffusers==0.37.*
 einops
 fastapi==0.112.4

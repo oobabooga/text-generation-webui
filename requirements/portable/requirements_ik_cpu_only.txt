@@ -1,4 +1,5 @@
 audioop-lts<1.0; python_version >= "3.13"
+ddgs==9.14.1
 fastapi==0.112.4
 huggingface-hub==1.5.*
 jinja2==3.1.6
