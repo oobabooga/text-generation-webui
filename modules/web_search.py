@@ -87,7 +87,7 @@ def download_web_page(url, timeout=10, include_links=False):
         return ""
 
 
-def perform_web_search(query, num_pages=3, max_workers=5, timeout=10, fetch_content=True):
+def perform_web_search(query, num_pages=3, max_workers=5, fetch_content=True):
     """Perform web search and return results, optionally with page content"""
     try:
         kwargs = {'max_results': num_pages} if num_pages is not None else {}
