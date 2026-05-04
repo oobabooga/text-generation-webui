@@ -374,6 +374,9 @@ def process_parameters(body, is_legacy=False):
 
 def process_multimodal_content(content):
     """Extract text and add image placeholders from OpenAI multimodal format"""
+    if content is None:
+        return ""
+
     if isinstance(content, str):
         return content
 
@@ -390,7 +393,7 @@ def process_multimodal_content(content):
             elif item_type == 'image_url':
                 image_placeholders += "<__media__>"
 
-        final_text = ' '.join(text_parts)
+        final_text = '\n'.join(text_parts)
         if image_placeholders:
             return f"{image_placeholders}\n\n{final_text}"
         else:
@@ -413,13 +416,11 @@ def convert_history(history):
     seen_non_system = False
 
     for entry in history:
-        content = entry["content"]
+        content = process_multimodal_content(entry.get("content"))
         role = entry["role"]
 
         if role == "user":
             seen_non_system = True
-            # Extract text content (images handled by model-specific code)
-            content = process_multimodal_content(content)
             user_input = content
             user_input_last = True
 
