@@ -2439,7 +2439,7 @@ select:focus-visible {
     margin: 0 !important;
     box-shadow: none !important;
     field-sizing: content;
-    height: auto !important;
+    height: auto;
     min-height: 22px !important;
     max-height: 200px !important;
     line-height: 22px !important;
