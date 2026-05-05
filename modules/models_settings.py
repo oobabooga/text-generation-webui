@@ -264,7 +264,7 @@ def apply_model_settings_to_state(model, state):
     # Handle MoE expert override UI
     current_enabled = state.get('moe_experts_override_enabled', False)
     current_override = state.get('moe_experts_override', 0)
-    state['moe_experts_override_enabled'] = gr.update(visible=False)
+    state['moe_experts_override_enabled'] = gr.update(visible=False, value=False)
     state['moe_experts_override'] = gr.update(visible=False)
     if state['loader'] == 'llama.cpp':
         total = shared.moe_total_experts
