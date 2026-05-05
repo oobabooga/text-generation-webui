@@ -86,6 +86,23 @@ textgen
 These formats require the one-click installer (not the portable build).
 </details>
 
+## Loading a model automatically
+
+To skip the Model tab on every launch, add this to `user_data/CMD_FLAGS.txt`:
+
+```
+--model my-model.gguf
+```
+
+Replace `my-model.gguf` with the name of a file in `user_data/models`. The model will load on startup.
+
+To pass extra flags, put each on its own line:
+
+```
+--model my-model.gguf
+--cache-type q8_0
+```
+
 ## Installation
 
 For the desktop app, see the [portable builds](https://github.com/oobabooga/textgen/releases). The options below run the web UI in your browser instead.
@@ -122,6 +139,9 @@ deactivate
 
 For users who need additional backends (ExLlamaV3, Transformers), training, image generation, or extensions like TTS, voice input, and translation. Requires ~10GB disk space and downloads PyTorch.
 
+<details>
+<summary>Installation details</summary>
+
 1. Clone the repository, or [download its source code](https://github.com/oobabooga/textgen/archive/refs/heads/main.zip) and extract it.
 2. Run the startup script for your OS: `start_windows.bat`, `start_linux.sh`, or `start_macos.sh`.
 3. When prompted, select your GPU vendor.
@@ -135,12 +155,7 @@ To update, run the update script for your OS: `update_wizard_windows.bat`, `upda
 
 To reinstall with a fresh Python environment, delete the `installer_files` folder and run the `start_` script again.
 
-<details>
-<summary>
-One-click installer details
-</summary>
-
-### One-click-installer
+### One-click installer details
 
 The script uses Miniforge to set up a Conda environment in the `installer_files` folder.
 
@@ -149,13 +164,6 @@ If you ever need to install something manually in the `installer_files` environm
 * There is no need to run any of those scripts (`start_`, `update_wizard_`, or `cmd_`) as admin/root.
 * To install requirements for extensions, it is recommended to use the update wizard script with the "Install/update extensions requirements" option. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
 * For automated installation, you can use the `GPU_CHOICE`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh`.
-
-</details>
-
-<details>
-<summary>
-Manual full installation with conda or docker
-</summary>
 
 ### Full installation with Conda
 
@@ -267,12 +275,13 @@ conda activate textgen
 cd textgen
 pip install -r <requirements file that you have used> --upgrade
 ```
+
 </details>
 
+### Command-line flags
+
 <details>
-<summary>
-List of command-line flags
-</summary>
+<summary>Show full list</summary>
 
 ```txt
 usage: server.py [-h] [--user-data-dir USER_DATA_DIR] [--multi-user] [--model MODEL] [--lora LORA [LORA ...]] [--model-dir MODEL_DIR] [--lora-dir LORA_DIR] [--model-menu] [--settings SETTINGS]
@@ -281,18 +290,19 @@ usage: server.py [-h] [--user-data-dir USER_DATA_DIR] [--multi-user] [--model MO
                  [--loader LOADER] [--ctx-size N] [--cache-type N] [--model-draft MODEL_DRAFT] [--draft-max DRAFT_MAX] [--gpu-layers-draft GPU_LAYERS_DRAFT] [--device-draft DEVICE_DRAFT]
                  [--ctx-size-draft CTX_SIZE_DRAFT] [--spec-type {none,ngram-mod,ngram-simple,ngram-map-k,ngram-map-k4v,ngram-cache}] [--spec-ngram-size-n SPEC_NGRAM_SIZE_N]
                  [--spec-ngram-size-m SPEC_NGRAM_SIZE_M] [--spec-ngram-min-hits SPEC_NGRAM_MIN_HITS] [--gpu-layers N] [--cpu-moe] [--mmproj MMPROJ] [--streaming-llm] [--tensor-split TENSOR_SPLIT]
-                 [--row-split] [--no-mmap] [--mlock] [--no-kv-offload] [--batch-size BATCH_SIZE] [--ubatch-size UBATCH_SIZE] [--threads THREADS] [--threads-batch THREADS_BATCH] [--numa]
-                 [--parallel PARALLEL] [--fit-target FIT_TARGET] [--extra-flags EXTRA_FLAGS] [--ik] [--cpu] [--cpu-memory CPU_MEMORY] [--disk] [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit]
-                 [--bf16] [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION] [--load-in-4bit] [--use_double_quant]
-                 [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE] [--gpu-split GPU_SPLIT] [--enable-tp] [--tp-backend TP_BACKEND] [--cfg-cache] [--listen] [--listen-port LISTEN_PORT]
-                 [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH] [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE]
-                 [--subpath SUBPATH] [--old-colors] [--portable] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT] [--api-key API_KEY] [--admin-key ADMIN_KEY]
-                 [--api-enable-ipv6] [--api-disable-ipv4] [--nowebui] [--temperature N] [--dynatemp-low N] [--dynatemp-high N] [--dynatemp-exponent N] [--smoothing-factor N] [--smoothing-curve N]
-                 [--top-p N] [--top-k N] [--min-p N] [--top-n-sigma N] [--typical-p N] [--xtc-threshold N] [--xtc-probability N] [--epsilon-cutoff N] [--eta-cutoff N] [--tfs N] [--top-a N]
-                 [--adaptive-target N] [--adaptive-decay N] [--dry-multiplier N] [--dry-allowed-length N] [--dry-base N] [--repetition-penalty N] [--frequency-penalty N] [--presence-penalty N]
-                 [--encoder-repetition-penalty N] [--no-repeat-ngram-size N] [--repetition-penalty-range N] [--penalty-alpha N] [--guidance-scale N] [--mirostat-mode N] [--mirostat-tau N]
-                 [--mirostat-eta N] [--do-sample | --no-do-sample] [--dynamic-temperature | --no-dynamic-temperature] [--temperature-last | --no-temperature-last] [--sampler-priority N]
-                 [--dry-sequence-breakers N] [--enable-thinking | --no-enable-thinking] [--reasoning-effort N] [--preserve-thinking | --no-preserve-thinking] [--chat-template-file CHAT_TEMPLATE_FILE]
+                 [--split-mode {layer,row,tensor,none}] [--no-mmap] [--mlock] [--no-kv-offload] [--batch-size BATCH_SIZE] [--ubatch-size UBATCH_SIZE] [--threads THREADS]
+                 [--threads-batch THREADS_BATCH] [--numa] [--parallel PARALLEL] [--fit-target FIT_TARGET] [--extra-flags EXTRA_FLAGS] [--ik] [--cpu] [--cpu-memory CPU_MEMORY] [--disk]
+                 [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION]
+                 [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE] [--gpu-split GPU_SPLIT] [--enable-tp] [--tp-backend TP_BACKEND] [--cfg-cache]
+                 [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH]
+                 [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE] [--subpath SUBPATH] [--old-colors] [--portable] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT]
+                 [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6] [--api-disable-ipv4] [--nowebui] [--temperature N] [--dynatemp-low N] [--dynatemp-high N] [--dynatemp-exponent N]
+                 [--smoothing-factor N] [--smoothing-curve N] [--top-p N] [--top-k N] [--min-p N] [--top-n-sigma N] [--typical-p N] [--xtc-threshold N] [--xtc-probability N] [--epsilon-cutoff N]
+                 [--eta-cutoff N] [--tfs N] [--top-a N] [--adaptive-target N] [--adaptive-decay N] [--dry-multiplier N] [--dry-allowed-length N] [--dry-base N] [--repetition-penalty N]
+                 [--frequency-penalty N] [--presence-penalty N] [--encoder-repetition-penalty N] [--no-repeat-ngram-size N] [--repetition-penalty-range N] [--penalty-alpha N] [--guidance-scale N]
+                 [--mirostat-mode N] [--mirostat-tau N] [--mirostat-eta N] [--do-sample | --no-do-sample] [--dynamic-temperature | --no-dynamic-temperature]
+                 [--temperature-last | --no-temperature-last] [--sampler-priority N] [--dry-sequence-breakers N] [--enable-thinking | --no-enable-thinking] [--reasoning-effort N]
+                 [--preserve-thinking | --no-preserve-thinking] [--chat-template-file CHAT_TEMPLATE_FILE]
 
 TextGen
 
@@ -349,7 +359,7 @@ llama.cpp:
   --mmproj MMPROJ                                      Path to the mmproj file for vision models.
   --streaming-llm                                      Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.
   --tensor-split TENSOR_SPLIT                          Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.
-  --row-split                                          Split the model by rows across GPUs. This may improve multi-gpu performance.
+  --split-mode {layer,row,tensor,none}                 How to split the model across multiple GPUs. "tensor" can make multi-GPU significantly faster.
   --no-mmap                                            Prevent mmap from being used.
   --mlock                                              Force the system to keep the model in RAM.
   --no-kv-offload                                      Do not offload the K, Q, V to the GPU. This saves VRAM but reduces performance.
