@@ -6,6 +6,7 @@ loaders_and_params = OrderedDict({
         'gpu_layers',
         'fit_target',
         'cpu_moe',
+        'moe_experts_override_enabled',
         'threads',
         'threads_batch',
         'batch_size',
@@ -343,6 +344,8 @@ def list_model_elements():
         'spec_ngram_size_m',
         'spec_ngram_min_hits',
         'mmproj',
+        'moe_experts_override_enabled',
+        'moe_experts_override',
     ]
 
     from modules import shared

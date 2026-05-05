@@ -26,6 +26,11 @@ lora_names = []
 bos_token = '<s>'
 eos_token = '</s>'
 
+# MoE expert info (populated when a GGUF model is loaded)
+moe_arch = ''
+moe_total_experts = 0
+moe_default_experts = 0
+
 # Image model variables
 image_model = None
 image_model_name = 'None'
