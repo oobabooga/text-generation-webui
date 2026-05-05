@@ -45,7 +45,7 @@
 }
 
 .chat .user-message {
-    background: #f3f4f6;
+    background: var(--bg-rail);
     padding: 1.5rem 1rem;
     padding-bottom: 2rem;
     border-radius: 0;
