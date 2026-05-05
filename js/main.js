@@ -962,24 +962,18 @@ document.fonts.addEventListener("loadingdone", (event) => {
 (function() {
   const chatParent = document.querySelector(".chat-parent");
   const chatInputRow = document.querySelector("#chat-input-row");
-  const originalMarginBottom = 75;
-  let originalHeight = chatInputRow.offsetHeight;
+  if (!chatParent || !chatInputRow) return;
 
-  function updateMargin() {
-    const currentHeight = chatInputRow.offsetHeight;
-    const heightDifference = currentHeight - originalHeight;
-    chatParent.style.marginBottom = `${originalMarginBottom + heightDifference}px`;
+  // Keep chat-parent's box ending 15px above the (absolute)
+  // composer so the message-actions row isn't glued to it.
+  function syncMargin() {
+    chatParent.style.marginBottom = (chatInputRow.offsetHeight + 15) + "px";
     if (!window.isScrolled) {
       chatParent.scrollTop = chatParent.scrollHeight - chatParent.clientHeight;
     }
   }
 
-  // Watch for size changes that affect height
-  new ResizeObserver(updateMargin).observe(chatInputRow);
-
-  // Also listen for window resize
-  window.addEventListener("resize", updateMargin);
-
-  // Initial call to set the margin based on current state
-  updateMargin();
+  new ResizeObserver(syncMargin).observe(chatInputRow);
+  window.addEventListener("resize", syncMargin);
+  syncMargin();
 })();

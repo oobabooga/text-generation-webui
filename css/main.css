@@ -458,7 +458,7 @@ audio {
     flex: 1;
     overflow: auto !important;
     border-radius: 0 !important;
-    margin-bottom: 75px;
+    margin-bottom: 8px;
 }
 
 .chat-parent .prose {
@@ -491,7 +491,7 @@ audio {
 .chat > .messages {
     display: flex;
     flex-direction: column;
-    min-height: calc(100vh - 102px);
+    min-height: calc(100vh - 225px);
 }
 
 .chat > .messages > :first-child {
@@ -698,6 +698,8 @@ audio {
 #chat-input textarea::placeholder {
     white-space: nowrap;
     overflow: hidden;
+    color: #9ca3af !important;
+    opacity: 1 !important;
 }
 
 #chat-input textarea:focus {
@@ -720,15 +722,6 @@ audio {
     margin-right: 16px;
     margin-bottom: 7px;
     background: transparent;
-}
-
-.chat-input-positioned {
-    max-width: 54rem;
-    left: 50%;
-    transform: translateX(-50%);
-    position: absolute;
-    bottom: 0;
-    background: var(--body-background-fill);
 }
 
 @media print {
@@ -1281,7 +1274,8 @@ audio {
 }
 
 .dark #chat-input textarea::placeholder {
-    color: var(--text-muted);
+    color: var(--text-muted) !important;
+    opacity: 1 !important;
 }
 
 .dark .hover-menu {
@@ -2332,19 +2326,41 @@ select:focus-visible {
    default chrome so the row reads as one bordered surface
    that lights up on focus-within. */
 #chat-input-row {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: flex-end !important;
-    gap: 4px;
+    display: grid !important;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: 1fr auto;
+    grid-template-areas:
+        "input input input"
+        "ham   .     send";
+    column-gap: 4px;
+    row-gap: 6px;
     width: calc(100% - 20px);
     max-width: 48rem;
     margin: 0 auto 1rem;
-    padding: 8px 12px;
-    background: var(--bg-input);
-    border: 1px solid var(--border);
+    padding: 8px 16px;
+    background: var(--bg-elevated);
+    border: 1px solid #d1d5db;
     border-radius: 1.5rem;
+    position: relative;
 }
+
+.dark #chat-input-row {
+    background: var(--bg-input);
+    border-color: var(--border);
+}
+
+/* Composer pinned to bottom of #chat-col; chat-parent's
+   margin-bottom is kept in sync via JS. */
+#chat-input-row.chat-input-positioned {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#chat-input-row > #gr-hover-container { grid-area: ham; }
+#chat-input-row > #chat-input-container { grid-area: input; }
+#chat-input-row > #generate-stop-container { grid-area: send; }
 
 /* Only the row's direct flex children get bottom-anchored.
    The universal cascade (#chat-input-row *) was pushing SVGs
@@ -2366,12 +2382,6 @@ select:focus-visible {
     min-height: 0 !important;
 }
 
-/* JS adds .chat-input-positioned when the row floats over
-   chat history: keep the composer-card fill in that state. */
-.chat-input-positioned {
-    background: var(--bg-input) !important;
-}
-
 /* Strip default chrome from the sibling columns and the
    MultimodalTextbox itself; the row supplies the visible
    surface. */
@@ -2383,6 +2393,31 @@ select:focus-visible {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
+}
+
+/* Paperclip pinned to the bottom-left of the composer.
+   Wrapper chain is position:static so the absolute resolves
+   up to #chat-input-row. */
+#chat-input .input-container {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    position: static !important;
+}
+
+#chat-input,
+#chat-input > label,
+#chat-input-container,
+#chat-input-container > .form {
+    position: static !important;
+}
+
+#chat-input .upload-button {
+    position: absolute !important;
+    bottom: 8px;
+    left: calc(12px + 32px + 4px);
+    z-index: 5;
+    margin: 0 !important;
 }
 
 /* Kill the wrapper offsets that push each icon to a different
@@ -2435,16 +2470,10 @@ select:focus-visible {
     background: transparent !important;
     border: none !important;
     border-radius: 0 !important;
-    padding: 5px 4px 5px 12px !important;
+    padding: 12px 4px 4px 2px !important;
     margin: 0 !important;
     box-shadow: none !important;
-    field-sizing: content;
-    height: auto;
-    min-height: 22px !important;
-    max-height: 200px !important;
-    line-height: 22px !important;
-    box-sizing: content-box !important;
-    overflow-y: auto !important;
+    font-size: 16px !important;
     overflow-wrap: anywhere !important;
 }
 
@@ -2468,6 +2497,7 @@ select:focus-visible {
    a subtle bottom divider rather than its own card. */
 #chat-input .thumbnails {
     padding: 6px 0 8px !important;
+    margin-left: -4px;
     background: transparent;
     gap: 8px !important;
 }
