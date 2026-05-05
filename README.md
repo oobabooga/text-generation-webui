@@ -13,7 +13,7 @@
 
 # TextGen
 
-**A desktop app for local LLMs. Open source, no telemetry.** Text, vision, tool-calling, file attachments. UI + API.
+**A desktop app for local LLMs. Open source, no telemetry.** Text, vision, tool-calling, web search. UI + API.
 
 [![GitHub stars](https://img.shields.io/github/stars/oobabooga/textgen?style=for-the-badge&logo=github&logoColor=white&labelColor=black)](https://github.com/oobabooga/textgen)
 
