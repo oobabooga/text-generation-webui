@@ -86,23 +86,6 @@ textgen
 These formats require the one-click installer (not the portable build).
 </details>
 
-## Loading a model automatically
-
-To skip the Model tab on every launch, add this to `user_data/CMD_FLAGS.txt`:
-
-```
---model my-model.gguf
-```
-
-Replace `my-model.gguf` with the name of a file in `user_data/models`. The model will load on startup.
-
-To pass extra flags, put each on its own line:
-
-```
---model my-model.gguf
---cache-type q8_0
-```
-
 ## Installation
 
 For the desktop app, see the [portable builds](https://github.com/oobabooga/textgen/releases). The options below run the web UI in your browser instead.
@@ -135,35 +118,33 @@ python server.py --portable --api --auto-launch
 deactivate
 ```
 
-### One-click installer
+### Full installation
 
 For users who need additional backends (ExLlamaV3, Transformers), training, image generation, or extensions like TTS, voice input, and translation. Requires ~10GB disk space and downloads PyTorch.
 
 <details>
 <summary>Installation details</summary>
 
+### One-click installer
+
 1. Clone the repository, or [download its source code](https://github.com/oobabooga/textgen/archive/refs/heads/main.zip) and extract it.
 2. Run the startup script for your OS: `start_windows.bat`, `start_linux.sh`, or `start_macos.sh`.
 3. When prompted, select your GPU vendor.
 4. After installation, open `http://127.0.0.1:7860` in your browser.
 
-To restart the web UI later, run the same `start_` script.
+After installation:
 
-You can pass command-line flags directly (e.g., `./start_linux.sh --help`), or add them to `user_data/CMD_FLAGS.txt` (e.g., `--api` to enable the API).
+* **Restart**: run the same `start_` script.
+* **Pass command-line flags**: directly (e.g., `./start_linux.sh --help`), or persist them in `user_data/CMD_FLAGS.txt` (e.g., `--api` to enable the API).
+* **Update**: run the update script for your OS (`update_wizard_windows.bat`, `update_wizard_linux.sh`, or `update_wizard_macos.sh`).
+* **Reinstall from scratch**: delete the `installer_files` folder and run the `start_` script again.
+* **Install extension requirements**: use the update wizard's "Install/update extensions requirements" option. It reinstalls the main project requirements at the end to ensure they take precedence over conflicting extension dependencies.
 
-To update, run the update script for your OS: `update_wizard_windows.bat`, `update_wizard_linux.sh`, or `update_wizard_macos.sh`.
+Notes:
 
-To reinstall with a fresh Python environment, delete the `installer_files` folder and run the `start_` script again.
-
-### One-click installer details
-
-The script uses Miniforge to set up a Conda environment in the `installer_files` folder.
-
-If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, or `cmd_macos.sh`.
-
-* There is no need to run any of those scripts (`start_`, `update_wizard_`, or `cmd_`) as admin/root.
-* To install requirements for extensions, it is recommended to use the update wizard script with the "Install/update extensions requirements" option. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
-* For automated installation, you can use the `GPU_CHOICE`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh`.
+* These scripts (`start_`, `update_wizard_`, `cmd_`) don't need to run as admin/root.
+* For automated installation, set the `GPU_CHOICE`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. Example: `GPU_CHOICE=A LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh`.
+* Under the hood, the script uses Miniforge to set up a Conda environment in `installer_files/`. To run anything manually in this environment, launch an interactive shell using `cmd_linux.sh`, `cmd_windows.bat`, or `cmd_macos.sh`.
 
 ### Full installation with Conda
 
@@ -278,7 +259,7 @@ pip install -r <requirements file that you have used> --upgrade
 
 </details>
 
-### Command-line flags
+## Command-line flags
 
 <details>
 <summary>Show full list</summary>
@@ -471,6 +452,23 @@ API generation defaults:
 ```
 
 </details>
+
+## Loading a model automatically
+
+To skip the Model tab on every launch, add this to `user_data/CMD_FLAGS.txt`:
+
+```
+--model my-model.gguf
+```
+
+Replace `my-model.gguf` with the name of a file in `user_data/models`. The model will load on startup.
+
+To pass extra flags, put each on its own line:
+
+```
+--model my-model.gguf
+--cache-type q8_0
+```
 
 ## Documentation
 
