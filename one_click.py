@@ -205,7 +205,14 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
     executable = None if is_windows() else 'bash'
 
     # Run shell commands
-    result = subprocess.run(cmd, shell=True, capture_output=capture_output, env=env, executable=executable)
+    if environment:
+        if is_windows():
+            result = _subprocess_run(['cmd.exe', '/c', cmd], capture_output=capture_output, env=env)
+        else:
+            result = _subprocess_run(['bash', '-c', cmd], capture_output=capture_output, env=env)
+    else:
+        import shlex
+        result = _subprocess_run(shlex.split(cmd), capture_output=capture_output, env=env)
 
     # Assert the command ran successfully
     if assert_success and result.returncode != 0:
