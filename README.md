@@ -205,7 +205,7 @@ Requirements file to use:
 | Apple Intel | `requirements_apple_intel.txt` |
 | Apple Silicon | `requirements_apple_silicon.txt` |
 
-### Start the web UI
+#### 4. Start the web UI
 
 ```
 conda activate textgen
@@ -213,15 +213,23 @@ cd textgen
 python server.py
 ```
 
-Then browse to
+Then browse to `http://127.0.0.1:7860`.
 
-`http://127.0.0.1:7860`
+#### Manual compilation
 
-#### Manual install
+The `requirements*.txt` files above contain wheels precompiled through GitHub Actions. To compile manually (e.g., if no wheels are available for your hardware), use `requirements_nowheels.txt` and install your desired loaders manually.
 
-The `requirements*.txt` above contain various wheels precompiled through GitHub Actions. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
+#### Updating the requirements
 
-### Alternative: Docker
+From time to time, the `requirements*.txt` files change. To update:
+
+```
+conda activate textgen
+cd textgen
+pip install -r <requirements file that you have used> --upgrade
+```
+
+### Docker
 
 ```
 For NVIDIA GPU:
@@ -246,16 +254,6 @@ docker compose up --build
 
 * You need to have Docker Compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/textgen/wiki/09-%E2%80%90-Docker) for instructions.
 * For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui-docker).
-
-### Updating the requirements
-
-From time to time, the `requirements*.txt` change. To update, use these commands:
-
-```
-conda activate textgen
-cd textgen
-pip install -r <requirements file that you have used> --upgrade
-```
 
 </details>
 
