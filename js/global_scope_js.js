@@ -3,6 +3,8 @@
 // -------------------------------------------------
 
 function getProfilePictureUrl() {
+  const thumb = document.querySelector(".pfp_character");
+  if (thumb) return thumb.src.replace("pfp_character_thumb.png", "pfp_character.png");
   return "/file/user_data/cache/pfp_character.png?time=" + Date.now();
 }
 
