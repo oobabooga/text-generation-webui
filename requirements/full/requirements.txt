@@ -31,7 +31,7 @@ transformers==5.6.*
 triton-windows==3.5.1.post24; platform_system == "Windows"
 tqdm
 wandb
-xformers==0.0.33.post2
+xformers==0.0.35
 
 # Gradio
 https://github.com/oobabooga/gradio/releases/download/4.37.2-custom.20/gradio-4.37.2+custom.20-py3-none-any.whl
