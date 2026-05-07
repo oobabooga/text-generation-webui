@@ -111,7 +111,7 @@ function createWindow(port) {
     ...bounds,
     title: TITLE,
     autoHideMenuBar: true,
-    webPreferences: { nodeIntegration: false, contextIsolation: true },
+    webPreferences: { nodeIntegration: false, contextIsolation: true, spellcheck: false },
   });
   if (state && state.maximized) mainWindow.maximize();
   mainWindow.on("page-title-updated", (e) => e.preventDefault());
