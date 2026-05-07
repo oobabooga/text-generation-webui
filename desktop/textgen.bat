@@ -12,5 +12,6 @@ exit /b %errorlevel%
 "%APP%\portable_env\python.exe" "%APP%\server.py" --help
 exit /b %errorlevel%
 :server
+cd /d "%APP%" || exit /b 1
 "%APP%\portable_env\python.exe" "%APP%\server.py" --portable --api %*
 exit /b %errorlevel%
