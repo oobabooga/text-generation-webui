@@ -213,6 +213,10 @@ group.add_argument('--reasoning-effort', type=str, default='medium', metavar='N'
 group.add_argument('--preserve-thinking', action=argparse.BooleanOptionalAction, default=False, help='Preserve thinking blocks from prior turns in the chat template')
 group.add_argument('--chat-template-file', type=str, default=None, help='Path to a chat template file (.jinja, .jinja2, or .yaml) to use as the default instruction template for API requests. Overrides the model\'s built-in template.')
 
+# Electron
+group = parser.add_argument_group('Electron')
+group.add_argument('--no-electron', action='store_true', help='In portable builds, skip the Electron desktop window. Useful if you prefer to use the web UI in the browser.')
+
 # Handle CMD_FLAGS.txt
 cmd_flags_path = user_data_dir / "CMD_FLAGS.txt"
 if cmd_flags_path.exists():

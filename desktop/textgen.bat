@@ -5,6 +5,7 @@ for %%a in (%*) do (
     if /i "%%~a"=="-h" goto :help
     if /i "%%~a"=="--nowebui" goto :server
     if /i "%%~a"=="--listen" goto :server
+    if /i "%%~a"=="--no-electron" goto :server
 )
 "%APP%\electron\electron.exe" "%APP%" -- %*
 exit /b %errorlevel%

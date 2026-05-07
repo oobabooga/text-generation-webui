@@ -7,7 +7,7 @@ for arg; do
         --help|-h)
             exec "$PY" "$APP/server.py" --help
             ;;
-        --nowebui|--listen)
+        --nowebui|--listen|--no-electron)
             cd "$APP" && exec "$PY" "$APP/server.py" --portable --api "$@"
             ;;
     esac
