@@ -485,7 +485,7 @@ class LlamaServer:
 
             cmd += ["--model-draft", str(model_file)]
             if shared.args.draft_max > 0:
-                cmd += ["--draft-max", str(shared.args.draft_max)]
+                cmd += ["--spec-draft-n-max", str(shared.args.draft_max)]
             if shared.args.gpu_layers_draft > 0:
                 cmd += ["--gpu-layers-draft", str(shared.args.gpu_layers_draft)]
             if shared.args.device_draft:
@@ -494,11 +494,15 @@ class LlamaServer:
                 cmd += ["--ctx-size-draft", str(shared.args.ctx_size_draft)]
         if shared.args.spec_type != 'none':
             cmd += ["--spec-type", shared.args.spec_type]
-            cmd += ["--draft-max", str(shared.args.draft_max)]
-            cmd += ["--draft-min", "48"]
-            cmd += ["--spec-ngram-size-n", str(shared.args.spec_ngram_size_n)]
-            cmd += ["--spec-ngram-size-m", str(shared.args.spec_ngram_size_m)]
-            cmd += ["--spec-ngram-min-hits", str(shared.args.spec_ngram_min_hits)]
+            if shared.args.spec_type == 'ngram-mod':
+                cmd += ["--spec-ngram-mod-n-match", str(shared.args.spec_ngram_size_n)]
+                cmd += ["--spec-ngram-mod-n-max", str(shared.args.draft_max)]
+                cmd += ["--spec-ngram-mod-n-min", str(shared.args.spec_ngram_size_m)]
+            elif shared.args.spec_type in ('ngram-simple', 'ngram-map-k', 'ngram-map-k4v'):
+                prefix = f"--spec-{shared.args.spec_type}"
+                cmd += [f"{prefix}-size-n", str(shared.args.spec_ngram_size_n)]
+                cmd += [f"{prefix}-size-m", str(shared.args.spec_ngram_size_m)]
+                cmd += [f"{prefix}-min-hits", str(shared.args.spec_ngram_min_hits)]
         cmd += ["--parallel", str(shared.args.parallel)]
         if shared.args.streaming_llm:
             cmd += ["--cache-reuse", "1"]
