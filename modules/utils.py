@@ -79,7 +79,12 @@ def current_time():
 
 
 def atoi(text):
-    return int(text) if text.isdigit() else text.lower()
+    # str.isdigit() is True for characters int() cannot parse (e.g. the
+    # superscript '²' or circled '①'), so guard the conversion instead.
+    try:
+        return int(text)
+    except ValueError:
+        return text.lower()
 
 
 def natural_keys(text):
