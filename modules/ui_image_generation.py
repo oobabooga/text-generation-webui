@@ -260,6 +260,24 @@ def get_initial_page_info():
     return f"Page {page + 1} of {total_pages} ({total_images} total images)"
 
 
+def delete_selected_image(selected_image_path, current_page):
+    """Delete the selected image from disk and refresh the gallery."""
+    if not selected_image_path:
+        return "", "No image selected", *refresh_gallery(current_page)
+
+    if not os.path.exists(selected_image_path):
+        return "", "Image file not found", *refresh_gallery(current_page)
+
+    try:
+        os.remove(selected_image_path)
+        global _image_cache
+        _image_cache = None
+        gallery, page, page_info = refresh_gallery(current_page)
+        return "", f"Deleted: {os.path.basename(selected_image_path)}", gallery, page, page_info
+    except Exception as e:
+        return selected_image_path, f"Delete failed: {e}", *refresh_gallery(current_page)
+
+
 def refresh_gallery(current_page=0):
     """Refresh gallery with current page."""
     images, page, total_pages, total_images = get_paginated_images(current_page, force_refresh=True)
@@ -466,6 +484,7 @@ def create_ui():
                         gr.Markdown("### Generation Settings")
                         shared.gradio['image_settings_display'] = gr.Markdown("Select an image to view its settings")
                         shared.gradio['image_send_to_generate'] = gr.Button("Send to Generate", variant="primary")
+                        shared.gradio['image_delete_selected'] = gr.Button("Delete", variant="stop")
                         shared.gradio['image_gallery_status'] = gr.Markdown("")
 
                         gr.Markdown("### Import Image")
@@ -670,6 +689,13 @@ def create_event_handlers():
             'image_gallery_status'
         ),
         js=f'() => {{{ui.switch_tabs_js}; switch_to_image_ai_generate()}}',
+        show_progress=False
+    )
+
+    shared.gradio['image_delete_selected'].click(
+        delete_selected_image,
+        gradio('image_selected_path', 'image_current_page'),
+        gradio('image_selected_path', 'image_gallery_status', 'image_history_gallery', 'image_current_page', 'image_page_info'),
         show_progress=False
     )
 
