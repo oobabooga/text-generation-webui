@@ -483,3 +483,15 @@ https://github.com/oobabooga/textgen/wiki
 
 - In August 2023, [Andreessen Horowitz](https://a16z.com/) (a16z) provided a generous grant to encourage and support my independent work on this project. I am **extremely** grateful for their trust and recognition.
 - This project was inspired by [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) and wouldn't exist without it.
+
+
+## Contributing
+
+We welcome contributions of all kinds! Please read [CONTRIBUTING.md](CONTRIBUTING.md)
+for guidelines on how to report bugs, suggest features, and submit pull requests.
+
+By participating in this project, you agree to follow our
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
+---
+*Documentation contributed by [Mukller](https://github.com/Mukller)*
