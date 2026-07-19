@@ -273,7 +273,7 @@ usage: server.py [-h] [--user-data-dir USER_DATA_DIR] [--multi-user] [--model MO
                  [--threads-batch THREADS_BATCH] [--numa] [--parallel PARALLEL] [--fit-target FIT_TARGET] [--extra-flags EXTRA_FLAGS] [--ik] [--cpu] [--cpu-memory CPU_MEMORY] [--disk]
                  [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION]
                  [--load-in-4bit] [--use_double_quant] [--compute_dtype COMPUTE_DTYPE] [--quant_type QUANT_TYPE] [--gpu-split GPU_SPLIT] [--enable-tp] [--tp-backend TP_BACKEND] [--cfg-cache]
-                 [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share] [--auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH]
+                 [--listen] [--listen-port LISTEN_PORT] [--listen-host LISTEN_HOST] [--share] [--auto-launch | --no-auto-launch] [--gradio-auth GRADIO_AUTH] [--gradio-auth-path GRADIO_AUTH_PATH]
                  [--ssl-keyfile SSL_KEYFILE] [--ssl-certfile SSL_CERTFILE] [--subpath SUBPATH] [--old-colors] [--portable] [--api] [--public-api] [--public-api-id PUBLIC_API_ID] [--api-port API_PORT]
                  [--api-key API_KEY] [--admin-key ADMIN_KEY] [--api-enable-ipv6] [--api-disable-ipv4] [--nowebui] [--temperature N] [--dynatemp-low N] [--dynatemp-high N] [--dynatemp-exponent N]
                  [--smoothing-factor N] [--smoothing-curve N] [--top-p N] [--top-k N] [--min-p N] [--top-n-sigma N] [--typical-p N] [--xtc-threshold N] [--xtc-probability N] [--epsilon-cutoff N]
@@ -383,7 +383,7 @@ Gradio:
   --listen-port LISTEN_PORT                            The listening port that the server will use.
   --listen-host LISTEN_HOST                            The hostname that the server will use.
   --share                                              Create a public URL. This is useful for running the web UI on Google Colab or similar.
-  --auto-launch                                        Open the web UI in the default browser upon launch.
+  --auto-launch, --no-auto-launch                      Open the web UI in the default browser upon launch. Enabled by default in portable builds.
   --gradio-auth GRADIO_AUTH                            Set Gradio authentication password in the format "username:password". Multiple credentials can also be supplied with "u1:p1,u2:p2,u3:p3".
   --gradio-auth-path GRADIO_AUTH_PATH                  Set the Gradio authentication file path. The file should contain one or more user:password pairs in the same format as above.
   --ssl-keyfile SSL_KEYFILE                            The path to the SSL certificate key file.
