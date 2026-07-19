@@ -26,6 +26,18 @@ def sanitize_filename(name):
     return name
 
 
+def validate_filename(name):
+    """Return a sanitized filename after checking cross-platform constraints."""
+    name = sanitize_filename(name)
+    if not name:
+        raise ValueError('File name cannot be empty.')
+
+    if re.search(r'[<>:"\\|?*\x00-\x1f]', name) or name.endswith(('.', ' ')):
+        raise ValueError('File name contains characters that are not supported on all operating systems.')
+
+    return name
+
+
 def _is_path_allowed(abs_path_str):
     """Check if a path is under the configured user_data directory."""
     # normpath (not resolve) preserves symlinks so a symlinked user_data/logs works.
