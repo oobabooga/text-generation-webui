@@ -787,8 +787,45 @@ def count_prompt_tokens(text_input, state):
         return f"Error: {str(e)}"
 
 
-def update_token_display_from_state(state):
+def _format_token_display(prompt_n, gen_n, max_tokens, elapsed=None):
+    total = prompt_n + gen_n
+    percentage = (total / max_tokens) * 100 if max_tokens > 0 else 0
+    value = f"{total:,} / {max_tokens:,} tokens ({percentage:.1f}%)"
+    if gen_n > 0:
+        value += f"<br>{gen_n:,} generated"
+        if elapsed and elapsed > 0:
+            value += f" ({gen_n / elapsed:.1f} t/s)"
+
+    return value
+
+
+def _store_generation_stats(history, row_idx, started_at):
+    prompt_n = getattr(shared.model, 'last_prompt_token_count', None)
+    if not prompt_n:
+        return
+
+    metadata = history.setdefault('metadata', {}).setdefault(f'assistant_{row_idx}', {})
+    metadata['generation_stats'] = {
+        'prompt_tokens': prompt_n,
+        'generated_tokens': getattr(shared.model, 'last_completion_token_count', 0) or 0,
+        'elapsed_seconds': time.perf_counter() - started_at,
+    }
+
+
+def update_token_display_from_state(state, history):
     import gradio as gr
+    max_tokens = state.get('truncation_length') or 0
+    metadata = history.get('metadata', {}) if history else {}
+    row_idx = len(history.get('internal', [])) - 1
+    stats = metadata.get(f'assistant_{row_idx}', {}).get('generation_stats')
+    if stats:
+        return _format_token_display(
+            stats['prompt_tokens'],
+            stats['generated_tokens'],
+            max_tokens,
+            stats['elapsed_seconds'],
+        )
+
     if shared.model is None:
         return gr.update()
 
@@ -797,10 +834,7 @@ def update_token_display_from_state(state):
         return gr.update()
 
     gen_n = getattr(shared.model, 'last_completion_token_count', 0) or 0
-    total = prompt_n + gen_n
-    max_tokens = state.get('truncation_length') or 0
-    percentage = (total / max_tokens) * 100 if max_tokens > 0 else 0
-    new_value = f"{total:,} / {max_tokens:,} tokens ({percentage:.1f}%)"
+    elapsed = None
 
     if gen_n > 0:
         # A drop in gen_n means a new generation (backends reset to 0 per turn).
@@ -813,10 +847,11 @@ def update_token_display_from_state(state):
         elapsed = time.time() - shared.model._tps_start_time
         baseline = shared.model._tps_baseline
         if gen_n > baseline and elapsed > 0:
-            tps = (gen_n - baseline) / elapsed
-            new_value += f"<br>{gen_n:,} generated ({tps:.1f} t/s)"
+            elapsed = elapsed * gen_n / (gen_n - baseline)
         else:
-            new_value += f"<br>{gen_n:,} generated"
+            elapsed = None
+
+    new_value = _format_token_display(prompt_n, gen_n, max_tokens, elapsed)
 
     if new_value == getattr(shared.model, '_last_token_display', None):
         return gr.update()
@@ -1238,6 +1273,8 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
     # Add timestamp for assistant's response at the start of generation
     update_message_metadata(output['metadata'], "assistant", row_idx, timestamp=get_current_timestamp(), model_name=shared.model_name)
+    output['metadata'][f'assistant_{row_idx}'].pop('generation_stats', None)
+    generation_started_at = time.perf_counter()
 
     # Detect if the template appended a thinking start tag to the prompt
     thinking_prefix = None
@@ -1286,6 +1323,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             if not state.get('_skip_output_extensions'):
                 output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
 
+            _store_generation_stats(output, row_idx, generation_started_at)
             yield output
             return
 
@@ -1310,6 +1348,8 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
                 _last_visible_before_tool_buffer = output['visible'][-1][1]
 
             yield output
+
+    _store_generation_stats(output, row_idx, generation_started_at)
 
     if _continue:
         # Reprocess the entire internal text for extensions (like translation).
