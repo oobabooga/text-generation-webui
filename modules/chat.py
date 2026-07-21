@@ -787,39 +787,120 @@ def count_prompt_tokens(text_input, state):
         return f"Error: {str(e)}"
 
 
+def _get_history_token_stats(history):
+    if not history:
+        return None
+    return (history.get('metadata') or {}).get('_token_stats')
+
+
+def _store_history_token_stats(history, prompt_n, gen_n, tps=None):
+    """Persist last generation token stats on the chat history (issue #7600)."""
+    if history is None:
+        return
+    if 'metadata' not in history:
+        history['metadata'] = {}
+    stats = {
+        'prompt_n': int(prompt_n or 0),
+        'gen_n': int(gen_n or 0),
+    }
+    if tps is not None:
+        stats['tps'] = float(tps)
+    history['metadata']['_token_stats'] = stats
+
+
+def _format_token_display(prompt_n, gen_n, max_tokens, tps=None):
+    total = (prompt_n or 0) + (gen_n or 0)
+    percentage = (total / max_tokens) * 100 if max_tokens > 0 else 0
+    new_value = f"{total:,} / {max_tokens:,} tokens ({percentage:.1f}%)"
+    if gen_n and gen_n > 0:
+        if tps is not None and tps > 0:
+            new_value += f"<br>{gen_n:,} generated ({tps:.1f} t/s)"
+        else:
+            new_value += f"<br>{gen_n:,} generated"
+    return new_value
+
+
 def update_token_display_from_state(state):
+    """Update the token/speed panel for the *currently viewed* chat.
+
+    Live counters on ``shared.model`` only apply to the chat that last
+    generated. Other chats must use stats stored on their history metadata,
+    otherwise switching chats shows stale counts and a collapsing t/s
+    (issue #7600).
+    """
     import gradio as gr
     if shared.model is None:
         return gr.update()
 
-    prompt_n = getattr(shared.model, 'last_prompt_token_count', None)
-    if not prompt_n:
-        return gr.update()
-
-    gen_n = getattr(shared.model, 'last_completion_token_count', 0) or 0
-    total = prompt_n + gen_n
+    unique_id = state.get('unique_id')
+    model_chat = getattr(shared.model, '_token_stats_chat_id', None)
     max_tokens = state.get('truncation_length') or 0
-    percentage = (total / max_tokens) * 100 if max_tokens > 0 else 0
-    new_value = f"{total:,} / {max_tokens:,} tokens ({percentage:.1f}%)"
+    history = state.get('history') or {}
 
-    if gen_n > 0:
-        # A drop in gen_n means a new generation (backends reset to 0 per turn).
-        last_seen = getattr(shared.model, '_tps_last_gen_n', None)
-        if last_seen is None or gen_n < last_seen:
-            shared.model._tps_start_time = time.time()
-            shared.model._tps_baseline = gen_n
-        shared.model._tps_last_gen_n = gen_n
+    prompt_n = getattr(shared.model, 'last_prompt_token_count', None)
+    gen_n = getattr(shared.model, 'last_completion_token_count', 0) or 0
+    tps = None
 
-        elapsed = time.time() - shared.model._tps_start_time
-        baseline = shared.model._tps_baseline
-        if gen_n > baseline and elapsed > 0:
-            tps = (gen_n - baseline) / elapsed
-            new_value += f"<br>{gen_n:,} generated ({tps:.1f} t/s)"
-        else:
-            new_value += f"<br>{gen_n:,} generated"
+    # Live path: model counters belong to the chat currently on screen.
+    use_live = (
+        prompt_n
+        and (model_chat is None or model_chat == unique_id)
+    )
 
-    if new_value == getattr(shared.model, '_last_token_display', None):
+    if use_live:
+        if model_chat is None and unique_id:
+            # First observation this process — bind counters to this chat.
+            shared.model._token_stats_chat_id = unique_id
+
+        if gen_n > 0:
+            # A drop in gen_n means a new generation (backends reset to 0 per turn).
+            last_seen = getattr(shared.model, '_tps_last_gen_n', None)
+            if last_seen is None or gen_n < last_seen:
+                shared.model._tps_start_time = time.time()
+                shared.model._tps_baseline = gen_n
+            shared.model._tps_last_gen_n = gen_n
+
+            elapsed = time.time() - shared.model._tps_start_time
+            baseline = getattr(shared.model, '_tps_baseline', 0) or 0
+            if gen_n > baseline and elapsed > 0:
+                tps = (gen_n - baseline) / elapsed
+
+            # Keep the active chat's history in sync so switching away/back works.
+            _store_history_token_stats(history, prompt_n, gen_n, tps)
+
+        new_value = _format_token_display(prompt_n, gen_n, max_tokens, tps)
+    else:
+        # Viewing a different chat than the one that owns the live counters.
+        # Prefer disk history for unique_id — interface_state.history can lag
+        # behind the radio selection after a chat switch.
+        stored = _get_history_token_stats(history)
+        if unique_id and (not stored or not stored.get('prompt_n')):
+            try:
+                disk_history = load_history(
+                    unique_id, state.get('character_menu'), state.get('mode')
+                )
+                stored = _get_history_token_stats(disk_history) or stored
+                history = disk_history
+            except Exception:
+                pass
+        if not stored or not stored.get('prompt_n'):
+            # Fall back to a history+empty-input count when no gen stats exist.
+            fallback_state = dict(state)
+            fallback_state['history'] = history
+            return count_prompt_tokens({'text': '', 'files': []}, fallback_state)
+
+        new_value = _format_token_display(
+            stored.get('prompt_n') or 0,
+            stored.get('gen_n') or 0,
+            max_tokens,
+            stored.get('tps'),
+        )
+
+    # Cache key must include chat id so switching chats always refreshes.
+    cache_key = f"{unique_id}:{new_value}"
+    if cache_key == getattr(shared.model, '_last_token_display_key', None):
         return gr.update()
+    shared.model._last_token_display_key = cache_key
     shared.model._last_token_display = new_value
     return new_value
 
@@ -1416,6 +1497,13 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
     check_model_loaded_or_raise()
 
+    # Bind live token counters to this chat so other chats don't inherit them.
+    if shared.model is not None:
+        shared.model._token_stats_chat_id = state.get('unique_id')
+        # Force a fresh t/s window for this turn.
+        if hasattr(shared.model, '_tps_last_gen_n'):
+            delattr(shared.model, '_tps_last_gen_n')
+
     if state['start_with'] != '' and not _continue:
         if regenerate:
             text, state['history'] = remove_last_message(state['history'])
@@ -1715,6 +1803,23 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
                 if ts is not None:
                     version_update['tool_sequence'] = ts
                 meta_entry['versions'][current_idx].update(version_update)
+
+    # Persist generation token stats for this chat so switching chats does not
+    # reuse another chat's model-level counters (issue #7600).
+    if shared.model is not None:
+        prompt_n = getattr(shared.model, 'last_prompt_token_count', None) or 0
+        gen_n = getattr(shared.model, 'last_completion_token_count', 0) or 0
+        tps = None
+        if gen_n > 0:
+            start = getattr(shared.model, '_tps_start_time', None)
+            baseline = getattr(shared.model, '_tps_baseline', 0) or 0
+            if start is not None and gen_n > baseline:
+                elapsed = time.time() - start
+                if elapsed > 0:
+                    tps = (gen_n - baseline) / elapsed
+        if prompt_n or gen_n:
+            _store_history_token_stats(history, prompt_n, gen_n, tps)
+            shared.model._token_stats_chat_id = state.get('unique_id')
 
     save_history(history, state['unique_id'], state['character_menu'], state['mode'])
 
@@ -2530,6 +2635,9 @@ def handle_unique_id_select(state):
     set_viewing_unique_id(state['unique_id'])
 
     history = load_history(state['unique_id'], state['character_menu'], state['mode'])
+    # Put history into state so token display can read per-chat stats.
+    state = dict(state)
+    state['history'] = history
     html = redraw_html(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     # Save this as the last visited chat
@@ -2537,7 +2645,8 @@ def handle_unique_id_select(state):
 
     convert_to_markdown.cache_clear()
 
-    return [history, html]
+    token_html = update_token_display_from_state(state)
+    return [history, html, token_html]
 
 
 def handle_start_new_chat_click(state):
