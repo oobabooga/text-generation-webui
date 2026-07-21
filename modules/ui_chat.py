@@ -312,7 +312,7 @@ def create_event_handlers():
     if not shared.args.multi_user:
         shared.gradio['unique_id'].select(
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            chat.handle_unique_id_select, gradio('interface_state'), gradio('history', 'display'), show_progress=False)
+            chat.handle_unique_id_select, gradio('interface_state'), gradio('history', 'display', 'token_display'), show_progress=False)
 
     shared.gradio['Start new chat'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
