@@ -675,11 +675,17 @@ def generate_chat_prompt(user_input, state, **kwargs):
     if shared.tokenizer is not None:
         max_length = get_max_prompt_length(state)
         encoded_length = get_encoded_length(prompt)
+
+        # make_prompt() renders messages[:-1] while continuing, so one message
+        # more than usual has to survive the pops; otherwise the chat template
+        # is handed an empty list and fails on messages[0].
+        min_messages = 2 if _continue else 1
+
         while len(messages) > 0 and encoded_length > max_length:
 
-            if len(messages) > 2 and messages[0]['role'] == 'system':
+            if len(messages) > min_messages + 1 and messages[0]['role'] == 'system':
                 pop_idx = 1
-            elif len(messages) > 1 and messages[0]['role'] != 'system':
+            elif len(messages) > min_messages and messages[0]['role'] != 'system':
                 pop_idx = 0
             else:
                 pop_idx = None
@@ -698,7 +704,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
             # Resort to truncating the user input
             else:
-                user_message = messages[-1]['content']
+                # While continuing, messages[-1] holds the partial reply being
+                # extended, so the oversized input is the message before it.
+                trunc_idx = -2 if _continue and len(messages) > 1 else -1
+                user_message = messages[trunc_idx]['content']
 
                 # Bisect the truncation point
                 left, right = 0, len(user_message)
@@ -706,7 +715,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 while left < right:
                     mid = (left + right + 1) // 2
 
-                    messages[-1]['content'] = user_message[:mid]
+                    messages[trunc_idx]['content'] = user_message[:mid]
                     prompt = make_prompt(messages)
                     encoded_length = get_encoded_length(prompt)
 
@@ -715,7 +724,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                     else:
                         right = mid - 1
 
-                messages[-1]['content'] = user_message[:left]
+                messages[trunc_idx]['content'] = user_message[:left]
                 prompt = make_prompt(messages)
                 encoded_length = get_encoded_length(prompt)
                 if encoded_length > max_length:
