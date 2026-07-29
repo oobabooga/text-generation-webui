@@ -55,6 +55,10 @@ def get_model_metadata(model):
             gguf_files = list(path.glob('*.gguf'))
             if not gguf_files:
                 error_msg = f"No .gguf models found in directory: {path}"
+                hint = describe_non_gguf_model(path)
+                if hint:
+                    error_msg = f"{error_msg}. {hint}"
+
                 logger.error(error_msg)
                 raise FileNotFoundError(error_msg)
 
@@ -179,6 +183,36 @@ def get_model_metadata(model):
         model_settings['instruction_template_str'] = load_instruction_template(model_settings['instruction_template'])
 
     return model_settings
+
+
+def describe_non_gguf_model(path):
+    '''
+    Describe the model format found in a directory that has no GGUF files, so
+    that the llama.cpp loader can explain why the model is unsupported instead
+    of only reporting that no .gguf file was found.
+    '''
+    if not path.is_dir():
+        return None
+
+    if not any(any(path.glob(pattern)) for pattern in ('*.safetensors', '*.bin', '*.pt')):
+        return None
+
+    quant_method = None
+    config_path = path / 'config.json'
+    if config_path.exists():
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                quant_method = (json.loads(f.read()).get('quantization_config') or {}).get('quant_method', None)
+        except (OSError, ValueError):
+            pass
+
+    format_name = quant_method.upper() if quant_method else 'Transformers'
+    if shared.args.portable:
+        advice = 'This portable build only supports GGUF models.'
+    else:
+        advice = 'Select a different loader or download a GGUF version of this model.'
+
+    return f"This directory contains {format_name} weights, which the llama.cpp loader cannot load. {advice}"
 
 
 def infer_loader(model_name, model_settings, hf_quant_method=None):
