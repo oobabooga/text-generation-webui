@@ -532,6 +532,23 @@ response = client.chat.completions.create(
 print(response.choices[0].message.content)
 ```
 
+The same `base_url` / `OPENAI_API_BASE` pattern works with any OpenAI-compatible endpoint. For example, a multi-model gateway such as [DaoXE](https://daoxe.com):
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="your-daoxe-api-key",  # key issued by that endpoint
+    base_url="https://api.daoxe.com/v1",
+)
+
+response = client.chat.completions.create(
+    model="gpt-4o-mini",  # use a model ID the endpoint actually serves
+    messages=[{"role": "user", "content": "Hello!"}],
+)
+print(response.choices[0].message.content)
+```
+
 With the [official Node.js openai client](https://github.com/openai/openai-node) (v4.x):
 
 ```js
