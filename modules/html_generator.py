@@ -343,12 +343,11 @@ def process_markdown_content(string):
 
     # Unfinished list, like "\n1.". A |delete| string is added and then
     # removed to force a <ol> or <ul> to be generated instead of a <p>.
-    list_item_pattern = r'(\n\d+\.?|\n\s*[-*+]\s*([*_~]{1,3})?)$'
+    # The dot is required: a trailing line holding only digits is a number the
+    # model wrote, not a list marker, and treating it as one swallowed it.
+    list_item_pattern = r'(\n\d+\.|\n\s*[-*+]\s*([*_~]{1,3})?)$'
     if re.search(list_item_pattern, result):
         delete_str = '|delete|'
-
-        if re.search(r'(\d+\.?)$', result) and not result.endswith('.'):
-            result += '.'
 
         # Add the delete string after the list item
         result = re.sub(list_item_pattern, r'\g<1> ' + delete_str, result)
