@@ -352,7 +352,14 @@ class Exllamav3Model:
             }
 
             default_priority = ['repetition_penalty', 'presence_frequency_penalty', 'top_k', 'top_p', 'min_p', 'temperature']
-            sampler_priority = list(state.get('sampler_priority') or default_priority)
+            sampler_priority = state.get('sampler_priority') or default_priority
+            if isinstance(sampler_priority, str):
+                # Presets and --sampler-priority hold this as a newline-separated
+                # string, and list() on a string gives one entry per character, so
+                # no sampler name ever matched and the order was left untouched.
+                sampler_priority = [x.strip() for x in sampler_priority.replace('\n', ',').split(',') if x.strip()]
+            else:
+                sampler_priority = list(sampler_priority)
 
             if state['temperature_last'] and 'temperature' in sampler_priority:
                 sampler_priority.append(sampler_priority.pop(sampler_priority.index('temperature')))
