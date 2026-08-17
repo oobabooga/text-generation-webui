@@ -1746,7 +1746,9 @@ def send_dummy_message(text, state):
     history = state['history']
 
     # Handle both dict and string inputs
+    files = []
     if isinstance(text, dict):
+        files = text.get('files', [])
         text = text['text']
 
     # Initialize metadata if not present
@@ -1754,6 +1756,10 @@ def send_dummy_message(text, state):
         history['metadata'] = {}
 
     row_idx = len(history['internal'])
+
+    for file_path in files:
+        add_message_attachment(history, row_idx, file_path, is_user=True)
+
     history['visible'].append([html.escape(text), ''])
     history['internal'].append([apply_extensions('input', text, state, is_chat=True), ''])
     update_message_metadata(history['metadata'], "user", row_idx, timestamp=get_current_timestamp())
