@@ -136,7 +136,7 @@ def create_ui():
                     evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + utils.get_datasets(str(shared.user_data_dir / 'training/datasets'), 'txt')[1:], value='wikitext', label='Input dataset', info=f'The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under {shared.user_data_dir}/training/datasets.', interactive=not mu)
                     with gr.Row():
                         with gr.Column():
-                            stride_length = gr.Slider(label='Stride', minimum=0, maximum=32768, value=512, step=256, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
+                            eval_stride_length = gr.Slider(label='Stride', minimum=0, maximum=32768, value=512, step=256, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
 
                         with gr.Column():
                             max_length = gr.Number(label='max_length', precision=0, step=256, value=0, info='The context for each evaluation. If set to 0, the maximum context length for the model will be used.')
@@ -165,12 +165,12 @@ def create_ui():
     # Evaluation events. For some reason, the interrupt event
     # doesn't work with the .then() syntax, so I write them one
     # by one in this ugly but functional way.
-    ev = start_evaluation.click(calculate_perplexity, [models, evaluate_text_file, stride_length, max_length], evaluation_log, show_progress=False)
+    ev = start_evaluation.click(calculate_perplexity, [models, evaluate_text_file, eval_stride_length, max_length], evaluation_log, show_progress=False)
     ev.then(generate_markdown_table, None, evaluation_table, show_progress=False)
 
     ev_cur = start_current_evaluation.click(
         lambda: ['current model'], None, tmp).then(
-        calculate_perplexity, [tmp, evaluate_text_file, stride_length, max_length], evaluation_log, show_progress=False)
+        calculate_perplexity, [tmp, evaluate_text_file, eval_stride_length, max_length], evaluation_log, show_progress=False)
 
     ev_cur.then(generate_markdown_table, None, evaluation_table, show_progress=False)
 
