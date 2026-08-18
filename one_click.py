@@ -11,7 +11,7 @@ import subprocess
 import sys
 
 # Define the required versions
-TORCH_VERSION = "2.9.1"
+TORCH_VERSION = "2.9.0"
 PYTHON_VERSION = "3.13"
 LIBSTDCXX_VERSION_LINUX = "12.1.0"
 
@@ -330,6 +330,10 @@ def update_requirements(initial_installation=False, pull=True):
             environment=True,
             assert_success=True
         )
+        # Land fresh installs on the latest release tag rather than bleeding-edge main.
+        latest_tag = run_cmd('git tag -l "v*" --sort=-v:refname', capture_output=True, environment=True).stdout.decode().strip().split('\n', 1)[0]
+        if latest_tag:
+            run_cmd(f"git reset --hard {latest_tag}", assert_success=True, environment=True)
 
     # Check for outdated Python version and refuse to update
     if '.'.join(map(str, sys.version_info[:2])) != PYTHON_VERSION:
@@ -375,8 +379,6 @@ def update_requirements(initial_installation=False, pull=True):
             with open(requirements_file, 'r') as f:
                 before_pull_whl_lines = [line for line in f if '.whl' in line]
 
-        print_big_message('Updating the local copy of the repository with "git pull"')
-
         # Hash files before pulling
         files_to_check = [
             'start_linux.sh', 'start_macos.sh', 'start_windows.bat', 'start_wsl.bat',
@@ -385,8 +387,15 @@ def update_requirements(initial_installation=False, pull=True):
         ]
         before_hashes = {file: calculate_file_hash(file) for file in files_to_check}
 
-        # Perform the git pull
-        run_cmd("git pull --autostash", assert_success=True, environment=True)
+        # Update to the latest release tag, but only if HEAD is an ancestor of it.
+        # This keeps users on untagged commits ahead of the last tag in place until the next release.
+        run_cmd("git fetch --tags", assert_success=True, environment=True)
+        latest_tag = run_cmd('git tag -l "v*" --sort=-v:refname', capture_output=True, environment=True).stdout.decode().strip().split('\n', 1)[0]
+        if latest_tag and run_cmd(f"git merge-base --is-ancestor HEAD {latest_tag}", capture_output=True, environment=True).returncode == 0:
+            print_big_message(f'Updating to release tag {latest_tag}.')
+            run_cmd(f"git merge --autostash --ff-only {latest_tag}", assert_success=True, environment=True)
+        else:
+            print_big_message(f'HEAD is ahead of the latest release tag ({latest_tag}). Skipping git update.')
         current_commit = get_current_commit()
 
         # Check hashes after pulling
@@ -400,7 +409,7 @@ def update_requirements(initial_installation=False, pull=True):
         # Check for changes to installer files
         for file in files_to_check:
             if before_hashes[file] != after_hashes[file]:
-                print_big_message(f"File '{file}' was updated during 'git pull'. Please run the script again.")
+                print_big_message(f"File '{file}' changed during the update. Please run the script again.")
 
                 # Save state before exiting
                 state = load_state()

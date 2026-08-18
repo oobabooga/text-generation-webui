@@ -27,6 +27,13 @@ jobs:
       version: ${{ inputs.version }}
       config: 'os:ubuntu-22.04'
 
+  build_release_cuda_linux_arm:
+    name: CUDA Linux ARM
+    uses: ./.github/workflows/build-portable-release-cuda.yml
+    with:
+      version: ${{ inputs.version }}
+      config: 'os:ubuntu-24.04-arm;cuda:13.1'
+
   build_release_vulkan_windows:
     name: Vulkan Windows
     uses: ./.github/workflows/build-portable-release-vulkan.yml

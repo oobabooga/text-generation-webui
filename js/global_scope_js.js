@@ -298,17 +298,35 @@ function autoScrollToBottom() {
 
 function updateInstructPadding() {
   const chatElement = document.getElementById("chat");
-  if (chatElement && chatElement.getAttribute("data-mode") === "instruct") {
-    const messagesContainer = chatElement.querySelector(".messages");
-    const lastChild = messagesContainer?.lastElementChild;
+  const messagesContainer = chatElement?.querySelector(".messages");
+  if (!messagesContainer) return;
+
+  // The top-anchored buffer only applies in instruct mode with something to
+  // anchor against; everything else clears it, so the space can't leak across
+  // a mode switch.
+  let bufferHeight = 0;
+  if (chatElement.getAttribute("data-mode") === "instruct") {
+    const lastChild = messagesContainer.lastElementChild;
     const prevSibling = lastChild?.previousElementSibling;
     if (lastChild && prevSibling && chatElement.offsetHeight > 0) {
-      let bufferHeight = Math.max(0, Math.max(window.innerHeight - 128 - 119, window.innerHeight - prevSibling.offsetHeight - 119) - lastChild.offsetHeight);
-      if (window.innerWidth <= 924) {
-        bufferHeight = Math.max(0, bufferHeight - 32);
+      // Target the scroll container's *content* height — clientHeight minus
+      // its own vertical padding — so the buffer fills the viewport exactly
+      // instead of overshooting by that padding into a permanent scrollbar.
+      // The viewport-128 term floors the buffer so a tall previous message
+      // can't shrink it away.
+      const chatParent = document.querySelector(".chat-parent");
+      let viewport = window.innerHeight;
+      if (chatParent) {
+        const cs = getComputedStyle(chatParent);
+        viewport = chatParent.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
       }
-      messagesContainer.style.paddingBottom = `${bufferHeight}px`;
+      bufferHeight = Math.max(0, Math.max(viewport - 128, viewport - prevSibling.offsetHeight) - lastChild.offsetHeight);
     }
+  }
+
+  const next = bufferHeight ? `${bufferHeight}px` : "";
+  if (messagesContainer.style.paddingBottom !== next) {
+    messagesContainer.style.paddingBottom = next;
   }
 }
 
@@ -342,6 +360,8 @@ function applyMorphdomUpdate(data) {
 
   const messagesContainer = document.getElementsByClassName("messages")[0];
   const messagesCountBefore = messagesContainer ? messagesContainer.children.length : 0;
+  // Survive morphdom: server HTML has no inline style.
+  const savedPaddingBottom = messagesContainer ? messagesContainer.style.paddingBottom : "";
 
   // Track open/closed blocks and store scroll positions for open ones
   const openBlocks = new Set();
@@ -417,6 +437,16 @@ function applyMorphdomUpdate(data) {
       }
     }
   );
+
+  // Re-apply the saved buffer only if the messages list still exists after
+  // morphdom. When the chat empties, morphdom repurposes that node into the
+  // welcome greeting (stripping its inline style); restoring the stale padding
+  // onto it would leave a phantom scrollbar that updateInstructPadding can't
+  // clear, since it keys off ".messages".
+  const messagesAfter = document.getElementsByClassName("messages")[0];
+  if (messagesAfter && savedPaddingBottom) {
+    messagesAfter.style.paddingBottom = savedPaddingBottom;
+  }
 
   // Syntax highlighting and LaTeX
   if (window.doSyntaxHighlighting) {

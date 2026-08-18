@@ -30,7 +30,7 @@ from modules.html_generator import (
 )
 from modules.image_utils import open_image_safely
 from modules.logging_colors import logger
-from modules.reasoning import THINKING_FORMATS
+from modules.reasoning import THINKING_FORMATS, extract_reasoning
 from modules.text_generation import (
     generate_reply,
     get_encoded_length,
@@ -247,11 +247,14 @@ def _expand_tool_sequence(tool_seq):
     for item in tool_seq:
         if 'tool_calls' in item:
             deserialized = _deserialize_tool_call_arguments(item['tool_calls'])
-            messages.append({
+            msg = {
                 "role": "assistant",
                 "content": item.get('content', ''),
                 "tool_calls": deserialized
-            })
+            }
+            if item.get('reasoning_content'):
+                msg['reasoning_content'] = item['reasoning_content']
+            messages.append(msg)
             for tc in item['tool_calls']:
                 tc_id = tc.get('id', '')
                 if tc_id:
@@ -798,6 +801,23 @@ def update_token_display_from_state(state):
     max_tokens = state.get('truncation_length') or 0
     percentage = (total / max_tokens) * 100 if max_tokens > 0 else 0
     new_value = f"{total:,} / {max_tokens:,} tokens ({percentage:.1f}%)"
+
+    if gen_n > 0:
+        # A drop in gen_n means a new generation (backends reset to 0 per turn).
+        last_seen = getattr(shared.model, '_tps_last_gen_n', None)
+        if last_seen is None or gen_n < last_seen:
+            shared.model._tps_start_time = time.time()
+            shared.model._tps_baseline = gen_n
+        shared.model._tps_last_gen_n = gen_n
+
+        elapsed = time.time() - shared.model._tps_start_time
+        baseline = shared.model._tps_baseline
+        if gen_n > baseline and elapsed > 0:
+            tps = (gen_n - baseline) / elapsed
+            new_value += f"<br>{gen_n:,} generated ({tps:.1f} t/s)"
+        else:
+            new_value += f"<br>{gen_n:,} generated"
+
     if new_value == getattr(shared.model, '_last_token_display', None):
         return gr.update()
     shared.model._last_token_display = new_value
@@ -1569,8 +1589,12 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
             tc_headers.append(f'{fn_name}({args_summary})')
 
         seq_entry = {'tool_calls': serialized}
-        if content_prefix.strip():
-            clean = _strip_channel_tokens(content_prefix)
+        reasoning, body = extract_reasoning(content_prefix)
+        reasoning = (reasoning or '').strip()
+        if reasoning:
+            seq_entry['reasoning_content'] = reasoning
+        if body.strip():
+            clean = _strip_channel_tokens(body)
             if clean:
                 seq_entry['content'] = clean
         seq.append(seq_entry)
@@ -2098,9 +2122,10 @@ def load_character(character, name1, name2):
     greeting_field = 'greeting'
     picture = None
 
+    safe_name = sanitize_filename(character)
     filepath = None
     for extension in ["yml", "yaml", "json"]:
-        filepath = shared.user_data_dir / 'characters' / f'{character}.{extension}'
+        filepath = shared.user_data_dir / 'characters' / f'{safe_name}.{extension}'
         if filepath.exists():
             break
 
@@ -2116,7 +2141,7 @@ def load_character(character, name1, name2):
     for path in [cache_folder / "pfp_character.png", cache_folder / "pfp_character_thumb.png"]:
         path.unlink(missing_ok=True)
 
-    picture = generate_pfp_cache(character)
+    picture = generate_pfp_cache(safe_name)
 
     # Finding the bot's name
     for k in ['name', 'bot', '<|bot|>', 'char_name']:

@@ -21,6 +21,9 @@ const userArgs = dashIdx >= 0 ? argv.slice(dashIdx + 1) : argv;
 
 app.setName(TITLE);
 
+// We only load http://127.0.0.1, so skip Chromium's DNS-over-HTTPS provider probes.
+app.commandLine.appendSwitch("disable-features", "DnsOverHttps,DnsOverHttpsUpgrade");
+
 // Skip Chromium's hardware video pipeline, which probes VAAPI at startup and
 // logs a noisy version-mismatch error on systems with older libva. We don't
 // render video content anyway. (--no-sandbox / --no-zygote are passed by the
@@ -40,7 +43,17 @@ function resolveUserDataDir() {
   const shared = path.join(baseDir, "..", "..", "user_data");
   return fs.existsSync(shared) ? shared : path.join(baseDir, "..", "user_data");
 }
-const stateFile = path.join(resolveUserDataDir(), "cache", "window-state.json");
+const userDataDir = resolveUserDataDir();
+const stateFile = path.join(userDataDir, "cache", "window-state.json");
+
+// Redirect Electron's per-app data (cookies, GPUCache, Local Storage, etc.)
+// out of ~/.config/TextGen and into user_data/cache/electron so everything
+// the app writes lives under the project's user_data tree.
+app.setPath("userData", path.join(userDataDir, "cache", "electron"));
+
+// css/ sits next to main.js in portable builds, one level up in dev.
+const portableIcon = path.join(baseDir, "css", "icon.png");
+const iconPath = fs.existsSync(portableIcon) ? portableIcon : path.join(baseDir, "..", "css", "icon.png");
 
 let serverProcess = null;
 let mainWindow = null;
@@ -110,6 +123,7 @@ function createWindow(port) {
   mainWindow = new BrowserWindow({
     ...bounds,
     title: TITLE,
+    icon: iconPath,
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),

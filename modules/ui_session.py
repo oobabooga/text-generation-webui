@@ -109,7 +109,7 @@ def create_ui():
                 None, gradio('model_dir'), gradio('model_dir'),
                 js='async (current) => { const p = await window.electronAPI.pickDirectory(); return p === null ? current : p; }')
 
-            shared.gradio['model_dir'].change(apply_model_dir, gradio('model_dir'), None, show_progress=False)
+            shared.gradio['model_dir'].change(apply_model_dir, gradio('model_dir'), gradio('model_menu', 'model_draft'), show_progress=False)
 
         shared.gradio['show_two_notebook_columns'].change(
             handle_default_to_notebook_change,
@@ -165,6 +165,10 @@ def apply_model_dir(value):
     if Path(value).is_dir():
         shared.args.model_dir = value
         shared.user_config = shared.load_user_config()
+        models = utils.get_available_models()
+        return gr.update(choices=models), gr.update(choices=['None'] + models)
+
+    return gr.update(), gr.update()
 
 
 def set_interface_arguments(extensions, bool_active):

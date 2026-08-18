@@ -64,9 +64,10 @@ def _load_model(data):
     update_model_parameters(model_settings)
 
     if args:
-        for k in args:
+        for k, v in args.items():
+            k = k.replace('-', '_')
             if k in allowed_keys and hasattr(shared.args, k):
-                setattr(shared.args, k, args[k])
+                setattr(shared.args, k, v)
 
     shared.model, shared.tokenizer = load_model(model_name)
 

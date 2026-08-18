@@ -240,6 +240,9 @@ window.doSyntaxHighlighting = function() {
                 { left: "\\(", right: "\\)", display: false },
                 { left: "\\[", right: "\\]", display: true },
               ],
+              // Render invalid LaTeX as an inline error instead of throwing,
+              // which would abort the update before paddings/scroll are fixed.
+              throwOnError: false,
             });
           }
         });
@@ -1008,6 +1011,9 @@ document.fonts.addEventListener("loadingdone", (event) => {
   // composer so the message-actions row isn't glued to it.
   function syncMargin() {
     chatParent.style.marginBottom = (chatInputRow.offsetHeight + 15) + "px";
+    // The instruct buffer is sized off chatParent.clientHeight, which the
+    // margin change above just shrank/grew, so recompute it here too.
+    window.updateInstructPadding?.();
     if (!window.isScrolled) {
       chatParent.scrollTop = chatParent.scrollHeight - chatParent.clientHeight;
     }

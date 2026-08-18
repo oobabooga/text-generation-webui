@@ -95,13 +95,18 @@ check_key = [Depends(verify_api_key)]
 check_admin_key = [Depends(verify_admin_key)]
 check_anthropic_key = [Depends(verify_anthropic_key)]
 
-# Configure CORS settings to allow all origins, methods, and headers
+# --listen/--public-api opts into network exposure; otherwise lock to localhost.
+if shared.args.listen or shared.args.public_api:
+    cors_kwargs = {"allow_origins": ["*"]}
+else:
+    cors_kwargs = {"allow_origin_regex": r"https?://(localhost|127\.0\.0\.1)(:\d+)?"}
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
+    **cors_kwargs,
 )
 
 

@@ -22,6 +22,33 @@ from modules.models_settings import (
 )
 from modules.utils import gradio
 
+NGRAM_SIZE_TYPES = ('ngram-mod', 'ngram-simple', 'ngram-map-k', 'ngram-map-k4v')
+NGRAM_MAP_TYPES = ('ngram-simple', 'ngram-map-k', 'ngram-map-k4v')
+SPEC_TYPE_OUTPUTS = ('spec_ngram_size_n', 'spec_ngram_size_m', 'spec_ngram_min_hits', 'draft_model_header', 'model_draft', 'model_draft_refresh', 'gpu_layers_draft', 'device_draft')
+
+
+def spec_type_visibility_updates(spec_type):
+    is_ngram_size = spec_type in NGRAM_SIZE_TYPES
+    is_ngram_map = spec_type in NGRAM_MAP_TYPES
+    is_draft = spec_type in ('none', 'draft-mtp')
+    visibility = {
+        'spec_ngram_size_n': is_ngram_size,
+        'spec_ngram_size_m': is_ngram_size,
+        'spec_ngram_min_hits': is_ngram_map,
+        'draft_model_header': is_draft,
+        'model_draft': is_draft,
+        'model_draft_refresh': is_draft,
+        'gpu_layers_draft': is_draft,
+        'device_draft': is_draft,
+    }
+    return [gr.update(visible=visibility[name]) for name in SPEC_TYPE_OUTPUTS]
+
+
+def loader_spec_overlay(loader, spec_type):
+    if loader == 'llama.cpp':
+        return spec_type_visibility_updates(spec_type)
+    return [gr.update()] * len(SPEC_TYPE_OUTPUTS)
+
 
 def create_ui():
     mu = shared.args.multi_user
@@ -73,22 +100,20 @@ def create_ui():
 
                             # Speculative decoding
                             with gr.Accordion("Speculative decoding", open=False) as shared.gradio['speculative_decoding_accordion']:
-                                shared.gradio['draft_max'] = gr.Number(label="draft-max", precision=0, step=1, value=shared.args.draft_max, info='Maximum number of tokens to draft for speculative decoding. Recommended: 4 for draft model, 64 for n-gram.')
+                                shared.gradio['spec_type'] = gr.Dropdown(label="spec-type", choices=['none', 'draft-mtp', 'ngram-mod', 'ngram-simple', 'ngram-map-k', 'ngram-map-k4v'], value=shared.args.spec_type, info='Recommended: draft-mtp if the main model is an MTP build, otherwise ngram-mod.')
+                                shared.gradio['draft_max'] = gr.Number(label="draft-max", precision=0, step=1, value=shared.args.draft_max, info='Maximum number of tokens to draft per step. Recommended: 3 for draft-mtp or a draft model, 64 for n-gram.')
 
-                                gr.Markdown('#### Draft model')
+                                shared.gradio['spec_ngram_size_n'] = gr.Number(label="spec-ngram-size-n", precision=0, step=1, value=shared.args.spec_ngram_size_n, info='N-gram lookup size for speculative decoding.', visible=shared.args.spec_type in NGRAM_SIZE_TYPES)
+                                shared.gradio['spec_ngram_size_m'] = gr.Number(label="spec-ngram-size-m", precision=0, step=1, value=shared.args.spec_ngram_size_m, info='Draft n-gram size for speculative decoding.', visible=shared.args.spec_type in NGRAM_SIZE_TYPES)
+                                shared.gradio['spec_ngram_min_hits'] = gr.Number(label="spec-ngram-min-hits", precision=0, step=1, value=shared.args.spec_ngram_min_hits, info='Minimum n-gram hits for ngram-map speculative decoding.', visible=shared.args.spec_type in NGRAM_MAP_TYPES)
+
+                                shared.gradio['draft_model_header'] = gr.Markdown('#### Draft model', visible=shared.args.spec_type in ('none', 'draft-mtp'))
                                 with gr.Row():
-                                    shared.gradio['model_draft'] = gr.Dropdown(label="model-draft", choices=['None'] + utils.get_available_models(), value=lambda: shared.args.model_draft, elem_classes='slim-dropdown', info='Draft model. Must share the same vocabulary as the main model.', interactive=not mu)
-                                    ui.create_refresh_button(shared.gradio['model_draft'], lambda: None, lambda: {'choices': ['None'] + utils.get_available_models()}, 'refresh-button', interactive=not mu)
+                                    shared.gradio['model_draft'] = gr.Dropdown(label="model-draft", choices=['None'] + utils.get_available_models(), value=lambda: shared.args.model_draft, elem_classes='slim-dropdown', info='Draft model. Must share the same vocabulary as the main model. Optional for draft-mtp (only needed when using a separate mtp-*.gguf head file).', interactive=not mu, visible=shared.args.spec_type in ('none', 'draft-mtp'))
+                                    shared.gradio['model_draft_refresh'] = ui.create_refresh_button(shared.gradio['model_draft'], lambda: None, lambda: {'choices': ['None'] + utils.get_available_models()}, 'refresh-button', interactive=not mu, visible=shared.args.spec_type in ('none', 'draft-mtp'))
 
-                                shared.gradio['gpu_layers_draft'] = gr.Slider(label="gpu-layers-draft", minimum=0, maximum=256, value=shared.args.gpu_layers_draft, info='Number of layers to offload to the GPU for the draft model.')
-                                shared.gradio['device_draft'] = gr.Textbox(label="device-draft", value=shared.args.device_draft, info='Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1')
-                                shared.gradio['ctx_size_draft'] = gr.Number(label="ctx-size-draft", precision=0, step=256, value=shared.args.ctx_size_draft, info='Size of the prompt context for the draft model. If 0, uses the same as the main model.')
-
-                                shared.gradio['ngram_header'] = gr.Markdown('#### N-gram (draftless)')
-                                shared.gradio['spec_type'] = gr.Dropdown(label="spec-type", choices=['none', 'ngram-mod', 'ngram-simple', 'ngram-map-k', 'ngram-map-k4v', 'ngram-cache'], value=shared.args.spec_type, info='Draftless speculative decoding type. Recommended: ngram-mod.')
-                                shared.gradio['spec_ngram_size_n'] = gr.Number(label="spec-ngram-size-n", precision=0, step=1, value=shared.args.spec_ngram_size_n, info='N-gram lookup size for speculative decoding.', visible=shared.args.spec_type != 'none')
-                                shared.gradio['spec_ngram_size_m'] = gr.Number(label="spec-ngram-size-m", precision=0, step=1, value=shared.args.spec_ngram_size_m, info='Draft n-gram size for speculative decoding.', visible=shared.args.spec_type != 'none')
-                                shared.gradio['spec_ngram_min_hits'] = gr.Number(label="spec-ngram-min-hits", precision=0, step=1, value=shared.args.spec_ngram_min_hits, info='Minimum n-gram hits for ngram-map speculative decoding.', visible=shared.args.spec_type != 'none')
+                                shared.gradio['gpu_layers_draft'] = gr.Slider(label="gpu-layers-draft", minimum=0, maximum=256, value=shared.args.gpu_layers_draft, info='Number of layers to offload to the GPU for the draft model.', visible=shared.args.spec_type in ('none', 'draft-mtp'))
+                                shared.gradio['device_draft'] = gr.Textbox(label="device-draft", value=shared.args.device_draft, info='Comma-separated list of devices to use for offloading the draft model. Example: CUDA0,CUDA1', visible=shared.args.spec_type in ('none', 'draft-mtp'))
 
                     gr.Markdown("## Other options")
                     with gr.Accordion("See more options", open=False):
@@ -148,7 +173,14 @@ def create_event_handlers():
     if mu:
         return
 
-    shared.gradio['loader'].change(loaders.make_loader_params_visible, gradio('loader'), gradio(loaders.get_all_params()), show_progress=False)
+    shared.gradio['loader'].change(
+        loaders.make_loader_params_visible, gradio('loader'), gradio(loaders.get_all_params()), show_progress=False
+    ).then(
+        loader_spec_overlay,
+        gradio('loader', 'spec_type'),
+        gradio(*SPEC_TYPE_OUTPUTS),
+        show_progress=False
+    )
 
     # In this event handler, the interface state is read and updated
     # with the model defaults (if any), and then the model is loaded
@@ -188,9 +220,9 @@ def create_event_handlers():
         shared.gradio['lora_menu_apply'].click(load_lora_wrapper, gradio('lora_menu'), gradio('model_status'), show_progress=False)
 
     shared.gradio['spec_type'].change(
-        lambda x: [gr.update(visible=x != 'none')] * 3,
+        spec_type_visibility_updates,
         gradio('spec_type'),
-        gradio('spec_ngram_size_n', 'spec_ngram_size_m', 'spec_ngram_min_hits'),
+        gradio(*SPEC_TYPE_OUTPUTS),
         show_progress=False
     )
 

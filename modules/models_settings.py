@@ -69,6 +69,8 @@ def get_model_metadata(model):
             elif k.endswith('.block_count'):
                 model_settings['gpu_layers'] = -1
                 model_settings['max_gpu_layers'] = metadata[k] + 1
+            elif k.endswith('.nextn_predict_layers') and metadata[k] > 0:
+                model_settings['spec_type'] = 'draft-mtp'
 
         if 'tokenizer.chat_template' in metadata:
             template = metadata['tokenizer.chat_template']
@@ -233,6 +235,9 @@ def apply_model_settings_to_state(model, state):
     for k in model_settings:
         if k in state and k != 'gpu_layers':  # Skip gpu_layers, handle separately
             state[k] = model_settings[k]
+
+    if state.get('spec_type') == 'draft-mtp' and model_settings.get('spec_type') != 'draft-mtp':
+        state['spec_type'] = 'none'
 
     # Auto-detect a sibling mmproj when the user hasn't saved one for this model.
     # Bare filenames (from user_data/mmproj/) persist across model switches;
@@ -412,12 +417,24 @@ def update_gpu_layers_and_vram(loader, model, gpu_layers, ctx_size, cache_type):
 
 def load_template_by_name(name):
     """Find and load a single instruction template by name. Returns '' if not found."""
+    # Prevent path traversal: strip all directory components, keep only the filename
+    name = Path(name).name
+    if not name:
+        return ''
+
     template_dir = shared.user_data_dir / 'instruction-templates'
     for ext in utils.TEMPLATE_EXTENSIONS:
         path = template_dir / f'{name}{ext}'
         if path.is_file():
             break
     else:
+        return ''
+
+    # Defense-in-depth: confirm resolved path stays inside template_dir
+    try:
+        path.resolve().relative_to(template_dir.resolve())
+    except ValueError:
+        logger.error(f'Path traversal blocked for instruction template name: {name!r}')
         return ''
 
     file_contents = path.read_text(encoding='utf-8')

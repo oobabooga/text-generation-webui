@@ -142,7 +142,7 @@ def _render_web_search_body(body):
     for r in results:
         title = html.escape(r['title'])
         url = r['url']
-        snippet = html.escape(r.get('snippet', ''))
+        snippet = html.escape(r.get('snippet') or '')
         if url.lower().startswith(('http://', 'https://')):
             link = f'<a class="web-search-title" href="{html.escape(url)}" target="_blank" rel="noopener noreferrer">{title}</a>'
         else:

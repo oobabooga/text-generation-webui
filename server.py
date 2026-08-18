@@ -242,6 +242,7 @@ def create_interface():
         ssl_certfile=shared.args.ssl_certfile,
         root_path=shared.args.subpath,
         allowed_paths=allowed_paths,
+        favicon_path='css/icon.png',
     )
 
 

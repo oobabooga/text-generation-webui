@@ -551,7 +551,7 @@ def setup_auto_save():
                 store_current_state_and_debounce, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls', 'theme_state'), None, show_progress=False)
 
 
-def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_class, interactive=True):
+def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_class, interactive=True, visible=True):
     """
     Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui
     """
@@ -564,7 +564,7 @@ def create_refresh_button(refresh_component, refresh_method, refreshed_args, ele
     classes = list(elem_class) if isinstance(elem_class, (list, tuple)) else [elem_class]
     if 'refresh-icon-btn' not in classes:
         classes.append('refresh-icon-btn')
-    refresh_button = gr.Button(refresh_symbol, elem_classes=classes, interactive=interactive)
+    refresh_button = gr.Button(refresh_symbol, elem_classes=classes, interactive=interactive, visible=visible)
     refresh_button.click(
         fn=lambda: {k: tuple(v) if type(k) is list else v for k, v in refresh().items()},
         inputs=[],

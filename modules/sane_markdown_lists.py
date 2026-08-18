@@ -19,7 +19,7 @@ Modify the behavior of Lists in Python-Markdown to act in a sane manner.
 from __future__ import annotations
 
 import re
-import xml.etree.ElementTree as etree
+import defusedxml.ElementTree as etree
 from typing import TYPE_CHECKING
 
 from markdown import Extension
