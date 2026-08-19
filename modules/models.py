@@ -4,7 +4,7 @@ import time
 
 import modules.shared as shared
 from modules.logging_colors import logger
-from modules.models_settings import get_model_metadata
+from modules.models_settings import describe_non_gguf_model, get_model_metadata
 from modules.utils import resolve_model_path
 
 last_generation_time = time.time()
@@ -90,7 +90,12 @@ def llama_cpp_server_loader(model_name):
     else:
         gguf_files = sorted(path.glob('*.gguf'))
         if not gguf_files:
-            logger.error(f"No .gguf models found in the directory: {path}")
+            error_msg = f"No .gguf models found in the directory: {path}"
+            hint = describe_non_gguf_model(path)
+            if hint:
+                error_msg = f"{error_msg}. {hint}"
+
+            logger.error(error_msg)
             return None, None
 
         model_file = gguf_files[0]
