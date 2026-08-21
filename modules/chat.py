@@ -588,6 +588,14 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 messages[-1]["content"] = "fake assistant message replace me"
                 messages.append({"role": "assistant", "content": "this will get deleted"})
 
+            if not messages:
+                # Context truncation can pop the only history message before
+                # this continuation slice runs, leaving nothing to render.
+                raise ValueError(
+                    "Cannot continue: no messages remain after context truncation. "
+                    "Increase ctx-size or shorten the input."
+                )
+
         if state['mode'] == 'chat-instruct':
             add_generation_prompt = _continue and not thinking_only_partial
         elif thinking_only_partial:
