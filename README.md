@@ -244,6 +244,11 @@ docker compose up --build
 
 </details>
 
+### Third-Party Installers & Launchers
+
+- [LynxHub](https://github.com/KindaBrazy/LynxHub): Cross-platform visual management dashboard and terminal/browser for installing, configuring, and launching TextGen.
+
+
 ## Command-line flags
 
 <details>
