@@ -53,9 +53,15 @@ def convert_request(body: dict) -> dict:
                 elif btype == 'thinking':
                     pass  # Strip thinking blocks
 
-            assistant_msg = {"role": "assistant", "content": '\n'.join(text_parts) if text_parts else ""}
+            # Clear content field if tool_calls exist to avoid double rendering
             if tool_calls:
-                assistant_msg["tool_calls"] = tool_calls
+                assistant_msg = {
+                    "role": "assistant",
+                    "content": "",
+                    "tool_calls": tool_calls
+                }
+            else:
+                assistant_msg = {"role": "assistant", "content": '\n'.join(text_parts) if text_parts else ""}
             messages.append(assistant_msg)
 
         elif role == 'user':
@@ -103,7 +109,35 @@ def convert_request(body: dict) -> dict:
                 else:
                     messages.append({"role": "user", "content": regular_parts})
         else:
-            messages.append({"role": role, "content": str(content)})
+            # Handle unstructured messages
+            content_str = str(content) if content else ""
+            # Extract tool_calls if present in the string (shouldn't happen, but safety check)
+            tool_calls = []
+            if '' in content_str:
+                # Parse tool_calls from string format
+                import re
+                pattern = r'<function=(\w+)>\n<parameter=([^>]+)>\n([^<]+)</parameter>\n'
+                for match in re.finditer(pattern, content_str):
+                    func_name = match.group(1)
+                    param_name = match.group(2)
+                    param_value = match.group(3).strip()
+                    tool_calls.append({
+                        "id": "",
+                        "type": "function",
+                        "function": {
+                            "name": func_name,
+                            "arguments": json.dumps({param_name: param_value})
+                        }
+                    })
+                assistant_msg = {
+                    "role": "assistant",
+                    "content": content_str.split('<function>')[0].strip() if '<function>' in content_str else content_str
+                }
+                if tool_calls:
+                    assistant_msg["tool_calls"] = tool_calls
+            else:
+                assistant_msg = {"role": "assistant", "content": content_str}
+            messages.append(assistant_msg)
 
     # Start with all fields from the original body (includes GenerationOptions defaults)
     result = dict(body)
