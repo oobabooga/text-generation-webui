@@ -247,17 +247,41 @@ def process_markdown_content(string):
     if not string:
         return ""
 
+    def make_unique_placeholder(base):
+        """Create a placeholder that cannot collide with the input."""
+        used_suffixes = {
+            match.group(1)
+            for match in re.finditer(fr'{re.escape(base)}(\d+)END', string)
+        }
+        suffix = 0
+        while str(suffix) in used_suffixes:
+            suffix += 1
+
+        return f'{base}{suffix}END'
+
     # Define unique placeholders for LaTeX characters that conflict with markdown
     LATEX_ASTERISK_PLACEHOLDER = "LATEXASTERISKPLACEHOLDER"
     LATEX_UNDERSCORE_PLACEHOLDER = "LATEXUNDERSCOREPLACEHOLDER"
     LATEX_PIPE_PLACEHOLDER = "LATEXPIPEPLACEHOLDER"
+    LATEX_DOUBLE_BACKSLASH_PLACEHOLDER = make_unique_placeholder("LATEXDOUBLEBACKSLASHPLACEHOLDER")
 
-    def protect_latex_content(content):
+    def protect_latex_content(content, preserve_double_backslashes=True):
         """Protect markdown-sensitive characters inside LaTeX."""
+        if preserve_double_backslashes:
+            content = content.replace('\\\\\\\\', LATEX_DOUBLE_BACKSLASH_PLACEHOLDER)
+
         content = content.replace('*', LATEX_ASTERISK_PLACEHOLDER)
         content = content.replace('_', LATEX_UNDERSCORE_PLACEHOLDER)
         content = content.replace('|', LATEX_PIPE_PLACEHOLDER)
         return content
+
+    def delimiter_is_escaped(position):
+        """Check delimiter escaping after every input backslash has been doubled."""
+        backslash_count = 0
+        while position > backslash_count and string[position - backslash_count - 1] == '\\':
+            backslash_count += 1
+
+        return (backslash_count // 2) % 2 == 1
 
     def protect_asterisks_underscores_in_latex(match):
         """A replacer function for re.sub to protect markdown-sensitive characters in multiple LaTeX formats."""
@@ -269,7 +293,8 @@ def process_markdown_content(string):
         elif match.group(3) is not None:  # Content from \(...\)
             return f'\\({protect_latex_content(match.group(3))}\\)'
         elif match.group(4) is not None:  # Content from $...$
-            return f'${protect_latex_content(match.group(4).strip())}$'
+            has_escaped_delimiter = delimiter_is_escaped(match.start()) or delimiter_is_escaped(match.end() - 1)
+            return f'${protect_latex_content(match.group(4).strip(), not has_escaped_delimiter)}$'
 
         return match.group(0)  # Fallback
 
@@ -302,7 +327,7 @@ def process_markdown_content(string):
     string = string.replace('\\end{equation*}', '$$')
     string = re.sub(r"(.)```", r"\1\n```", string)
 
-    # Protect asterisks and underscores within all LaTeX blocks before markdown conversion
+    # Protect markdown-sensitive content within all LaTeX blocks before markdown conversion
     string = _LATEX_PATTERN.sub(protect_asterisks_underscores_in_latex, string)
 
     result = ''
@@ -364,10 +389,11 @@ def process_markdown_content(string):
         # Convert to HTML using markdown
         html_output = markdown.markdown(result, extensions=['fenced_code', 'tables', SaneListExtension()])
 
-    # Restore the LaTeX asterisks and underscores after markdown conversion
+    # Restore protected LaTeX content after markdown conversion
     html_output = html_output.replace(LATEX_ASTERISK_PLACEHOLDER, '*')
     html_output = html_output.replace(LATEX_UNDERSCORE_PLACEHOLDER, '_')
     html_output = html_output.replace(LATEX_PIPE_PLACEHOLDER, '|')
+    html_output = html_output.replace(LATEX_DOUBLE_BACKSLASH_PLACEHOLDER, '\\\\\\\\')
 
     # Remove extra newlines before </code>
     html_output = re.sub(r'\s*</code>', '</code>', html_output)
