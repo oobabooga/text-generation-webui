@@ -26,6 +26,28 @@ def sanitize_filename(name):
     return name
 
 
+def validate_filename(name):
+    """Return a sanitized filename that is valid across supported platforms."""
+    error_message = 'File name is not valid on all operating systems.'
+    if re.search(r'[/\\]', name):
+        raise ValueError(error_message)
+
+    name = sanitize_filename(name)
+    if not name:
+        raise ValueError(error_message)
+
+    windows_device_names = {'CON', 'PRN', 'AUX', 'NUL'}
+    windows_device_names.update(f'{prefix}{number}' for prefix in ('COM', 'LPT') for number in range(1, 10))
+    windows_device_names.update(f'{prefix}{number}' for prefix in ('COM', 'LPT') for number in ('¹', '²', '³'))
+    basename = name.split('.', 1)[0].upper()
+    has_invalid_character = re.search(r'[<>:"|?*\x00-\x1f]', name)
+    has_invalid_suffix = name.endswith(('.', ' '))
+    if has_invalid_character or has_invalid_suffix or basename in windows_device_names:
+        raise ValueError(error_message)
+
+    return name
+
+
 def _is_path_allowed(abs_path_str):
     """Check if a path is under the configured user_data directory."""
     # normpath (not resolve) preserves symlinks so a symlinked user_data/logs works.

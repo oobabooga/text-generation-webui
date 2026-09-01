@@ -2,7 +2,7 @@ import gradio as gr
 
 from modules import chat, presets, shared, ui, utils
 from modules.logging_colors import logger
-from modules.utils import gradio, sanitize_filename
+from modules.utils import gradio, sanitize_filename, validate_filename
 
 
 def create_ui():
@@ -96,13 +96,16 @@ def create_event_handlers():
 
 def handle_save_preset_confirm_click(filename, contents):
     try:
-        filename = sanitize_filename(filename)
+        filename = validate_filename(filename)
         utils.save_file(str(shared.user_data_dir / "presets" / f"{filename}.yaml"), contents)
         available_presets = utils.get_available_presets()
         output = gr.update(choices=available_presets, value=filename)
-    except Exception:
-        output = gr.update()
+    except ValueError as exc:
+        logger.warning(f"Failed to save preset: {exc}")
+        raise gr.Error(str(exc)) from exc
+    except Exception as exc:
         logger.exception("Failed to save preset")
+        raise gr.Error("Failed to save preset. Check the server logs for details.") from exc
 
     return [
         output,
