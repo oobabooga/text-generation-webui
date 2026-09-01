@@ -677,9 +677,14 @@ def generate_chat_prompt(user_input, state, **kwargs):
         encoded_length = get_encoded_length(prompt)
         while len(messages) > 0 and encoded_length > max_length:
 
-            if len(messages) > 2 and messages[0]['role'] == 'system':
+            current_user_idx = max(
+                (i for i, msg in enumerate(messages) if msg.get('role') == 'user'),
+                default=-1,
+            )
+
+            if messages[0]['role'] == 'system' and current_user_idx > 1:
                 pop_idx = 1
-            elif len(messages) > 1 and messages[0]['role'] != 'system':
+            elif messages[0]['role'] != 'system' and current_user_idx > 0:
                 pop_idx = 0
             else:
                 pop_idx = None
@@ -698,15 +703,17 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
             # Resort to truncating the user input
             else:
-                user_message = messages[-1]['content']
+                if current_user_idx < 0:
+                    raise ValueError("Cannot truncate prompt without a user message")
+
+                user_message = messages[current_user_idx]['content']
 
                 # Bisect the truncation point
                 left, right = 0, len(user_message)
 
                 while left < right:
                     mid = (left + right + 1) // 2
-
-                    messages[-1]['content'] = user_message[:mid]
+                    messages[current_user_idx]['content'] = user_message[:mid]
                     prompt = make_prompt(messages)
                     encoded_length = get_encoded_length(prompt)
 
@@ -715,7 +722,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
                     else:
                         right = mid - 1
 
-                messages[-1]['content'] = user_message[:left]
+                messages[current_user_idx]['content'] = user_message[:left]
                 prompt = make_prompt(messages)
                 encoded_length = get_encoded_length(prompt)
                 if encoded_length > max_length:
