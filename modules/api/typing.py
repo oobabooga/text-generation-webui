@@ -6,6 +6,14 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator, validator
 
 from modules import shared
 
+TOP_LOGPROBS_MAX = 20
+
+
+def validate_top_logprobs(value: int | None) -> int | None:
+    if value is not None and not 0 <= value <= TOP_LOGPROBS_MAX:
+        raise ValueError(f'top_logprobs must be between 0 and {TOP_LOGPROBS_MAX}')
+    return value
+
 
 class GenerationOptions(BaseModel):
     preset: str | None = Field(default=None, description="The name of a file under textgen/user_data/presets (without the .yaml extension). The sampling parameters that get overwritten by this option are the keys in the default_preset() function in modules/presets.py.")
@@ -154,7 +162,7 @@ class ChatCompletionRequestParams(BaseModel):
     tool_choice: str | dict | None = Field(default=None, description="Controls tool use: 'auto', 'none', 'required', or {\"type\": \"function\", \"function\": {\"name\": \"...\"}}.")
     logit_bias: dict | None = None
     logprobs: bool | None = None
-    top_logprobs: int | None = None
+    top_logprobs: int | None = Field(default=None, ge=0, le=TOP_LOGPROBS_MAX)
     max_tokens: int | None = None
     max_completion_tokens: int | None = None
     n: int | None = Field(default=1, description="Unused parameter.")
