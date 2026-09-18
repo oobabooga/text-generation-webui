@@ -10,7 +10,7 @@ import yaml
 from pydantic import ValidationError
 
 from .errors import InvalidRequestError
-from .typing import ToolDefinition
+from .typing import ToolDefinition, validate_top_logprobs
 from .utils import debug_msg
 from modules.tool_parsing import get_tool_call_id, parse_tool_call, detect_tool_call_format
 from modules import shared, utils
@@ -343,7 +343,10 @@ def process_parameters(body, is_legacy=False):
     # Resolve logprobs: for chat completions, logprobs is a bool and the count
     # comes from top_logprobs. Normalize to an int for all backends.
     logprobs = body.get('logprobs', None)
-    top_logprobs = body.get('top_logprobs', None)
+    try:
+        top_logprobs = validate_top_logprobs(body.get('top_logprobs', None))
+    except ValueError as exc:
+        raise InvalidRequestError(str(exc)) from exc
     if logprobs is True:
         logprobs = max(top_logprobs, 1) if top_logprobs is not None else 5
         generate_params['logprobs'] = logprobs
