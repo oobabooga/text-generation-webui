@@ -10,6 +10,7 @@ import yaml
 from pydantic import ValidationError
 
 from .errors import InvalidRequestError
+from .message_validation import validate_chat_messages
 from .typing import ToolDefinition
 from .utils import debug_msg
 from modules.tool_parsing import get_tool_call_id, parse_tool_call, detect_tool_call_format
@@ -493,32 +494,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False, p
         tools = None  # Disable tool detection entirely
 
     messages = body['messages']
-    for m in messages:
-        if 'role' not in m:
-            raise InvalidRequestError(message="messages: missing role", param='messages')
-        elif m['role'] == 'function':
-            raise InvalidRequestError(message="role: function is not supported.", param='messages')
-
-        # Handle multimodal content validation
-        content = m.get('content')
-        if content is None:
-            # OpenAI allows content: null on assistant messages when tool_calls is present
-            if m['role'] == 'assistant' and m.get('tool_calls'):
-                m['content'] = ''
-            else:
-                raise InvalidRequestError(message="messages: missing content", param='messages')
-
-        # Validate multimodal content structure
-        if isinstance(content, list):
-            for item in content:
-                if not isinstance(item, dict) or 'type' not in item:
-                    raise InvalidRequestError(message="messages: invalid content item format", param='messages')
-                if item['type'] not in ['text', 'image_url']:
-                    raise InvalidRequestError(message="messages: unsupported content type", param='messages')
-                if item['type'] == 'text' and 'text' not in item:
-                    raise InvalidRequestError(message="messages: missing text in content item", param='messages')
-                if item['type'] == 'image_url' and ('image_url' not in item or 'url' not in item['image_url']):
-                    raise InvalidRequestError(message="messages: missing image_url in content item", param='messages')
+    validate_chat_messages(messages)
 
     # Chat Completions
     object_type = 'chat.completion' if not stream else 'chat.completion.chunk'
