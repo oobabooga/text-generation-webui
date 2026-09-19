@@ -24,6 +24,7 @@ import modules.api.anthropic as Anthropic
 from .tokens import token_count, token_decode, token_encode
 from .errors import OpenAIError
 from .utils import _start_cloudflared
+from .validation import validation_error_response
 from modules import shared
 from modules.logging_colors import logger
 from modules.models import unload_model
@@ -134,16 +135,7 @@ async def anthropic_error_handler(request: Request, exc: AnthropicError):
 
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(request: Request, exc: RequestValidationError):
-    if request.url.path.startswith("/v1/messages"):
-        messages = "; ".join(
-            f"{'.'.join(str(l) for l in e['loc'])}: {e['msg']}" for e in exc.errors()
-        )
-        return JSONResponse(
-            status_code=400,
-            content={"type": "error", "error": {"type": "invalid_request_error", "message": messages}}
-        )
-
-    return JSONResponse(status_code=422, content={"detail": exc.errors()})
+    return validation_error_response(request.url.path, exc.errors())
 
 
 @app.middleware("http")
