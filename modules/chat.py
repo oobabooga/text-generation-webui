@@ -1903,6 +1903,9 @@ def find_all_histories_with_first_prompts(state):
         if state['search_chat'] and state['search_chat'] not in file_content:
             continue
 
+        if not file_content.strip():
+            continue
+
         data = json.loads(file_content)
         if re.match(r'^[0-9]{8}-[0-9]{2}-[0-9]{2}-[0-9]{2}$', filename):
             first_prompt = ""
@@ -2037,7 +2040,12 @@ def load_history(unique_id, character, mode):
         return {'internal': [], 'visible': [], 'metadata': {}}
 
     with open(p, 'rb') as fh:
-        f = json.loads(fh.read())
+        content = fh.read()
+
+    if not content.strip():
+        return {'internal': [], 'visible': [], 'metadata': {}}
+
+    f = json.loads(content)
     if 'internal' in f and 'visible' in f:
         history = f
     else:
