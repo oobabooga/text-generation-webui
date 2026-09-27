@@ -47,9 +47,13 @@ def extract_reasoning(text, html_escaped=False):
                 # During streaming, the start tag may be arriving partially.
                 # If the text is a prefix of a start tag, return empty content
                 # to prevent the partial tag from leaking.
+                # Bare markers like "thought\n" are not tags: "though" is a word.
                 stripped = text.strip()
-                if stripped and start_esc.startswith(stripped):
+                if stripped and start_esc.startswith("<") and start_esc.startswith(stripped):
                     return '', ''
+                continue
+            # A bare marker has to lead the reply. "I thought\n..." is a sentence.
+            if not start_esc.startswith("<") and text[:start_pos].strip():
                 continue
             thought_start = start_pos + len(start_esc)
             end_pos = text.find(end_esc, thought_start)
