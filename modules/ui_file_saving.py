@@ -103,6 +103,11 @@ def handle_save_preset_confirm_click(filename, contents):
     except Exception:
         output = gr.update()
         logger.exception("Failed to save preset")
+        raise gr.Error(
+            "Could not save the preset. The file name may contain characters "
+            "that are not allowed on this system (e.g. : < > \" / \\| ? *). "
+            "Rename the preset and try again."
+        )
 
     return [
         output,
