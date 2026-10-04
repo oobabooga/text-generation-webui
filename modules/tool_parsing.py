@@ -214,14 +214,9 @@ def _parse_bare_name_tool_calls(answer: str, tool_names: list[str]):
     start_pos = None
     # Match tool name followed by opening brace, then extract balanced JSON
     escaped_names = [re.escape(name) for name in tool_names]
-    pattern = r'(?:' + '|'.join(escaped_names) + r')\s*\{'
+    pattern = r'(' + '|'.join(escaped_names) + r')\s*\{'
     for match in re.finditer(pattern, answer):
-        text = match.group(0)
-        name = None
-        for n in tool_names:
-            if text.startswith(n):
-                name = n
-                break
+        name = match.group(1)
         if not name:
             continue
         brace_start = match.end() - 1
