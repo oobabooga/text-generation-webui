@@ -422,8 +422,16 @@ def generate_chat_prompt(user_input, state, **kwargs):
             # Assistant message with only tool_calls and no text content
             messages.insert(insert_pos, {"role": "assistant", "content": "", "tool_calls": _deserialize_tool_call_arguments(entry_meta['tool_calls'])})
         elif assistant_msg:
+            # In chat-instruct, history becomes an outer user message, so the
+            # instruction template cannot strip thinking from assistant turns.
+            # Keep the current reply intact when continuing generation.
+            gemma_thought = assistant_msg.startswith('<|channel>thought') or (assistant_msg.startswith('thought\n') and '<channel|>' in assistant_msg)
+            if state['mode'] == 'chat-instruct' and not state['preserve_thinking'] and not (_continue and i == 0) and gemma_thought:
+                final_content = assistant_msg.partition('<channel|>')[2]
+                messages.insert(insert_pos, {"role": "assistant", "content": final_content.strip()})
+
             # Handle GPT-OSS as a special case
-            if '<|channel|>analysis<|message|>' in assistant_msg or '<|channel|>final<|message|>' in assistant_msg:
+            elif '<|channel|>analysis<|message|>' in assistant_msg or '<|channel|>final<|message|>' in assistant_msg:
                 thinking_content = ""
                 final_content = ""
 
