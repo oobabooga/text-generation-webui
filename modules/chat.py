@@ -2221,14 +2221,17 @@ def upload_character(file, img_path, tavern=False):
         data = yaml.safe_load(decoded_file)
 
     if 'char_name' in data:
-        name = sanitize_filename(data['char_name'])
+        name = data['char_name']
         greeting = data['char_greeting']
         context = build_pygmalion_style_context(data)
         yaml_data = generate_character_yaml(name, greeting, context)
     else:
-        name = sanitize_filename(data['name'])
+        name = data['name']
         yaml_data = generate_character_yaml(data['name'], data['greeting'], data['context'])
 
+    name = sanitize_filename(re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', name)).rstrip(' .') or 'character'
+    if re.match(r'(?i)^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(?:\.|$)', name):
+        name = f'_{name}'
     outfile_name = name
     i = 1
     while (shared.user_data_dir / 'characters' / f'{outfile_name}.yaml').exists():
