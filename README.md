@@ -77,6 +77,8 @@ These formats require the full installation (not the portable build).
 
 For the desktop app, see the [portable builds](https://github.com/oobabooga/textgen/releases). The options below run the web UI in your browser instead.
 
+For Linux systems with both an integrated and a discrete AMD GPU, see [GPU selection](docs/11%20-%20AMD%20Setup.md#systems-with-both-integrated-and-discrete-amd-gpus) if model loading crashes.
+
 ### Manual portable install with venv
 
 Fast setup on any Python 3.9+:
