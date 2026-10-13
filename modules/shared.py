@@ -53,7 +53,7 @@ group.add_argument('--model', type=str, help='Name of the model to load by defau
 group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
 group.add_argument('--model-dir', type=str, default=str(user_data_dir / 'models'), help='Path to directory with all the models.')
 group.add_argument('--lora-dir', type=str, default=str(user_data_dir / 'loras'), help='Path to directory with all the loras.')
-group.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
+group.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched. Select 0 to start without loading a model.')
 group.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See user_data/settings-template.yaml for an example. If you create a file called user_data/settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 group.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')

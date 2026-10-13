@@ -328,14 +328,15 @@ if __name__ == "__main__":
             sys.exit(0)
         else:
             print('The following models are available:\n')
+            print('0. None (start without loading a model)')
             for i, model in enumerate(available_models):
                 print(f'{i+1}. {model}')
 
-            print(f'\nWhich one do you want to load? 1-{len(available_models)}\n')
-            i = int(input()) - 1
+            print(f'\nWhich one do you want to load? 0-{len(available_models)}\n')
+            i = int(input())
             print()
 
-        shared.model_name = available_models[i]
+        shared.model_name = 'None' if i == 0 else available_models[i - 1]
 
     # If any model has been selected, load it
     if shared.model_name != 'None':
