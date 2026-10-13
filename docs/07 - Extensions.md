@@ -84,6 +84,54 @@ google_translate-language string: 'fr'
 
 That is, the syntax for the key is `extension_name-variable_name`.
 
+## The `state` dictionary
+
+The `state` argument passed to extension hooks is a Python dictionary of generation settings and conversation data, not a string or a list of messages. In the web UI, its keys come from `list_interface_input_elements()` in [modules/ui.py](https://github.com/oobabooga/textgen/blob/main/modules/ui.py), and `gather_interface_values()` fills them from the current controls.
+
+Common keys include:
+
+| Key | Contents |
+|-----|----------|
+| `mode` | Chat mode: `chat`, `chat-instruct`, or `instruct`. |
+| `name1`, `name2` | User and character display names. |
+| `context`, `user_bio` | Character context and user description. |
+| `custom_system_message` | Custom system message for the instruction template. |
+| `chat_template_str`, `instruction_template_str` | Jinja template source strings. |
+| `chat-instruct_command` | Command used to wrap a chat prompt in chat-instruct mode. |
+| `character_menu`, `chat_style` | Selected character and chat display style. |
+| `max_new_tokens`, `truncation_length`, `stream` | Output token limit, context length limit, and streaming setting. |
+| `enable_thinking`, `reasoning_effort` | Reasoning settings passed to the instruction template. |
+| `selected_tools` | Names of tools selected in the UI. |
+| `tools` | Tool definitions supplied to the prompt template, when present. |
+| `history` | Chat history dictionary, described below. |
+
+Available keys depend on the caller and mode. Use `state.get("key", default)` for optional values rather than assuming every hook receives every key.
+
+### Chat history
+
+`state['history']` contains `internal` and `visible` lists. Each list contains `[user_message, bot_reply]` pairs. The internal text is used to build the model prompt; the visible text is used to display the conversation and can differ after translation, HTML escaping, or other extension processing. Keep the two lists aligned when changing history.
+
+History can also contain a `metadata` dictionary, with entries such as `user_0` and `assistant_0` for the first pair. Timestamps, attachments, and tool-call details live there, not in extra positions in each message pair. Older histories may lack metadata, so read it with `history.get('metadata', {})`.
+
+In chat generation, `chatbot_wrapper()` copies the history and applies `history_modifier()` before it calls `state_modifier()`. Use `history_modifier()` to modify that generation's working history; changing `state['history']` in `state_modifier()` does not replace the copy already made.
+
+### Modifying settings and keeping extension data
+
+Return the state dictionary from `state_modifier()`. Its return value is passed to the next state modifier, in extension order, and then used by generation. For example:
+
+```python
+def state_modifier(state):
+    state = state.copy()
+    state["max_new_tokens"] = min(state["max_new_tokens"], 256)
+    return state
+```
+
+The UI gathers a new settings dictionary for subsequent actions. Changing a setting in this hook does not update its UI control or save a character file. Do not use arbitrary keys in `state` as persistent extension storage. Keep extension configuration in your own `params` dictionary or a file, and account for multiple users if keeping data in module-level variables.
+
+Adding a custom key also does not automatically put it in the model prompt: prompt construction reads specific keys. Use an input or prompt hook when you want to add text.
+
+This hook argument is separate from the module-level `state` in [modules/extensions.py](https://github.com/oobabooga/textgen/blob/main/modules/extensions.py), which tracks loaded extensions. Resetting that registry in `load_extensions()` does not define the lifetime of generation settings.
+
 ## Using multiple extensions at the same time
 
 You can activate more than one extension at a time by providing their names separated by spaces after `--extensions`. The input, output, and bot prefix modifiers will be applied in the specified order. 
