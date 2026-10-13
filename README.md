@@ -77,6 +77,23 @@ These formats require the full installation (not the portable build).
 
 For the desktop app, see the [portable builds](https://github.com/oobabooga/textgen/releases). The options below run the web UI in your browser instead.
 
+<details>
+<summary>macOS: startup is blocked because the developer cannot be verified</summary>
+
+For a download you trust from the [official releases](https://github.com/oobabooga/textgen/releases), try opening it, then go to **System Settings → Privacy & Security → Open Anyway**. Follow [Apple's instructions](https://support.apple.com/102445) to confirm the exception.
+
+A portable release contains many executables and libraries, so macOS may ask you to approve individual files repeatedly. After verifying the source of the download, you can remove the quarantine attribute from that extracted release folder in Terminal:
+
+```bash
+xattr -dr com.apple.quarantine "/absolute/path/to/textgen"
+```
+
+Replace the quoted path with the exact folder containing `start_macos.sh`, then run that script again. The command applies recursively to that folder and its contents, so keep its scope limited to the release you intend to trust. It does not require disabling Gatekeeper system-wide.
+
+This workaround is for an unidentified-developer warning. If macOS reports that malware was detected or the software will damage your computer, follow Apple's guidance instead of removing quarantine.
+
+</details>
+
 ### Manual portable install with venv
 
 Fast setup on any Python 3.9+:
