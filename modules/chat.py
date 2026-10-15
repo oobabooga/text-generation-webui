@@ -524,7 +524,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
         if entry_meta.get('role') == 'system':
             if user_msg:
                 messages.insert(insert_pos, {"role": "system", "content": user_msg})
-        elif user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
+        elif user_msg != '<|BEGIN-VISIBLE-CHAT|>':
             # Check for user message attachments in metadata
             user_key = f"user_{row_idx}"
             enhanced_user_msg = user_msg
@@ -540,7 +540,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 if attachments_text:
                     enhanced_user_msg += f"\n\nATTACHMENTS:\n{attachments_text}"
 
-            messages.insert(insert_pos, {"role": "user", "content": enhanced_user_msg})
+            if enhanced_user_msg:
+                messages.insert(insert_pos, {"role": "user", "content": enhanced_user_msg})
 
     # Handle the current user input
     user_input = user_input.strip()
