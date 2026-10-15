@@ -105,6 +105,8 @@ python server.py --portable --api --auto-launch
 deactivate
 ```
 
+To start the web UI automatically on Linux, see the [systemd user service guide](docs/Linux%20systemd%20service.md).
+
 ### Full installation
 
 For users who need additional backends (ExLlamaV3, Transformers), training, image generation, or extensions like TTS, voice input, and translation. Requires ~10GB disk space and downloads PyTorch.
