@@ -218,7 +218,9 @@ def _parse_bare_name_tool_calls(answer: str, tool_names: list[str]):
     for match in re.finditer(pattern, answer):
         text = match.group(0)
         name = None
-        for n in tool_names:
+        # Check longer names first so that e.g. "search_web{" resolves to
+        # "search_web" rather than the shorter prefix "search".
+        for n in sorted(tool_names, key=len, reverse=True):
             if text.startswith(n):
                 name = n
                 break
