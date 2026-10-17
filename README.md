@@ -460,6 +460,8 @@ To pass extra flags, put each on its own line:
 
 ## Documentation
 
+- [Set default tools, chat mode, and character for multi-user sessions](docs/Multi-user%20defaults.md)
+
 https://github.com/oobabooga/textgen/wiki
 
 ## Community
