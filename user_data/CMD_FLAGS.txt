@@ -1,3 +1,5 @@
 # Add persistent flags here to use every time you launch the web UI.
 # Example:
 # --listen --api
+# Remove --auto-launch if you do not want the browser to open automatically.
+--auto-launch

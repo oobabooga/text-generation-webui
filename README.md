@@ -122,7 +122,7 @@ For users who need additional backends (ExLlamaV3, Transformers), training, imag
 After installation:
 
 * **Restart**: run the same `start_` script.
-* **Pass command-line flags**: directly (e.g., `./start_linux.sh --help`), or persist them in `user_data/CMD_FLAGS.txt` (e.g., `--api` to enable the API).
+* **Pass command-line flags**: directly (e.g., `./start_linux.sh --help`), or persist them in `user_data/CMD_FLAGS.txt` (e.g., `--api` to enable the API). The default `--auto-launch` setting is in that file; remove it to stop the browser opening automatically.
 * **Update**: run the update script for your OS (`update_wizard_windows.bat`, `update_wizard_linux.sh`, or `update_wizard_macos.sh`).
 * **Reinstall from scratch**: delete the `installer_files` folder and run the `start_` script again.
 * **Install extension requirements**: use the update wizard's "Install/update extensions requirements" option. It reinstalls the main project requirements at the end to ensure they take precedence over conflicting extension dependencies.

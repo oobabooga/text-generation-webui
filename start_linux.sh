@@ -9,7 +9,7 @@ cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 
 # Portable install case
 if [ -d "portable_env" ]; then
-    ./portable_env/bin/python3 server.py --portable --api --auto-launch "$@"
+    ./portable_env/bin/python3 server.py --portable --api "$@"
     exit $?
 fi
 
