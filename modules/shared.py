@@ -97,6 +97,8 @@ group = parser.add_argument_group('llama.cpp')
 group.add_argument('--gpu-layers', '--n-gpu-layers', type=int, default=-1, metavar='N', help='Number of layers to offload to the GPU. -1 = auto.')
 group.add_argument('--cpu-moe', action='store_true', help='Move the experts to the CPU (for MoE models).')
 group.add_argument('--mmproj', type=str, default=None, help='Path to the mmproj file for vision models.')
+group.add_argument('--image-max-dimension', type=int, default=0, metavar='N', help='Maximum image width or height sent to llama.cpp, preserving aspect ratio. 0 = original size.')
+group.add_argument('--image-format', choices=['png', 'jpeg'], default='png', help='Image encoding sent to llama.cpp. JPEG uses quality 95; PNG is lossless (default).')
 group.add_argument('--streaming-llm', action='store_true', help='Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.')
 group.add_argument('--tensor-split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.')
 group.add_argument('--split-mode', type=str, default='layer', choices=['layer', 'row', 'tensor', 'none'], help='How to split the model across multiple GPUs. "tensor" can make multi-GPU significantly faster.')
@@ -234,6 +236,8 @@ if cmd_flags_path.exists():
 
 
 args = parser.parse_args()
+if args.image_max_dimension < 0:
+    parser.error('--image-max-dimension must be non-negative')
 user_data_dir = Path(args.user_data_dir)  # Update from parsed args (may differ from pre-parse)
 original_args = copy.deepcopy(args)
 args_defaults = parser.parse_args([])
