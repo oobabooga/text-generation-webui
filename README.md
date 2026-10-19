@@ -73,6 +73,13 @@ textgen
 These formats require the full installation (not the portable build).
 </details>
 
+### Sorting the model list
+
+Use **Sort models by** on the Model tab to switch from the default name order to
+**Last modified (newest first)**. Refreshing the list keeps the chosen order.
+Modification times come from each GGUF file or model directory; they do not track
+when a model was last used.
+
 ## Installation
 
 For the desktop app, see the [portable builds](https://github.com/oobabooga/textgen/releases). The options below run the web UI in your browser instead.

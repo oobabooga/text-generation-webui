@@ -117,7 +117,7 @@ def resolve_model_path(model_name_or_path, image_model=False):
         return Path(f'{shared.args.model_dir}/{model_name_or_path}')
 
 
-def get_available_models():
+def get_available_models(sort_by='name'):
     # Get all GGUF files
     gguf_files = get_available_ggufs()
 
@@ -168,7 +168,18 @@ def get_available_models():
 
     model_dirs = sorted(model_dirs, key=natural_keys)
 
-    return filtered_gguf_files + model_dirs
+    models = filtered_gguf_files + model_dirs
+    if sort_by == 'modified':
+        def modified_time(name):
+            try:
+                return (model_dir / name).stat().st_mtime
+            except OSError:
+                # A model may be removed while the list is being refreshed.
+                return 0
+
+        models.sort(key=modified_time, reverse=True)
+
+    return models
 
 
 def get_available_image_models():
