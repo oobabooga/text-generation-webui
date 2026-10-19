@@ -58,11 +58,12 @@ def create_ui():
             with gr.Column():
                 with gr.Row():
                     shared.gradio['model_menu'] = gr.Dropdown(choices=utils.get_available_models(), value=lambda: shared.model_name, label='Model', elem_classes='slim-dropdown', interactive=not mu)
-                    ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': utils.get_available_models()}, 'refresh-button', interactive=not mu)
+                    shared.gradio['model_refresh'] = gr.Button(ui.refresh_symbol, elem_classes=['refresh-button', 'refresh-icon-btn'], interactive=not mu)
                     shared.gradio['load_model'] = gr.Button("Load", elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['unload_model'] = gr.Button("Unload", elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['save_model_settings'] = gr.Button("Save settings", elem_classes='refresh-button', interactive=not mu)
 
+                shared.gradio['model_sort'] = gr.Dropdown(label='Sort models by', choices=[('Name (default)', 'name'), ('Last modified (newest first)', 'modified')], value='name', interactive=not mu)
                 shared.gradio['loader'] = gr.Dropdown(label="Model loader", choices=loaders.loaders_and_params.keys() if not shared.args.portable else ['llama.cpp'], value=None)
                 with gr.Blocks():
                     gr.Markdown("## Main options")
@@ -172,6 +173,9 @@ def create_event_handlers():
     mu = shared.args.multi_user
     if mu:
         return
+
+    for event in (shared.gradio['model_sort'].change, shared.gradio['model_refresh'].click):
+        event(lambda sort_by: gr.update(choices=utils.get_available_models(sort_by)), gradio('model_sort'), gradio('model_menu'), show_progress=False)
 
     shared.gradio['loader'].change(
         loaders.make_loader_params_visible, gradio('loader'), gradio(loaders.get_all_params()), show_progress=False
