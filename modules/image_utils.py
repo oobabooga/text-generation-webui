@@ -23,11 +23,26 @@ def open_image_safely(path):
         return None
 
 
-def convert_pil_to_base64(image: Image.Image) -> str:
-    """Converts a PIL Image to a base64 encoded string."""
+def convert_pil_to_base64(image: Image.Image, image_format: str = 'png', max_dimension: int = 0) -> str:
+    """Encode an image, optionally limiting its dimensions and using JPEG."""
+    if max_dimension < 0:
+        raise ValueError('max_dimension must be non-negative')
+    if image_format not in ('png', 'jpeg'):
+        raise ValueError('image_format must be png or jpeg')
+
+    if max_dimension and max(image.size) > max_dimension:
+        image = image.copy()
+        image.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
+
     buffered = io.BytesIO()
-    # Save image to an in-memory bytes buffer in PNG format
-    image.save(buffered, format="PNG")
+    if image_format == 'jpeg':
+        # JPEG has no alpha channel. Composite transparent pixels on white.
+        rgba = image.convert('RGBA')
+        image = Image.new('RGB', rgba.size, 'white')
+        image.paste(rgba, mask=rgba.getchannel('A'))
+        image.save(buffered, format='JPEG', quality=95)
+    else:
+        image.save(buffered, format='PNG')
     # Encode the bytes to a base64 string
     return base64.b64encode(buffered.getvalue()).decode('utf-8')
 

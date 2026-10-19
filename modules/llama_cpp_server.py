@@ -191,7 +191,10 @@ class LlamaServer:
             # Translate placeholders to the server's actual media marker.
             prompt = prompt.replace("<__media__>", self.media_marker)
 
-            base64_images = [convert_pil_to_base64(img) for img in pil_images]
+            base64_images = [
+                convert_pil_to_base64(img, image_format=shared.args.image_format, max_dimension=shared.args.image_max_dimension)
+                for img in pil_images
+            ]
             payload["prompt"] = {
                 "prompt_string": prompt,
                 "multimodal_data": base64_images

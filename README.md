@@ -255,7 +255,7 @@ usage: server.py [-h] [--user-data-dir USER_DATA_DIR] [--multi-user] [--model MO
                  [--image-attn-backend {flash_attention_2,sdpa}] [--image-cpu-offload] [--image-compile] [--image-quant {none,bnb-8bit,bnb-4bit,torchao-int8wo,torchao-fp4,torchao-float8wo}]
                  [--loader LOADER] [--ctx-size N] [--cache-type N] [--model-draft MODEL_DRAFT] [--draft-max DRAFT_MAX] [--gpu-layers-draft GPU_LAYERS_DRAFT] [--device-draft DEVICE_DRAFT]
                  [--ctx-size-draft CTX_SIZE_DRAFT] [--spec-type {none,ngram-mod,ngram-simple,ngram-map-k,ngram-map-k4v,ngram-cache}] [--spec-ngram-size-n SPEC_NGRAM_SIZE_N]
-                 [--spec-ngram-size-m SPEC_NGRAM_SIZE_M] [--spec-ngram-min-hits SPEC_NGRAM_MIN_HITS] [--gpu-layers N] [--cpu-moe] [--mmproj MMPROJ] [--streaming-llm] [--tensor-split TENSOR_SPLIT]
+                 [--spec-ngram-size-m SPEC_NGRAM_SIZE_M] [--spec-ngram-min-hits SPEC_NGRAM_MIN_HITS] [--gpu-layers N] [--cpu-moe] [--mmproj MMPROJ] [--image-max-dimension N] [--image-format {png,jpeg}] [--streaming-llm] [--tensor-split TENSOR_SPLIT]
                  [--split-mode {layer,row,tensor,none}] [--no-mmap] [--mlock] [--no-kv-offload] [--batch-size BATCH_SIZE] [--ubatch-size UBATCH_SIZE] [--threads THREADS]
                  [--threads-batch THREADS_BATCH] [--numa] [--parallel PARALLEL] [--fit-target FIT_TARGET] [--extra-flags EXTRA_FLAGS] [--ik] [--cpu] [--cpu-memory CPU_MEMORY] [--disk]
                  [--disk-cache-dir DISK_CACHE_DIR] [--load-in-8bit] [--bf16] [--no-cache] [--trust-remote-code] [--force-safetensors] [--no_use_fast] [--attn-implementation IMPLEMENTATION]
@@ -323,6 +323,8 @@ llama.cpp:
   --gpu-layers, --n-gpu-layers N                       Number of layers to offload to the GPU. -1 = auto.
   --cpu-moe                                            Move the experts to the CPU (for MoE models).
   --mmproj MMPROJ                                      Path to the mmproj file for vision models.
+  --image-max-dimension N                              Maximum image width or height sent to llama.cpp, preserving aspect ratio. 0 = original size.
+  --image-format {png,jpeg}                            Image encoding sent to llama.cpp. JPEG uses quality 95; PNG is lossless (default).
   --streaming-llm                                      Activate StreamingLLM to avoid re-evaluating the entire prompt when old messages are removed.
   --tensor-split TENSOR_SPLIT                          Split the model across multiple GPUs. Comma-separated list of proportions. Example: 60,40.
   --split-mode {layer,row,tensor,none}                 How to split the model across multiple GPUs. "tensor" can make multi-GPU significantly faster.
@@ -440,6 +442,19 @@ Electron:
 ```
 
 </details>
+
+## Reducing vision image payloads
+
+For llama.cpp, `--image-max-dimension 1024 --image-format jpeg` resizes images so
+neither dimension exceeds 1024 pixels (preserving aspect ratio, without upscaling)
+and encodes them as JPEG at quality 95. This applies to images sent to llama.cpp
+from both the web UI and the API, including images in conversation history.
+It can reduce the size of requests to llama-server, but does not change limits on
+incoming API requests or guarantee that a long conversation fits those limits.
+
+The defaults remain original dimensions (`--image-max-dimension 0`) and lossless
+PNG (`--image-format png`). Resizing and JPEG compression can lose visual detail;
+choose a size appropriate for the task. These options do not affect other loaders.
 
 ## Loading a model automatically
 
