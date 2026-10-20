@@ -41,6 +41,22 @@ The sidebar (toggled via "Show controls") contains:
 * **Chat style**: see below.
 * **Command for chat-instruct mode**: the command that is used in chat-instruct mode to query the model to generate a reply on behalf of the character. Can be used creatively to generate specific kinds of responses. Inside this string, `<|character|>` is a placeholder that gets replaced with the bot name, and `<|prompt|>` is a placeholder that gets replaced with the full chat prompt.
 
+## Exporting conversations
+
+Under **Character > Chat history**, click **Export ShareGPT** to download the
+current conversation as a JSON array containing a `conversations` list. User and
+assistant messages use the `human` and `gpt` roles. The export includes the current
+custom system message in instruct mode, or the character context in chat and
+chat-instruct modes. Character name placeholders in the context are expanded.
+
+The export uses the original message text, including greetings, rather than the
+rendered HTML. Tool calls and responses are retained as `tool_calls` and `tool`
+messages; support for these fields depends on the importing application. Local
+attachment references are preserved as text, but attachment files are not bundled.
+
+Use **Save history** for TextGen's native history format, which can be loaded again
+with **Upload History JSON**. ShareGPT export is intended for other tools and datasets.
+
 ## Mode
 
 The most important input field. It defines how the chat prompt is formatted. There are 3 options: chat, chat-instruct, and instruct. It is worth going into more detail about this because it seems to not be obvious to a lot of people.

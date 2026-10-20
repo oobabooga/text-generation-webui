@@ -1821,6 +1821,36 @@ def get_history_file_path(unique_id, character, mode):
     return p
 
 
+def export_history_sharegpt(state):
+    conversations = []
+    if state['mode'] == 'instruct':
+        system_message = state['custom_system_message']
+    else:
+        system_message = replace_character_names(state['context'], state['name1'], state['name2'])
+
+    if system_message.strip():
+        conversations.append({'from': 'system', 'value': system_message})
+
+    for entry in state['history']['internal']:
+        user, assistant = entry[:2]
+        tool = entry[2] if len(entry) > 2 else ''
+        metadata = entry[3] if len(entry) > 3 else {}
+        if user and user != '<|BEGIN-VISIBLE-CHAT|>':
+            conversations.append({'from': 'human', 'value': user})
+        if assistant or metadata.get('tool_calls'):
+            message = {'from': 'gpt', 'value': assistant}
+            if metadata.get('tool_calls'):
+                message['tool_calls'] = metadata['tool_calls']
+            conversations.append(message)
+        if tool:
+            message = {'from': 'tool', 'value': tool}
+            if 'tool_call_id' in metadata:
+                message['tool_call_id'] = metadata['tool_call_id']
+            conversations.append(message)
+
+    return json.dumps([{'conversations': conversations}], indent=4, ensure_ascii=False)
+
+
 def save_history(history, unique_id, character, mode):
     if shared.args.multi_user:
         return
