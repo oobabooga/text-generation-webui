@@ -181,6 +181,7 @@ def create_character_settings_ui():
                     with gr.Row():
                         with gr.Column():
                             shared.gradio['save_chat_history'] = gr.Button(value='Save history')
+                            shared.gradio['export_sharegpt'] = gr.Button(value='Export ShareGPT')
 
                         with gr.Column():
                             shared.gradio['load_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label='Upload History JSON')
@@ -387,6 +388,11 @@ def create_event_handlers():
     shared.gradio['save_chat_history'].click(
         lambda x: json.dumps(x, indent=4), gradio('history'), gradio('temporary_text')).then(
         None, gradio('temporary_text', 'character_menu', 'mode'), None, js=f'(hist, char, mode) => {{{ui.save_files_js}; saveHistory(hist, char, mode)}}')
+
+    shared.gradio['export_sharegpt'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.export_history_sharegpt, gradio('interface_state'), gradio('temporary_text'), show_progress=False).then(
+        None, gradio('temporary_text'), None, js=f'(hist) => {{{ui.save_files_js}; saveFile(hist, `sharegpt_${{getCurrentTimestamp()}}.json`)}}')
 
     shared.gradio['Submit character'].click(
         chat.upload_character, gradio('upload_json', 'upload_img_bot'), gradio('character_menu'), show_progress=False).then(
