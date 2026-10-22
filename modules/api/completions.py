@@ -463,6 +463,8 @@ def convert_history(history):
                     chat_dialogue.append([current_message, '', '', {}])
                     current_message = ""
                 chat_dialogue.append([content, '', '', {"role": "system"}])
+                # The preceding user input is already in history, before this instruction.
+                user_input_last = False
 
     if not user_input_last:
         user_input = ""
